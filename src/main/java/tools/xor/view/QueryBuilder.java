@@ -1,0 +1,409 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.view;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import tools.xor.AggregateAction;
+import tools.xor.BusinessObject;
+import tools.xor.CallInfo;
+import tools.xor.EntityType;
+import tools.xor.Type;
+import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.PersistenceOrchestrator.QueryType;
+import tools.xor.service.QueryCapability;
+import tools.xor.util.Constants;
+
+/**
+ * QueryBuilder needs to handle the following expressions
+
+First Phase -- Restrict to simple needs 
+
+Example filters
+-----------------------------
+ilike(param, %1)
+in(param, %1)
+idEq(%1)
+ge(%1)
+asc(%1)
+
+e.g.
+
+ilike(name, "%xyz%")
+in("id", String[])
+idEq(String)
+ge("createdOn", long)
+ge("updatedOn", long)
+asc("name")
+
+Modify view to support filters
+------------------------------
+
+  FILTERS
+  ilike(name, ":name")            // lower(name) LIKE :name
+  in(state, ":state"              // name IN(:state)
+  equal(ownedBy.name, ":owner")   // ownedBy.name = :owner 
+  ge(createdOn, ":createdSince")  // createdOn > :createdSince
+  ge(updatedOn, ":updatedSince"); // updaetdOn > :updatedSince
+  asc(name)                       // ORDER BY name  also honor OrderBy annotation in model if no ORDER BY clause is provided
+  between(updatedOn, ":updatedFrom", ":updatedTo")
+
+ *
+ */
+public class QueryBuilder {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
+	private static final String SELECT_CLAUSE = "SELECT ";
+	private static final String COMMA_DELIMITER = ", ";
+
+	private BusinessObject   entity;
+	private Type             type;	
+	private QueryView        view;
+	private List<Filter>     additionalFilters;
+	private boolean          addIdentifier;
+	private List<String>     selectedColumns;
+
+	/* refers to the columns used in the order by clause. 
+	 * There needs to be atleast one unique column for this to work property.
+	 * If there are multiple columns then the last column should be a unique column
+	 *
+	 * Examples:
+	 * 1. Sort on unique column A
+	 *    Then the pageColumn will refer to this unique column A
+	 *    
+	 * 2. If we sort on non-unique column B
+	 *    We add the id column as the second column
+	 *    so we sort on B, I
+	 *    and the query becomes
+	 *    AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
+	 *    
+	 * We currently do not handle more than 1 order by columns, though this can be supported 
+	 * using this approach
+	 */    
+	private Filter   pageColumn;         
+
+	public BusinessObject getEntity() {
+		return entity;
+	}	
+
+	public boolean doAddIdentifier() {
+		return addIdentifier;
+	}
+
+	public void setAddIdentifier(boolean addIdentifier) {
+		this.addIdentifier = addIdentifier;
+	}
+	
+	public void init(Type type, QueryView view, List<Filter> additionalFilters) {
+		this.type = type;
+		this.view = view;
+
+		this.additionalFilters = new ArrayList<Filter>();
+		for(Filter filter: additionalFilters) {
+			Filter narrowedFilter = filter.narrow();
+			this.additionalFilters.add(narrowedFilter);	
+		}	
+		this.additionalFilters.addAll(view.getFilters());	
+		
+		Collections.sort(additionalFilters);
+	}	
+
+	public void init(BusinessObject entity, QueryView view, List<Filter> additionalFilters) {
+		init(entity.getDomainType(), view, additionalFilters);
+		this.entity = entity;
+		view.normalizeFilters(this.additionalFilters, getQueryCapability(entity.getObjectCreator().getPersistenceOrchestrator()));
+		
+		if(entity.getIdentifierValue() != null) {
+			addIdentifier = true;
+		}
+	}
+
+	private QueryCapability getQueryCapability(PersistenceOrchestrator po)  {
+		return po.getQueryCapability();
+	}
+
+	public Query constructQuery(CallInfo callInfo, Map<String, Object> filters) {
+		//		First check for a StoredProcedure query, then a SQL query 
+		//		When retrieving the QueryBuilder instance, registered SQL queries are given preference over HQL/JPQL queries.
+		//
+		//		It is the responsibility of the user to ensure that the registered SQL is ANSI compliant 
+		//		and can work with all the databases that the user uses.
+		
+		if(view.getContentView() != null && view.getContentView().getStoredProcedure() != null) {
+			StoredProcedure querySP = null;
+			for(StoredProcedure sp: view.getContentView().getStoredProcedure()) {
+				if(sp.getAction() == AggregateAction.READ) {
+					querySP = sp;
+					break;
+				}
+			}
+			if(querySP != null) {
+				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(querySP.getName(), QueryType.SP, querySP);
+			}
+		}
+
+		if(view.getContentView() != null && view.getContentView().getNativeQuery() != null) {
+			String queryString = view.getContentView().getNativeQuery().getQueryString();
+			if(doAddIdentifier()) {
+				String idClause = view.getContentView().getNativeQuery().getIdentifierClause();
+				if((idClause == null || idClause.trim().equals("")))
+					throw new RuntimeException("Identifier clause expected in native query");
+
+				queryString = queryString + " " + idClause + " = :" + QueryViewProperty.ID_PARAMETER_NAME;
+			}
+
+			queryString.replaceAll("[\n\r]", "");
+			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, null);
+		}
+
+		StringBuilder HQL = generateOQLQuery(callInfo, callInfo.getInputObjectCreator().getPersistenceOrchestrator(), filters);
+		
+		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
+		if(vb.isDebugEnabled()) {
+			vb.debug("HQL of view [" + view.getName() + "] => " + HQL.toString());
+		}
+
+		return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(HQL.toString(), QueryType.OQL, null);
+	}
+	
+	public StringBuilder generateOQLQuery(CallInfo callInfo, PersistenceOrchestrator po, Map<String, Object> filters) {
+		StringBuilder HQL = new StringBuilder(constructHQL(callInfo, po));
+		HQL.append(buildWhereClause(callInfo, filters));
+		HQL.append(buildOrderClause(po));
+		
+		return HQL;
+	}
+	
+	private void debugSelectColumns(Map<String, ColumnMeta> meta) {
+		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
+		if(vb.isDebugEnabled()) {
+			StringBuilder sb = new StringBuilder("********* C O L U M N   M E T A [" + view.getName() + "] *********\r\n");
+			for(ColumnMeta columnMeta: meta.values()) {
+				sb.append(columnMeta.toString() + "\r\n");
+			}			
+			vb.debug(sb.toString());
+		}		
+	}
+
+	protected String constructHQL(CallInfo callInfo, PersistenceOrchestrator po) {		
+		Map<String, ColumnMeta> meta = view.getAugmentedAttributes();
+
+		StringBuilder HQL = new StringBuilder(SELECT_CLAUSE);
+
+		int position = 0;
+		selectedColumns = new ArrayList<String>();
+		for(ColumnMeta columnMeta: meta.values()) {
+			if(!columnMeta.getViewProperty().doFetch()) { // Should the property not be fetched
+				continue;
+			}
+
+			columnMeta.setPosition(position++);	
+			selectedColumns.add(QueryViewProperty.unqualifyProperty(columnMeta.getAttributePath()) );
+			if(!SELECT_CLAUSE.equals(HQL.toString()))
+				HQL.append(COMMA_DELIMITER);
+			String columnString = columnMeta.getQueryString(getQueryCapability(po));
+			HQL.append(columnString);
+		}
+		debugSelectColumns(meta);
+
+		Class<?> entityClass = (callInfo == null) ? type.getInstanceClass() : callInfo.getSettings().getNarrowedClass();
+		HQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias());
+
+		// if more than one collection property is specified then we would get a severe performance hit due to cartesian product
+		// This is solved by breaking the query intelligently. 
+		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
+			QueryViewProperty parentView = viewProperty.getParent();
+			if(parentView == null)
+				continue; // the root needs to be skipped
+			HQL.append(" LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias());		
+		}
+
+		if(view.getContentView() != null && view.getContentView().getJoin() != null && view.getContentView().getJoin().getEntity() != null)
+			HQL.append(", " + view.getContentView().getJoin().getEntity());		
+
+		return HQL.toString();
+	}	
+
+	protected String buildOrderClause(PersistenceOrchestrator po) {
+		StringBuilder result = new StringBuilder();
+
+		Map<Integer, String> orderClauses = new TreeMap<Integer, String>();
+		for(ColumnMeta columnMeta: view.getAugmentedAttributes().values()) {
+			if(columnMeta.getAttributePath().endsWith(QueryViewProperty.LIST_INDEX_ATTRIBUTE)) {
+				String columnString = columnMeta.getQueryString(getQueryCapability(po));
+				orderClauses.put(columnMeta.getAttributeLevel(), columnString);
+			}
+		}
+
+		// filter order clauses
+		StringBuilder filterOrderBy = new StringBuilder();
+		for(Filter filter: this.additionalFilters) {
+			if(filter.isOrderBy()) {
+				if(filterOrderBy.length() > 0)
+					filterOrderBy.append(COMMA_DELIMITER);
+				filterOrderBy.append(filter.getQueryString());
+			}
+		}
+
+		// Append any ORDER BY clauses
+		if(orderClauses.size() > 0 || filterOrderBy.length() > 0) {
+			for(String indexColumn: orderClauses.values())
+				result.append( (result.length() > 0) ? COMMA_DELIMITER + indexColumn : indexColumn );
+
+			if(filterOrderBy.length() > 0) 
+				result.append((result.length() > 0) ? COMMA_DELIMITER + filterOrderBy : filterOrderBy);
+
+			result.insert(0, " ORDER BY ");			
+		}		
+
+		return result.toString();
+	}
+
+	protected String getNormalizedName(String propertyPath) {
+		QueryViewProperty viewProperty = view.getViewProperty(QueryViewProperty.qualifyProperty(propertyPath));
+		return viewProperty.getNormalizedName();
+	}	
+	
+	protected void checkAndAddFilters(StringBuilder result, Map<String, Object> filters) {
+		Map<String, Object> originalFilters = new HashMap<String, Object>(filters);
+		filters.clear();
+
+		Map<String, Parameter> parameterMap = new HashMap<String, Parameter>();
+		for(Parameter parameter: view.getParameter())
+			parameterMap.put(parameter.name, parameter);
+		
+		// Initialize the filterbypath map
+		for(Filter filter: this.additionalFilters) {
+			if(filter.isOrderBy()) { // Will be handled in the ORDER BY clause
+			    // Before we skip, we initialize it if it is needed
+				// for paging. This column has to be unique for it to be used
+				// for this purpose.
+				if(pageColumn == null)
+					pageColumn = filter;
+				continue;
+			}
+
+			// Filter is skipped
+			if(!filter.isFilterIncluded(originalFilters, filters, parameterMap))
+				continue;
+			
+			addWhereStep(result);
+			result.append(filter.getQueryString());
+		}	
+		
+		// Set parameters referred from native query or join clause
+		if(view.getContentView() != null && view.getContentView().getJoin() != null) {
+			// Expression
+			addWhereStep(result);
+
+			for(Parameter parameter: view.getContentView().getJoin().getParameter()) {		
+				if(originalFilters.containsKey(parameter.name)) {
+					filters.put(parameter.name, originalFilters.get(parameter.name));
+					result.append(parameter.expression);
+				}
+			}
+		}		
+	}
+	
+	protected void checkAndAddId(StringBuilder result) {
+
+		if(addIdentifier) {
+			addWhereStep(result);
+
+			result.append( getNormalizedName(((EntityType)entity.getDomainType()).getIdentifierProperty().getName()) );
+			result.append( " = :" + QueryViewProperty.ID_PARAMETER_NAME);			
+		}
+	}
+	
+	protected void checkAndAddCustom(CallInfo callInfo, StringBuilder result) {
+		// AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
+		if(callInfo != null && callInfo.getSettings().getPageEndSortValue() != null) {
+			addWhereStep(result);
+
+			result.append( " ( " +pageColumn.getNormalizedName() );
+			result.append( " > :" + QueryViewProperty.PAGE_END_SORT_VALUE);
+			
+			if(callInfo.getSettings().getPageEndIdValue() != null) {
+				result.append( " OR ( " +pageColumn.getNormalizedName() );
+				result.append( " = :" + QueryViewProperty.PAGE_END_SORT_VALUE + " AND ");
+				result.append( getNormalizedName(((EntityType)entity.getDomainType()).getIdentifierProperty().getName()) );
+				result.append( " > :" + QueryViewProperty.PAGE_END_ID_VALUE);	
+				result.append( " ) ");
+			}
+			
+			result.append( " ) ");
+		}	
+	}
+
+	protected String buildWhereClause(CallInfo callInfo, Map<String, Object> filters) {
+		StringBuilder result = new StringBuilder();
+		
+		checkAndAddFilters(result, filters);
+		checkAndAddId(result);
+		checkAndAddCustom(callInfo, result);	
+
+		return result.toString();
+	}	
+
+	private void addWhereStep(StringBuilder result) {
+		if(result.length() > 0)
+			result.append(" AND ");		
+		else
+			result.append(" WHERE ");		
+	}
+
+	public void postProcess(QueryView queryView, CallInfo callInfo, Query query, Map<String, Object> filters) {
+		
+		for(Map.Entry<String, Object> entry: filters.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+
+		if(doAddIdentifier() && query.hasParameter(QueryViewProperty.ID_PARAMETER_NAME)) {
+			query.setParameter(QueryViewProperty.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
+		}
+
+		if(query.hasParameter(QueryViewProperty.PAGE_END_SORT_VALUE)) {
+			query.setParameter(QueryViewProperty.PAGE_END_SORT_VALUE, callInfo.getSettings().getPageEndSortValue());
+		}
+		
+		if(query.hasParameter(QueryViewProperty.PAGE_END_ID_VALUE)) {
+			query.setParameter(QueryViewProperty.PAGE_END_ID_VALUE, callInfo.getSettings().getPageEndIdValue());
+		}		
+
+		// pagination
+		if(callInfo.getSettings().getOffset() != null)
+			query.setFirstResult(callInfo.getSettings().getOffset());
+		if(callInfo.getSettings().getLimit() != null)
+			query.setMaxResults(callInfo.getSettings().getLimit());	
+		
+		// initialize the query with the selected columns
+		query.setColumns(selectedColumns);
+		
+		query.prepare((EntityType)entity.getDomainType(), queryView);
+	}
+}

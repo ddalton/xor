@@ -1,0 +1,72 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor;
+
+public final class AssociationSetting {
+	private final MatchType matchType;
+	private final Class<?> entityClass;
+	private final String pathSuffix;
+
+	/**
+	 * If including a type to be part of the view, then
+	 * it will automatically include all the data types
+	 * 
+	 * @param entityClass
+	 */
+	public AssociationSetting(Class<?> entityClass) {
+		this.entityClass = entityClass;
+		this.matchType = MatchType.TYPE;
+		this.pathSuffix = null;
+	}
+
+	public AssociationSetting(String pathSuffix) {
+		this.pathSuffix = pathSuffix;
+		this.matchType = MatchType.PATH;
+		this.entityClass = null;
+	}
+	
+	public Class<?> getEntityClass() {
+		return entityClass;
+	}
+
+	public String getPathSuffix() {
+		return pathSuffix;
+	}
+
+	public MatchType getMatchType() {
+		return matchType;
+	}	
+
+	public boolean isAggregatePart(CallInfo ci) {
+		if(matchType == MatchType.TYPE) {
+			Object associatedInstance = ci.getOutput() != null ? ((BusinessObject)ci.getOutput()).getInstance() : null;
+			return entityClass.isAssignableFrom(associatedInstance.getClass());
+		}
+
+		if(matchType == MatchType.PATH && ci.isPathSuffix(this.pathSuffix))
+			return true;
+
+		return false;
+	}
+	
+	public String toString() {
+		return matchType + " - " + ((matchType == MatchType.TYPE) ? entityClass.getName() : pathSuffix );
+	}
+}

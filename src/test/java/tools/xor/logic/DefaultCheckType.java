@@ -1,0 +1,182 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.logic;
+
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import tools.xor.AbstractDBTest;
+import tools.xor.AssociationSetting;
+import tools.xor.BusinessObject;
+import tools.xor.EntityType;
+import tools.xor.MapperDirection;
+import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.custom.TestAssociationStrategy;
+import tools.xor.db.base.Chapter;
+import tools.xor.db.base.ChapterType;
+import tools.xor.db.base.Facet;
+import tools.xor.db.base.Person;
+import tools.xor.db.base.Technician;
+import tools.xor.db.pm.Task;
+import tools.xor.service.AggregateManager;
+import tools.xor.service.DataAccessService;
+import tools.xor.util.ObjectCreator;
+
+public class DefaultCheckType extends AbstractDBTest {
+	
+	@Autowired
+	protected AggregateManager aggregateManager;
+	
+	private static final String TASK_NAME = "SETUP_DSL";
+	
+	protected void checkPath() {
+		DataAccessService das = aggregateManager.getDAS();
+		
+		// create person
+		Technician owner = new Technician();
+		owner.setName("DILIP_DALTON");
+		owner.setDisplayName("Dilip Dalton");
+		owner.setDescription("Software engineer in the bay area");
+		owner.setUserName("daltond");
+		owner.setSkill("Network, electric, telephone");
+		owner = (Technician) aggregateManager.create(owner, new Settings());	
+		Person person = (Person) aggregateManager.read(owner, new Settings());	
+		
+		// Create Task
+		Task task = new Task();
+		task.setName(TASK_NAME);
+		task.setDisplayName("Setup DSL");
+		task.setDescription("Setup high-speed broadband internet using DSL technology");
+		task.setAssignedTo(person);
+		
+		Settings settings = new Settings();
+		// Need to enhance the default aggregate view with this association to persist the technician relationship
+		settings.addAssociation(new AssociationSetting("assignedTo"));
+		
+		task = (Task) aggregateManager.create(task, settings);
+		task = (Task) aggregateManager.read(task, getSettings());
+		
+		assert(task.getId() != null);
+		assert(task.getAssignedTo() != null);
+		assert(task.getAssignedTo().getId() != null);
+		
+		// read the person object using a DataObject
+		ObjectCreator oc = new ObjectCreator(das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		settings = getSettings();
+		settings.addAssociation(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		settings.setEntityType(taskType);
+		settings.init(aggregateManager);
+		
+		BusinessObject from = oc.createDataObject(task, taskType, null, null);
+		settings.setAssociationStrategy(new TestAssociationStrategy()); // Explicitly set the association strategy if not going through the AggregateManager
+		BusinessObject to = (BusinessObject) from.read(settings);
+
+		BusinessObject technician = (BusinessObject) to.getExistingDataObject("/assignedTo");
+		owner = (Technician) technician.getInstance();
+		assert(owner.getId() != null);
+		
+		// the name is null since we did not retrieve it from the DB but from the previously loaded task that did not
+		// have name populated
+		assert(owner.getName() == null);
+		
+		// Now let us get the task from DB and check it
+		// NOTE: we use the same settings, but use the read API from the AggregateManager that gets the DB object
+		task = (Task) aggregateManager.read(task, settings);
+		assert(task.getId() != null);
+		assert(task.getAssignedTo() != null);
+		assert(task.getAssignedTo().getId() != null);
+		assert(task.getAssignedTo().getName().equals("DILIP_DALTON"));
+	}
+
+	protected void checkOrder() {
+		DataAccessService das = aggregateManager.getDAS();
+		
+		EntityType chapterT = (EntityType) das.getType(Chapter.class);
+		EntityType chapterTT = (EntityType) das.getType(ChapterType.class);
+		EntityType facetT = (EntityType) das.getType(Facet.class);
+		
+		assert(chapterT.getOrder() < chapterTT.getOrder());
+		assert(chapterTT.getOrder() < facetT.getOrder());
+	}
+	
+	protected void checkReflectionGetter() {
+		DataAccessService das = aggregateManager.getDAS();
+		
+		// Create Task
+		Task task = new Task();
+		task.setName(TASK_NAME);
+		task.setDisplayName("Setup DSL");
+		task.setDescription("Setup high-speed broadband internet using DSL technology");
+		
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		ObjectCreator oc = new ObjectCreator(das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		BusinessObject from = oc.createDataObject(task, taskType, null, null);
+		
+		Property property = taskType.getProperty("name");
+		assert(property != null);
+		
+		Object name = from.get(property);
+		//assert(name != null && name.toString().equals(TASK_NAME));
+		Date start = new Date();
+		for(int i = 0; i < 1000000; i++) {
+			from.get(property);
+		}
+		System.out.println("checkReflectionGetter[Reflection call] took " + ((new Date()).getTime() - start.getTime()) + " milliseconds");
+		
+		start = new Date();
+		for(int i = 0; i < 1000000; i++) {
+			task.getName();
+		}
+		System.out.println("checkReflectionGetter[Direct call] took " + ((new Date()).getTime() - start.getTime()) + " milliseconds");		
+	}
+	
+	protected void checkReflectionSetter() {
+		DataAccessService das = aggregateManager.getDAS();
+		
+		// Create Task
+		Task task = new Task();
+		task.setName(TASK_NAME);
+		task.setDisplayName("Setup DSL");
+		task.setDescription("Setup high-speed broadband internet using DSL technology");
+		
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		ObjectCreator oc = new ObjectCreator(das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		BusinessObject from = oc.createDataObject(task, taskType, null, null);
+		
+		Property property = taskType.getProperty("name");
+		assert(property != null);
+		
+		from.set(property, "New Name"); 
+		Date start = new Date();
+		for(int i = 0; i < 2000000; i++) {
+			from.set(property, "New Name"); 
+		}
+		System.out.println("checkReflectionSetter[Reflection call] took " + ((new Date()).getTime() - start.getTime()) + " milliseconds");
+		
+		start = new Date();
+		for(int i = 0; i < 2000000; i++) {
+			task.setName("New Name");
+		}
+		System.out.println("checkReflectionSetter[Direct call] took " + ((new Date()).getTime() - start.getTime()) + " milliseconds");		
+	}	
+}

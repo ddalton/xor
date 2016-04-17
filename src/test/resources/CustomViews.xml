@@ -1,0 +1,8 @@
+<AggregateViews>
+	<aggregateView>
+		<name>CUSTOMVIEW</name>
+		<attributeList>id</attributeList>
+		<attributeList>name</attributeList>
+		<attributeList>displayName</attributeList>	
+	</aggregateView>
+</AggregateViews>

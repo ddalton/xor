@@ -1,0 +1,154 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.service;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.mapping.PersistentClass;
+
+import tools.xor.HibernateType;
+import tools.xor.Type;
+import tools.xor.TypeMapper;
+import tools.xor.util.PersistenceType;
+import tools.xor.util.HibernateUtil;
+
+/**
+ * This class is part of the Data Access Service framework
+ * 
+ * @author Dilip Dalton
+ * 
+ */
+public abstract class HibernateDAS extends AbstractDataAccessService {
+
+	private static final Logger logger = LogManager.getLogger(new Exception()
+	.getStackTrace()[0].getClassName());
+	
+	public HibernateDAS(TypeMapper typeMapper, DASFactory dasFactory) {
+		super(dasFactory);
+		this.typeMapper = typeMapper;
+	}
+	
+	public abstract SessionFactory getSessionFactory();
+	
+	public abstract Configuration getConfiguration();
+
+	@Override
+	public void define() {
+		Configuration conf = getConfiguration();
+		Iterator<PersistentClass> classMappings = conf.getClassMappings();
+
+		logger.info("Getting the list of hibernate mapped classes");
+		while (classMappings.hasNext()) {
+			PersistentClass classMapping = (PersistentClass) classMappings
+					.next();
+			logger.debug("     Adding hibernate persisted class: "
+					+ classMapping.getClassName());
+			defineTypes(classMapping);
+		}
+
+		// Set the base types
+		setBaseTypes();
+
+		// Define the properties for the Types
+		// This will end up defining the simple types
+		defineProperties();
+		
+		postProcess();
+	}
+
+	protected void defineTypes(PersistentClass classMapping) {
+		HibernateType dataType = new HibernateType( HibernateUtil.getEntityType(getSessionFactory(), classMapping.getEntityName()),
+				classMapping);
+		
+		logger.debug("Defined data type: " + dataType.getName());
+		addType(dataType.getName(), dataType);
+		
+		for(Type type: dataType.getEmbeddableTypes()) {
+			addType(type.getName(), type);
+		}
+		
+		defineSubtypes();
+	}
+
+	protected void defineProperties() {
+		for (Type type : types.values()) {
+			if (HibernateType.class.isAssignableFrom(type.getClass())) {
+				HibernateType hibernateType = (HibernateType) type;
+				hibernateType.setProperty(this);
+			}
+		}
+
+		// Link the bi-directional relationship between the properties
+		for (Type type : types.values()) {
+			if (HibernateType.class.isAssignableFrom(type.getClass())) {
+				HibernateType hibernateType = (HibernateType) type;
+				hibernateType.setOpposite(this);
+			}
+		}
+	}
+
+	protected void setBaseTypes() {
+		for (Type type : types.values()) {
+			if (HibernateType.class.isAssignableFrom(type.getClass())) {
+				HibernateType hibernateType = (HibernateType) type;
+				if(hibernateType.getHibernateType().isComponentType())
+					continue;
+
+				List<Type> baseTypes = new ArrayList<Type>();
+				PersistentClass base = ((PersistentClass)hibernateType.getHibernateClass()).getSuperclass();
+
+				if (base != null) {
+					Type baseType = types.get(base.getEntityName());
+					if (baseType != null)
+						baseTypes.add(baseType);	
+				}
+				hibernateType.setBaseType(baseTypes);
+			}
+		}
+	}
+
+	@Override
+	public List<String> getAggregateList() {
+		List<String> result = new ArrayList<String>();
+		
+		Configuration conf = getConfiguration();
+		Iterator<PersistentClass> classMappings = conf.getClassMappings();
+
+		logger.info("Getting the list of hibernate mapped classes");
+		while (classMappings.hasNext()) {
+			PersistentClass classMapping = (PersistentClass) classMappings
+					.next();
+			result.add(classMapping.getEntityName());
+		}
+		
+		return result;
+	}
+
+	@Override
+	public PersistenceType getAccessType() {
+		return PersistenceType.HIBERNATE;
+	}
+}

@@ -1,0 +1,44 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.util;
+
+import tools.xor.BasicType;
+import tools.xor.BusinessObject;
+import tools.xor.Settings;
+
+
+public interface CreationStrategy {
+
+	/**
+	 * Creates a new instance with the provided information
+	 * @param from    A copy of this object is returned if it is mutable, else the from object is returned
+	 * @param type    The class information can be extracted from the type that is used to create the instance
+	 * @param toClass If the type is not provided then this field is required
+	 * @return
+	 * @throws Exception
+	 */
+	public Object newInstance(Object from, BasicType type, Class<?> toClass) throws Exception;
+	
+	/**
+	 * Give a chance for the creation strategy to do any final conversion on the root object
+	 * @return
+	 */
+	public Object getNormalizedInstance(BusinessObject bo, Settings settings);
+}

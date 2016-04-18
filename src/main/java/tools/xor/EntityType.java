@@ -19,6 +19,8 @@
 
 package tools.xor;
 
+import tools.xor.service.DataAccessService;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -144,6 +146,10 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 */
 	public List <Property> getProperties(int apiVersion);
 
+	/**
+	 * This method is not synchronized as we do not remove elements from a Map
+	 */
+	public void addProperty(Property property);
 
 	/**
 	 * Retrieve a property by its alias name
@@ -252,17 +258,5 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param value
 	 */
 	void setSuperType(EntityType value);
-
-	/**
-	 * Returns the open property associated with this type
-	 * @return
-	 */
-	public Property getOpenProperty ();
-
-	/**
-	 * Sets the open property associated with this type
-	 * @param openProperty
-	 */
-	public void setOpenProperty (Property openProperty);
 
 }

@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import tools.xor.AbstractType;
 import tools.xor.EntityType;
 import tools.xor.ExternalType;
+import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.SimpleTypeFactory;
 import tools.xor.Type;
@@ -253,7 +254,16 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		return result;
-	}	
+	}
+
+	@Override
+	public void addView(AggregateView view) {
+		if(views.containsKey(view.getName())) {
+			throw new RuntimeException("There is an existing view with this name: " + view.getName());
+		}
+
+		views.put(view.getName(), view);
+	}
 	
 	@Override
 	public AggregateView getBaseView(EntityType type) {
@@ -538,6 +548,18 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				setBiDirectionOnDerivedType(derivedType);
 			}
 		}			
+	}
+
+	public void addProperty (EntityType type, Property openProperty) {
+		type.addProperty(openProperty);
+		if(derivedTypes.containsKey(type.getName())) {
+			ExternalType derived = (ExternalType) derivedTypes.get(type.getName());
+			if(derived == null) {
+				throw new RuntimeException("Cannot find the derived type for: " + type.getName());
+			}
+			Property derivedProperty = derived.defineProperty(this, openProperty);
+			derived.addProperty(derivedProperty);
+		}
 	}
 
 	protected void setBiDirectionOnDerivedType(ExternalType derivedType) {

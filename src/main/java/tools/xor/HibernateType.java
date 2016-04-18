@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.hibernate.mapping.Component;
 import org.hibernate.mapping.PersistentClass;
 
+import tools.xor.service.DataAccessService;
 import tools.xor.service.HibernateDAS;
 import tools.xor.util.ClassUtil;
 

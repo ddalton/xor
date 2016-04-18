@@ -31,9 +31,11 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.OrderColumn;
 
+import tools.xor.ExtendedProperty;
 import tools.xor.annotation.XorInput;
 import tools.xor.annotation.XorOutput;
 import tools.xor.annotation.XorRead;
+import tools.xor.annotation.XorUpdate;
 import tools.xor.db.base.Identity;
 import tools.xor.db.base.Person;
 
@@ -189,7 +191,12 @@ public class Task extends Identity {
 	}
 
 	@XorRead(property="ItemList")
-	public Object defaultSkill(@XorInput Object object) {
+	public Object retrieveItemList(@XorInput Object object) {
 		return null;
+	}
+
+	@XorUpdate(property="ItemList", phase= ExtendedProperty.Phase.PRE)
+	public void populateItemList(@XorInput Object object) {
+		int a = 1;
 	}
 }

@@ -47,24 +47,41 @@ public class ExternalType extends AbstractType {
 			// populate the properties for this type
 			properties = new HashMap<String, Property>();	
 			for(Property domainProperty: domainType.getProperties()) {
-				AbstractProperty abstractProperty = (AbstractProperty) domainProperty;
-				Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-				if(externalClass == null)
-					throw new RuntimeException("The external type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
-
-				Type propertyType = dataAccessService.getExternalType(externalClass);
-				ExternalProperty externalProperty = new ExternalProperty((ExtendedProperty) domainProperty, propertyType, this);
+				ExternalProperty externalProperty = (ExternalProperty) defineProperty(dataAccessService, domainProperty);
 				if(externalProperty.getGetterMethod() == null ) {
 					logger.warn("Out-of-sync between external and domain types. The following property is not present in the external type: " + domainProperty.getName());
 					continue;
 				}
 				
 				externalProperty.init(dataAccessService);
-				logger.debug("[" + getName() + "] Domain property name: " + abstractProperty.getName() + ", type name: " + externalProperty.getJavaType());
+				logger.debug("[" + getName() + "] Domain property name: " + domainProperty.getName() + ", type name: " + externalProperty.getJavaType());
 				properties.put(externalProperty.getName(), externalProperty);
 			}			
 		} 		
-	}	
+	}
+
+	/**
+	 * Create and add a new property to this type.
+	 *
+	 * @param dataAccessService
+	 * @param domainProperty
+	 * @return
+	 */
+	public Property defineProperty(DataAccessService dataAccessService, Property domainProperty) {
+		Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+		if(externalClass == null)
+			throw new RuntimeException("The external type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
+
+		Type propertyType = dataAccessService.getExternalType(externalClass);
+		ExternalProperty externalProperty = null;
+		if(domainProperty.isOpenContent()) {
+			externalProperty = new ExternalProperty(domainProperty.getName(), (ExtendedProperty) domainProperty, propertyType, this);
+		} else {
+			externalProperty = new ExternalProperty((ExtendedProperty) domainProperty, propertyType, this);
+		}
+
+		return externalProperty;
+	}
 
 	public void setOpposite(DataAccessService das) {
 		for(Property property: properties.values())

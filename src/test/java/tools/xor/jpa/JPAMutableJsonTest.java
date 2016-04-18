@@ -95,7 +95,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		DataAccessService das = aggregateService.getDAS();
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		Property openProperty = new JPAProperty("ItemList", das.getType(Object.class), taskType);
-		taskType.setOpenProperty(openProperty);
+		das.addProperty(taskType, openProperty);
 
 		super.checkOpenField();
 	}

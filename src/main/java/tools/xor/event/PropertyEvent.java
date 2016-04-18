@@ -20,6 +20,7 @@
 package tools.xor.event;
 
 import tools.xor.ExtendedProperty.Phase;
+import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 
 public interface PropertyEvent {
@@ -31,4 +32,7 @@ public interface PropertyEvent {
 	// If the element refers the input, the other element refers the output and vice versa
 	public Object getOtherElement ();
 
+	// Get the processing stage, is this the first pass (object creation) or the second pass (
+	//object update)
+	public ProcessingStage getStage();
 }

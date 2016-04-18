@@ -24,6 +24,8 @@ import java.math.BigInteger;
 import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,6 +41,7 @@ import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.view.AggregateView;
 
 public class DefaultMutableJson extends AbstractDBTest {
 	@Autowired
@@ -315,6 +318,15 @@ public class DefaultMutableJson extends AbstractDBTest {
 	protected void checkOpenField() throws JSONException {
 		final String TASK_NAME = "SETUP_DSL";
 
+		AggregateView view = new AggregateView();
+		List path = new ArrayList();
+		path.add("name");
+		path.add("displayName");
+		path.add("description");
+		path.add("quote.price");
+		path.add("ItemList"); // open property
+		view.setAttributeList(path);
+
 		// Create task
 		JSONObject json = new JSONObject();
 		json.put("name", TASK_NAME);
@@ -328,6 +340,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 		json.put("quote", quote);
 
 		Settings settings = getSettings();
+		settings.setView(view);
 		settings.setEntityClass(Task.class);
 		Task task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);

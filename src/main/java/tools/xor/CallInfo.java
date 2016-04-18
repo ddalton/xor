@@ -102,7 +102,7 @@ public class CallInfo {
 			BusinessObject parentSource = (BusinessObject) getParent().getInput();
 			BusinessObject sourceRootDO = (BusinessObject) parentSource.getRootObject();
 
-			Object sourceInstance = getInputFromParent();
+			Object sourceInstance = this.input;
 			this.input = (sourceInstance == null) ? null : sourceRootDO.getObjectCreator().getExistingDataObject(sourceInstance);
 
 			if(this.input != null && ( ((BusinessObject)input).getContainmentProperty() == null || !((BusinessObject)input).getContainmentProperty().isContainment())) {
@@ -227,14 +227,6 @@ public class CallInfo {
 	public boolean isCollection() {
 		return AbstractProperty.isCollection(getInputProperty());
 	}
-
-	public Property getOpenProperty() {
-		if(input != null && input instanceof BusinessObject) {
-			return ((EntityType)((BusinessObject)input).getType()).getDomainType().getOpenProperty();
-		}
-
-		return null;
- 	}
 
 	public boolean isDataType() {
 		if(getInputProperty() == null) {
@@ -386,13 +378,15 @@ public class CallInfo {
 	
 	protected Object readCustomValue(BusinessObject invokeOn, ExtendedProperty property) {
 		
-		if(property.getDataReader(getSettings()) != null) {
+		if(property.getDataReader(getSettings(), getStage()) != null) {
 			return property.propertyRead(
 				invokeOn,
 				new PropertyElement(
 					getSettings(),
 					null,
-					property.isOpenContent() ? getParent().getOutput() : getOutput()));
+					property.isOpenContent() ? getParent().getOutput() : getOutput(),
+					ExtendedProperty.Phase.LOGIC,
+					getStage()));
 		} else {
 			return property.getValue(invokeOn);
 		}		

@@ -60,13 +60,12 @@ public abstract class AbstractType implements EntityType {
 	private ClassResolver           classResolver;
 	private boolean                 immutable;
 	private boolean                 aggregate;    // Does this type represent an aggregate according to the model - marked by the Aggregate annotation
-	protected Map<String, Property> properties;
+	protected Map<String, Property> properties;   // TODO: synchronize if properties are removed in future
 	protected EntityType            rootEntityType;
 	private   Set<EntityType>       subTypes;	
 	private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
-	private Property                openProperty;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -127,18 +126,6 @@ public abstract class AbstractType implements EntityType {
 	
 	public void setOrder(int value) {
 		this.order = value;
-	}
-
-	@Override
-	public Property getOpenProperty ()
-	{
-		return openProperty;
-	}
-
-	@Override
-	public void setOpenProperty (Property openProperty)
-	{
-		this.openProperty = openProperty;
 	}
 
 	public EntityType getRootEntityType() {
@@ -577,7 +564,8 @@ public abstract class AbstractType implements EntityType {
 					false,
 					dataRead.action(),
 					dataRead.tag(),
-					null);
+					null,
+					dataRead.stage());
 				if(!addUniqueMethod(allMethods, dataRead.property(), methodInfo)) {
 					notUnique.add(dataRead.property());
 				}
@@ -593,7 +581,8 @@ public abstract class AbstractType implements EntityType {
 				false,
 				dataRead.action(),
 				dataRead.tag(),
-				null);
+				null,
+				dataRead.stage());
 			addUniqueMethod(allMethods, dataRead.property(), methodInfo);
 		}
 
@@ -620,12 +609,13 @@ public abstract class AbstractType implements EntityType {
 					continue;
 				}
 				MethodInfo methodInfo = new MethodInfo(dataUpdate.fromVersion(), 
-						dataUpdate.untilVersion(), 
-						method,
-						dataUpdate.capture(),
-						dataUpdate.action(),
-						dataUpdate.tag(),
-						dataUpdate.phase());
+					dataUpdate.untilVersion(),
+					method,
+					dataUpdate.capture(),
+					dataUpdate.action(),
+					dataUpdate.tag(),
+					dataUpdate.phase(),
+					dataUpdate.stage());
 				if(!addUniqueMethod(allMethods, dataUpdate.property(), methodInfo)) {
 					notUnique.add(dataUpdate.property());
 				}
@@ -641,7 +631,8 @@ public abstract class AbstractType implements EntityType {
 				dataUpdate.capture(),
 				dataUpdate.action(),
 				dataUpdate.tag(),
-				dataUpdate.phase());
+				dataUpdate.phase(),
+				dataUpdate.stage());
 			addUniqueMethod(allMethods, dataUpdate.property(), methodInfo);
 		}
 
@@ -826,6 +817,17 @@ public abstract class AbstractType implements EntityType {
 		return result;
 	}
 
+	/**
+	 * This method is not synchronized as we do not remove elements from a Map
+	 */
+	@Override
+	public void addProperty(Property property) {
+		properties.put(property.getName(), property);
+
+		// Clear the property version map so it gets rebuilt
+		propertiesByVersion.clear();
+	}
+
 	@Override
 	public Property getProperty(String path) {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
@@ -846,11 +848,6 @@ public abstract class AbstractType implements EntityType {
 
 		if (result != null) {
 			return result;
-		}
-
-		// check if this is an open property
-		if(openProperty != null && path.equals(openProperty.getName())) {
-			return openProperty;
 		}
 
 		return null;

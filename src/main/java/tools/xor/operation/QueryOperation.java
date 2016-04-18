@@ -40,15 +40,6 @@ import tools.xor.view.QueryView;
 public class QueryOperation extends AbstractOperation {
 
 	private List<Object> result = new ArrayList<Object>();
-
-	@Override
-	protected void processPostLogic(CallInfo callInfo) throws Exception {
-		// Invariants do not need to be run since this operation does not modify data
-
-		if(callInfo.getStage() == ProcessingStage.CREATE) {
-			handleOpenProperty(callInfo);
-		}
-	}
 	
 	protected Type getNarrowedClass(DataAccessService das, Settings settings) {
 		TypeMapper typeMapper = das.getTypeMapper();

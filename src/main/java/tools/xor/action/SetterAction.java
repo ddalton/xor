@@ -21,6 +21,7 @@ package tools.xor.action;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
+import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 import tools.xor.event.PropertyElement;
 
@@ -82,7 +83,7 @@ public final class SetterAction implements Executable {
 
 		ExtendedProperty property = ((ExtendedProperty)key.getProperty());
 		
-		if(property.getDataUpdater(settings, ExtendedProperty.Phase.LOGIC) != null) {
+		if(property.getDataUpdater(settings, ExtendedProperty.Phase.LOGIC, ProcessingStage.UPDATE) != null) {
 			property.propertyUpdate(invokeOn, new PropertyElement(settings, value, input));
 		} else {
 			property.setValue(invokeOn, value);	

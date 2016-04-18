@@ -244,7 +244,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	private void initBusinessLogicAnnotations() {
-		logger.debug("Containing type: " + getContainingType().getName() + ", property name: " + getName());
 		
 		// set business logic processors
 		if(getContainingType().getDataReaders(getName()) != null) {
@@ -404,10 +403,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 	
 	@Override
-	public Method getDataReader(Settings settings) {
+	public Method getDataReader(Settings settings, ProcessingStage stage) {
 		if(dataReaders != null) {
 			for(MethodInfo mi: dataReaders) {
-				if(mi.isRelevant(settings)) {
+				if(mi.isRelevant(settings, stage)) {
 					return mi.getMethod();
 				}
 			}
@@ -416,10 +415,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public MethodInfo getDataUpdater(Settings settings, Phase phase) {
+	public MethodInfo getDataUpdater(Settings settings, Phase phase, ProcessingStage stage) {
 		if(dataUpdaters != null) {
 			for(MethodInfo mi: dataUpdaters) {
-				if(mi.isRelevant(settings, phase)) {
+				if(mi.isRelevant(settings, phase, stage)) {
 					return mi;
 				} 
 			}
@@ -542,7 +541,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 
-		Method dataReader = getDataReader(event.getSettings());
+		Method dataReader = getDataReader(event.getSettings(), event.getStage());
 		
 		if(dataReader != null) {
 			Object[] args = getArgs(dataReader, dataObject, event.getOtherElement());
@@ -562,11 +561,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public boolean propertyUpdate(BusinessObject dataObject, PropertyEvent event) 
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
-		if(isOpenContent()) {
-			instance = ClassUtil.getInstance(dataObject.getContainer());
-		}
 
-		MethodInfo dataUpdater = getDataUpdater(event.getSettings(), event.getPhase());
+		MethodInfo dataUpdater = getDataUpdater(event.getSettings(), event.getPhase(), event.getStage());
 
 		if(dataUpdater != null) {
 			Object[] args = getArgs(dataUpdater.getMethod(), dataObject, event.getOtherElement());

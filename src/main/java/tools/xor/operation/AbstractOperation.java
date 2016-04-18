@@ -85,8 +85,6 @@ public abstract class AbstractOperation implements Operation {
 			BusinessObject target = (BusinessObject) callInfo.getOutput();
 			if(callInfo.isCascadable())
 				target.invokePostLogic(callInfo.getSettings());
-
-			handleOpenProperty(callInfo);
 		}
 	}
 
@@ -105,6 +103,7 @@ public abstract class AbstractOperation implements Operation {
 
 		try {
 			if(!callInfo.isDataType()) {
+				boolean alreadyVisited = ((BusinessObject)callInfo.getOutput()).isVisited();
 				BusinessObject source = (BusinessObject) callInfo.getInput();	
 				
 				// Get the property list for the current API version
@@ -116,23 +115,14 @@ public abstract class AbstractOperation implements Operation {
 					processAttribute(next); // recurse
 				}
 
-				processPostLogic(callInfo);
+				if(!alreadyVisited) {
+					processPostLogic(callInfo);
+				}
 			}
 
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		} 
-	}
-
-	protected void handleOpenProperty(CallInfo callInfo) throws Exception
-	{
-		// Handle open property
-		Property openProperty = callInfo.getOpenProperty();
-		if(openProperty != null) {
-			CallInfo next = new CallInfo();
-			next.init(null, callInfo, (ExtendedProperty) openProperty);
-			processAttribute(next);
-		}
 	}
 
 	private void processToMany(CallInfo callInfo) throws Exception {
@@ -145,11 +135,20 @@ public abstract class AbstractOperation implements Operation {
 	private boolean executeDataUpdate(CallInfo ci, Phase phase) {
 		 
 		if(ci.getOutputProperty() != null) {
-			if(ci.getOutputProperty().getDataUpdater(ci.getSettings(), phase) != null) {
-				return ci.getOutputProperty().propertyUpdate(ci.getParentOutputEntity(), new PropertyElement(ci.getSettings(), null, ci.getInput(), phase));
+			ExtendedProperty property = ci.getOutputProperty();
+			if(property.getDataUpdater(ci.getSettings(), phase, ci.getStage()) != null) {
+				return property.propertyUpdate(
+					ci.getParentOutputEntity(),
+					new PropertyElement(
+						ci.getSettings(),
+						null,
+						property.isOpenContent() ? ci.getParent().getInput() : ci.getInput(),
+						phase,
+						ci.getStage()));
 			}
 		}
-		
+
+
 		return false;
 	}
 

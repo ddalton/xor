@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import tools.xor.EntityType;
+import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
@@ -158,6 +159,12 @@ public interface DataAccessService {
 	 * @return
 	 */
 	public AggregateView getView(EntityType entityType);
+
+	/**
+	 * Add a view programmatically.
+	 * @param view
+	 */
+	public void addView(AggregateView view);
 	
 
 	/**
@@ -190,4 +197,11 @@ public interface DataAccessService {
 	 * @return
 	 */
 	public PersistenceOrchestrator createPO(Object sessionContext, Object data);
+
+	/**
+	 * Used to extend the property for a type. e.g., add a new open property
+	 * @param taskType
+	 * @param openProperty
+	 */
+	public void addProperty (EntityType taskType, Property openProperty);
 }

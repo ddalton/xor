@@ -37,10 +37,14 @@ public class ExternalProperty extends AbstractProperty {
 	
 	public ExternalProperty(ExtendedProperty domainProperty, Type type, ExternalType parentType) {
 		super(type, parentType);
-		
 		this.domainProperty = domainProperty;
 		
 		init();
+	}
+
+	public ExternalProperty(String name, ExtendedProperty domainProperty, Type type, EntityType parentType) {
+		super(name, type, parentType);
+		this.domainProperty = domainProperty;
 	}
 	
 	@Override
@@ -54,7 +58,11 @@ public class ExternalProperty extends AbstractProperty {
 	
 	@Override
 	public String getName() {
-		return domainProperty.getName();
+		if(isOpenContent()) {
+			return name;
+		} else {
+			return domainProperty.getName();
+		}
 	}
 
 	@Override

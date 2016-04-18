@@ -21,6 +21,7 @@ package tools.xor.event;
 
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
+import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 
 public class PropertyElement implements PropertyEvent {
@@ -29,16 +30,18 @@ public class PropertyElement implements PropertyEvent {
 	private Phase    phase;
 	private Settings settings;
 	private Object   inputElement;
+	private ProcessingStage stage;
 	
 	public PropertyElement(Settings settings, Object element, Object input) {
-		this(settings, element, input, ExtendedProperty.Phase.LOGIC);
+		this(settings, element, input, ExtendedProperty.Phase.LOGIC, ProcessingStage.UPDATE);
 	}
 
-	public PropertyElement(Settings settings, Object element, Object input, Phase phase) {
+	public PropertyElement(Settings settings, Object element, Object input, Phase phase, ProcessingStage stage) {
 		this.element = element;
 		this.phase = phase;
 		this.settings = settings;
 		this.inputElement = input;
+		this.stage = stage;
 	}
 
 	public Object getElement() {
@@ -68,8 +71,12 @@ public class PropertyElement implements PropertyEvent {
 		return inputElement;
 	}
 
+	@Override public ProcessingStage getStage ()
+	{
+		return this.stage;
+	}
+
 	public void setInputElement(Object inputElement) {
 		this.inputElement = inputElement;
 	}
-
 }

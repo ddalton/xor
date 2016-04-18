@@ -248,7 +248,7 @@ public interface ExtendedProperty extends Property {
 	 * @param settings
 	 * @return
 	 */
-	public Method getDataReader(Settings settings);
+	public Method getDataReader(Settings settings, ProcessingStage stage);
 
 	/**
 	 * Get the correct business logic setter for the current API version in settings
@@ -256,7 +256,7 @@ public interface ExtendedProperty extends Property {
 	 * @param settings
 	 * @return
 	 */
-	public MethodInfo getDataUpdater(Settings settings, Phase phase);
+	public MethodInfo getDataUpdater(Settings settings, Phase phase, ProcessingStage stage);
 
 	/**
 	 * Checks if the property is appliacable for the given api version

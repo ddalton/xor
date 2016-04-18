@@ -34,12 +34,17 @@ public class MethodInfo extends VersionInfo {
 	private final AggregateAction[] actions;
 	private final String[] tags;
 	private final Phase phase;
+	private final ProcessingStage stage;
 
 	public MethodInfo(int fromVersion, int untilVersion, Method method) {
-		this(fromVersion, untilVersion, method, false, null, null, null);
+		this(fromVersion, untilVersion, method, false, null, null, null, null);
+	}
+
+	public MethodInfo(int fromVersion, int untilVersion, Method method, boolean capture, AggregateAction[] actions, String[] tags, Phase phase) {
+		this(fromVersion, untilVersion, method, capture, actions, tags, phase, null);
 	}
 	
-	public MethodInfo(int fromVersion, int untilVersion, Method method, boolean capture, AggregateAction[] actions, String[] tags, Phase phase) {
+	public MethodInfo(int fromVersion, int untilVersion, Method method, boolean capture, AggregateAction[] actions, String[] tags, Phase phase, ProcessingStage stage) {
 		super(fromVersion, untilVersion);
 		
 		this.capture = capture;
@@ -65,6 +70,12 @@ public class MethodInfo extends VersionInfo {
 		
 		if(this.getUntilVersion() < this.getFromVersion()) {
 			throw new RuntimeException("untilVersion cannot be less than the fromVersion");
+		}
+
+		if(stage == null) {
+			this.stage = ProcessingStage.UPDATE;
+		} else {
+			this.stage = stage;
 		}
 	}
 	
@@ -115,10 +126,14 @@ public class MethodInfo extends VersionInfo {
 	}
 	
 	public boolean isRelevant(Settings settings) {
-		return isRelevant(settings, Phase.LOGIC);
+		return isRelevant(settings, Phase.LOGIC, null);
+	}
+
+	public boolean isRelevant(Settings settings, ProcessingStage stage) {
+		return isRelevant(settings, Phase.LOGIC, stage);
 	}
 	
-	public boolean isRelevant(Settings settings, Phase phase) {
+	public boolean isRelevant(Settings settings, Phase phase, ProcessingStage stage) {
 		if(!intersectsTags(settings.getTags().toArray(new String[settings.getTags().size()]))) {
 			return false;
 		}
@@ -138,6 +153,10 @@ public class MethodInfo extends VersionInfo {
 		}
 		
 		if(phase != this.phase) {
+			return false;
+		}
+
+		if (stage != null && this.stage != stage) {
 			return false;
 		}
 		

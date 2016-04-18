@@ -25,6 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import tools.xor.AggregateAction;
+import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 
 /**
@@ -52,7 +53,14 @@ public @interface XorRead {
 	 * The name of the property for which this annotation is valid
 	 * @return
 	 */
-	String property();   
+	String property();
+
+    /**
+     * The processing pass in which this method is invoked
+     * @return
+     */
+    // TODO: Give the ability to run in multiple stages
+    ProcessingStage stage() default ProcessingStage.UPDATE;
     
     /**
      * The version until which this method is valid

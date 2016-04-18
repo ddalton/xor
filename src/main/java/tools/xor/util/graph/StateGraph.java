@@ -115,7 +115,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	/**
 	 * 
-	 * @param states Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
+	 * @param mergeStates Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
 	 * @return
 	 */
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
@@ -138,7 +138,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		for(E edge: getEdges()) {
-			result.addEdge((E)new Edge<State>(edge.getName(),
+			result.addEdge(
+				(E) new Edge<State>(
+					edge.getName(),
 					oldNew.get(edge.getStart()),
 					oldNew.get(edge.getEnd()),
 					edge.isQualified()));
@@ -150,7 +152,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	/**
 	 * Get the set of child attributes anchored at the state
 	 * referenced by pathAnchor
-	 * @param pathAnchor
+	 * @param type
 	 * @return
 	 */
 	public List<Property> next(Type type) {
@@ -583,9 +585,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * Cascaded relationships are reversed because it represents
 	 * IS_DEPENDED_BY and required relationships model
 	 * IS_DEPENDED_ON
-	 * 
-	 * 
-	 * @param transientObjects
 	 */
 	@Override
 	public List<V> toposort() {

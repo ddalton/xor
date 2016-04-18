@@ -59,26 +59,37 @@ public class MutableJsonType extends ExternalType {
 	}
 
 	@Override
+	public Property defineProperty(DataAccessService dataAccessService, Property domainProperty) {
+		AbstractProperty abstractProperty = (AbstractProperty) domainProperty;
+		Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+		if(externalClass == null)
+			throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
+
+		Type propertyType = dataAccessService.getExternalType(domainProperty.getType().getName());
+		if(propertyType == null) {
+			Class<?> propertyClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+			logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
+			propertyType = dataAccessService.getType(propertyClass);
+		}
+		MutableJsonProperty dynamicProperty = null;
+		if(domainProperty.isOpenContent()) {
+			dynamicProperty = new MutableJsonProperty(domainProperty.getName(), (ExtendedProperty) domainProperty, propertyType, this);
+		} else {
+			dynamicProperty = new MutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this);
+		}
+		return dynamicProperty;
+	}
+
+	@Override
 	public void setProperty(DataAccessService dataAccessService) {
 		if(properties == null) {
 			// populate the properties for this type
 			properties = new HashMap<String, Property>();	
 			for(Property domainProperty: domainType.getProperties()) {
-				AbstractProperty abstractProperty = (AbstractProperty) domainProperty;
-				Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-				if(externalClass == null)
-					throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
+				MutableJsonProperty dynamicProperty = (MutableJsonProperty) defineProperty(dataAccessService, domainProperty);
 
-				Type propertyType = dataAccessService.getExternalType(domainProperty.getType().getName());
-				if(propertyType == null) {
-					Class<?> propertyClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-					logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
-					propertyType = dataAccessService.getType(propertyClass);
-				}
-				MutableJsonProperty dynamicProperty = new MutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this);
-				
 				dynamicProperty.init(dataAccessService);
-				logger.debug("[" + getName() + "] Domain property name: " + abstractProperty.getName() + ", type name: " + dynamicProperty.getJavaType());
+				logger.debug("[" + getName() + "] Domain property name: " + domainProperty.getName() + ", type name: " + dynamicProperty.getJavaType());
 				properties.put(dynamicProperty.getName(), dynamicProperty);
 			}			
 		} 		

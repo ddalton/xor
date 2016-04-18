@@ -30,6 +30,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
+import javax.persistence.PersistenceException;
 import javax.persistence.PersistenceUnitUtil;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -176,7 +177,17 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	}	
 	
 	protected void createCallableStatement(StoredProcedure sp) {
-		java.sql.Connection conn = getEntityManager().unwrap(java.sql.Connection.class);
+		java.sql.Connection conn = null;
+		try {
+			getEntityManager().unwrap(java.sql.Connection.class);
+		} catch(PersistenceException pe) {
+			try {
+				// try hibernate provider
+				conn = getEntityManager().unwrap(org.hibernate.internal.SessionImpl.class).connection();
+			} catch (Exception e) {
+				throw new RuntimeException("Unable to obtain the JDBC connection");
+			}
+		}
 		try {
 			DatabaseMetaData dbmd = conn.getMetaData();
 			if(!dbmd.supportsStoredProcedures()) {

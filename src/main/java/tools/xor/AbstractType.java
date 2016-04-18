@@ -49,6 +49,7 @@ import tools.xor.annotation.XorRead;
 import tools.xor.annotation.XorUpdate;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.DFAtoRE;
 import tools.xor.view.AggregateView;
 
 public abstract class AbstractType implements EntityType {
@@ -839,7 +840,10 @@ public abstract class AbstractType implements EntityType {
 			}
 			result = properties.get(path);
 		} else {
-			Property property = getProperty(path.substring(0, delim)); 
+			Property property = getProperty(path.substring(0, delim));
+			if(property == null && path.contains(DFAtoRE.RECURSE_SYMBOL)) {
+				throw new RuntimeException("Recursive references currently not supported");
+			}
 			Type propertyType = property.getType();
 			if(property.isMany())
 				propertyType = ((ExtendedProperty)property).getElementType();

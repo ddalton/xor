@@ -31,6 +31,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.OrderColumn;
 
+import org.json.JSONObject;
 import tools.xor.ExtendedProperty;
 import tools.xor.annotation.XorInput;
 import tools.xor.annotation.XorOutput;
@@ -192,11 +193,19 @@ public class Task extends Identity {
 
 	@XorRead(property="ItemList")
 	public Object retrieveItemList(@XorInput Object object) {
+		if(object instanceof JSONObject) {
+			JSONObject json = (JSONObject) object;
+			json.put("openField", "Success");
+		}
+
 		return null;
 	}
 
 	@XorUpdate(property="ItemList", phase= ExtendedProperty.Phase.PRE)
 	public void populateItemList(@XorInput Object object) {
-		int a = 1;
+		if(object instanceof JSONObject) {
+			JSONObject json = (JSONObject) object;
+			assert json.has("openField");
+		}
 	}
 }

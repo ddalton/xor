@@ -1,4 +1,4 @@
-﻿Vision
+Vision
 =======
 Support CRUD automation over REST using JPA
 Allows developers to quickly add J2EE persistence to their UI development. Assists with RAD.
@@ -30,6 +30,11 @@ NEXT TASK
 1. Create a model with two parallel collections (unfortunately only cascaded collections are represented and all cascaded collections are put in the same view). Check Project.
 2. Check that 2 children views are generated one for each collection. This is to prevent cartesian joins (The user can always modify this structure).
 3. Check that the user entered OQL is honored.
+
+JUnits
+=====
+1. Enable DefaultQueryOperation#queryPersonStoredProcedure
+2. Enable DefaultViewBranchTest#testTaskFull
 
 
 Goals/use cases

@@ -162,6 +162,8 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		settings.setPreFlush(true);
 		List<?> toList = aggregateService.query(person, settings);
 
+		// This requires the presence of a stored procedure in the DB. So we comment
+		// this test for now
 		assert(toList.size() == 1);
 
 		Person result = null;

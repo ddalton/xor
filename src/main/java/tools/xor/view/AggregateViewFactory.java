@@ -58,6 +58,7 @@ import tools.xor.view.QueryView.ViewKey;
 public class AggregateViewFactory {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static String AGGREGATE_VIEW_FILE = "AggregateViews.xml";
+	private static String REGEN_SUFFIX = "REGEN";
 
 	public void load(AggregateManager am) {
 		load(AGGREGATE_VIEW_FILE, am);
@@ -216,7 +217,12 @@ public class AggregateViewFactory {
 							.newInstance();
 					Transformer transformer = tFactory.newTransformer();
 
-					File f = new File(child.getPath() + "REGEN.xml");
+					String childPath =
+						child.getPath().endsWith(REGEN_SUFFIX + ".xml")
+							? child.getPath()
+							: child.getPath() + REGEN_SUFFIX + ".xml";
+
+					File f = new File(childPath);
 					DOMSource source = new DOMSource(doc);
 					StreamResult result = new StreamResult(f);
 					transformer.transform(source, result);

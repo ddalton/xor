@@ -332,6 +332,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 		json.put("name", TASK_NAME);
 		json.put("displayName", "Setup DSL");
 		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		json.put("openField", "Success");
 
 		// Create quote
 		final BigDecimal price =  new BigDecimal("123456789.987654321");
@@ -353,6 +354,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 		JSONObject jsonTask = (JSONObject) jsonObject;
 		System.out.println("JSON string: " + jsonTask.toString());
 		assert( (jsonTask.get("name")).toString().equals(TASK_NAME));
+		assert( (jsonTask.get("openField")).toString().equals("Success"));
 		JSONObject jsonQuote = jsonTask.getJSONObject("quote");
 		assert( new BigDecimal( jsonQuote.get("price").toString() ).equals(price));
 	}

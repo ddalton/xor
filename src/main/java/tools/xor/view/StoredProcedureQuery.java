@@ -68,13 +68,15 @@ public class StoredProcedureQuery extends AbstractQuery {
 		this.sp = sp;
 		
 		int position = 1;
-		for(ParameterMapping param: sp.parameterList) {
-			param.position = position;
-			String attrName = param.attribute;
-			if(attrName == null) {
-				attrName = param.name;
+		if (sp.parameterList != null) {
+			for (ParameterMapping param : sp.parameterList) {
+				param.position = position;
+				String attrName = param.attribute;
+				if (attrName == null) {
+					attrName = param.name;
+				}
+				paramMap.put(attrName, param);
 			}
-			paramMap.put(attrName, param);
 		}
 	}
 
@@ -92,7 +94,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 */
 	public List getResultList(QueryView viewBranch) {
 		OutputLocation ol = sp.getOutputLocation().get(resultCount-1);
-		
+		List result = new ArrayList();
 		try {
 			if(resultCount++ == 1) {
 				// When requesting the result for the first time, we execute
@@ -142,7 +144,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		}
 		
 		//TODO: Dilip
-		return null;
+		return result;
 		
 		/*
 		 * Look at http://ahexamples.blogspot.com/2014/05/example-of-java-jdbc-call.html

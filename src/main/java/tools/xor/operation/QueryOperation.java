@@ -62,8 +62,9 @@ public class QueryOperation extends AbstractOperation {
 		if(aggregateView.getSubBranches().size() > 1) {
 			for(QueryView branch: aggregateView.getSubBranches())
 				executeBranch(branch, uniqueList, qb, callInfo);
-		} else
+		} else {
 			executeBranch(aggregateView, uniqueList, qb, callInfo);
+		}
 		
 		// Do a second pass
 		for(BusinessObject root: uniqueList.keySet())

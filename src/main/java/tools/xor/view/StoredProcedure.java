@@ -105,13 +105,39 @@ public class StoredProcedure {
 	public CallableStatement getCallableStatement() {
 		return this.callableStatement;
 	}
-	
+
+	private String getParamString() {
+		StringBuilder result = new StringBuilder();
+		if(parameterList != null && parameterList.size() > 0) {
+			for (int i = 1; i < parameterList.size(); i++) {
+				result.append("?,");
+			}
+			result.append("?");
+		}
+
+		return result.toString();
+	}
+
+	/**
+	 * Creates a JDBC stored procedure string.
+	 * e.g.,
+	 * 		"{call GET_SP(?, ?)}"
+	 * @return
+	 */
 	public String jdbcCallString() {
 		if(getCallString() != null) {
 			return getCallString();
 		}
-		
-		// TODO: Compute the call string
-		return null;
+
+		StringBuilder result = new StringBuilder();
+		result
+			.append("{call ")
+			.append(name)
+			.append("(")
+			.append(getParamString())
+			.append(")}");
+
+		callString = result.toString();
+		return callString;
 	}
 }

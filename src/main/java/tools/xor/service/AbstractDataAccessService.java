@@ -121,9 +121,14 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			type.defineSubtypes(entityTypes);
 			
 			// Initialize supertype if applicable
-			Type superType = getType(type.getInstanceClass().getSuperclass().getName());
-			if(superType != null) {
-				type.setSuperType((EntityType) superType);
+			Class<?> clazz = type.getInstanceClass();
+			while(clazz != Object.class) {
+				Type superType = getType(clazz.getSuperclass().getName());
+				if(superType != null) {
+					type.setSuperType((EntityType) superType);
+					break;
+				}
+				clazz = clazz.getSuperclass();
 			}
 		}
 	}
@@ -186,7 +191,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 		initRootType();
 		
-		initViews();
+//		initViews();
 		
 		initOrder();
 	}
@@ -484,8 +489,11 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			}
 			eligibleClass.put(entry.getKey(), Boolean.FALSE);
 		}
-	}	
-	
+	}
+
+	/**
+	 * This can be a performance issue depending on how many entities there are in the system
+	 */
 	private void initViews() {
 		for(Type type: types.values()) {
 			if(EntityType.class.isAssignableFrom(type.getClass())) {

@@ -35,6 +35,11 @@ import tools.xor.logic.DefaultAggregatePaths;
 public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 
 	@Test
+	public void checkDirPath() {
+		super.checkDirPath();
+	}
+
+	@Test
 	public void checkPaths() {
 		super.checkPaths();		
 	}

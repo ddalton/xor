@@ -150,8 +150,10 @@ public abstract class AbstractType implements EntityType {
 		subTypes = new HashSet<EntityType>();
 		
 		for(EntityType type: entityTypes) {
-			if(this.getInstanceClass().isAssignableFrom(type.getInstanceClass()))
+			if(this.getInstanceClass().isAssignableFrom(type.getInstanceClass()) &&
+				this.getInstanceClass() != type.getInstanceClass()) {
 				subTypes.add(type);
+			}
 		}
 	}
 	

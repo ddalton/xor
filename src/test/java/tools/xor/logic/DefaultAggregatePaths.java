@@ -34,16 +34,19 @@ import tools.xor.AbstractDBTest;
 import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Type;
+import tools.xor.db.base.Directory;
 import tools.xor.db.base.Patent;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.AggregatePropertyPaths;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 
 
@@ -52,6 +55,37 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	
 	@Autowired
 	protected AggregateManager aggregateManager;
+
+	@Test
+	public void checkDirPath() {
+		DataAccessService das = aggregateManager.getDAS();
+
+		Type dir = das.getType(Directory.class);
+		AggregateView view = aggregateManager.getDAS().getView((EntityType) dir);
+
+		Set<String> paths = AggregatePropertyPaths.enumerate(dir);
+		System.out.println("********* Directory model paths **********");
+		for(String path: paths) {
+			System.out.println(path);
+		}
+
+		Map<String, StateGraph<State, Edge<State>>> sgAll = view.getStateGraph();
+		System.out.println("********* Key **********");
+		for(Map.Entry<String, StateGraph<State, Edge<State>>> entry: sgAll.entrySet()) {
+			System.out.println(entry.getKey());
+			printGraph(entry.getValue());
+		}
+	}
+
+	private void printGraph(StateGraph<State, Edge<State>> sg) {
+		DFAtoNFA.processInheritance(sg);
+
+
+		Map<Type, State> v = sg.getStates();
+		for(State s: v.values()) {
+			System.out.println("   " + s.getName());
+		}
+	}
 
 	public void checkPaths() {	
 		DataAccessService das = aggregateManager.getDAS(); 

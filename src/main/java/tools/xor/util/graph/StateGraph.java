@@ -32,7 +32,9 @@ import tools.xor.view.QueryView;
 public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSparseGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger sgLogger = LogManager.getLogger(Constants.Log.STATE_GRAPH);
-	
+
+	private static final String EMPTY_EDGE = "";
+
 	private Type root; // aggregate rooted at this type
 	private Map<Type, V> states = new HashMap<Type, V>();
 	private Map<V, Map<String, E>> outTransitions = new HashMap<V, Map<String, E>>(); 
@@ -179,6 +181,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		// Add entity attributes
 		for(Edge e: getOutEdges(vertex)) {
+			if(EMPTY_EDGE.equals(e.getName())) {
+				continue;
+			}
 			result.add(vertex.getType().getProperty(e.getName()));
 		}
 		attrByType.put(type, result);
@@ -303,7 +308,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			link(addendum.getRootState(), state);
 		}
 	}
-	
+
+	// TODO: this does not handle inheritance. @see DFAtoNFA
 	private void link(State from, State to) {
 		for(Property property: from.getType().getProperties()) {
 			Type propertyType = GraphUtil.getPropertyType(property);
@@ -388,7 +394,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					((UnionExpression)result).addAlternate(previous);
 			}
 
-			Expression exp = new LiteralExpression(transition);
+			Expression exp = LiteralExpression.instance(transition);
 			previous = new TypedExpression(exp, transition.getEnd().getType());
 		}
 

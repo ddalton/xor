@@ -61,6 +61,7 @@ public class DFAtoRE {
 		this.aggregateType = aggregateType;
 		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType);
 		buildDFA();
+		DFAtoNFA.processInheritance(this.stateGraph);
 		solve();
 	}
 	
@@ -266,7 +267,9 @@ public class DFAtoRE {
 			for(Expression child: children) {
 				if(TypedExpression.class.isAssignableFrom(child.getClass()) && ((TypedExpression)child).getType() == type) {
 					starExpression = ((TypedExpression)child).getExpression();
-					starExpression = new StarExpression(starExpression);
+					if(starExpression != LiteralExpression.EMPTY_STRING) {
+						starExpression = new StarExpression(starExpression);
+					}
 				} else
 					rest.add(child);
 			}
@@ -498,12 +501,20 @@ public class DFAtoRE {
 			this.transition = transition;
 		}
 
+		public static LiteralExpression instance(Edge transition) {
+			if(transition.getQualifiedName() != null && transition.getQualifiedName().equals("")) {
+				return LiteralExpression.EMPTY_STRING;
+			}
+
+			return new LiteralExpression(transition);
+		}
+
 		@Override
 		public Expression prepend(Expression expression) {
 			expression = expression.copy();
 			if(LiteralExpression.class.isAssignableFrom(expression.getClass())) {
 				Expression result = this;
-				if( (LiteralExpression)expression != LiteralExpression.EMPTY_STRING) {
+				if( expression != LiteralExpression.EMPTY_STRING) {
 					result = new ConcatExpression(expression);
 					result = result.append(this);
 				}

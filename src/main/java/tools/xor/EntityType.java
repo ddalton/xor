@@ -257,6 +257,6 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Set the super type for this entity type
 	 * @param value
 	 */
-	void setSuperType(EntityType value);
+	public void setSuperType(EntityType value);
 
 }

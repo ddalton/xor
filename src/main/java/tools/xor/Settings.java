@@ -197,7 +197,8 @@ public class Settings {
 			if(entityType == null) {
 				throw new RuntimeException("EntityType is required to resolve the default view");
 			}
-			this.view = am.getDAS().getView( AbstractType.getViewName(entityType) );
+			//this.view = am.getDAS().getView( AbstractType.getViewName(entityType) );
+			this.view = am.getDAS().getView((EntityType) entityType);
 
 			if(associationSettings != null && associationSettings.size() > 0) {
 				// Make a copy of the view and enhance it with the associations needed to be traversed

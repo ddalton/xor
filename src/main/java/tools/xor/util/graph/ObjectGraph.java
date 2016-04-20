@@ -210,11 +210,9 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 * This method builds the directed object graph. Used for addressing loops.
 	 * Non cascaded references are swizzled to a simpler object copy
 	 * 
-	 * See {@link ObjectGraph#addEdge(BusinessEdge, MutableBO, MutableBO)}
+	 * See {@link ObjectGraph#addEdge(E, V, V)}
 	 * @param source
-	 * @param visited
 	 * @param settings
-	 * @param t
 	 */
 	private void build(BusinessObject source, Settings settings) {
 		

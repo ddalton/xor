@@ -18,32 +18,15 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
 
 NEXT TASK
 =========
-0. Represent inheritance relationship using an empty edge in the state graph.
-   This converts the DFA state graph to a NFA state graph.
-   For e.g., the Filesystem model
-
-             -->INODE
-            |     ^
-   children |   ϵ/ \ϵ
-             --DIR FILE
-
 1. Create a model with two parallel collections (unfortunately only cascaded collections are represented and all cascaded collections are put in the same view). Check Project.
 2. Check that 2 children views are generated one for each collection. This is to prevent cartesian joins (The user can always modify this structure).
 3. Check that the user entered OQL is honored.
 
-JUnits
-=====
-1. Enable DefaultQueryOperation#queryPersonStoredProcedure
-2. Enable DefaultViewBranchTest#testTaskFull
-
 
 Goals/use cases
 ===============
-1. Create Swizzler library (both Maven and NPM) to allow communication of cyclic JSON objects
-   Use JSONTransformer in MutableJsonCreationStrategy#getNormalizedInstance
-   Use isCyclic method in state graph to only do this for graphs with loops for performance reasons.
 
-2. High performance loading and save, meeting needs of low latency applications and cutting through ORM overhead.
+High performance loading and save, meeting needs of low latency applications and cutting through ORM overhead.
    Implement use case to support same view along 4 different approaches
    1. Reachability by traversing object model (show N+1 select problem)
    2. View using HQL or JPL
@@ -216,8 +199,6 @@ See data in files vs DB. Maybe just specify the validation name and extra data i
 15 Create test case for an extensible Facet
 
 
-
-1. Add JUnit tests for XorInput and XorOutput param annotations
 3. Release XOR product
 
 

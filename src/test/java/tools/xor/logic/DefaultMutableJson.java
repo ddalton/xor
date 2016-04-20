@@ -246,6 +246,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 		json.put("name", TASK_NAME);
 		json.put("displayName", "Setup DSL");
 		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		json.put("openField", "Success");
 
 		// Create quote
 		final BigDecimal price =  new BigDecimal("123456789.987654321");
@@ -279,12 +280,14 @@ public class DefaultMutableJson extends AbstractDBTest {
 		json.put("name", TASK_NAME);
 		json.put("displayName", "Setup DSL");
 		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		json.put("openField", "Success");
 
 		// Create and add 1 child task
 		JSONObject child1 = new JSONObject();
 		child1.put("name", CHILD_TASK_NAME);
 		child1.put("displayName", "Task 1");
 		child1.put("description", "This is the first child task");
+		child1.put("openField", "Success");
 		
 		JSONArray jsonArray = new JSONArray();
 		jsonArray.put(child1);

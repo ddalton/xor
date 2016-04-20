@@ -314,6 +314,10 @@ public class QueryView {
 				throw new RuntimeException("The attribute should refer to a data type and not a data object");
 
 			Property rootProperty = aggregateType.getProperty(rootAnchorName);
+			if(rootProperty == null) {
+				//logger.warn ("This type does not have a desired property: " + rootAnchorName);
+				continue;
+			}
 			Type rootType = rootProperty.getType();
 			if(rootProperty.isMany())
 				rootType = ((ExtendedProperty)rootProperty).getElementType();			

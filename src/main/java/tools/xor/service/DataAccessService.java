@@ -44,7 +44,7 @@ public interface DataAccessService {
 	
 	/**
 	 * Return the type associated with a particular DataObject
-	 * @param The java class whose Type object we need
+	 * @param clazz The java class whose Type object we need
 	 * @return The Type object
 	 */
 	public Type getType(Class<?> clazz);
@@ -80,7 +80,7 @@ public interface DataAccessService {
 	/**
 	 * This method uses the persistence mechanism to do any post-processing activity
 	 * @param newInstance
-	 * @param autoInject  true, if the model needs to be autowired 
+	 * @param autoWire  true, if the model needs to be autowired
 	 * @return
 	 */
 	public void postProcess(Object newInstance, boolean autoWire);
@@ -120,7 +120,7 @@ public interface DataAccessService {
 	/**
 	 * Refresh the view mapping with the entity based on the
 	 * attributes referenced in the view
-	 * @param abstractTypeNarrower
+	 * @param typeNarrower
 	 */
 	public void refresh(TypeNarrower typeNarrower);
 
@@ -128,7 +128,7 @@ public interface DataAccessService {
 	 * Populate the view mapping with the entity based on the
 	 * attributes referenced in the view
 	 * @param entityClass
-	 * @param abstractTypeNarrower
+	 * @param typeNarrower
 	 */
 	public void populateNarrowedClass(Class<?> entityClass,
 			TypeNarrower typeNarrower);

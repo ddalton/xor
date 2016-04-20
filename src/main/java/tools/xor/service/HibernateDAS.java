@@ -90,7 +90,7 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 			addType(type.getName(), type);
 		}
 		
-		defineSubtypes();
+		defineSuperType();
 	}
 
 	protected void defineProperties() {

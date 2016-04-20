@@ -83,6 +83,8 @@ public abstract class AbstractType implements EntityType {
 	private static final HashSet<Class<?>> WRAPPER_TYPES = getWrapperTypes();
 	private static final HashSet<Class<?>> BASIC_TYPES = getBasicTypes();
 
+	private DataAccessService das;
+
 	public AbstractType() {
 		classResolver = new ClassResolver(this);
 	}
@@ -101,6 +103,11 @@ public abstract class AbstractType implements EntityType {
 		initDataReaders();
 		initDataUpdaters();
 		initDataInvokers();
+	}
+
+	@Override
+	public void setDAS(DataAccessService das) {
+		this.das = das;
 	}
 	
 	@Override
@@ -146,13 +153,15 @@ public abstract class AbstractType implements EntityType {
 	}	
 	
 	@Override
-	public void defineSubtypes(List<EntityType> entityTypes) {
+	public void defineSubtypes(List<Type> types) {
 		subTypes = new HashSet<EntityType>();
 		
-		for(EntityType type: entityTypes) {
-			if(this.getInstanceClass().isAssignableFrom(type.getInstanceClass()) &&
-				this.getInstanceClass() != type.getInstanceClass()) {
-				subTypes.add(type);
+		for(Type type: types) {
+			if(type instanceof EntityType) {
+				if (this.getInstanceClass().isAssignableFrom(type.getInstanceClass()) &&
+					this.getInstanceClass() != type.getInstanceClass()) {
+					subTypes.add((EntityType) type);
+				}
 			}
 		}
 	}
@@ -169,6 +178,10 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public Set<EntityType> getSubtypes() {
+		if(subTypes == null) {
+			defineSubtypes(das.getTypes());
+		}
+
 		return subTypes;
 	}
 

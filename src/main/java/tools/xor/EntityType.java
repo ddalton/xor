@@ -130,7 +130,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	/**
 	 * Find all the types of the subclasses of the instance class of this type 
 	 */
-	public void defineSubtypes(List<EntityType> entityTypes);
+	public void defineSubtypes(List<Type> type);
 	
 	/**
 	 * Get a list of all the sub types of this type
@@ -258,5 +258,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param value
 	 */
 	public void setSuperType(EntityType value);
+
+	/**
+	 * The DAS object is needed when doing lazy initializing on certain functionality
+	 * @param das
+	 */
+	public void setDAS(DataAccessService das);
 
 }

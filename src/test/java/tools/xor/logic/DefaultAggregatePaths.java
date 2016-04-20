@@ -78,8 +78,6 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	}
 
 	private void printGraph(StateGraph<State, Edge<State>> sg) {
-		DFAtoNFA.processInheritance(sg);
-
 
 		Map<Type, State> v = sg.getStates();
 		for(State s: v.values()) {

@@ -82,6 +82,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		typeMap.put(className, type);
 
 		if(EntityType.class.isAssignableFrom(type.getClass())) {
+			((EntityType)type).setDAS(this);
 			String entityName = ((EntityType)type).getEntityName();
 			if(entityName != null && !className.equals(entityName)) {
 				if(typeMap.containsKey(entityName)) {
@@ -105,9 +106,14 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		return result;
-	}	
-	
-	protected void defineSubtypes(){
+	}
+
+	/**
+	 * This is a performance intensive method. So we now define subtypes as and when they are
+	 * needed.
+	 * For this to work we save the DataAccessService instance along with the EntityType.
+	 */
+	protected void defineSuperType (){
 		List<EntityType> entityTypes = new ArrayList<EntityType>();
 		for(Type type: getUniqueTypes()) {
 			if(!EntityType.class.isAssignableFrom(type.getClass()))
@@ -118,7 +124,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 		
 		for(EntityType type: entityTypes) {
-			type.defineSubtypes(entityTypes);
 			
 			// Initialize supertype if applicable
 			Class<?> clazz = type.getInstanceClass();

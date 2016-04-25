@@ -1,0 +1,6 @@
+{
+  "name": "XOR",
+  "tagline": "A meta-model based JSON transformation library",
+  "body": "# Summary\r\nThe XOR tool enhances an ORM solution by making it easier for the developer to work with rich domain models and also to integrate the domain smoothly with a REST API.\r\n\r\n# Prerequisites\r\nThe implementation uses existing JPA annotations in the code to build the meta-model of the business domain.\r\n\r\n\r\n\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}

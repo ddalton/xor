@@ -8,11 +8,11 @@
 	<description>Empowering Model Driven Architecture in J2EE applications</description>
 	<url>https://github.com/ddalton/xor</url>
 	<licenses> 
-		<license> 
-			<url>http://www.gnu.org/licenses/gpl-2.0.html</url> 
-			<name>GPL 2.0</name> 
-			<distribution>repo</distribution> 
-		</license> 
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>		
 	</licenses> 	
 	<scm>
 		<url>https://github.com/ddalton/xor</url>

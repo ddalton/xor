@@ -78,8 +78,14 @@ public class JSONTransformer {
 					
 					if(element instanceof JSONObject) {
 						JSONObject jsonObject = (JSONObject) element;
+						
+						// Is this an entity?
 						if(jsonObject.length() > 0) {
 							jsonObject.put(Constants.XOR.ID, currentID++);
+							
+							// TODO: If an ExcelVisitor is supplied then
+							// visit it. The logic in the visitor will store
+							// it by type and id, so it can build the necessary Excel sheets
 						}
 
 						for(String key: JSONObject.getNames(jsonObject)) 
@@ -105,6 +111,12 @@ public class JSONTransformer {
 						}
 						marked.put(element, Boolean.TRUE);
 					} else if(element instanceof JSONArray) {
+						// TODO: If ExcelVisitor is present then
+						// visit it, collections are handled in separate sheets in Excel
+						// The sheet will be named <targetType>:<propertyName>
+						// Here targetType is not the polymorphic type, but the type where propertyName is
+						// defined
+						
 						JSONArray jsonArray = (JSONArray) element;
 						for(int i = 0; i < jsonArray.length(); i++) {
 							Object obj = jsonArray.get(i);

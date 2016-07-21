@@ -12,15 +12,33 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
    2. OQL 
    3. SQL
    4. Stored procedure
-5. Future goals 
-   i) Support Excel import/export
-   ii) ODATA
+5. Support Excel import/export for Perf data population
+
+
+
 
 NEXT TASK
 =========
+
+View meta information
+=====================
+Add support for providing cascade information from XML files for each entity. The entity is FQCN.
+With this information we efficiently retrieve using JPAViewBranchTest#testTaskQueryableRegions.
+[NOTE] Queries for cascaded loops need to be provided by user. Raise this as an error if not provided.
+Once this is done, all loops need to be removed (i.e., the non-cascaded backref)
+
+This information is needed for Persistence mechanisms that don't support cascade directly.
+
+
+optimization 
+- If list (unless it does not have orderby or index column, then it is a bag), the other side cannot be inverse since the index information needs to be updated
+- If set/bag, the other side can be inverse for performance reasons during update. Unless there is a business logic method. see #14
+
+
 1. Create a model with two parallel collections (unfortunately only cascaded collections are represented and all cascaded collections are put in the same view). Check Project.
 2. Check that 2 children views are generated one for each collection. This is to prevent cartesian joins (The user can always modify this structure).
 3. Check that the user entered OQL is honored.
+
 
 
 Goals/use cases
@@ -56,84 +74,6 @@ populate OQLQuery object in AggregateView. Maybe this should only have the query
 
 Maybe eliminate QueryView - No since QueryView is pretty rich and we only want to store a serialization friendly form in AggregateView.
 
-Versioning
-==========
-The viewFiles folder will have versions folders underneath it, e.g., 
-
-20
-19
-18
-17
-
-Each version folder will have only those views that have changed.
-A function called regenerate will merge all views valid until a certain version to keep the versions manageable
-and also to deprecate old versions.
-
-so e.g., merge(16) will regenerate all views not present in versions 17 and higher
-
-Additionally, types whose structure has been changed in an non-supportable way will need to be 
-marked in the AggregateManager along with the minimum version and a maxium version if that type is no longer
-available. If the type is not listed here then it is supported across all versions.
-
-
-
-
-3. Convert JSON to JPA object and vice versa
-
-Future goal
-===========
-Implement Excel to support loading of large amounts of data useful for perf testing of models
-Excel import export
-   Export
-   ======
-   Support sheet name by type
-   Initially we will load the object graph using the existing load by default view
-   method.
-   We then segregate the objects by type and write it into each sheet
-   Import
-   ======
-   We read each sheet, build the objects
-   Find target id by business key (contains type name and business key fields)
-   call XOR.update on the root object
-
-
-
-
-************* DETAILS *********************
-
-Excel import export
-===================
-Excel support is useful for testing without UI.
-Save schema with the excel, that way we can identify if the schema changed.
-
-1. Each attribute (even one-to-one associations) in a different sheet
-
-2. Cascaded loops should be saved with the parent information, if this is already not in the model
-
-3. Reference to other entities should not be by Id, but by Business key (Json object, if the business key is composite)
-
-
-View meta information
-=====================
-Add support for providing cascade information from XML files for each entity. The entity is FQCN.
-With this information we efficiently retrieve using JPAViewBranchTest#testTaskQueryableRegions.
-[NOTE] Queries for cascaded loops need to be provided by user. Raise this as an error if not provided.
-Once this is done, all loops need to be removed (i.e., the non-cascaded backref)
-
-This information is needed for Persistence mechanisms that don't support cascade directly.
-
-
-optimization 
-- If list (unless it does not have orderby or index column, then it is a bag), the other side cannot be inverse since the index information needs to be updated
-- If set/bag, the other side can be inverse for performance reasons during update. Unless there is a business logic method. see #14
-
-
-
-INVESTIGATE[Not important] JPAViewBranchTest#testTaskQueryableRegions
-0.2 To support Excel export/import. We need to create non-duplicated data by creating appropriate queries.
-  Implement StateGraph#getQueryableRegions()
-
-
 
 
 
@@ -147,18 +87,6 @@ Batch support -
   The existing test cases need to support this change in behavior.
 
   Also, clean up the test cases and have a uniform model (Maybe borrow the northwind database or the supplier/parts/orders/locations database in CJ Date)
-
-
-
-See data in files vs DB. Maybe just specify the validation name and extra data is stored in files or DB.
-0.1 Validation support and Excel output - Using validation to incorporate in Datavalidation.
-
-
-
-1. Develop ODOR (ODATA) just for the query REST interface.
-   a) The first activity is to build the aggregate view to do a basic selection of attributes. Needs support from XOR
-      for this.
-   b) The second activity is to build a view to do a specific selection of attributes against an entity
 
 
 2. Test queryOperation, that automatically attaches domain objects to the session
@@ -202,28 +130,49 @@ See data in files vs DB. Maybe just specify the validation name and extra data i
 3. Release XOR product
 
 
+*******************
+Future enhancements
+*******************
+ 
 
-Validations
-===========
+Support Amazon DynamoDB and Google cloud datastore
+-- Aggregate is implemented using the following algorithm
+-- Important fields are given their own columns (Support expanding this as needed, could be expensive)
+-- All other data in the aggregate is stored as compressed JSON data in a separate column
+By going with this approach we keep the API simple. Queries will work only with the columns identified as important fields
 
-Whole number/Decimal/Date/Time/Text length
-  between 
-  not between
-  equal to
-  not equal to 
-  greater than
-  less than
-  greater than or equal to
-  less than or equal to
+The compressed size limit is affected by the provider limits
+DynamoDB - 400KB
+Datastore - 1MB
 
-List
-  
-Custom 
-  Formula - Map to java class
+The solution would be to split it across different rows. But that needs to be done by the application (Can be supported in the tool later).
+
+-- Could consider supporting this approach in an RDBMS 
+-- Support machine-learning performance improvement (Add frequently accessed columns and mark the row dirty if an important column is modified)
+
+Examples
+========
+http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/JavaDocumentAPIBinaryTypeExample.html
+http://stackoverflow.com/questions/13121062/what-is-the-exact-datastore-and-memcache-entity-size-limit-and-how-is-it-calc
 
 
-Input message
-Error Alert
 
-NONE - needed to cancel validation that was included in the view
 
+Versioning
+==========
+The viewFiles folder will have versions folders underneath it, e.g., 
+
+20
+19
+18
+17
+
+Each version folder will have only those views that have changed.
+A function called regenerate will merge all views valid until a certain version to keep the versions manageable
+and also to deprecate old versions.
+
+so e.g., merge(16) will regenerate all views not present in versions 17 and higher
+
+Additionally, types whose structure has been changed in an non-supportable way will need to be 
+marked in the AggregateManager along with the minimum version and a maxium version if that type is no longer
+available. If the type is not listed here then it is supported across all versions.

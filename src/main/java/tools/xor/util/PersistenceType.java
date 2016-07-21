@@ -24,7 +24,6 @@ public enum PersistenceType
 	HIBERNATE,
 	METADATA,
 	JPA,
-	MONGODB,
-	RIAK,
+	DATASTORE,
 	AML
 }

@@ -1,5 +1,7 @@
 package tools.xor.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -119,5 +121,25 @@ public interface Xor {
 	 * Exports the data in excel format
 	 * @param outputStream
 	 */
-	public void excelExport(OutputStream outputStream, Settings settings);
+	public void exportQuery(OutputStream outputStream, Settings settings);
+
+	/**
+	 * This returns an Excel workbook object that can be used to generate an Excel file
+	 * 
+	 * @param inputObject
+	 * @param settings
+	 * @return
+	 * @throws IOException 
+	 */
+	public void exportAggregate(OutputStream os, Object inputObject, Settings settings) throws IOException ;
+	
+	/**
+	 * Import the aggregate expressed in an Excel file
+	 * 
+	 * @param is
+	 * @param settings
+	 * @return the id of the created object
+	 * @throws IOException
+	 */
+	public Object importAggregate(InputStream is, Settings settings) throws IOException;
 }

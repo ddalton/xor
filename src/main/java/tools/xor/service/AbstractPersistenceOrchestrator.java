@@ -101,7 +101,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 			Serializable id = (Serializable) identifierProperty.getValue(from);
 			if(id != null) {
-				Class<?> desiredClass = typeMapper.toDomain(type.getInstanceClass());
+				Class<?> desiredClass = typeMapper.toDomain(type.getInstanceClass(), from);
 				persistentObject = findById(desiredClass, id);
 			} 
 		}

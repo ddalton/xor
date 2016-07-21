@@ -56,7 +56,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("BASICINFO"));
 		
 		FileOutputStream out = new FileOutputStream("queryEmpty.xlsx");
-		aggregateService.excelExport(out, settings);
+		aggregateService.exportQuery(out, settings);
 	}	
 
 	public void queryOne() throws FileNotFoundException {
@@ -77,7 +77,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("BASICINFO"));
 		
 		FileOutputStream out = new FileOutputStream("queryOne.xlsx");
-		aggregateService.excelExport(out, settings);
+		aggregateService.exportQuery(out, settings);
 	}
 
 	public void queryPersonNative() throws FileNotFoundException {
@@ -98,7 +98,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("BASICINFO_NATIVE"));
 		
 		FileOutputStream out = new FileOutputStream("queryOneNative.xlsx");
-		aggregateService.excelExport(out, settings);
+		aggregateService.exportQuery(out, settings);
 	}	
 
 	public void queryTaskChildren() throws FileNotFoundException {
@@ -137,7 +137,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		
 		FileOutputStream out = new FileOutputStream("queryTaskChildren.xlsx");
-		aggregateService.excelExport(out, settings);
+		aggregateService.exportQuery(out, settings);
 	}
 
 }

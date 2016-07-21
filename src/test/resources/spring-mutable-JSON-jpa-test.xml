@@ -43,7 +43,7 @@
 	</bean>		
 	
 	<!-- Type Mapper for DTO objects -->
-	<bean id="typeMapper" class="tools.xor.MutableJsonTypeMapper">	
+	<bean id="typeMapper" class="tools.xor.ExcelJsonTypeMapper">	
 		<property name="domainPackagePath" value="tools.xor.db" />	
 	</bean>	
 	

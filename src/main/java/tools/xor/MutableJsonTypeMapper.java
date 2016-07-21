@@ -28,7 +28,9 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import tools.xor.util.Constants;
 import tools.xor.util.CreationStrategy;
+import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.util.MutableJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
 
@@ -81,6 +83,41 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	}
 	
 	@Override
+	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo) {
+		if(!isDomain(externalClass)) {
+			if(bo != null && bo.getInstance() != null) {
+				if(bo.getInstance() instanceof JSONObject) {
+					JSONObject jsonObject = (JSONObject) bo.getInstance();
+					if(jsonObject.has(Constants.XOR.TYPE)) {
+						String className = jsonObject.getString(Constants.XOR.TYPE);
+						try {
+							return Class.forName(className);
+						} catch (ClassNotFoundException e) {
+							throw new RuntimeException("Unable to find domain entity class: " + className);
+						}
+					}
+				} else if(bo.getInstance() instanceof JSONArray) {
+					JSONObject container = (JSONObject) ((BusinessObject)bo.getContainer()).getInstance();
+					Property containmentProperty = bo.getContainmentProperty();
+					if(container != null && containmentProperty != null) {
+						String collectionTypeKey = ExcelJsonCreationStrategy.getCollectionTypeKey(containmentProperty);
+						if(container.has(collectionTypeKey)) {
+							String className = container.getString(collectionTypeKey);
+							try {
+								return Class.forName(className);
+							} catch (ClassNotFoundException e) {
+								throw new RuntimeException("Unable to find collection class: " + className);
+							}
+						}
+					}
+				}
+			} 
+			throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
+		}
+		return externalClass;
+	}	
+	
+	@Override
 	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo) {
 		Class<?> result = null;
 
@@ -92,7 +129,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		case DOMAINTOEXTERNAL:
 		case DOMAINTODOMAIN:
 			try {
-				result = toDomain(clazz);
+				result = toDomain(clazz, (BusinessObject) callInfo.getInput());
 			} catch (UnsupportedOperationException e) {
 				if(callInfo.getInputProperty() != null) {
 					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
@@ -160,6 +197,9 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	
 	@Override
 	public boolean isDomain(Class<?> clazz) {
+		if(domainPackagePath == null) {
+			return super.isDomain(clazz);
+		}
 		return (clazz.getCanonicalName().startsWith(domainPackagePath));
 	}		
 

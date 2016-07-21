@@ -31,6 +31,11 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	public Class<?> toDomain(Type type) {
 		return toDomain(type.getInstanceClass());
 	}
+	
+	@Override
+	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo) {
+		return toDomain(externalClass);
+	}	
 
 	@Override
 	public MapperDirection getDirection() {
@@ -96,5 +101,36 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	@Override
 	public boolean isOpen(Class<?> clazz) {
 		return false;
+	}
+	
+	@Override
+	public EntityKey getEntityKey(Object id, Type type) {
+		return getEntityKey(id, type, null);
+	}
+	
+	@Override
+	public EntityKey getEntityKey(Object id, BusinessObject bo) {
+		return getEntityKey(id, bo.getType(), bo);
+	}	
+	
+	public EntityKey getEntityKey(Object id, Type type, BusinessObject bo) {
+		if(id == null)
+			return null;
+
+		if(!EntityType.class.isAssignableFrom(type.getClass()))
+			throw new IllegalArgumentException("type has to refer to a Data Object");
+
+		Type rootEntityType = ((EntityType)type).getRootEntityType();
+
+		String domainTypeName = rootEntityType.getName();
+		String externalTypeName = rootEntityType.getName();
+		if(ExternalType.class.isAssignableFrom(rootEntityType.getClass()))
+			domainTypeName = toDomain(rootEntityType.getInstanceClass(), bo).getName();
+		else
+			externalTypeName = toExternal(rootEntityType.getInstanceClass()).getName();
+
+		EntityKey key =  new EntityKey(id, domainTypeName, externalTypeName);
+
+		return key;
 	}
 }

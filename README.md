@@ -1,4 +1,4 @@
-XOR
+XOR - Enabling polyglot persistence with a consistent API
 
 The XOR tool enhances an ORM solution by making it easier for the developer to work with rich domain models and also to integrate the domain smoothly with a REST API.
 

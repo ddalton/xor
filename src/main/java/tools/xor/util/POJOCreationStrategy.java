@@ -20,6 +20,8 @@
 package tools.xor.util;
 
 import tools.xor.BasicType;
+import tools.xor.BusinessObject;
+import tools.xor.Property;
 
 
 public class POJOCreationStrategy extends AbstractCreationStrategy {
@@ -30,6 +32,12 @@ public class POJOCreationStrategy extends AbstractCreationStrategy {
 	
 	@Override
 	public Object newInstance(Object from, BasicType type, Class<?> toClass) throws Exception {
+		return newInstance(from, type, toClass, null, null);
+	}
+
+	@Override
+	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container,
+			Property containmentProperty) throws Exception {
 		if(type != null) {
 			return type.newInstance(from);
 		}

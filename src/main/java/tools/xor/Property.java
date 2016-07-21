@@ -124,4 +124,11 @@ public interface Property
    */
   Object get(Property property);
 
+  /**
+   * Returns the expanded property names rooted at this property. 
+   * This is typically one entry and can be more than one when dealing with 
+   * embedded types
+   * @return
+   */
+  List<String> expand();
 }

@@ -37,6 +37,7 @@ import org.apache.log4j.Logger;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.Property;
 import tools.xor.Settings;
 
 
@@ -91,6 +92,12 @@ public class ImmutableJsonCreationStrategy extends AbstractCreationStrategy {
 	 * JsonValue.NULL
 	 */
 	public Object newInstance(Object from, BasicType type, Class<?> toClass) throws Exception {
+		return this.newInstance(from, type, toClass, null, null);
+	}
+
+	@Override
+	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container,
+			Property containmentProperty) throws Exception {
 
 		Object result = null;
 		if(unchanged.contains(toClass)) {
@@ -122,5 +129,5 @@ public class ImmutableJsonCreationStrategy extends AbstractCreationStrategy {
 			return ((JsonObjectBuilder)instance).build();
 		}
 		return super.getNormalizedInstance(bo, settings);
-	}	
+	}
 }

@@ -26,12 +26,14 @@ import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.QueryOperation;
 import tools.xor.operation.ReadOperation;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.QueryViewProperty;
 
@@ -123,15 +125,19 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public void addEntity(BusinessObject entity) {
 		Object id = entity.getIdentifierValue();
-		if(id != null)
-			getObjectCreator().addByEntityKey(getEntityKey(getObjectCreator(), id, entity.getType()), entity);
+		if(id != null) {
+			EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, entity);
+			getObjectCreator().addByEntityKey(entityKey, entity);
+		}
 	}
 
 	@Override
 	public void removeEntity(BusinessObject entity) {
 		Object id = entity.getIdentifierValue();
-		if(id != null) 
-			getObjectCreator().removeByEntityKey(getEntityKey(getObjectCreator(), id, entity.getType()));
+		if(id != null) { 
+			EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, entity);
+			getObjectCreator().removeByEntityKey(entityKey);
+		}
 	}
 
 	/**
@@ -142,38 +148,20 @@ public abstract class AbstractBO implements BusinessObject {
 	public BusinessObject getEntity(BusinessObject entity) {
 		Object id = entity.getIdentifierValue();
 		if(id != null)
-			return getByEntityKey(id, entity.getType());
+			return getByEntityKey(id, entity);
 
 		return null;
 	}
 
-	public static EntityKey getEntityKey(ObjectCreator objectCreator, Object id, Type type) {
-		if(id == null)
-			return null;
-
-		if(!EntityType.class.isAssignableFrom(type.getClass()))
-			throw new IllegalArgumentException("type has to refer to a Data Object");
-
-		Type rootEntityType = ((EntityType)type).getRootEntityType();
-
-		TypeMapper tm = objectCreator.getTypeMapper();
-		String domainTypeName = rootEntityType.getName();
-		String externalTypeName = rootEntityType.getName();
-		if(ExternalType.class.isAssignableFrom(rootEntityType.getClass()))
-			domainTypeName = tm.toDomain(rootEntityType.getInstanceClass()).getName();
-		else
-			externalTypeName = tm.toExternal(rootEntityType.getInstanceClass()).getName();
-
-		EntityKey key =  new EntityKey(id, domainTypeName, externalTypeName);
-
-		//EntityKey key = getObjectCreator().getTypeMapper().getEntityKey(id.toString(), rootEntityType); 
-
-		return key;
-	}
-
 	public BusinessObject getByEntityKey(Object id, Type type) {
-		return getObjectCreator().getByEntityKey(getEntityKey(getObjectCreator(), id, type));		
+		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, type);
+		return getObjectCreator().getByEntityKey(entityKey);		
 	}
+	
+	public BusinessObject getByEntityKey(Object id, BusinessObject bo) {
+		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, bo);
+		return getObjectCreator().getByEntityKey(entityKey);		
+	}	
 
 	@Override
 	public ExtendedProperty getCollectionKeyProperty() {
@@ -218,7 +206,31 @@ public abstract class AbstractBO implements BusinessObject {
 			Property identifier = ((EntityType)elementType).getIdentifierProperty();
 			return (this.get(identifier) == null) ? null : this.get(identifier).toString();
 		}
-	}	
+	}
+	
+	@Override
+	public String getInstanceClassName() {
+		if(instance == null) {
+			return getType().getInstanceClass().getName();
+		}
+		
+		if(instance != JSONObject.class || !((JSONObject)instance).has(Constants.XOR.TYPE)) {
+			return objectCreator.getTypeMapper().toDomain(getType()).getName();
+		} else {
+			return ((JSONObject)instance).getString(Constants.XOR.TYPE);
+		}
+	}
+	
+	@Override
+	public String getOpenProperty(String propertyName) {
+		if(instance instanceof JSONObject) {
+			if(((JSONObject)instance).has(propertyName)) {
+				return ((JSONObject)instance).getString(propertyName);
+			}
+		}
+		
+		return null;
+	}
 
 	@Override
 	public Object getInstance() {
@@ -369,8 +381,19 @@ public abstract class AbstractBO implements BusinessObject {
 			} else {
 				String firstComponent = path.substring(0, path.indexOf(PATH_DELIMITER));
 				String remainingPath = path.substring(path.indexOf(PATH_DELIMITER)+1);
+				
 				// Get the property name related to the first path component
-				return ((DataObject)getPathObject(firstComponent)).get(remainingPath);
+				Object anchor = getPathObject(firstComponent);
+				if(anchor != null) {
+					BusinessObject anchorBO = objectCreator.getExistingDataObject(anchor);
+					if(anchorBO != null) {
+						return anchorBO.get(remainingPath);
+					} else {
+						throw new RuntimeException("Cannot find BusinessObject in object creator");
+					}
+				} else {
+					return null;
+				}
 			}
 		}
 

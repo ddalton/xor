@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,12 +39,14 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.annotation.XorAlways;
+import tools.xor.annotation.XorData;
 import tools.xor.annotation.XorInput;
 import tools.xor.annotation.XorOutput;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 import tools.xor.util.I18NUtils;
 import tools.xor.util.ObjectCreator;
 
@@ -55,7 +58,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	protected AccessType accessType;
 	protected boolean    needsInitialization;
-	protected boolean    computed;
+	
+	protected boolean    data;
 	private   VersionInfo versionInfo;
 
 	// The following fields are used to set/retrieve value
@@ -294,13 +298,21 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 		setterMethod = getContainingType().getSetterMethod(getName());
 
-		if (getterMethod == null || field == null)
+		if (getterMethod == null || field == null) {
 			logger.warn("getter or field name is not accessible: " + getName());
+		}
 
 		if ((getterMethod != null && getterMethod.isAnnotationPresent(XorAlways.class)) ||
 			(field != null && field.isAnnotationPresent(XorAlways.class))
-			)
+			) {
 			needsInitialization = true;
+		}
+		
+		if ((getterMethod != null && getterMethod.isAnnotationPresent(XorData.class)) ||
+				(field != null && field.isAnnotationPresent(XorData.class))
+				) {
+				data = true;
+			}		
 	}
 
 	protected void initByAnnotations() {
@@ -662,8 +674,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public boolean isComputed() {
-		return computed;
+	public boolean isData() {
+		return data;
 	}
 
 	@Override
@@ -847,5 +859,33 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	@Override
 	public Property getDomainProperty() {
 		return this;
+	}
+	
+	@Override
+	public List<String> expand() {
+		List<String> result = new LinkedList<String>();
+		
+		if(getType() instanceof EntityType) {
+			if(((EntityType)getType()).isEmbedded()) {
+				for(Property p: getType().getProperties()) {
+					for(String embeddedPropertyName: p.expand()) {
+						result.add(getName() + Settings.PATH_DELIMITER + embeddedPropertyName);
+					}
+				}
+			} else {
+				/*
+				// This can additionally contain the user key
+				result.add(getName() + Settings.PATH_DELIMITER + ((EntityType)getType()).getIdentifierProperty().getName());
+				if(((EntityType)getType()).getUserKey() != null) {
+					result.add(getName() + Settings.PATH_DELIMITER + ((EntityType)getType()).getUserKey().getName());
+				}
+				*/
+				result.add(Constants.XOR.OBJECTREF + getName());
+			}
+		} else {
+			result.add(getName());
+		}
+		
+		return result;
 	}
 }

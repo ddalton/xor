@@ -19,6 +19,8 @@
 
 package tools.xor.jpa;
 
+import java.io.IOException;
+
 import org.json.JSONException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -99,4 +101,14 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		super.checkOpenField();
 	}
+	
+	@Test
+	public void checkExcelExport() throws JSONException, IOException {
+		super.checkExcelExport();
+	}
+	
+	@Test
+	public void checkExcelImport() throws JSONException, IOException {
+		super.checkExcelImport();
+	}		
 }

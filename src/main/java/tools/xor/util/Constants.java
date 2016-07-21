@@ -19,6 +19,10 @@
 
 package tools.xor.util;
 
+import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.Type;
+
 public class Constants {
 
   // Constants related to logging
@@ -44,10 +48,32 @@ public class Constants {
   
   // Constants related to XOR serialization between JavaScript client and the Java server
   public static class XOR {
+	  public static final String XOR_PREFIX = "XOR";
+	  public static final String SEP = ":";
+	  public static final String XOR_PATH_PREFIX = XOR_PREFIX + Settings.PATH_DELIMITER;
+	  
 	  // Additional references to an object are represented using the following attribute prefix
-	  public static final String OBJECTREF = "|XOR|";
+	  public static final String OBJECTREF = "|" + XOR_PREFIX + "|";
+
+	  // Synthetic identifier added to each object instance to help identify each object in an object graph
+	  public static final String ID = XOR_PATH_PREFIX + "id";
+
+	  // Synthetic identifier to save the type, especially useful if the object is a subtype 
+	  public static final String TYPE = XOR_PATH_PREFIX + "type";
+	  
+	  // Flag to indicate if that entry should be deleted. Mainly used during aggregate update.
+	  public static final String DELETE = XOR_PATH_PREFIX + "delete";
+
+	  // Represents the sheet containing the root object in the aggregate 
+	  public static final String EXCEL_ENTITY_SHEET = "Entity";	  
+	  public static final String EXCEL_SHEET_PREFIX = "Sheet";
+	  public static final String EXCEL_INDEX_SHEET = "Sheet Index";	
 	  
 	  // Synthetic identifier added to each object instance to help identify each object in an object graph
-	  public static final String ID = "XOR.id";
+	  public static final String OWNER_ID = XOR_PATH_PREFIX + "owner.id";
+	  
+	  public static String getExcelSheetFullName(Type type, Property property) {
+		  return type.getName() + ":" + property.getName();
+	  }
   }
 }

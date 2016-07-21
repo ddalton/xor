@@ -824,9 +824,9 @@ public abstract class AbstractType implements EntityType {
 		List<Property> result = null;
 		if(apiVersion != ALL) {
 			result = getProperties(properties.values(), apiVersion);
-			propertiesByVersion.put(apiVersion, result);
+			propertiesByVersion.put(apiVersion, sort(result));
 		} else {
-			propertiesByVersion.put(ALL, new ArrayList<Property>(properties.values()));
+			propertiesByVersion.put(ALL, sort(new ArrayList<Property>(properties.values())));
 			result = propertiesByVersion.get(ALL);
 		}
 
@@ -896,6 +896,8 @@ public abstract class AbstractType implements EntityType {
 	/**
 	 * Move all the collections to the end. This does not order between collections. So if there is a dependency from one collection to another that needs to be resolved using postProcess
 	 * e.g., a business logic annotation
+	 * 
+	 * TODO: Is sort really necessary?
 	 */	
 	@Override
 	public List<Property> sort(List<Property> properties) {

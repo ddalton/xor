@@ -25,7 +25,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,8 +46,11 @@ import tools.xor.util.ClassUtil;
 public class MutableJsonProperty extends ExternalProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	private static Map<Class, Converter> converters = new ConcurrentHashMap<Class, Converter>();
+	private static Map<Class, Converter> convertersByClass = new ConcurrentHashMap<Class, Converter>();
+	private static Map<String, Converter> convertersByProperty = new ConcurrentHashMap<String, Converter>();	
 	public static final String ISO8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+	
+	private volatile Converter converter;
 	
 	public interface Converter {
 		public void setExternal(JSONObject jsonObject, String name, Object object) throws JSONException;
@@ -64,14 +66,20 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 
 	public static void registerConverter(Class<?> clazz, Converter converter) {
-		if(!converters.containsKey(clazz)) {
-			converters.put(clazz, converter);
+		if(!convertersByClass.containsKey(clazz)) {
+			convertersByClass.put(clazz, converter);
 		}
 	}
+	
+	public static void registerConverter(String propertyName, Converter converter) {
+		if(!convertersByProperty.containsKey(propertyName)) {
+			convertersByProperty.put(propertyName, converter);
+		}
+	}	
 
 	public static Converter findConverter(Class<?> clazz) {
-		if(converters.containsKey(clazz)) {
-			return converters.get(clazz);
+		if(convertersByClass.containsKey(clazz)) {
+			return convertersByClass.get(clazz);
 		}
 
 		return null;
@@ -85,7 +93,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 	
 	static {
-		converters.put(Boolean.class,
+		convertersByClass.put(Boolean.class,
 				new AbstractConverter() {
 					
 					@Override
@@ -100,9 +108,9 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);
-		converters.put(boolean.class, converters.get(Boolean.class)); // primitive
+		convertersByClass.put(boolean.class, convertersByClass.get(Boolean.class)); // primitive
 		
-		converters.put(BigDecimal.class,
+		convertersByClass.put(BigDecimal.class,
 			new AbstractConverter() {
 				
 				@Override
@@ -124,7 +132,7 @@ public class MutableJsonProperty extends ExternalProperty {
 			}
 		);
 		
-		converters.put(BigInteger.class,
+		convertersByClass.put(BigInteger.class,
 				new AbstractConverter() {
 
 					@Override
@@ -146,7 +154,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				}
 			);	
 		
-		converters.put(Double.class,
+		convertersByClass.put(Double.class,
 				new AbstractConverter() {
 					
 					@Override
@@ -160,9 +168,9 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);		
-		converters.put(double.class, converters.get(Double.class)); // primitive
+		convertersByClass.put(double.class, convertersByClass.get(Double.class)); // primitive
 		
-		converters.put(Float.class,
+		convertersByClass.put(Float.class,
 				new AbstractConverter() {
 					
 					@Override
@@ -176,9 +184,9 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);	
-		converters.put(float.class, converters.get(Float.class)); // primitive		
+		convertersByClass.put(float.class, convertersByClass.get(Float.class)); // primitive		
 		
-		converters.put(Integer.class,
+		convertersByClass.put(Integer.class,
 				new AbstractConverter() {
 					
 					@Override
@@ -192,9 +200,9 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);
-		converters.put(int.class, converters.get(Integer.class)); // primitive				
+		convertersByClass.put(int.class, convertersByClass.get(Integer.class)); // primitive				
 		
-		converters.put(Long.class,
+		convertersByClass.put(Long.class,
 				new AbstractConverter() {
 					
 					@Override
@@ -208,9 +216,9 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);
-		converters.put(long.class, converters.get(Long.class)); // primitive		
+		convertersByClass.put(long.class, convertersByClass.get(Long.class)); // primitive		
 		
-		converters.put(String.class,	
+		convertersByClass.put(String.class,	
 				new AbstractConverter() {	
 					
 					@Override
@@ -225,7 +233,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				}
 			);		
 		
-		converters.put(Date.class,
+		convertersByClass.put(Date.class,
 				new AbstractConverter() {
 					@Override
 					public void setExternal(JSONObject jsonObject, String name, Object object) throws JSONException {
@@ -236,12 +244,12 @@ public class MutableJsonProperty extends ExternalProperty {
 					@Override
 					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
 						DateFormat df = new SimpleDateFormat(ISO8601_FORMAT);
-						String dataString = jsonObject.getString(key);
+						String dateString = jsonObject.getString(key);
 						try {
-							return dataString == null ? null : df.parse(dataString);
+							return dateString == null ? null : ("".equals(dateString) ? null : df.parse(dateString));
 						} catch (ParseException e) {
 							logger.warn("DynamicProperty#getObject problem parsing date string: " 
-									+ dataString + ", message: " + e.getMessage());
+									+ dateString + ", message: " + e.getMessage());
 							return null;
 						}						
 					}
@@ -259,7 +267,7 @@ public class MutableJsonProperty extends ExternalProperty {
 		 * all the other properties. So build() should be invoked only once at the end of 
 		 * populating all the fields.
 		 */
-		converters.put(JSONObject.class,	
+		convertersByClass.put(JSONObject.class,	
 				new AbstractConverter() {
 					
 					@Override
@@ -275,7 +283,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				}
 			);	
 		
-		converters.put(JSONArray.class,	
+		convertersByClass.put(JSONArray.class,	
 				new AbstractConverter() {
 					
 					@Override
@@ -348,25 +356,38 @@ public class MutableJsonProperty extends ExternalProperty {
 		}		
 	}	
 	
+	private Converter getConverter() {
+		if(this.converter == null) {
+			if(convertersByProperty.containsKey(getName())) {
+				converter = convertersByProperty.get(getName());
+			}
+			if(convertersByClass.containsKey(getDomainProperty().getType().getInstanceClass())) {
+				converter = convertersByClass.get(getDomainProperty().getType().getInstanceClass());
+			}
+		}
+		
+		return converter;
+	}
+	
 	private void setExternal(JSONObject jsonObject, String name, Object propertyValue) throws JSONException {
-		if(converters.containsKey(getDomainProperty().getType().getInstanceClass())) {
-			converters.get(getDomainProperty().getType().getInstanceClass()).setExternal(jsonObject, name, propertyValue);
+		if(getConverter() != null) {
+			getConverter().setExternal(jsonObject, name, propertyValue);
 		} else {
 			Object instanceObj = propertyValue;
 			if(BusinessObject.class.isAssignableFrom(propertyValue.getClass())) {
 				instanceObj = ((BusinessObject)propertyValue).getInstance();
 			}
 			if(JSONObject.class.isAssignableFrom(instanceObj.getClass())) {
-				converters.get(JSONObject.class).setExternal( jsonObject, name, instanceObj);	
+				convertersByClass.get(JSONObject.class).setExternal( jsonObject, name, instanceObj);	
 			} else if (JSONArray.class.isAssignableFrom(instanceObj.getClass())) {
-				converters.get(JSONArray.class).setExternal( jsonObject, name, instanceObj);	
+				convertersByClass.get(JSONArray.class).setExternal( jsonObject, name, instanceObj);	
 			}
 		}		
 	}
 	
 	private Object toDomain(JSONObject jsonObject, String key) throws JSONException {
-		if(converters.containsKey(getDomainProperty().getType().getInstanceClass())) {
-			return converters.get(getDomainProperty().getType().getInstanceClass()).toDomain(jsonObject, key);
+		if(getConverter() != null) {
+			return getConverter().toDomain(jsonObject, key);
 		} else {
 			if(logger.isDebugEnabled()) {
 				logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass() 
@@ -388,14 +409,14 @@ public class MutableJsonProperty extends ExternalProperty {
 		}
 
 		JSONArray jsonArray = (JSONArray) ((BusinessObject) dataObject).getInstance();
-		if(converters.containsKey(element.getClass())) {
-			converters.get(element.getClass()).add(jsonArray, element);
+		if(convertersByClass.containsKey(element.getClass())) {
+			convertersByClass.get(element.getClass()).add(jsonArray, element);
 		} else {
 
 			if(JSONObject.class.isAssignableFrom(element.getClass())) {
-				converters.get(JSONObject.class).add( jsonArray, element);	
+				convertersByClass.get(JSONObject.class).add( jsonArray, element);	
 			} else if (JSONArray.class.isAssignableFrom(element.getClass())) {
-				converters.get(JSONArray.class).add(jsonArray, element);	
+				convertersByClass.get(JSONArray.class).add(jsonArray, element);	
 			} else {
 				logger.error("DynamicProperty#addElement element " + element.getClass() + " is not of type JsonValue/JsonObjectBuilder/JsonArrayBuilder");
 			}

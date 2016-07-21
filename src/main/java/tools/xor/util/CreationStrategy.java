@@ -21,6 +21,7 @@ package tools.xor.util;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.Property;
 import tools.xor.Settings;
 
 
@@ -35,6 +36,20 @@ public interface CreationStrategy {
 	 * @throws Exception
 	 */
 	public Object newInstance(Object from, BasicType type, Class<?> toClass) throws Exception;
+	
+	/**
+	 * This method additionally provides the container and containmentProperty so the collection type can be saved on the container.
+	 * This information is useful to support export/import.
+	 * 
+	 * @param from
+	 * @param type
+	 * @param toClass
+	 * @param container
+	 * @param containmentProperty
+	 * @return
+	 * @throws Exception
+	 */
+	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container, Property containmentProperty) throws Exception;	
 	
 	/**
 	 * Give a chance for the creation strategy to do any final conversion on the root object

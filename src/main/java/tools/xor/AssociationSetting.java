@@ -56,8 +56,17 @@ public final class AssociationSetting {
 
 	public boolean isAggregatePart(CallInfo ci) {
 		if(matchType == MatchType.TYPE) {
-			Object associatedInstance = ci.getOutput() != null ? ((BusinessObject)ci.getOutput()).getInstance() : null;
-			return entityClass.isAssignableFrom(associatedInstance.getClass());
+			BusinessObject domainObject = (BusinessObject)ci.getOutput();
+			if(ci.getSettings().getAction() == AggregateAction.READ) {
+				domainObject = (BusinessObject)ci.getInput();
+			}
+			Object associatedInstance = domainObject != null ? domainObject.getInstance() : null;
+			boolean result = associatedInstance != null ? entityClass.isAssignableFrom(associatedInstance.getClass()) : false;
+			if(!result) {
+				// Check the type
+				result = entityClass.isAssignableFrom(domainObject.getDomainType().getInstanceClass());
+			}
+			return result;
 		}
 
 		if(matchType == MatchType.PATH && ci.isPathSuffix(this.pathSuffix))

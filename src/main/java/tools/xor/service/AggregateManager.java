@@ -20,16 +20,34 @@
 package tools.xor.service;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import tools.xor.AbstractType;
@@ -39,10 +57,13 @@ import tools.xor.BusinessObject;
 import tools.xor.DefaultTypeMapper;
 import tools.xor.DefaultTypeNarrower;
 import tools.xor.EntityType;
+import tools.xor.ExcelJsonTypeMapper;
 import tools.xor.ExtendedProperty;
 import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
+import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
 import tools.xor.core.Interceptor;
@@ -50,10 +71,11 @@ import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DefaultAssociationStrategy;
 import tools.xor.custom.DefaultDetailStrategy;
 import tools.xor.custom.DetailStrategy;
-import tools.xor.util.PersistenceType;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
@@ -466,8 +488,7 @@ public class AggregateManager implements Xor {
 		return create(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
 	}
 
-	@Override
-	public Object read(Object entity, Settings settings) {
+	private BusinessObject readBO(Object entity, Settings settings) {
 		owLogger.debug("Performing read operation");
 		
 		boolean isWrapper = false;
@@ -502,14 +523,494 @@ public class AggregateManager implements Xor {
 		from = from.load(settings);  // Get the persistent object
 	
 		//  perform read on it
-		BusinessObject to = (BusinessObject) from.read(settings);		
+		BusinessObject to = (BusinessObject) from.read(settings);
+		
+		return to;
+	}
 	
+	@Override
+	public Object read(Object entity, Settings settings) {
+		BusinessObject to = readBO(entity, settings);
 		return to.getNormalizedInstance(settings);
 	}
 
 	@Override
 	public <T> Object read(Object inputObject, Class<T> entityClass) {
 		return read(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
+	}
+	
+	@Override
+	public void exportAggregate(OutputStream os, Object inputObject, Settings settings) throws IOException {
+		validateImportExport();
+		
+		BusinessObject to = readBO(inputObject, settings);
+		Set<BusinessObject> dataObject = to.getObjectCreator().getDataObjects();
+		
+		// Get the container and the containment property and create a sheet of such objects
+		Map<String, List<BusinessObject>> sheetBO = new HashMap<String, List<BusinessObject>>();
+		for(BusinessObject bo: dataObject) {
+			if(bo.getContainer() != null && bo.getContainmentProperty() != null) {
+				String key = Constants.XOR.getExcelSheetFullName(bo.getContainer().getType(), bo.getContainmentProperty());
+				if(!sheetBO.containsKey(key)) {
+					sheetBO.put(key, new LinkedList<BusinessObject>());
+				}
+				List<BusinessObject> boList = sheetBO.get(key);
+				boList.add(bo);
+			}
+		}
+		
+		Workbook wb = processSheetBO(to, sheetBO);
+	    wb.write(os);
+	    os.close();
+	    wb.close();
+
+	}
+	
+	private Map<String, Integer> getHeaderMap(Sheet sheet) {
+		Map<String, Integer> colMap = new HashMap<String, Integer>();
+		Row headerRow = sheet.getRow(0);
+		for(int i = 0; i < headerRow.getLastCellNum(); i++) {
+			Cell headerCell = headerRow.getCell(i);
+			colMap.put(headerCell.getStringCellValue(), i);
+		}
+		
+		return colMap;
+	}
+	
+	private void validateImportExport() {
+		if(!ExcelJsonTypeMapper.class.isAssignableFrom(this.getTypeMapper().getClass())) {
+			throw new RuntimeException("Import/Export can only work with ExcelJsonTypeMapper");
+		}		
+	}
+	
+	@Override
+	/**
+	 *  For now we handle only one aggregate entity in the document. 
+	 *  Later on we can update it handle multiple entities.
+	 *  
+	 *  Ideally, we would want each entity to be in a separate document, 
+	 *  so we can process it efficiently using streaming.
+	 */
+	public Object importAggregate(InputStream is, Settings settings) throws IOException {
+		validateImportExport();
+		
+		try {
+			Workbook wb = WorkbookFactory.create(is);
+
+			Sheet entitySheet = wb.getSheet(Constants.XOR.EXCEL_ENTITY_SHEET);
+			if(entitySheet == null) {
+				throw new RuntimeException("The entity sheet is missing");
+			}
+
+			// Get the entity class name
+			Map<String, Integer> colMap = getHeaderMap(entitySheet);
+			if(!colMap.containsKey(Constants.XOR.TYPE)) {
+				// TODO: Fallback to entity class in settings if provided
+				throw new RuntimeException("XOR.type column is missing");
+			}
+			Row entityRow = entitySheet.getRow(1);
+			if(entityRow == null) {
+				throw new RuntimeException("Entity row is missing");
+			}
+			Cell typeCell = entityRow.getCell(colMap.get(Constants.XOR.TYPE));
+			String entityClassName = typeCell.getStringCellValue();
+			try {
+				settings.setEntityClass(Class.forName(entityClassName));
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException("Class " + entityClassName + " is not found");
+			}
+			
+			/******************************************************
+			 * Algorithm
+			 * 
+			 * 1. Create all objects with the XOR.id 
+			 * 2. Create the collections
+			 * 3. Associate the collections to their owners
+			 * 4. Then finally call JSONTransformer.unpack to link the objects by XOR.id
+			 * 
+			 ********************************************************/
+			
+			// 1. Create all objects with the XOR.id
+			Map<String, String> collectionSheets = new HashMap<String, String>();
+			Map<String, String> entitySheets = new HashMap<String, String>();
+			entitySheets.put(Constants.XOR.EXCEL_ENTITY_SHEET, entityClassName);
+			Map<String, JSONObject> idMap = parseEntities(wb, entitySheets, collectionSheets);
+			
+			// 2. Create the collections
+			// The key in the collection property map is of the form <owner_xor_id>:<property>
+			Map<String, JSONArray> collectionPropertyMap = parseCollections(wb, collectionSheets, idMap);
+			
+			// 3. Associate the collections to their owners
+			// Replace all objectref prefix keys with the actual objects
+			// Replace all collection properties with the array objects
+			link(wb, idMap, collectionPropertyMap);
+			
+			// Find the root
+			Cell idCell = entityRow.getCell(colMap.get(Constants.XOR.ID));
+			String rootId = idCell.getStringCellValue();
+			JSONObject root = idMap.get(rootId);
+			
+			// Finally persist the root object
+			// call the update persistence method
+			Class entityClass;
+			try {
+				entityClass = Class.forName(root.getString(Constants.XOR.TYPE));
+			} catch (ClassNotFoundException | JSONException e) {
+				throw new RuntimeException("Unable to construct root entity. Either the class is not found or the class name is missing");
+			}
+			
+			return update(root, entityClass);
+			
+		} catch (EncryptedDocumentException e) {
+			throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");
+		} catch (InvalidFormatException e) {
+			throw new RuntimeException("The provided inputstream is not valid. " + e.getMessage());
+		}
+	}
+	
+	private void link(Workbook wb, Map<String, JSONObject> idMap, Map<String, JSONArray> collectionPropertyMap) {
+		// First link the collections to their owners
+		for(Map.Entry<String, JSONArray> entry: collectionPropertyMap.entrySet()) {
+			String collectionKey = entry.getKey();
+			String[] tokens = collectionKey.split(":");
+			String ownerId = tokens[0];
+			String collectionProperty = tokens[1];
+			
+			JSONObject owner = idMap.get(ownerId);
+			if(owner == null) {
+				throw new RuntimeException("Unable to find collection owner with XOR.id " + ownerId);
+			}
+			owner.put(collectionProperty, entry.getValue());
+		}
+		
+		// Link all the object references
+		for(JSONObject entity: idMap.values()) {
+			// Iterate through all the object references
+			JSONArray fields = entity.names();
+			for(int i = 0; i < fields.length(); i++) {
+				String property = fields.getString(i);
+				if(property.startsWith(Constants.XOR.OBJECTREF)) {
+					JSONObject toOne = idMap.get(entity.getString(property));
+					if(toOne == null) {
+						logger.info("Unable to find object reference: " + entity.getString(property));
+						continue;
+					}
+					String reference = property.substring(Constants.XOR.OBJECTREF.length());
+					
+					// replace the object reference with actual reference
+					setEmbeddableValue(entity, reference, toOne, property);
+				}
+			}
+		}
+	}
+	
+	private Type getType(String entityInfo) {
+		// Parse the entity classname from this
+		String[] tokens = entityInfo.split(":");
+		if(tokens.length != 2) {
+			throw new RuntimeException("The entity info column in sheet map is not in <classname>:<property> format: " + entityInfo);
+		}
+		return getDAS().getType(tokens[0]);		
+	}
+	
+	private Property getProperty(String entityInfo) {
+		Type type = getType(entityInfo);
+		
+		String[] tokens = entityInfo.split(":");
+		return type.getProperty(tokens[1]);
+	}
+	
+	/**
+	 * 
+	 * @param wb
+	 * @param collectionSheets Will be used in subsequent processing
+	 * @return
+	 */
+	private Map<String, JSONObject> parseEntities(Workbook wb, Map<String, String> entitySheets, Map<String, String> collectionSheets) {
+		// First find all the entity sheets
+		Sheet sheetMap = wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET);
+		
+		// SheetName is in first column
+		// Entity type and property is in second column
+		for(int i = 0; i <= sheetMap.getLastRowNum(); i++) {
+			Row row = sheetMap.getRow(i);
+			String entityInfo = row.getCell(1).getStringCellValue();
+			
+			if(getProperty(entityInfo).isMany()) {
+				collectionSheets.put(row.getCell(0).getStringCellValue(), entityInfo);
+			} else {
+				entitySheets.put(row.getCell(0).getStringCellValue(), entityInfo);
+			}
+		}
+
+		Map<String, JSONObject> idMap = new HashMap<String, JSONObject>();
+		for(Map.Entry<String, String> entry: entitySheets.entrySet()) {
+			processEntitySheet(wb, entry.getKey(), idMap);
+		}
+		
+		return idMap;
+	}
+	
+	private void processEntitySheet(Workbook wb, String sheetName, Map<String, JSONObject> idMap) {
+		// Ensure we have the XOR.id column in the entity sheet
+		Sheet entitySheet = wb.getSheet(sheetName);
+		Map<String, Integer> colMap = getHeaderMap(entitySheet);
+		if(!colMap.containsKey(Constants.XOR.ID)) {
+			throw new RuntimeException("XOR.id column is missing");
+		}		
+		
+		// process each entity
+		for(int i = 1; i <= entitySheet.getLastRowNum(); i++) {
+			JSONObject entityJSON = getJSON(colMap, entitySheet.getRow(i));
+			idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
+		}
+	}
+	
+	private void processCollectionSheet(
+			Workbook wb, 
+			String sheetName, 
+			String entityInfo, Map<String, JSONArray> collectionPropertyMap, 
+			Map<String, JSONObject> idMap) {
+		// Ensure we have the XOR.id column in the entity sheet
+		Sheet collectionSheet = wb.getSheet(sheetName);
+		Map<String, Integer> colMap = getHeaderMap(collectionSheet);
+
+		// A collection can have value objects, so XOR.ID is not mandatory
+		// But a collection entry should have a collection owner
+		if(!colMap.containsKey(Constants.XOR.OWNER_ID)) {
+			throw new RuntimeException("XOR.owner.id column is missing");
+		}		
+		
+		// process each collection entry
+		for(int i = 1; i <= collectionSheet.getLastRowNum(); i++) {
+			JSONObject collectionEntryJSON = getJSON(colMap, collectionSheet.getRow(i));
+			String key = getCollectionKey(collectionEntryJSON.getString(Constants.XOR.OWNER_ID), entityInfo);  
+			addCollectionEntry(collectionPropertyMap, key, collectionEntryJSON);
+			
+			// If the collection element is an entity add it to the idMap also
+			if(collectionEntryJSON.has(Constants.XOR.ID)) {
+				idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
+			}
+		}
+	}
+	
+	private String getCollectionKey(String ownerXorKey, String entityInfo) {
+		return ownerXorKey + ":" + getProperty(entityInfo).getName();
+	}
+	
+	private void addCollectionEntry(Map<String, JSONArray> collectionPropertyMap, String key, JSONObject collectionEntryJSON) {
+		JSONArray collection = null;
+		if(collectionPropertyMap.containsKey(key)) {
+			collection = collectionPropertyMap.get(key);
+		} else {
+			collection = new JSONArray();
+			collectionPropertyMap.put(key, collection);
+		}
+		
+		collection.put(collectionEntryJSON);
+	}
+	
+	private boolean isEmbeddedPath(String propertyPath) {
+		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1 &&
+				!propertyPath.startsWith(Constants.XOR.XOR_PATH_PREFIX)) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private JSONObject getJSON(Map<String, Integer> colMap, Row row) {
+		JSONObject entity = new JSONObject();
+		
+		for(Map.Entry<String, Integer> entry: colMap.entrySet()) {
+			Cell cell = row.getCell(entry.getValue());
+			if(isEmbeddedPath(entry.getKey())) {
+				setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
+			} else {
+				// set direct value
+				entity.put(entry.getKey(), cell.getStringCellValue());
+			}
+		}
+		
+		return entity;
+	}
+
+	private void setEmbeddableValue(JSONObject base, String path, String value) {
+		this.setEmbeddableValue(base, path, value, null);
+	}
+	
+	private void setEmbeddableValue(JSONObject base, String path, Object value, String replacedProperty) {
+		JSONObject embeddable = base;
+		
+		// Loop through each part of the path
+		while(path.indexOf(Settings.PATH_DELIMITER) != -1) {
+			String rootpart = path.substring(0, path.indexOf(Settings.PATH_DELIMITER));
+			if(base.has(rootpart)) {
+				embeddable = base.getJSONObject(rootpart);
+			} else {
+				embeddable = new JSONObject();
+				base.put(rootpart, embeddable);
+			}
+			
+			path = path.substring(rootpart.length()+1);
+		}
+		embeddable.put(path, value);
+		if(replacedProperty != null) {
+			embeddable.remove(replacedProperty);
+		}
+	}
+	
+	private Map<String, JSONArray> parseCollections(Workbook wb, Map<String, String> collectionSheets, Map<String, JSONObject> idMap) {
+		Map<String, JSONArray> collectionPropertyMap = new HashMap<String, JSONArray>();
+		for(Map.Entry<String, String> entry: collectionSheets.entrySet()) {
+			processCollectionSheet(wb, entry.getKey(), entry.getValue(), collectionPropertyMap, idMap);
+		}
+		
+		return collectionPropertyMap;
+	}
+	
+	/**
+	 * TODO: Should the map be topologically ordered?
+	 * @param to
+	 * @param sheetBO
+	 * @return
+	 */
+	private Workbook processSheetBO(BusinessObject to, Map<String, List<BusinessObject>> sheetBO) {
+		
+		SXSSFWorkbook wb = new SXSSFWorkbook(); 
+		wb.setCompressTempFiles(true);
+		
+		List<BusinessObject> entityBOList = new LinkedList<BusinessObject>();
+		entityBOList.add(to);
+		createBOSheet(wb, Constants.XOR.EXCEL_ENTITY_SHEET, null, entityBOList, null);
+		
+		int sheetNo = 1;
+		Map<String, String> sheetMap = new HashMap<String, String>();
+		for(Map.Entry<String, List<BusinessObject>> entry: sheetBO.entrySet()) {
+			// Create a sheet
+			String sheetName = Constants.XOR.EXCEL_SHEET_PREFIX + sheetNo++;
+			sheetMap.put(entry.getKey(), sheetName);	
+			createBOSheet(wb, sheetName, entry.getKey(), entry.getValue(), null);
+		}
+		writeSheetMap(wb, sheetMap);
+		
+		return wb;
+	}
+	
+	private void createBOSheet(Workbook wb, String sheetName, String entityInfo, List<BusinessObject> boList, BusinessObject owner ) {
+		
+		int colNo = 0;
+		int rowNo = 1;
+		SXSSFSheet sh = (SXSSFSheet) wb.getSheet(sheetName);
+		if(sh == null) {
+			sh = (SXSSFSheet) wb.createSheet(sheetName);
+		} else {
+			rowNo = sh.getLastRowNum() + 1;
+		}
+		Map<String, Integer> propertyColIndex = new HashMap<String, Integer>();
+		
+		for(BusinessObject bo: boList) {
+			if(bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {
+				createBOSheet(wb, sheetName, entityInfo, bo.getList(), (BusinessObject) bo.getContainer());
+				continue;
+			}
+			
+			List<String> propertyPaths = new ArrayList<String>();
+			
+			// Based on polymorphism, the actual instance can be a different subtype
+			// so we need to get a fresh property list and calculate the column indexes
+			// as new properties might be present and would need to be mapped to additional columns
+			if(owner == null && bo.getContainer() != null) {
+				owner = (BusinessObject) bo.getContainer();
+			}
+			if(owner != null) {
+				propertyPaths.add(Constants.XOR.OWNER_ID);
+			}
+			propertyPaths.add(Constants.XOR.ID);
+			propertyPaths.add(Constants.XOR.TYPE);
+			for(Property property: bo.getType().getProperties()) {
+				if(property.isMany()) {
+					propertyPaths.add(ExcelJsonCreationStrategy.getCollectionTypeKey(property));
+					
+					// Collections are handled separately
+					continue;
+				}
+				// Skip open content until we come with a default serialized form for empty object
+				// Currently it fails validation since empty string does not equal JSONObject
+				if(property.isOpenContent()) {
+					continue;
+				}
+				// Handle embedded objects and expand them if necessary
+				propertyPaths.addAll(property.expand());
+			}
+			
+			for(String propertyPath: propertyPaths) {
+				if(!propertyColIndex.containsKey(propertyPath)) {
+					propertyColIndex.put(propertyPath, colNo++);
+				}
+			}
+			
+			// TODO: add columns only if the value is not null
+			Row row = sh.createRow(rowNo++);
+			for(String propertyPath: propertyPaths) {
+				Cell cell = row.createCell(propertyColIndex.get(propertyPath));
+				Object value = null;
+				if(Constants.XOR.OWNER_ID.equals(propertyPath)) {
+					value = owner.getOpenProperty(Constants.XOR.ID);
+				} else if(Constants.XOR.ID.equals(propertyPath) || propertyPath.startsWith(Constants.XOR.TYPE + Constants.XOR.SEP)) {	
+					value = bo.getOpenProperty(propertyPath);
+				} else if(Constants.XOR.TYPE.equals(propertyPath)) {
+					value = bo.getInstanceClassName();
+				} else if(propertyPath.startsWith(Constants.XOR.OBJECTREF)) {
+					String path = propertyPath.substring(Constants.XOR.OBJECTREF.length());
+					value = bo.getExistingDataObject(Settings.convertToBOPath(path));
+					if(value != null && value instanceof BusinessObject) {
+						value = ((BusinessObject)value).getOpenProperty(Constants.XOR.ID);
+					} else if(value != null) {
+						throw new RuntimeException("ObjectRef needs to refer to an Entity: " + value.toString());
+					}
+				} else {
+					value = bo.get(Settings.convertToBOPath(propertyPath));
+				}
+				if(value != null) {
+					cell.setCellValue(value.toString());
+				}
+			}
+		}
+		
+		writeColumnNames(sh, propertyColIndex);		
+	}
+	
+	private void writeSheetMap(SXSSFWorkbook wb, Map<String, String> sheetMap) {
+		SXSSFSheet sh = (SXSSFSheet) wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
+		
+		int rowNo = 0;
+		for(Map.Entry<String, String> entry: sheetMap.entrySet()) {
+			Row row = sh.createRow(rowNo++);
+			Cell sheetNameCell = row.createCell(0);
+			Cell propertyNameCell = row.createCell(1);
+			sheetNameCell.setCellValue(entry.getValue());
+			propertyNameCell.setCellValue(entry.getKey());
+		}
+		
+		sh.autoSizeColumn(0);
+		sh.autoSizeColumn(1);
+		wb.setSheetOrder(Constants.XOR.EXCEL_INDEX_SHEET,1);
+	}
+	
+	private void writeColumnNames(SXSSFSheet sh, Map<String, Integer> propertyColIndex) {
+		Row row = sh.getRow(0);
+		if(row != null) {
+			// Column names have already been populated
+			return;
+		}
+
+		row = sh.createRow(0);
+		for(Map.Entry<String, Integer> entry: propertyColIndex.entrySet()) {
+			Cell cell = row.createCell(entry.getValue());
+			cell.setCellValue(entry.getKey());
+			sh.autoSizeColumn(entry.getValue());
+		}
 	}
 
 	@Override
@@ -642,7 +1143,22 @@ public class AggregateManager implements Xor {
 		public AggregateManagerBuilder viewVersion(int nestedViewVersion) {
 			this.nestedViewVersion = nestedViewVersion;
 			return this;
-		}		
+		}
+		
+		public AggregateManagerBuilder init(AggregateManager other) {
+			
+			this.nestedDasFactory = other.getDasFactory();
+			this.nestedAutoFlushNative = other.isAutoFlushNative();
+			this.nestedInterceptor = other.getInterceptor();
+			this.nestedAssociationStrategy = other.getAssociationStrategy();
+			this.nestedDetailStrategy = other.detailStrategy;
+			this.nestedPersistenceType = other.getPersistenceType();
+			this.nestedTypeNarrower = other.getTypeNarrower();
+			this.nestedTypeMapper = other.getTypeMapper();
+			this.nestedViewVersion = other.getViewVersion();
+			
+			return this;
+		}
 		
 		public AggregateManager build() {
 			AggregateManager result = new AggregateManager();
@@ -679,7 +1195,7 @@ public class AggregateManager implements Xor {
 	}
 
 	@Override
-	public void excelExport(OutputStream outputStream, Settings settings) {
+	public void exportQuery(OutputStream outputStream, Settings settings) {
 		
 		// Make sure this is a denormalized query
 		settings.setDenormalized(true);

@@ -120,26 +120,15 @@ public abstract class AbstractDASFactory implements DASFactory {
 			logger.warn("JPA configuration not found, hence cannot create a JPADataAccessService instance");
 		}
 
-		try { // MongoDB, use JPA for metadata configuration
-			if(persistenceType == null || persistenceType == PersistenceType.MONGODB) {
-				das.put(name, createJPADAS(typeMapper, name));
+		try { // Google App Engine, use JPA for metadata configuration
+			if(persistenceType == null || persistenceType == PersistenceType.DATASTORE) {
+				das.put(name, createCustomDAS(typeMapper, name));
 				injectDependencies(das.get(name), name);
 				das.get(name).define();
 				return das.get(name);
 			}
 		} catch (BeanCreationException e) {
-			logger.warn("MongDB configuration not found");
-		}	
-
-		try { // Riak, use JPA for metadata configuration
-			if(persistenceType == null || persistenceType == PersistenceType.RIAK) {
-				das.put(name, createJPADAS(typeMapper, name));
-				injectDependencies(das.get(name), name);
-				das.get(name).define();
-				return das.get(name);
-			}
-		} catch (BeanCreationException e) {
-			logger.warn("Riak configuration not found");
+			logger.warn("App Engine Datastore configuration not found");
 		}
 
 		// Ariba persistence uses a custom implementation

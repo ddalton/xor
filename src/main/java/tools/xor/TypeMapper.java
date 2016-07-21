@@ -42,6 +42,16 @@ public interface TypeMapper {
 	public Class<?> toDomain(Class<?> externalClass);
 	
 	/**
+	 * If the domain class could not be found from the given class, then try to 
+	 * infer it from the provided BusinessObject 
+	 * 
+	 * @param externalClass
+	 * @param bo BusinessObject
+	 * @return
+	 */
+	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);	
+	
+	/**
 	 * This is a more flexible form of getting the 
 	 * external form of the class and allows a particalar
 	 * type implementation to store more information on the external type
@@ -143,4 +153,26 @@ public interface TypeMapper {
 	 * @return
 	 */
 	public boolean isOpen(Class<?> clazz);
+	
+	/**
+	 * Get the EntityKey object that is used as the key in the ObjectCreator
+	 * cache.
+	 * 
+	 * @param id
+	 * @param type
+	 * @return
+	 */
+	public EntityKey getEntityKey(Object id, Type type);
+	
+	/**
+	 * Get the EntityKey object that is used as the key in the ObjectCreator
+	 * cache. This method allows type information to be inferred from a BusinessObject
+	 * and can lead to a more robust behavior in Polymorphic situations where the Type object 
+	 * is not present in dynamic type situations (e.g., JSON)
+	 *  
+	 * @param id
+	 * @param bo
+	 * @return
+	 */
+	public EntityKey getEntityKey(Object id, BusinessObject bo);	
 }

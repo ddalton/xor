@@ -24,8 +24,6 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.json.JsonObjectBuilder;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -33,6 +31,7 @@ import org.json.JSONObject;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.graph.ObjectGraph;
 
@@ -74,6 +73,22 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 		pojoCS = new POJOCreationStrategy(objectCreator);
 	}
 	
+	/**
+	 * Overridden by subclasses
+	 * @param result
+	 */
+	protected void addEntityMeta(JSONObject entity, Object from) {
+		
+	}
+	
+	/**
+	 * Overridden by subclasses
+	 * @param result
+	 */
+	protected void addCollectionMeta(JSONObject container, Property containmentProperty, Object fromCollectionInstance) {
+		
+	}	
+	
 	@Override
 	/**
 	 * Handle the creation of the following classes
@@ -86,14 +101,24 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 	 * JsonValue.NULL
 	 */
 	public Object newInstance(Object from, BasicType type, Class<?> toClass) throws Exception {
+		return this.newInstance(from, type, toClass, null, null);
+	}
 
+	@Override
+	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container,
+			Property containmentProperty) throws Exception {
+		
 		Object result = null;
 		if(unchanged.contains(toClass)) {
 			result = from;
 		} else if(toClass == JSONObject.class) {
 			result = new JSONObject();
+			addEntityMeta((JSONObject)result, from);
 		} else if(toClass == JSONArray.class) {
 			result = new JSONArray();
+			if(container != null && containmentProperty != null) {
+				addCollectionMeta((JSONObject) container.getInstance(), containmentProperty, from);
+			}
 		} else {
 			result = pojoCS.newInstance(from, type, toClass);
 		}
@@ -117,5 +142,5 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 		og.spanningTreeWithEdgeSwizzling(bo, settings);
 
 		return super.getNormalizedInstance(bo, settings);
-	}		
+	}	
 }

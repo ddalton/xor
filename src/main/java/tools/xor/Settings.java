@@ -565,4 +565,8 @@ public class Settings {
 			return new Settings(this);
 		}
 	}
+	
+	public static String convertToBOPath(String input) {
+		return input.replace(PATH_DELIMITER, AbstractBO.PATH_DELIMITER);
+	}
 }

@@ -107,10 +107,10 @@ public interface ExtendedProperty extends Property {
 	public boolean needsInitialization();
 	
 	/**
-	 * Indicates if this property should not be updated automatically by the framework
+	 * Indicates if this property represents the full data of the aggregate in JSON format
 	 * @return
 	 */
-	public boolean isComputed();	
+	public boolean isData();	
 
 	/**
 	 * Returns the type of association modelled by this property

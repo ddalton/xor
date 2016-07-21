@@ -297,6 +297,16 @@ public class ObjectCreator {
 		}
 	}
 
+	/**
+	 * Register the user provided object in the object creator cache.
+	 * During registration the following issues are handled
+	 * 1. Multiple objects with the same id (controlled by the share flag)
+	 * 2. Multiple objects with the same id but of different types due to polymorphism. The
+	 *    more specific instance is honored
+	 *    
+	 * @param newDataObject
+	 * @return
+	 */
 	public BusinessObject register(BusinessObject newDataObject) {
 		BusinessObject result = newDataObject;
 
@@ -472,7 +482,7 @@ public class ObjectCreator {
 
 			if(result == null) {
 				if(targetInstance == null) {
-					targetInstance = createInstance(sourceInstance, instanceClass, targetType);
+					targetInstance = createInstance(sourceInstance, instanceClass, targetType, container, containmentProperty);
 					if(targetInstance == null) {
 						logger.error(
 								"ObjectCreator#createTarget Unable to create targetInstance of class: "	+ instanceClass.getName() 
@@ -492,8 +502,8 @@ public class ObjectCreator {
 		return result;
 	}	
 
-	protected Object createInstance(Object source, Class<?> targetClass, Type targetType) throws Exception {
-		Object instance = creationStrategy.newInstance(source, (BasicType) targetType, targetClass);
+	protected Object createInstance(Object source, Class<?> targetClass, Type targetType, BusinessObject container, Property containmentProperty) throws Exception {
+		Object instance = creationStrategy.newInstance(source, (BasicType) targetType, targetClass, container, containmentProperty);
 		//setEmbeddedInstance(instance, targetType);
 
 		return instance;

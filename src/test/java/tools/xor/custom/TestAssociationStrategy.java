@@ -25,8 +25,6 @@ import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.BusinessNode;
-import tools.xor.custom.DefaultAssociationStrategy;
 import tools.xor.db.base.Category;
 import tools.xor.db.vo.base.CategoryVO;
 import tools.xor.util.ClassUtil;
@@ -63,7 +61,7 @@ public class TestAssociationStrategy extends DefaultAssociationStrategy {
 				// If the associated entity is a transient Category, we need to persist it if its type is extensible
 				BusinessObject target = (BusinessObject) callInfo.getOutput();
 
-				if(target == null || !((BusinessNode)target).isPersistent()) {
+				if(target == null || !((BusinessObject)target).isPersistent()) {
 					boolean isExtensible = false;
 					String categoryName = null;
 					String facetName = null;

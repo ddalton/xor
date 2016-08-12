@@ -96,7 +96,7 @@ public class AggregateManager implements Xor {
 	private Interceptor             interceptor;         // A user provided interceptor to be notified of framework events
 	private AssociationStrategy     associationStrategy; // Determine if any extra object need to be processed
 	private DetailStrategy          detailStrategy;      // Allows the user to define a custom detail strategy
-	private PersistenceType persistenceType;
+	private PersistenceType         persistenceType;
 	private TypeNarrower            typeNarrower;
 	private String                  viewsDirectory;
 
@@ -426,6 +426,7 @@ public class AggregateManager implements Xor {
 			direction = MapperDirection.DOMAINTOEXTERNAL;
 
 		ObjectCreator oc = new ObjectCreator(das, getPersistenceOrchestrator(), direction);
+		oc.setReadOnly(true);
 		BusinessObject from = oc.createDataObject(entity, (EntityType) oc.getType( getEntityClass(entity, settings) ), null, null);
 
 		// Get the narrowed class
@@ -515,6 +516,7 @@ public class AggregateManager implements Xor {
 			getPersistenceOrchestrator().refresh(entity);		
 		
 		ObjectCreator oc = new ObjectCreator( getDAS(), getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		oc.setReadOnly(true);
 		BusinessObject from = oc.createDataObject(entity, oc.getType(entity.getClass()), null, null);
 		if(isWrapper) {
 			ExtendedProperty property = (ExtendedProperty) ((EntityType)from.getType()).getIdentifierProperty();
@@ -789,7 +791,12 @@ public class AggregateManager implements Xor {
 			
 			// If the collection element is an entity add it to the idMap also
 			if(collectionEntryJSON.has(Constants.XOR.ID)) {
-				idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
+				try {
+					idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
+				} catch (Exception e) {
+					String longStr = new Long(collectionEntryJSON.getLong(Constants.XOR.ID)).toString();
+					idMap.put(longStr, collectionEntryJSON);
+				}
 			}
 		}
 	}
@@ -828,7 +835,17 @@ public class AggregateManager implements Xor {
 				setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
 			} else {
 				// set direct value
-				entity.put(entry.getKey(), cell.getStringCellValue());
+				if(cell != null) {
+					try {
+						entity.put(entry.getKey(), cell.getStringCellValue());
+					} catch(Exception e) {
+						// Numeric entry
+						entity.put(entry.getKey(), cell.getNumericCellValue());
+					}
+				} else {
+					//entity.put(entry.getKey(), JSONObject.NULL);
+					entity.put(entry.getKey(), "");
+				}
 			}
 		}
 		
@@ -1059,11 +1076,9 @@ public class AggregateManager implements Xor {
 		settings.setBaseline(true);
 		
 		BusinessObject o = queryOne(entity, settings);
-		System.out.println("TYpe: " + o.getType().getName() + ", instance: " + o.getInstance());
 		
 		// attach it to the persistence layer
 		getPersistenceOrchestrator().attach(o, settings.getView());
-		System.out.println("patch object: " + o.getInstance());
 		
 		// update the just attached object with the original object
 		return update(entity, settings);		

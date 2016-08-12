@@ -20,7 +20,6 @@
 package tools.xor.operation;
 
 import tools.xor.CallInfo;
-import tools.xor.ProcessingStage;
 
 
 public class DeleteOperation extends AbstractOperation {
@@ -31,15 +30,8 @@ public class DeleteOperation extends AbstractOperation {
 		return null;
 	}
 	
-	/**
-	 * Supports all stages except CREATE
-	 */
 	@Override
-	protected boolean supportsStage(ProcessingStage stage, CallInfo callInfo) {
-		if(stage == ProcessingStage.CREATE) {
-			return false;
-		}
-		
-		return true;
-	}	
+	protected boolean supportsCreate(CallInfo callInfo) {
+		return false;
+	}		
 }

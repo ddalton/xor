@@ -301,4 +301,17 @@ public interface BusinessObject extends DataObject {
 	 * @return
 	 */
 	public Object getDataObject(Property property);	
+	
+	/**
+	 * A node is considered a dependent if it has incoming edges and one of them has the cascade flag set to true
+	 * @return
+	 */
+	public boolean isDependent();	
+	
+	/**
+	 * This method takes care of creating the containment graph and also any needed DataObject wrappers for the instance objects
+	 * This is especially important if the object is referenced more than once and we don't want to create a copy for each reference
+	 * It also demarcates the spanning tree of the graph based on containment relationships
+	 */		
+	public void createAggregate();	
 }

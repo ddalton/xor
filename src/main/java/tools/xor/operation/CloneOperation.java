@@ -57,13 +57,5 @@ public class CloneOperation extends AbstractOperation {
 	public Object getResult() {
 		return result;
 	}
-
-	/**
-	 * Supports all stages
-	 */
-	@Override
-	protected boolean supportsStage(ProcessingStage stage, CallInfo callInfo) {
-		return true;
-	}	
 	
 }

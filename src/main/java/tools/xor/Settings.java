@@ -53,6 +53,8 @@ public class Settings {
 	public static final int    INITIAL_API_VERSION = 1;
 	public static final int    CURRENT_API_VERSION = 1;	
 	
+	protected boolean supportsPostLogic;
+	
 	// The entity type on which the data is based
 	// TODO: can evolve to an IDL operation
 	protected Type entityType;
@@ -569,4 +571,13 @@ public class Settings {
 	public static String convertToBOPath(String input) {
 		return input.replace(PATH_DELIMITER, AbstractBO.PATH_DELIMITER);
 	}
+	
+
+	public boolean isSupportsPostLogic() {
+		return supportsPostLogic;
+	}
+
+	public void setSupportsPostLogic(boolean supportsPostLogic) {
+		this.supportsPostLogic = supportsPostLogic;
+	}	
 }

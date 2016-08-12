@@ -41,6 +41,11 @@ public class DenormalizedModifyOperation extends ModifyOperation {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private Object result;
+	
+	@Override
+	protected boolean supportsCreate(CallInfo callInfo) {
+		return false;
+	}		
 
 	public void removeObsoleteEntities(CallInfo callInfo, CollectionUpdateAction migratorAction) {
 
@@ -54,13 +59,6 @@ public class DenormalizedModifyOperation extends ModifyOperation {
 	@Override
 	public void processCollection(CallInfo callInfo) throws Exception {
 
-		// DILIP: This is processed by view
-		//if(!callInfo.isCascadable()) // Hibernate will not update this collection
-		//	return;
-
-		//if(callInfo.getStage() != ProcessingStage.UPDATE)
-		//	return;		
-
 		// Update the collection/map. This includes adding/removing/repositioning elements
 		PropertyKey propertyKey = new PropertyKey((BusinessObject) callInfo.getParent().getOutput(), callInfo.getOutputProperty());
 		CollectionUpdateAction migratorAction = callInfo.getOutputRoot().getObjectPersister().getOrCreateMigratorAction(propertyKey);
@@ -69,7 +67,6 @@ public class DenormalizedModifyOperation extends ModifyOperation {
 			removeObsoleteEntities(callInfo, migratorAction);
 		}
 		migratorAction.linkElements(callInfo);
-		//migratorAction.addOrReposition(callInfo);
 	}
 
 	@Override

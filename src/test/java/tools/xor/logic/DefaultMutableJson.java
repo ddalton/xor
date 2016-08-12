@@ -432,4 +432,22 @@ public class DefaultMutableJson extends AbstractDBTest {
 			assert(child.getId() != null);
 		}		
 	}
+	
+	protected void checkExcelImport100() throws JSONException, IOException {
+		FileInputStream in = new FileInputStream("task100Child.xlsx");
+		
+		final String TASK_NAME = "SETUP_DSL";
+		
+		Settings settings = getSettings();
+		settings.addAssociation( new AssociationSetting(TaskDetails.class));		
+		Task task = (Task) aggregateService.importAggregate(in, settings);
+		
+		assert(task.getId() != null);
+		assert(task.getName().equals(TASK_NAME));
+		assert(task.getTaskChildren() != null);
+		assert(task.getTaskChildren().size() == 100);
+		for(Task child: task.getTaskChildren()) {
+			assert(child.getId() != null);
+		}		
+	}	
 }

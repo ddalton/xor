@@ -711,7 +711,9 @@ public class QueryView {
 			// find and create data object
 			result = ((AbstractBO)entity).getByEntityKey(idValue, entity.getType());
 			if(result == null) {
-				System.out.println("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
+				if(logger.isDebugEnabled()) {
+					logger.debug("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
+				}
 				result = entity.createDataObject(idValue, type);
 			}
 		}

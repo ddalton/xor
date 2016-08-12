@@ -20,7 +20,6 @@
 package tools.xor;
 
 import java.util.Date;
-import java.util.List;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -30,7 +29,7 @@ import tools.xor.operation.ModifyOperation;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 
-public class MutableBO extends AbstractBO implements BusinessNode {
+public class MutableBO extends AbstractBO {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final long serialVersionUID = 1L;
 	
@@ -40,83 +39,6 @@ public class MutableBO extends AbstractBO implements BusinessNode {
 
 		if(isRoot()) 
 			objectPersister = new ObjectPersister();
-	}
-
-	@Override
-	public boolean isPersistent() {
-		return persistent;
-	}
-
-	@Override
-	public void clearVisited() {
-		for(BusinessObject dataObject: objectCreator.getDataObjects())
-			dataObject.setVisited(false);
-	}
-
-	/**
-	 * This method takes care of creating the containment graph and also any needed DataObject wrappers for the instance objects
-	 * This is especially important if the object is referenced more than once and we don't want to create a copy for each reference
-	 * It also demarcates the spanning tree of the graph based on containment relationships
-	 */	
-	@Override
-	public void createAggregate() {
-
-		// Loop through the data object properties and if it is not a data type, then create a Data Object wrapper and recurse
-		clearVisited();
-		createWrapper(this);
-
-		clearVisited();
-	}
-
-	protected void createWrapper(BusinessObject parent) {
-		
-		for(BusinessObject child: parent.getList()) {
-			if(parent.getContainmentProperty().isContainment()) {
-				child.setContainer(parent);
-				child.setContainmentProperty(parent.getContainmentProperty());
-			}
-			createWrapper(child);
-		}
-
-		for(Property property: parent.getType().getProperties()) {	
-			if(!((ExtendedProperty) property).isDataType()) {
-				Object propertyInstance = ((ExtendedProperty)property).getValue(parent);
-				if(propertyInstance == null)
-					continue;
-
-				Object target = objectCreator.getExistingDataObject(propertyInstance);
-				if(target != null && !BusinessObject.class.isAssignableFrom(target.getClass()))
-					throw new IllegalStateException("Property refers to a DataObject, but the object is not a DataObject");
-
-				BusinessObject child = null;
-				if(target != null)
-					child = (BusinessObject) target;
-				else {
-					BusinessObject container = parent;
-					Property containmentProperty = property;
-					if(!property.isContainment()) {
-						container = null;
-						containmentProperty = null;
-					}
-					child = objectCreator.createDataObject(propertyInstance, property.getType(), container, containmentProperty);
-				}
-
-				if(child.isVisited())
-					continue;
-				else
-					child.setVisited(true);
-
-				if(!property.isContainment()) 
-					continue;
-
-				createWrapper(child);				
-			}
-		}
-	}	
-
-	@Override
-	public boolean isDependent() {
-		return getContainmentProperty() != null;
 	}
 
 	@Override
@@ -178,9 +100,11 @@ public class MutableBO extends AbstractBO implements BusinessNode {
 		try {
 			Date start = new Date();
 			oc.persistGraph(settings);
-			System.out.println("MutableBO#create.createAggregate took " + ((a.getTime()-s.getTime())/1000) + " seconds");
-			System.out.println("MutableBO#create.execute took " + ((start.getTime()-s.getTime())/1000) + " seconds");
-			System.out.println("MutableBO#create.persist took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+			if(logger.isDebugEnabled()) {
+				logger.debug("MutableBO#create.createAggregate took " + ((a.getTime()-s.getTime())/1000) + " seconds");
+				logger.debug("MutableBO#create.execute took " + ((start.getTime()-s.getTime())/1000) + " seconds");
+				logger.debug("MutableBO#create.persist took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+			}
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}

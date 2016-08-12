@@ -19,9 +19,7 @@
 
 package tools.xor.operation;
 
-import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.ProcessingStage;
 
 public class ReadOperation extends AbstractOperation {
 	
@@ -44,12 +42,12 @@ public class ReadOperation extends AbstractOperation {
 	}	
 	
 	@Override
-	protected boolean supportsStage(ProcessingStage stage, CallInfo callInfo) {
+	protected boolean supportsPostLogic(CallInfo callInfo) {
 		// Immutable processing is done in POSTLOGIC stage
-		if(stage == ProcessingStage.POSTLOGIC && !callInfo.getOutputObjectCreator().getTypeMapper().immutable()) {
-			return false;
+		if(callInfo.getOutputObjectCreator().getTypeMapper().immutable()) {
+			return true;
 		}
 		
-		return true;
+		return super.supportsPostLogic(callInfo);
 	}	
 }

@@ -359,7 +359,9 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			objectCreator.getPersistenceOrchestrator().saveOrUpdate(root.getInstance());
 		}
 
-		System.out.println("ObjectGraph took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+		if(logger.isDebugEnabled()) {
+			System.out.println("ObjectGraph took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+		}
 	}
 	
 	public void replaceInstance(V vertex, Object newInstance) {

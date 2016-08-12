@@ -19,9 +19,6 @@
 
 package tools.xor.util;
 
-import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -30,10 +27,11 @@ import java.util.Set;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import tools.xor.AggregateAction;
 import tools.xor.BasicType;
 import tools.xor.BusinessEdge;
-import tools.xor.BusinessNode;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityKey;
@@ -334,7 +332,7 @@ public class ObjectCreator {
 					// Clear up references to the more general proxy instance
 					instanceDataObjectMap.remove(oldInstance);
 					if(objectGraph != null) {
-						objectGraph.replaceInstance((MutableBO) existing, instance);
+						objectGraph.replaceInstance(existing, instance);
 					}
 					result = existing; // we have replace the instance with the new instance
 				} else {
@@ -460,7 +458,7 @@ public class ObjectCreator {
 			AggregateAction action = ci.getSettings().getAction();
 			boolean isDependent = false;
 			if(ci.getInput() != null)
-				isDependent = ((BusinessNode)ci.getInput()).isDependent();
+				isDependent = ((BusinessObject)ci.getInput()).isDependent();
 			boolean fetchPersistent =  ( (action == AggregateAction.CREATE || action == AggregateAction.CLONE) && !isDependent ) ||
 					(action == AggregateAction.MERGE || action == AggregateAction.UPDATE || action == AggregateAction.LOAD);
 			if( fetchPersistent && targetInstance == null) {

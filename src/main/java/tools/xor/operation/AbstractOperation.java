@@ -25,31 +25,38 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
-import tools.xor.MutableBO;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.graph.ObjectGraph;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
 
 	protected void setResult(Object target) {}
+		
+	protected boolean supportsCreate(CallInfo callInfo) {
+		return true;
+	}	
 	
-	protected abstract boolean supportsStage(ProcessingStage stage, CallInfo callInfo);
+	protected boolean supportsUpdate(CallInfo callInfo) {
+		return true;
+	}	
+	
+	protected boolean supportsPostLogic(CallInfo callInfo) {
+		return callInfo.getSettings().isSupportsPostLogic();
+	}
 
 	public void execute(CallInfo callInfo) {
 		
 		// Create new objects
-		if(supportsStage(ProcessingStage.CREATE, callInfo)) {
+		if(supportsCreate(callInfo)) {
 			owLogger.debug("Processing state: " + ProcessingStage.CREATE);
 			this.process(callInfo.setStage(ProcessingStage.CREATE)); 
 			callInfo.clearVisitedOutputs();			
@@ -58,7 +65,7 @@ public abstract class AbstractOperation implements Operation {
 		// TODO: get list of revisions for this aggregate and iterate this process for each revision
 		// The upgrade and downgrade methods will be called for revision processing instead of the process method
 		// Step 1: Create the update actions
-		if(supportsStage(ProcessingStage.UPDATE, callInfo)) {
+		if(supportsUpdate(callInfo)) {
 			setVisited(callInfo, true);
 			owLogger.debug("Processing state: " + ProcessingStage.UPDATE);
 			this.process(callInfo.setStage(ProcessingStage.UPDATE));
@@ -70,7 +77,8 @@ public abstract class AbstractOperation implements Operation {
 		}
 
 		// Process post actions
-		if(supportsStage(ProcessingStage.POSTLOGIC, callInfo)) {
+		// Enable only if necessary for performance reasons
+		if(supportsPostLogic(callInfo)) {
 			owLogger.debug("Processing state: " + ProcessingStage.POSTLOGIC);
 			this.process(callInfo.setStage(ProcessingStage.POSTLOGIC));
 			callInfo.clearVisitedOutputs();	

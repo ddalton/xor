@@ -54,7 +54,6 @@ public class QueryOperation extends AbstractOperation {
 		
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
-		System.out.println("Type: " + referenceType.getName());
 		QueryView aggregateView = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
 		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();	
 		
@@ -115,17 +114,15 @@ public class QueryOperation extends AbstractOperation {
 		return result;
 	}	
 	
-	/**
-	 * Supports only the CREATE stage
-	 */
 	@Override
-	protected boolean supportsStage(ProcessingStage stage, CallInfo callInfo) {
-		if(stage == ProcessingStage.CREATE) {
-			return true;
-		}
-		
-		return false;
+	protected boolean supportsCreate(CallInfo callInfo) {
+		return true;
 	}	
+	
+	@Override
+	protected boolean supportsUpdate(CallInfo callInfo) {
+		return false;
+	}		
 	
 	@Override
 	protected void postVisited(CallInfo ci) {

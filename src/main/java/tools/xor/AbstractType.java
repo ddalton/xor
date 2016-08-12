@@ -816,6 +816,11 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	@Override
+	/**
+	 * We will not automatically sort as this involves additional resources that the 
+	 * user should not pay if not needed.
+	 * So the user will take of invoking the business logic in the correct order.
+	 */
 	public List<Property> getProperties(int apiVersion) {
 		if(propertiesByVersion.containsKey(apiVersion) ) {
 			return propertiesByVersion.get(apiVersion);
@@ -824,10 +829,10 @@ public abstract class AbstractType implements EntityType {
 		List<Property> result = null;
 		if(apiVersion != ALL) {
 			result = getProperties(properties.values(), apiVersion);
-			propertiesByVersion.put(apiVersion, sort(result));
+			propertiesByVersion.put(apiVersion, result);
 		} else {
-			propertiesByVersion.put(ALL, sort(new ArrayList<Property>(properties.values())));
-			result = propertiesByVersion.get(ALL);
+			result = new ArrayList<Property>(properties.values());
+			propertiesByVersion.put(ALL, result);
 		}
 
 		return result;
@@ -892,45 +897,6 @@ public abstract class AbstractType implements EntityType {
 	public List<Type> getEmbeddableTypes() {
 		return new ArrayList<Type>();
 	}
-
-	/**
-	 * Move all the collections to the end. This does not order between collections. So if there is a dependency from one collection to another that needs to be resolved using postProcess
-	 * e.g., a business logic annotation
-	 * 
-	 * TODO: Is sort really necessary?
-	 */	
-	@Override
-	public List<Property> sort(List<Property> properties) {
-		List<Property> dataTypes = new ArrayList<Property>();
-		List<Property> toMany = new ArrayList<Property>();
-		List<Property> toOne = new ArrayList<Property>();
-
-		for(Property property: properties) {
-			if(property == null) {
-				logger.error("property is null)");
-			}
-						
-			if(property.getType().isDataType()) {
-				dataTypes.add(property);
-			} else {
-				if(property.isMany())
-					if(property.isContainment())
-						toMany.add(property);
-					else
-						toMany.add(0, property);
-				else
-					if(property.isContainment())
-						toOne.add(property);
-					else
-						toOne.add(0, property);
-			}
-		}
-		List<Property> result = dataTypes;
-		result.addAll(toOne);
-		result.addAll(toMany);
-
-		return result;
-	}	
 
 	@Override
 	public void invokePostLogic(Settings settings, Object instance) {

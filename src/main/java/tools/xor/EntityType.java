@@ -241,13 +241,6 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public boolean supportsDynamicUpdate();
 
 	/**
-	 * Give an ordering of the properties
-	 * @param properties
-	 * @return
-	 */
-	public List<Property> sort(List<Property> properties);
-
-	/**
 	 * Get the super type for this type
 	 * @return
 	 */

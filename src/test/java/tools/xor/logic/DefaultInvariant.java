@@ -37,7 +37,10 @@ public class DefaultInvariant extends AbstractDBTest {
 		person.setDisplayName("Dilip Dalton");
 		person.setDescription("Software engineer in the bay area");
 		person.setUserName("daltond");
-		person = (Manager) aggregateService.create(person, new Settings());	
+		
+		Settings settings = new Settings();
+		settings.setSupportsPostLogic(true);
+		person = (Manager) aggregateService.create(person, settings);	
 		
 		assert(person.getId() != null);
 	}

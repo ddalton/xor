@@ -736,16 +736,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		} else
 			result = getType().isDataType();
 		
-		/*
-		if(isMany()) {
-
-			System.out.println("AbstractProperty#isDataType property: " + getName() 
-					+ ", result: " + result
-					+ ", elementType: " + getElementType().getName());
-			if(ExternalType.class.isAssignableFrom(getElementType().getClass()))
-				System.out.println("AbstractProperty#isDataType elementType domain: " + ((ExternalType)getElementType()).getDomainType().getName());
-		}
-		*/
 		return result;
 	}
 

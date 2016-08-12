@@ -80,6 +80,11 @@ public abstract class AbstractBO implements BusinessObject {
 	public void setPersistent(boolean persistent) {
 		this.persistent = persistent;
 	}
+	
+	@Override
+	public boolean isDependent() {
+		return getContainmentProperty() != null;
+	}	
 
 	@Override
 	public ObjectPersister getObjectPersister() {
@@ -147,7 +152,7 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public BusinessObject getEntity(BusinessObject entity) {
 		Object id = entity.getIdentifierValue();
-		if(id != null)
+		if(id != null && !"".equals(id))
 			return getByEntityKey(id, entity);
 
 		return null;
@@ -522,12 +527,12 @@ public abstract class AbstractBO implements BusinessObject {
 		// We will use the already loaded object in session if one is available
 		// This is done only for the query operation that retrieves managed objects
 		if(instanceType == null)
-			System.out.println("!!!!! instanceType is null");
+			logger.error("!!!!! instanceType is null for object id: " + id);
 		if(getObjectCreator().isReadOnly() && objectCreator.getTypeMapper().isDomain(instanceType.getInstanceClass())) {
 			propertyInstance = objectCreator.getPersistenceOrchestrator().getCached(instanceType.getInstanceClass(), id);
 			
 			if(propertyInstance != null) {
-				System.out.println("Found in cache for type: " + instanceType.getInstanceClass().getName() + " and id: " + id.toString());
+				logger.info("Found in cache for type: " + instanceType.getInstanceClass().getName() + " and id: " + id.toString());
 			}
 		}
 		
@@ -1252,4 +1257,60 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		return copy;
 	}
+	
+	@Override
+	public void createAggregate() {
+
+		// Loop through the data object properties and if it is not a data type, then create a Data Object wrapper and recurse
+		objectCreator.clearVisited();
+		createWrapper(this);
+
+		objectCreator.clearVisited();
+	}	
+	
+	protected void createWrapper(BusinessObject parent) {
+		
+		for(BusinessObject child: parent.getList()) {
+			if(parent.getContainmentProperty().isContainment()) {
+				child.setContainer(parent);
+				child.setContainmentProperty(parent.getContainmentProperty());
+			}
+			createWrapper(child);
+		}
+
+		for(Property property: parent.getType().getProperties()) {	
+			if(!((ExtendedProperty) property).isDataType()) {
+				Object propertyInstance = ((ExtendedProperty)property).getValue(parent);
+				if(propertyInstance == null)
+					continue;
+
+				Object target = objectCreator.getExistingDataObject(propertyInstance);
+				if(target != null && !BusinessObject.class.isAssignableFrom(target.getClass()))
+					throw new IllegalStateException("Property refers to a DataObject, but the object is not a DataObject");
+
+				BusinessObject child = null;
+				if(target != null)
+					child = (BusinessObject) target;
+				else {
+					BusinessObject container = parent;
+					Property containmentProperty = property;
+					if(!property.isContainment()) {
+						container = null;
+						containmentProperty = null;
+					}
+					child = objectCreator.createDataObject(propertyInstance, property.getType(), container, containmentProperty);
+				}
+
+				if(child.isVisited())
+					continue;
+				else
+					child.setVisited(true);
+
+				if(!property.isContainment()) 
+					continue;
+
+				createWrapper(child);				
+			}
+		}
+	}		
 }

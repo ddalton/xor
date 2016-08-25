@@ -19,7 +19,7 @@
 
 package tools.xor;
 
-import java.lang.reflect.Method;
+import java.util.List;
 
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
@@ -34,11 +34,6 @@ public interface ExtendedProperty extends Property {
 		 * Process before the property is processed
 		 */
 		PRE,    
-
-		/**
-		 * Do the actual processing replacing the standard getter/setter processing
-		 */
-		LOGIC,  
 
 		/**
 		 * Process after the property and its descendants are processed
@@ -105,12 +100,6 @@ public interface ExtendedProperty extends Property {
 	 * Indicates if this property needs to be initialized when the object is created
 	 */
 	public boolean needsInitialization();
-	
-	/**
-	 * Indicates if this property represents the full data of the aggregate in JSON format
-	 * @return
-	 */
-	public boolean isData();	
 
 	/**
 	 * Returns the type of association modelled by this property
@@ -173,13 +162,6 @@ public interface ExtendedProperty extends Property {
 	 * Returns true if the collection represents a Set
 	 */
 	public boolean isSet();
-	
-	/**
-	 * Allow business logic to be invoked when reading a value
-	 * @param dataObject
-	 * @param event
-	 */
-	public Object propertyRead(BusinessObject dataObject, PropertyEvent event);
 
 	/**
 	 * Allow business logic to be invoked when setting a value
@@ -187,7 +169,7 @@ public interface ExtendedProperty extends Property {
 	 * @param event
 	 * @return true if the processing needs to be short circuited
 	 */
-	public boolean propertyUpdate(BusinessObject dataObject, PropertyEvent event);
+	public boolean evaluatePromise(BusinessObject dataObject, PropertyEvent event);
 
 	/**
 	 * Convenience method to see if the property refers to a DataObject or a simple object
@@ -241,14 +223,6 @@ public interface ExtendedProperty extends Property {
 	 * @return
 	 */
 	public boolean isUpdatable();
-	
-	/**
-	 * Get the correct business logic getter for the current API version in settings
-	 * 
-	 * @param settings
-	 * @return
-	 */
-	public Method getDataReader(Settings settings, ProcessingStage stage);
 
 	/**
 	 * Get the correct business logic setter for the current API version in settings
@@ -256,7 +230,7 @@ public interface ExtendedProperty extends Property {
 	 * @param settings
 	 * @return
 	 */
-	public MethodInfo getDataUpdater(Settings settings, Phase phase, ProcessingStage stage);
+	public List<MethodInfo> getPromises(Settings settings, Phase phase, ProcessingStage stage);
 
 	/**
 	 * Checks if the property is appliacable for the given api version

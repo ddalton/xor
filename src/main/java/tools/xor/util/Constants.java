@@ -72,6 +72,8 @@ public class Constants {
 	  // Synthetic identifier added to each object instance to help identify each object in an object graph
 	  public static final String OWNER_ID = XOR_PATH_PREFIX + "owner.id";
 	  
+	  public static final String CALLBACK = "_CALLBACK_";
+	  
 	  public static String getExcelSheetFullName(Type type, Property property) {
 		  return type.getName() + ":" + property.getName();
 	  }

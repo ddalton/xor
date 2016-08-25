@@ -193,27 +193,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public Method getSetterMethod(String targetProperty);
 
 	/**
-	 * Get the business logic method that gets invoked when an object
-	 * referenced by the property is read
+	 * Get the promises associated with a property
 	 * @param targetProperty
 	 * @return
 	 */
-	public Set<MethodInfo> getDataReaders(String targetProperty);
-
-	/**
-	 * Get the business logic method that gets invoked when an object
-	 * referenced by the property is updated
-	 * @param targetProperty
-	 * @return
-	 */
-	public Set<MethodInfo> getDataUpdaters(String targetProperty);
-	
-	/**
-	 * Get the business logic method if available based on viewname
-	 * @param viewName
-	 * @return
-	 */
-	public Set<MethodInfo> getDataInvokers(String viewName);
+	public List<MethodInfo> getPromises(String targetProperty);
 
 	/**
 	 * Returns all the properties that need to be initialized when
@@ -257,5 +241,4 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param das
 	 */
 	public void setDAS(DataAccessService das);
-
 }

@@ -20,10 +20,16 @@
 package tools.xor.operation;
 
 import tools.xor.CallInfo;
+import tools.xor.ExtendedProperty;
 
 public class ReadOperation extends AbstractOperation {
 	
 	private Object result;
+	
+	@Override
+	protected ExtendedProperty getDomainProperty(CallInfo ci) {
+		return ci.getInputProperty();
+	}	
 	
 	@Override
 	protected boolean isIdentifier(CallInfo ci) {

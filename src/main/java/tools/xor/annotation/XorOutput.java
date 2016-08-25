@@ -32,5 +32,5 @@ import tools.xor.AbstractBO;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface XorOutput {
-    String path() default AbstractBO.CURRENT;
+    String path() default AbstractBO.PATH_CONTAINER;
 }

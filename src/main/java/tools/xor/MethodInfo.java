@@ -35,16 +35,8 @@ public class MethodInfo extends VersionInfo {
 	private final String[] tags;
 	private final Phase phase;
 	private final ProcessingStage stage;
-
-	public MethodInfo(int fromVersion, int untilVersion, Method method) {
-		this(fromVersion, untilVersion, method, false, null, null, null, null);
-	}
-
-	public MethodInfo(int fromVersion, int untilVersion, Method method, boolean capture, AggregateAction[] actions, String[] tags, Phase phase) {
-		this(fromVersion, untilVersion, method, capture, actions, tags, phase, null);
-	}
 	
-	public MethodInfo(int fromVersion, int untilVersion, Method method, boolean capture, AggregateAction[] actions, String[] tags, Phase phase, ProcessingStage stage) {
+	public MethodInfo(int order, int fromVersion, int untilVersion, Method method, boolean capture, AggregateAction[] actions, String[] tags, Phase phase, ProcessingStage stage) {
 		super(fromVersion, untilVersion);
 		
 		this.capture = capture;
@@ -63,7 +55,7 @@ public class MethodInfo extends VersionInfo {
 		}
 		
 		if(phase == null) {
-			this.phase = Phase.LOGIC;
+			this.phase = Phase.POST;
 		} else {
 			this.phase = phase;
 		}
@@ -77,10 +69,6 @@ public class MethodInfo extends VersionInfo {
 		} else {
 			this.stage = stage;
 		}
-	}
-	
-	public MethodInfo(Method method) {
-		this(Settings.INITIAL_API_VERSION, Integer.MAX_VALUE, method);
 	}
 	
 	public boolean intersectsTags(String[] otherTags) {
@@ -126,11 +114,11 @@ public class MethodInfo extends VersionInfo {
 	}
 	
 	public boolean isRelevant(Settings settings) {
-		return isRelevant(settings, Phase.LOGIC, null);
+		return isRelevant(settings, Phase.POST, null);
 	}
 
 	public boolean isRelevant(Settings settings, ProcessingStage stage) {
-		return isRelevant(settings, Phase.LOGIC, stage);
+		return isRelevant(settings, Phase.POST, stage);
 	}
 	
 	public boolean isRelevant(Settings settings, Phase phase, ProcessingStage stage) {

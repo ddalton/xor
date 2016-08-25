@@ -30,17 +30,15 @@ public class PropertyElement implements PropertyEvent {
 	private Phase    phase;
 	private Settings settings;
 	private Object   inputElement;
+	private Object   inputParentElement;	
 	private ProcessingStage stage;
-	
-	public PropertyElement(Settings settings, Object element, Object input) {
-		this(settings, element, input, ExtendedProperty.Phase.LOGIC, ProcessingStage.UPDATE);
-	}
 
-	public PropertyElement(Settings settings, Object element, Object input, Phase phase, ProcessingStage stage) {
+	public PropertyElement(Settings settings, Object element, Object input, Object inputParent, Phase phase, ProcessingStage stage) {
 		this.element = element;
 		this.phase = phase;
 		this.settings = settings;
 		this.inputElement = input;
+		this.inputParentElement = inputParent;
 		this.stage = stage;
 	}
 
@@ -70,6 +68,11 @@ public class PropertyElement implements PropertyEvent {
 	public Object getOtherElement () {
 		return inputElement;
 	}
+	
+	@Override
+	public Object getOtherElementParent () {
+		return inputParentElement;
+	}	
 
 	@Override public ProcessingStage getStage ()
 	{

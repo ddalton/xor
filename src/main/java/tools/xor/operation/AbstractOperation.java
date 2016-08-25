@@ -140,17 +140,22 @@ public abstract class AbstractOperation implements Operation {
 		processCollection(callInfo);
 	}
 	
+	protected ExtendedProperty getDomainProperty(CallInfo ci) {
+		return ci.getOutputProperty();
+	}
+	
 	private boolean executeDataUpdate(CallInfo ci, Phase phase) {
 		 
 		if(ci.getOutputProperty() != null) {
-			ExtendedProperty property = ci.getOutputProperty();
-			if(property.getDataUpdater(ci.getSettings(), phase, ci.getStage()) != null) {
-				return property.propertyUpdate(
+			ExtendedProperty property = getDomainProperty(ci);
+			if(property.getPromises(ci.getSettings(), phase, ci.getStage()).size() > 0) {
+				return property.evaluatePromise(
 					ci.getParentOutputEntity(),
 					new PropertyElement(
 						ci.getSettings(),
 						null,
-						property.isOpenContent() ? ci.getParent().getInput() : ci.getInput(),
+						ci.getInput(),
+						ci.getParent().getInput(),
 						phase,
 						ci.getStage()));
 			}

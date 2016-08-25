@@ -72,23 +72,8 @@ public final class SetterAction implements Executable {
 			}
 		}
 		
-		setCustomValue(invokeOn);
+		((ExtendedProperty)key.getProperty()).setValue(invokeOn, value);
 	}		
-	
-	/**
-	 * This method also takes case of invoking any business logic specific method
-	 * @param invokeOn
-	 */
-	protected void setCustomValue(BusinessObject invokeOn) {
-
-		ExtendedProperty property = ((ExtendedProperty)key.getProperty());
-		
-		if(property.getDataUpdater(settings, ExtendedProperty.Phase.LOGIC, ProcessingStage.UPDATE) != null) {
-			property.propertyUpdate(invokeOn, new PropertyElement(settings, value, input));
-		} else {
-			property.setValue(invokeOn, value);	
-		}
-	}
 
 	@Override
 	public PropertyKey getKey() {

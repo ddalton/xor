@@ -35,4 +35,6 @@ public interface PropertyEvent {
 	// Get the processing stage, is this the first pass (object creation) or the second pass (
 	//object update)
 	public ProcessingStage getStage();
+	
+	public Object getOtherElementParent();
 }

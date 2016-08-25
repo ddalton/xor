@@ -19,8 +19,6 @@
 
 package tools.xor;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -31,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,13 +39,12 @@ import javax.persistence.Entity;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorEntity;
 import tools.xor.annotation.XorInput;
-import tools.xor.annotation.XorInvoke;
 import tools.xor.annotation.XorOutput;
-import tools.xor.annotation.XorRead;
-import tools.xor.annotation.XorUpdate;
+import tools.xor.annotation.XorPromise;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
@@ -74,9 +72,7 @@ public abstract class AbstractType implements EntityType {
 	private Map<String, Annotation> classAnnotations = new HashMap<String, Annotation>();
 	
 	// Cached Annotations used to enforce business logic in the model
-	private Map<String, Set<MethodInfo>> dataReaderMethods     = new HashMap<String, Set<MethodInfo>>();
-	private Map<String, Set<MethodInfo>> dataUpdaterMethods    = new HashMap<String, Set<MethodInfo>>();
-	private Map<String, Set<MethodInfo>> dataInvokerMethods    = new HashMap<String, Set<MethodInfo>>();
+	volatile private Map<String, List<MethodInfo>> promises = new HashMap<String, List<MethodInfo>>();
 	
 	private Set<MethodInfo> postLogicMethods = new HashSet<MethodInfo>(); // includes PostLogic annotated methods of ancestors
 
@@ -100,9 +96,7 @@ public abstract class AbstractType implements EntityType {
 		initFields();
 		initClassAnnotations();
 		initPostLogic();
-		initDataReaders();
-		initDataUpdaters();
-		initDataInvokers();
+		initPromises();
 	}
 
 	@Override
@@ -196,7 +190,7 @@ public abstract class AbstractType implements EntityType {
 			for (int i = ma.length - 1; i > -1; i--) {
 				Method m = ma[i];
 
-				if (m.getAnnotation(XorRead.class) != null) {
+				if (m.getAnnotation(XorPromise.class) != null) {
 
 					if (m.getParameterTypes().length != 0) {
 						if (!validateParamAnnotations(m)) {
@@ -204,8 +198,10 @@ public abstract class AbstractType implements EntityType {
 						}
 					}
 
-					XorRead dataRead = m.getAnnotation(XorRead.class);
-					if (dataRead.property().equals(property)) {
+					XorPromise p = m.getAnnotation(XorPromise.class);
+					if (p.property().equals(property) &&
+							p.capture() &&
+							hasReadAction(p.action())) {
 						return m;
 					}
 					else {
@@ -222,6 +218,16 @@ public abstract class AbstractType implements EntityType {
 
 		return null;
 	}
+	
+	private boolean hasReadAction(AggregateAction[] actions) {
+		for(AggregateAction a: actions) {
+			if(a == AggregateAction.READ) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
 
 	protected Method getPolymorphicSetterMethod (String property)
 	{
@@ -234,7 +240,7 @@ public abstract class AbstractType implements EntityType {
 			for (int i = ma.length - 1; i > -1; i--) {
 				Method m = ma[i];
 
-				if (m.getAnnotation(XorUpdate.class) != null) {
+				if (m.getAnnotation(XorPromise.class) != null) {
 
 					if (m.getParameterTypes().length != 0) {
 						if (!validateParamAnnotations(m)) {
@@ -242,7 +248,7 @@ public abstract class AbstractType implements EntityType {
 						}
 					}
 
-					XorUpdate dataUpdate = m.getAnnotation(XorUpdate.class);
+					XorPromise dataUpdate = m.getAnnotation(XorPromise.class);
 					if (dataUpdate.property().equals(property)) {
 						return m;
 					}
@@ -477,12 +483,15 @@ public abstract class AbstractType implements EntityType {
 					}
 					
 					XorAfter postLogic = method.getAnnotation(XorAfter.class);
-					MethodInfo methodInfo = new MethodInfo(postLogic.fromVersion(), 
+					MethodInfo methodInfo = new MethodInfo(
+							0,
+							postLogic.fromVersion(), 
 							postLogic.untilVersion(), 
 							method,
 							false,
 							postLogic.action(),
 							postLogic.tag(),
+							null,
 							null);
 					methods.add(methodInfo);
 				}
@@ -490,10 +499,10 @@ public abstract class AbstractType implements EntityType {
 			postLogicMethods = Collections.unmodifiableSet(methods);
 	}
 	
-	private Set<MethodInfo> getMethods(HashMap<String, Set<MethodInfo>> allMethods, String property) {
-		Set<MethodInfo> methods = allMethods.get(property);
+	private List<MethodInfo> getMethods(Map<String, List<MethodInfo>> allMethods, String property) {
+		List<MethodInfo> methods = allMethods.get(property);
 		if(methods == null) {
-			methods = new HashSet<MethodInfo>();
+			methods = new LinkedList<MethodInfo>();
 			allMethods.put(property, methods);
 		}
 		return methods;
@@ -507,8 +516,8 @@ public abstract class AbstractType implements EntityType {
 	 * @param property
 	 * @param methodInfo
 	 */
-	private boolean addUniqueMethod(HashMap<String, Set<MethodInfo>> allMethods, String property, MethodInfo methodInfo) {
-		Set<MethodInfo> methods = getMethods(allMethods, property);
+	private boolean addUniqueMethod(Map<String, List<MethodInfo>> allMethods, String property, MethodInfo methodInfo) {
+		List<MethodInfo> methods = getMethods(allMethods, property);
 		for(MethodInfo mi: methods) {
 			if(methodInfo.doOverlap(mi)) {
 				logger.error(
@@ -550,68 +559,21 @@ public abstract class AbstractType implements EntityType {
 		if(foundParamAnnotation && foundParamNoAnnotation) {
 			logger.warn("The business logic method " + method.getName() + " should have Input/Output parameter annotations on all its parameters to indicate how the param values need to be populated");
 		}
+		
+		if(!Modifier.isStatic(method.getModifiers())) {
+			throw new RuntimeException("The business logic method " + method.getDeclaringClass().getName() + "#" + method.getName() + " should be static");
+		}
 
 		return foundParamAnnotation;
 	}
-	
-	protected void initDataReaders() {	
 
-		HashMap<String, Set<MethodInfo>> allMethods = new HashMap<String, Set<MethodInfo>>();				
-		Class<?> instanceClass = getInstanceClass();
+	protected void initPromises() {	
 
-		Set<String> notUnique = new HashSet<String>();
-		for(Method method: instanceClass.getMethods()) {
-			if(method.getAnnotation(XorRead.class) != null) {
-
-				if(method.getParameterTypes().length != 0) {
-					if(!validateParamAnnotations(method)) {
-						continue;
-					}
-				}
-				
-				XorRead dataRead = method.getAnnotation(XorRead.class);
-				if(notUnique.contains(dataRead.property())) {
-					// already recorded
-					continue;
-				}
-				MethodInfo methodInfo = new MethodInfo(dataRead.fromVersion(),
-					dataRead.untilVersion(),
-					method,
-					false,
-					dataRead.action(),
-					dataRead.tag(),
-					null,
-					dataRead.stage());
-				if(!addUniqueMethod(allMethods, dataRead.property(), methodInfo)) {
-					notUnique.add(dataRead.property());
-				}
-			}
-		}
-		// Get the polymorphic method
-		for(String property: notUnique) {
-			Method method = getPolymorphicGetterMethod(property);
-			XorRead dataRead = method.getAnnotation(XorRead.class);
-			MethodInfo methodInfo = new MethodInfo(dataRead.fromVersion(),
-				dataRead.untilVersion(),
-				method,
-				false,
-				dataRead.action(),
-				dataRead.tag(),
-				null,
-				dataRead.stage());
-			addUniqueMethod(allMethods, dataRead.property(), methodInfo);
-		}
-
-		dataReaderMethods = Collections.unmodifiableMap(allMethods);
-	}
-
-	protected void initDataUpdaters() {	
-
-		HashMap<String, Set<MethodInfo>> allMethods = new HashMap<String, Set<MethodInfo>>();				
+		HashMap<String, List<MethodInfo>> allMethods = new HashMap<String, List<MethodInfo>>();				
 		Class<?> instanceClass = getInstanceClass();
 		Set<String> notUnique = new HashSet<String>();
 		for(Method method: instanceClass.getMethods()) {
-			if(method.getAnnotation(XorUpdate.class) != null) {
+			if(method.getAnnotation(XorPromise.class) != null) {
 
 				if(method.getParameterTypes().length != 0) {
 					if(!validateParamAnnotations(method)) {
@@ -619,29 +581,33 @@ public abstract class AbstractType implements EntityType {
 					}
 				}
 
-				XorUpdate dataUpdate = method.getAnnotation(XorUpdate.class);
-				if(notUnique.contains(dataUpdate.property())) {
+				XorPromise promise = method.getAnnotation(XorPromise.class);
+				if(notUnique.contains(promise.property())) {
 					// already recorded
 					continue;
 				}
-				MethodInfo methodInfo = new MethodInfo(dataUpdate.fromVersion(), 
-					dataUpdate.untilVersion(),
+				MethodInfo methodInfo = new MethodInfo(
+					promise.order(),
+					promise.fromVersion(), 
+					promise.untilVersion(),
 					method,
-					dataUpdate.capture(),
-					dataUpdate.action(),
-					dataUpdate.tag(),
-					dataUpdate.phase(),
-					dataUpdate.stage());
-				if(!addUniqueMethod(allMethods, dataUpdate.property(), methodInfo)) {
-					notUnique.add(dataUpdate.property());
+					promise.capture(),
+					promise.action(),
+					promise.tag(),
+					promise.phase(),
+					promise.stage());
+				if(!addUniqueMethod(allMethods, promise.property(), methodInfo)) {
+					notUnique.add(promise.property());
 				}
 			}
 		}
 		// Get the polymorphic method
 		for(String property: notUnique) {
 			Method method = getPolymorphicGetterMethod(property);
-			XorUpdate dataUpdate = method.getAnnotation(XorUpdate.class);
-			MethodInfo methodInfo = new MethodInfo(dataUpdate.fromVersion(),
+			XorPromise dataUpdate = method.getAnnotation(XorPromise.class);
+			MethodInfo methodInfo = new MethodInfo(
+				dataUpdate.order(),
+				dataUpdate.fromVersion(),
 				dataUpdate.untilVersion(),
 				method,
 				dataUpdate.capture(),
@@ -652,43 +618,12 @@ public abstract class AbstractType implements EntityType {
 			addUniqueMethod(allMethods, dataUpdate.property(), methodInfo);
 		}
 
-		dataUpdaterMethods = Collections.unmodifiableMap(allMethods);
-	}
-	
-	protected void initDataInvokers() {	
-
-		HashMap<String, Set<MethodInfo>> allMethods = new HashMap<String, Set<MethodInfo>>();				
-		Class<?> instanceClass = getInstanceClass();
-		for(Method method: instanceClass.getMethods()) {
-			if(method.getAnnotation(XorInvoke.class) != null) {
-
-				if(method.getParameterTypes().length != 0) {
-					if(!validateParamAnnotations(method)) {
-						continue;
-					}
-				}
-				
-				XorInvoke dataInvoke = method.getAnnotation(XorInvoke.class);
-				MethodInfo methodInfo = new MethodInfo(dataInvoke.fromVersion(), dataInvoke.untilVersion(), method);
-				addUniqueMethod(allMethods, dataInvoke.readview() + dataInvoke.updateview(), methodInfo);
-			}
-		}
-		dataInvokerMethods = Collections.unmodifiableMap(allMethods);
-	}
-	
-	@Override
-	public Set<MethodInfo> getDataReaders(String targetProperty) {
-		return dataReaderMethods.get(targetProperty);
+		promises = Collections.unmodifiableMap(allMethods);
 	}
 
 	@Override
-	public Set<MethodInfo> getDataUpdaters(String targetProperty) {
-		return dataUpdaterMethods.get(targetProperty);
-	}
-	
-	@Override
-	public Set<MethodInfo> getDataInvokers(String viewName) {
-		return dataInvokerMethods.get(viewName);
+	public List<MethodInfo> getPromises(String targetProperty) {
+		return promises.get(targetProperty);
 	}
 
 	public static boolean isWrapperType(Class<?> clazz)

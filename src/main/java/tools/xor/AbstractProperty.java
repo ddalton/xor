@@ -39,9 +39,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.annotation.XorAlways;
-import tools.xor.annotation.XorData;
 import tools.xor.annotation.XorInput;
 import tools.xor.annotation.XorOutput;
+import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
 import tools.xor.service.DataAccessService;
@@ -59,7 +59,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	protected AccessType accessType;
 	protected boolean    needsInitialization;
 	
-	protected boolean    data;
 	private   VersionInfo versionInfo;
 
 	// The following fields are used to set/retrieve value
@@ -87,8 +86,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 *     Invoked when the last reference to the object is removed
 	 */
 	// Business logic related annotations 
-	protected Set<MethodInfo>     dataReaders;    
-	protected Set<MethodInfo>     dataUpdaters;
+	protected List<MethodInfo>     promises;
 	protected String       name; // If this is used, it represents an open property
 
 	protected ExtendedProperty positionProperty;
@@ -249,13 +247,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	private void initBusinessLogicAnnotations() {
 		
-		// set business logic processors
-		if(getContainingType().getDataReaders(getName()) != null) {
-			dataReaders = getContainingType().getDataReaders(getName());
-		}
-		
-		if(getContainingType().getDataUpdaters(getName()) != null) {
-			dataUpdaters = getContainingType().getDataUpdaters(getName());
+		if(getContainingType().getPromises(getName()) != null) {
+			promises = getContainingType().getPromises(getName());
 		}
 	}
 	
@@ -307,12 +300,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			) {
 			needsInitialization = true;
 		}
-		
-		if ((getterMethod != null && getterMethod.isAnnotationPresent(XorData.class)) ||
-				(field != null && field.isAnnotationPresent(XorData.class))
-				) {
-				data = true;
-			}		
+
 	}
 
 	protected void initByAnnotations() {
@@ -413,29 +401,19 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public Property getPositionProperty() {
 		return positionProperty;
 	}
-	
-	@Override
-	public Method getDataReader(Settings settings, ProcessingStage stage) {
-		if(dataReaders != null) {
-			for(MethodInfo mi: dataReaders) {
-				if(mi.isRelevant(settings, stage)) {
-					return mi.getMethod();
-				}
-			}
-		}
-		return null;
-	}
 
 	@Override
-	public MethodInfo getDataUpdater(Settings settings, Phase phase, ProcessingStage stage) {
-		if(dataUpdaters != null) {
-			for(MethodInfo mi: dataUpdaters) {
+	public List<MethodInfo> getPromises(Settings settings, Phase phase, ProcessingStage stage) {
+		List<MethodInfo> result = new LinkedList<MethodInfo>();
+
+		if(promises != null) {
+			for(MethodInfo mi: promises) {
 				if(mi.isRelevant(settings, phase, stage)) {
-					return mi;
+					result.add(mi);
 				} 
 			}
 		}
-		return null;
+		return result;
 	}	
 
 	public abstract void init(DataAccessService das);
@@ -498,7 +476,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			logger.warn(I18NUtils.getResource(  "exception.propertyNotFound",I18NUtils.CORE_RESOURCES, params));
 			return;
 		} else {
-			executeUpdate(dataObject, propertyValue);
+			invokePromise(dataObject, propertyValue);
 		}
 	}	
 
@@ -514,7 +492,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		targetMap.put(key, value);
 	}
 	
-	private Object[] getArgs(Method method, BusinessObject dataObject, Object inputObject) {
+	private Object[] getArgs(Method method, BusinessObject dataObject, PropertyEvent event, Object resultPreviousCallback) {
 		Annotation[][] paramAnnotations = method.getParameterAnnotations();
 		Object[] result = null;
 
@@ -527,18 +505,24 @@ public abstract class AbstractProperty implements ExtendedProperty {
 				for(Annotation annotation: paramA) {
 					if(XorInput.class.isAssignableFrom(annotation.getClass())) {
 						XorInput input = (XorInput) annotation;
-						if(input.path().equals(AbstractBO.CURRENT)) {
-							result[i] = ClassUtil.getInstance(inputObject);
+						if(input.path().equals(AbstractBO.PATH_CONTAINER)) {
+							result[i] = ClassUtil.getInstance(event.getOtherElementParent());
+						} else if(input.path().equals(AbstractBO.CURRENT)) {
+							result[i] = ClassUtil.getInstance(event.getOtherElement());
 						} else {
-							result[i] = ((BusinessObject)inputObject).get(input.path());
+							result[i] = ClassUtil.getInstance(((BusinessObject)event.getOtherElement()).get(input.path()));
 						}
 					} else if(XorOutput.class.isAssignableFrom(annotation.getClass())) {
 						XorOutput output = (XorOutput) annotation;
-						if(output.path().equals(AbstractBO.CURRENT)) {
-							result[i] = dataObject;
+						if(output.path().equals(AbstractBO.PATH_CONTAINER)) {
+							result[i] = ClassUtil.getInstance(dataObject);						
+						} else if(output.path().equals(AbstractBO.CURRENT)) {
+							result[i] = ClassUtil.getInstance(dataObject.get(this));
 						} else {
-							result[i] = dataObject.get(output.path());
+							result[i] = ClassUtil.getInstance(dataObject.get(output.path()));
 						}
+					} else if(XorResult.class.isAssignableFrom(annotation.getClass())) {
+						result[i] = resultPreviousCallback;
 					}
 				}
 			}
@@ -547,50 +531,34 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		
 		return result;
 	}
-	
-	@Override
-	public Object propertyRead(BusinessObject dataObject, PropertyEvent event) 
-	{
-		Object instance = ClassUtil.getInstance(dataObject);
-
-		Method dataReader = getDataReader(event.getSettings(), event.getStage());
-		
-		if(dataReader != null) {
-			Object[] args = getArgs(dataReader, dataObject, event.getOtherElement());
-
-			try {
-				return ClassUtil.invokeMethodAsPrivileged(instance, dataReader, args);
-			} catch (Exception e) {
-				throw ClassUtil.wrapRun(e);
-			}
-		} else {
-			logger.warn("Could not find the data read method for property: " + this.getName());
-			return null;
-		}
-	}	
 
 	@Override
-	public boolean propertyUpdate(BusinessObject dataObject, PropertyEvent event) 
+	public boolean evaluatePromise(BusinessObject dataObject, PropertyEvent event) 
 	{
+		boolean result = false;
 		Object instance = ClassUtil.getInstance(dataObject);
 
-		MethodInfo dataUpdater = getDataUpdater(event.getSettings(), event.getPhase(), event.getStage());
-
-		if(dataUpdater != null) {
-			Object[] args = getArgs(dataUpdater.getMethod(), dataObject, event.getOtherElement());
+		List<MethodInfo> dataUpdaters = getPromises(event.getSettings(), event.getPhase(), event.getStage());
+		Object resultPreviousCallback = null;
+		for(int i = 0; i < dataUpdaters.size(); i++) {
+			MethodInfo du = dataUpdaters.get(i);
+			Object[] args = getArgs(du.getMethod(), dataObject, event, resultPreviousCallback);
 
 			try {
-				ClassUtil.invokeMethodAsPrivileged(instance, dataUpdater.getMethod(), args);
+				// First argument is null since we are invoking a static method
+				resultPreviousCallback = ClassUtil.invokeMethodAsPrivileged(null, du.getMethod(), args);
 			} catch (Exception e) {
 				throw ClassUtil.wrapRun(e);
 			}
 			
-			return dataUpdater.isCapture();
-		} else {
-			logger.warn("Could not find the data update method for property: " + this.getName());
+			if(du.isCapture() && i < (dataUpdaters.size()-1)) {
+				logger.warn("Short circuiting updater callback before other callbacks are called: " + du.getMethod().getName());
+				return du.isCapture();
+			}
+			result = du.isCapture();
 		}
 		
-		return false;
+		return result;
 	}		
 
 	private Object query(Object dataObject) 
@@ -625,7 +593,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}	
 
-	private <T> void executeUpdate(Object dataObject, Object propertyValue) 
+	private <T> void invokePromise(Object dataObject, Object propertyValue) 
 	{
 		// We need to work with the instance objects and not the DataObject objects
 		Object instance = ClassUtil.getInstance(dataObject);
@@ -671,11 +639,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	@Override
 	public boolean needsInitialization() {
 		return needsInitialization;
-	}
-
-	@Override
-	public boolean isData() {
-		return data;
 	}
 
 	@Override

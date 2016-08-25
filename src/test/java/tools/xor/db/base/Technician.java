@@ -23,9 +23,11 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
 
-import tools.xor.annotation.XorRead;
-import tools.xor.annotation.XorUpdate;
+import tools.xor.AggregateAction;
+import tools.xor.ExtendedProperty.Phase;
 import tools.xor.annotation.XorInput;
+import tools.xor.annotation.XorOutput;
+import tools.xor.annotation.XorPromise;
 
 @Entity
 public class Technician extends Person {
@@ -42,9 +44,13 @@ public class Technician extends Person {
 		this.skill = skill;
 	}
 	
-	@XorRead(property="skill")
-	public String defaultSkill() {
-		return skill != null ? skill : "ELECTRICIAN";
+	@XorPromise(property="skill", action={AggregateAction.READ}, capture=true)
+	public static void defaultSkill(@XorInput Technician current, @XorOutput Technician result ) {
+		if(current.skill != null) { 
+			result.skill = current.skill;
+		} else {
+			result.setSkill("ELECTRICIAN"); 
+		};
 	}
 	
 	@OneToOne(mappedBy="technician", cascade = CascadeType.ALL)
@@ -56,10 +62,10 @@ public class Technician extends Person {
 		this.rate = rate;
 	}
 	
-	@XorUpdate(property="rate")
-	public void updateRate(@XorInput Rate rate) {
-		this.rate = rate;
-		this.comment = "SetRate";
+	@XorPromise(property="rate")
+	public static void updateRate(@XorOutput Technician current, @XorInput(path=".") Rate rate) {
+		current.rate = rate;
+		current.comment = "SetRate";
 	}
 
 	public String getComment() {

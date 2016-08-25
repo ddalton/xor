@@ -375,25 +375,9 @@ public class CallInfo {
 
 		return targetProperty;
 	}
-	
-	protected Object readCustomValue(BusinessObject invokeOn, ExtendedProperty property) {
-		
-		if(property.getDataReader(getSettings(), getStage()) != null) {
-			return property.propertyRead(
-				invokeOn,
-				new PropertyElement(
-					getSettings(),
-					null,
-					property.isOpenContent() ? getParent().getOutput() : getOutput(),
-					ExtendedProperty.Phase.LOGIC,
-					getStage()));
-		} else {
-			return property.getValue(invokeOn);
-		}		
-	}
 
 	public Object getInputFromParent() {
-		return readCustomValue((BusinessObject) getParent().getInput(), (ExtendedProperty)getInputProperty());			
+		return ((ExtendedProperty)getInputProperty()).getValue((BusinessObject) getParent().getInput());
 	}
 
 	public BusinessObject getOutputRoot() {

@@ -25,48 +25,48 @@ import java.util.List;
 public interface DAOTemplate<T> {
 	/**
 	 * Find the entity by its primary key
-	 * @param id
-	 * @return
+	 * @param id identifier
+	 * @return Entity object
 	 */
     T findById(Object id);    
     
     /**
      * Find an entity by the "name" property
      * 
-     * @param name
-     * @return
+     * @param name value
+     * @return object
      */
 	T findByName(String name); 
 	
 	/**
 	 * Find a list of entities by its primary key
-	 * @param ids
-	 * @return
+	 * @param ids list of identifiers
+	 * @return list of entity objects
 	 */
     List<T> findByIds(Collection<Object> ids);
     
     /**
      * Get a list of all the instances of an entity type
-     * @return
+     * @return list of entities
      */
     List<T> findAll();
     
     /**
      * Save the entity in the database
-     * @param entity
-     * @return
+     * @param entity to be saved
+     * @return entity
      */
     T saveOrUpdate(T entity);
     
     /**
      * Delete the entity from the database
-     * @param entity
+     * @param entity to delete
      */
     void delete(T entity);
     
     /**
      * refresh the state of the instance from the database
-     * @param entity
+     * @param entity to refresh
      */
     public void refresh(T entity);
     
@@ -77,7 +77,7 @@ public interface DAOTemplate<T> {
     
     /**
      * Set the java class of the entity
-     * @param clazz
+     * @param clazz java class
      */
     public void setPersistentClass(T clazz);
 }

@@ -122,11 +122,14 @@ public class ClassUtil {
 		return result;
 	}
 
-	/** 
-	 * Invoke the given method as a privileged action, if necessary. 
-	 * @throws InvocationTargetException 
-	 * @throws IllegalAccessException 
-	 * @throws IllegalArgumentException 
+	/**
+	 * Invoke the given method as a privileged action, if necessary.
+	 * @param target the object on which the method needs to be invoked
+	 * @param method to invoke
+	 * @param args to the method
+	 * @return result of the invocation
+	 * @throws InvocationTargetException while invoking the method
+	 * @throws IllegalAccessException when accessing the meta data
 	 */
 	//public static Object invokeMethodAsPrivileged(final Object target, final Method method, final Object[] args) 
 	public static Object invokeMethodAsPrivileged(final Object target, final Method method, final Object... args)
@@ -157,9 +160,13 @@ public class ClassUtil {
 	
 	/** 
 	 * Invoke the given method as a privileged action, if necessary. 
-	 * @throws InvocationTargetException 
-	 * @throws IllegalAccessException 
-	 * @throws IllegalArgumentException 
+	 * @param target the object on which the method needs to be invoked
+	 * @param field we are reading or writing
+	 * @param value to set in the field
+	 * @param read true if this a read operation
+	 * @return result of the invocation
+	 * @throws InvocationTargetException while invoking the method
+	 * @throws IllegalAccessException when accessing the meta data
 	 */
 	public static Object invokeFieldAsPrivileged(final Object target, final Field field, final Object value, final boolean read) 
 			throws InvocationTargetException, IllegalAccessException 
@@ -281,6 +288,8 @@ public class ClassUtil {
 	/**
 	 * Creates a non cglib/javassist enhanced instance of the given class, which
 	 * could itself be the class of a cglib/javassist enhanced object.
+	 * @param fromClass basis of the java class for the new instance
+	 * @return new object instance
 	 */
 	public static Object newInstance(Class<?> fromClass) {
 		Class<?> toClass = ClassUtil.getUnEnhanced(fromClass);
@@ -297,9 +306,9 @@ public class ClassUtil {
 	 * invoking the constructor as a privileged action if it is protected or
 	 * private.
 	 * 
-	 * @param c
-	 *            given class
+	 * @param c given class
 	 * @return a new instance of the given class via the no-arg constructor
+	 * @throws Exception when creating the instance
 	 */
 	public static Object newInstanceAsPrivileged(final Class<?> c) throws Exception {
 

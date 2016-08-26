@@ -19,12 +19,11 @@
 
 package tools.xor;
 
-import tools.xor.service.AbstractDASFactory;
-import tools.xor.service.DataAccessService;
-import tools.xor.util.ClassUtil;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import tools.xor.service.DataAccessService;
+import tools.xor.util.ClassUtil;
 
 /**
  * SimpleType have no properties
@@ -97,7 +96,7 @@ public class SimpleType implements BasicType {
 	 *               we fallback to checking the meta information. The meta information may not
 	 *               always be correct since it could refer to an abstract class that might be
 	 *               marked as a DataType.
-	 * @return
+	 * @return true if the type is a data type
 	 */
 	@Override public boolean isDataType (Object object)
 	{

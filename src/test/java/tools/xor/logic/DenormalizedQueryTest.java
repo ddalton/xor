@@ -19,8 +19,10 @@
 
 package tools.xor.logic;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,7 +58,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("BASICINFO"));
 		
 		FileOutputStream out = new FileOutputStream("queryEmpty.xlsx");
-		aggregateService.exportQuery(out, settings);
+		aggregateService.exportDenormalized(out, settings);
 	}	
 
 	public void queryOne() throws FileNotFoundException {
@@ -77,7 +79,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("BASICINFO"));
 		
 		FileOutputStream out = new FileOutputStream("queryOne.xlsx");
-		aggregateService.exportQuery(out, settings);
+		aggregateService.exportDenormalized(out, settings);
 	}
 
 	public void queryPersonNative() throws FileNotFoundException {
@@ -98,7 +100,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("BASICINFO_NATIVE"));
 		
 		FileOutputStream out = new FileOutputStream("queryOneNative.xlsx");
-		aggregateService.exportQuery(out, settings);
+		aggregateService.exportDenormalized(out, settings);
 	}	
 
 	public void queryTaskChildren() throws FileNotFoundException {
@@ -137,7 +139,16 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		
 		FileOutputStream out = new FileOutputStream("queryTaskChildren.xlsx");
-		aggregateService.exportQuery(out, settings);
+		aggregateService.exportDenormalized(out, settings);
 	}
 
+	public void updateTaskChildren() throws IOException
+	{
+		Settings settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setView(aggregateService.getView("TASKCHILDREN"));
+
+		FileInputStream is = new FileInputStream("queryTaskChildren.xlsx");
+		aggregateService.importDenormalized(is, settings);
+	}
 }

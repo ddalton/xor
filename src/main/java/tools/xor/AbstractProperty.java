@@ -624,19 +624,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public Object shallowCopy(Object dataObject, ObjectCreator creator) {
-
-		try {
-			Object propertyValue = getValue(dataObject);
-
-			// TODO: iterate the properties and copy them
-		} catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
-		}
-		return null;
-	}
-
-	@Override
 	public boolean needsInitialization() {
 		return needsInitialization;
 	}

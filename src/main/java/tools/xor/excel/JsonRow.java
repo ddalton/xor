@@ -34,21 +34,12 @@ public class JsonRow implements IRow {
 		this.row = row;
 	}
 
-	/**
-	 * short representing the last logical cell in the row <b>PLUS ONE</b>,
-     *   or -1 if the row does not contain any cells.
-	 * 
-	 * @return
-	 */
+	@Override
 	public short getLastCellNum() {
 		return (short) row.length();
 	}
 
-	/**
-	 * 
-	 * @param column
-	 * @return
-	 */
+	@Override
 	public ICell createCell(int column) {
 
 		JsonCell cell = new JsonCell();
@@ -56,12 +47,7 @@ public class JsonRow implements IRow {
 		return cell;
 	}
 	
-	/**
-	 * Get the cell representing a given column (logical cell) 0-based. If you ask for a cell that is not defined....you get a null.
-	 * 
-	 * @param cellNum
-	 * @return
-	 */
+	@Override
 	public ICell getCell(int cellNum) {
 		return (ICell) row.get(cellNum);
 	}

@@ -122,7 +122,7 @@ public class StoredProcedure {
 	 * Creates a JDBC stored procedure string.
 	 * e.g.,
 	 * 		"{call GET_SP(?, ?)}"
-	 * @return
+	 * @return SP string
 	 */
 	public String jdbcCallString() {
 		if(getCallString() != null) {

@@ -109,9 +109,8 @@ public interface Property
    * Returns a read-only List of instance Properties available on this Property.
    * <p>
    * This list includes, at a minimum, any open content properties (extensions) added to
-   * the object before {@link commonj.sdo.helper.TypeHelper#define(DataObject) defining
-   * the Property's Type}. Implementations may, but are not required to in the 2.1 version
-   * of SDO, provide additional instance properties.
+   * the object before defining the Property's Type}. Implementations may, but are not required 
+   * to in the 2.1 version of SDO, provide additional instance properties.
    * @return the List of instance Properties on this Property.
    */
   List /*Property*/<?> getInstanceProperties();
@@ -128,7 +127,7 @@ public interface Property
    * Returns the expanded property names rooted at this property. 
    * This is typically one entry and can be more than one when dealing with 
    * embedded types
-   * @return
+   * @return a list of properties
    */
   List<String> expand();
 }

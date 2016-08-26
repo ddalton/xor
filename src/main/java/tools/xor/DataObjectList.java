@@ -91,7 +91,7 @@ public class DataObjectList {
 
 	/**
 	 * This constructor is for DataObject representing a collection
-	 * @param dataObject
+	 * @param dataObject DataObject
 	 */
 	public DataObjectList(BusinessObject dataObject) {
 		this.dataObject = dataObject;

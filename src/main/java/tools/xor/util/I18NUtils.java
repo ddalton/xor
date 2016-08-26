@@ -34,9 +34,9 @@ public class I18NUtils {
     /**
      * Returns the localized string with the given key from the given bundle.
      * Works with messsage with no parameter.
-     * @param key
-     * @param bundleName
-     * @param locale
+     * @param key of the resource
+     * @param bundleName of the resoure
+     * @param locale of the user
      * @return the localized resource
      */
     public static String getResource(String key, String bundleName, Locale locale) {

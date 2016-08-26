@@ -27,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -50,12 +51,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
+import tools.xor.AbstractBO;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
 import tools.xor.DefaultTypeMapper;
 import tools.xor.DefaultTypeNarrower;
+import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExcelJsonTypeMapper;
 import tools.xor.ExtendedProperty;
@@ -259,7 +262,7 @@ public class AggregateManager implements Xor {
 	 * of whether the thread had one previously. This way we do
 	 * not have to bother about clearing an obsolete persistence orchestrator
 	 * 
-	 * @param po
+	 * @param po value to set
 	 */
 	public void setPersistenceOrchestrator(
 			PersistenceOrchestrator po) {
@@ -456,8 +459,8 @@ public class AggregateManager implements Xor {
 	/**
 	 * Convenience method to quickly get access to the view meta object
 	 *
-	 * @param viewName
-	 * @return
+	 * @param viewName name of view
+	 * @return AggregateView
 	 */
 	public AggregateView getView(String viewName) {
 		return getDAS().getView(viewName);
@@ -482,11 +485,6 @@ public class AggregateManager implements Xor {
 		}
 		
 		return flushHandler.instance();
-	}
-
-	@Override
-	public <T> Object create(Object inputObject, Class<T> entityClass) {
-		return create(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
 	}
 
 	private BusinessObject readBO(Object entity, Settings settings) {
@@ -534,11 +532,6 @@ public class AggregateManager implements Xor {
 	public Object read(Object entity, Settings settings) {
 		BusinessObject to = readBO(entity, settings);
 		return to.getNormalizedInstance(settings);
-	}
-
-	@Override
-	public <T> Object read(Object inputObject, Class<T> entityClass) {
-		return read(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
 	}
 	
 	@Override
@@ -817,7 +810,7 @@ public class AggregateManager implements Xor {
 		collection.put(collectionEntryJSON);
 	}
 	
-	private boolean isEmbeddedPath(String propertyPath) {
+	private static boolean isEmbeddedPath(String propertyPath) {
 		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1 &&
 				!propertyPath.startsWith(Constants.XOR.XOR_PATH_PREFIX)) {
 			return true;
@@ -826,7 +819,7 @@ public class AggregateManager implements Xor {
 		return false;
 	}
 	
-	private JSONObject getJSON(Map<String, Integer> colMap, Row row) {
+	public static JSONObject getJSON(Map<String, Integer> colMap, Row row) {
 		JSONObject entity = new JSONObject();
 		
 		for(Map.Entry<String, Integer> entry: colMap.entrySet()) {
@@ -852,11 +845,11 @@ public class AggregateManager implements Xor {
 		return entity;
 	}
 
-	private void setEmbeddableValue(JSONObject base, String path, String value) {
-		this.setEmbeddableValue(base, path, value, null);
+	private static void setEmbeddableValue(JSONObject base, String path, String value) {
+		setEmbeddableValue(base, path, value, null);
 	}
 	
-	private void setEmbeddableValue(JSONObject base, String path, Object value, String replacedProperty) {
+	private static void setEmbeddableValue(JSONObject base, String path, Object value, String replacedProperty) {
 		JSONObject embeddable = base;
 		
 		// Loop through each part of the path
@@ -1055,18 +1048,13 @@ public class AggregateManager implements Xor {
 	}
 
 	@Override
-	public <T> Object update(Object inputObject, Class<T> entityClass) {
+	public Object update(Object inputObject, Class<?> entityClass) {
 		return update(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
 	}
 
 	@Override
 	public void delete(Object entity, Settings settings) {
 		// TODO: 
-	}
-
-	@Override
-	public <T> void delete(Object inputObject, Class<T> entityClass) {
-		delete(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
 	}
 
 	@Override
@@ -1085,11 +1073,6 @@ public class AggregateManager implements Xor {
 	}
 
 	@Override
-	public <T> Object patch(Object inputObject, Class<T> entityClass) {
-		return patch(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
-	}
-
-	@Override
 	public List<?> query(Object entity, Settings settings) {
 		List<Object> result = new ArrayList<Object>();
 		List<?> dataObjects = queryInternal(entity, settings);
@@ -1102,11 +1085,6 @@ public class AggregateManager implements Xor {
 		}
 	
 		return result;
-	}
-
-	@Override
-	public <T> List<?> query(Object inputObject, Class<T> entityClass) {
-		return query(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
 	}
 	
 	public static class AggregateManagerBuilder
@@ -1210,7 +1188,7 @@ public class AggregateManager implements Xor {
 	}
 
 	@Override
-	public void exportQuery(OutputStream outputStream, Settings settings) {
+	public void exportDenormalized(OutputStream outputStream, Settings settings) {
 		
 		// Make sure this is a denormalized query
 		settings.setDenormalized(true);
@@ -1228,8 +1206,94 @@ public class AggregateManager implements Xor {
 		}
 		// TODO: add validation support
 		e.writeValidations();
-		
+
 		e.finish();
+	}
+
+	private static Object getCellValue(Cell cell) {
+		if (cell != null) {
+			try {
+				return cell.getStringCellValue();
+			}
+			catch (Exception e) {
+				// Numeric entry
+				return cell.getNumericCellValue();
+			}
+		}
+		else {
+			return "";
+		}
+	}
+
+	@Override
+	public void importDenormalized (InputStream is, Settings settings) throws
+		IOException
+	{
+
+		try {
+			Workbook wb = WorkbookFactory.create(is);
+
+			// First create the object based on the denormalized values
+			// The callInfo should have root BusinessObject
+			// clone the task object using a DataObject
+
+			// Create an object creator for the target root
+			ObjectCreator oc = new ObjectCreator(
+				getDAS(),
+				getPersistenceOrchestrator(),
+				MapperDirection.DOMAINTOEXTERNAL);
+
+			// The Excel should have a single sheet containing the denormalized data
+			// Create a JSONObject for each row
+			Sheet entitySheet = wb.getSheetAt(0);
+			Map<String, Integer> colMap = getHeaderMap(wb.getSheetAt(0));
+
+			Map<BusinessObject, Object> roots = new IdentityHashMap<BusinessObject, Object>();
+			for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
+				Row row = entitySheet.getRow(i);
+
+				String idName = ((EntityType)settings.getEntityType()).getIdentifierProperty().getName();
+				if(!colMap.containsKey(idName)) {
+					throw new RuntimeException("The Excel sheet needs to have the entity identifier column");
+				}
+				Object idValue = getCellValue(row.getCell(colMap.get(idName)));
+
+				// Get a child business object of the same type
+				// TODO: Get by user key
+				EntityKey ek = oc.getTypeMapper().getEntityKey(idValue, settings.getEntityType());
+				BusinessObject bo = oc.getByEntityKey(ek);
+				if (bo == null) {
+					
+					bo = oc.createDataObject(
+						AbstractBO.createInstance(oc, idValue, settings.getEntityType()),
+						settings.getEntityType(),
+						null,
+						null);
+					BusinessObject potentialRoot = (BusinessObject)bo.getRootObject();
+					if(!roots.containsKey(potentialRoot)) {
+						roots.put(potentialRoot, null);
+					}
+				}
+
+				for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+					Cell cell = row.getCell(entry.getValue());
+					bo.set(entry.getKey(), getCellValue(cell));
+				}
+			}
+			for(BusinessObject root: roots.keySet()) {
+				this.update(root.getInstance(), settings);
+			}
+
+		}
+		catch (EncryptedDocumentException e) {
+			throw new RuntimeException("Document is encrypted, provide a decrypted inputstream", e);
+		}
+		catch (InvalidFormatException e) {
+			throw new RuntimeException("The provided inputstream is not valid. ", e);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("An error occurred during update.", e);
+		}
 	}
 
 	public File getGeneratedViewsDirectory() {

@@ -25,11 +25,7 @@ import tools.xor.Type;
 
 
 public class DefaultDetailStrategy implements DetailStrategy {
-	/**
-	 * The strategy used to define a custom detail
-	 * @param callInfo
-	 * @throws Exception 
-	 */
+
 	@Override
 	public boolean isIncluded(CallInfo callInfo) {
 		Property inputProperty = callInfo.getInputProperty();

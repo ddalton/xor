@@ -109,8 +109,6 @@ public interface DataObject extends Serializable
    * @param property the property of the value to fetch.
    * @return the value of the given property of the object.
    * @see #set(Property, Object)
-   * @see #unset(Property)
-   * @see #isSet(Property)
    */
   Object get(Property property);
 
@@ -126,8 +124,6 @@ public interface DataObject extends Serializable
    * and it becomes the new value of the property of the object.
    * @param property the property of the value to set.
    * @param value the new value for the property.
-   * @see #unset(Property)
-   * @see #isSet(Property)
    * @see #get(Property)
    */
   void set(Property property, Object value);
@@ -191,7 +187,6 @@ public interface DataObject extends Serializable
    * @param typeName the name of a type in the specified package.
    * @return the created data object.
    * @see #createDataObject(String)
-   * @see commonj.sdo.helper.TypeHelper#getType
    */
   DataObject createDataObject(String propertyName, String namespaceURI, String typeName);
 
@@ -205,7 +200,6 @@ public interface DataObject extends Serializable
    * @param typeName the name of a type in the specified package.
    * @return the created data object.
    * @see #createDataObject(int)
-   * @see commonj.sdo.helper.TypeHelper#getType
    */
   DataObject createDataObject(int propertyIndex, String namespaceURI, String typeName);
 
@@ -253,6 +247,8 @@ public interface DataObject extends Serializable
 
   /**
    * @deprecated replaced by {@link #getInstanceProperty(String)} in 2.1.0
+   * @param propertyName the name of the Property
+   * @return the Property object
    */
   Property getProperty(String propertyName);
 

@@ -31,22 +31,22 @@ public interface ISheet {
 	 * Gets the last row num in the sheet
 	 * Similar to total number of rows
 	 * 
-	 * @return
+	 * @return row number
 	 */
 	public int getLastRowNum();
 	
 	/**
 	 * Returns an object that represents a row
-	 * 
-	 * @return
+	 * @param rowNum row number
+	 * @return Row object
 	 */
 	public IRow createRow(int rowNum);
 	
 	/**
 	 * Returns the row at position rowNum
 	 * 
-	 * @param rowNum
-	 * @return
+	 * @param rowNum row number
+	 * @return Row object
 	 */
 	public IRow getRow(int rowNum);
 	
@@ -54,6 +54,7 @@ public interface ISheet {
 	 * Utility method to adjust the rendering width of the column
 	 * Not relevant for a JSON representation. Is only applicable
 	 * for the Excel representation.
+	 * @param column number
 	 */
 	public void autoSizeColumn(int column);
 }

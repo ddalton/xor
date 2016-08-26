@@ -26,38 +26,37 @@ import tools.xor.CallInfo;
 public interface Operation {
 	/**
 	 * The logic in the copying of data from the input to the output objects
-	 * @param callInfo
-	 * @throws Exception 
+	 * @param callInfo object
 	 */
 	public void execute(CallInfo callInfo);
 
 	/**
 	 * Allows operation specific behavior in the creation of DataObjects
-	 * @param ci
-	 * @param desiredClass
-	 * @return
+	 * @param ci CallInfo object
+	 * @param desiredClass of target object
+	 * @return BusinessObject
 	 */
 	public BusinessObject createTarget(CallInfo ci, Class<?> desiredClass);
 
 	/**
 	 * Allows a new DataObject to be created based on an existing target instance object
-	 * @param ci
-	 * @param targetInstance
-	 * @param desiredClass
-	 * @return
+	 * @param ci CallInfo object
+	 * @param targetInstance object
+	 * @param desiredClass of target object
+	 * @return BusinessObject
 	 */
 	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Class<?> desiredClass);
 	
 	/**
 	 * Returns the result of the execution if any.
-	 * @return
+	 * @return result object
 	 */
 	public Object getResult();
 
 	/**
 	 * Indicates if the specific association is not part of this aggregate
-	 * @param ci
-	 * @return
+	 * @param ci CallInfo object
+	 * @return true if external association
 	 */
 	boolean isExternalAssociationLink(CallInfo ci);
 }

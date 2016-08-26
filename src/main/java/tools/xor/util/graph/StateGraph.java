@@ -118,7 +118,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	/**
 	 * 
 	 * @param mergeStates Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
-	 * @return
+	 * @param mergeStates map of states to be merged
+	 * @return merged graph
 	 */
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
 		
@@ -154,8 +155,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	/**
 	 * Get the set of child attributes anchored at the state
 	 * referenced by pathAnchor
-	 * @param type
-	 * @return
+	 * @param type of the vertex
+	 * @return list of properties
 	 */
 	public List<Property> next(Type type) {
 		if(attrByType.containsKey(type)) {
@@ -275,7 +276,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	/** Extend the state graph with the new type if needed and create all associations referencing this type in the state graph
 	 *  Probably should be called before create(String path...)
 	 * 
-	 * @param additionalType
+	 * @param additionalType to extend
+	 * @param am AggregateManager
 	 */
 	public void extend(EntityType additionalType, AggregateManager am) {
 		if(this.states.containsKey(additionalType)) {
@@ -430,7 +432,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return result;
 	}
 	
-	/**
+	/*
 		To support Excel export/import. We need to create non-duplicated data by creating appropriate queries.
 		    The approach is to add a method to the state graph that will pull all the toMany and cascaded loop
 		    relationships.

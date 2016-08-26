@@ -32,8 +32,8 @@ public interface CreationStrategy {
 	 * @param from    A copy of this object is returned if it is mutable, else the from object is returned
 	 * @param type    The class information can be extracted from the type that is used to create the instance
 	 * @param toClass If the type is not provided then this field is required
-	 * @return
-	 * @throws Exception
+	 * @return new object
+	 * @throws Exception when trying to create a new java object
 	 */
 	public Object newInstance(Object from, BasicType type, Class<?> toClass) throws Exception;
 	
@@ -41,19 +41,21 @@ public interface CreationStrategy {
 	 * This method additionally provides the container and containmentProperty so the collection type can be saved on the container.
 	 * This information is useful to support export/import.
 	 * 
-	 * @param from
-	 * @param type
-	 * @param toClass
-	 * @param container
-	 * @param containmentProperty
-	 * @return
-	 * @throws Exception
+	 * @param from  source object
+	 * @param type  type of the entity
+	 * @param toClass target object class
+	 * @param container parent object
+	 * @param containmentProperty parent property referring to the new instance
+	 * @return new instance
+	 * @throws Exception when trying to create a new java object 
 	 */
 	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container, Property containmentProperty) throws Exception;	
 	
 	/**
 	 * Give a chance for the creation strategy to do any final conversion on the root object
-	 * @return
+	 * @param bo BusinessObject
+	 * @param settings user specfied settings
+	 * @return normalized instance
 	 */
 	public Object getNormalizedInstance(BusinessObject bo, Settings settings);
 }

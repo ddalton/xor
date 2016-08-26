@@ -50,6 +50,7 @@ public class AggregateViews {
 	/**
 	 * Obsolete views will be left as is, and new or updated views will be set 
 	 * This is an expensive operation
+	 * @param am AggregateManager
 	 */
 	public void sync(AggregateManager am) {
 

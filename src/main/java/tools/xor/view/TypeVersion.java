@@ -22,7 +22,7 @@ package tools.xor.view;
 import javax.xml.bind.annotation.XmlAttribute;
 
 
-/**
+/*
  * Used to define the API version validity of a type. If a type does
  * not have a TypeVersion entry in the AggregateManager, then that type
  * is valid across all versions

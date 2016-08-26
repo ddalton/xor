@@ -76,7 +76,7 @@ public class HibernateType extends AbstractType {
 	
 	/**
 	 * The name Hibernate uses to refer to this entity
-	 * @return
+	 * @return entity name
 	 */
 	@Override
 	public String getEntityName() {

@@ -172,12 +172,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		return new ArrayList<Type>(getUniqueTypes());
 	}	
 
-	/**
-	 * This method uses the persistence mechanism to do any post-processing activity
-	 * @param newInstance
-	 * @return
-	 */
-
 	@Override
 	public void postProcess(Object newInstance, boolean autoWire) {
 		if(newInstance == null)

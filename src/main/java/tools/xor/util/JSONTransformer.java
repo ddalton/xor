@@ -274,6 +274,7 @@ public class JSONTransformer {
 	 * when accessing a new node, if it has already been visited then we replace it with an id and 
 	 * mark the attribute name (e.g., prefix) This object id can use System.identityHashCode or be based
 	 * on a sequence
+	 * @param input object graph
 	 */
 	public static void pack(JSONObject input) 
 	{
@@ -286,6 +287,7 @@ public class JSONTransformer {
 	 * 1. Traverse the object graph and populate the map between an object's id and the object instance
 	 * 2. Fix all references to the id (using a special attribute prefix e.g., |XOR|) with the help of this map
 	 *    during a second scan
+	 * @param input object tree
 	 */
 	public static void unpack(JSONObject input)
 	{

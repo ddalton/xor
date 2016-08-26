@@ -648,7 +648,7 @@ public class DFAtoRE {
 	/** 
 	 * This changes the state graph
 	 * 
-	 * @param type
+	 * @param type to set
 	 */
 	public void setAggregateType(Type type) {
 		this.aggregateType = type;
@@ -720,8 +720,9 @@ public class DFAtoRE {
 	/**
 	 * Build constrained state graph of only RECURSE attributes
 	 * 
-	 * @param aggregateView
-	 * @return
+	 * @param aggregateView representing the graph
+	 * @param type of entity
+	 * @return state graph instance
 	 */
 	public static StateGraph<State, Edge<State>> build(AggregateView aggregateView, Type type) {
 		if(aggregateView == null) {

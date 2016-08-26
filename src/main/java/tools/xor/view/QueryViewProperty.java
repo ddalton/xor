@@ -223,7 +223,7 @@ public class QueryViewProperty {
 	/**
 	 * Normalize the property name based on any aliases in the ancestor list.
 	 * This is needed for HQL to work properly 
-	 * @return
+	 * @return normalized name
 	 */
 	protected String getNormalizedName() {
 
@@ -255,8 +255,8 @@ public class QueryViewProperty {
 
 	/**
 	 * This method adds any additional attributes needed for the view to provide correct functionality
-	 * @param narrow
-	 * @return
+	 * @param narrow true if entity name information needs to be added
+	 * @return column information
 	 */
 	public Set<ColumnMeta> getColumnMeta(boolean narrow) {
 		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);

@@ -93,10 +93,10 @@ public class Filter implements Comparable<Filter> {
 	/**
 	 * Checks to see if a filter is relevant for this query based on the input parameters
 	 * 
-	 * @param originalFilters
-	 * @param filters
-	 * @param parameterMap
-	 * @return
+	 * @param originalFilters user supplied filters
+	 * @param filters normalized filters
+	 * @param parameterMap parameter map used by filters
+	 * @return true if filter is included
 	 */
 	public boolean isFilterIncluded(Map<String, Object> originalFilters, Map<String, Object> filters, Map<String, Parameter> parameterMap) {
 		boolean result = false;

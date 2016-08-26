@@ -23,8 +23,8 @@ import tools.xor.util.Vertex;
  * This class is not thread safe because some methods (getCircuits())
  * change state without synchronization. 
  *
- * @param <V>
- * @param <E>
+ * @param <V> vertex
+ * @param <E> edge
  */
 public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	private static final Logger cfLogger = LogManager.getLogger(Constants.Log.CYCLE_FINDER);
@@ -629,7 +629,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	
 	/**
 	 * Renumber the id based on sorted list
-	 * @param sorted
+	 * @param sorted list of vertices
 	 */
 	protected void renumber(List<V> sorted) {
 		this.nextId = START;

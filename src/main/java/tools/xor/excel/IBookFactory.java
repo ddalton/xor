@@ -31,6 +31,8 @@ public interface IBookFactory {
 	
 	/**
 	 * Returns the appropriate IBook instance
+	 * @param inp Excel file input stream
+	 * @return Book instance
 	 */
     public IBook createBook(InputStream inp);
 

@@ -7,6 +7,12 @@ public abstract class AbstractGenerator {
 	
 	private Type type;
 
+	/**
+	 * The XSDVisitor will keep track of all additional types that need to be part of the
+	 * XSD document 
+	 * 
+	 * @param coordinator that gathers information while visiting
+	 */	
 	public abstract void generate(XSDVisitor coordinator);
 	
 	public AbstractGenerator(Type type) {
@@ -34,7 +40,7 @@ public abstract class AbstractGenerator {
 
 	/**
 	 * Overridden by subclasses
-	 * @param coordinator
+	 * @param coordinator that gathers information while visiting
 	 */
 	public void generateBody(XSDVisitor coordinator) {
 	}

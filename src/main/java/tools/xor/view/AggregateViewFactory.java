@@ -195,6 +195,7 @@ public class AggregateViewFactory {
 	/**
 	 * Refer https://docs.oracle.com/javase/tutorial/jaxp/dom/readingXML.html
 	 *       https://docs.oracle.com/javase/tutorial/jaxp/xslt/writingDom.html
+	 * @param am AggregateManager
 	 */
 	public void testDOMRewrite(AggregateManager am) {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

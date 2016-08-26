@@ -55,20 +55,14 @@ public abstract class AbstractDASFactory implements DASFactory {
 	
 	protected abstract HibernateDAS createHibernateDAS(TypeMapper typeMapper);
 	
-	/**
-	 * 
-	 * @param typeMapper
-	 * @param name represents the Persistence unit name
-	 * @return
-	 */
 	protected abstract JPADAS createJPADAS(TypeMapper typeMapper, String name);
 
 
 	/**
 	 * This should be overridden by a custom DASFactory
-	 * @param typeMapper
-	 * @param name
-	 * @return
+	 * @param typeMapper object
+	 * @param name unique to this mapping
+	 * @return DataAccessService object
 	 */
 	protected AbstractDataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
 		throw new UnsupportedOperationException("This method is only supported by a user provided custom DAS factory");

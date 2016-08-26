@@ -78,9 +78,9 @@ public class QueryView {
 
 	/**
 	 * Used for manually creating the child query views
-	 * @param parent
-	 * @param rootName
-	 * @param rootType
+	 * @param parent view
+	 * @param rootName anchored at a property and is the property name
+	 * @param rootType type
 	 */
 	public QueryView(QueryView parent, String rootName, Type rootType) {
 		this.parent = parent;
@@ -235,7 +235,7 @@ public class QueryView {
 
 	/**
 	 * Use the subBranches if there is more than one
-	 * @return
+	 * @return list of subbranch views
 	 */
 	public List<QueryView> getSubBranches() {
 		return Collections.unmodifiableList(this.subBranches);
@@ -746,7 +746,7 @@ public class QueryView {
 	 * Get a list of the attribute types in the same order as listed in the AggregateView
 	 * @see StoredProcedure
 	 * 
-	 * @return
+	 * @return list of attribute types
 	 */
 	public List<Type> getAttributeTypes() {
 		List<Type> result = new ArrayList<Type>();

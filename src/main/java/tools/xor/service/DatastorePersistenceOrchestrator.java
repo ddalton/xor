@@ -41,7 +41,6 @@ import tools.xor.BusinessObject;
 import tools.xor.Type;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateView;
-import tools.xor.view.JPAQuery;
 import tools.xor.view.Query;
 import tools.xor.view.StoredProcedure;
 
@@ -57,13 +56,7 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
     public DatastorePersistenceOrchestrator(Object sessionContext, Object data) {
     	
     }    
-	
-	/**
-	 * Save the entity group in the persistence store
-	 * 
-	 * @param entity
-	 * @return
-	 */
+
 	@Override
 	public void saveOrUpdate(Object entity) {
 		datastore.put((Entity) entity);		
@@ -79,11 +72,6 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 		// This has no effect in the Datastore
 	}		
 
-	/**
-	 * Delete the entity from the persistence store
-	 * 
-	 * @param entity
-	 */
 	@Override
 	public void delete(Object entity) {
 		// TODO: Extract the key from the entity

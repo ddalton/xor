@@ -64,7 +64,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	 * We don't make use of sessionContext currently since we can
 	 * get the session from sessionFactory.getCurrentSession()
 	 * 
-	 * @param sessionContext
+	 * @param sessionContext session context
 	 * @param data any additional data that needs to be passed by the user
 	 */
 	public HibernatePersistenceOrchestrator(Object sessionContext, Object data) {
@@ -128,12 +128,6 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 		}
 	}
 
-	/**
-	 * Save the entity in the persistence store
-	 * 
-	 * @param entity
-	 * @return
-	 */
 	@Override
 	public void saveOrUpdate(Object entity) {
 		//System.out.println("HibernatePersistenceOrchestrator#saveOrUpdate");
@@ -149,12 +143,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	public void refresh(Object object) {
 		getSession().refresh(object);
 	}	
-	
-	/**
-	 * Delete the entity from the persistence store
-	 * 
-	 * @param entity
-	 */
+
 	@Override
 	public void delete(Object entity) {
 		getSession().delete(entity);		

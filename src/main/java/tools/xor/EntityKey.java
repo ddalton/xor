@@ -32,6 +32,10 @@ public final class EntityKey implements Serializable {
 	private final String derivedTypeName;
 	private final int hashCode;
 
+	public EntityKey(Object id, String referenceTypeName) {
+		this(id, referenceTypeName, "");
+	}
+
 	public EntityKey(Object id, String referenceTypeName, String derivedTypeName) {
 		if ( id == null ) {
 			throw new IllegalStateException( "null identifier" );

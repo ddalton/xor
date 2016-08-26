@@ -294,26 +294,6 @@ public class Settings {
 		return false;
 	}	
 
-	/**
-	 * The key name does not have to refer to the full property path. 
-	 * For e.g., resourceBinding.resourceProvider_userkey_=name
-	 * Since this property can be referenced from ServiceComponent at different levels
-	 * 
-	 * @param propertyPath
-	 * @return
-	 */
-	public String getUserKeyOverride(String propertyPath) {
-		// Get the first match
-		for( Map.Entry<String, String> entry: userkeyOverrides.entrySet()) {
-			if(propertyPath.toUpperCase().endsWith(entry.getKey())) {
-				logger.info("Got key override, property path: " + propertyPath + ", matched userKey: " + entry.getKey() + ", userkey value: " + entry.getValue());
-				return entry.getValue();
-			}
-		}
-
-		return null;
-	}
-
 	public Map<String, String> getUserkeyOverrides(Map<String, String> queryParams) {
 		if(queryParams == null)
 			return new HashMap<String, String>();
@@ -526,6 +506,8 @@ public class Settings {
 	 * This is an efficient paging mechanism if 
 	 * the paging query is based of the order by column
 	 * This value should represent the first term in the order by clause
+	 * 
+	 * @return first item in the page
 	 */
 	public Object getPageEndSortValue() {
 		return pageEndSortValue;

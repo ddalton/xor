@@ -38,10 +38,6 @@ public abstract class AbstractCreationStrategy implements CreationStrategy {
 		return objectCreator;
 	}
 		
-	/**
-	 * Returns true if the given class is known to be immutable; false
-	 * otherwise.
-	 */
 	protected boolean immutable(Class<?> c) {
 		if (c == null)
 			return false;
@@ -85,6 +81,8 @@ public abstract class AbstractCreationStrategy implements CreationStrategy {
 	/**
 	 * Returns true if the given class is under a package that starts with
 	 * "java.".
+	 * @param c class
+	 * @return boolean value
 	 */
 	protected boolean isJavaOrAppPackage(Class<?> c) {
 		if (c == null)

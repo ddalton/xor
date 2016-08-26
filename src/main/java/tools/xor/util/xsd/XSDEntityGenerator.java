@@ -78,13 +78,6 @@ public class XSDEntityGenerator extends AbstractGenerator {
 		coordinator.pop(); // pop the indicator
 	}
 	
-	/**
-	 * The XSDVisitor will keep track of all additional types that need to be part of the
-	 * XSD document 
-	 * 
-	 * @param coordinator
-	 * @return
-	 */
 	@Override
 	public void generate(XSDVisitor coordinator) {
 		

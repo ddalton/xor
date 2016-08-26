@@ -28,7 +28,7 @@ public final class AssociationSetting {
 	 * If including a type to be part of the view, then
 	 * it will automatically include all the data types
 	 * 
-	 * @param entityClass
+	 * @param entityClass the class of the Type
 	 */
 	public AssociationSetting(Class<?> entityClass) {
 		this.entityClass = entityClass;

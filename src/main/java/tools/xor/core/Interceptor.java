@@ -29,6 +29,7 @@ public interface Interceptor {
 
 	/**
 	 * Called before the actions are processed
+	 * @param actions list of actions
 	 */
 	public void preBiDirActionStage(Map<PropertyKey, List<Executable>> actions);
 }

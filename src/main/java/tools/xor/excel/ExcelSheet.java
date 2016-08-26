@@ -39,16 +39,17 @@ public class ExcelSheet implements ISheet {
 	 * Gets the last row num in the sheet
 	 * Similar to total number of rows
 	 * 
-	 * @return
+	 * @return row number
 	 */
 	public int getLastRowNum() {
 		return sheet.getLastRowNum();
 	}
 	
 	/**
-	 * Returns an object that represents a row
+	 * Creates and returns an object that represents a row
 	 * 
-	 * @return
+	 * @param rowNum row number
+	 * @return Row object
 	 */
 	public IRow createRow(int rowNum) {
 		Row row = sheet.createRow(rowNum);
@@ -58,8 +59,8 @@ public class ExcelSheet implements ISheet {
 	/**
 	 * Returns the row at position rowNum
 	 * 
-	 * @param rowNum
-	 * @return
+	 * @param rowNum row number
+	 * @return Row object
 	 */
 	public IRow getRow(int rowNum) {
 		Row row = sheet.getRow(rowNum);
@@ -70,6 +71,7 @@ public class ExcelSheet implements ISheet {
 	 * Utility method to adjust the rendering width of the column
 	 * Not relevant for a JSON representation. Is only applicable
 	 * for the Excel representation.
+	 * @param column number
 	 */
 	public void autoSizeColumn(int column) {
 		sheet.autoSizeColumn(column);

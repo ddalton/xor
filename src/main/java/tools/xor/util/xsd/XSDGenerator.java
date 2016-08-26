@@ -28,8 +28,9 @@ public class XSDGenerator {
 	 * The XSDVisitor will keep track of all additional types that need to be part of the
 	 * XSD document 
 	 * 
-	 * @param coordinator
-	 * @return
+	 * @param coordinator is a visitor object that gathers information 
+	 * @param type of entity to generate
+	 * @return result
 	 */
 	public String generate(XSDVisitor coordinator, Type type) {
 

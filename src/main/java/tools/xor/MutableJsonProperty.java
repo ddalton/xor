@@ -59,8 +59,8 @@ public class MutableJsonProperty extends ExternalProperty {
 		/**
 		 * We have to use an array builder since there is no "name" property
 		 *
-		 * @param jsonArray
-		 * @param object
+		 * @param jsonArray object
+		 * @param object to add to the array
 		 */
 		public void   add(JSONArray jsonArray, Object object);
 	}

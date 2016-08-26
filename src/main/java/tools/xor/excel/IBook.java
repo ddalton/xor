@@ -43,6 +43,7 @@ public interface IBook {
      *  from which the Workbook was read. After closing, the
      *  Workbook should no longer be used.
      * <p>This will have no effect newly created Workbooks.
+     * @throws IOException when closing file
      */
     public void close() throws IOException;
 	
@@ -56,7 +57,7 @@ public interface IBook {
 	
     /**
      * Set whether temp files should be compressed.
-     * @param compress
+     * @param compress true to compress
      */
     public void setCompressTempFiles(boolean compress);
     
@@ -67,8 +68,8 @@ public interface IBook {
      * IllegalArgumentException if the name is null or invalid
      *  or workbook already contains a sheet with this name
      * 
-     * @param sheetname
-     * @return
+     * @param sheetname sheet name
+     * @return Sheet object
      */
     public ISheet createSheet(String sheetname);
 }

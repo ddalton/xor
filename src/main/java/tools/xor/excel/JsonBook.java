@@ -51,10 +51,11 @@ public class JsonBook implements IBook {
     	jsonBook.write(new OutputStreamWriter(stream));
     }
 	
-    /**
-     * Not relevant for JsonBook
-     */
+    @Override
     public void close() throws IOException {
+        /*
+         * Not relevant for JsonBook
+         */
     }
 	
     /**
@@ -71,21 +72,16 @@ public class JsonBook implements IBook {
     	return null;
     }
 	
-    /**
-     * Not relevant for JsonBook.
-     * 
-     * @param compress
-     */
+    @Override
     public void setCompressTempFiles(boolean compress) {
+        /*
+         * Not relevant for JsonBook.
+         * 
+         * @param compress
+         */    	
     }
     
-    /**
-     * Create a new sheet for this Workbook and return the high level representation.
-     * Use this to create new sheets.
-     * 
-     * @param sheetname
-     * @return
-     */
+    @Override
     public ISheet createSheet(String sheetname) {
     	if(jsonBook.has(sheetname)) {
     		throw new IllegalArgumentException( "The json already contains a sheet of this name: " + sheetname);

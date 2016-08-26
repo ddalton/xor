@@ -33,7 +33,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Should the access be based on property (getter method) or 
 	 * by field.
 	 * 
-	 * @return
+	 * @return method or field access
 	 */
 	public AccessType getAccessType();
 	
@@ -47,114 +47,125 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	/**
 	 * For external types, this will return the domain type from which it is based off.
 	 * For domain types, this will return self.
-	 * @return
+	 * @return Domain Type for this type
 	 */
 	public EntityType getDomainType();
 	
 	/**
 	 * Returns the property that refers to the id of the entity
-	 * @return
+	 * @return Property object
 	 */
 	public Property getIdentifierProperty();
 	
 	/**
 	 * Returns the property that is marked as the user key
-	 * @return
+	 * @return Property object
 	 */
 	public Property getUserKey();	
 	
 	/**
 	 * Returns the property that is marked as the collection user key
-	 * @return
+	 * @return Property object
 	 */
 	public Property getCollectionUserKey();	
 	
 	/**
 	 * Returns the property that refers to the version of the entity
-	 * @return
+	 * @return Property object
 	 */
 	public Property getVersionProperty();	
 	
 	/**
 	 * Used to get access to the Domain type from external types
-	 * @return
+	 * @return TypeMapper
 	 */
 	public TypeMapper getTypeMapper();	
 
 	/**
 	 * Get a list of all the types that are embedded in this type
-	 * @return
+	 * @return list of embedded types
 	 */
 	public List<Type> getEmbeddableTypes();
 	
 	/**
 	 * Return true if the contents of this object cannot be changed
+	 * @return true if immutable
 	 */
 	public boolean isImmutable();
 	
 	/**
 	 * Return true if the type is marked as an aggregate using the Aggregate annotation
 	 * This is used to control the amount of data using the ContentScope control
-	 * @return
+	 * @return true if aggregate
 	 */
 	public boolean isAggregate();	
 	
 	/**
 	 * Returns true if this type is an embedded type
+	 * @return true if embedded type
 	 */
 	public boolean isEmbedded();
 	
 	/**
 	 * Returns the highest ancestor entity in an inheritance hierarchy. Useful in EntityKey
+	 * @return EntityType
 	 */
 	public EntityType getRootEntityType();
 	
 	/**
 	 * Executes all the PostLogic annotated methods associated with objects of this type and its ancestor types
+	 * 
+	 * @param settings passed by user
+	 * @param instance on which the postlogic methods are invoked
 	 */
-	public void invokePostLogic(Settings settings, Object object);
+	public void invokePostLogic(Settings settings, Object instance);
 
 	/**
 	 * Returns the name that the persistence provider uses to map an entity
 	 * @see Type#getName()
-	 * @return
+	 * @return entityName
 	 */
 	public String getEntityName();
 
 	/** 
 	 * Returns true if this type represents an entity
-	 * @return
+	 * @return boolean value
 	 */
 	public boolean isEntity();
 
 	/**
 	 * Find all the types of the subclasses of the instance class of this type 
+	 * 
+	 * @param types of all types   
 	 */
-	public void defineSubtypes(List<Type> type);
+	public void defineSubtypes(List<Type> types);
 	
 	/**
 	 * Get a list of all the sub types of this type
-	 * @return
+	 * @return subtypes
 	 */
 	public Set<EntityType> getSubtypes();
 	
 	/**
 	 * Get a list of all properties for a given apiVersion
 	 * 
-	 * @param apiVersion
-	 * @return
+	 * @param apiVersion apiVersion number
+	 * @return list of properties
 	 */
 	public List <Property> getProperties(int apiVersion);
 
 	/**
+	 * Add property to this type
 	 * This method is not synchronized as we do not remove elements from a Map
+	 * 
+	 * @param property that is added
 	 */
 	public void addProperty(Property property);
 
 	/**
 	 * Retrieve a property by its alias name
-	 * @param name
-	 * @return
+	 * @param name alternative name
+	 * @return Property object
 	 */
 	public Property getPropertyByAlias(String name);
 
@@ -166,79 +177,81 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 
 	/**
 	 * Find the annotation object from the instance class
-	 * @param annotationClass
-	 * @return
+	 * @param annotationClass on this type's java class
+	 * @return annotation object if present
 	 */
 	public Annotation getClassAnnotation(Class<?> annotationClass);
 
 	/**
 	 * Return the Method object for the specific property
-	 * @param targetProperty
-	 * @return
+	 * @param targetProperty property name
+	 * @return Method object if present, null otherwise
 	 */
 	public Method getGetterMethod(String targetProperty);
 
 	/**
 	 * Return the Field object for the specific property
-	 * @param targetProperty
-	 * @return
+	 * @param targetProperty property name
+	 * @return Field object if present, null otherwise
 	 */
 	public Field getField(String targetProperty);
 
 	/**
 	 * Return the setter method object for the property
-	 * @param targetProperty
-	 * @return
+	 * @param targetProperty property name
+	 * @return Method object if present, null otherwise
 	 */
 	public Method getSetterMethod(String targetProperty);
 
 	/**
 	 * Get the promises associated with a property
-	 * @param targetProperty
-	 * @return
+	 * @param targetProperty property name
+	 * @return list of promises
 	 */
 	public List<MethodInfo> getPromises(String targetProperty);
 
 	/**
 	 * Returns all the properties that need to be initialized when
 	 * the entity is created
-	 * @return
+	 * @return a set of properties
 	 */
 	public Set<String> getInitializedProperties();
 	
 	/**
 	 * Returns the topological sort order for the type
 	 * 
-	 * @return
+	 * @return order number
 	 */
 	public int getOrder();
 	
 	/**
 	 * Sets the topological sort order for the type
+	 * 
+	 * @param value of order
 	 */
 	public void setOrder(int value);
 	
 	/**
 	 * If this entity type is configured to support dynamic update
-	 * @return
+	 * @return boolean value
 	 */
 	public boolean supportsDynamicUpdate();
 
 	/**
 	 * Get the super type for this type
-	 * @return
+	 * @return EntityType
 	 */
 	public EntityType getSuperType();
 	
 	/**
 	 * Set the super type for this entity type
-	 * @param value
+	 * @param value of EntityType
 	 */
 	public void setSuperType(EntityType value);
 
 	/**
 	 * The DAS object is needed when doing lazy initializing on certain functionality
-	 * @param das
+	 * @param das DataAccessService for this type
 	 */
 	public void setDAS(DataAccessService das);
 }

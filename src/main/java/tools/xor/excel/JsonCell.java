@@ -28,20 +28,12 @@ package tools.xor.excel;
 public class JsonCell implements ICell {
 	private String value;
 
-	/**
-	 * Get the value of the cell as a string
-	 * 
-	 * @return
-	 */
+	@Override
 	public String getStringCellValue() {
 		return value;
 	}
 
-	/**
-	 * Set a string value for the cell.
-	 * 
-	 * @param value
-	 */
+	@Override
 	public void setCellValue(String value) {
 		this.value = value;
 	}

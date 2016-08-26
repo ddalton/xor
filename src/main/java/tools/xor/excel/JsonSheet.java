@@ -34,21 +34,12 @@ public class JsonSheet implements ISheet {
 		this.sheet = sheet;
 	}
 
-	/**
-	 * Gets the last row num in the sheet
-	 * Similar to total number of rows
-	 * 
-	 * @return
-	 */
+	@Override
 	public int getLastRowNum() {
 		return sheet.length();
 	}
 	
-	/**
-	 * Returns an object that represents a row
-	 * 
-	 * @return
-	 */
+	@Override
 	public IRow createRow(int rowNum) {
 		if(sheet.opt(rowNum) != null) {
 			throw new IllegalArgumentException("Trying to add a new row at a location that has an existing row: " + rowNum);
@@ -60,21 +51,17 @@ public class JsonSheet implements ISheet {
 		return row;
 	}
 	
-	/**
-	 * Returns the row at position rowNum
-	 * 
-	 * @param rowNum
-	 * @return
-	 */
+	@Override
 	public IRow getRow(int rowNum) {
 		JsonRow row = (JsonRow) sheet.opt(rowNum);
 
 		return row;
 	}
 	
-	/**
-	 * Not applicable for JsonSheet
-	 */
+	@Override
 	public void autoSizeColumn(int column) {
+		/*
+		 * Not applicable for JsonSheet
+		 */		
 	}
 }

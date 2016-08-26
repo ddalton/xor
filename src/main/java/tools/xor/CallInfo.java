@@ -24,9 +24,7 @@ import java.util.List;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.event.PropertyElement;
 import tools.xor.operation.Operation;
-import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.StateGraph;
@@ -314,23 +312,6 @@ public class CallInfo {
 		else
 			return ((EntityType) inputProperty.getType()).isAggregate();
 	}
-
-	/**
-	 * Constrain the processing according to the view.
-	 * 
-	 * @return
-	 */
-	/*
-	public boolean isInView() {
-		
-		if(settings.getView() == null) {
-			// If the user does not specify the view for the entity, then the view representing the full aggregate is used
-			throw new IllegalArgumentException("TODO: A view representing the full aggregate should be provided if the user did not set the view!");
-		}
-		
-		return settings.getView().isInView(getInputPropertyPath());
-	}
-	*/
 
 	public Operation getOperation() {
 		return operation;

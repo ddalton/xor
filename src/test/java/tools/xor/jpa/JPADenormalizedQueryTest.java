@@ -20,6 +20,7 @@
 package tools.xor.jpa;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,5 +55,11 @@ public class JPADenormalizedQueryTest extends DenormalizedQueryTest {
 	@Test
 	public void queryTaskChildren() throws FileNotFoundException {
 		super.queryTaskChildren();
+	}
+
+	@Test
+	public void updateTaskChildren() throws IOException
+	{
+		super.updateTaskChildren();
 	}
 }

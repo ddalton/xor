@@ -44,7 +44,7 @@ import tools.xor.util.Vertex;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.QueryView.ViewKey;
 
-/**
+/*
  * If no view/qualifier is specified then we return all the properties and children of the aggregate
  * 
  * We are not dealing with an XML document, so there is no inherent context to work with, i.e, one cannot navigate to a parent from the root etc..

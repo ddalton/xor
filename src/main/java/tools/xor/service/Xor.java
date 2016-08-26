@@ -15,14 +15,6 @@ public interface Xor {
 	 * @return The persistence managed object
 	 */
 	public Object create(Object inputObject, Settings settings);
-	
-	/**
-	 * @param   inputObject  The input object from the user in external form
-	 * @param   entityClass  The entity class of the object to be created
-	 *                       This is different from the class of the input object as that can be JSONObject
-	 * @return The persistence managed object
-	 */	
-	public <T> Object create(Object inputObject, Class<T> entityClass);	
 
 	/**
 	 * This method returns the object in external form such as JSONObject
@@ -30,16 +22,9 @@ public interface Xor {
 	 * 
 	 * @param inputObject   This can either be the primary key or the managed object
 	 * @param settings      User specified settings
-	 * @return
+	 * @return object
 	 */
 	public Object read(Object inputObject, Settings settings);
-	
-	/**
-	 * @param   inputObject  This can either be the primary key or the managed object
-	 * @param   entityClass  The entity class of the object to be read
-	 * @return The object in external form
-	 */		
-	public <T> Object read(Object inputObject, Class<T> entityClass);	
 
 	/**
 	 * @param   inputObject    The input object from the user in external form
@@ -54,20 +39,13 @@ public interface Xor {
 	 *                       This is different from the class of the input object as that can be JSONObject
 	 * @return The persistence managed object
 	 */	
-	public <T> Object update(Object inputObject, Class<T> entityClass);
+	public Object update(Object inputObject, Class<?> entityClass);
 
 	/**
 	 * @param inputObject  The persistence managed object that needs to be deleted
 	 * @param settings     User specified settings
 	 */
-	public void   delete(Object inputObject, Settings settings);
-	
-	/**
-	 * 
-	 * @param inputObject  The persistence managed object that needs to be deleted
-	 * @param entityClass  The entity class of the object to be deleted
-	 */
-	public <T> void   delete(Object inputObject, Class<T> entityClass);	
+	public void delete(Object inputObject, Settings settings);
 	
 	/**
 	 * Optimized form of update where the user can specify the how much of an object to update
@@ -81,36 +59,17 @@ public interface Xor {
 	public Object patch(Object inputObject, Settings settings);
 	
 	/**
-	 * @param   inputObject  The input object from the user in external form
-	 * @param   entityClass  The entity class of the object to be created
-	 *                       This is different from the class of the input object as that can be JSONObject
-	 * @return The persistence managed object
-	 * @see Xor#patch(Object, Settings)
-	 */		
-	public <T> Object patch(Object inputObject, Class<T> entityClass);	
-	
-	/**
 	 * Get a list of the objects in external form
 	 * 
 	 * @param inputObject  The input object from the user in external form
 	 *                     If the input object has an id then only that object is returned
-	 * @param settings
+	 * @param settings User specified settings
 	 * @return The result of the query
 	 */
 	public List<?> query(Object inputObject, Settings settings);
-	
-	/**
-	 * Get a list of the objects in external form
-	 * 
-	 * @param inputObject  The input object from the user in external form
-	 *                     If the input object has an id then only that object is returned
-	 * @param entityClass  The entity class of the object being queried
-	 * @return The result of the query
-	 */
-	public <T> List<?> query(Object inputObject, Class<T> entityClass);
 
 	/**
-	 * @param   inputObject  The input object from the user in managed form
+	 * @param   entity       The input object from the user in managed form
 	 * @param   settings     User specified settings
 	 * @return A persistence managed object that is a copy of the input entity
 	 * @see Xor#patch(Object, Settings)
@@ -119,27 +78,37 @@ public interface Xor {
 	
 	/**
 	 * Exports the data in excel format
-	 * @param outputStream
+	 * @param outputStream OutputStream of the Excel file
+	 * @param settings from the user
 	 */
-	public void exportQuery(OutputStream outputStream, Settings settings);
+	public void exportDenormalized(OutputStream outputStream, Settings settings);
+
+	/**
+	 * Imports the denormalized excel
+	 * @param is InputStream of the Excel file
+	 * @param settings from the user
+	 * @throws IOException if an error was encoutered while operating the inputstream
+	 */
+	public void importDenormalized (InputStream is, Settings settings) throws
+		IOException;
 
 	/**
 	 * This returns an Excel workbook object that can be used to generate an Excel file
 	 * 
-	 * @param inputObject
-	 * @param settings
-	 * @return
-	 * @throws IOException 
+	 * @param os OutputStream of the Excel file
+	 * @param inputObject object to export
+	 * @param settings from the user
+	 * @throws IOException if an error was encoutered while operating the OutputStream
 	 */
 	public void exportAggregate(OutputStream os, Object inputObject, Settings settings) throws IOException ;
 	
 	/**
 	 * Import the aggregate expressed in an Excel file
 	 * 
-	 * @param is
-	 * @param settings
+	 * @param is InputStream of the Excel file
+	 * @param settings from the user
 	 * @return the id of the created object
-	 * @throws IOException
+	 * @throws IOException  if an error was encoutered while operating the inputstream
 	 */
 	public Object importAggregate(InputStream is, Settings settings) throws IOException;
 }

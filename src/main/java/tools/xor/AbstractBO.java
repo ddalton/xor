@@ -162,7 +162,8 @@ public abstract class AbstractBO implements BusinessObject {
 		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, type);
 		return getObjectCreator().getByEntityKey(entityKey);		
 	}
-	
+
+	@Override
 	public BusinessObject getByEntityKey(Object id, BusinessObject bo) {
 		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, bo);
 		return getObjectCreator().getByEntityKey(entityKey);		
@@ -512,7 +513,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public BusinessObject createDataObject(Object id, Type instanceType, Property property) throws Exception {
-		Object propertyInstance = createInstance(id, instanceType);
+		Object propertyInstance = createInstance(objectCreator, id, instanceType);
 		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, this, property);
 
 		if(property != null)
@@ -521,15 +522,15 @@ public abstract class AbstractBO implements BusinessObject {
 		return result;
 	}
 	
-	private Object createInstance(Object id, Type instanceType) throws Exception {
+	public static Object createInstance(ObjectCreator oc, Object id, Type instanceType) throws Exception {
 		Object propertyInstance = null;
 		
 		// We will use the already loaded object in session if one is available
 		// This is done only for the query operation that retrieves managed objects
 		if(instanceType == null)
 			logger.error("!!!!! instanceType is null for object id: " + id);
-		if(getObjectCreator().isReadOnly() && objectCreator.getTypeMapper().isDomain(instanceType.getInstanceClass())) {
-			propertyInstance = objectCreator.getPersistenceOrchestrator().getCached(instanceType.getInstanceClass(), id);
+		if(oc.isReadOnly() && oc.getTypeMapper().isDomain(instanceType.getInstanceClass())) {
+			propertyInstance = oc.getPersistenceOrchestrator().getCached(instanceType.getInstanceClass(), id);
 			
 			if(propertyInstance != null) {
 				logger.info("Found in cache for type: " + instanceType.getInstanceClass().getName() + " and id: " + id.toString());
@@ -537,7 +538,7 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		if(propertyInstance == null) {
-			propertyInstance = objectCreator.createInstance(instanceType);
+			propertyInstance = oc.createInstance(instanceType);
 			if(!instanceType.isDataType() && ((EntityType)instanceType).getIdentifierProperty() != null )
 				((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(propertyInstance, id);
 		}
@@ -547,7 +548,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public BusinessObject createDataObject(Object id, Type instanceType) throws Exception {
-		Object propertyInstance = createInstance(id, instanceType);
+		Object propertyInstance = createInstance(objectCreator, id, instanceType);
 		return objectCreator.createDataObject(propertyInstance, instanceType, null, null);
 	}	
 

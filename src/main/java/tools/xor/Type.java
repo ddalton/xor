@@ -72,10 +72,9 @@ public interface Type
    * yields the property's index relative to this type.
    * As such, these expressions are equivalent:
    *<pre>
-   *    dataObject.{@link DataObject#get(int) get}(i)
    *    dataObject.{@link DataObject#get(Property) get}((Property)dataObject.getType().getProperties().get(i));
    *</pre>
-   * </p>
+   * <p>
    * @return the Properties of the type.
    * @see Property#getContainingType
    */
@@ -88,22 +87,23 @@ public interface Type
    *    dataObject.{@link DataObject#get(String) get}("name")
    *    dataObject.{@link DataObject#get(Property) get}(dataObject.getType().getProperty("name"))
    *</pre>
-   * </p>
+   * <p>
+   * @param propertyName property name
    * @return the Property with the specified name.
    * @see #getProperties
    */
   Property getProperty(String propertyName);
   
-  /**
+  /*
    * Indicates if this Type specifies DataTypes (true) or DataObjects (false).
    * When false, any object that is an instance of this type
    * also implements the DataObject interface.
    * True for simple types such as Strings and numbers.
    * For any object:
-   * <pre>
+   *  <pre>
    *   isInstance(object) && !isDataType() implies
-   *   DataObject.class.isInstance(object) returns true. 
-   * </pre>
+   *    DataObject.class.isInstance(object) returns true. 
+   *  </pre>
    * @return true if Type specifies DataTypes, false for DataObjects.
    */
   boolean isDataType();
@@ -137,10 +137,7 @@ public interface Type
    * Indicates if this Type specifies Sequenced DataObjects.
    * Sequenced DataObjects are used when the order of values 
    * between Properties must be preserved.
-   * When true, a DataObject will return a Sequence.  For example,
-   * <pre>
-   *  Sequence elements = dataObject.{@link DataObject#getSequence() getSequence}();
-   * </pre>
+   * When true, a DataObject will return a Sequence. 
    * @return true if this Type specifies Sequenced DataObjects.
    */
   boolean isSequenced();
@@ -155,8 +152,7 @@ public interface Type
 
   /**
    * Returns the List of base Types for this Type.  The List is empty
-   * if there are no base Types.  XSD <extension>, <restriction>, and
-   * Java extends keyword are mapped to this list.
+   * if there are no base Types. 
    * @return the List of base Types for this Type.
    */
   List /*Type*/<Type> getBaseTypes();
@@ -178,9 +174,8 @@ public interface Type
    * Returns a read-only List of instance Properties available on this Type.
    * <p>
    * This list includes, at a minimum, any open content properties (extensions) added to
-   * the object before {@link commonj.sdo.helper.TypeHelper#define(DataObject) defining
-   * the Type's Type}. Implementations may, but are not required to in the 2.1 version
-   * of SDO, provide additional instance properties.
+   * the object before defining the Type's Type}. Implementations may, but are not required 
+   * to in the 2.1 version of SDO, provide additional instance properties.
    * @return the List of instance Properties on this Type.
    */
   List /*Property*/<?> getInstanceProperties();

@@ -41,7 +41,7 @@ public @interface XorPromise {
 	
 	/**
 	 * The CRUD/clone actions for which the annotation is valid. An empty action means it is valid for any CRUD/clone action.
-	 * @return
+	 * @return array of AggregateAction
 	 */
 	// 
 	AggregateAction[] action() default { AggregateAction.CREATE,
@@ -52,49 +52,50 @@ public @interface XorPromise {
 	/**
 	 * The tag for which the annotation is valid. An empty tag means it is always invoked.
 	 *  Mainly used for custom logic.
-	 * @return
+	 * @return array of tags
 	 */
 	String[] tag() default {}; 
 	
 	/**
 	 * The name of the property for which this annotation is valid
-	 * @return
+	 * @return property name
 	 */
 	String property();   
 	
 	/**
 	 * If true, then the processing does not descend further, applicable only for phase PRE
-	 * @return
+	 * @return true if the promise flow stops proceeding further
 	 */
 	boolean capture() default false; 
 	
 	/**
 	 * The processing phase in which this method is invoked.
-	 * @return
+	 * @return phase
 	 */
     Phase phase() default Phase.PRE;
 
 	/**
 	 * The processing pass in which this method is invoked
-	 * @return
+	 * @return processing stage
 	 */
 	// TODO: Give the ability to run in multiple stages
 	ProcessingStage stage() default ProcessingStage.UPDATE;
     
     /**
      * The version until which this method is valid
-     * @return
+     * @return untilVersion
      */
     int untilVersion() default Integer.MAX_VALUE;
     
     /**
      * The version from which this method is valid
-     * @return
+     * @return fromVersion
      */
     int fromVersion() default Settings.INITIAL_API_VERSION;
     
     /**
      * The order of execution, if a property has multiple methods
+     * @return order number
      */
     int order() default 0;
 }

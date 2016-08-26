@@ -45,9 +45,9 @@ public interface TypeMapper {
 	 * If the domain class could not be found from the given class, then try to 
 	 * infer it from the provided BusinessObject 
 	 * 
-	 * @param externalClass
+	 * @param externalClass external java class
 	 * @param bo BusinessObject
-	 * @return
+	 * @return the domain java class
 	 */
 	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);	
 	
@@ -56,8 +56,8 @@ public interface TypeMapper {
 	 * external form of the class and allows a particalar
 	 * type implementation to store more information on the external type
 	 * 
-	 * @param  type
-	 * @return
+	 * @param  type external
+	 * @return the domain java class
 	 */
 	public Class<?> toDomain(Type type);
 
@@ -73,60 +73,59 @@ public interface TypeMapper {
 	 * Describes what form corresponds to the source and target types
 	 * The source class and target class resolution is dependent upon this.
 	 * 
-	 * @return
-	 * @see TypeMapper#getSourceClass(Class)
+	 * @return direction
 	 */
 	public MapperDirection getDirection();
 	
 	/**
 	 * Sets the desired forms of the source and target types
 	 * 
-	 * @param direction
+	 * @param direction value
 	 */
 	public void setDirection(MapperDirection direction);	
 	
 	/**
 	 * Returns the source form of the class given an input class
-	 * @param clazz
+	 * @param clazz input
 	 * @param callInfo Need this object to obtain the property or the parent property in case property is null
-	 * @return
+	 * @return source class
 	 * @see TypeMapper#getDirection()
 	 */
 	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo);
 	
 	/**
 	 * Factory method to create a TypeMapper instance
-	 * @param direction
-	 * @return
+	 * @param direction value
+	 * @return typemapper instance
 	 */
 	public TypeMapper newInstance(MapperDirection direction);
 
 	/**
 	 * Check if the given class is in its external form
-	 * @param clazz
-	 * @return
+	 * @param clazz value
+	 * @return true if external form of the class
 	 */
 	public boolean isExternal(Class<?> clazz);
 	
 	/**
 	 * Check if the given class is in its domain form
-	 * @param clazz
-	 * @return
+	 * @param clazz value
+	 * @return true if domain form of the class
 	 */
 	public boolean isDomain(Class<?> clazz);
 	
 	/**
 	 * Get the associated creation strategy
-	 * @param oc
-	 * @return
+	 * @param oc objectcreator input
+	 * @return creationstrategy
 	 */
 	public CreationStrategy getCreationStrategy(ObjectCreator oc);
 	
 	/**
 	 * Create an instance of the desired external type
-	 * @param domainType
-	 * @param derivedClass
-	 * @return
+	 * @param domainType domain type
+	 * @param derivedClass external java class
+	 * @return external type
 	 */
 	public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass);
 
@@ -134,23 +133,24 @@ public interface TypeMapper {
 	 * Allow the typemapper to specify a custom name for the external type
 	 * This is necessary for examples like JsonObject where there is not much information
 	 * without knowing the domain class that it represents
-	 * @param inputClass
-	 * @param domainType
-	 * @return
+	 * 
+	 * @param inputClass external class
+	 * @param domainType domain type
+	 * @return external name
 	 */
 	public String getExternalTypeName(Class<?> inputClass, Type domainType);
 
 	/** 
-	 * Flag that denotes if the object needs to be readded after the child properties are processed
+	 * Flag that denotes if the object needs to be read after the child properties are processed
 	 * This is necessary for immutable objects
-	 * @return
+	 * @return true if immutable
 	 */
 	public boolean immutable();
 	
 	/**
 	 * Identifies if a particular interface is an open type
-	 * @param clazz
-	 * @return
+	 * @param clazz input
+	 * @return true if the clazz supports creating open properties e.g., JSONObject
 	 */
 	public boolean isOpen(Class<?> clazz);
 	
@@ -158,9 +158,9 @@ public interface TypeMapper {
 	 * Get the EntityKey object that is used as the key in the ObjectCreator
 	 * cache.
 	 * 
-	 * @param id
-	 * @param type
-	 * @return
+	 * @param id identifier
+	 * @param type Type
+	 * @return EntityKey
 	 */
 	public EntityKey getEntityKey(Object id, Type type);
 	
@@ -170,9 +170,9 @@ public interface TypeMapper {
 	 * and can lead to a more robust behavior in Polymorphic situations where the Type object 
 	 * is not present in dynamic type situations (e.g., JSON)
 	 *  
-	 * @param id
-	 * @param bo
-	 * @return
+	 * @param id identifier
+	 * @param bo BusinessObject from which the Type is inferred
+	 * @return EntityKey
 	 */
 	public EntityKey getEntityKey(Object id, BusinessObject bo);	
 }

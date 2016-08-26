@@ -59,10 +59,10 @@ public class ImmutableJsonProperty extends ExternalProperty {
 		
 		/**
 		 * We have to use an array builder since there is no "name" property
-		 * @param builder
-		 * @param object
+		 * @param builder json array builder
+		 * @param object to add to the builder
 		 */
-		public void   add(JsonArrayBuilder builder, Object object);
+		public void add(JsonArrayBuilder builder, Object object);
 	}
 	
 	abstract public static class AbstractConverter implements Converter {

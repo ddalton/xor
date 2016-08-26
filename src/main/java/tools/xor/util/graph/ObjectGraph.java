@@ -66,9 +66,9 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 * Need to query the collection owner object if needing the
 	 * collection elements.
 	 * 
-	 * @param vertex
-	 * @param name
-	 * @return
+	 * @param vertex object
+	 * @param name of the edge
+	 * @return edge
 	 */
 	public E getOutEdge(V vertex, String name) {
 		if(!outTransitions.containsKey(vertex)) {
@@ -149,6 +149,8 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 * 
 	 * NOTE: This can be an expensive method since the enumeration of all the loops in a graph
 	 * is expensive. Call only when needed.
+	 * @param source root
+	 * @param settings user specified settings
 	 */
 	public void spanningTreeWithEdgeSwizzling(BusinessObject source, Settings settings) {
 

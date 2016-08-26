@@ -75,7 +75,8 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 	
 	/**
 	 * Overridden by subclasses
-	 * @param result
+	 * @param entity to which some meta data is added
+	 * @param from object instance
 	 */
 	protected void addEntityMeta(JSONObject entity, Object from) {
 		
@@ -83,7 +84,9 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 	
 	/**
 	 * Overridden by subclasses
-	 * @param result
+	 * @param container parent object
+	 * @param containmentProperty parent property 
+	 * @param fromCollectionInstance from collection instance
 	 */
 	protected void addCollectionMeta(JSONObject container, Property containmentProperty, Object fromCollectionInstance) {
 		

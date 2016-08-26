@@ -27,13 +27,14 @@ package tools.xor;
 public interface BasicType extends Type {
 	/**
 	 * Assists in finding the actual class for each of the elements in a property path
-	 * @return
+	 * @return ClassResolver 
 	 */
 	public ClassResolver getClassResolver();
 	
 	/**
 	 * The type knows how to create a new instance
-	 * @return
+	 * @param instance prototype whose className is used if necessary to create the new object
+	 * @return new object instance
 	 */
 	public Object newInstance(Object instance);
 }

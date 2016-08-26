@@ -39,28 +39,29 @@ public interface PersistenceOrchestrator {
 	
 	/**
 	 * Find the entity by its primary key
-	 * @param id
-	 * @return
-	 */
+     * @param persistentClass Java class of entity we want to find
+     * @param id of the entity
+     * @return Persistence managed object
+     */
 	public Object findById(Class<?> persistentClass, Object id);	
 	
 	/**
 	 * Find the entity by one or more property values
-	 * @param id
-	 * @return
+	 * @param type of the entity we want to find
+	 * @param propertyValues by which we need to restrict
+	 * @return Persistence managed object
 	 */
 	public Object findByProperty(Type type, Map<String, String> propertyValues);		
 
     /**
      * Save the entity in the persistence store
-     * @param entity
-     * @return
+     * @param entity to save
      */
     public void saveOrUpdate(Object entity);
     
     /**
      * Delete the entity from the persistence store
-     * @param entity
+     * @param entity to delete
      */
     public void delete(Object entity);
     
@@ -83,7 +84,7 @@ public interface PersistenceOrchestrator {
 	
 	/**
 	 * Set the flush mode
-	 * @param flushMode
+	 * @param flushMode to set
 	 */
 	public void setFlushMode(Object flushMode);
     
@@ -94,18 +95,20 @@ public interface PersistenceOrchestrator {
     
     /**
      * Refreshes the object held in the persistence cache
+     * @param object Persistence managed object
      */
     public void refresh(Object object);    
     
     /**
      * Indicates if this persistence orchestrator automatically tracks version 
      * If not, the framework takes care of updating the version in order to support optimistic concurrency control
+     * @return true if version tracking is supported
      */
     public boolean supportsVersionTracking();
     
     /**
      * Returns the mechanisms supported for querying
-     * @return
+     * @return QueryCapability object
      */
     public QueryCapability getQueryCapability();
     
@@ -116,6 +119,7 @@ public interface PersistenceOrchestrator {
      * This is usually not a problem with NoSQL databases.
      * Setting this flag to false, allows the framework to individually persist
      * objects within the aggregate in based on topological ordering of the required fields.
+     * @return true if can process aggregate
      */
     public boolean canProcessAggregate();
     
@@ -123,8 +127,9 @@ public interface PersistenceOrchestrator {
 	 * Check if there is an existing persistent instance with the identifier 
 	 * specified in object
 	 * 
-	 * @param object
-	 * @return A persistent object or null 
+     * @param callInfo object
+     * @param typeMapper instance to infer the domain type
+     * @return A persistent object or null 
 	 */
 	public Object getPersistentObject(CallInfo callInfo, TypeMapper typeMapper);
 	
@@ -132,13 +137,18 @@ public interface PersistenceOrchestrator {
 	 * If the object is present in the local cache (session) return it 
 	 * else return null
 	 * 
-	 * @param id
-	 * @return
+	 * @param persistentClass of the entity we want to get
+	 * @param id of the entity
+	 * @return object if present in cache or null 
 	 */
 	public Object getCached(Class<?> persistentClass, Object id);
 	
 	/**
 	 * Return the query object specific to the persistence mechanism
+	 * @param queryString typically the SQL string
+	 * @param queryType the type of query
+	 * @param sp if the query needs to use a stored procedure
+	 * @return Query object
 	 */
 	public Query getQuery(String queryString, QueryType queryType, StoredProcedure sp);
 	
@@ -151,14 +161,13 @@ public interface PersistenceOrchestrator {
 	 * 
 	 * @param bo The object wrapper being reattached
 	 * @param view The view representing the scope of the update
-	 * @return
 	 */
 	public void attach(BusinessObject bo, AggregateView view);
 	
 	/**
 	 * Checks to see if stored procedure support 
 	 * This includes OUT parameters support. TODO: relax this requirement in the future.
-	 * @return
+	 * @return true if stored procedures are supported
 	 */
 	public boolean supportsStoredProcedure();
 

@@ -80,7 +80,7 @@ public class ExcelBook implements IBook {
 	
     /**
      * Set whether temp files should be compressed.
-     * @param compress
+     * @param compress set to true for compression
      */
     public void setCompressTempFiles(boolean compress) {
     	wb.setCompressTempFiles(compress);
@@ -90,8 +90,8 @@ public class ExcelBook implements IBook {
      * Create a new sheet for this Workbook and return the high level representation.
      * Use this to create new sheets.
      * 
-     * @param sheetname
-     * @return
+     * @param sheetname name of the excel sheet
+     * @return Sheet object
      */
     public ISheet createSheet(String sheetname) {
     	Sheet sheet = wb.createSheet(sheetname);

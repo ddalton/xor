@@ -67,12 +67,6 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
     	
     }    
 	
-	/**
-	 * Save the entity in the persistence store
-	 * 
-	 * @param entity
-	 * @return
-	 */
 	@Override
 	public void saveOrUpdate(Object entity) {
 		getEntityManager().persist(entity);		
@@ -88,11 +82,6 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 		getEntityManager().refresh(object);
 	}		
 
-	/**
-	 * Delete the entity from the persistence store
-	 * 
-	 * @param entity
-	 */
 	@Override
 	public void delete(Object entity) {
 		getEntityManager().remove(entity);		

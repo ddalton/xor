@@ -31,22 +31,22 @@ public interface IRow {
 	 * short representing the last logical cell in the row <b>PLUS ONE</b>,
      *   or -1 if the row does not contain any cells.
 	 * 
-	 * @return
+	 * @return column number
 	 */
 	public short getLastCellNum();
 
 	/**
-	 * 
-	 * @param column
-	 * @return
+	 * Create cell in column
+	 * @param column number
+	 * @return Cell object
 	 */
 	public ICell createCell(int column);
 	
 	/**
 	 * Get the cell representing a given column (logical cell) 0-based. If you ask for a cell that is not defined....you get a null.
 	 * 
-	 * @param cellNum
-	 * @return
+	 * @param cellNum column number
+	 * @return Cell Object
 	 */
 	public ICell getCell(int cellNum);
 	

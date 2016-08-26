@@ -26,26 +26,29 @@ public interface QueryCapability {
 	   
     /**
      * Returns the mechanism for returning the actual type of a subclassable type
-     * @return
-     */
+	 * @param queryAlias of the type in a query 
+	 * @return type mechanism value
+	 */
     public String getTypeMechanism(String queryAlias);
 
     /**
      * Returns the mechanism used to obtain the key of a map attribute
-     * @return
+	 * @param queryAlias of the type in a query 
+	 * @return key mechanism value
      */
     public String getMapKeyMechanism(String queryAlias);
     
     /**
      * Returns the mechanism used to obtain the value of a map 
-     * @return
+	 * @param queryAlias of the type in a query 
+	 * @return value mechanism value
      */
     public String getMapValueMechanism(String queryAlias);
     
     /**
      * Returns the mechanism used to obtain the index value of a list
-     * @param queryAlias
-     * @return
+	 * @param queryAlias of the type in a query 
+	 * @return index mechanism value
      */
 	public String getListIndexMechanism(String queryAlias);    
 }

@@ -21,9 +21,7 @@ package tools.xor.action;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
-import tools.xor.ProcessingStage;
 import tools.xor.Settings;
-import tools.xor.event.PropertyElement;
 
 
 public final class SetterAction implements Executable {
@@ -31,28 +29,20 @@ public final class SetterAction implements Executable {
 	private final Object      value;
 	private final PropertyKey key;
 	private final Executable  triggeringAction;
-	private final Settings    settings;
-	private final Object      input;
 
 	/**
 	 * NOTE: The output object in callInfo may not be the same as the key.getDataObject() - e.g., the backRef code calling this methoed
 	 *       in the context of setting the bi-directional link. This is typically indicated by the fact that 
 	 *       triggeringAction is not null.
 	 *
-	 * @param value
-	 * @param key
-	 * @param triggeringAction
-	 * @param settings
-	 * @param input
+	 * @param value the new value
+	 * @param key property details
+	 * @param triggeringAction action
 	 */
-	public SetterAction(Object value, PropertyKey key, Executable triggeringAction, Settings settings, Object input) {
+	public SetterAction(Object value, PropertyKey key, Executable triggeringAction) {
 		this.value = value;
 		this.key = key;
 		this.triggeringAction = triggeringAction;
-		this.settings = settings;
-		this.input = input;
-		
-		//(new Exception()).printStackTrace();
 	}
 
 	@Override

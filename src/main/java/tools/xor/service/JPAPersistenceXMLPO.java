@@ -35,8 +35,8 @@ public class JPAPersistenceXMLPO extends JPAPersistenceOrchestrator {
     
     /**
      * 
-     * @param sessionContext
-     * @param data
+     * @param sessionContext session context
+     * @param data unique name
      */
     public JPAPersistenceXMLPO(Object sessionContext, Object data) {
     	super(sessionContext, data);

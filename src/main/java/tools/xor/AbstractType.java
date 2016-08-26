@@ -410,7 +410,7 @@ public abstract class AbstractType implements EntityType {
 
 	/**
 	 * Initialize both the root entity type and also the parent entity type
-	 * @param das
+	 * @param das to get the Type
 	 */
 	public void initRootEntityType(DataAccessService das) {
 		Class<?> rootEntityClass = getInstanceClass();

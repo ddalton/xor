@@ -30,14 +30,14 @@ public interface ICell {
 	/**
 	 * Get the value of the cell as a string
 	 * 
-	 * @return
+	 * @return cell value as string
 	 */
 	public String getStringCellValue();
 
 	/**
 	 * Set a string value for the cell.
 	 * 
-	 * @param value
+	 * @param value set as string
 	 */
 	public void setCellValue(String value);
 	

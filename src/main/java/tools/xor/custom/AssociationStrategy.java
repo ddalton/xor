@@ -26,14 +26,16 @@ import tools.xor.util.ObjectCreator;
 public interface AssociationStrategy {
 	/**
 	 * The strategy used to associate with an existing object based on the source information
-	 * @param callInfo
-	 * @throws Exception 
+	 * @param callInfo object
+	 * @param oc ObjectCreator
+	 * @return persistence managed object
 	 */
 	public Object execute(CallInfo callInfo, ObjectCreator oc);
 
 	/**
 	 * Method that indicates if the source object should be further processed
-	 * @param callInfo
+	 * @param callInfo object
+	 * @return true if we should continue processing child entities
 	 */
 	public boolean doProcess(CallInfo callInfo);
 }

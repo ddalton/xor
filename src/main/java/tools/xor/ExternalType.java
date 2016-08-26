@@ -63,9 +63,9 @@ public class ExternalType extends AbstractType {
 	/**
 	 * Create and add a new property to this type.
 	 *
-	 * @param dataAccessService
-	 * @param domainProperty
-	 * @return
+	 * @param dataAccessService dataAccessService instance
+	 * @param domainProperty domain Property object
+	 * @return Property object
 	 */
 	public Property defineProperty(DataAccessService dataAccessService, Property domainProperty) {
 		Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());

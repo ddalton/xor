@@ -77,8 +77,8 @@ public class NativeQuery {
 
 	/**
 	 * The starting position is 1
-	 * @param attribute
-	 * @return
+	 * @param value of path
+	 * @return position
 	 */
 	public int getPosition(String value) {
 		int result = -1;

@@ -184,7 +184,7 @@ public abstract class CollectionUpdateAction implements Executable {
 		// Set the backRef value to null. This is an asynchronous activity
 		if(callInfo.getParent().getOutputProperty().isBiDirectional()) {
 			PropertyKey newOppositeKey = new PropertyKey(collectionElement, callInfo.getParent().getOutputProperty().getOpposite());			
-			callInfo.getOutputRoot().getObjectPersister().addAction(new SetterAction(null, newOppositeKey, originalAction, callInfo.getSettings(), callInfo.getInput())); 	
+			callInfo.getOutputRoot().getObjectPersister().addAction(new SetterAction(null, newOppositeKey, originalAction)); 	
 		}
 
 	}		

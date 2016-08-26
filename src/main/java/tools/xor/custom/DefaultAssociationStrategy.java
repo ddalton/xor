@@ -25,19 +25,13 @@ import tools.xor.util.ObjectCreator;
 
 
 public class DefaultAssociationStrategy implements AssociationStrategy {
-	/**
-	 * The strategy used to associate with an existing object based on the source information
-	 * @param callInfo
-	 * @throws Exception 
-	 */
+
+	@Override
 	public Object execute(CallInfo callInfo, ObjectCreator oc) {
 		return oc.getPersistenceOrchestrator().getPersistentObject(callInfo, oc.getTypeMapper());
 	}
 
-	/**
-	 * Method that indicates if the source object should be persisted
-	 * @param callInfo
-	 */
+	@Override
 	public boolean doProcess(CallInfo callInfo) {
 		if(callInfo.getOperation().isExternalAssociationLink(callInfo))
 			return false;

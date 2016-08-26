@@ -39,42 +39,42 @@ import tools.xor.service.PersistenceOrchestrator.QueryType;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.Constants;
 
-/**
+/*
  * QueryBuilder needs to handle the following expressions
+ * 
+ * First Phase -- Restrict to simple needs 
+ * 
+ * Example filters
+ * -----------------------------
+ * ilike(param, %1)
+ * in(param, %1)
+ * idEq(%1)
+ * ge(%1)
+ * asc(%1)
+ * 
+ * e.g.
+ * 
+ * ilike(name, "%xyz%")
+ * in("id", String[])
+ * idEq(String)
+ * ge("createdOn", long)
+ * ge("updatedOn", long)
+ * asc("name")
+ * 
+ * Modify view to support filters
+ * ------------------------------
+ * 
+ * FILTERS
+ * ilike(name, ":name")            // lower(name) LIKE :name
+ * in(state, ":state"              // name IN(:state)
+ * equal(ownedBy.name, ":owner")   // ownedBy.name = :owner 
+ * ge(createdOn, ":createdSince")  // createdOn > :createdSince
+ * ge(updatedOn, ":updatedSince"); // updaetdOn > :updatedSince
+ * asc(name)                       // ORDER BY name  also honor OrderBy annotation in model if no ORDER BY clause is provided
+ * between(updatedOn, ":updatedFrom", ":updatedTo")
+ * 
+ * */
 
-First Phase -- Restrict to simple needs 
-
-Example filters
------------------------------
-ilike(param, %1)
-in(param, %1)
-idEq(%1)
-ge(%1)
-asc(%1)
-
-e.g.
-
-ilike(name, "%xyz%")
-in("id", String[])
-idEq(String)
-ge("createdOn", long)
-ge("updatedOn", long)
-asc("name")
-
-Modify view to support filters
-------------------------------
-
-  FILTERS
-  ilike(name, ":name")            // lower(name) LIKE :name
-  in(state, ":state"              // name IN(:state)
-  equal(ownedBy.name, ":owner")   // ownedBy.name = :owner 
-  ge(createdOn, ":createdSince")  // createdOn > :createdSince
-  ge(updatedOn, ":updatedSince"); // updaetdOn > :updatedSince
-  asc(name)                       // ORDER BY name  also honor OrderBy annotation in model if no ORDER BY clause is provided
-  between(updatedOn, ":updatedFrom", ":updatedTo")
-
- *
- */
 public class QueryBuilder {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 

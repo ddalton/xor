@@ -162,6 +162,8 @@ public class ObjectCreator {
 	/**
 	 * Returns true if the given class is under a package that starts with
 	 * "java.".
+	 * @param c class
+	 * @return boolean value
 	 */
 	protected boolean isJavaOrAppPackage(Class<?> c) {
 		if (c == null)
@@ -172,10 +174,6 @@ public class ObjectCreator {
 						"org.LWSDO."));
 	}
 
-	/**
-	 * Returns true if the given class is known to be immutable; false
-	 * otherwise.
-	 */
 	protected boolean immutable(Class<?> c) {
 		if (c == null)
 			return false;
@@ -302,8 +300,8 @@ public class ObjectCreator {
 	 * 2. Multiple objects with the same id but of different types due to polymorphism. The
 	 *    more specific instance is honored
 	 *    
-	 * @param newDataObject
-	 * @return
+	 * @param newDataObject to register
+	 * @return resolved BusinessObject
 	 */
 	public BusinessObject register(BusinessObject newDataObject) {
 		BusinessObject result = newDataObject;
@@ -376,10 +374,10 @@ public class ObjectCreator {
 	 * This is not to be confused with the method name "createTarget",
 	 * as that refers to creating the target object w.r.t the CallInfo
 	 * 
-	 * @param ci
+	 * @param ci CallInfo object
 	 * @param targetInstance A reference to an already created target instance
-	 * @param desiredClass
-	 * @return
+	 * @param desiredClass for the instance
+	 * @return new BusinessObject
 	 */	
 	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Class<?> desiredClass) {
 
@@ -532,7 +530,7 @@ public class ObjectCreator {
 	/**
 	 * This method sets the root for MutableBO Business objects
 	 * in the output ObjectCreator
-	 * @param root
+	 * @param root of the object graph
 	 */
 	public void setObjectGraph(BusinessObject root) {
 		this.root = root;

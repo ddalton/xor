@@ -25,8 +25,8 @@ import tools.xor.CallInfo;
 public interface DetailStrategy {
 	/**
 	 * The strategy used to define a custom detail
-	 * @param callInfo
-	 * @throws Exception 
+	 * @param callInfo object
+	 * @return true if it needs to be included in the processing
 	 */
 	public boolean isIncluded(CallInfo callInfo);
 }

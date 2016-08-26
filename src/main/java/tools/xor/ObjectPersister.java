@@ -100,7 +100,7 @@ public class ObjectPersister {
 
 	/**
 	 * If this is a element action, the migrator action is found and the element action is recorded on it
-	 * @param action
+	 * @param action update action object
 	 */
 	public void addAction(Executable action) {
 

@@ -27,7 +27,6 @@ import java.util.Map;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.AggregatePropertyPaths;
-import tools.xor.view.AggregateViews;
 import tools.xor.view.QueryView;
 
 public class MetaModel {
@@ -120,27 +119,6 @@ public class MetaModel {
 	             count++;
 
 	    return count;
-	}	
-	
-	/**
-	 * List all the DataUpdater names and their property name
-	 */
-	public Map<String, String> getDataUpdaters(String aggregateName) {
-		return null;
-	}
-	
-	/**
-	 * List all the DataReader names
-	 */
-	public Map<String, String> getDataReaders(String aggregateName) {
-		return null;
-	}	
-	
-	/**
-	 * List all the invariant names
-	 */
-	public Map<String, String> getInvariants(String aggregateName) {
-		return null;
 	}	
 	
 }

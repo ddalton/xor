@@ -39,26 +39,26 @@ public @interface XorAfter {
     
 	/**
 	 * The CRUD/clone actions for which the annotation is valid. An empty action means it is valid for any CRUD/clone action.
-	 * @return
+	 * @return array of AggregateAction
 	 */
 	AggregateAction[] action() default {}; 
 	
 	/**
 	 * The tag for which the annotation is valid. An empty tag means it is always invoked.
 	 *  Mainly used for custom logic.
-	 * @return
+	 * @return array of tags
 	 */
 	String[] tag() default {}; 
     
     /**
      * The version until which this method is valid
-     * @return
+     * @return untilVersion
      */
     int untilVersion() default Integer.MAX_VALUE;
     
     /**
      * The version from which this method is valid
-     * @return
+     * @return fromVersion
      */
     int fromVersion() default Settings.INITIAL_API_VERSION;
 }

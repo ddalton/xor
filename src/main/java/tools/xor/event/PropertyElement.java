@@ -19,36 +19,54 @@
 
 package tools.xor.event;
 
-import tools.xor.ExtendedProperty;
+import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 
 public class PropertyElement implements PropertyEvent {
 
-	private Object   element;
-	private Phase    phase;
 	private Settings settings;
-	private Object   inputElement;
-	private Object   inputParentElement;	
+	private Object domain;	
+	private Object external;
+	private BusinessObject domainParent;
+	private BusinessObject externalParent;
+	private Phase    phase;	
 	private ProcessingStage stage;
+	private Object value; // Will be injected as XorResult
 
-	public PropertyElement(Settings settings, Object element, Object input, Object inputParent, Phase phase, ProcessingStage stage) {
-		this.element = element;
-		this.phase = phase;
+	public PropertyElement(Settings settings, Object value, Phase phase, ProcessingStage stage) {
 		this.settings = settings;
-		this.inputElement = input;
-		this.inputParentElement = inputParent;
+		this.value = value;
+		this.phase = phase;
 		this.stage = stage;
 	}
 
-	public Object getElement() {
-		return element;
+	public PropertyElement(Settings settings, Object domain, Object external, BusinessObject domainParent, BusinessObject externalParent, Phase phase, ProcessingStage stage) {
+		this.domain = domain;
+		this.phase = phase;
+		this.settings = settings;
+		this.external = external;
+		this.domainParent = domainParent;
+		this.externalParent = externalParent;
+		this.stage = stage;
+	}
+
+	public Object getDomain() {
+		return domain;
 	}
 
 	public void setElement(Object element) {
-		this.element = element;
+		this.domain = element;
 	}
+	
+	public Object getExternal() {
+		return external;
+	}
+
+	public void setExternal(Object element) {
+		this.external = element;
+	}	
 
 	@Override
 	public Phase getPhase() {
@@ -63,23 +81,24 @@ public class PropertyElement implements PropertyEvent {
 	public void setSettings(Settings settings) {
 		this.settings = settings;
 	}
-
+	
 	@Override
-	public Object getOtherElement () {
-		return inputElement;
+	public BusinessObject getDomainParent () {
+		return domainParent;
 	}
 	
 	@Override
-	public Object getOtherElementParent () {
-		return inputParentElement;
-	}	
+	public BusinessObject getExternalParent () {
+		return externalParent;
+	}		
 
 	@Override public ProcessingStage getStage ()
 	{
 		return this.stage;
 	}
-
-	public void setInputElement(Object inputElement) {
-		this.inputElement = inputElement;
+	
+	@Override
+	public Object getValue() {
+		return value;
 	}
 }

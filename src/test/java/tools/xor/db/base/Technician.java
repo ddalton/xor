@@ -25,9 +25,9 @@ import javax.persistence.OneToOne;
 
 import tools.xor.AggregateAction;
 import tools.xor.ExtendedProperty.Phase;
-import tools.xor.annotation.XorInput;
-import tools.xor.annotation.XorOutput;
-import tools.xor.annotation.XorPromise;
+import tools.xor.annotation.XorDomain;
+import tools.xor.annotation.XorExternal;
+import tools.xor.annotation.XorLambda;
 
 @Entity
 public class Technician extends Person {
@@ -44,8 +44,8 @@ public class Technician extends Person {
 		this.skill = skill;
 	}
 	
-	@XorPromise(property="skill", action={AggregateAction.READ}, capture=true)
-	public static void defaultSkill(@XorInput Technician current, @XorOutput Technician result ) {
+	@XorLambda(property="skill", action={AggregateAction.READ}, capture=true)
+	public static void defaultSkill(@XorDomain Technician current, @XorExternal Technician result ) {
 		if(current.skill != null) { 
 			result.skill = current.skill;
 		} else {
@@ -62,8 +62,8 @@ public class Technician extends Person {
 		this.rate = rate;
 	}
 	
-	@XorPromise(property="rate")
-	public static void updateRate(@XorOutput Technician current, @XorInput(path=".") Rate rate) {
+	@XorLambda(property="rate")
+	public static void updateRate(@XorDomain Technician current, @XorExternal(path="rate") Rate rate) {
 		current.rate = rate;
 		current.comment = "SetRate";
 	}

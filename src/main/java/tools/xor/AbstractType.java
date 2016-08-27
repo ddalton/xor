@@ -42,9 +42,9 @@ import org.apache.log4j.Logger;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorEntity;
-import tools.xor.annotation.XorInput;
-import tools.xor.annotation.XorOutput;
-import tools.xor.annotation.XorPromise;
+import tools.xor.annotation.XorDomain;
+import tools.xor.annotation.XorExternal;
+import tools.xor.annotation.XorLambda;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
@@ -72,7 +72,7 @@ public abstract class AbstractType implements EntityType {
 	private Map<String, Annotation> classAnnotations = new HashMap<String, Annotation>();
 	
 	// Cached Annotations used to enforce business logic in the model
-	volatile private Map<String, List<MethodInfo>> promises = new HashMap<String, List<MethodInfo>>();
+	volatile private Map<String, List<MethodInfo>> lambdas = new HashMap<String, List<MethodInfo>>();
 	
 	private Set<MethodInfo> postLogicMethods = new HashSet<MethodInfo>(); // includes PostLogic annotated methods of ancestors
 
@@ -96,7 +96,7 @@ public abstract class AbstractType implements EntityType {
 		initFields();
 		initClassAnnotations();
 		initPostLogic();
-		initPromises();
+		initLambdas();
 	}
 
 	@Override
@@ -190,7 +190,7 @@ public abstract class AbstractType implements EntityType {
 			for (int i = ma.length - 1; i > -1; i--) {
 				Method m = ma[i];
 
-				if (m.getAnnotation(XorPromise.class) != null) {
+				if (m.getAnnotation(XorLambda.class) != null) {
 
 					if (m.getParameterTypes().length != 0) {
 						if (!validateParamAnnotations(m)) {
@@ -198,7 +198,7 @@ public abstract class AbstractType implements EntityType {
 						}
 					}
 
-					XorPromise p = m.getAnnotation(XorPromise.class);
+					XorLambda p = m.getAnnotation(XorLambda.class);
 					if (p.property().equals(property) &&
 							p.capture() &&
 							hasReadAction(p.action())) {
@@ -219,7 +219,7 @@ public abstract class AbstractType implements EntityType {
 		return null;
 	}
 	
-	private boolean hasReadAction(AggregateAction[] actions) {
+	public static boolean hasReadAction(AggregateAction[] actions) {
 		for(AggregateAction a: actions) {
 			if(a == AggregateAction.READ) {
 				return true;
@@ -240,7 +240,7 @@ public abstract class AbstractType implements EntityType {
 			for (int i = ma.length - 1; i > -1; i--) {
 				Method m = ma[i];
 
-				if (m.getAnnotation(XorPromise.class) != null) {
+				if (m.getAnnotation(XorLambda.class) != null) {
 
 					if (m.getParameterTypes().length != 0) {
 						if (!validateParamAnnotations(m)) {
@@ -248,7 +248,7 @@ public abstract class AbstractType implements EntityType {
 						}
 					}
 
-					XorPromise dataUpdate = m.getAnnotation(XorPromise.class);
+					XorLambda dataUpdate = m.getAnnotation(XorLambda.class);
 					if (dataUpdate.property().equals(property)) {
 						return m;
 					}
@@ -541,8 +541,8 @@ public abstract class AbstractType implements EntityType {
 		for(Annotation[] paramA: paramAnnotations) {
 			boolean found = false;
 			for(Annotation annotation: paramA) {
-				if(XorInput.class.isAssignableFrom(annotation.getClass()) ||
-						XorOutput.class.isAssignableFrom(annotation.getClass())) {
+				if(XorDomain.class.isAssignableFrom(annotation.getClass()) ||
+						XorExternal.class.isAssignableFrom(annotation.getClass())) {
 					if(!found) {
 						found = true;
 						foundParamAnnotation = true;
@@ -560,20 +560,20 @@ public abstract class AbstractType implements EntityType {
 			logger.warn("The business logic method " + method.getName() + " should have Input/Output parameter annotations on all its parameters to indicate how the param values need to be populated");
 		}
 		
-		if(!Modifier.isStatic(method.getModifiers())) {
-			throw new RuntimeException("The business logic method " + method.getDeclaringClass().getName() + "#" + method.getName() + " should be static");
-		}
+		//if(!Modifier.isStatic(method.getModifiers())) {
+		//	throw new RuntimeException("The business logic method " + method.getDeclaringClass().getName() + "#" + method.getName() + " should be static");
+		//}
 
 		return foundParamAnnotation;
 	}
 
-	protected void initPromises() {	
+	protected void initLambdas() {	
 
 		HashMap<String, List<MethodInfo>> allMethods = new HashMap<String, List<MethodInfo>>();				
 		Class<?> instanceClass = getInstanceClass();
 		Set<String> notUnique = new HashSet<String>();
 		for(Method method: instanceClass.getMethods()) {
-			if(method.getAnnotation(XorPromise.class) != null) {
+			if(method.getAnnotation(XorLambda.class) != null) {
 
 				if(method.getParameterTypes().length != 0) {
 					if(!validateParamAnnotations(method)) {
@@ -581,30 +581,30 @@ public abstract class AbstractType implements EntityType {
 					}
 				}
 
-				XorPromise promise = method.getAnnotation(XorPromise.class);
-				if(notUnique.contains(promise.property())) {
+				XorLambda lambda = method.getAnnotation(XorLambda.class);
+				if(notUnique.contains(lambda.property())) {
 					// already recorded
 					continue;
 				}
 				MethodInfo methodInfo = new MethodInfo(
-					promise.order(),
-					promise.fromVersion(), 
-					promise.untilVersion(),
+					lambda.order(),
+					lambda.fromVersion(), 
+					lambda.untilVersion(),
 					method,
-					promise.capture(),
-					promise.action(),
-					promise.tag(),
-					promise.phase(),
-					promise.stage());
-				if(!addUniqueMethod(allMethods, promise.property(), methodInfo)) {
-					notUnique.add(promise.property());
+					lambda.capture(),
+					lambda.action(),
+					lambda.tag(),
+					lambda.phase(),
+					lambda.stage());
+				if(!addUniqueMethod(allMethods, lambda.property(), methodInfo)) {
+					notUnique.add(lambda.property());
 				}
 			}
 		}
 		// Get the polymorphic method
 		for(String property: notUnique) {
 			Method method = getPolymorphicGetterMethod(property);
-			XorPromise dataUpdate = method.getAnnotation(XorPromise.class);
+			XorLambda dataUpdate = method.getAnnotation(XorLambda.class);
 			MethodInfo methodInfo = new MethodInfo(
 				dataUpdate.order(),
 				dataUpdate.fromVersion(),
@@ -618,12 +618,12 @@ public abstract class AbstractType implements EntityType {
 			addUniqueMethod(allMethods, dataUpdate.property(), methodInfo);
 		}
 
-		promises = Collections.unmodifiableMap(allMethods);
+		lambdas = Collections.unmodifiableMap(allMethods);
 	}
 
 	@Override
-	public List<MethodInfo> getPromises(String targetProperty) {
-		return promises.get(targetProperty);
+	public List<MethodInfo> getLambdas(String targetProperty) {
+		return lambdas.get(targetProperty);
 	}
 
 	public static boolean isWrapperType(Class<?> clazz)

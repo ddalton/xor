@@ -34,9 +34,9 @@ import javax.persistence.OrderColumn;
 import org.json.JSONObject;
 
 import tools.xor.AggregateAction;
-import tools.xor.annotation.XorInput;
-import tools.xor.annotation.XorOutput;
-import tools.xor.annotation.XorPromise;
+import tools.xor.annotation.XorDomain;
+import tools.xor.annotation.XorExternal;
+import tools.xor.annotation.XorLambda;
 import tools.xor.db.base.Identity;
 import tools.xor.db.base.Person;
 
@@ -191,15 +191,15 @@ public class Task extends Identity {
 		return this.getName();
 	}
 
-	@XorPromise(property="ItemList", action={AggregateAction.READ})
-	public static Object retrieveItemList(@XorOutput JSONObject current) {
+	@XorLambda(property="ItemList", action={AggregateAction.READ})
+	public Object retrieveItemList(@XorExternal JSONObject current) {
 		current.put("openField", "Success");
 
 		return null;
 	}
 
-	@XorPromise(property="ItemList")
-	public static void populateItemList(@XorInput JSONObject current) {
+	@XorLambda(property="ItemList")
+	public void populateItemList(@XorExternal JSONObject current) {
 		assert current.has("openField");
 	}
 }

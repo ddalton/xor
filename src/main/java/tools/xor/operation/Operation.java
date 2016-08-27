@@ -59,4 +59,32 @@ public interface Operation {
 	 * @return true if external association
 	 */
 	boolean isExternalAssociationLink(CallInfo ci);
+	
+	/**
+	 * Get the domain object in this operation for the current call stack
+	 * @param ci call stack object
+	 * @return domain object
+	 */
+	public Object getDomain(CallInfo ci);
+
+	/**
+	 * Get the external object in this operation for the current call stack
+	 * @param ci call stack object
+	 * @return external object
+	 */	
+	public Object getExternal(CallInfo ci);
+	
+	/**
+	 * Get the parent domain object in this operation for the current call stack
+	 * @param ci call stack object
+	 * @return parent domain object
+	 */
+	public BusinessObject getDomainParent(CallInfo ci);
+	
+	/**
+	 * Get the parent external object in this operation for the current call stack
+	 * @param ci call stack object
+	 * @return parent external object
+	 */
+	public BusinessObject getExternalParent(CallInfo ci);
 }

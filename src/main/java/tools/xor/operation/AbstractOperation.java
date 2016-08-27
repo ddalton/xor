@@ -118,7 +118,7 @@ public abstract class AbstractOperation implements Operation {
 				List<Property> properties = callInfo.getProperties(source.getType());
 				CallInfo next = new CallInfo();
 				for(Property sourceProperty: properties) {
-					next.init(null, callInfo, (ExtendedProperty) sourceProperty);
+					next.initOperation(this, null, callInfo, (ExtendedProperty) sourceProperty);
 					//CallInfo next = new CallInfo(null, callInfo, (ExtendedProperty) sourceProperty);
 					processAttribute(next); // recurse
 				}
@@ -148,22 +148,42 @@ public abstract class AbstractOperation implements Operation {
 		 
 		if(ci.getOutputProperty() != null) {
 			ExtendedProperty property = getDomainProperty(ci);
-			if(property.getPromises(ci.getSettings(), phase, ci.getStage()).size() > 0) {
-				return property.evaluatePromise(
-					ci.getParentOutputEntity(),
+			if(property.getLambdas(ci.getSettings(), phase, ci.getStage()).size() > 0) {
+				return property.evaluateLambda(
 					new PropertyElement(
 						ci.getSettings(),
-						null,
-						ci.getInput(),
-						ci.getParent().getInput(),
+						getDomain(ci),
+						getExternal(ci),
+						getDomainParent(ci),
+						getExternalParent(ci),
 						phase,
-						ci.getStage()));
+						ci.getStage())).isCapture();
 			}
 		}
 
 
 		return false;
 	}
+	
+	@Override
+	public Object getDomain(CallInfo ci) {
+		return ci.getOutput();
+	}
+	
+	@Override
+	public Object getExternal(CallInfo ci) {
+		return ci.getInput();
+	}	
+	
+	@Override
+	public BusinessObject getDomainParent(CallInfo ci) {
+		return ci.getParentOutputEntity();
+	}
+	
+	@Override
+	public BusinessObject getExternalParent(CallInfo ci) {
+		return ci.getParentInputEntity();
+	}	
 
 	public String getDebugInput(Object inputValue) {
 		if(inputValue.toString().length() > Constants.Log.DEBUG_DATA_SIZE) {
@@ -179,7 +199,7 @@ public abstract class AbstractOperation implements Operation {
 	}
 	
 	protected void processDataType(CallInfo ci) throws Exception {
-		ci.setOutput(ci.getOutputObjectCreator().createDataType(ci.getInputFromParent(), ci.getOutputProperty()));
+		ci.setOutput(ci.getOutputObjectCreator().createDataType(ci.getInputFromParent(this), ci.getOutputProperty()));
 		Object oldTarget = ci.getOutputFromParent();
 		if( !( oldTarget == ci.getOutput() || (oldTarget != null && oldTarget.equals(ci.getOutput()))) ) {
 			ci.linkOutputToParent(ci.getOutput());

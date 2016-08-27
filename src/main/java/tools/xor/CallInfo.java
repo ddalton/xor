@@ -24,6 +24,8 @@ import java.util.List;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.ExtendedProperty.Phase;
+import tools.xor.event.PropertyElement;
 import tools.xor.operation.Operation;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
@@ -56,10 +58,6 @@ public class CallInfo {
 
 		this.init(from, to, parent, property);		
 	}
-
-	public CallInfo(Object to, CallInfo parent, ExtendedProperty property) {
-		this.init(to, parent, property);
-	}
 	
 	public void init(Object from, Object to, CallInfo parent, ExtendedProperty property) {
 
@@ -90,12 +88,12 @@ public class CallInfo {
 		validate();			
 	}
 	
-	public void init(Object to, CallInfo parent, ExtendedProperty property) {
+	public void initOperation(Operation operation, Object to, CallInfo parent, ExtendedProperty property) {
 		init(null, to, parent, property);
 
 		// The order of the below 2 lines is important. We need to set input before
 		// we invoke isDataType()
-		this.input = getInputFromParent();
+		this.input = getInputFromParent(operation);
 		if(!isDataType()) {
 			BusinessObject parentSource = (BusinessObject) getParent().getInput();
 			BusinessObject sourceRootDO = (BusinessObject) parentSource.getRootObject();
@@ -173,6 +171,17 @@ public class CallInfo {
 
 		return result;
 	}
+	
+	public BusinessObject getParentInputEntity() {
+		CallInfo parent = getParent();
+		BusinessObject result = (BusinessObject) parent.getInput();
+		while( ((EntityType)result.getType()).isEmbedded() ) {
+			parent = parent.getParent();
+			result = (BusinessObject) parent.getInput();
+		}
+
+		return result;
+	}	
 
 	public CallInfo getParent() {
 		return parent;
@@ -356,9 +365,32 @@ public class CallInfo {
 
 		return targetProperty;
 	}
+	
+	protected Object readCustomValue(Operation operation, BusinessObject invokee, ExtendedProperty property) {
+		Phase phase = Phase.INPLACEOF;
+		ProcessingStage stage = ProcessingStage.UPDATE;
+		
+		List<MethodInfo> customGetter = property.getLambdas(settings, phase, stage);
+		if(customGetter != null && customGetter.size() > 0) {
+			return property.evaluateLambda(
+					new PropertyElement(
+						settings,
+						operation.getDomain(this),
+						operation.getExternal(this),
+						operation.getDomainParent(this),
+						operation.getExternalParent(this),
+						phase,
+						stage)).getResult();				
+		} else {
+			return property.getValue(invokee);
+		}
+	}
 
-	public Object getInputFromParent() {
-		return ((ExtendedProperty)getInputProperty()).getValue((BusinessObject) getParent().getInput());
+	public Object getInputFromParent(Operation operation) {
+		return readCustomValue(operation, (BusinessObject) getParent().getInput(), (ExtendedProperty)getInputProperty());
+		
+		//ExtendedProperty p = (ExtendedProperty)getInputProperty();
+		//return p.getValue( (BusinessObject) getParent().getInput());
 	}
 
 	public BusinessObject getOutputRoot() {

@@ -19,13 +19,21 @@
 
 package tools.xor.action;
 
+import java.util.List;
+
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
+import tools.xor.MethodInfo;
+import tools.xor.ProcessingStage;
 import tools.xor.Settings;
+import tools.xor.ExtendedProperty.Phase;
+import tools.xor.event.PropertyElement;
+import tools.xor.operation.Operation;
 
 
 public final class SetterAction implements Executable {
 
+	private final Settings    settings;
 	private final Object      value;
 	private final PropertyKey key;
 	private final Executable  triggeringAction;
@@ -35,11 +43,13 @@ public final class SetterAction implements Executable {
 	 *       in the context of setting the bi-directional link. This is typically indicated by the fact that 
 	 *       triggeringAction is not null.
 	 *
+	 * @param settings user provided settings
 	 * @param value the new value
 	 * @param key property details
 	 * @param triggeringAction action
 	 */
-	public SetterAction(Object value, PropertyKey key, Executable triggeringAction) {
+	public SetterAction(Settings settings, Object value, PropertyKey key, Executable triggeringAction) {
+		this.settings = settings;
 		this.value = value;
 		this.key = key;
 		this.triggeringAction = triggeringAction;
@@ -62,8 +72,27 @@ public final class SetterAction implements Executable {
 			}
 		}
 		
-		((ExtendedProperty)key.getProperty()).setValue(invokeOn, value);
+		setCustomValue(invokeOn);
 	}		
+	
+	protected void setCustomValue(BusinessObject invokee) {
+		ExtendedProperty property = (ExtendedProperty)key.getProperty();
+		
+		Phase phase = Phase.INPLACEOF;
+		ProcessingStage stage = ProcessingStage.UPDATE;
+		
+		List<MethodInfo> customGetter = property.getLambdas(settings, phase, stage);
+		if(customGetter != null && customGetter.size() > 0) {
+			property.evaluateLambda(
+					new PropertyElement(
+						settings,
+						value,
+						phase,
+						stage)).getResult();				
+		} else {
+			property.setValue(invokee, value);
+		}
+	}
 
 	@Override
 	public PropertyKey getKey() {

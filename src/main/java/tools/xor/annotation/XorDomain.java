@@ -27,10 +27,10 @@ import java.lang.annotation.Target;
 import tools.xor.AbstractBO;
 
 /**
- * Allows the framework to set the argument to the output object specified by path
+ * Allows the framework to set the argument to the input object specified by path
  */ 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface XorOutput {
+public @interface XorDomain {
     String path() default AbstractBO.PATH_CONTAINER;
 }

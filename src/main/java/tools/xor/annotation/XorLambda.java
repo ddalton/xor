@@ -30,14 +30,13 @@ import tools.xor.Settings;
 import tools.xor.ExtendedProperty.Phase;
 
 /**
- * This annotation can only be specified on a static method that
- * is a callback.
- * Not a true promise, but follows in similar pattern to promises.
+ * This annotation helps a function behave like a lambda function, that can
+ * be declaratively chained
  */  
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface XorPromise {
+public @interface XorLambda {
 	
 	/**
 	 * The CRUD/clone actions for which the annotation is valid. An empty action means it is valid for any CRUD/clone action.
@@ -64,7 +63,7 @@ public @interface XorPromise {
 	
 	/**
 	 * If true, then the processing does not descend further, applicable only for phase PRE
-	 * @return true if the promise flow stops proceeding further
+	 * @return true if the lambda flow stops proceeding further
 	 */
 	boolean capture() default false; 
 	

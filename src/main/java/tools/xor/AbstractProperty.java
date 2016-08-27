@@ -39,8 +39,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.annotation.XorAlways;
-import tools.xor.annotation.XorInput;
-import tools.xor.annotation.XorOutput;
+import tools.xor.annotation.XorDomain;
+import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
@@ -48,7 +48,6 @@ import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.I18NUtils;
-import tools.xor.util.ObjectCreator;
 
 
 public abstract class AbstractProperty implements ExtendedProperty {
@@ -86,7 +85,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 *     Invoked when the last reference to the object is removed
 	 */
 	// Business logic related annotations 
-	protected List<MethodInfo>     promises;
+	protected List<MethodInfo>     lambdas;
 	protected String       name; // If this is used, it represents an open property
 
 	protected ExtendedProperty positionProperty;
@@ -247,8 +246,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	private void initBusinessLogicAnnotations() {
 		
-		if(getContainingType().getPromises(getName()) != null) {
-			promises = getContainingType().getPromises(getName());
+		if(getContainingType().getLambdas(getName()) != null) {
+			lambdas = getContainingType().getLambdas(getName());
 		}
 	}
 	
@@ -403,11 +402,11 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public List<MethodInfo> getPromises(Settings settings, Phase phase, ProcessingStage stage) {
+	public List<MethodInfo> getLambdas(Settings settings, Phase phase, ProcessingStage stage) {
 		List<MethodInfo> result = new LinkedList<MethodInfo>();
 
-		if(promises != null) {
-			for(MethodInfo mi: promises) {
+		if(lambdas != null) {
+			for(MethodInfo mi: lambdas) {
 				if(mi.isRelevant(settings, phase, stage)) {
 					result.add(mi);
 				} 
@@ -476,7 +475,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			logger.warn(I18NUtils.getResource(  "exception.propertyNotFound",I18NUtils.CORE_RESOURCES, params));
 			return;
 		} else {
-			invokePromise(dataObject, propertyValue);
+			invokeLambda(dataObject, propertyValue);
 		}
 	}	
 
@@ -503,23 +502,23 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			for(int i = 0; i < paramAnnotations.length; i++) {
 				Annotation[] paramA = paramAnnotations[i];
 				for(Annotation annotation: paramA) {
-					if(XorInput.class.isAssignableFrom(annotation.getClass())) {
-						XorInput input = (XorInput) annotation;
-						if(input.path().equals(AbstractBO.PATH_CONTAINER)) {
-							result[i] = ClassUtil.getInstance(event.getOtherElementParent());
-						} else if(input.path().equals(AbstractBO.CURRENT)) {
-							result[i] = ClassUtil.getInstance(event.getOtherElement());
+					if(XorDomain.class.isAssignableFrom(annotation.getClass()) && event.getDomainParent() != null) {
+						XorDomain domain = (XorDomain) annotation;
+						if(domain.path().equals(AbstractBO.PATH_CONTAINER)) {
+							result[i] = ClassUtil.getInstance(event.getDomainParent());
+						} else if(domain.path().equals(AbstractBO.CURRENT)) {
+							result[i] = ClassUtil.getInstance(event.getDomain());
 						} else {
-							result[i] = ClassUtil.getInstance(((BusinessObject)event.getOtherElement()).get(input.path()));
+							result[i] = ClassUtil.getInstance(event.getDomainParent().get(domain.path()));
 						}
-					} else if(XorOutput.class.isAssignableFrom(annotation.getClass())) {
-						XorOutput output = (XorOutput) annotation;
-						if(output.path().equals(AbstractBO.PATH_CONTAINER)) {
-							result[i] = ClassUtil.getInstance(dataObject);						
-						} else if(output.path().equals(AbstractBO.CURRENT)) {
-							result[i] = ClassUtil.getInstance(dataObject.get(this));
+					} else if(XorExternal.class.isAssignableFrom(annotation.getClass()) && event.getExternalParent() != null) {
+						XorExternal external = (XorExternal) annotation;
+						if(external.path().equals(AbstractBO.PATH_CONTAINER)) {
+							result[i] = ClassUtil.getInstance(event.getExternalParent());						
+						} else if(external.path().equals(AbstractBO.CURRENT)) {
+							result[i] = ClassUtil.getInstance(event.getExternal());
 						} else {
-							result[i] = ClassUtil.getInstance(dataObject.get(output.path()));
+							result[i] = ClassUtil.getInstance(event.getExternalParent().get(external.path()));
 						}
 					} else if(XorResult.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = resultPreviousCallback;
@@ -531,34 +530,69 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		
 		return result;
 	}
+	
+	public static class LambdaResult {
+		/**
+		 * Used to short circuit further processing
+		 */
+		private boolean capture;
+		
+		/**
+		 * Result from a getter method
+		 */
+		private Object result;
+		
+		public LambdaResult(boolean capture, Object result) {
+			this.capture = capture;
+			this.result = result;
+		}
+		
+		public boolean isCapture() {
+			return capture;
+		}
+		public void setCapture(boolean capture) {
+			this.capture = capture;
+		}
+		public Object getResult() {
+			return result;
+		}
+		public void setResult(Object result) {
+			this.result = result;
+		}
+	}
 
 	@Override
-	public boolean evaluatePromise(BusinessObject dataObject, PropertyEvent event) 
+	public LambdaResult evaluateLambda(PropertyEvent event) 
 	{
 		boolean result = false;
+		BusinessObject dataObject = event.getDomainParent();
 		Object instance = ClassUtil.getInstance(dataObject);
 
-		List<MethodInfo> dataUpdaters = getPromises(event.getSettings(), event.getPhase(), event.getStage());
-		Object resultPreviousCallback = null;
+		List<MethodInfo> dataUpdaters = getLambdas(event.getSettings(), event.getPhase(), event.getStage());
+		Object resultPreviousCallback = event.getValue();
 		for(int i = 0; i < dataUpdaters.size(); i++) {
 			MethodInfo du = dataUpdaters.get(i);
 			Object[] args = getArgs(du.getMethod(), dataObject, event, resultPreviousCallback);
 
 			try {
 				// First argument is null since we are invoking a static method
-				resultPreviousCallback = ClassUtil.invokeMethodAsPrivileged(null, du.getMethod(), args);
+				Object invokee = instance;
+				if(Modifier.isStatic(du.getMethod().getModifiers())) {
+					invokee = null;
+				}
+				resultPreviousCallback = ClassUtil.invokeMethodAsPrivileged(invokee, du.getMethod(), args);
 			} catch (Exception e) {
 				throw ClassUtil.wrapRun(e);
 			}
 			
 			if(du.isCapture() && i < (dataUpdaters.size()-1)) {
 				logger.warn("Short circuiting updater callback before other callbacks are called: " + du.getMethod().getName());
-				return du.isCapture();
+				return new LambdaResult(du.isCapture(), resultPreviousCallback);
 			}
 			result = du.isCapture();
 		}
 		
-		return result;
+		return new LambdaResult(result, resultPreviousCallback);
 	}		
 
 	private Object query(Object dataObject) 
@@ -593,7 +627,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}	
 
-	private <T> void invokePromise(Object dataObject, Object propertyValue) 
+	private <T> void invokeLambda(Object dataObject, Object propertyValue) 
 	{
 		// We need to work with the instance objects and not the DataObject objects
 		Object instance = ClassUtil.getInstance(dataObject);

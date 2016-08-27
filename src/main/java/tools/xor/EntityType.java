@@ -204,11 +204,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public Method getSetterMethod(String targetProperty);
 
 	/**
-	 * Get the promises associated with a property
+	 * Get the lambdas associated with a property
 	 * @param targetProperty property name
-	 * @return list of promises
+	 * @return list of lambdas
 	 */
-	public List<MethodInfo> getPromises(String targetProperty);
+	public List<MethodInfo> getLambdas(String targetProperty);
 
 	/**
 	 * Returns all the properties that need to be initialized when

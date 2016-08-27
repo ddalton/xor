@@ -172,7 +172,7 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		// TODO: handle MANY_TO_MANY backRef
 		if(callInfo.getParent().getOutputProperty().isBiDirectional()) {
 			PropertyKey newOppositeKey = new PropertyKey(collectionElement, callInfo.getParent().getOutputProperty().getOpposite());			
-			callInfo.getOutputRoot().getObjectPersister().addAction(new SetterAction(collectionOwner, newOppositeKey, originalAction));
+			callInfo.getOutputRoot().getObjectPersister().addAction(new SetterAction(callInfo.getSettings(), collectionOwner, newOppositeKey, originalAction));
 		}
 	}
 

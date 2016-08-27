@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
+import tools.xor.AbstractProperty.LambdaResult;
 import tools.xor.event.PropertyEvent;
 
 public interface ExtendedProperty extends Property {
@@ -32,7 +33,12 @@ public interface ExtendedProperty extends Property {
 		/**
 		 * Process before the property is processed
 		 */
-		PRE,    
+		PRE,
+		
+		/**
+		 * Process in place of the regular getter and setter
+		 */
+		INPLACEOF,   		
 
 		/**
 		 * Process after the property and its descendants are processed
@@ -163,11 +169,10 @@ public interface ExtendedProperty extends Property {
 
 	/**
 	 * Allow business logic to be invoked 
-	 * @param dataObject the promises on this dataObject for this property
 	 * @param event event details object to be passed in as argument values if needed
-	 * @return true if the processing needs to be short circuited
+	 * @return LambdaResult object
 	 */
-	public boolean evaluatePromise(BusinessObject dataObject, PropertyEvent event);
+	public LambdaResult evaluateLambda(PropertyEvent event);
 
 	/**
 	 * Convenience method to see if the property refers to a DataObject or a simple object
@@ -225,13 +230,13 @@ public interface ExtendedProperty extends Property {
 	public boolean isUpdatable();
 
 	/**
-	 * Get the promises
+	 * Get the lambdas
 	 * @param settings user entered settings
 	 * @param phase desired phase
 	 * @param stage desired stage
-	 * @return list of promise objects
+	 * @return list of lambda objects
 	 */
-	public List<MethodInfo> getPromises(Settings settings, Phase phase, ProcessingStage stage);
+	public List<MethodInfo> getLambdas(Settings settings, Phase phase, ProcessingStage stage);
 
 	/**
 	 * Checks if the property is appliacable for the given api version

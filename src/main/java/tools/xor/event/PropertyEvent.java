@@ -19,22 +19,32 @@
 
 package tools.xor.event;
 
+import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 
 public interface PropertyEvent {
 
-	public Object getElement();
-	public Phase getPhase();
 	public Settings getSettings();
-
-	// If the element refers the input, the other element refers the output and vice versa
-	public Object getOtherElement ();
+	
+	/**
+	 * Gets the domain object
+	 * @return an object and not a BusinessObject since simple values are not wrapped in a BusinessObject
+	 */
+	public Object getDomain ();
+	
+	public Object getExternal ();	
+	
+	public BusinessObject getDomainParent ();
+	
+	public BusinessObject getExternalParent ();	
 
 	// Get the processing stage, is this the first pass (object creation) or the second pass (
 	//object update)
 	public ProcessingStage getStage();
 	
-	public Object getOtherElementParent();
+	public Phase getPhase();	
+	
+	public Object getValue();
 }

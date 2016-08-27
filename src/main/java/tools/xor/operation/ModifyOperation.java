@@ -26,8 +26,8 @@ import org.apache.log4j.Logger;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.ImmutableJsonProperty;
 import tools.xor.ExtendedProperty;
+import tools.xor.ImmutableJsonProperty;
 import tools.xor.ProcessingStage;
 import tools.xor.action.AddElementAction;
 import tools.xor.action.CollectionUpdateAction;
@@ -108,7 +108,7 @@ public class ModifyOperation extends AbstractOperation {
 
 		// Set the target to null
 		PropertyKey key = new PropertyKey((BusinessObject)ci.getParentOutputEntity(), ci.getOutputProperty());		
-		Executable originalAction = new SetterAction(null, key, null);
+		Executable originalAction = new SetterAction(ci.getSettings(), null, key, null);
 		ci.getOutputRoot().getObjectPersister().addAction(originalAction);		
 
 		// bi-directional link
@@ -118,7 +118,7 @@ public class ModifyOperation extends AbstractOperation {
 			PropertyKey oppositeKey = new PropertyKey((BusinessObject)ci.getOutput(), ci.getOutputProperty().getOpposite());
 
 			// set the backRef from the opposite object to null	
-			Executable oppositeAction = new SetterAction(null, oppositeKey, originalAction);
+			Executable oppositeAction = new SetterAction(ci.getSettings(), null, oppositeKey, originalAction);
 			if(ci.getOutputProperty().getAssociationType() == PersistentAttributeType.MANY_TO_ONE) {
 				Object position = (oppositeKey.getProperty() == null) ? null : ((ExtendedProperty)oppositeKey.getProperty()).getValue(key.getDataObject());
 				oppositeAction = new RemoveElementAction(oppositeKey, key.getDataObject(), (BusinessObject) ci.getOutput(), originalAction, position, ci.getInputObjectCreator());				
@@ -138,7 +138,7 @@ public class ModifyOperation extends AbstractOperation {
 
 		// If this is a uni-directional OneToOne, we just have to set the target to value
 		PropertyKey key            = new PropertyKey((BusinessObject)ci.getParentOutputEntity(), ci.getOutputProperty());
-		Executable originalAction  = new SetterAction(value, key, null);
+		Executable originalAction  = new SetterAction(ci.getSettings(), value, key, null);
 
 		// Set the target to value
 		if(!isSameTarget(ci, value))		
@@ -157,7 +157,7 @@ public class ModifyOperation extends AbstractOperation {
 				PropertyKey oldOppositeKey = new PropertyKey(oldObject, ci.getOutputProperty().getOpposite());
 
 				// Set the backRef from the old value to null
-				Executable oppositeAction = new SetterAction(null, oldOppositeKey, originalAction);				
+				Executable oppositeAction = new SetterAction(ci.getSettings(), null, oldOppositeKey, originalAction);				
 				if(ci.getOutputProperty().getAssociationType() == PersistentAttributeType.MANY_TO_ONE) {
 					Object position = getPosition((ExtendedProperty) oldOppositeKey.getProperty(), key.getDataObject());
 					oppositeAction = new RemoveElementAction(oldOppositeKey, key.getDataObject(), oldObject, originalAction, position, ci.getInputObjectCreator());				
@@ -166,7 +166,7 @@ public class ModifyOperation extends AbstractOperation {
 			}			 
 
 			// Set the backRef of value to point to the parent target (or to the ancester in case of embedded property)
-			Executable oppositeAction = new SetterAction(ci.getParentOutputEntity(), newOppositeKey, originalAction);			
+			Executable oppositeAction = new SetterAction(ci.getSettings(), ci.getParentOutputEntity(), newOppositeKey, originalAction);			
 			if(ci.getOutputProperty().getAssociationType() == PersistentAttributeType.MANY_TO_ONE) {
 				Object position = getPosition((ExtendedProperty) newOppositeKey.getProperty(), key.getDataObject());
 				oppositeAction = new AddElementAction(newOppositeKey, key.getDataObject(), (BusinessObject) value, originalAction, position, ci.getInputObjectCreator());				

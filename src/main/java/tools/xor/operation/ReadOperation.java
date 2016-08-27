@@ -19,12 +19,33 @@
 
 package tools.xor.operation;
 
+import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ExtendedProperty;
 
 public class ReadOperation extends AbstractOperation {
 	
 	private Object result;
+	
+	@Override
+	public Object getDomain(CallInfo ci) {
+		return ci.getInput();
+	}
+	
+	@Override
+	public Object getExternal(CallInfo ci) {
+		return ci.getOutput();
+	}		
+	
+	@Override
+	public BusinessObject getDomainParent(CallInfo ci) {
+		return ci.getParentInputEntity();
+	}
+	
+	@Override
+	public BusinessObject getExternalParent(CallInfo ci) {
+		return ci.getParentOutputEntity();
+	}	
 	
 	@Override
 	protected ExtendedProperty getDomainProperty(CallInfo ci) {

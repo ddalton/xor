@@ -53,7 +53,9 @@ import tools.xor.util.I18NUtils;
 public abstract class AbstractProperty implements ExtendedProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public static final String EMPTY_TAG = "_EMPTY_";	
+	public static final String EMPTY_TAG = "_EMPTY_";
+	public static final String GETTER_TAG = "_GETTER_";	
+	public static final String SETTER_TAG = "_SETTER_";	
 
 	protected AccessType accessType;
 	protected boolean    needsInitialization;
@@ -249,6 +251,36 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		if(getContainingType().getLambdas(getName()) != null) {
 			lambdas = getContainingType().getLambdas(getName());
 		}
+		
+		/*
+		 * If this is an open field. The user should provide a custom
+		 * setter and getter. Ensure that these methods are present
+		 */
+		if(getAccessType() == AccessType.USERDEFINED) {
+			// Check for a custom getter
+			String[] getterTag = {GETTER_TAG};
+			boolean getterFound = false;
+			for(MethodInfo mi: lambdas) {
+				getterFound = ClassUtil.intersectsTags(getterTag, mi.getTags());
+				if(getterFound) {
+					break;
+				}
+			}
+			
+			// Check for a custom getter
+			String[] setterTag = {SETTER_TAG};
+			boolean setterFound = false;
+			for(MethodInfo mi: lambdas) {
+				setterFound = ClassUtil.intersectsTags(getterTag, mi.getTags());
+				if(setterFound) {
+					break;
+				}
+			}
+			
+			if(!getterFound || !setterFound) {
+				logger.warn("Custom setter and getters are not present for the open property: " + getName());
+			}
+		}
 	}
 	
 	private void initApiVersion() {
@@ -273,6 +305,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		logger.debug("Class name: " + instanceClass.getName() + ", property name: " + getName());
 
 		initBusinessLogicAnnotations();
+		
+		if(getAccessType() == AccessType.USERDEFINED) {
+			return;
+		}
 
 		if (getterMethod == null) { // No point in continuing as the field is not present
 			if (
@@ -284,11 +320,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			}
 			return;
 		}
+		setterMethod = getContainingType().getSetterMethod(getName());		
 
 		initApiVersion();
 		initByAnnotations();
+		initColumnName();
 
-		setterMethod = getContainingType().getSetterMethod(getName());
+		// Check if it is an Identifier property
+		hasIdAnnotation = isAnnotationPresent(Id.class);		
 
 		if (getterMethod == null || field == null) {
 			logger.warn("getter or field name is not accessible: " + getName());
@@ -319,12 +358,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						"Unable to get Field object. The field name is not the same as getter property name "
 							+ getName() + ", skipping field access check.");
 			}
-
-			initColumnName();
-
-			// Check if it is an Identifier property
-			hasIdAnnotation = isAnnotationPresent(Id.class);
-
 		} catch (NoClassDefFoundError e) {
 			// Ignore the JPA annotation code for persistence mechanisms that do not use JPA
 		}
@@ -402,12 +435,12 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public List<MethodInfo> getLambdas(Settings settings, Phase phase, ProcessingStage stage) {
+	public List<MethodInfo> getLambdas(Settings settings, String[] tags, Phase phase, ProcessingStage stage) {
 		List<MethodInfo> result = new LinkedList<MethodInfo>();
 
 		if(lambdas != null) {
 			for(MethodInfo mi: lambdas) {
-				if(mi.isRelevant(settings, phase, stage)) {
+				if(mi.isRelevant(settings, tags, phase, stage)) {
 					result.add(mi);
 				} 
 			}
@@ -568,7 +601,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		BusinessObject dataObject = event.getDomainParent();
 		Object instance = ClassUtil.getInstance(dataObject);
 
-		List<MethodInfo> dataUpdaters = getLambdas(event.getSettings(), event.getPhase(), event.getStage());
+		List<MethodInfo> dataUpdaters = getLambdas(event.getSettings(), event.getTags(), event.getPhase(), event.getStage());
 		Object resultPreviousCallback = event.getValue();
 		for(int i = 0; i < dataUpdaters.size(); i++) {
 			MethodInfo du = dataUpdaters.get(i);

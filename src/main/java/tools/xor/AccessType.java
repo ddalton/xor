@@ -21,5 +21,6 @@ package tools.xor;
 
 public enum AccessType {
     FIELD,
-    PROPERTY
+    PROPERTY,
+    USERDEFINED
 }

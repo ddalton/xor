@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -205,7 +206,7 @@ public class Settings {
 			if(associationSettings != null && associationSettings.size() > 0) {
 				// Make a copy of the view and enhance it with the associations needed to be traversed
 				view = view.copy();
-				view.getStateGraph((EntityType) entityType).enhance(associationSettings, am);
+				view.getStateGraph((EntityType) entityType).enhance(associationSettings, am);				
 			}
 		}
 

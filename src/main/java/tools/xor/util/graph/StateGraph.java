@@ -235,6 +235,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return builder.toString();
 	}
 	
+	/**
+	 * This method is to enhance the state graph since the states are reused across other state graph entities.
+	 * We cannot just rebuild a part of the state graph with new state graph if we don't account for the sharing.
+	 * 
+	 * @param associations new properties e.g., open properties being added to the state graph
+	 * @param am used to obtain the type service 
+	 */
 	public void enhance(List<AssociationSetting> associations, AggregateManager am) {
 
 		if(sgLogger.isDebugEnabled()) {

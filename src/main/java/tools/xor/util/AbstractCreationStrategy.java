@@ -95,4 +95,9 @@ public abstract class AbstractCreationStrategy implements CreationStrategy {
 	public Object getNormalizedInstance(BusinessObject bo, Settings settings) {
 		return bo.getInstance();
 	}	
+	
+	@Override
+	public boolean needsObjectGraph() {
+		return false;
+	}
 }

@@ -159,4 +159,13 @@ public class TaskVO extends IdentityVO {
 		this.ownedBy = ownedBy;
 	}	
 
+	private String subTask;
+
+	public String getSubTask() {
+		return subTask;
+	}
+
+	public void setSubTask(String subTask) {
+		this.subTask = subTask;
+	}	
 }

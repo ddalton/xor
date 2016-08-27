@@ -450,4 +450,56 @@ public class DefaultMutableJson extends AbstractDBTest {
 			assert(child.getId() != null);
 		}		
 	}	
+	
+	
+	/**
+	 * In this test we will check the save of an entity association
+	 * referenced as a primitive (String) field.
+	 * 
+	 *        subTask (String)
+	 *  Task ------------------> Task
+	 *  
+	 *  The field subTask is a String field, and refers to the id
+	 *  of the subTask.
+	 *  
+	 *  The following steps are involved in this test:
+	 *  1. Setup the model to have this association modelled as a Task
+	 *     using an open property
+	 *  2. Create the test data using JSON object.
+	 *     The Open property setter should ensure that we get the id 
+	 *     from the subTask field and get the persistence managed object
+	 *     If this object is not present, then create it.
+	 *     Delegate most of this work to the framework.
+	 *  3. Check that the data is saved correctly
+	 *  4. Read the data and ensure the data is modelled
+	 *     correctly as a Task object referenced by the open property
+	 *     name
+	 *  
+	 */
+	protected void checkOpenFieldEntityToOne() {
+		final String TASK_NAME = "SETUP_DSL";
+		final String SUB_TASK_NAME = "SETUP_WIRING";
+		
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		
+		// Create subTask
+		JSONObject subTask = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup Wiring");
+		json.put("description", "Establish wiring from the external line to the exterior of the home");
+		json.put("subTaskObj", subTask);
+		
+		Settings settings = getSettings();
+		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.setEntityClass(Task.class);	
+		Task task = (Task) aggregateService.create(json, settings);
+	}
+	
+	protected void checkOpenFieldEntityToMany() {
+		
+	}
 }

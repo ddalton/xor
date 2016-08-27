@@ -44,6 +44,8 @@ public interface PropertyEvent {
 	//object update)
 	public ProcessingStage getStage();
 	
+	public String[] getTags();	
+	
 	public Phase getPhase();	
 	
 	public Object getValue();

@@ -27,7 +27,10 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.Access;
 
@@ -347,4 +350,15 @@ public class ClassUtil {
 		
 		return collection;
 	}
+	
+	public static boolean intersectsTags(String[] tags, String[] otherTags) {
+		Set<String> commonTags = new HashSet<String>(Arrays.asList(tags));
+		commonTags.retainAll(new HashSet<String>(Arrays.asList(otherTags)) );
+		if(commonTags.isEmpty()) {
+			// applies to different tags so they do not overlap
+			return false;
+		}
+		
+		return true;
+	}	
 }

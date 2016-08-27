@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import tools.xor.ExtendedProperty.Phase;
+import tools.xor.util.ClassUtil;
 
 
 public class MethodInfo extends VersionInfo {
@@ -71,17 +72,6 @@ public class MethodInfo extends VersionInfo {
 		}
 	}
 	
-	public boolean intersectsTags(String[] otherTags) {
-		Set<String> commonTags = new HashSet<String>(Arrays.asList(tags));
-		commonTags.retainAll(new HashSet<String>(Arrays.asList(otherTags)) );
-		if(commonTags.isEmpty()) {
-			// applies to different tags so they do not overlap
-			return false;
-		}
-		
-		return true;
-	}
-	
 	public boolean intersectsActions(AggregateAction[] otherActions) {
 		Set<AggregateAction> commonActions = new HashSet<AggregateAction>(Arrays.asList(actions));
 		commonActions.retainAll(new HashSet<AggregateAction>(Arrays.asList(otherActions)) );
@@ -94,7 +84,7 @@ public class MethodInfo extends VersionInfo {
 	}
 	
 	public boolean doOverlap(MethodInfo method) {
-		if(!intersectsTags(method.tags)) {
+		if(!ClassUtil.intersectsTags(tags, method.tags)) {
 			return false;
 		}
 		
@@ -114,15 +104,11 @@ public class MethodInfo extends VersionInfo {
 	}
 	
 	public boolean isRelevant(Settings settings) {
-		return isRelevant(settings, Phase.POST, null);
-	}
-
-	public boolean isRelevant(Settings settings, ProcessingStage stage) {
-		return isRelevant(settings, Phase.POST, stage);
+		return isRelevant(settings, settings.getTags().toArray(new String[settings.getTags().size()]), Phase.POST, null);
 	}
 	
-	public boolean isRelevant(Settings settings, Phase phase, ProcessingStage stage) {
-		if(!intersectsTags(settings.getTags().toArray(new String[settings.getTags().size()]))) {
+	public boolean isRelevant(Settings settings, String[] tags, Phase phase, ProcessingStage stage) {
+		if(!ClassUtil.intersectsTags(this.tags, tags)) {
 			return false;
 		}
 		

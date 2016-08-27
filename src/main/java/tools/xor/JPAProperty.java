@@ -79,6 +79,7 @@ public class JPAProperty extends AbstractProperty {
 	private boolean         isFieldMapped;    // Are the JPA mappings on the field
 	private boolean         hasVersionAnnotation;	
 	private boolean         cascaded;
+	private boolean         required;
 
 	public JPAProperty(Attribute<?, ?> attribute, Type type, JPAType parentType) {
 		super(type, parentType);
@@ -90,6 +91,13 @@ public class JPAProperty extends AbstractProperty {
 	public JPAProperty(String name, Type type, EntityType parentType) {
 		super(name, type, parentType);
 	}
+	
+	// Open property
+	public JPAProperty(String name, Type type, EntityType parentType, boolean required) {
+		this(name, type, parentType);
+		this.accessType = AccessType.USERDEFINED;
+		this.required = required;
+	}	
 
 	public boolean isPropertyMapped() {
 		return isPropertyMapped;
@@ -304,7 +312,7 @@ public class JPAProperty extends AbstractProperty {
 		if(attribute != null && SingularAttribute.class.isAssignableFrom(attribute.getClass()))
 			return ((SingularAttribute<?, ?>)attribute).isOptional();
 		else
-			return true;
+			return !required;
 	}
 
 	@Override

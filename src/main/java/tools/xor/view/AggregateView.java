@@ -526,5 +526,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	@Override
 	public int compareTo(AggregateView o) {
 		return (name.equals(o.getName())) ? (version - o.getVersion()) : name.compareTo(o.getName());
+	}
+
+	public void rebuild(EntityType type) {
+		stateGraph.put(type.getName(), DFAtoRE.build(this, type));
 	}	
 }

@@ -41,7 +41,8 @@ public interface ExtendedProperty extends Property {
 		INPLACEOF,   		
 
 		/**
-		 * Process after the property and its descendants are processed
+		 * Process after the property is set and 
+		 * before any further entity members or collection element processing
 		 */
 		POST;    
 	}
@@ -236,7 +237,7 @@ public interface ExtendedProperty extends Property {
 	 * @param stage desired stage
 	 * @return list of lambda objects
 	 */
-	public List<MethodInfo> getLambdas(Settings settings, Phase phase, ProcessingStage stage);
+	public List<MethodInfo> getLambdas(Settings settings, String[] tags, Phase phase, ProcessingStage stage);
 
 	/**
 	 * Checks if the property is appliacable for the given api version

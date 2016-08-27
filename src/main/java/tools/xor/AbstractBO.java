@@ -1058,6 +1058,12 @@ public abstract class AbstractBO implements BusinessObject {
 		try {
 			Object target = operation.createTarget(callInfo, null);
 			callInfo.setOutput(target);
+			
+			// Needed to hold references to open property created objects
+			if(oc.getCreationStrategy().needsObjectGraph()) {
+				oc.setObjectGraph((BusinessObject) target);
+			}
+			
 			operation.execute(callInfo);
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
@@ -1093,6 +1099,12 @@ public abstract class AbstractBO implements BusinessObject {
 		try {
 			Class<?> desiredClass = settings.doBaseline() ? settings.getNarrowedClass() : getObjectCreator().getDAS().getTypeMapper().toExternal(settings.getNarrowedClass());
 			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, desiredClass));
+			
+			// Needed to hold references to open property created objects
+			if(oc.getCreationStrategy().needsObjectGraph()) {
+				oc.setObjectGraph((BusinessObject) callInfo.getOutput());
+			}
+			
 			callInfo.getOperation().execute(callInfo);
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);

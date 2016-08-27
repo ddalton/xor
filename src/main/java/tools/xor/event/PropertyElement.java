@@ -31,24 +31,27 @@ public class PropertyElement implements PropertyEvent {
 	private Object external;
 	private BusinessObject domainParent;
 	private BusinessObject externalParent;
+	private String[] tags;
 	private Phase    phase;	
 	private ProcessingStage stage;
 	private Object value; // Will be injected as XorResult
 
-	public PropertyElement(Settings settings, Object value, Phase phase, ProcessingStage stage) {
+	public PropertyElement(Settings settings, Object value, String[] tags, Phase phase, ProcessingStage stage) {
 		this.settings = settings;
 		this.value = value;
+		this.tags = tags;
 		this.phase = phase;
 		this.stage = stage;
 	}
 
-	public PropertyElement(Settings settings, Object domain, Object external, BusinessObject domainParent, BusinessObject externalParent, Phase phase, ProcessingStage stage) {
+	public PropertyElement(Settings settings, Object domain, Object external, BusinessObject domainParent, BusinessObject externalParent, String[] tags, Phase phase, ProcessingStage stage) {
 		this.domain = domain;
-		this.phase = phase;
 		this.settings = settings;
 		this.external = external;
 		this.domainParent = domainParent;
 		this.externalParent = externalParent;
+		this.tags = tags;
+		this.phase = phase;
 		this.stage = stage;
 	}
 
@@ -67,6 +70,10 @@ public class PropertyElement implements PropertyEvent {
 	public void setExternal(Object element) {
 		this.external = element;
 	}	
+
+	public String[] getTags() {
+		return tags;
+	}
 
 	@Override
 	public Phase getPhase() {

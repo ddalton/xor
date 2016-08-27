@@ -369,8 +369,9 @@ public class CallInfo {
 	protected Object readCustomValue(Operation operation, BusinessObject invokee, ExtendedProperty property) {
 		Phase phase = Phase.INPLACEOF;
 		ProcessingStage stage = ProcessingStage.UPDATE;
+		String[] tags = {AbstractProperty.GETTER_TAG};
 		
-		List<MethodInfo> customGetter = property.getLambdas(settings, phase, stage);
+		List<MethodInfo> customGetter = property.getLambdas(settings, tags, phase, stage);
 		if(customGetter != null && customGetter.size() > 0) {
 			return property.evaluateLambda(
 					new PropertyElement(
@@ -379,6 +380,7 @@ public class CallInfo {
 						operation.getExternal(this),
 						operation.getDomainParent(this),
 						operation.getExternalParent(this),
+						tags,
 						phase,
 						stage)).getResult();				
 		} else {

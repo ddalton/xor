@@ -20,6 +20,8 @@
 package tools.xor.jpa;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.json.JSONException;
 import org.junit.Test;
@@ -29,6 +31,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
+import tools.xor.AssociationSetting;
 import tools.xor.EntityType;
 import tools.xor.JPAProperty;
 import tools.xor.Property;
@@ -116,4 +119,14 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void checkExcelImport100() throws JSONException, IOException {
 		super.checkExcelImport100();
 	}	
+	
+	@Test
+	public void checkOpenFieldEntityToOne() {
+		DataAccessService das = aggregateService.getDAS();
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		Property openProperty = new JPAProperty("subTaskObj", das.getType(Task.class), taskType);
+		das.addProperty(taskType, openProperty);
+
+		super.checkOpenFieldEntityToOne();		
+	}
 }

@@ -559,6 +559,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	public void addProperty (EntityType type, Property openProperty) {
 		type.addProperty(openProperty);
+		
 		if(derivedTypes.containsKey(type.getName())) {
 			ExternalType derived = (ExternalType) derivedTypes.get(type.getName());
 			if(derived == null) {

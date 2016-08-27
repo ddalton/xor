@@ -58,4 +58,11 @@ public interface CreationStrategy {
 	 * @return normalized instance
 	 */
 	public Object getNormalizedInstance(BusinessObject bo, Settings settings);
+	
+	/**
+	 * Flag that indicates if the object graph should be tracked during the call graph traversal
+	 * Useful to track references to open property objects as they are not accessible otherwise
+	 * @return boolean value
+	 */
+	public boolean needsObjectGraph();
 }

@@ -21,14 +21,16 @@ package tools.xor.action;
 
 import java.util.List;
 
+import tools.xor.AbstractProperty;
+import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
+import tools.xor.ExtendedProperty.Phase;
 import tools.xor.MethodInfo;
 import tools.xor.ProcessingStage;
 import tools.xor.Settings;
-import tools.xor.ExtendedProperty.Phase;
 import tools.xor.event.PropertyElement;
-import tools.xor.operation.Operation;
+import tools.xor.util.graph.ObjectGraph;
 
 
 public final class SetterAction implements Executable {
@@ -63,16 +65,16 @@ public final class SetterAction implements Executable {
 	public void setValue() {
 		ExtendedProperty prop = ((ExtendedProperty)key.getProperty());
 		
-		BusinessObject invokeOn = key.getDataObject();
+		BusinessObject invokee = key.getDataObject();
 		// First check if this property is part of this data object
-		if(invokeOn instanceof BusinessObject) {
-			if(((BusinessObject)invokeOn).getType().getProperty(prop.getName()) == null && prop.getMapPath() != null && prop.getMapPath().contains(Settings.PATH_DELIMITER)) {
+		if(invokee instanceof BusinessObject) {
+			if(((BusinessObject)invokee).getType().getProperty(prop.getName()) == null && prop.getMapPath() != null && prop.getMapPath().contains(Settings.PATH_DELIMITER)) {
 				// Get the embedded object
-				invokeOn = (BusinessObject) ((BusinessObject)invokeOn).get( prop.getMapPath().substring(0, prop.getMapPath().lastIndexOf(Settings.PATH_DELIMITER)));
+				invokee = (BusinessObject) ((BusinessObject)invokee).get( prop.getMapPath().substring(0, prop.getMapPath().lastIndexOf(Settings.PATH_DELIMITER)));
 			}
 		}
 		
-		setCustomValue(invokeOn);
+		setCustomValue(invokee);
 	}		
 	
 	protected void setCustomValue(BusinessObject invokee) {
@@ -80,13 +82,15 @@ public final class SetterAction implements Executable {
 		
 		Phase phase = Phase.INPLACEOF;
 		ProcessingStage stage = ProcessingStage.UPDATE;
+		String[] tags = {AbstractProperty.SETTER_TAG};
 		
-		List<MethodInfo> customGetter = property.getLambdas(settings, phase, stage);
+		List<MethodInfo> customGetter = property.getLambdas(settings, tags, phase, stage);
 		if(customGetter != null && customGetter.size() > 0) {
 			property.evaluateLambda(
 					new PropertyElement(
 						settings,
 						value,
+						tags,
 						phase,
 						stage)).getResult();				
 		} else {

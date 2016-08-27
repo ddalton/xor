@@ -34,7 +34,6 @@ import javax.persistence.OrderColumn;
 import org.json.JSONObject;
 
 import tools.xor.AggregateAction;
-import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorLambda;
 import tools.xor.db.base.Identity;
@@ -202,4 +201,15 @@ public class Task extends Identity {
 	public void populateItemList(@XorExternal JSONObject current) {
 		assert current.has("openField");
 	}
+
+	private String subTask;
+
+	public String getSubTask() {
+		return subTask;
+	}
+
+	public void setSubTask(String subTask) {
+		this.subTask = subTask;
+	}
+
 }

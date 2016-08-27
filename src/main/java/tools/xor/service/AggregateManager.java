@@ -1078,9 +1078,9 @@ public class AggregateManager implements Xor {
 		List<?> dataObjects = queryInternal(entity, settings);
 	
 		for(Object obj: dataObjects) {
-			if(!settings.isDenormalized())
+			if(!settings.isDenormalized()) {
 				result.add( ((BusinessObject)obj).getNormalizedInstance(settings) );
-			else
+			} else
 				result.add(obj);
 		}
 	

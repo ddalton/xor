@@ -125,7 +125,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		assert(propertyNames.contains("version"));
 		assert(propertyNames.contains("quote"));
 		assert(propertyNames.contains("dependants"));
-		assert(properties.size() == 18);
+		assert(properties.size() == 19);
 	}
 
 	public void checkCyclicPaths() {	

@@ -17,13 +17,23 @@ import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.MutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 
+/**
+ * This represents the call graph during the UPDATE stage of the processing for the given view.
+ * Useful for the following purposes:
+ * 1. Identify loops so they can be broken for serialization
+ * 2. Identify the connections represented by open properties, as open properties objects cannot be reached otherwise
+ * 
+ * @author Dilip Dalton
+ *
+ * @param <V> vertex
+ * @param <E> edge
+ */
 public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> extends DirectedSparseGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	public  static final String AGGREGATE_NAME_PREFIX = "AGGREGATE";

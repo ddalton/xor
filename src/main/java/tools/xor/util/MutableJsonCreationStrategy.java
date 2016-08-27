@@ -146,4 +146,9 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 
 		return super.getNormalizedInstance(bo, settings);
 	}	
+	
+	@Override
+	public boolean needsObjectGraph() {
+		return true;
+	}	
 }

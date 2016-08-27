@@ -25,6 +25,7 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -35,6 +36,7 @@ import tools.xor.Property;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.graph.ObjectGraph;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
@@ -148,7 +150,8 @@ public abstract class AbstractOperation implements Operation {
 		 
 		if(ci.getOutputProperty() != null) {
 			ExtendedProperty property = getDomainProperty(ci);
-			if(property.getLambdas(ci.getSettings(), phase, ci.getStage()).size() > 0) {
+			String[] tags = ci.getSettings().getTags().toArray(new String[ci.getSettings().getTags().size()]);
+			if(property.getLambdas(ci.getSettings(), tags, phase, ci.getStage()).size() > 0) {
 				return property.evaluateLambda(
 					new PropertyElement(
 						ci.getSettings(),
@@ -156,6 +159,7 @@ public abstract class AbstractOperation implements Operation {
 						getExternal(ci),
 						getDomainParent(ci),
 						getExternalParent(ci),
+						tags,
 						phase,
 						ci.getStage())).isCapture();
 			}
@@ -262,13 +266,18 @@ public abstract class AbstractOperation implements Operation {
 				ci.setOutput(setExistingOrNewCopy(ci));
 			}
 
+			// Add edge to any open property objects
+			// Collection edges are handled later using the build method
+			BusinessObject invokee = (BusinessObject)ci.getParentOutputEntity();
+			if(invokee != null && invokee.getObjectCreator().getObjectGraph() != null) {
+				BusinessObject value = (BusinessObject) ci.getOutput();
+				BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(invokee, value, ci.getOutputProperty());
+				invokee.getObjectCreator().getObjectGraph().addEdge(edge, invokee, value);
+			}
+
 			// TODO: Post DataUpdate
 		}
-
-		// We do not handle collection objects here because they need additional processing on the child elements so, this short circuiting cannot be applied to them.
-		// TODO: do we need this since we handle all limits from the view?
-		if(!ci.getSettings().getAssociationStrategy().doProcess(ci))
-			return;
+		executeDataUpdate(ci, Phase.POST);
 
 		if(!((BusinessObject)ci.getOutput()).isVisited()) {
 			setVisited(ci, true);
@@ -284,8 +293,6 @@ public abstract class AbstractOperation implements Operation {
 		
 		// Rebuild an immutable object that is now fully populated by the builder
 		//rebuildImmutable(ci);
-		
-		executeDataUpdate(ci, Phase.POST);
 	}	
 	
 	protected void postVisited(CallInfo ci) {

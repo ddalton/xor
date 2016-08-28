@@ -39,6 +39,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.annotation.XorAlways;
+import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorResult;
@@ -555,6 +556,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						}
 					} else if(XorResult.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = resultPreviousCallback;
+					} else if(XorDataService.class.isAssignableFrom(annotation.getClass())) {
+						result[i] = event.getDomainParent().getObjectCreator().getPersistenceOrchestrator();
 					}
 				}
 			}

@@ -488,15 +488,27 @@ public class DefaultMutableJson extends AbstractDBTest {
 		
 		// Create subTask
 		JSONObject subTask = new JSONObject();
-		json.put("name", TASK_NAME);
-		json.put("displayName", "Setup Wiring");
-		json.put("description", "Establish wiring from the external line to the exterior of the home");
+		subTask.put("name", SUB_TASK_NAME);
+		subTask.put("displayName", "Setup Wiring");
+		subTask.put("description", "Establish wiring from the external line to the exterior of the home");
 		json.put("subTaskObj", subTask);
 		
 		Settings settings = getSettings();
+		settings.setSupportsPostLogic(true);
 		settings.addAssociation( new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		Task task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+		
+		// Make sure the subTask contains the id of the subTaskObj object
+		assert(task.getSubTask() != null);
+		
+		// Now read the object and see if the subTaskObj was created
+		Object jsonObject = aggregateService.read(task, settings);		
+		JSONObject jsonTask = (JSONObject) jsonObject;
+		JSONObject subTaskJson = jsonTask.getJSONObject("subTaskObj");
+		assert(subTaskJson.get("name").equals(SUB_TASK_NAME));
+		System.out.println("{}{}{}{}{}{}{} JSON string: " + jsonTask.toString());			
 	}
 	
 	protected void checkOpenFieldEntityToMany() {

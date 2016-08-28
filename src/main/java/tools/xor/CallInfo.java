@@ -343,6 +343,7 @@ public class CallInfo {
 	}
 
 	public Object getOutputFromParent() {
+
 		EntityType targetType = (EntityType) ((BusinessObject) getParent().getOutput()).getType();
 		ExtendedProperty targetProperty = (ExtendedProperty) targetType.getProperty(getInputProperty().getName());
 		if(targetProperty == null) {

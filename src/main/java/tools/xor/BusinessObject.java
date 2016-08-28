@@ -343,4 +343,10 @@ public interface BusinessObject extends DataObject {
 	 * @return BusinessObject if found, null otherwise
 	 */
 	public BusinessObject getByEntityKey(Object id, BusinessObject bo);
+
+	/**
+	 * Get the object from the object graph for open property
+	 * @param name of the property
+	 */
+	public BusinessObject getOpenPropertyValue(String name);
 }

@@ -22,12 +22,16 @@ package tools.xor.operation;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.ProcessingStage;
 import tools.xor.util.ClassUtil;
 
 public class CloneOperation extends AbstractOperation {
 	
 	private Object result;
+	
+	@Override
+	protected void persist(CallInfo callInfo) {
+		callInfo.getOutputObjectCreator().persistGraph(callInfo.getSettings());
+	}	
 	
 	@Override
 	protected void processCollection(CallInfo callInfo) throws Exception {

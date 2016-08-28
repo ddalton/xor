@@ -59,13 +59,8 @@ public class MutableBO extends AbstractBO {
 		target = (BusinessObject) operation.createTarget(callInfo, settings.getEntityClass());
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
+		settings.setPersist(true);
 		operation.execute(callInfo);
-		
-		try {
-			oc.persistGraph(settings);
-		} catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
-		}
 
 		return target;
 	}
@@ -95,11 +90,12 @@ public class MutableBO extends AbstractBO {
 		target = (BusinessObject) operation.createTarget(callInfo, settings.getEntityClass());
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
-		operation.execute(callInfo);
-
-		try {
+		settings.setPersist(true);
+		
+		try {		
 			Date start = new Date();
-			oc.persistGraph(settings);
+			operation.execute(callInfo);
+			//oc.persistGraph(settings);
 			if(logger.isDebugEnabled()) {
 				logger.debug("MutableBO#create.createAggregate took " + ((a.getTime()-s.getTime())/1000) + " seconds");
 				logger.debug("MutableBO#create.execute took " + ((start.getTime()-s.getTime())/1000) + " seconds");
@@ -132,8 +128,9 @@ public class MutableBO extends AbstractBO {
 			target = (BusinessObject) operation.createTarget(callInfo, settings.getEntityClass());
 			oc.setObjectGraph(target);
 			callInfo.setOutput(target);
+			settings.setPersist(true);
 			operation.execute(callInfo);
-			oc.persistGraph(settings);
+			//oc.persistGraph(settings);
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}

@@ -33,11 +33,17 @@ import javax.persistence.OrderColumn;
 
 import org.json.JSONObject;
 
+import tools.xor.AbstractProperty;
 import tools.xor.AggregateAction;
+import tools.xor.ExtendedProperty.Phase;
+import tools.xor.ProcessingStage;
+import tools.xor.annotation.XorDataService;
+import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorLambda;
 import tools.xor.db.base.Identity;
 import tools.xor.db.base.Person;
+import tools.xor.service.PersistenceOrchestrator;
 
 @Entity
 public class Task extends Identity {	
@@ -201,6 +207,23 @@ public class Task extends Identity {
 	public void populateItemList(@XorExternal JSONObject current) {
 		assert current.has("openField");
 	}
+	
+	@XorLambda(property="subTaskObj", stage=ProcessingStage.POSTLOGIC)
+	public void populateSubTaskId(@XorDomain(path="subTaskObj") Task st) {
+		if(st != null) {
+			subTask = st.getId();
+		}
+	}	
+	
+	@XorLambda(property="subTaskObj", tag={AbstractProperty.GETTER_TAG}, phase=Phase.INPLACEOF, action={AggregateAction.READ}, stage=ProcessingStage.UPDATE)
+	public Object retrieveSubTaskObj(@XorDataService PersistenceOrchestrator po) {
+		if(subTask != null) {
+			Task t = (Task) po.findById(Task.class, subTask);
+			return t;
+		}
+
+		return null;
+	}	
 
 	private String subTask;
 

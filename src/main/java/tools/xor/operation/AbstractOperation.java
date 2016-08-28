@@ -33,10 +33,10 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.graph.ObjectGraph;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
@@ -77,6 +77,13 @@ public abstract class AbstractOperation implements Operation {
 				callInfo.getOutputRoot().getObjectPersister().processActions(callInfo.getSettings());
 			}
 		}
+		
+		// Now we can persist the objects as all the links are set
+		// This might be necessary if the post logic actions if any
+		// are dependent on the identifier of newly created objects
+		if(callInfo.getSettings().doPersist()) {
+			persist(callInfo);
+		}
 
 		// Process post actions
 		// Enable only if necessary for performance reasons
@@ -87,6 +94,13 @@ public abstract class AbstractOperation implements Operation {
 		}
 
 		setResult(callInfo.getOutput());
+	}
+	
+	protected void persist(CallInfo callInfo) {
+		/*
+		 * By default we do not persist. This is overridden by the
+		 * appropriate subclasses
+		 */
 	}
 
 	protected void processPostLogic(CallInfo callInfo) throws Exception
@@ -269,7 +283,7 @@ public abstract class AbstractOperation implements Operation {
 			// Add edge to any open property objects
 			// Collection edges are handled later using the build method
 			BusinessObject invokee = (BusinessObject)ci.getParentOutputEntity();
-			if(invokee != null && invokee.getObjectCreator().getObjectGraph() != null) {
+			if(invokee != null && invokee.getObjectCreator().getObjectGraph() != null && ci.getStage() == ProcessingStage.UPDATE) {
 				BusinessObject value = (BusinessObject) ci.getOutput();
 				BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(invokee, value, ci.getOutputProperty());
 				invokee.getObjectCreator().getObjectGraph().addEdge(edge, invokee, value);

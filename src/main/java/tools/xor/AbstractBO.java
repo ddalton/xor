@@ -878,6 +878,10 @@ public abstract class AbstractBO implements BusinessObject {
 	public Object get(Property property) {
 		if(this.instance == null)
 			return null;
+		
+		if(property.isOpenContent()) {
+			return getOpenPropertyValue(property.getName());			
+		}
 
 		return ((ExtendedProperty)property).getValue(this);
 		/*
@@ -1325,5 +1329,14 @@ public abstract class AbstractBO implements BusinessObject {
 				createWrapper(child);				
 			}
 		}
-	}		
+	}
+	
+	public BusinessObject getOpenPropertyValue(String name) {
+		if(objectCreator.getObjectGraph() == null) {
+			return null;
+		}
+		
+		BusinessEdge<BusinessObject> edge = objectCreator.getObjectGraph().getOutEdge(this, name);
+		return edge == null ? null : edge.getEnd();
+	}
 }

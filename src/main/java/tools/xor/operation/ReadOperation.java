@@ -69,6 +69,16 @@ public class ReadOperation extends AbstractOperation {
 	}	
 	
 	@Override
+	protected boolean supportsCreate(CallInfo callInfo) {
+		// Immutable Json variant requires the creation step
+		// to get the JSON builders ready
+		if(callInfo.getOutputObjectCreator().getTypeMapper().immutable()) {
+			return true;
+		}
+		return false;
+	}		
+	
+	@Override
 	protected boolean supportsPostLogic(CallInfo callInfo) {
 		// Immutable processing is done in POSTLOGIC stage
 		if(callInfo.getOutputObjectCreator().getTypeMapper().immutable()) {

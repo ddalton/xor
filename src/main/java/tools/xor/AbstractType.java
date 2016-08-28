@@ -41,6 +41,7 @@ import org.apache.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import tools.xor.annotation.XorAfter;
+import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorEntity;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
@@ -537,12 +538,12 @@ public abstract class AbstractType implements EntityType {
 		boolean foundParamAnnotation = false;
 		boolean foundParamNoAnnotation = false;
 
-		// check that each of the paramAnnotations array has either an Input/Output annotation but not both
 		for(Annotation[] paramA: paramAnnotations) {
 			boolean found = false;
 			for(Annotation annotation: paramA) {
 				if(XorDomain.class.isAssignableFrom(annotation.getClass()) ||
-						XorExternal.class.isAssignableFrom(annotation.getClass())) {
+						XorExternal.class.isAssignableFrom(annotation.getClass()) ||
+						XorDataService.class.isAssignableFrom(annotation.getClass())) {
 					if(!found) {
 						found = true;
 						foundParamAnnotation = true;

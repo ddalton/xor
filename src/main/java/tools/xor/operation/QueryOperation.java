@@ -116,7 +116,7 @@ public class QueryOperation extends AbstractOperation {
 	
 	@Override
 	protected boolean supportsCreate(CallInfo callInfo) {
-		return true;
+		return false;
 	}	
 	
 	@Override

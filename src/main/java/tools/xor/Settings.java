@@ -81,6 +81,7 @@ public class Settings {
 	private boolean postFlush;     // Setting this flag to true, flushes the session after it executes the operation	
 	private boolean preClear; // Setting this flag to true clears the session cache before it executes the operation
 	private boolean preRefresh;   // Setting this flag to true refreshes the object before it executes the operation	
+	private boolean persist;     // Setting this flag will do an automatic saveupdate on the object graph after the UPDATE phase
 
 	private boolean narrow; // Request the query operation to narrow the object to the appropriate type. This can have a performance impact
 
@@ -410,6 +411,14 @@ public class Settings {
 	public boolean doPreRefresh() {
 		return this.preRefresh;
 	}	
+
+	public boolean doPersist() {
+		return persist;
+	}
+
+	public void setPersist(boolean persist) {
+		this.persist = persist;
+	}
 
 	public boolean doNarrow() {
 		return narrow;

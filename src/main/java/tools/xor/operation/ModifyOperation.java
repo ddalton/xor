@@ -41,6 +41,11 @@ public class ModifyOperation extends AbstractOperation {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private Object result;
+	
+	@Override
+	protected void persist(CallInfo callInfo) {
+		callInfo.getOutputObjectCreator().persistGraph(callInfo.getSettings());
+	}		
 
 	public void removeObsoleteEntities(CallInfo callInfo, CollectionUpdateAction migratorAction) {
 

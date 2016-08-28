@@ -241,12 +241,12 @@ public class ObjectCreator {
 
 	/**
 	 * This method ensures that all derived and reference persistence instance point to the same reference data object 
-	 * @param sourceInstance
-	 * @param targetInstance
-	 * @param targetType
-	 * @param container
-	 * @param containmentProperty
-	 * @return
+	 * @param sourceInstance the provided source instance
+	 * @param targetInstance the provided target instance or a persistence managed instance
+	 * @param targetType the type of the instance
+	 * @param container the parent BusinessObject
+	 * @param containmentProperty the property referring to the target instance
+	 * @return the new BusinessObject
 	 */
 	private BusinessObject createDataObject(Object sourceInstance, Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty) {
 

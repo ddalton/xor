@@ -117,8 +117,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	/**
 	 * 
-	 * @param mergeStates Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
-	 * @param mergeStates map of states to be merged
+	 * @param mergeStates map of states to be merged. Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
 	 * @return merged graph
 	 */
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {

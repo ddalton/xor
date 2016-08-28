@@ -472,8 +472,9 @@ public class QueryView {
 	 * This method adds the anchor property and any additional properties needed to support the creation of the
 	 * correct anchor object. This could be the identifier, version and/or the entity name if supported.
 	 * 
-	 * @param attribute
-	 * @return
+	 * @param attribute the attribute path from which the parent QueryViewProperty is found
+	 * @param doFetch decides if the property should be included in the result 
+	 * @return the parent QueryViewProperty
 	 */
 	private QueryViewProperty getParentViewProperty(String attribute, boolean doFetch) {
 		attribute = QueryViewProperty.qualifyProperty(attribute);

@@ -305,8 +305,9 @@ public abstract class AbstractType implements EntityType {
 	/**
 	 * 	If the field a boolean (primitive type), then only "is<propertyName>" is a valid getter method
 	 *  If a "get<propertyName>" method is present for this type then we override it 
-	 * @param m
-	 * @return
+	 * @param beanClass the java class
+	 * @param m the getter method
+	 * @return true if it is a getter method
 	 */
 	private boolean isGetterMethod(Class<?> beanClass, Method m) {
 		Class<?> returnType = m.getReturnType();
@@ -732,9 +733,9 @@ public abstract class AbstractType implements EntityType {
 	/**
 	 * Filter the properties by the API version
 	 *
-	 * @param input
-	 * @param apiVersion
-	 * @return
+	 * @param input  the given properties
+	 * @param apiVersion the version to filter by
+	 * @return the list of properties valid for the given apiVersion
 	 */
 	List<Property> getProperties(Collection<Property> input, int apiVersion) {
 		List<Property> result = new ArrayList<Property>(input.size());

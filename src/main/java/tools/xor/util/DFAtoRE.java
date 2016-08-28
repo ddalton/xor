@@ -709,8 +709,8 @@ public class DFAtoRE {
 	/**
 	 * Remove all spaces and parenthesis and RECURSE '*' characters
 	 * 
-	 * @param attrPath
-	 * @return
+	 * @param attrPath given attribute path
+	 * @return a normalized path that can be easily processed
 	 */
 	private static String normalize(String attrPath) {
 		// TODO: test this

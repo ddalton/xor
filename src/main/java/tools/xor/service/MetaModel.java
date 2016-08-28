@@ -85,8 +85,8 @@ public class MetaModel {
 	/**
 	 * Sorts the attributes by their part paths and hence by their length in an ordered form
 	 * Path gets modified in this method so it cannot be final
-	 * @param path
-	 * @return
+	 * @param path attribute path
+	 * @return sorted paths
 	 */
 	private List<String> sortPaths(List<String> path) {
 		int totalSize = path.size();

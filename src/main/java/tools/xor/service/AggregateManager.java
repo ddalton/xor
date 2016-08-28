@@ -721,6 +721,14 @@ public class AggregateManager implements Xor {
 	 * @param collectionSheets Will be used in subsequent processing
 	 * @return
 	 */
+	/**
+	 * Parse the given Excel workbook and group the entity and collection sheets separately.
+	 * 
+	 * @param wb given workbook
+	 * @param entitySheets Sheets containing entity data
+	 * @param collectionSheets Sheets capturing collection relationships. Will be used in subsequent processing
+	 * @return a map of JSON entities keyed by their XOR id
+	 */
 	private Map<String, JSONObject> parseEntities(Workbook wb, Map<String, String> entitySheets, Map<String, String> collectionSheets) {
 		// First find all the entity sheets
 		Sheet sheetMap = wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET);
@@ -880,10 +888,11 @@ public class AggregateManager implements Xor {
 	}
 	
 	/**
+	 * Generate the Excel sheets based on entities and collections
 	 * TODO: Should the map be topologically ordered?
-	 * @param to
-	 * @param sheetBO
-	 * @return
+	 * @param to root entity
+	 * @param sheetBO map of the sheet name and the entities/relationships within that sheet
+	 * @return the generated Excel workbook
 	 */
 	private Workbook processSheetBO(BusinessObject to, Map<String, List<BusinessObject>> sheetBO) {
 		

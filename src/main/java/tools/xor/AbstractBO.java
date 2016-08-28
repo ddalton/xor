@@ -363,7 +363,7 @@ public abstract class AbstractBO implements BusinessObject {
 	 *   
 	 * 
 	 * @param path
-	 * @return
+	 * @return value at path
 	 */
 	private Object getPathObject(String path) {
 

@@ -21,7 +21,6 @@ package tools.xor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -114,6 +113,9 @@ public class Settings {
 	private boolean autoWire;
 	
 	private Object sessionContext;
+	
+	// User provided data that is made available to callbacks
+	private Object externalData;
 
 
 	public Object getSessionContext() {
@@ -571,5 +573,14 @@ public class Settings {
 
 	public void setSupportsPostLogic(boolean supportsPostLogic) {
 		this.supportsPostLogic = supportsPostLogic;
-	}	
+	}
+
+	public Object getExternalData() {
+		return externalData;
+	}
+
+	public void setExternalData(Object externalData) {
+		this.externalData = externalData;
+	}
+	
 }

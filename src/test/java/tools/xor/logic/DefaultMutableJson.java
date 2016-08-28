@@ -508,10 +508,76 @@ public class DefaultMutableJson extends AbstractDBTest {
 		JSONObject jsonTask = (JSONObject) jsonObject;
 		JSONObject subTaskJson = jsonTask.getJSONObject("subTaskObj");
 		assert(subTaskJson.get("name").equals(SUB_TASK_NAME));
+		//System.out.println("{}{}{}{}{}{}{} JSON string: " + jsonTask.toString());			
+	}
+	
+	protected void checkOpenFieldEntityToOneGrandchild() {
+		final String TASK_NAME = "SETUP_DSL";
+		final String SUB_TASK_NAME = "SETUP_WIRING";
+		final String GC_TASK_NAME = "SCHEDULE_APPT";		
+		
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		
+		// Create subTask
+		JSONObject subTask = new JSONObject();
+		subTask.put("name", SUB_TASK_NAME);
+		subTask.put("displayName", "Setup Wiring");
+		subTask.put("description", "Establish wiring from the external line to the exterior of the home");
+		json.put("subTaskObj", subTask);
+		
+		// Create Grandchild task
+		JSONObject gcTask = new JSONObject();
+		gcTask.put("name", GC_TASK_NAME);
+		gcTask.put("displayName", "Schedule Appointment");
+		gcTask.put("description", "Schedule appointment for the internet installer");
+		subTask.put("subTaskObj", gcTask);		
+		
+		Settings settings = getSettings();
+		settings.setSupportsPostLogic(true);
+		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.setEntityClass(Task.class);	
+		Task task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+		
+		// Make sure the subTask contains the id of the subTaskObj object
+		assert(task.getSubTask() != null);
+		
+		// Now read the object and see if the subTaskObj was created
+		Object jsonObject = aggregateService.read(task, settings);		
+		JSONObject jsonTask = (JSONObject) jsonObject;
+		JSONObject subTaskJson = jsonTask.getJSONObject("subTaskObj");
+		assert(subTaskJson.get("name").equals(SUB_TASK_NAME));
+		JSONObject gcJson = subTaskJson.getJSONObject("subTaskObj");
+		assert(gcJson.get("name").equals(GC_TASK_NAME));		
 		System.out.println("{}{}{}{}{}{}{} JSON string: " + jsonTask.toString());			
 	}
 	
-	protected void checkOpenFieldEntityToMany() {
+	protected void checkExternalData() throws JSONException {
+		final String TASK_NAME = "SETUP_DSL";
+		final String TASK_URI = "http://www.att.com";
 		
-	}
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		json.put("taskUri", TASK_URI);
+		
+		Settings settings = getSettings();
+		settings.setEntityClass(Task.class);
+		Task task = (Task) aggregateService.create(json, settings);	
+		assert(task.getId() != null);
+		assert(task.getName().equals(TASK_NAME));
+		assert(task.getTaskUri().equals(TASK_URI));
+		
+		settings.addTag("External Data");
+		settings.setExternalData(5);
+		Object jsonObject = aggregateService.read(task, settings);
+		JSONObject jsonTask = (JSONObject) jsonObject;
+		assert( (jsonTask.get("taskUri")).toString().equals(TASK_URI));
+	}	
 }

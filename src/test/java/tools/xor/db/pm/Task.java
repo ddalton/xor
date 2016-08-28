@@ -40,6 +40,7 @@ import tools.xor.ProcessingStage;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
+import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
 import tools.xor.db.base.Identity;
 import tools.xor.db.base.Person;
@@ -101,7 +102,12 @@ public class Task extends Identity {
 	public String getTaskUri() {
 		return this.taskUri;
 	}
-
+	
+	@XorLambda(property="taskUri", tag={"External Data"}, action={AggregateAction.READ}, stage=ProcessingStage.UPDATE)
+	public void passAdditionalData(@XorExternalData Integer num) {
+		assert num == 5;
+	}	
+	
 	private Person assignedTo;
 	
 	@OneToOne

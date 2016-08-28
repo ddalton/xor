@@ -42,6 +42,7 @@ import tools.xor.annotation.XorAlways;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
+import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
@@ -558,6 +559,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						result[i] = resultPreviousCallback;
 					} else if(XorDataService.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = event.getDomainParent().getObjectCreator().getPersistenceOrchestrator();
+					} else if(XorExternalData.class.isAssignableFrom(annotation.getClass())) {
+						result[i] = event.getSettings().getExternalData();
 					}
 				}
 			}

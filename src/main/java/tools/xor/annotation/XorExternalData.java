@@ -25,10 +25,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Injects the underlying XOR Data service object. This object can be used to load an object by id etc...
- * The user is free to use any other DAO mechanism as long as it returns the same persistence managed object.
+ * Allows access to data apart from the persistence data. For e.g., prefetch maps between user key and ids
+ * is one example.
+ * This data is made available by calling Settings#setExternalData
  */ 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface XorDataService {
+public @interface XorExternalData {
 }

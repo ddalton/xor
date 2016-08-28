@@ -45,6 +45,7 @@ import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorEntity;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
+import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
@@ -543,7 +544,8 @@ public abstract class AbstractType implements EntityType {
 			for(Annotation annotation: paramA) {
 				if(XorDomain.class.isAssignableFrom(annotation.getClass()) ||
 						XorExternal.class.isAssignableFrom(annotation.getClass()) ||
-						XorDataService.class.isAssignableFrom(annotation.getClass())) {
+						XorDataService.class.isAssignableFrom(annotation.getClass()) ||
+						XorExternalData.class.isAssignableFrom(annotation.getClass())) {
 					if(!found) {
 						found = true;
 						foundParamAnnotation = true;

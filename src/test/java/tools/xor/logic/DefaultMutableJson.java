@@ -324,7 +324,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 	protected void checkOpenField() throws JSONException {
 		final String TASK_NAME = "SETUP_DSL";
 
-		AggregateView view = new AggregateView();
+		AggregateView view = new AggregateView("OPEN_FIELD_VIEW");
 		List path = new ArrayList();
 		path.add("name");
 		path.add("displayName");
@@ -410,6 +410,63 @@ public class DefaultMutableJson extends AbstractDBTest {
 	    FileOutputStream out = new FileOutputStream("taskExcel.xlsx");
 		aggregateService.exportAggregate(out, task, settings);
 	}	
+	
+
+	protected void checkExcelExportView() throws JSONException, IOException {
+		final String TASK_NAME = "SETUP_DSL";
+		final String CHILD_TASK_NAME = "TASK_1";
+		
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+
+		// Create and add 1 child task
+		JSONObject child1 = new JSONObject();
+		child1.put("name", CHILD_TASK_NAME);
+		child1.put("displayName", "Task 1");
+		child1.put("description", "This is the first child task");
+		
+		JSONArray jsonArray = new JSONArray();
+		jsonArray.put(child1);
+		json.put("taskChildren", jsonArray);
+		
+		JSONObject childDetails = new JSONObject();
+		childDetails.put("version", "0");
+		child1.put("taskDetails", childDetails);
+		
+		AggregateView view = new AggregateView("VIEW_STREAM");
+		List path = new ArrayList();
+		path.add("id");
+		path.add("name");
+		path.add("displayName");
+		path.add("description");
+		view.setAttributeList(path);
+		
+
+		Settings settings = new Settings();
+		settings.addFilter("ASC(name)", 1);
+		settings.setView(view);		
+		settings.addAssociation( new AssociationSetting(TaskDetails.class));
+		settings.setEntityClass(Task.class);
+		
+		Task task = (Task) aggregateService.create(json, settings);	
+		assert(task.getId() != null);
+		assert(task.getName().equals(TASK_NAME));
+		assert(task.getTaskChildren() != null);
+		System.out.println("Children size: " + task.getTaskChildren().size());
+		assert(task.getTaskChildren().size() == 1);
+		for(Task child: task.getTaskChildren()) {
+			System.out.println("Task name: " + child.getName());
+		}
+		for(Task child: task.getTaskChildren()) {
+			assert(child.getId() != null);
+		}
+		
+	    FileOutputStream out = new FileOutputStream("taskExcelChunking.xlsx");
+		aggregateService.exportAggregate(out, task, settings);
+	}		
 	
 	protected void checkExcelImport() throws JSONException, IOException {
 		FileInputStream in = new FileInputStream("taskOneChild.xlsx");

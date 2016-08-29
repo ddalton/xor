@@ -22,6 +22,7 @@ package tools.xor.view;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -38,6 +39,7 @@ import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator.QueryType;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.Constants;
+import tools.xor.view.expression.AscFunctionExpression;
 
 /*
  * QueryBuilder needs to handle the following expressions
@@ -86,26 +88,7 @@ public class QueryBuilder {
 	private QueryView        view;
 	private List<Filter>     additionalFilters;
 	private boolean          addIdentifier;
-	private List<String>     selectedColumns;
-
-	/* refers to the columns used in the order by clause. 
-	 * There needs to be atleast one unique column for this to work property.
-	 * If there are multiple columns then the last column should be a unique column
-	 *
-	 * Examples:
-	 * 1. Sort on unique column A
-	 *    Then the pageColumn will refer to this unique column A
-	 *    
-	 * 2. If we sort on non-unique column B
-	 *    We add the id column as the second column
-	 *    so we sort on B, I
-	 *    and the query becomes
-	 *    AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
-	 *    
-	 * We currently do not handle more than 1 order by columns, though this can be supported 
-	 * using this approach
-	 */    
-	private Filter   pageColumn;         
+	private List<String>     selectedColumns;    
 
 	public BusinessObject getEntity() {
 		return entity;
@@ -299,15 +282,12 @@ public class QueryBuilder {
 		
 		// Initialize the filterbypath map
 		for(Filter filter: this.additionalFilters) {
-			if(filter.isOrderBy()) { // Will be handled in the ORDER BY clause
-			    // Before we skip, we initialize it if it is needed
-				// for paging. This column has to be unique for it to be used
-				// for this purpose.
-				if(pageColumn == null)
-					pageColumn = filter;
+
+			// Order By filters are handled separately
+			if(filter.isOrderBy()) {
 				continue;
 			}
-
+			
 			// Filter is skipped
 			if(!filter.isFilterIncluded(originalFilters, filters, parameterMap))
 				continue;
@@ -340,24 +320,81 @@ public class QueryBuilder {
 		}
 	}
 	
-	protected void checkAndAddCustom(CallInfo callInfo, StringBuilder result) {
-		// AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
-		if(callInfo != null && callInfo.getSettings().getPageEndSortValue() != null) {
-			addWhereStep(result);
-
-			result.append( " ( " +pageColumn.getNormalizedName() );
-			result.append( " > :" + QueryViewProperty.PAGE_END_SORT_VALUE);
-			
-			if(callInfo.getSettings().getPageEndIdValue() != null) {
-				result.append( " OR ( " +pageColumn.getNormalizedName() );
-				result.append( " = :" + QueryViewProperty.PAGE_END_SORT_VALUE + " AND ");
-				result.append( getNormalizedName(((EntityType)entity.getDomainType()).getIdentifierProperty().getName()) );
-				result.append( " > :" + QueryViewProperty.PAGE_END_ID_VALUE);	
-				result.append( " ) ");
+	private String getDirection(Filter filter) {
+		if(filter.functionExpression instanceof AscFunctionExpression) {
+			return " > ";
+		} else {
+			return " < ";
+		}
+	}
+	
+	private String getEqualOrderByExp(int endPos, List<Filter> orderBy) {
+		// 	Create an equals condition for all the orderBy fields until endPos
+		
+		StringBuilder result = new StringBuilder("");
+		for(int i = 0; i <= endPos; i++) {
+			Filter f = orderBy.get(i);
+			if(i > 0) {
+				result.append(" AND ");
 			}
+			result.append( f.getNormalizedName() + " = : " + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+		}
+		
+		return result.toString();
+	}
+	
+	/*
+	/* refers to the columns used in the order by clause. 
+	 * There needs to be atleast one unique column for this to work property.
+	 * If there are multiple columns then the last column should be a unique column
+	 *
+	 * Examples:
+	 * 1. Sort on unique column A
+	 *    Then the pageColumn will refer to this unique column A
+	 *    
+	 * 2. If we sort on non-unique column B
+	 *    We add the id column as the second column
+	 *    so we sort on B, I
+	 *    and the query becomes
+	 *    AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
+	 *    
+	 * 
+	 * @param callInfo current call stack frame
+	 * @param query the current query string that has been built so far 
+	 */
+	protected void checkAndAddChunkStart(CallInfo callInfo, StringBuilder queryString) {
+		if(callInfo == null) {
+			return;
+		}
+		
+		Map<String, Object> nextToken = callInfo.getSettings().getNextToken();
+		if(nextToken == null || nextToken.isEmpty()) {
+			return;
+		}
+		
+		List<Filter> orderBy = new LinkedList<Filter>();
+		for(Filter filter: this.additionalFilters) {
+			if(filter.isOrderBy()) {
+				orderBy.add(filter);
+			}
+		}		
+		
+		addWhereStep(queryString);
+		queryString.append( " ( ");		
+		for(int i = 0; i < orderBy.size(); i++) {
+			Filter f = orderBy.get(i);
+			// AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
+		
+			queryString.append( f.getNormalizedName() );
+			queryString.append( getDirection(f) + ":" + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
 			
-			result.append( " ) ");
-		}	
+			if(i > 0) {
+				queryString.append( " OR ( " + getEqualOrderByExp(i-1, orderBy) );
+				queryString.append( " AND " + f.getNormalizedName() + getDirection(f) + ":" + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+				queryString.append( " ) ");
+			}
+		}
+		queryString.append( " ) ");
 	}
 
 	protected String buildWhereClause(CallInfo callInfo, Map<String, Object> filters) {
@@ -365,7 +402,7 @@ public class QueryBuilder {
 		
 		checkAndAddFilters(result, filters);
 		checkAndAddId(result);
-		checkAndAddCustom(callInfo, result);	
+		checkAndAddChunkStart(callInfo, result);	
 
 		return result.toString();
 	}	
@@ -387,13 +424,16 @@ public class QueryBuilder {
 			query.setParameter(QueryViewProperty.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
 		}
 
-		if(query.hasParameter(QueryViewProperty.PAGE_END_SORT_VALUE)) {
-			query.setParameter(QueryViewProperty.PAGE_END_SORT_VALUE, callInfo.getSettings().getPageEndSortValue());
+		// Set the chunk values
+		Map<String, Object> nextToken = callInfo.getSettings().getNextToken();
+		if(nextToken != null) {
+			for(Map.Entry<String, Object> entry: nextToken.entrySet()) {
+				if(!query.hasParameter(QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
+					throw new IllegalStateException("NextToken missing information for orderBy field: " + entry.getKey());
+				}
+				query.setParameter(QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
+			}
 		}
-		
-		if(query.hasParameter(QueryViewProperty.PAGE_END_ID_VALUE)) {
-			query.setParameter(QueryViewProperty.PAGE_END_ID_VALUE, callInfo.getSettings().getPageEndIdValue());
-		}		
 
 		// pagination
 		if(callInfo.getSettings().getOffset() != null)

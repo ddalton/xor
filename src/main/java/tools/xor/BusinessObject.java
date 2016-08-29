@@ -347,6 +347,7 @@ public interface BusinessObject extends DataObject {
 	/**
 	 * Get the object from the object graph for open property
 	 * @param name of the property
+	 * @return BusinessObject value of the open property
 	 */
 	public BusinessObject getOpenPropertyValue(String name);
 }

@@ -103,8 +103,7 @@ public class Settings {
 	// Paging related attributes
 	private Integer limit;
 	private Integer offset;
-	private Object pageEndSortValue;
-	private Object pageEndIdValue;
+	private Map<String, Object> nextToken;
 
 	private int apiVersion = getCurrentApiVersion();
 	
@@ -211,6 +210,8 @@ public class Settings {
 				view = view.copy();
 				view.getStateGraph((EntityType) entityType).enhance(associationSettings, am);				
 			}
+		} else if(view.getName() == null || "".equals(view.getName().trim())) {
+			throw new IllegalStateException("A name for the AggregateView is required");
 		}
 
 		this.filters = populateFilters(queryParams);
@@ -473,6 +474,23 @@ public class Settings {
 		this.offset = offset;
 	}
 
+	/**
+	 * This is an efficient paging mechanism if 
+	 * the paging query is based of the order by column
+	 * This value should represent the last term in the order by clause
+	 * for this chunk
+	 * 
+	 * @return last term in current chunk
+	 */
+
+	public Map<String, Object> getNextToken() {
+		return nextToken;
+	}
+
+	public void setNextToken(Map<String, Object> nextToken) {
+		this.nextToken = nextToken;
+	}
+
 	public Integer getLimit() {
 		return limit;
 	}
@@ -513,29 +531,6 @@ public class Settings {
 	public void setBaseline(boolean domain) {
 		this.baseline = domain;
 	}
-
-	/**
-	 * This is an efficient paging mechanism if 
-	 * the paging query is based of the order by column
-	 * This value should represent the first term in the order by clause
-	 * 
-	 * @return first item in the page
-	 */
-	public Object getPageEndSortValue() {
-		return pageEndSortValue;
-	}
-
-	public void setPageEndSortValue(Object sortValuePageEnd) {
-		this.pageEndSortValue = sortValuePageEnd;
-	}
-
-	public Object getPageEndIdValue() {
-		return pageEndIdValue;
-	}
-
-	public void setPageEndIdValue(Object idPageEnd) {
-		this.pageEndIdValue = idPageEnd;
-	}	
 	
 	private Settings(SettingsBuilder builder) {
 		this.entityClass = builder.entityClass;

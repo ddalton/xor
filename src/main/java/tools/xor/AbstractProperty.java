@@ -821,18 +821,27 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public String getMappedByName() {	
 		String result = null;
 
-		javax.persistence.ManyToOne manyToOne = getterMethod.getAnnotation(javax.persistence.ManyToOne.class);	
-		if(manyToOne != null) // this annotation does not have a mappedBy field
-			return result;
-
-		javax.persistence.OneToOne oneToOne = getterMethod.getAnnotation(javax.persistence.OneToOne.class);
-		javax.persistence.OneToMany oneToMany = getterMethod.getAnnotation(javax.persistence.OneToMany.class);
-		javax.persistence.ManyToMany manyToMany = getterMethod.getAnnotation(javax.persistence.ManyToMany.class);
+		javax.persistence.ManyToOne manyToOne = null;
+		javax.persistence.OneToOne oneToOne = null;
+		javax.persistence.OneToMany oneToMany = null;
+		javax.persistence.ManyToMany manyToMany = null;
+		
+		if(getterMethod != null) {
+			manyToOne = getterMethod.getAnnotation(javax.persistence.ManyToOne.class);	
+			oneToOne = getterMethod.getAnnotation(javax.persistence.OneToOne.class);
+			oneToMany = getterMethod.getAnnotation(javax.persistence.OneToMany.class);
+			manyToMany = getterMethod.getAnnotation(javax.persistence.ManyToMany.class);
+		}
+		
 		if(oneToOne == null && oneToMany == null && manyToMany == null && field != null) {
+			manyToOne = field.getAnnotation(javax.persistence.ManyToOne.class);				
 			oneToOne = field.getAnnotation(javax.persistence.OneToOne.class);
 			oneToMany = field.getAnnotation(javax.persistence.OneToMany.class);
 			manyToMany = field.getAnnotation(javax.persistence.ManyToMany.class);
 		}
+		
+		if(manyToOne != null) // this annotation does not have a mappedBy field
+			return result;		
 
 		if(oneToOne != null && oneToOne.mappedBy() != null)
 			result = oneToOne.mappedBy();		

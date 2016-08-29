@@ -19,7 +19,9 @@
 
 package tools.xor.logic;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -193,7 +195,9 @@ public class DefaultPaging extends AbstractDBTest {
 		// read the person object using a DataObject
 		Settings settings = new Settings();
 		settings.setView(aggregateManager.getView("PERSON_DESC"));
-		settings.setPageEndSortValue(NAME2);
+		Map<String, Object> nextToken = new HashMap<String, Object>();
+		nextToken.put("name", NAME2);
+		settings.setNextToken(nextToken);
 		List<?> toList = aggregateManager.query(new Person(), settings);
 		
 		assert(toList.size() == 1);		

@@ -155,10 +155,19 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		initQuery(queryView);
 	}
 	
-	public AggregateView(Type type) {
+	public AggregateView(Type type, String viewName) {
+		this(viewName);
 		this.typeName = type.getInstanceClass().getName();
 	}	
+	
+	public AggregateView(String viewName) {
+		setName(viewName);
+	}		
 
+	/**
+	 * No-args constructor required for Unmarshalling purpose and also internally by the framework. 
+	 * Don't use this directly.
+	 */
 	public AggregateView() {
 	}
 	
@@ -368,7 +377,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		if(filter != null) {
 			List<Filter> filterCopy = new ArrayList<Filter>();
 			for(Filter f: filter) {
-				filterCopy.add(new Filter(f.expression));
+				filterCopy.add(new Filter(f.expression, f.position));
 			}
 			result.setFilter(filterCopy);
 		}

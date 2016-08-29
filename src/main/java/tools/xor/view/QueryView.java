@@ -57,7 +57,7 @@ public class QueryView {
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 
-	private static final String ENTITY_ALIAS_PREFIX = "ENT";
+	private static final String ENTITY_ALIAS_PREFIX = "_abc_";
 	private static final String PROPERTY_ALIAS_PREFIX = "PROP";
 
 	private        Type                      aggregateType;

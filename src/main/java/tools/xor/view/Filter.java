@@ -36,13 +36,20 @@ public class Filter implements Comparable<Filter> {
 	
 	protected AbstractFunctionExpression functionExpression;
 	
+	/**
+	 * No-args constructor required for Unmarshalling purpose. Don't use this directly.
+	 */
 	public Filter() {
-		
 	}
 	
 	public Filter(String expression) {
+		this(expression, 0);
+	}	
+	
+	public Filter(String expression, int position) {
 		init(expression);
-	}
+		this.position = position;
+	}	
 	
 	public void init(String expression) {
 		this.expression = expression;
@@ -55,7 +62,7 @@ public class Filter implements Comparable<Filter> {
 	}
 
 	public Filter narrow() {
-		return new Filter(expression);
+		return new Filter(expression, position);
 	}
 
 	public boolean isOrderBy() {

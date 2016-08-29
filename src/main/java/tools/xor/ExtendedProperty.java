@@ -233,6 +233,7 @@ public interface ExtendedProperty extends Property {
 	/**
 	 * Get the lambdas
 	 * @param settings user entered settings
+	 * @param tags invoke only when a certain label is found
 	 * @param phase desired phase
 	 * @param stage desired stage
 	 * @return list of lambda objects

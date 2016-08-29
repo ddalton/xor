@@ -53,8 +53,7 @@ public class QueryViewProperty {
 	
 	// Inputs or parameters are in lower case
 	public static final String ID_PARAMETER_NAME     = "id_";
-	public static final String PAGE_END_SORT_VALUE   = "page_sort_value_";
-	public static final String PAGE_END_ID_VALUE     = "page_id_value_";	
+	public static final String NEXTTOKEN_PARAM_PREFIX = "orderBy_";	
 
 	private QueryViewProperty   parent;        // Needed for embedded or element collection attributes
 	private Property       property;      // null for root

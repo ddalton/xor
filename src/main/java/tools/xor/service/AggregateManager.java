@@ -413,7 +413,7 @@ public class AggregateManager implements Xor {
 	}
 	
 	private Class<?> getEntityClass(Object inputObject, Settings settings) {
-		return inputObject == null ? settings.getEntityType().getInstanceClass() : inputObject.getClass();
+		return inputObject == null ? (settings.getEntityClass() != null ? settings.getEntityClass() : settings.getEntityType().getInstanceClass()) : inputObject.getClass();
 	}
 
 	private List<?> queryInternal(Object entity, Settings settings) {

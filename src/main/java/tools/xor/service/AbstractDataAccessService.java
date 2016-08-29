@@ -244,12 +244,11 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		AggregateView result = views.get(viewName);
 
 		if(result == null) {
-			result = new AggregateView(type);
+			result = new AggregateView(type, viewName);
 			result.setDAS(this);
 			Set<String> paths = AggregatePropertyPaths.enumerate(type);
 			
 			result.setAttributeList(new ArrayList<String>(paths));
-			result.setName(viewName);
 			
 			DFAtoRE dfaRE = new DFAtoRE(type);
 			result.addStateGraph(type.getName(), dfaRE.getFullStateGraph());

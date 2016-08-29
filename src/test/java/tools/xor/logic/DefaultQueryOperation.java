@@ -1122,7 +1122,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		settings.addFilter("equal(ownedBy.name, :owner)");
 		settings.addFilter("ge(createdOn, :createdSince)");
 		settings.addFilter("ge(updatedOn, :updatedSince)");
-		settings.addFilter("asc(name)");
+		settings.addFilter("asc(name)", 1);
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntity input = new MetaEntity();
 		input.setMetaEntityType(getType(MetaEntityTypeEnum.PATENT.name()));		

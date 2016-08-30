@@ -149,5 +149,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	@Test
 	public void checkExternalData() {	
 		super.checkExternalData();			
-	}	
+	}
+	
+	@Test
+	public void checkOpenFieldPaging() {
+		setupOpenField(aggregateService.getDAS());		
+		super.checkOpenFieldPaging();
+	}
 }

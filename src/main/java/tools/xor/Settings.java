@@ -451,6 +451,9 @@ public class Settings {
 
 		if(entity != null) {
 			narrowedClass = typeNarrower.narrow(entity, getView().getName());
+			if(narrowedClass == null) {
+				throw new IllegalArgumentException("The entityClass is not applicable for this view. Check if the entity object for the correct class was passed in.");
+			}
 		} else {
 			narrowedClass = getEntityType().getInstanceClass();
 		}

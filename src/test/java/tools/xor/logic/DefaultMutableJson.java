@@ -696,4 +696,127 @@ public class DefaultMutableJson extends AbstractDBTest {
 		JSONObject jsonTask = (JSONObject) jsonObject;
 		assert( (jsonTask.get("taskUri")).toString().equals(TASK_URI));
 	}	
+
+	protected void checkOpenFieldPaging() {
+		// Task Tree 1
+		final String TASK_NAME = "SETUP_DSL";
+		final String SUB_TASK_NAME = "SETUP_WIRING";
+		final String GC_TASK_NAME = "SCHEDULE_APPT";		
+
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+
+		// Create subTask
+		JSONObject subTask = new JSONObject();
+		subTask.put("name", SUB_TASK_NAME);
+		subTask.put("displayName", "Setup Wiring");
+		subTask.put("description", "Establish wiring from the external line to the exterior of the home");
+		json.put("subTaskObj", subTask);
+
+		// Create Grandchild task
+		JSONObject gcTask = new JSONObject();
+		gcTask.put("name", GC_TASK_NAME);
+		gcTask.put("displayName", "Schedule Appointment");
+		gcTask.put("description", "Schedule appointment for the internet installer");
+		subTask.put("subTaskObj", gcTask);		
+
+		Settings settings = getSettings();
+		settings.setSupportsPostLogic(true);
+		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.setEntityClass(Task.class);	
+		Task task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+
+		// Task Tree 2	
+
+		// Create task
+		json = new JSONObject();
+		json.put("name", "HOMEWORK");
+		json.put("displayName", "Homework");
+		json.put("description", "Homework from school");
+
+		// Create subTask
+		subTask = new JSONObject();
+		subTask.put("name", "MATH_HOMEWORK");
+		subTask.put("displayName", "Math's homework");
+		subTask.put("description", "Complete math homework");
+		json.put("subTaskObj", subTask);
+
+		// Create Grandchild task
+		gcTask = new JSONObject();
+		gcTask.put("name", "ALGEBRA");
+		gcTask.put("displayName", "Algebra problems");
+		gcTask.put("description", "Complete the algebra part of the math homework");
+		subTask.put("subTaskObj", gcTask);		
+
+		settings = getSettings();
+		settings.setSupportsPostLogic(true);
+		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.setEntityClass(Task.class);	
+		task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+		
+		// Task tree 3
+
+		// Create task
+		json = new JSONObject();
+		json.put("name", "ATHLETICS");
+		json.put("displayName", "Athletics");
+		json.put("description", "The athletics programs the child participates in");
+
+		// Create subTask
+		subTask = new JSONObject();
+		subTask.put("name", "TRACK_FIELD");
+		subTask.put("displayName", "Track & Field");
+		subTask.put("description", "Track and field programs");
+		json.put("subTaskObj", subTask);
+
+		// Create Grandchild task
+		gcTask = new JSONObject();
+		gcTask.put("name", "DISTANCE_RUNNING");
+		gcTask.put("displayName", "Long distance running");
+		gcTask.put("description", "The 1 mile run");
+		subTask.put("subTaskObj", gcTask);		
+
+		settings = getSettings();
+		settings.setSupportsPostLogic(true);
+		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.setEntityClass(Task.class);	
+		task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+			
+		
+		AggregateView view = new AggregateView("OPEN_FIELD_QUERY");
+		List path = new ArrayList();
+		path.add("id");
+		path.add("name");
+		path.add("displayName");
+		path.add("description");
+		path.add("subTaskObj.id");
+		path.add("subTaskObj.name");
+		path.add("subTaskObj.displayName");
+		path.add("subTaskObj.description");	
+		path.add("subTaskObj.subTaskObj.id");
+		path.add("subTaskObj.subTaskObj.name");
+		path.add("subTaskObj.subTaskObj.displayName");
+		path.add("subTaskObj.subTaskObj.description");	
+		view.setAttributeList(path);		
+
+
+		settings = new Settings();
+		settings.addFunctionFilter("asc(name)", 1);		
+		settings.setView(view);		
+		settings.setEntityClass(Task.class);		
+		settings.setDenormalized(true);
+		settings.setLimit(2);
+		List<?> result = aggregateService.query(null, settings);		
+		assert(result.size() == 3);	
+		
+		// We proceed from the nextToken, so we should return the remaining single row
+		result = aggregateManager.query(null, settings);
+		assert(result.size() == 2);		
+	}
 }

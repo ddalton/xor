@@ -32,5 +32,16 @@ import tools.xor.AbstractBO;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface XorExternal {
+	/**
+	 * Retrieve the value at the path rooted in the external object
+	 * @return path string
+	 */
     String path() default AbstractBO.PATH_CONTAINER;
+    
+	/**
+	 * If true, then the business object wrapper is returned. This provides additional functionality on the object
+	 * It makes sense to return the wrapper only for an entity type and not a simple type
+	 * @return boolean value
+	 */
+	boolean wrapper() default false;     
 }

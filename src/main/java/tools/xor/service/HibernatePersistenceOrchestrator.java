@@ -173,11 +173,11 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	}
 
 	@Override
-	public Object findByProperty(Type type, Map<String, String> propertyValues) {
+	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
 		Class<?> persistentClass = type.getInstanceClass();
 		Criteria crit = getSession().createCriteria(persistentClass);
 
-		for(Map.Entry<String, String> entry: propertyValues.entrySet())
+		for(Map.Entry<String, Object> entry: propertyValues.entrySet())
 			crit.add(Restrictions.eq(entry.getKey(), entry.getValue()));
 
 		List<Object> resultList = crit.list();

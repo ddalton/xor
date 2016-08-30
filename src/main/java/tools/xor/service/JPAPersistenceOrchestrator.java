@@ -111,7 +111,7 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	}
 	
 	@Override
-	public Object findByProperty(Type type, Map<String, String> propertyValues) {
+	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
 		CriteriaBuilder builder = getEntityManagerFactory().getCriteriaBuilder();
 		CriteriaQuery<Object> crit = builder.createQuery();
 		
@@ -121,7 +121,7 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 
 		Predicate[] predicates = new Predicate[propertyValues.size()];
 		int index = 0;
-		for( Map.Entry<String, String> entry: propertyValues.entrySet())
+		for( Map.Entry<String, Object> entry: propertyValues.entrySet())
 			predicates[index++] = builder.equal(from.get(entry.getKey()), entry.getValue());
 
 		crit.where(builder.and(predicates));

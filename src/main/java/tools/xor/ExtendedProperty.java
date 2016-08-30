@@ -20,6 +20,7 @@
 package tools.xor;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
@@ -259,4 +260,26 @@ public interface ExtendedProperty extends Property {
 	 * @return Property object
 	 */
 	public Property getDomainProperty();
+	
+	/**
+	 * Returns the relationship type for an open property
+	 * @return null if not an open property
+	 */
+	public RelationshipType getRelationshipType();
+	
+	/**
+	 * Return the foreign key field mappings for the open property relationship
+	 * @return map of the field mappings. Has more than one entry if the key is composite
+	 */
+	public Map<String, String> getKeyFields();
+
+	/**
+	 * Records the foreign key relationship between two entities
+	 * 
+	 * @param thisSet The set of fields that comprise the foreign key of the current entity for a TO_ONE relationship
+	 *        and refers to the set of fields on the element entity for a TO_MANY relationship
+	 * @param thatSet The set of fields that comprise the composite condidate/primary key on the target entity. The source
+	 *        entity is the current entity for a TO_ONE relationship and the collection element for a TO_MANY relationship. 
+	 */
+	public void addKeyMapping(String[] thisSet, String[] thatSet);	
 }

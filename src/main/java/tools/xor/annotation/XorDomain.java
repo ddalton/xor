@@ -32,5 +32,15 @@ import tools.xor.AbstractBO;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface XorDomain {
+	/**
+	 * Retrieve the value at the path rooted in the domain object
+	 * @return path string
+	 */
     String path() default AbstractBO.PATH_CONTAINER;
+    
+	/**
+	 * If true, then the business object wrapper is returned. This provides additional functionality on the object
+	 * @return boolean value
+	 */
+	boolean wrapper() default false;     
 }

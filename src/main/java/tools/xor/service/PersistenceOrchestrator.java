@@ -51,7 +51,7 @@ public interface PersistenceOrchestrator {
 	 * @param propertyValues by which we need to restrict
 	 * @return Persistence managed object
 	 */
-	public Object findByProperty(Type type, Map<String, String> propertyValues);		
+	public Object findByProperty(Type type, Map<String, Object> propertyValues);		
 
     /**
      * Save the entity in the persistence store
@@ -170,5 +170,13 @@ public interface PersistenceOrchestrator {
 	 * @return true if stored procedures are supported
 	 */
 	public boolean supportsStoredProcedure();
+
+	/**
+	 * Find the object on the other side of the relationship involving an open property
+	 * @param source object on one side of the relationship
+	 * @param openPropertyName name of the open property
+	 * @return persistence managed object
+	 */
+	public Object getTargetObject(BusinessObject source, String openPropertyName);
 
 }

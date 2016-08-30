@@ -32,6 +32,7 @@ import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
+import tools.xor.RelationshipType;
 import tools.xor.TypeMapper;
 import tools.xor.view.AggregateView;
 import tools.xor.view.StoredProcedure;
@@ -66,11 +67,11 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		Property userKeyProperty = type.getUserKey();
 
 		if(userKeyProperty != null) {
-			Map<String, String> param = new HashMap<String, String>();
+			Map<String, Object> param = new HashMap<String, Object>();
 			if(from.get(userKeyProperty) == null)
 				return null;
 			
-			param.put(userKeyProperty.getName(), from.get(userKeyProperty).toString() );
+			param.put(userKeyProperty.getName(), from.get(userKeyProperty) );
 
 			return findByProperty(from.getDomainType(), param);
 		} else
@@ -109,6 +110,33 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		return persistentObject;
 	}
 	
+	@Override
+	public Object getTargetObject(BusinessObject source, String openPropertyName) {
+		ExtendedProperty property = (ExtendedProperty) source.getType().getProperty(openPropertyName);
+		if(property.getRelationshipType() == RelationshipType.TO_ONE) {
+			Map<String, String> keyFields = property.getKeyFields();
+			
+			if(keyFields.size() == 1) {
+				Map.Entry<String, String> entry = keyFields.entrySet().iterator().next();
+				if( ((EntityType)property.getType()).getIdentifierProperty().getName().equals(entry.getValue()) ) {
+					// The value in the source object referenced by the key property 
+					// is the id value of the target object
+					return findById(property.getType().getInstanceClass(), source.get(entry.getKey()));
+				}
+			} else {
+				// For all other cases we query the DB
+				Map<String, Object> params = new HashMap<String, Object>();
+				for(Map.Entry<String, String> entry: keyFields.entrySet()) {
+					params.put(entry.getValue(), source.get(entry.getKey()));
+				}
+				return findByProperty(property.getType(), params);
+			}
+		}		
+		
+		// TODO: Handle TO_MANY
+		
+		return null;
+	}
 
 	@Override
 	public Object getCached(Class<?> persistentClass, Object id) {

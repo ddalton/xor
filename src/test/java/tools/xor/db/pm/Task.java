@@ -35,6 +35,7 @@ import org.json.JSONObject;
 
 import tools.xor.AbstractProperty;
 import tools.xor.AggregateAction;
+import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.annotation.XorDataService;
@@ -222,9 +223,11 @@ public class Task extends Identity {
 	}	
 	
 	@XorLambda(property="subTaskObj", tag={AbstractProperty.GETTER_TAG}, phase=Phase.INPLACEOF, action={AggregateAction.READ}, stage=ProcessingStage.UPDATE)
-	public Object retrieveSubTaskObj(@XorDataService PersistenceOrchestrator po) {
+//	public Object retrieveSubTaskObj(@XorDataService PersistenceOrchestrator po, @XorDomain BusinessObject bo) {
+	public Object retrieveSubTaskObj(@XorDataService PersistenceOrchestrator po, @XorDomain(wrapper=true) BusinessObject bo) {	
 		if(subTask != null) {
-			Task t = (Task) po.findById(Task.class, subTask);
+			Task t = (Task) po.getTargetObject(bo, "subTaskObj");
+			//Task t = (Task) po.findById(Task.class, subTask);
 			return t;
 		}
 

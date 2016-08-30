@@ -30,8 +30,10 @@ import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.JPAProperty;
 import tools.xor.Property;
+import tools.xor.RelationshipType;
 import tools.xor.db.pm.Task;
 import tools.xor.logic.DefaultMutableJson;
 import tools.xor.service.DataAccessService;
@@ -120,7 +122,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	private void setupOpenField(DataAccessService das) {
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		if(taskType.getProperty("subTaskObj") == null) {
-			Property openProperty = new JPAProperty("subTaskObj", das.getType(Task.class), taskType);
+			ExtendedProperty openProperty = new JPAProperty("subTaskObj", das.getType(Task.class), taskType, RelationshipType.TO_ONE, null);
+			openProperty.addKeyMapping(new String[]{"subTask"}, new String[]{"id"});
 			das.addProperty(taskType, openProperty);
 		}
 	}
@@ -136,6 +139,12 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		setupOpenField(aggregateService.getDAS());
 		super.checkOpenFieldEntityToOneGrandchild();			
 	}
+	
+	@Test
+	public void checkOpenFieldQuery() {	
+		setupOpenField(aggregateService.getDAS());
+		super.checkOpenFieldQuery();			
+	}	
 			
 	@Test
 	public void checkExternalData() {	

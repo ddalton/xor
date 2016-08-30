@@ -34,6 +34,9 @@ import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.RelationshipType;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator.QueryType;
@@ -175,7 +178,7 @@ public class QueryBuilder {
 	}
 	
 	public StringBuilder generateOQLQuery(CallInfo callInfo, PersistenceOrchestrator po, Map<String, Object> filters) {
-		StringBuilder HQL = new StringBuilder(constructHQL(callInfo, po));
+		StringBuilder HQL = new StringBuilder(constructOQL(callInfo, po));
 		HQL.append(buildWhereClause(callInfo, filters));
 		HQL.append(buildOrderClause(po));
 		
@@ -193,10 +196,10 @@ public class QueryBuilder {
 		}		
 	}
 
-	protected String constructHQL(CallInfo callInfo, PersistenceOrchestrator po) {		
+	protected String constructOQL(CallInfo callInfo, PersistenceOrchestrator po) {		
 		Map<String, ColumnMeta> meta = view.getAugmentedAttributes();
 
-		StringBuilder HQL = new StringBuilder(SELECT_CLAUSE);
+		StringBuilder OQL = new StringBuilder(SELECT_CLAUSE);
 
 		int position = 0;
 		selectedColumns = new ArrayList<String>();
@@ -207,29 +210,52 @@ public class QueryBuilder {
 
 			columnMeta.setPosition(position++);	
 			selectedColumns.add(QueryViewProperty.unqualifyProperty(columnMeta.getAttributePath()) );
-			if(!SELECT_CLAUSE.equals(HQL.toString()))
-				HQL.append(COMMA_DELIMITER);
+			if(!SELECT_CLAUSE.equals(OQL.toString()))
+				OQL.append(COMMA_DELIMITER);
 			String columnString = columnMeta.getQueryString(getQueryCapability(po));
-			HQL.append(columnString);
+			OQL.append(columnString);
 		}
 		debugSelectColumns(meta);
 
 		Class<?> entityClass = (callInfo == null) ? type.getInstanceClass() : callInfo.getSettings().getNarrowedClass();
-		HQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias());
+		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias());
+		
+		// Join explicitly against all open property types as the persistence layer does not know about these relationships
+		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
+			
+			if(viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) {
+				ExtendedProperty extendedProperty = (ExtendedProperty) viewProperty.getProperty();
+				
+				// Represents the source type of the foreign key relationship
+				// The source type is reversed based on whether this is a TO_ONE or TO_MANY relationship
+				EntityType sourceType = null;
+				if(extendedProperty.getRelationshipType() == RelationshipType.TO_ONE) {
+					sourceType = (EntityType) extendedProperty.getType();
+				} else if(extendedProperty.getRelationshipType() == RelationshipType.TO_MANY) {
+					sourceType = (EntityType) extendedProperty.getElementType();
+				}
+				OQL.append("," + sourceType.getEntityName() + " AS " + viewProperty.getAlias());
+			}
+			// Also the WHERE clause now needs to have a condition to explicitly join with these entities
+			// So we do the similar processing there
+		}
 
 		// if more than one collection property is specified then we would get a severe performance hit due to cartesian product
 		// This is solved by breaking the query intelligently. 
 		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
 			QueryViewProperty parentView = viewProperty.getParent();
-			if(parentView == null)
+			
+			// Skip joining open content properties as the persistence layer does not know about these relationships
+			if(parentView == null || (viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) ) {
 				continue; // the root needs to be skipped
-			HQL.append(" LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias());		
+			}
+			OQL.append(" LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias());		
 		}
 
 		if(view.getContentView() != null && view.getContentView().getJoin() != null && view.getContentView().getJoin().getEntity() != null)
-			HQL.append(", " + view.getContentView().getJoin().getEntity());		
+			OQL.append(", " + view.getContentView().getJoin().getEntity());		
 
-		return HQL.toString();
+		return OQL.toString();
 	}	
 
 	protected String buildOrderClause(PersistenceOrchestrator po) {
@@ -403,9 +429,57 @@ public class QueryBuilder {
 		checkAndAddFilters(result, filters);
 		checkAndAddId(result);
 		checkAndAddChunkStart(callInfo, result);	
+		checkAndAddOpenPropertyJoins(result);
 
 		return result.toString();
 	}	
+	
+	private void checkAndAddOpenPropertyJoins(StringBuilder result) {
+		StringBuilder whereFragment = new StringBuilder("");
+		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
+			
+			if(viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) {
+				ExtendedProperty extendedProperty = (ExtendedProperty) viewProperty.getProperty();
+				
+				// Represents the source type of the foreign key relationship
+				// The source type is reversed based on whether this is a TO_ONE or TO_MANY relationship
+				Map<String, String> keyFields = extendedProperty.getKeyFields();
+				
+				if(viewProperty.getParent() == null) {
+					throw new IllegalStateException("The open property cannot be the root");
+				}
+				
+				String sourceAlias = null;
+				String targetAlias = null;
+				
+				if(extendedProperty.getRelationshipType() == RelationshipType.TO_ONE) {
+					sourceAlias = viewProperty.getParent().getAlias();
+					targetAlias = viewProperty.getAlias();
+				} else if(extendedProperty.getRelationshipType() == RelationshipType.TO_MANY) {
+					sourceAlias = viewProperty.getAlias();
+					targetAlias = viewProperty.getParent().getAlias();
+				}					
+				
+				if(sourceAlias != null && targetAlias != null) {
+					int index = 0;
+
+					for(Map.Entry<String, String> entry: keyFields.entrySet()) {
+						if(whereFragment.length() > 0) {
+							whereFragment.append(" AND ");
+						}
+						whereFragment
+						.append(sourceAlias + Settings.PATH_DELIMITER + entry.getKey())
+						.append(" = ")
+						.append(targetAlias + Settings.PATH_DELIMITER + entry.getValue());
+					}
+				}
+			}
+		}		
+		if(whereFragment.length() > 0) {
+			addWhereStep(result);
+			result.append(whereFragment);
+		}
+	}
 
 	private void addWhereStep(StringBuilder result) {
 		if(result.length() > 0)

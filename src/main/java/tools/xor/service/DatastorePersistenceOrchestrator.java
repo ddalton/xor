@@ -105,11 +105,11 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 	}
 	
 	@Override
-	public Object findByProperty(Type type, Map<String, String> propertyValues) {
+	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
 		com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(type.getName());
 		
 		List<Filter> filters = new LinkedList<Filter>();
-		for( Map.Entry<String, String> entry: propertyValues.entrySet()) {
+		for( Map.Entry<String, Object> entry: propertyValues.entrySet()) {
 			filters.add(new FilterPredicate(entry.getKey(),
 					                      FilterOperator.EQUAL,
 					                      entry.getValue()));			

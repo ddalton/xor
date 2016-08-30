@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 */
 	// Business logic related annotations 
 	protected List<MethodInfo>     lambdas;
-	protected String       name; // If this is used, it represents an open property
+	protected String           name; // If this is used, it represents an open property
+	protected RelationshipType relType; // The type of relationship this open property models
+	
+	/**
+	 * The set of fields comprising the relationship for TO_ONE and TO_MANY types
+	 * Modeled as a map since the value might be referred by different names on the two sides fo the relationship
+	 */
+	protected Map<String, String> keyFields; 
+	  
 
 	protected ExtendedProperty positionProperty;
 	protected ExtendedProperty mapKeyOf;
@@ -110,15 +119,44 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	public AbstractProperty(Type type, EntityType parentType) {
 		this.type = type;
-		this.parentType = parentType;
+		this.parentType = parentType;		
 	}
-
+	
 	public AbstractProperty(String name, Type type, EntityType parentType) {
 		this(type, parentType);
 		this.name = name;
-
+		this.relType = RelationshipType.CUSTOM;
+		
 		// This is needed to map the open property with its appropriate dataX methods
-		initBusinessLogicAnnotations();
+		initBusinessLogicAnnotations();		
+	}	
+
+	public AbstractProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
+		this(name, type, parentType);
+		this.relType = relType;
+		
+		if(this.relType == RelationshipType.TO_MANY && elementType == null) {
+			throw new IllegalStateException("Element type is required for a collection relationship");
+		}
+		
+		this.elementType = elementType;
+	}
+
+	@Override
+	public void addKeyMapping(String[] thisSet, String[] thatSet) {
+		if(this.keyFields == null) {
+			this.keyFields = new HashMap<String, String>();
+		}
+		if(thisSet == null || thatSet == null ||
+				thisSet.length == 0 || thatSet.length == 0) {
+			throw new IllegalArgumentException("OpenMapping set cannot be null or empty");
+		}
+		if(thisSet.length != thatSet.length) {
+			throw new IllegalArgumentException("The relationship should have the same number of composite key parts");
+		}
+		for(int i = 0; i < thisSet.length; i++) {
+			this.keyFields.put(thisSet[i], thatSet[i]);	
+		}
 	}
 
 	@Override
@@ -540,20 +578,20 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					if(XorDomain.class.isAssignableFrom(annotation.getClass()) && event.getDomainParent() != null) {
 						XorDomain domain = (XorDomain) annotation;
 						if(domain.path().equals(AbstractBO.PATH_CONTAINER)) {
-							result[i] = ClassUtil.getInstance(event.getDomainParent());
+							result[i] = domain.wrapper() ? event.getDomainParent() : ClassUtil.getInstance(event.getDomainParent());
 						} else if(domain.path().equals(AbstractBO.CURRENT)) {
-							result[i] = ClassUtil.getInstance(event.getDomain());
+							result[i] = domain.wrapper() ? event.getDomain() : ClassUtil.getInstance(event.getDomain());
 						} else {
-							result[i] = ClassUtil.getInstance(event.getDomainParent().get(domain.path()));
+							result[i] = domain.wrapper() ? event.getDomainParent().get(domain.path()) : ClassUtil.getInstance(event.getDomainParent().get(domain.path()));
 						}
 					} else if(XorExternal.class.isAssignableFrom(annotation.getClass()) && event.getExternalParent() != null) {
 						XorExternal external = (XorExternal) annotation;
 						if(external.path().equals(AbstractBO.PATH_CONTAINER)) {
-							result[i] = ClassUtil.getInstance(event.getExternalParent());						
+							result[i] = external.wrapper() ? event.getExternalParent() : ClassUtil.getInstance(event.getExternalParent());						
 						} else if(external.path().equals(AbstractBO.CURRENT)) {
-							result[i] = ClassUtil.getInstance(event.getExternal());
+							result[i] = external.wrapper() ? event.getExternal() : ClassUtil.getInstance(event.getExternal());
 						} else {
-							result[i] = ClassUtil.getInstance(event.getExternalParent().get(external.path()));
+							result[i] = external.wrapper() ? event.getExternalParent().get(external.path()) : ClassUtil.getInstance(event.getExternalParent().get(external.path()));
 						}
 					} else if(XorResult.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = resultPreviousCallback;
@@ -910,4 +948,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		
 		return result;
 	}
+
+	@Override
+	public RelationshipType getRelationshipType() {
+		return relType;
+	}
+
+	@Override
+	public Map<String, String> getKeyFields() {
+		return keyFields;
+	}
+
 }

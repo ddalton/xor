@@ -23,6 +23,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -87,17 +88,14 @@ public class JPAProperty extends AbstractProperty {
 
 		init();
 	}
-
+	
 	public JPAProperty(String name, Type type, EntityType parentType) {
 		super(name, type, parentType);
 	}
-	
-	// Open property
-	public JPAProperty(String name, Type type, EntityType parentType, boolean required) {
-		this(name, type, parentType);
-		this.accessType = AccessType.USERDEFINED;
-		this.required = required;
-	}	
+
+	public JPAProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
+		super(name, type, parentType, relType, elementType);
+	}
 
 	public boolean isPropertyMapped() {
 		return isPropertyMapped;
@@ -243,6 +241,10 @@ public class JPAProperty extends AbstractProperty {
 	
 	@Override
 	public void init(DataAccessService das) {
+		if(isOpenContent() && attribute != null) {
+			throw new IllegalStateException("Cannot define an open property with the same name as a persistence managed property");
+		}
+		
 		if( attribute != null && PluralAttribute.class.isAssignableFrom(attribute.getClass()) ) {
 			PluralAttribute<?, ?, ?> pluralAttribute = (PluralAttribute<?, ?, ?>) attribute;
 			elementType = das.getType(pluralAttribute.getElementType().getJavaType());

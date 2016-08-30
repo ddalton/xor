@@ -178,6 +178,7 @@ public class QueryBuilder {
 	}
 	
 	public StringBuilder generateOQLQuery(CallInfo callInfo, PersistenceOrchestrator po, Map<String, Object> filters) {
+		
 		StringBuilder HQL = new StringBuilder(constructOQL(callInfo, po));
 		HQL.append(buildWhereClause(callInfo, filters));
 		HQL.append(buildOrderClause(po));
@@ -411,8 +412,10 @@ public class QueryBuilder {
 			Filter f = orderBy.get(i);
 			// AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
 		
-			queryString.append( f.getNormalizedName() );
-			queryString.append( getDirection(f) + ":" + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+			if(i == 0) {
+				queryString.append( f.getNormalizedName() );
+				queryString.append( getDirection(f) + ":" + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+			}
 			
 			if(i > 0) {
 				queryString.append( " OR ( " + getEqualOrderByExp(i-1, orderBy) );

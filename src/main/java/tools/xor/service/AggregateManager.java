@@ -82,6 +82,7 @@ import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
+import tools.xor.view.Filter;
 import tools.xor.view.TypeVersion;
 
 @Component
@@ -1086,11 +1087,48 @@ public class AggregateManager implements Xor {
 		List<Object> result = new ArrayList<Object>();
 		List<?> dataObjects = queryInternal(entity, settings);
 	
+		Object lastObject = null;
+		Object firstObject = null;
 		for(Object obj: dataObjects) {
+			firstObject = firstObject == null ? obj : firstObject;
 			if(!settings.isDenormalized()) {
 				result.add( ((BusinessObject)obj).getNormalizedInstance(settings) );
-			} else
+			} else {
 				result.add(obj);
+			}
+			
+			lastObject = obj;
+		}
+		
+		if(settings.getLimit() != null && firstObject != lastObject) {
+			
+			// Extract the columns postions from the first object
+			Map<String, Integer> colPositions = new HashMap<String, Integer>();
+			if(lastObject.getClass().isArray()) {
+				int i = 0;
+				for(Object col: (Object[]) firstObject) {
+					colPositions.put((String) col, i++);
+				}				
+			}
+			
+			// Ensure we capture the order by field values for the last object in the nextToken
+			Map<String, Object> nextTokenValues = new HashMap<String, Object>();
+			List<Filter> consolidated = new ArrayList<Filter>(settings.getAdditionalFilters());
+			// Also Look for the filters in the view
+			if(settings.getView().getFilter() != null) {
+				consolidated.addAll(settings.getView().getFilter());
+			}
+
+			for(Filter filter: consolidated) {
+				if(filter.isOrderBy()) {
+					if(lastObject instanceof BusinessObject) {
+						nextTokenValues.put(filter.getAttribute(), ((BusinessObject)lastObject).get(filter.getAttribute()));
+					} else if(lastObject.getClass().isArray()){
+						nextTokenValues.put(filter.getAttribute(), ((Object[])lastObject)[colPositions.get(filter.getAttribute())]);
+					}
+				}
+			}
+			settings.setNextToken(nextTokenValues);
 		}
 	
 		return result;

@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -461,10 +462,14 @@ public class Settings {
 		return this.additionalFilters;
 	}
 	
-	public void addFilter(String filterExpression) {
-		Filter newFilter = new Filter(filterExpression);
-		this.additionalFilters.add(newFilter);
+	public void addFunctionFilter(String filterExpression) {
+		addFunctionFilter(filterExpression, 0);
 	}
+	
+	public void addFunctionFilter(String filterExpression, int position) {
+		Filter newFilter = new Filter(filterExpression, position);
+		this.additionalFilters.add(newFilter);
+	}	
 
 	public Integer getOffset() {
 		return offset;

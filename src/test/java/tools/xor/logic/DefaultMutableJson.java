@@ -446,7 +446,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 		
 
 		Settings settings = new Settings();
-		settings.addFilter("ASC(name)", 1);
+		settings.addFunctionFilter("ASC(name)", 1);
 		settings.setView(view);		
 		settings.addAssociation( new AssociationSetting(TaskDetails.class));
 		settings.setEntityClass(Task.class);

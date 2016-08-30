@@ -137,12 +137,12 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("ilike(name, :name)");
-		settings.addFilter("in(state, :state)");
-		settings.addFilter("equal(ownedBy.name, :owner)");
-		settings.addFilter("ge(createdOn, :createdSince)");
-		settings.addFilter("ge(updatedOn, :updatedSince)");
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("ilike(name, :name)");
+		settings.addFunctionFilter("in(state, :state)");
+		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
+		settings.addFunctionFilter("ge(createdOn, :createdSince)");
+		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
+		settings.addFunctionFilter("asc(name)", 1);
 		
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
@@ -182,12 +182,12 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("ilike(name, :name)");
-		settings.addFilter("in(state, :state)");
-		settings.addFilter("equal(ownedBy.name, :owner)");
-		settings.addFilter("ge(createdOn, :createdSince)");
-		settings.addFilter("ge(updatedOn, :updatedSince)");
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("ilike(name, :name)");
+		settings.addFunctionFilter("in(state, :state)");
+		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
+		settings.addFunctionFilter("ge(createdOn, :createdSince)");
+		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
+		settings.addFunctionFilter("asc(name)", 1);
 		
 		// Filter by name
 		settings.addFilter("name", "PATENT1");
@@ -238,12 +238,12 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("ilike(name, :name)");
-		settings.addFilter("in(state.name, :state)");
-		settings.addFilter("equal(ownedBy.name, :owner)");
-		settings.addFilter("ge(createdOn, :createdSince)");
-		settings.addFilter("ge(updatedOn, :updatedSince)");
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("ilike(name, :name)");
+		settings.addFunctionFilter("in(state.name, :state)");
+		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
+		settings.addFunctionFilter("ge(createdOn, :createdSince)");
+		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
+		settings.addFunctionFilter("asc(name)", 1);
 		
 		// Filter by name
 		settings.addFilter("state", "ACTIVE");
@@ -294,11 +294,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("ilike(name, :name)");
-		settings.addFilter("in(state.name, :state)");
-		settings.addFilter("equal(ownedBy.name, :owner)");
-		settings.addFilter("lt(createdOn, :createdBefore)");
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("ilike(name, :name)");
+		settings.addFunctionFilter("in(state.name, :state)");
+		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
+		settings.addFunctionFilter("lt(createdOn, :createdBefore)");
+		settings.addFunctionFilter("asc(name)", 1);
 		
 		// Filter by name
 		settings.addFilter("createdBefore", today);
@@ -360,11 +360,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("ilike(name, :name)");
-		settings.addFilter("in(state.name, :state)");
-		settings.addFilter("equal(ownedBy.name, :owner)");
-		settings.addFilter("between(createdOn, :createdFrom, :createdTo)");
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("ilike(name, :name)");
+		settings.addFunctionFilter("in(state.name, :state)");
+		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
+		settings.addFunctionFilter("between(createdOn, :createdFrom, :createdTo)");
+		settings.addFunctionFilter("asc(name)", 1);
 		
 		// Filter by date
 		Date yesterday = new Date();
@@ -431,7 +431,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("asc(name)", 1);
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntityVO input = new MetaEntityVO();
@@ -443,7 +443,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		assert(toList.size() == 3);		
 
 		settings = new Settings();
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("asc(name)", 1);
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		settings.setLimit(2);
 		toList = aggregateService.query(input, settings);

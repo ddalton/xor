@@ -1117,12 +1117,12 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("ilike(name, :name)");
-		settings.addFilter("in(state, :state)");
-		settings.addFilter("equal(ownedBy.name, :owner)");
-		settings.addFilter("ge(createdOn, :createdSince)");
-		settings.addFilter("ge(updatedOn, :updatedSince)");
-		settings.addFilter("asc(name)", 1);
+		settings.addFunctionFilter("ilike(name, :name)");
+		settings.addFunctionFilter("in(state, :state)");
+		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
+		settings.addFunctionFilter("ge(createdOn, :createdSince)");
+		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
+		settings.addFunctionFilter("asc(name)", 1);
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntity input = new MetaEntity();
 		input.setMetaEntityType(getType(MetaEntityTypeEnum.PATENT.name()));		

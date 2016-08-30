@@ -138,7 +138,11 @@ public class DefaultPaging extends AbstractDBTest {
 		settings.setLimit(2);
 		List<?> toList = aggregateManager.query(new Person(), settings);
 		
-		assert(toList.size() == 2);		
+		assert(toList.size() == 2);
+		
+		// We proceed from the nextToken, so we should return the remaining single row
+		toList = aggregateManager.query(new Person(), settings);
+		assert(toList.size() == 1);
 	}
 
 	public void offsetPerson() {

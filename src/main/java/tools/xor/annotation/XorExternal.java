@@ -40,7 +40,12 @@ public @interface XorExternal {
     
 	/**
 	 * If true, then the business object wrapper is returned. This provides additional functionality on the object
-	 * It makes sense to return the wrapper only for an entity type and not a simple type
+	 * It makes sense to return the wrapper only for an entity type and not a simple type.
+	 * 
+	 * !!!!!!!! WARNING !!!!!!!
+	 * If returning the wrapper, do not leak it outside of the method where it is used as this can cause a memory leak.
+	 * In a tightly connected graph, holding on to the BusinessObject instance will hold pretty much the whole ObjectGraph in memory without
+	 * releasing it.
 	 * @return boolean value
 	 */
 	boolean wrapper() default false;     

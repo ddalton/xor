@@ -348,14 +348,10 @@ public class CallInfo {
 		EntityType targetType = (EntityType) ((BusinessObject) getParent().getOutput()).getType();
 		ExtendedProperty targetProperty = (ExtendedProperty) targetType.getProperty(getInputProperty().getName());
 		if(targetProperty == null) {
-			if(getInputProperty().isOpenContent()) {
-				return null;
-			}
 			throw new RuntimeException(
-				"Property " + getInputProperty().getName() + " is missing from the external type.");
+				"Property " + getInputProperty().getName() + " is missing from the type " + targetType.getName());
 		}
-
-		return targetProperty.getValue(getParent().getOutput());			
+		return targetProperty.getValue(getParent().getOutput());
 	}
 
 	public ExtendedProperty getOutputProperty() {

@@ -71,7 +71,8 @@ public abstract class AbstractOperation implements Operation {
 			setVisited(callInfo, true);
 			owLogger.debug("Processing state: " + ProcessingStage.UPDATE);
 			this.process(callInfo.setStage(ProcessingStage.UPDATE));
-			callInfo.clearVisitedOutputs();		
+			callInfo.clearVisitedOutputs();			
+			
 			// Step 2: Execute the actions
 			if(callInfo.getOutputRoot().getObjectPersister() != null) {
 				callInfo.getOutputRoot().getObjectPersister().processActions(callInfo.getSettings());
@@ -79,10 +80,15 @@ public abstract class AbstractOperation implements Operation {
 		}
 		
 		// Now we can persist the objects as all the links are set
-		// This might be necessary if the post logic actions if any
+		// This might be necessary if the deferred and post logic actions if any
 		// are dependent on the identifier of newly created objects
 		if(callInfo.getSettings().doPersist()) {
 			persist(callInfo);
+		}		
+		
+		// Process the open property actions that were deferred
+		if(callInfo.getOutputRoot().getObjectPersister() != null) {
+			callInfo.getOutputRoot().getObjectPersister().processOpenPropertyActions(callInfo.getSettings());
 		}
 
 		// Process post actions

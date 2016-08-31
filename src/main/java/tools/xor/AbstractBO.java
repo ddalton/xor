@@ -158,6 +158,7 @@ public abstract class AbstractBO implements BusinessObject {
 		return null;
 	}
 
+	@Override
 	public BusinessObject getByEntityKey(Object id, Type type) {
 		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, type);
 		return getObjectCreator().getByEntityKey(entityKey);		

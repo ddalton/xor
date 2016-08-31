@@ -24,8 +24,10 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.LogManager;
@@ -171,21 +173,34 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	public Object findById(Class<?> persistentClass, Object id) {
 		return getSession().get(persistentClass, (Serializable) id);
 	}
-
-	@Override
-	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
+	
+	private List<Object> getResult(Type type, Map<String, Object> propertyValues) {
 		Class<?> persistentClass = type.getInstanceClass();
 		Criteria crit = getSession().createCriteria(persistentClass);
 
 		for(Map.Entry<String, Object> entry: propertyValues.entrySet())
 			crit.add(Restrictions.eq(entry.getKey(), entry.getValue()));
+		
+		return crit.list();
+	}
 
-		List<Object> resultList = crit.list();
+	@Override
+	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
+
+		List<Object> resultList = getResult(type, propertyValues);
 		if (resultList != null && !resultList.isEmpty()) {
 			return resultList.get(0);
 		}
 		return null;		
 	}
+	
+	@Override
+	public Object getCollection(Type type, Map<String, Object> propertyValues) {
+		
+		List<Object> resultList = getResult(type, propertyValues);
+		Set<Object> result = new HashSet<Object>(resultList);
+		return result;
+	}	
 
 	@Override
 	public QueryCapability getQueryCapability() {

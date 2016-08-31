@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 import tools.xor.AbstractBO;
 
 /**
- * Allows the framework to set the argument to the input object specified by path
+ * Allows the framework to set the argument to the input object specified by path.
  */ 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
@@ -39,7 +39,12 @@ public @interface XorDomain {
     String path() default AbstractBO.PATH_CONTAINER;
     
 	/**
-	 * If true, then the business object wrapper is returned. This provides additional functionality on the object
+	 * If true, then the business object wrapper is returned. This provides additional functionality on the object.
+	 * 
+	 * !!!!!!!! WARNING !!!!!!!
+	 * If returning the wrapper, do not leak it outside of the method where it is used as this can cause a memory leak.
+	 * In a tightly connected graph, holding on to the BusinessObject instance will hold pretty much the whole ObjectGraph in memory without
+	 * releasing it.
 	 * @return boolean value
 	 */
 	boolean wrapper() default false;     

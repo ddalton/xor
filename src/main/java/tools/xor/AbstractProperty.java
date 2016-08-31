@@ -48,6 +48,7 @@ import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.I18NUtils;
@@ -521,11 +522,99 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public boolean isContainment() {
 		return false;
 	}
+	
+	// TODO: What happens if one of the key fields represents an Open Property?
+	private Map<String, Object> getForeignKeyFromSource(BusinessObject sourceBO) {
+		Map<String, Object> uniqueKey = new HashMap<String, Object>();
+		for(Map.Entry<String, String> entry: this.keyFields.entrySet()) {
+			uniqueKey.put(entry.getValue(), sourceBO.get(entry.getKey()));
+		}
+		return uniqueKey;
+	}		
+	
+	// TODO: What happens if one of the key fields represents an Open Property?
+	private Map<String, Object> getForeignKeyFromTarget(BusinessObject targetBO) {
+		Map<String, Object> uniqueKey = new HashMap<String, Object>();
+		for(Map.Entry<String, String> entry: this.keyFields.entrySet()) {
+			uniqueKey.put(entry.getKey(), targetBO.get(entry.getValue()));
+		}
+		return uniqueKey;
+	}	
+	
+	// TODO: What happens if one of the key fields represents an Open Property?	
+	/**
+	 * Set the foreign key from bo to propertyValue keys for TO_ONE relationship
+	 * and from bo (element) to owner keys for To_MANY relationship
+	 * @param bo The target of the foreign key
+	 * @param propertyValue The target of the foreign key
+	 * @param foreignKey The key/value mapping(s) for the foreign key
+	 */
+	private void setForeignKey(BusinessObject bo, Map<String, Object> foreignKey) {
 
+		for(Map.Entry<String, Object> entry: foreignKey.entrySet()) {
+			bo.set(entry.getKey(), entry.getValue());
+		}
+
+	}		
+
+	/**
+	 * @param dataObject here refers to a persistence managed object as the external objects
+	 *  are handled by subclass overridden methods.
+	 * @return value of the property in the given dataObject
+	 */
 	@Override
 	public Object getValue(Object dataObject) 
 	{	
 		if(field == null && getterMethod == null) {
+			if(isOpenContent() && dataObject != null) {
+				// We should always receive a persistence managed dataObject
+				BusinessObject bo = (BusinessObject) dataObject;
+				Object value = bo.getOpenPropertyValue(getName());
+				
+				// Value was already set and we discovered this using the Object Graph
+				if(value != null) {
+					return value;
+				}
+				
+				// load the object by id first as it might already have been cached
+				// So we need to check if we are referencing an id
+				if(getRelationshipType() == RelationshipType.TO_ONE) {
+
+					Object idValue = null;
+					boolean byId = false;
+					if(((EntityType)getType()).getIdentifierProperty() != null) {
+
+						if(this.keyFields.size() == 1) {
+							Map.Entry<String, String> entry = this.keyFields.entrySet().iterator().next();
+							
+							if (((EntityType)getType()).getIdentifierProperty().getName().equals(entry.getValue())) {
+								byId = true;
+								idValue = bo.get(entry.getKey());
+							}
+						}
+						if(idValue != null) {
+							value = bo.getByEntityKey(idValue, getType());							
+						}
+					}					
+					
+					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
+					if(value == null) {
+						if(idValue != null) {
+							value = po.findById(getType().getInstanceClass(), idValue);
+						} else if(!byId) {
+							value = po.findByProperty(getType(), getForeignKeyFromSource(bo));
+						}
+					}
+				} else if(getRelationshipType() == RelationshipType.TO_MANY) {
+					
+					// Return a collection of elements. Right now we support only Set. 
+					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
+					value = po.getCollection(getType(), getForeignKeyFromSource(bo));
+				}
+				
+				return value;
+			}
+			
 			// The object does not have the desired property
 			String[] params = new String[2];
 			params[0] = getName();
@@ -541,14 +630,29 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public void setValue(Object dataObject, Object propertyValue) 
 	{	
 		if(field == null && getterMethod == null) {
-			// This field is not present, could be a field missing between Data transfer and POJO data models
-			String[] params = new String[2];
-			params[0] = getName();
-			params[1] = getType().getInstanceClass().getName();
-			logger.warn(I18NUtils.getResource(  "exception.propertyNotFound",I18NUtils.CORE_RESOURCES, params));
-			return;
+			
+			if(isOpenContent() && dataObject != null) {
+				// We should always receive a persistence managed propertyValue object
+				if(getRelationshipType() == RelationshipType.TO_ONE) {
+					BusinessObject boValue = (BusinessObject) propertyValue;
+					setForeignKey((BusinessObject) dataObject, getForeignKeyFromTarget((BusinessObject) boValue));
+				} else if(getRelationshipType() == RelationshipType.TO_MANY) {
+					Set<BusinessObject> elementSet = (Set) propertyValue;
+					for(BusinessObject element: elementSet) {
+						setForeignKey((BusinessObject) element, getForeignKeyFromSource((BusinessObject) element));
+					}
+				}
+			} else {
+			
+				// This field is not present, could be a field missing between Data transfer and POJO data models
+				String[] params = new String[2];
+				params[0] = getName();
+				params[1] = getType().getInstanceClass().getName();
+				logger.warn(I18NUtils.getResource(  "exception.propertyNotFound",I18NUtils.CORE_RESOURCES, params));
+				return;
+			}
 		} else {
-			invokeLambda(dataObject, propertyValue);
+			executeUpdate(dataObject, propertyValue);
 		}
 	}	
 
@@ -704,7 +808,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}	
 
-	private <T> void invokeLambda(Object dataObject, Object propertyValue) 
+	private <T> void executeUpdate(Object dataObject, Object propertyValue) 
 	{
 		// We need to work with the instance objects and not the DataObject objects
 		Object instance = ClassUtil.getInstance(dataObject);

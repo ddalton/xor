@@ -335,6 +335,14 @@ public interface BusinessObject extends DataObject {
 	 * It also demarcates the spanning tree of the graph based on containment relationships
 	 */		
 	public void createAggregate();
+	
+	/**
+	 * Get a business object of the same type as the current business object but with different id
+	 * @param id identifier
+	 * @param bo type of the object we need to get
+	 * @return BusinessObject if found, null otherwise
+	 */
+	public BusinessObject getByEntityKey(Object id, Type type);	
 
 	/**
 	 * Get a business object of the same type as the current business object but with different id

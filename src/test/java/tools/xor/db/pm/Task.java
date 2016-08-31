@@ -214,16 +214,16 @@ public class Task extends Identity {
 	public void populateItemList(@XorExternal JSONObject current) {
 		assert current.has("openField");
 	}
-	
+
+	/*
 	@XorLambda(property="subTaskObj", stage=ProcessingStage.POSTLOGIC)
 	public void populateSubTaskId(@XorDomain(path="subTaskObj") Task st) {
 		if(st != null) {
 			subTask = st.getId();
 		}
 	}	
-	
+
 	@XorLambda(property="subTaskObj", tag={AbstractProperty.GETTER_TAG}, phase=Phase.INPLACEOF, action={AggregateAction.READ}, stage=ProcessingStage.UPDATE)
-//	public Object retrieveSubTaskObj(@XorDataService PersistenceOrchestrator po, @XorDomain BusinessObject bo) {
 	public Object retrieveSubTaskObj(@XorDataService PersistenceOrchestrator po, @XorDomain(wrapper=true) BusinessObject bo) {	
 		if(subTask != null) {
 			Task t = (Task) po.getTargetObject(bo, "subTaskObj");
@@ -233,6 +233,7 @@ public class Task extends Identity {
 
 		return null;
 	}	
+*/
 
 	private String subTask;
 

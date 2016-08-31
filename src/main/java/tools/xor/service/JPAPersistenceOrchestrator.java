@@ -23,8 +23,10 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -110,8 +112,7 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	   return getEntityManager().find(persistentClass, (Serializable) id);
 	}
 	
-	@Override
-	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
+	private List<Object> getResult(Type type, Map<String, Object> propertyValues) {
 		CriteriaBuilder builder = getEntityManagerFactory().getCriteriaBuilder();
 		CriteriaQuery<Object> crit = builder.createQuery();
 		
@@ -121,18 +122,33 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 
 		Predicate[] predicates = new Predicate[propertyValues.size()];
 		int index = 0;
-		for( Map.Entry<String, Object> entry: propertyValues.entrySet())
+		for( Map.Entry<String, Object> entry: propertyValues.entrySet()) {
 			predicates[index++] = builder.equal(from.get(entry.getKey()), entry.getValue());
+		}
 
 		crit.where(builder.and(predicates));
 
 		TypedQuery<Object> typedQuery = getEntityManager().createQuery(select);
-		List<Object> resultList = typedQuery.getResultList();
+		return typedQuery.getResultList();
+	}
+	
+	@Override
+	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
+
+		List<Object> resultList = getResult(type, propertyValues);
 		if (resultList != null && !resultList.isEmpty()) {
 			return resultList.get(0);
 		}
 		return null;		
 	}	
+	
+	@Override
+	public Object getCollection(Type type, Map<String, Object> propertyValues) {
+		
+		List<Object> resultList = getResult(type, propertyValues);
+		Set<Object> result = new HashSet<Object>(resultList);
+		return result;
+	}		
 
 	@Override
 	public QueryCapability getQueryCapability() {

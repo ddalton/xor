@@ -3,7 +3,7 @@
 	<groupId>tools.xor</groupId>
 	<artifactId>xor</artifactId>
 	<packaging>jar</packaging>
-	<version>1.2.5</version>
+	<version>1.2.6</version>
 	<name>xor</name>
 	<description>Empowering Model Driven Architecture in J2EE applications</description>
 	<url>https://github.com/ddalton/xor</url>
@@ -87,7 +87,7 @@
 					<mavenExecutorId>forked-path</mavenExecutorId>
 				</configuration>				
 			</plugin>	
-			<!--plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.4</version>
@@ -100,7 +100,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin-->			
+			</plugin>			
 
 		<!-- Needed to compile with JDK 1.8 API -->
         <!--plugin>

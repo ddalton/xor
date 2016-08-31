@@ -19,9 +19,11 @@
 
 package tools.xor.service;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -104,8 +106,7 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 		}
 	}
 	
-	@Override
-	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
+	private List<Object> getResult(Type type, Map<String, Object> propertyValues) {
 		com.google.appengine.api.datastore.Query q = new com.google.appengine.api.datastore.Query(type.getName());
 		
 		List<Filter> filters = new LinkedList<Filter>();
@@ -119,12 +120,30 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 		// Use PreparedQuery interface to retrieve results
 		PreparedQuery pq = datastore.prepare(q);
 
-		for (Entity result : pq.asIterable()) {
-			// return the first result;
-			return result;
-		}		
+		List<Object> result = new LinkedList<Object>();
+		for (Entity element : pq.asIterable()) {		
+			result.add(element);
+		}
+		
+		return result;
+	}
+	
+	@Override
+	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
+		List<Object> resultList = getResult(type, propertyValues);
+		if (resultList != null && !resultList.isEmpty()) {
+			return resultList.get(0);
+		}
 		return null;		
 	}	
+	
+	@Override
+	public Object getCollection(Type type, Map<String, Object> propertyValues) {
+		
+		List<Object> resultList = getResult(type, propertyValues);
+		Set<Object> result = new HashSet<Object>(resultList);
+		return result;
+	}		
 
 	@Override
 	public QueryCapability getQueryCapability() {

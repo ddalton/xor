@@ -53,6 +53,14 @@ public interface PersistenceOrchestrator {
 	 */
 	public Object findByProperty(Type type, Map<String, Object> propertyValues);		
 
+	/**
+	 * Return the persisted collection elements in a collection (Set) object
+	 * @param type of the entity we want to find
+	 * @param collectionOwnerKey The owner id of the collection
+	 * @return collection object containing zero or more elements
+	 */
+	public Object getCollection(Type type, Map<String, Object> collectionOwnerKey);	
+	
     /**
      * Save the entity in the persistence store
      * @param entity to save

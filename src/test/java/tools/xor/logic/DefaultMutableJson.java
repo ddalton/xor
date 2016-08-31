@@ -552,6 +552,7 @@ public class DefaultMutableJson extends AbstractDBTest {
 		
 		Settings settings = getSettings();
 		settings.setSupportsPostLogic(true);
+		settings.setPostFlush(true);
 		settings.addAssociation( new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		Task task = (Task) aggregateService.create(json, settings);

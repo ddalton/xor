@@ -19,8 +19,6 @@
 
 package tools.xor;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import tools.xor.action.CollectionUpdateAction;
 import tools.xor.action.ElementAction;
 import tools.xor.action.Executable;
@@ -48,23 +47,44 @@ public class ObjectPersister {
 	
 	// Includes add, remove and reposition collection elements
 	private Map<PropertyKey, List<Executable>> propertyActions = new Object2ObjectOpenHashMap<PropertyKey, List<Executable>>();
-
+	private Map<PropertyKey, List<Executable>> deferredActions = new Object2ObjectOpenHashMap<PropertyKey, List<Executable>>();
+	
 	public void processActions(Settings settings) {
+		Map<PropertyKey, List<Executable>> immediateActions = new Object2ObjectOpenHashMap<PropertyKey, List<Executable>>();
+		for(Map.Entry<PropertyKey, List<Executable>> entry: propertyActions.entrySet()) {
+			if(entry.getKey().getProperty().isOpenContent()) {
+				deferredActions.put(entry.getKey(), entry.getValue());
+			} else {
+				immediateActions.put(entry.getKey(), entry.getValue());
+			}
+		}
+		
+		process(settings, immediateActions);
+	}
+	
+	public void processOpenPropertyActions(Settings settings) {
+		process(settings, deferredActions);
+	}
+
+	public void process(Settings settings, Map<PropertyKey, List<Executable>> currentActions) {
 		// Process the uni-directional actions
 		Set<PropertyKey> uniDirKeys = new HashSet<PropertyKey>();
-		for(PropertyKey key: propertyActions.keySet()) {
+		for(PropertyKey key: currentActions.keySet()) {
 			if( !((ExtendedProperty)key.getProperty()).isBiDirectional() )
 				uniDirKeys.add(key);
 		}
 		for(PropertyKey uniDirKey: uniDirKeys) {
-			List<Executable> actions = propertyActions.remove(uniDirKey);
+			List<Executable> actions = currentActions.remove(uniDirKey);
 			processActions(uniDirKey, actions);
 		}
 
-		settings.getInterceptor().preBiDirActionStage( Collections.unmodifiableMap(propertyActions) );
+		// Currently used by tests for immediate actions
+		if(currentActions != deferredActions) {
+			settings.getInterceptor().preBiDirActionStage( Collections.unmodifiableMap(currentActions) );
+		}
 
-		for(Map.Entry<PropertyKey, List<Executable>> entry: propertyActions.entrySet())
-			processActions(entry.getKey(), propertyActions.get(entry.getKey()));
+		for(Map.Entry<PropertyKey, List<Executable>> entry: currentActions.entrySet())
+			processActions(entry.getKey(), currentActions.get(entry.getKey()));
 	}
 
 	private void processActions(PropertyKey key, List<Executable> actions) {

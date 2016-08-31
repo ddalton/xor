@@ -269,7 +269,11 @@ public class JPAProperty extends AbstractProperty {
 		if(!isOpenContent()) {
 			return attribute.isCollection();
 		} else {
-			return false;
+			if(isOpenContent()) {
+				return getRelationshipType() == RelationshipType.TO_MANY;
+			} else {
+				return false;
+			}
 		}
 	}
 
@@ -344,6 +348,13 @@ public class JPAProperty extends AbstractProperty {
 		if(!isOpenContent()) {
 			return attribute.getPersistentAttributeType();
 		} else {
+			if(isOpenContent()) {
+				if(getRelationshipType() == RelationshipType.TO_ONE) {
+					return PersistentAttributeType.MANY_TO_ONE;
+				} else if(getRelationshipType() == RelationshipType.TO_MANY) {
+					return PersistentAttributeType.ONE_TO_MANY;
+				}
+			}
 			return PersistentAttributeType.BASIC;
 		}
 	}

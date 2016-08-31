@@ -20,6 +20,12 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
 NEXT TASK
 =========
 
+getOutputFromparent
+
+setterAction.setCustomValue->setValue : 638
+
+callInfo.readCustomValue
+
 View meta information
 =====================
 Add support for providing cascade information from XML files for each entity. The entity is FQCN.

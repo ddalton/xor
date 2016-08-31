@@ -1139,13 +1139,6 @@ public abstract class AbstractBO implements BusinessObject {
 
 			if(id != null) {
 				h = 31 * h + id.hashCode();
-			} else {
-				// iterate through the properties
-				for(Property property: type.getProperties()) {
-					ExtendedProperty extended = (ExtendedProperty) property;
-					Object value = extended.getValue(this);
-					h = 31 * h + ((value != null) ? value.hashCode() : 0);
-				}
 			}
 		}
 
@@ -1179,8 +1172,11 @@ public abstract class AbstractBO implements BusinessObject {
 		Object thisId = identifierProperty.getValue(this);
 		Object otherId = identifierProperty.getValue(other);
 
-		if(thisId != null)
-			return thisId.equals(otherId);
+		if(thisId != null) {
+			if(thisId.equals(otherId)) {
+				throw new RuntimeException("Cannot have two BusinessObjects with the same id.");
+			}
+		}
 
 		return false;
 	}

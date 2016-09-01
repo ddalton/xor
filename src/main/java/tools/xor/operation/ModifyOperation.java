@@ -92,7 +92,7 @@ public class ModifyOperation extends AbstractOperation {
 		if(ci.getSettings().doUpdate(ci) && ci.getStage() == ProcessingStage.UPDATE) {
 
 			if(ci.getInputProperty() != null && ci.getInputProperty().isMany()) {
-				ci.setOutput(createTarget(ci, ci.getOutputFromParent(), null)); // Get the persistent data object into target
+				ci.setOutput(createTarget(ci, ci.getOutputFromParent(ci.getSettings()), null)); // Get the persistent data object into target
 				processCollection(ci);
 			} else
 				unlinkToOne(ci);
@@ -108,7 +108,7 @@ public class ModifyOperation extends AbstractOperation {
 		if(ImmutableJsonProperty.class.isAssignableFrom(ci.getOutputProperty().getClass()))
 			return;
 
-		if(ci.getOutputFromParent() == null)
+		if(ci.getOutputFromParent(ci.getSettings()) == null)
 			return;		
 
 		// Set the target to null
@@ -119,7 +119,7 @@ public class ModifyOperation extends AbstractOperation {
 		// bi-directional link
 		if(ci.getOutputProperty().isBiDirectional()) {
 
-			ci.setOutput(createTarget(ci, ci.getOutputFromParent(), null)); // Get the persistent data object into target
+			ci.setOutput(createTarget(ci, ci.getOutputFromParent(ci.getSettings()), null)); // Get the persistent data object into target
 			PropertyKey oppositeKey = new PropertyKey((BusinessObject)ci.getOutput(), ci.getOutputProperty().getOpposite());
 
 			// set the backRef from the opposite object to null	
@@ -133,7 +133,7 @@ public class ModifyOperation extends AbstractOperation {
 	}
 
 	private boolean isSameTarget(CallInfo ci, Object value) {
-		return ci.getOutputFromParent() == ((BusinessObject)value).getInstance();
+		return ci.getOutputFromParent(ci.getSettings()) == ((BusinessObject)value).getInstance();
 	}
 
 	protected void linkToOne(CallInfo ci, Object value) {
@@ -153,10 +153,10 @@ public class ModifyOperation extends AbstractOperation {
 			PropertyKey newOppositeKey = new PropertyKey((BusinessObject)value, ci.getOutputProperty().getOpposite());	
 
 			// If the target has an existing opposite object, its backRef needs to be set to null 
-			if(ci.getOutputFromParent() != null && !isSameTarget(ci, value) && !ImmutableJsonProperty.class.isAssignableFrom(ci.getOutputProperty().getClass())) {
+			if(ci.getOutputFromParent(ci.getSettings()) != null && !isSameTarget(ci, value) && !ImmutableJsonProperty.class.isAssignableFrom(ci.getOutputProperty().getClass())) {
 				
 				CallInfo newCall = new CallInfo(null, null, ci, ci.getOutputProperty());
-				BusinessObject oldObject = (BusinessObject) createTarget(newCall, ci.getOutputFromParent(), null); // Get the persistent data object into target
+				BusinessObject oldObject = (BusinessObject) createTarget(newCall, ci.getOutputFromParent(ci.getSettings()), null); // Get the persistent data object into target
 
 				// Set the backRef of the opposite object to null
 				PropertyKey oldOppositeKey = new PropertyKey(oldObject, ci.getOutputProperty().getOpposite());

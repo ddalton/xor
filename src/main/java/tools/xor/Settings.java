@@ -116,6 +116,9 @@ public class Settings {
 	
 	// User provided data that is made available to callbacks
 	private Object externalData;
+	
+	// User provided data that is efficiently obtained
+	private PrefetchCache prefetchCache;
 
 
 	public Object getSessionContext() {
@@ -584,6 +587,14 @@ public class Settings {
 
 	public void setExternalData(Object externalData) {
 		this.externalData = externalData;
+	}
+
+	public PrefetchCache getPrefetchCache() {
+		return prefetchCache;
+	}
+
+	public void setPrefetchCache(PrefetchCache prefetchCache) {
+		this.prefetchCache = prefetchCache;
 	}
 	
 }

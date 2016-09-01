@@ -343,7 +343,7 @@ public class CallInfo {
 		targetProperty.setValue(getParent().getOutput(), targetValue);			
 	}
 
-	public Object getOutputFromParent() {
+	public Object getOutputFromParent(Settings settings) {
 
 		EntityType targetType = (EntityType) ((BusinessObject) getParent().getOutput()).getType();
 		ExtendedProperty targetProperty = (ExtendedProperty) targetType.getProperty(getInputProperty().getName());
@@ -351,7 +351,7 @@ public class CallInfo {
 			throw new RuntimeException(
 				"Property " + getInputProperty().getName() + " is missing from the type " + targetType.getName());
 		}
-		return targetProperty.getValue(getParent().getOutput());
+		return targetProperty.getValue(getParent().getOutput(), settings.getPrefetchCache());
 	}
 
 	public ExtendedProperty getOutputProperty() {
@@ -382,7 +382,7 @@ public class CallInfo {
 						phase,
 						stage)).getResult();				
 		} else {
-			return property.getValue(invokee);
+			return property.getValue(invokee, settings.getPrefetchCache());
 		}
 	}
 

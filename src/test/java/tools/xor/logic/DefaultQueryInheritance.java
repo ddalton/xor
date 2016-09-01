@@ -21,11 +21,18 @@ package tools.xor.logic;
 
 import java.util.List;
 
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.db.base.ChapterType;
+import tools.xor.db.base.Facet;
+import tools.xor.db.base.MetaEntityState;
+import tools.xor.db.base.MetaEntityType;
 import tools.xor.db.base.Technician;
+import tools.xor.db.common.Property;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.db.vo.base.TechnicianVO;
 import tools.xor.service.AggregateManager;

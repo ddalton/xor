@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,8 +43,8 @@ import org.apache.log4j.Logger;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorDataService;
-import tools.xor.annotation.XorEntity;
 import tools.xor.annotation.XorDomain;
+import tools.xor.annotation.XorEntity;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
@@ -67,6 +68,7 @@ public abstract class AbstractType implements EntityType {
 	private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
+	private Set<String>             userKey;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -89,7 +91,7 @@ public abstract class AbstractType implements EntityType {
 	
 	public void init() {
 		initMeta();
-		initImmutable();
+		initXorEntity();
 	}
 	
 	protected void initMeta() {
@@ -663,12 +665,18 @@ public abstract class AbstractType implements EntityType {
 		return ret;
 	}    	
 
-	protected void initImmutable() {
+	protected void initXorEntity() {
 		Annotation annotation = getClassAnnotation(XorEntity.class);
 		if(annotation != null && annotation.annotationType() == XorEntity.class) {
 			boolean value = ((XorEntity)annotation).immutable();
-			if(value)
+			if(value) {
 				this.immutable = value;
+			}
+			
+			String[] userKeyArr = ((XorEntity)annotation).userKeyProperty();
+			if(userKeyArr != null && userKeyArr.length > 0) {
+				setUserKey(userKeyArr);
+			}
 		}	
 	}	
 
@@ -856,26 +864,26 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	@Override
-	public Property getUserKey() {
-
-		String userKeyString = null;
-		Annotation annotation = getClassAnnotation(XorEntity.class);
-		if(annotation != null && annotation.annotationType() == XorEntity.class) {
-			userKeyString = ((XorEntity)annotation).userKeyProperty();	
-		}
-		return (userKeyString != null) ? getProperty(userKeyString) : null;	
+	public Set<String> getUserKey() {
+		return this.userKey;
+	}
+	
+	@Override
+	public void setUserKey(String[] keys) {
+		this.userKey = new HashSet<String>(Arrays.asList(keys));
 	}
 
 	@Override
 	public Property getCollectionUserKey() {
-		String collUserKeyString = null;
 		
 		Annotation annotation = getClassAnnotation(XorEntity.class);
 		if(annotation != null && annotation.annotationType() == XorEntity.class) {
-			if( ((XorEntity)annotation).collectionUserKey() == true)
-				collUserKeyString = ((XorEntity)annotation).userKeyProperty();	
+			if( ((XorEntity)annotation).collectionUserKey() == true) {
+				// FixMe: 
+				return getProperty(userKey.iterator().next());	
+			}
 		}
-		return (collUserKeyString != null) ? getProperty(collUserKeyString) : null;
+		return null;
 	}	
 	
 	@Override

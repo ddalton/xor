@@ -1067,6 +1067,9 @@ public abstract class AbstractBO implements BusinessObject {
 			// Needed to hold references to open property created objects
 			if(oc.getCreationStrategy().needsObjectGraph()) {
 				oc.setObjectGraph((BusinessObject) target);
+				
+				// This is needed when processing open content collection
+				oc.setObjectGraph(this);
 			}
 			
 			operation.execute(callInfo);
@@ -1336,4 +1339,19 @@ public abstract class AbstractBO implements BusinessObject {
 		BusinessEdge<BusinessObject> edge = objectCreator.getObjectGraph().getOutEdge(this, name);
 		return edge == null ? null : edge.getEnd();
 	}
+	
+	@Override
+	public BusinessObject getCollectionOwner() {
+		if(objectCreator.getObjectGraph() == null) {
+			return null;
+		}
+		
+		// A collection should have only a single in edge
+		Collection inEdges = objectCreator.getObjectGraph().getInEdges(this);
+		if(inEdges != null && inEdges.size() == 1) {
+			BusinessEdge edge = (BusinessEdge) inEdges.iterator().next();
+			return edge.getStart();
+		}
+		return null;
+	}	
 }

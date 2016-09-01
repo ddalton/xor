@@ -322,7 +322,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 	
 	@Override
-	public Object getValue(Object dataObject) 
+	public Object getValue(Object dataObject, PrefetchCache prefetchCache) 
 	{	
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JsonObject.class.isAssignableFrom(instance.getClass())) {
@@ -343,7 +343,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public void setValue(Object dataObject, Object propertyValue) 
+	public void setValue(Object dataObject, Object propertyValue, PrefetchCache prefetchCache) 
 	{	
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JsonObjectBuilder.class.isAssignableFrom(instance.getClass())) {
@@ -353,6 +353,8 @@ public class ImmutableJsonProperty extends ExternalProperty {
 			logger.error("DynamicProperty#setValue dataObject instance is not a JsonObject");
 		}		
 	}	
+	
+	
 	
 	private Object toExternal(JsonObjectBuilder builder, String name, Object propertyValue) {
 		if(converters.containsKey(getDomainProperty().getType().getInstanceClass())) {

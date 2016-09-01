@@ -316,7 +316,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 	
 	@Override
-	public Object getValue(Object dataObject) 
+	public Object getValue(Object dataObject, PrefetchCache prefetchCache) 
 	{	
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JSONObject.class.isAssignableFrom(instance.getClass())) {
@@ -341,7 +341,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public void setValue(Object dataObject, Object propertyValue) 
+	public void setValue(Object dataObject, Object propertyValue, PrefetchCache prefetchCache) 
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JSONObject.class.isAssignableFrom(instance.getClass())) {

@@ -26,7 +26,7 @@ import java.util.Collection;
  * @author Dilip Dalton
  *
  */
-public interface Prefetch {
+public interface PrefetchCache {
 
 	/**
 	 * Get the entity cached by its primary key.  
@@ -52,14 +52,5 @@ public interface Prefetch {
 	 * @return collection object
 	 */
 	public Collection getDefaultCollection(ExtendedProperty collectionProperty);
-	
-	/**
-	 * Use this method to specify the entity object type that needs to be created. The returned
-	 * object will be a copy of a prototype entity object.
-	 * @param property referencing the entity
-	 * @return entity object
-	 */
-	public Object getDefaultEntity(ExtendedProperty property);
-
 	
 }

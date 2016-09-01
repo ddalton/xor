@@ -541,6 +541,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return uniqueKey;
 	}	
 	
+	// Used to find the primary key for collection owner
+	private Map<String, Object> getPrimaryKeyFromTarget(BusinessObject targetBO) {
+		Map<String, Object> uniqueKey = new HashMap<String, Object>();
+		for(Map.Entry<String, String> entry: this.keyFields.entrySet()) {
+			uniqueKey.put(entry.getValue(), targetBO.get(entry.getValue()));
+		}
+		return uniqueKey;
+	}	
+	
 	// TODO: What happens if one of the key fields represents an Open Property?	
 	/**
 	 * Set the foreign key from bo to propertyValue keys for TO_ONE relationship
@@ -556,6 +565,16 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 
 	}		
+	
+	@Override
+	public Object getValue(Object dataObject) {
+		return getValue(dataObject, null);
+	}
+
+	@Override
+	public void setValue(Object dataObject, Object propertyValue) {
+		setValue(dataObject, propertyValue, null);
+	}	
 
 	/**
 	 * @param dataObject here refers to a persistence managed object as the external objects
@@ -563,7 +582,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 * @return value of the property in the given dataObject
 	 */
 	@Override
-	public Object getValue(Object dataObject) 
+	public Object getValue(Object dataObject, PrefetchCache cache) 
 	{	
 		if(field == null && getterMethod == null) {
 			if(isOpenContent() && dataObject != null) {
@@ -580,6 +599,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 				// So we need to check if we are referencing an id
 				if(getRelationshipType() == RelationshipType.TO_ONE) {
 
+					// Try and obtain the value from the prefetch cache
+					if(cache != null) {
+						value = cache.getEntity(getType(), getForeignKeyFromSource(bo));
+						if(value != null) {
+							return value;
+						}
+					}
+					
 					Object idValue = null;
 					boolean byId = false;
 					if(((EntityType)getType()).getIdentifierProperty() != null) {
@@ -606,10 +633,21 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						}
 					}
 				} else if(getRelationshipType() == RelationshipType.TO_MANY) {
-					
-					// Return a collection of elements. Right now we support only Set. 
-					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
-					value = po.getCollection(getType(), getForeignKeyFromSource(bo));
+					BusinessObject collectionOwner = bo.getCollectionOwner();
+
+					if(collectionOwner != null) {
+						// Try and obtain the value from the prefetch cache
+						if(cache != null) {
+							value = cache.getCollection(this, getPrimaryKeyFromTarget(collectionOwner));
+							if(value != null) {
+								return value;
+							}					
+						} 
+
+						// Return a collection of elements. Right now we support only Set. 
+						PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
+						value = po.getCollection(getType(), getForeignKeyFromSource(collectionOwner));
+					}
 				}
 				
 				return value;
@@ -627,7 +665,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public void setValue(Object dataObject, Object propertyValue) 
+	public void setValue(Object dataObject, Object propertyValue, PrefetchCache cache) 
 	{	
 		if(field == null && getterMethod == null) {
 			

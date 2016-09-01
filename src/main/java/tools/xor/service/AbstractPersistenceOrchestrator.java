@@ -22,6 +22,7 @@ package tools.xor.service;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -31,7 +32,6 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.Property;
 import tools.xor.RelationshipType;
 import tools.xor.TypeMapper;
 import tools.xor.view.AggregateView;
@@ -64,14 +64,19 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 	private Object getByUserKey(CallInfo callInfo, EntityType type) {
 		BusinessObject from = (BusinessObject) callInfo.getInput();
-		Property userKeyProperty = type.getUserKey();
+		Set<String> userKey = type.getUserKey();
 
-		if(userKeyProperty != null) {
+		if(userKey != null) {
 			Map<String, Object> param = new HashMap<String, Object>();
-			if(from.get(userKeyProperty) == null)
+			for(String key: userKey) {
+				if(from.get(key) == null)
+					continue;
+				
+				param.put(key, from.get(key) );
+			}
+			if(param.size() == 0) {
 				return null;
-			
-			param.put(userKeyProperty.getName(), from.get(userKeyProperty) );
+			}
 
 			return findByProperty(from.getDomainType(), param);
 		} else

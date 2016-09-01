@@ -358,4 +358,10 @@ public interface BusinessObject extends DataObject {
 	 * @return BusinessObject value of the open property
 	 */
 	public BusinessObject getOpenPropertyValue(String name);
+
+	/**
+	 * Get the Collection owner object from the object graph
+	 * @return collection owner BusinessObject
+	 */
+	public BusinessObject getCollectionOwner();
 }

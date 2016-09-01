@@ -287,8 +287,11 @@ public class QueryViewProperty {
 				}
 			} else { // entity
 				// add USERKEY
-				if( ((EntityType)type).getUserKey() != null )
-					result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + ((EntityType)type).getUserKey().getName(), this));
+				if( ((EntityType)type).getUserKey() != null ) {
+					for(String key: ((EntityType)type).getUserKey()) {
+						result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + key, this));
+					}
+				}
 			}
 			
 			if(vb.isDebugEnabled()) {

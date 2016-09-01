@@ -33,7 +33,6 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
-import tools.xor.Settings;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -224,7 +223,7 @@ public abstract class AbstractOperation implements Operation {
 	
 	protected void processDataType(CallInfo ci) throws Exception {
 		ci.setOutput(ci.getOutputObjectCreator().createDataType(ci.getInputFromParent(this), ci.getOutputProperty()));
-		Object oldTarget = ci.getOutputFromParent();
+		Object oldTarget = ci.getOutputFromParent(ci.getSettings());
 		if( !( oldTarget == ci.getOutput() || (oldTarget != null && oldTarget.equals(ci.getOutput()))) ) {
 			ci.linkOutputToParent(ci.getOutput());
 		}		
@@ -246,7 +245,7 @@ public abstract class AbstractOperation implements Operation {
 		}
 		
 		if(ci.getInput() == null) {
-			if ( ci.getOutputFromParent() != null && shouldUnlink(ci)) {
+			if ( ci.getOutputFromParent(ci.getSettings()) != null && shouldUnlink(ci)) {
 				processNullValue(ci);
 			}
 
@@ -334,7 +333,7 @@ public abstract class AbstractOperation implements Operation {
 		Object propertyTarget = null;
 
 		// If this is a collection, then we need to skip creating copy if an existing persistent collection is found
-		Object value = ci.getOutputFromParent();
+		Object value = ci.getOutputFromParent(ci.getSettings());
 		if(value != null) {
 
 			// Existing embedded/collection objects need to be wrapped in a data object

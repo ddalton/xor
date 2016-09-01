@@ -21,7 +21,9 @@ package tools.xor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -239,9 +241,9 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
-	public Property getUserKey() {
+	public Set<String> getUserKey() {
 		if(domainType.getUserKey() != null)
-			return getProperty(domainType.getUserKey().getName());
+			return new HashSet<String>(domainType.getUserKey());
 		else
 			return null;
 	}

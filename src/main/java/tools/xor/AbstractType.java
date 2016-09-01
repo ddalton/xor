@@ -874,13 +874,12 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public Property getCollectionUserKey() {
+	public Set<String> getCollectionUserKey() {
 		
 		Annotation annotation = getClassAnnotation(XorEntity.class);
 		if(annotation != null && annotation.annotationType() == XorEntity.class) {
 			if( ((XorEntity)annotation).collectionUserKey() == true) {
-				// FixMe: 
-				return getProperty(userKey.iterator().next());	
+				return userKey;	
 			}
 		}
 		return null;

@@ -81,15 +81,15 @@ public abstract class CollectionUpdateAction implements Executable {
 
 		Map outputMap = new HashMap<Object, BusinessObject>();
 		for(BusinessObject element: output.getList())
-			if(element.getCollectionElementId() != null)
-				outputMap.put(element.getCollectionElementId(), element);		
+			if(element.getCollectionElementKey(callInfo.getOutputProperty()) != null)
+				outputMap.put(element.getCollectionElementKey(callInfo.getOutputProperty()), element);		
 
-		Set<String> inputIds = new HashSet<String>();
+		Set<Object> inputIds = new HashSet<Object>();
 		if(callInfo.getInput() != null) {
 			List<BusinessObject> inputList = input.getList();
 			for(int i = 0; i < inputList.size(); i++) {
 				BusinessObject element = inputList.get(i);
-				String key = element.getCollectionElementId();
+				Object key = element.getCollectionElementKey(callInfo.getInputProperty());
 				if(key != null)
 					inputIds.add(key);
 			}
@@ -99,7 +99,7 @@ public abstract class CollectionUpdateAction implements Executable {
 			CallInfo next = new CallInfo();
 			for(BusinessObject sourceElement: inputList) {
 				Set<String> keys = elementKeys.get(sourceElement.getInstance());			
-				String id = sourceElement.getCollectionElementId();
+				Object id = sourceElement.getCollectionElementKey(callInfo.getInputProperty());
 
 				boolean isNew = id == null || !outputMap.containsKey(id);
 
@@ -149,12 +149,12 @@ public abstract class CollectionUpdateAction implements Executable {
 
 		Map targetKeys = new HashMap<Object, Object>();
 		for(BusinessObject element: output.getList())
-			targetKeys.put(element.getCollectionElementId(), element);		
+			targetKeys.put(element.getCollectionElementKey(callInfo.getOutputProperty()), element);		
 
 		Map sourceKeys = new HashMap<Object, Object>();		
 		if(callInfo.getInput() != null) 
 			for(BusinessObject element: input.getList()) {
-				Object idValue = element.getCollectionElementId();
+				Object idValue = element.getCollectionElementKey(callInfo.getInputProperty());
 				if(idValue != null)
 					sourceKeys.put(idValue, element);
 			}			

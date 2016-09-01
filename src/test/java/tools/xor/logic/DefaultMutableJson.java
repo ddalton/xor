@@ -898,7 +898,9 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		P p1 = new P();
 		p1.setPartNo("P1");
 		Object jsonObject = aggregateService.read(p1, settings);		
-		JSONObject jsonTask = (JSONObject) jsonObject;
+		JSONObject jsonP = (JSONObject) jsonObject;
+		JSONArray spJson = jsonP.getJSONArray("supplierParts");	
+		assert(spJson.length() == 2);
 		//System.out.println("{}{}{}{}{}{}{} JSON string: " + jsonTask.toString());			
 	}
 }

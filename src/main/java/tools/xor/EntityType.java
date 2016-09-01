@@ -73,7 +73,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Returns the property that is marked as the collection user key
 	 * @return Property object
 	 */
-	public Property getCollectionUserKey();	
+	public Set<String> getCollectionUserKey();	
 	
 	/**
 	 * Returns the property that refers to the version of the entity

@@ -292,7 +292,7 @@ public abstract class AbstractOperation implements Operation {
 				BusinessObject value = (BusinessObject) ci.getOutput();
 				BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(invokee, value, ci.getOutputProperty());
 				invokee.getObjectCreator().getObjectGraph().addEdge(edge, invokee, value);
-			}
+			}		
 
 			// TODO: Post DataUpdate
 		}
@@ -447,7 +447,7 @@ public abstract class AbstractOperation implements Operation {
 			return;
 
 		CallInfo next = new CallInfo();
-		for (Object nextSource : ((BusinessObject)callInfo.getInput()).getList()) {
+		for (Object nextSource : ((BusinessObject)callInfo.getInput()).getList(callInfo.getInputProperty())) {
 			next.init(nextSource, null, callInfo, null);
 			if(next.isCascadable()) {
 				next.setOutput(getExistingTarget(next));

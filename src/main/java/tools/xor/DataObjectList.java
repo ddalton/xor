@@ -33,20 +33,10 @@ public class DataObjectList {
 
 	private BusinessObject dataObject;
 	private Property property;
-
-	public List<BusinessObject> list() {
-		
-		Object list = (property != null) ? ((ExtendedProperty)property).getValue(dataObject) : dataObject.getInstance();
-		if(list == null)
-			return new ArrayList();
-
+	
+	private Collection<Object> getCollectionObject(Object list) {
 		Collection<Object> collection = null;
-		/*
-		if(Collection.class.isAssignableFrom(list.getClass()))
-			collection = (Collection<Object>) list;
-		else if(Map.class.isAssignableFrom(list.getClass()))
-			collection = ((Map<Object, Object>) list).values();
-			*/
+		
 		// Prefer instanceof to isAssignableFrom due to performance
 		if(list instanceof Collection)
 			collection = (Collection<Object>) list;
@@ -54,9 +44,26 @@ public class DataObjectList {
 			collection = ((Map<Object, Object>) list).values();
 		else if(list instanceof JSONArray) 
 			collection = ClassUtil.jsonArrayToCollection((JSONArray) list);
-		else
-			//throw new IllegalArgumentException("Cannot create a DataObjectList for a non-list property: " + property.getName() + ", with type: " + property.getType().getName());
+		
+		return collection;
+	}
+
+	public List<BusinessObject> list() {
+		
+		// First check to see if dataObject refers to collection owner or the collection object
+		Object list = dataObject.getInstance();
+		Collection<Object> collection = getCollectionObject(list);
+		
+		// dataObject is the collection owner
+		if(collection == null && property != null) {
+			list = ((ExtendedProperty)property).getValue(dataObject);
+			collection = getCollectionObject(list);
+		}
+		
+		if(collection == null) {
 			return new ArrayList();
+		}
+		
 		
 		if(property == null && dataObject.getContainmentProperty() == null) {
 			if(!Map.class.isAssignableFrom(list.getClass())) {
@@ -71,15 +78,18 @@ public class DataObjectList {
 			return new ArrayList();
 		}
 
-		Type type = (property != null) ? property.getType() : ((ExtendedProperty)dataObject.getContainmentProperty()).getElementType();		
+		// A property is provided for a collection owner 
+		// and a collection object should have a containment property unless it is an open property in which case we look at the property
+		Type type = (property != null) ? ((ExtendedProperty)property).getElementType() : ((ExtendedProperty)dataObject.getContainmentProperty()).getElementType();		
 		List<BusinessObject> result = new ArrayList<BusinessObject>(collection.size());
 		ObjectCreator objectCreator = dataObject.getObjectCreator();
 		
 		//if(objectCreator.getExistingDataObject(collection) != null)
 		//	System.out.println("*****!!!!!! has existing collection");
 		
-		for(Object element: collection)
-			result.add(objectCreator.createDataObject(element, type, (BusinessObject) dataObject, property));
+		for(Object element: collection) {
+			result.add(objectCreator.createDataObject(element, type, null, null));
+		}
 
 		return result;
 	}

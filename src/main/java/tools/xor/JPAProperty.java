@@ -366,6 +366,9 @@ public class JPAProperty extends AbstractProperty {
 				if (pluralAttribute.getCollectionType() == collectionType)
 					return true;
 			}
+		} else {
+			// Currently open content collection supports only Set type
+			return collectionType == CollectionType.SET;
 		}
 		
 		return false;

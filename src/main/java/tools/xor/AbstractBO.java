@@ -20,6 +20,7 @@
 package tools.xor;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -178,38 +179,26 @@ public abstract class AbstractBO implements BusinessObject {
 
 		return null;
 	}
+	
+	private Set<Object> getKeyValue(Set<String> keys) {
+		Set<Object> keyValues = new HashSet<Object>();
+		for(String key: keys) {
+			keyValues.add(get(key));
+		}
+		return keyValues;
+	}	
 
 	@Override
 	/**
 	 * Invoked on the Collection Element data object
 	 */
-	public String getCollectionElementId() {
-		if(getContainer() == null || !getContainer().getContainmentProperty().isMany())
-			throw new RuntimeException("The getCollectionElementId can only be invoked on a collection element");
+	public Object getCollectionElementKey(Property property) {
 
-		Property collectionUserKey = ((BusinessObject)getContainer()).getCollectionKeyProperty();
+		Set<String> collectionUserKey = ((EntityType)getType()).getCollectionUserKey();
 		if( collectionUserKey != null ) {
-			return this.get(collectionUserKey).toString();
+			return getKeyValue(collectionUserKey);
 		} else { // fallback to id
-			Type elementType = ((ExtendedProperty)getContainer().getContainmentProperty()).getElementType();
-			Property identifier = ((EntityType)elementType).getIdentifierProperty();
-			return (this.get(identifier) == null) ? null : this.get(identifier).toString();
-		}
-	}
-
-	@Override
-	/**
-	 * Invoked on the Collection data object
-	 */
-	public String getCollectionElementId(Object collectionElement) {
-		if(!getContainmentProperty().isMany())
-			throw new RuntimeException("The getCollectionElementId can only be invoked on a collection object");
-
-		Property collectionUserKey = getCollectionKeyProperty();
-		if( collectionUserKey != null ) {
-			return ((ExtendedProperty)collectionUserKey).getValue(collectionElement).toString();
-		} else { // fallback to id
-			Type elementType = ((ExtendedProperty)getContainmentProperty()).getElementType();
+			Type elementType = ((ExtendedProperty)property).getElementType();
 			Property identifier = ((EntityType)elementType).getIdentifierProperty();
 			return (this.get(identifier) == null) ? null : this.get(identifier).toString();
 		}
@@ -1067,9 +1056,6 @@ public abstract class AbstractBO implements BusinessObject {
 			// Needed to hold references to open property created objects
 			if(oc.getCreationStrategy().needsObjectGraph()) {
 				oc.setObjectGraph((BusinessObject) target);
-				
-				// This is needed when processing open content collection
-				oc.setObjectGraph(this);
 			}
 			
 			operation.execute(callInfo);
@@ -1339,19 +1325,4 @@ public abstract class AbstractBO implements BusinessObject {
 		BusinessEdge<BusinessObject> edge = objectCreator.getObjectGraph().getOutEdge(this, name);
 		return edge == null ? null : edge.getEnd();
 	}
-	
-	@Override
-	public BusinessObject getCollectionOwner() {
-		if(objectCreator.getObjectGraph() == null) {
-			return null;
-		}
-		
-		// A collection should have only a single in edge
-		Collection inEdges = objectCreator.getObjectGraph().getInEdges(this);
-		if(inEdges != null && inEdges.size() == 1) {
-			BusinessEdge edge = (BusinessEdge) inEdges.iterator().next();
-			return edge.getStart();
-		}
-		return null;
-	}	
 }

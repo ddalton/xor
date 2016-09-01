@@ -633,21 +633,18 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						}
 					}
 				} else if(getRelationshipType() == RelationshipType.TO_MANY) {
-					BusinessObject collectionOwner = bo.getCollectionOwner();
 
-					if(collectionOwner != null) {
-						// Try and obtain the value from the prefetch cache
-						if(cache != null) {
-							value = cache.getCollection(this, getPrimaryKeyFromTarget(collectionOwner));
-							if(value != null) {
-								return value;
-							}					
-						} 
+					// Try and obtain the value from the prefetch cache
+					if(cache != null) {
+						value = cache.getCollection(this, getPrimaryKeyFromTarget(bo));
+						if(value != null) {
+							return value;
+						}					
+					} 
 
-						// Return a collection of elements. Right now we support only Set. 
-						PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
-						value = po.getCollection(getType(), getForeignKeyFromSource(collectionOwner));
-					}
+					// Return a collection of elements. Right now we support only Set. 
+					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
+					value = po.getCollection(this.getElementType(), getForeignKeyFromSource(bo));
 				}
 				
 				return value;

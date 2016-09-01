@@ -282,8 +282,11 @@ public class QueryViewProperty {
 					// add KEY
 					result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + MAP_KEY_ATTRIBUTE, this));
 					// add COLLECTION_USERKEY
-					if( ((EntityType)type).getCollectionUserKey() != null )
-						result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + ((EntityType)type).getCollectionUserKey().getName(), this));
+					if( ((EntityType)type).getCollectionUserKey() != null ) {
+						for(String key: ((EntityType)type).getCollectionUserKey()) {
+							result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + key, this));
+						}
+					}
 				}
 			} else { // entity
 				// add USERKEY

@@ -249,9 +249,9 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
-	public Property getCollectionUserKey() {
+	public Set<String> getCollectionUserKey() {
 		if(domainType.getCollectionUserKey() != null)
-			return getProperty(domainType.getCollectionUserKey().getName());
+			return domainType.getCollectionUserKey();
 		else
 			return null;
 	}

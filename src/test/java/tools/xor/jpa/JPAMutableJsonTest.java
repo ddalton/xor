@@ -180,6 +180,13 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		if(S1 != null) {
 			return;
 		}
+		
+		EntityType stype = (EntityType) aggregateManager.getDAS().getType(S.class);
+		stype.setUserKey(new String[]{"supplierNo"});
+		EntityType ptype = (EntityType) aggregateManager.getDAS().getType(P.class);
+		ptype.setUserKey(new String[]{"partNo"});	
+		EntityType sptype = (EntityType) aggregateManager.getDAS().getType(SP.class);
+		sptype.setUserKey(new String[]{"supplierNo, partNo"});		
 
 		S1 = new tools.xor.db.sp.S("S1", "Smith", 20, "London");
 		S S2 = new tools.xor.db.sp.S("S2", "Jones", 10, "Paris");

@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import tools.xor.util.ObjectCreator;
 
@@ -282,17 +283,10 @@ public interface BusinessObject extends DataObject {
 	public void unlinkBackPointer();
 
 	/**
-	 * Returns the collection element id. This method is invoked on the Collection Element data object
-	 * @return value of the element id
+	 * Returns the collection element key value. This method is invoked on the Collection Element data object
+	 * @return value of the element key
 	 */
-	public String getCollectionElementId();
-	
-	/**
-	 * Invoked on the Collection data object
-	 * @param collectionElement id 
-	 * @return value of the element id
-	 */
-	public String getCollectionElementId(Object collectionElement);
+	public Object getCollectionElementKey(Property property);
 
 	/**
 	 * Flag to denote if the instance has had modifications
@@ -358,10 +352,4 @@ public interface BusinessObject extends DataObject {
 	 * @return BusinessObject value of the open property
 	 */
 	public BusinessObject getOpenPropertyValue(String name);
-
-	/**
-	 * Get the Collection owner object from the object graph
-	 * @return collection owner BusinessObject
-	 */
-	public BusinessObject getCollectionOwner();
 }

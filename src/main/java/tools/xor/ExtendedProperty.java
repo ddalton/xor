@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
@@ -116,7 +117,13 @@ public interface ExtendedProperty extends Property {
 	 * Indicates if this property needs to be initialized when the object is created
 	 * @return boolean value
 	 */
-	public boolean needsInitialization();
+	public boolean isAlwaysInitialized();
+	
+	/**
+	 * Use this to always have the field retrieved or set depending on the operation
+	 * @param alwaysInitialized true if the value needs to always be initialized
+	 */
+	public void setAlwaysInitialized(boolean alwaysInitialized);	
 
 	/**
 	 * Returns the type of association modelled by this property
@@ -298,4 +305,22 @@ public interface ExtendedProperty extends Property {
 	 *        entity is the current entity for a TO_ONE relationship and the collection element for a TO_MANY relationship. 
 	 */
 	public void addKeyMapping(String[] thisSet, String[] thatSet);	
+	
+	/**
+	 * Returns the key that uniquely identifies an element within a collection.
+	 * This key does not have to be as precise as a natural key of the element if there is one as
+	 * the collection is just a restriction of the element table.
+	 * 
+	 * The <CollectionKey, Owner key> typically represents the natural key of the element
+	 * 
+	 * @return collection key
+	 */
+	public Set<String> getCollectionKey();
+	
+	/**
+	 * Set the collection key for this property. The property should represent a TO_MANY relationship
+	 * 
+	 * @param collectionKey
+	 */
+	public void setCollectionKey(Set<String> collectionKey);
 }

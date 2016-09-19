@@ -75,11 +75,15 @@ public class ExternalType extends AbstractType {
 			throw new RuntimeException("The external type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 
 		Type propertyType = dataAccessService.getExternalType(externalClass);
+		Type elementType = 	null;
+		if(((ExtendedProperty)domainProperty).getElementType() != null) {
+			elementType = dataAccessService.getExternalType(((ExtendedProperty)domainProperty).getElementType().getInstanceClass());
+		}
 		ExternalProperty externalProperty = null;
 		if(domainProperty.isOpenContent()) {
-			externalProperty = new ExternalProperty(domainProperty.getName(), (ExtendedProperty) domainProperty, propertyType, this);
+			externalProperty = new ExternalProperty(domainProperty.getName(), (ExtendedProperty) domainProperty, propertyType, this, elementType);
 		} else {
-			externalProperty = new ExternalProperty((ExtendedProperty) domainProperty, propertyType, this);
+			externalProperty = new ExternalProperty((ExtendedProperty) domainProperty, propertyType, this, elementType);
 		}
 
 		return externalProperty;
@@ -241,17 +245,9 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
-	public Set<String> getUserKey() {
-		if(domainType.getUserKey() != null)
-			return new HashSet<String>(domainType.getUserKey());
-		else
-			return null;
-	}
-
-	@Override
-	public Set<String> getCollectionUserKey() {
-		if(domainType.getCollectionUserKey() != null)
-			return domainType.getCollectionUserKey();
+	public Set<String> getNaturalKey() {
+		if(domainType.getNaturalKey() != null)
+			return new HashSet<String>(domainType.getNaturalKey());
 		else
 			return null;
 	}

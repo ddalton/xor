@@ -19,12 +19,12 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
 
 NEXT TASK
 =========
+Create an attribute - getDomainType in Business Object during creation
+so we know how to form the EntityKey, this needed to resolve shared references to the same object, i.e., build a graph and not a tree with duplicated objects.
 
-getOutputFromparent
+Currently the ImmutableBO object for JSON is registered before the id is set and that is why there is no exception The drawbacks of this is less sharing of objecs and more duplication.
 
-setterAction.setCustomValue->setValue : 638
 
-callInfo.readCustomValue
 
 View meta information
 =====================

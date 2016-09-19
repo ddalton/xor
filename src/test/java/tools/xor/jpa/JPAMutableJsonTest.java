@@ -21,8 +21,6 @@ package tools.xor.jpa;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -31,7 +29,6 @@ import javax.persistence.PersistenceContext;
 import org.json.JSONException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
@@ -182,11 +179,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		}
 		
 		EntityType stype = (EntityType) aggregateManager.getDAS().getType(S.class);
-		stype.setUserKey(new String[]{"supplierNo"});
+		stype.setNaturalKey(new String[]{"supplierNo"});
 		EntityType ptype = (EntityType) aggregateManager.getDAS().getType(P.class);
-		ptype.setUserKey(new String[]{"partNo"});	
+		ptype.setNaturalKey(new String[]{"partNo"});	
 		EntityType sptype = (EntityType) aggregateManager.getDAS().getType(SP.class);
-		sptype.setUserKey(new String[]{"supplierNo, partNo"});		
+		sptype.setNaturalKey(new String[]{"supplierNo", "partNo"});		
 
 		S1 = new tools.xor.db.sp.S("S1", "Smith", 20, "London");
 		S S2 = new tools.xor.db.sp.S("S2", "Jones", 10, "Paris");
@@ -202,17 +199,17 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		P P6 = new P("P6", "Cog", "Red", new BigDecimal(19.0), "London");	
 
 		SP s1p1 = new SP("S1", "P1", 300);
-		SP s1p2 = new SP("S1", "P2", 300);
-		SP s1p3 = new SP("S1", "P3", 300);
-		SP s1p4 = new SP("S1", "P4", 300);
-		SP s1p5 = new SP("S1", "P5", 300);
-		SP s1p6 = new SP("S1", "P6", 300);
+		SP s1p2 = new SP("S1", "P2", 200);
+		SP s1p3 = new SP("S1", "P3", 400);
+		SP s1p4 = new SP("S1", "P4", 200);
+		SP s1p5 = new SP("S1", "P5", 100);
+		SP s1p6 = new SP("S1", "P6", 100);
 		SP s2p1 = new SP("S2", "P1", 300);
-		SP s2p2 = new SP("S2", "P2", 300);
-		SP s3p2 = new SP("S3", "P2", 300);
-		SP s4p2 = new SP("S4", "P2", 300);
+		SP s2p2 = new SP("S2", "P2", 400);
+		SP s3p2 = new SP("S3", "P2", 200);
+		SP s4p2 = new SP("S4", "P2", 200);
 		SP s4p4 = new SP("S4", "P4", 300);
-		SP s4p5 = new SP("S4", "P5", 300);		  
+		SP s4p5 = new SP("S4", "P5", 400);		  
 			
 		entityManager.persist(S1);
 		entityManager.persist(S2);
@@ -241,17 +238,26 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		entityManager.persist(s4p5);
 	}
 	
-	@Test
-	public void checkOpenPropertyCollection() {
-		
-        DataAccessService das = aggregateService.getDAS();
+	private void createSPProperty() {
+        DataAccessService das = aggregateService.getDAS();		
         EntityType partType = (EntityType) das.getType(P.class);
         if(partType.getProperty("supplierParts") == null) {
             ExtendedProperty openProperty = new JPAProperty("supplierParts", das.getType(Set.class), partType, RelationshipType.TO_MANY, (EntityType) das.getType(SP.class));
             openProperty.addKeyMapping(new String[]{"partNo"}, new String[]{"partNo"});
             das.addProperty(partType, openProperty);
-        }
-        
+        }		
+	}
+	
+	@Test
+	public void checkOpenPropertyCollection() {
+		
+		createSPProperty();
 		super.checkOpenPropertyCollection();
+	}
+	
+	@Test
+	public void checkOpenPropertyCollectionUpdate() {
+		createSPProperty();
+		super.checkOpenPropertyCollectionUpdate();
 	}
 }

@@ -94,6 +94,15 @@ public interface TypeMapper {
 	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo);
 	
 	/**
+	 * Returns the target form of the class given an input class
+	 * @param clazz input
+	 * @param callInfo Need this object to obtain the property or the parent property in case property is null
+	 * @return target class
+	 * @see TypeMapper#getDirection()
+	 */
+	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo);	
+	
+	/**
 	 * Factory method to create a TypeMapper instance
 	 * @param direction value
 	 * @return typemapper instance
@@ -175,4 +184,10 @@ public interface TypeMapper {
 	 * @return EntityKey
 	 */
 	public EntityKey getEntityKey(Object id, BusinessObject bo);	
+	
+	/**
+	 * Check to see if we are created external Business object(s)
+	 * @return true if the target object is of external type
+	 */
+	public boolean isToExternal();
 }

@@ -50,13 +50,13 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate();
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
 		BusinessObject target = null;
 		
-		target = (BusinessObject) operation.createTarget(callInfo, settings.getEntityClass());
+		target = (BusinessObject) operation.createTarget(callInfo, (EntityType) settings.getEntityType());
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);
@@ -81,13 +81,13 @@ public class MutableBO extends AbstractBO {
 		Date a = new Date();
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
 		BusinessObject target = null;
 		
-		target = (BusinessObject) operation.createTarget(callInfo, settings.getEntityClass());
+		target = (BusinessObject) operation.createTarget(callInfo, (EntityType) settings.getEntityType());
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);
@@ -125,7 +125,7 @@ public class MutableBO extends AbstractBO {
 		BusinessObject target = null;
 		
 		try {
-			target = (BusinessObject) operation.createTarget(callInfo, settings.getEntityClass());
+			target = (BusinessObject) operation.createTarget(callInfo, (EntityType) settings.getEntityType());
 			oc.setObjectGraph(target);
 			callInfo.setOutput(target);
 			settings.setPersist(true);

@@ -48,7 +48,6 @@ public class QueryViewProperty {
 	public static final String MAP_KEY_ATTRIBUTE     = "KEY_";
 	public static final String MAP_VALUE_ATTRIBUTE   = "VALUE_";
 	public static final String LIST_INDEX_ATTRIBUTE  = "INDEX_";               // Use this to set the object at the right location or in ORDER BY clause if filter is used	
-	public static final String COL_USERKEY_ATTRIBUTE = "COLLECTION_USERKEY_";
 	public static final String USERKEY_ATTRIBUTE     = "USERKEY_";
 	
 	// Inputs or parameters are in lower case
@@ -281,17 +280,17 @@ public class QueryViewProperty {
 				} else if( ((ExtendedProperty)property).isMap() ) {
 					// add KEY
 					result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + MAP_KEY_ATTRIBUTE, this));
-					// add COLLECTION_USERKEY
-					if( ((EntityType)type).getCollectionUserKey() != null ) {
-						for(String key: ((EntityType)type).getCollectionUserKey()) {
-							result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + key, this));
-						}
-					}
 				}
+				// add COLLECTION_USERKEY
+				if( ((ExtendedProperty)property).getCollectionKey() != null ) {
+					for(String key: ((ExtendedProperty)property).getCollectionKey()) {
+						result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + key, this));
+					}
+				}				
 			} else { // entity
 				// add USERKEY
-				if( ((EntityType)type).getUserKey() != null ) {
-					for(String key: ((EntityType)type).getUserKey()) {
+				if( ((EntityType)type).getNaturalKey() != null ) {
+					for(String key: ((EntityType)type).getNaturalKey()) {
 						result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + key, this));
 					}
 				}

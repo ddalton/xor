@@ -127,11 +127,18 @@ public class ObjectCreator {
 		if(typeMapper.isDomain(inputClass)) {
 			return das.getType(inputClass);
 		} else { 
-			return das.getExternalType(typeMapper.getExternalTypeName(inputClass, domainType));
+			if(domainType != null) {
+				return das.getExternalType(typeMapper.getExternalTypeName(inputClass, domainType));
+			} else {
+				return das.getExternalType(inputClass);
+			}
 		}
 	}	
 
 	public void addByEntityKey(EntityKey key, BusinessObject entity) {
+		if(key == null) {
+			return;
+		}
 		entitiesByKey.put(key, entity);
 	}
 
@@ -355,31 +362,14 @@ public class ObjectCreator {
 	}		
 	
 	/**
-	 * There are two flows involved in the XOR call from the perspective of
-	 * the ObjectCreator
-	 * Incoming flow (From user to system)
-	 *   Source - Refers to the user provided object, the external form
-	 *   Target - Refers to the persistence managed object, the domain form
-	 *   
-	 * Outgoing flow (From system back to user)
-	 *   Source - Refers to the persistence managed object, the domain form
-	 *   Target - Refers to the user provided object, the external form
-	 *   
-	 * With this background we see why we are trying to create an object
-	 * based on "typeMapper.getSourceClass" method
-	 * At the point in the code where the "getSourceClass" method is called 
-	 * we are in the return flow. So the target here refers to the source 
-	 * in the outgoing flow. 
-	 * 
-	 * This is not to be confused with the method name "createTarget",
-	 * as that refers to creating the target object w.r.t the CallInfo
+	 * Create the target BusinessObject based on the TypeMapper direction target type
 	 * 
 	 * @param ci CallInfo object
 	 * @param targetInstance A reference to an already created target instance
-	 * @param desiredClass for the instance
+	 * @param domainEntityType The desired type for the target if present
 	 * @return new BusinessObject
 	 */	
-	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Class<?> desiredClass) {
+	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Type domainEntityType) {
 
 		targetInstance = ClassUtil.getInstance(targetInstance);
 		Object sourceInstance = ClassUtil.getInstance(ci.getInput());
@@ -410,18 +400,18 @@ public class ObjectCreator {
 		}
 
 		try {
-			Class<?> instanceClass = null;
+			Class<?> targetInstanceClass = null;
 			if(targetInstance == null) {
-				instanceClass = sourceInstance != null ? ClassUtil.getUnEnhanced(sourceInstance.getClass()) : null;
+				//targetInstanceClass = sourceInstance != null ? ClassUtil.getUnEnhanced(sourceInstance.getClass()) : null;
 
-				if(desiredClass == null) {
-					//if(BusinessObject.class.isAssignableFrom(sourceInstance.getClass())) {
+				if(domainEntityType == null) {
+
 					if(sourceInstance instanceof BusinessObject) {
 						EntityType type = (EntityType) ((BusinessObject)sourceInstance).getType();
-						instanceClass = typeMapper.getSourceClass(type.getInstanceClass(), ci);
+						targetInstanceClass = typeMapper.getTargetClass(type.getInstanceClass(), ci);
 					} else {
 
-							instanceClass = typeMapper.getSourceClass(instanceClass, ci);
+							targetInstanceClass = typeMapper.getTargetClass(sourceInstance.getClass(), ci);
 							/*
 							// Unable to resolve the domain type
 							// So we explicitly try and get it
@@ -430,20 +420,35 @@ public class ObjectCreator {
 							instanceClass = typeMapper.getSourceClass(type.getInstanceClass());
 							*/
 					}
-				} else
-					instanceClass = desiredClass;
-			} else
-				instanceClass = targetInstance.getClass();
+					
+				} else {
+					if(typeMapper.isToExternal()) {
+						
+						targetInstanceClass = typeMapper.toExternal(domainEntityType.getInstanceClass());
+						//Class<?> externalClass = typeMapper.toExternal(domainEntityType.getInstanceClass());
+						//instanceClass = das.getExternalType(typeMapper.getExternalTypeName(externalClass, domainEntityType)).getInstanceClass();
+					} else {
+						targetInstanceClass = domainEntityType.getInstanceClass();
+					}
+				}
+			} else {
+				targetInstanceClass = targetInstance.getClass();
+			}
 
 			Type targetType = null;
-			// If the sourceInstance is a domain type, then we need to pass it to get the correct target type
 			if(sourceInstance != null && typeMapper.isDomain( ClassUtil.getUnEnhanced(sourceInstance.getClass()))) {
-				targetType = getType(instanceClass, getType(ClassUtil.getUnEnhanced(sourceInstance.getClass())) );
+				Type domainType = getType(ClassUtil.getUnEnhanced(sourceInstance.getClass()));
+				if(typeMapper.isOpen(targetInstanceClass)) {
+					if(domainEntityType != null) {
+						domainType = domainEntityType;
+					}
+				}
+				targetType = getType(targetInstanceClass, domainType );
 			} else {
 				try {
-				targetType = getType(instanceClass);
+					targetType = getType(targetInstanceClass, domainEntityType);
 				} catch(NullPointerException e) {
-					System.out.println("NullPointerException: " + instanceClass);
+					System.out.println("NullPointerException: " + targetInstanceClass);
 				}
 			}
 			Property containmentProperty = (container == null || sourceContainmentProperty == null) ? null : container.getInstanceProperty(sourceContainmentProperty.getName()); 	
@@ -478,10 +483,10 @@ public class ObjectCreator {
 
 			if(result == null) {
 				if(targetInstance == null) {
-					targetInstance = createInstance(sourceInstance, instanceClass, targetType, container, containmentProperty);
+					targetInstance = createInstance(sourceInstance, targetInstanceClass, targetType, container, containmentProperty);
 					if(targetInstance == null) {
 						logger.error(
-								"ObjectCreator#createTarget Unable to create targetInstance of class: "	+ instanceClass.getName() 
+								"ObjectCreator#createTarget Unable to create targetInstance of class: "	+ targetInstanceClass.getName() 
 								+ " and source instance: " + sourceInstance.getClass().getName()
 								+ " and target type: " + targetType.getName());
 					}

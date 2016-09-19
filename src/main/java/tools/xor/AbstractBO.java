@@ -20,13 +20,14 @@
 package tools.xor;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tools.xor.operation.DenormalizedQueryOperation;
@@ -152,38 +153,25 @@ public abstract class AbstractBO implements BusinessObject {
 	 */
 	@Override
 	public BusinessObject getEntity(BusinessObject entity) {
-		Object id = entity.getIdentifierValue();
-		if(id != null && !"".equals(id))
-			return getByEntityKey(id, entity);
-
-		return null;
-	}
-
-	@Override
-	public BusinessObject getByEntityKey(Object id, Type type) {
-		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, type);
-		return getObjectCreator().getByEntityKey(entityKey);		
-	}
-
-	@Override
-	public BusinessObject getByEntityKey(Object id, BusinessObject bo) {
-		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, bo);
-		return getObjectCreator().getByEntityKey(entityKey);		
-	}	
-
-	@Override
-	public ExtendedProperty getCollectionKeyProperty() {
-		Type type = ((ExtendedProperty)containmentProperty).getElementType();
-		if(EntityType.class.isAssignableFrom(type.getClass()))
-			return (ExtendedProperty) ((EntityType)type).getCollectionUserKey();
-
-		return null;
+		
+		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(entity.getIdentifierValue(), entity);
+		return getObjectCreator().getByEntityKey(entityKey);
 	}
 	
-	private Set<Object> getKeyValue(Set<String> keys) {
-		Set<Object> keyValues = new HashSet<Object>();
+	@Override
+	public BusinessObject getBySurrogateKey(Object id, Type type) {	
+		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName()));
+	}	
+	
+	@Override
+	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type) {
+		return getObjectCreator().getByEntityKey(new NaturalEntityKey(naturalKeyValues, type.getName()));
+	}		
+	
+	private Map<String, Object> getKeyValue(Set<String> keys) {
+		Map<String, Object> keyValues = new HashMap<String, Object>();
 		for(String key: keys) {
-			keyValues.add(get(key));
+			keyValues.put(key, get(key));
 		}
 		return keyValues;
 	}	
@@ -194,9 +182,9 @@ public abstract class AbstractBO implements BusinessObject {
 	 */
 	public Object getCollectionElementKey(Property property) {
 
-		Set<String> collectionUserKey = ((EntityType)getType()).getCollectionUserKey();
-		if( collectionUserKey != null ) {
-			return getKeyValue(collectionUserKey);
+		Set<String> collectionKey = ((ExtendedProperty)property).getCollectionKey();
+		if( collectionKey != null ) {
+			return getKeyValue(collectionKey);
 		} else { // fallback to id
 			Type elementType = ((ExtendedProperty)property).getElementType();
 			Property identifier = ((EntityType)elementType).getIdentifierProperty();
@@ -468,7 +456,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 		// Retrieve by identifier if possible
 		if( ((EntityType)((ExtendedProperty)containmentProperty).getElementType()).getIdentifierProperty() == attributeProperty ) {
-			return getByEntityKey(attributeValue, ((ExtendedProperty)containmentProperty).getElementType());
+			return getBySurrogateKey(attributeValue, ((ExtendedProperty)containmentProperty).getElementType());
 		} else {
 			for(DataObject dataObject: values) {
 				if(dataObject.get(attributeProperty).toString().equals(attributeValue))
@@ -500,11 +488,15 @@ public abstract class AbstractBO implements BusinessObject {
 
 		return container;
 	}
-
+	
 	@Override
 	public BusinessObject createDataObject(Object id, Type instanceType, Property property) throws Exception {
-		Object propertyInstance = createInstance(objectCreator, id, instanceType);
-		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, this, property);
+		return this.createDataObject(id, null, instanceType, property);
+	}
+
+	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property) throws Exception {
+		Object propertyInstance = createInstance(objectCreator, id, naturalKeyValues, instanceType);
+		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, property == null ? null : this, property);
 
 		if(property != null)
 			((ExtendedProperty)property).setValue(this, propertyInstance);
@@ -513,6 +505,10 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 	
 	public static Object createInstance(ObjectCreator oc, Object id, Type instanceType) throws Exception {
+		return createInstance(oc, id, null, instanceType);
+	}
+	
+	public static Object createInstance(ObjectCreator oc, Object id, Map<String, Object> naturalKeyValues, Type instanceType) throws Exception {
 		Object propertyInstance = null;
 		
 		// We will use the already loaded object in session if one is available
@@ -529,8 +525,16 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		if(propertyInstance == null) {
 			propertyInstance = oc.createInstance(instanceType);
-			if(!instanceType.isDataType() && ((EntityType)instanceType).getIdentifierProperty() != null )
-				((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(propertyInstance, id);
+			if(!instanceType.isDataType()) {
+				if(((EntityType)instanceType).getIdentifierProperty() != null ) {
+					((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(propertyInstance, id);
+				} 
+				if(((EntityType)instanceType).getNaturalKey() != null && naturalKeyValues != null) {
+					for(String key: ((EntityType)instanceType).getNaturalKey()) {
+						((ExtendedProperty)((EntityType)instanceType).getProperty(key)).setValue(propertyInstance, naturalKeyValues.get(key));
+					}
+				}
+			}
 		}
 		
 		return propertyInstance;
@@ -543,7 +547,7 @@ public abstract class AbstractBO implements BusinessObject {
 	}	
 
 	@Override
-	public void set(String propertyPath, Map<String, Object> propertyResult) throws Exception {
+	public void set(String propertyPath, Map<String, Object> propertyResult, EntityType domainEntityType) throws Exception {
 
 		// If we are setting a null value then nothing needs to be done
 		if( propertyResult.get(QueryViewProperty.qualifyProperty(propertyPath) ) == null)
@@ -559,6 +563,7 @@ public abstract class AbstractBO implements BusinessObject {
 			currentPath.append(step);
 
 			Property property = current.getInstanceProperty(step);
+			Property domainProperty = domainEntityType.getProperty(currentPath.substring(currentPath.indexOf(Settings.PATH_DELIMITER)+1));
 			if(property == null)
 				throw new RuntimeException("Unable to resolve property: " + propertyPath);
 
@@ -571,24 +576,44 @@ public abstract class AbstractBO implements BusinessObject {
 					return;
 				}
 
-				if( ((EntityType)property.getType()).isEmbedded() )
+				if( ((EntityType)property.getType()).isEmbedded() ) {
+					// Is this true? 
+					// TODO: Check if the embedded object gets created
+					// What about collection of embedded objects?
+					// Maybe we only allow the fast path of object creation, i.e., the result needs to be sorted
+					//   and we use this ability to construct the fields as we scan through each row.
+					//   This also allows optimization using OpenCL
 					continue; // Embedded objects are automatically created as part of its lifecycle owner
+				}
 
 				if(propertyDO == null) {
+					// Set the natural key if there is one
+					Map<String, Object> naturalKeyValues = new HashMap<String, Object>();
+					if(((EntityType)property.getType()).getNaturalKey() != null) {
+						Set<String> naturalKey = ((EntityType)property.getType()).getNaturalKey();
+						if(naturalKey != null) {
+							for(String key: naturalKey) {
+								Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
+								naturalKeyValues.put(key, keyValue);
+							}
+							propertyDO = getByNaturalKey(naturalKeyValues, domainProperty.getType());
+						}				
+					}
 					// Check if there is a data object with the given key
 					// Get the identifier value
 					Object idValue = null;
-					if(((EntityType)property.getType()).getIdentifierProperty() != null) {
+					if(propertyDO == null && ((EntityType)property.getType()).getIdentifierProperty() != null) {
 						idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
-						propertyDO = getByEntityKey(idValue, property.getType());
+						propertyDO = getBySurrogateKey(idValue, domainProperty.getType());
 					}
+
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
 						String narrowToType = (String) propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.ENTITYNAME_ATTRIBUTE);
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getType(narrowToType);
-						propertyDO = current.createDataObject(idValue, objectType, property);
+						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property);
 					}
 				}
 				if(property.isContainment()) {
@@ -609,20 +634,37 @@ public abstract class AbstractBO implements BusinessObject {
 					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property);
 				}
 				current = (BusinessObject) propertyDO;
+				Object elementDO = null;
 
 				// Get the identifier value from the collection element
 				Type elementType = ((ExtendedProperty)property).getElementType();
-				Object idValue = null;
-				if(((EntityType) elementType).getIdentifierProperty() != null) {
-					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
-					propertyDO = getByEntityKey(idValue, elementType);
+				Type domainElementType = ((ExtendedProperty)domainProperty).getElementType();
+				
+				// Get by the natural key if there is one
+				Map<String, Object> naturalKeyValues = new HashMap<String, Object>();	
+				if(((EntityType)elementType).getNaturalKey() != null) {
+					Set<String> naturalKey = ((EntityType)elementType).getNaturalKey();
+					for(String key: naturalKey) {
+						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
+						naturalKeyValues.put(key, keyValue);
+					}
 
-					// check flag to see if the containment should be set
-					if(propertyDO != null && property.isContainment())
-						((BusinessObject)propertyDO).setContainer(current); // Containment property is null for a collection element					
+					// Get the element
+					elementDO = getByNaturalKey(naturalKeyValues, domainElementType);
+				}				
+				
+				Object idValue = null;
+				if(elementDO == null && ((EntityType) elementType).getIdentifierProperty() != null) {
+					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
+					elementDO = getBySurrogateKey(idValue, domainElementType);
 				}
 
-				if(propertyDO == null) { // create and set the instance object
+				// check flag to see if the containment should be set
+				if(elementDO != null && property.isContainment()) {
+					((BusinessObject)elementDO).setContainer(current); // Containment property is null for a collection element
+				}					
+
+				if(elementDO == null) { // create and set the instance object
 
 					// Get the property instance if possible
 					Object elementInstance = null;
@@ -631,41 +673,24 @@ public abstract class AbstractBO implements BusinessObject {
 						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.MAP_KEY_ATTRIBUTE);
 						Map map = (Map) current.getInstance();
 						elementInstance = map.get(keyValue);
-					} else if ( ((ExtendedProperty)property).isList() || ((ExtendedProperty)property).isSet() ) {
-
-						// If the collection element is an embeddable look for a user key otherwise throw a operation not supported. 
-						// TODO: This check should be done in view validation	
-
-						// TODO: performance optimization. Create an EntityKey object where Id is the collection owner id + property name + user key 
-						Object colUserKeyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.COL_USERKEY_ATTRIBUTE);
-						if(colUserKeyValue != null) {
-							Collection collection = (Collection) current.getInstance();
-							ExtendedProperty colUserKey = (ExtendedProperty) (EntityType.class.isAssignableFrom(elementType.getClass()) ? ((EntityType)elementType).getCollectionUserKey() : null);	
-							for(Object obj: collection) {
-								if( colUserKey != null && colUserKeyValue.equals(colUserKey.getValue(obj)) ) {
-									elementInstance = obj;
-									break;
-								} 
-							}
-						}
-					}
+					} 
 
 					if(elementInstance == null) {
-						if(idValue != null)
-							propertyDO = current.createDataObject(idValue, (EntityType) elementType, null);							
+						if(idValue != null || naturalKeyValues.size() > 0)
+							elementDO = current.createDataObject(idValue, naturalKeyValues, (EntityType) elementType, null);							
 						else
 							return; // Does not have a collection element
 					} else
 						// create the data object using the instance
-						propertyDO = objectCreator.createDataObject(elementInstance, elementType, current, null);
+						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null);
 
 					// check flag to see if the containment should be set
 					if(property.isContainment())
-						((BusinessObject)propertyDO).setContainer(current); // Containment property is null for a collection element
+						((BusinessObject)elementDO).setContainer(current); // Containment property is null for a collection element
 				}
 
 				// Add the element
-				Object elementInstance = ((BusinessObject)propertyDO).getInstance();				
+				Object elementInstance = ((BusinessObject)elementDO).getInstance();				
 				if( ((ExtendedProperty)property).isMap() ) {
 					// If this is a map, get the key
 					Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.MAP_KEY_ATTRIBUTE);
@@ -678,11 +703,17 @@ public abstract class AbstractBO implements BusinessObject {
 					if(index >= list.size() || list.get(index) != elementInstance)
 						list.add(elementInstance);
 				} else if ( ((ExtendedProperty)property).isSet() ) {
-					Set set = (Set) current.getInstance();
-					set.add(elementInstance);
+					// Currently Immutable JSON is treated as a set, so we should check for this
+					if(current.getInstance() instanceof JSONArray) {
+						JSONArray jsonArray = (JSONArray) current.getInstance();
+						jsonArray.put(elementInstance);
+					} else {
+						Set set = (Set) current.getInstance();
+						set.add(elementInstance);
+					}
 				}				
 
-				current = (BusinessObject) propertyDO;	
+				current = (BusinessObject) elementDO;	
 			}
 		}
 
@@ -1091,8 +1122,9 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		try {
-			Class<?> desiredClass = settings.doBaseline() ? settings.getNarrowedClass() : getObjectCreator().getDAS().getTypeMapper().toExternal(settings.getNarrowedClass());
-			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, desiredClass));
+			//Class<?> desiredClass = settings.doBaseline() ? settings.getNarrowedClass() : getObjectCreator().getDAS().getTypeMapper().toExternal(settings.getNarrowedClass());
+			//getObjectCreator().getDAS().getType(settings.getNarrowedClass());
+			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, (EntityType) getObjectCreator().getDAS().getType(settings.getNarrowedClass())));
 			
 			// Needed to hold references to open property created objects
 			if(oc.getCreationStrategy().needsObjectGraph()) {

@@ -19,62 +19,9 @@
 
 package tools.xor;
 
-import java.io.Serializable;
-
 /**
  * Uniquely identifies a persistent entity.
  */
-public final class EntityKey implements Serializable {
-	private static final long serialVersionUID = 1L;
-	
-	private final Object identifier;
-	private final String referenceTypeName;
-	private final String derivedTypeName;
-	private final int hashCode;
-
-	public EntityKey(Object id, String referenceTypeName) {
-		this(id, referenceTypeName, "");
-	}
-
-	public EntityKey(Object id, String referenceTypeName, String derivedTypeName) {
-		if ( id == null ) {
-			throw new IllegalStateException( "null identifier" );
-		}
-		this.identifier = id; 
-		this.referenceTypeName = referenceTypeName;
-		this.derivedTypeName = derivedTypeName;
-		this.hashCode = generateHashCode();
-	}
-
-	private int generateHashCode() {
-		int result = 17;
-		result = 37 * result + referenceTypeName.hashCode();
-		result = 37 * result + derivedTypeName.hashCode();
-		result = 37 * result + identifier.hashCode();
-		return result;
-	}
-
-	public Object getIdentifier() {
-		return identifier;
-	}
-
-	@Override
-	public boolean equals(Object other) {
-		if(other == null)
-			return false;
-
-		if (!(other instanceof EntityKey))
-			return false;
-
-		EntityKey otherKey = (EntityKey) other;
-		return otherKey.referenceTypeName.equals(this.referenceTypeName) &&
-				otherKey.derivedTypeName.equals(this.derivedTypeName) &&
-				otherKey.identifier.equals(this.identifier);
-	}
-
-	@Override
-	public int hashCode() {
-		return hashCode;
-	}
+public interface EntityKey {
 
 }

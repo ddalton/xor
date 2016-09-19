@@ -35,16 +35,25 @@ public class ExternalProperty extends AbstractProperty {
 
 	private ExtendedProperty domainProperty;
 	
-	public ExternalProperty(ExtendedProperty domainProperty, Type type, ExternalType parentType) {
+	public ExternalProperty(ExtendedProperty domainProperty, Type type, ExternalType parentType, Type elementType) {
 		super(type, parentType);
 		this.domainProperty = domainProperty;
+		setElementType(elementType);			
 		
 		init();
 	}
 
-	public ExternalProperty(String name, ExtendedProperty domainProperty, Type type, EntityType parentType) {
+	public ExternalProperty(String name, ExtendedProperty domainProperty, Type type, EntityType parentType, Type elementType) {
 		super(name, type, parentType);
 		this.domainProperty = domainProperty;
+		setElementType(elementType);
+	}
+	
+	private void setElementType(Type eType) {
+		this.elementType = eType;
+		if(this.elementType != null) {
+			this.relType = RelationshipType.TO_MANY;
+		}			
 	}
 	
 	@Override
@@ -126,8 +135,8 @@ public class ExternalProperty extends AbstractProperty {
 	}
 	
 	@Override
-	public boolean needsInitialization() {
-		return domainProperty.needsInitialization();
+	public boolean isAlwaysInitialized() {
+		return domainProperty.isAlwaysInitialized();
 	}
 
 	@Override

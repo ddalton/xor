@@ -428,6 +428,9 @@ public class AggregateManager implements Xor {
 		MapperDirection direction = MapperDirection.EXTERNALTOEXTERNAL;
 		if(das.getTypeMapper().isDomain( getEntityClass(entity, settings) ))
 			direction = MapperDirection.DOMAINTOEXTERNAL;
+		if(settings.doBaseline()) {
+			direction = direction.toDomain();
+		}
 
 		ObjectCreator oc = new ObjectCreator(das, getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);

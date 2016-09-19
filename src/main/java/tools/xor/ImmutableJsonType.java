@@ -70,12 +70,16 @@ public class ImmutableJsonType extends ExternalType {
 					throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 
 				Type propertyType = dataAccessService.getExternalType(domainProperty.getType().getName());
+				Type elementType = null;
+				if(((ExtendedProperty)domainProperty).getElementType() != null) {
+					elementType = dataAccessService.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
+				}
 				if(propertyType == null) {
 					Class<?> propertyClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 					logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
 					propertyType = dataAccessService.getType(propertyClass);
 				}
-				ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this);
+				ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this, elementType);
 				
 				dynamicProperty.init(dataAccessService);
 				logger.debug("[" + getName() + "] Domain property name: " + abstractProperty.getName() + ", type name: " + dynamicProperty.getJavaType());

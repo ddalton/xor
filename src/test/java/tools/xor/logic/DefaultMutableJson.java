@@ -903,4 +903,51 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		assert(spJson.length() == 2);
 		//System.out.println("{}{}{}{}{}{}{} JSON string: " + jsonTask.toString());			
 	}
+	
+	public void checkOpenPropertyCollectionUpdate() {
+		createSPData();
+		
+		// We are going to test the following
+		// P1.suppliers
+		// We should return a collection of {S1, S2}
+		
+        AggregateView view = new AggregateView("TestSP");
+        List path = new ArrayList();
+        path.add("supplierParts.supplierNo");
+        path.add("supplierParts.partNo");
+        path.add("supplierParts.qty");
+        path.add("partNo");
+        path.add("pname");
+        path.add("color");
+        path.add("weight");
+        path.add("city");
+        view.setAttributeList(path);
+
+        Settings settings = new Settings();
+        settings.setEntityClass(P.class);
+        settings.setView(view);
+		settings.addAssociation( new AssociationSetting("supplierParts"));
+		settings.setEntityClass(P.class);	
+
+		
+		// Now read the object and see if the subTaskObj was created
+		P p1 = new P();
+		p1.setPartNo("P1");
+		Object jsonObject = aggregateService.read(p1, settings);		
+		JSONObject jsonP = (JSONObject) jsonObject;
+		JSONArray spJson = jsonP.getJSONArray("supplierParts");	
+		assert(spJson.length() == 2);
+		
+		settings = new Settings();
+		settings.addFunctionFilter("asc(supplierParts.partNo)", 1);	
+		settings.addFunctionFilter("asc(supplierParts.supplierNo)", 2);	
+		settings.setView(view);		
+		settings.setEntityClass(P.class);		
+		List<?> result = aggregateService.query(null, settings);	
+		assert(result.size() > 0);
+		//System.out.println("{}{}{}{}{}{}{} JSON string: " + jsonTask.toString());		
+		
+		// Change the quantity value for Supplier parts P1-S1 from 300 to 500
+		
+	}	
 }

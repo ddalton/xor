@@ -21,6 +21,8 @@ package tools.xor.operation;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityType;
+import tools.xor.Type;
 
 
 public interface Operation {
@@ -33,19 +35,20 @@ public interface Operation {
 	/**
 	 * Allows operation specific behavior in the creation of DataObjects
 	 * @param ci CallInfo object
-	 * @param desiredClass of target object
+	 * @param domainType domain type from which either the domain/external type can be derived
 	 * @return BusinessObject
 	 */
-	public BusinessObject createTarget(CallInfo ci, Class<?> desiredClass);
+	public BusinessObject createTarget(CallInfo ci, Type domainType);	
 
 	/**
 	 * Allows a new DataObject to be created based on an existing target instance object
 	 * @param ci CallInfo object
 	 * @param targetInstance object
-	 * @param desiredClass of target object
+	 * @param domainType provide the type meta data that helps to resolve the correct Entity type (External/domain) for the business
+	 *        object being created
 	 * @return BusinessObject
 	 */
-	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Class<?> desiredClass);
+	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Type domainType);
 	
 	/**
 	 * Returns the result of the execution if any.

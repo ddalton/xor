@@ -34,7 +34,7 @@ import tools.xor.annotation.XorEntity;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "DISCRIMINATOR")
 @DiscriminatorValue("CATEGORY")
-@XorEntity(userKeyProperty={"name"}, immutable=true)
+@XorEntity(naturalKey={"name"}, immutable=true)
 public class Category extends Identity {
 
 	private boolean disabled;

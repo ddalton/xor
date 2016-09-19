@@ -114,10 +114,10 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 		Object result = null;
 		if(unchanged.contains(toClass)) {
 			result = from;
-		} else if(toClass == JSONObject.class) {
+		} else if(toClass == JSONObject.class || type.getInstanceClass() == JSONObject.class) {
 			result = new JSONObject();
 			addEntityMeta((JSONObject)result, from);
-		} else if(toClass == JSONArray.class) {
+		} else if(toClass == JSONArray.class || type.getInstanceClass() == JSONArray.class) {
 			result = new JSONArray();
 			if(container != null && containmentProperty != null) {
 				addCollectionMeta((JSONObject) container.getInstance(), containmentProperty, from);

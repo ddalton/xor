@@ -33,6 +33,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
+import tools.xor.Type;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -358,14 +359,14 @@ public abstract class AbstractOperation implements Operation {
 	}
 
 	@Override
-	public BusinessObject createTarget(CallInfo ci, Class<?> desiredClass) {
-		return createTarget(ci, null, desiredClass);
+	public BusinessObject createTarget(CallInfo ci, Type domainType) {	
+		return createTarget(ci, null, domainType);
 	}
 
 	@Override
-	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Class<?> desiredClass) {
+	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Type domainType) {
 		targetInstance = ClassUtil.getInstance(targetInstance);
-		BusinessObject target = ci.getOutputObjectCreator().createTarget(ci, targetInstance, desiredClass);
+		BusinessObject target = ci.getOutputObjectCreator().createTarget(ci, targetInstance, domainType);
 
 		return target;
 	}	

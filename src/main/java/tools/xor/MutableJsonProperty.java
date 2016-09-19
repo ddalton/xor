@@ -306,13 +306,13 @@ public class MutableJsonProperty extends ExternalProperty {
 	}	
 	
 	public MutableJsonProperty(ExtendedProperty domainProperty, Type type,
-			ExternalType parentType) {
-		super(domainProperty, type, parentType);
+			ExternalType parentType, Type elementType) {
+		super(domainProperty, type, parentType, elementType);
 	}
 
 	public MutableJsonProperty(String name, ExtendedProperty domainProperty, Type type,
-							   ExternalType parentType) {
-		super(name, domainProperty, type, parentType);
+							   ExternalType parentType, Type elementType) {
+		super(name, domainProperty, type, parentType, elementType);
 	}
 	
 	@Override

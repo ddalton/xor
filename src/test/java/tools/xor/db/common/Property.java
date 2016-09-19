@@ -34,7 +34,7 @@ import tools.xor.db.base.Identity;
 import tools.xor.db.base.MetaEntity;
 
 @Entity
-@XorEntity(userKeyProperty = "name", collectionUserKey = true)
+@XorEntity(naturalKey = "name")
 public class Property extends Identity {
 
 	private MetaEntity metaEntity;

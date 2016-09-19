@@ -19,7 +19,6 @@
 
 package tools.xor.action;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,10 +27,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.util.ClassUtil;
 
@@ -114,7 +113,9 @@ public abstract class CollectionUpdateAction implements Executable {
 	
 	private void processLink(String key, BusinessObject sourceElement, CallInfo next, CallInfo callInfo, boolean isNew) throws Exception {
 		next.init(sourceElement, null, callInfo, null);
-		next.setOutput(callInfo.getOutputObjectCreator().createTarget(next, null, null));
+		
+		EntityType targetType = ((tools.xor.EntityType)sourceElement.getType()).getDomainType();
+		next.setOutput(callInfo.getOutputObjectCreator().createTarget(next, null, targetType));
 		
 		linkElement(next, key, isNew);		
 	}

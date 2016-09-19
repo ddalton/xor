@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,7 +63,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public static final String SETTER_TAG = "_SETTER_";	
 
 	protected AccessType accessType;
-	protected boolean    needsInitialization;
+	protected boolean    alwaysInitialized;
 	
 	private   VersionInfo versionInfo;
 
@@ -115,6 +116,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	// Collection related
 	protected Type       keyType;
 	protected Type       elementType;	
+	protected Set<String> collectionKey; 
 
 	private List<String> aliasNames = new ArrayList<String>();
 
@@ -377,7 +379,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		if ((getterMethod != null && getterMethod.isAnnotationPresent(XorAlways.class)) ||
 			(field != null && field.isAnnotationPresent(XorAlways.class))
 			) {
-			needsInitialization = true;
+			alwaysInitialized = true;
 		}
 
 	}
@@ -620,7 +622,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 							}
 						}
 						if(idValue != null) {
-							value = bo.getByEntityKey(idValue, getType());							
+							value = bo.getBySurrogateKey(idValue, getType());							
 						}
 					}					
 					
@@ -874,8 +876,13 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public boolean needsInitialization() {
-		return needsInitialization;
+	public boolean isAlwaysInitialized() {
+		return alwaysInitialized;
+	}
+
+	@Override
+	public void setAlwaysInitialized(boolean alwaysInitialized) {
+		this.alwaysInitialized = alwaysInitialized;
 	}
 
 	@Override
@@ -1096,6 +1103,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	@Override
 	public Map<String, String> getKeyFields() {
 		return keyFields;
+	}
+
+	public Set<String> getCollectionKey() {
+		return this.collectionKey;
+	}
+	
+	public void setCollectionKey(Set<String> value) {
+		this.collectionKey = Collections.unmodifiableSet(value);
 	}
 
 }

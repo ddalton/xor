@@ -149,6 +149,37 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	}	
 	
 	@Override
+	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo) {
+		Class<?> result = null;
+
+		switch(getDirection()) {
+		case DOMAINTOEXTERNAL:
+		case EXTERNALTOEXTERNAL:			
+			result = toExternal(clazz);
+			break;
+		case EXTERNALTODOMAIN:
+		case DOMAINTODOMAIN:
+			try {
+				result = toDomain(clazz, (BusinessObject) callInfo.getInput());
+			} catch (UnsupportedOperationException e) {
+				if(callInfo.getInputProperty() != null) {
+					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
+				} else {
+					// Collection, so go to the owner and get the element type
+					ExtendedProperty property = callInfo.getParent().getInputProperty();
+					result = ((ExtendedProperty)property.getDomainProperty()).getElementType().getInstanceClass();
+				}
+			}
+			break;
+		default:
+			result = clazz;
+			break;
+		}
+
+		return result;
+	}		
+	
+	@Override
 	/**
 	 * Return the domain class from the external type
 	 */

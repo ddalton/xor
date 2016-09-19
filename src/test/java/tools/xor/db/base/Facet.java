@@ -30,7 +30,7 @@ import javax.persistence.OneToMany;
 import tools.xor.annotation.XorEntity;
 
 @Entity
-@XorEntity(userKeyProperty="name", immutable=true) 
+@XorEntity(naturalKey="name", immutable=true) 
 public class Facet extends Identity {
 
 	private boolean extensible;

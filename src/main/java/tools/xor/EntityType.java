@@ -59,21 +59,15 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	
 	/**
 	 * Returns the key that the entity is uniquely referred by the user
-	 * @return the fields in the userkey
+	 * @return the fields in the natural key
 	 */
-	public Set<String> getUserKey();	
+	public Set<String> getNaturalKey();	
 	
 	/**
-	 * Set the user key for this type
-	 * @param keys fields of the user key
+	 * Set the natural key for this type
+	 * @param keys fields of the natural key
 	 */
-	public void setUserKey(String[] keys);	
-	
-	/**
-	 * Returns the property that is marked as the collection user key
-	 * @return Property object
-	 */
-	public Set<String> getCollectionUserKey();	
+	public void setNaturalKey(String[] keys);	
 	
 	/**
 	 * Returns the property that refers to the version of the entity

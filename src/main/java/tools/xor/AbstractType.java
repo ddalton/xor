@@ -68,7 +68,7 @@ public abstract class AbstractType implements EntityType {
 	private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
-	private Set<String>             userKey;
+	private Set<String>             naturalKey;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -118,7 +118,7 @@ public abstract class AbstractType implements EntityType {
 
 		for(Property property: getProperties()) {
 
-			if( ((ExtendedProperty)property).needsInitialization() && property.getType().isDataType()) {
+			if( ((ExtendedProperty)property).isAlwaysInitialized() && property.getType().isDataType()) {
 				result.add(property.getName());
 			}
 		}
@@ -673,9 +673,9 @@ public abstract class AbstractType implements EntityType {
 				this.immutable = value;
 			}
 			
-			String[] userKeyArr = ((XorEntity)annotation).userKeyProperty();
+			String[] userKeyArr = ((XorEntity)annotation).naturalKey();
 			if(userKeyArr != null && userKeyArr.length > 0) {
-				setUserKey(userKeyArr);
+				setNaturalKey(userKeyArr);
 			}
 		}	
 	}	
@@ -864,26 +864,14 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	@Override
-	public Set<String> getUserKey() {
-		return this.userKey;
+	public Set<String> getNaturalKey() {
+		return this.naturalKey;
 	}
 	
 	@Override
-	public void setUserKey(String[] keys) {
-		this.userKey = new HashSet<String>(Arrays.asList(keys));
+	public void setNaturalKey(String[] keys) {
+		this.naturalKey = new HashSet<String>(Arrays.asList(keys));
 	}
-
-	@Override
-	public Set<String> getCollectionUserKey() {
-		
-		Annotation annotation = getClassAnnotation(XorEntity.class);
-		if(annotation != null && annotation.annotationType() == XorEntity.class) {
-			if( ((XorEntity)annotation).collectionUserKey() == true) {
-				return userKey;	
-			}
-		}
-		return null;
-	}	
 	
 	@Override
 	public int compareTo(EntityType o) {

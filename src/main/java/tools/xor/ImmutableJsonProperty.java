@@ -317,8 +317,8 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}	
 	
 	public ImmutableJsonProperty(ExtendedProperty domainProperty, Type type,
-			ExternalType parentType) {
-		super(domainProperty, type, parentType);
+			ExternalType parentType, Type externalType) {
+		super(domainProperty, type, parentType, externalType);
 	}
 	
 	@Override

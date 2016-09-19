@@ -698,19 +698,23 @@ public class QueryView {
 		if(ClassUtil.getDimensionCount(obj) == 1) {
 			Object[] queryRow = (Object[])obj;
 
-			String idPropertyName = ((EntityType)entity.getType()).getIdentifierProperty().getName();
+			String idPropertyName = ((EntityType)this.aggregateType).getIdentifierProperty().getName();
 			Object idValue = getQueryValue(queryRow, idPropertyName);
 
 			String entityName = (String) getQueryValue(queryRow, QueryViewProperty.ENTITYNAME_ATTRIBUTE);
-			EntityType type = (EntityType) entity.getType();
+			Type type = entity.getType();
 			if(entityName != null) {
 				// This is padded with space based on the largest type name if a CASE statement is used
 				entityName = entityName.trim();
-				type = (EntityType) entity.getObjectCreator().getDAS().getType(entityName);
-			}
+				type = entity.getObjectCreator().getDAS().getType(entityName);
+			} 
+			/*else {
+				// Query API always returns an external type
+				type = entity.getObjectCreator().getDAS().getExternalType(this.aggregateType.getName());
+			}*/
 
 			// find and create data object
-			result = ((AbstractBO)entity).getByEntityKey(idValue, entity.getType());
+			result = ((AbstractBO)entity).getBySurrogateKey(idValue, this.aggregateType);
 			if(result == null) {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
@@ -739,7 +743,7 @@ public class QueryView {
 				continue;
 
 			// Set the value and create any intermediate objects if necessary
-			root.set(QueryViewProperty.unqualifyProperty(propertyPath), propertyResult);
+			root.set(QueryViewProperty.unqualifyProperty(propertyPath), propertyResult, (EntityType) this.aggregateType);
 		}
 	}
 	

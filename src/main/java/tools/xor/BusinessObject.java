@@ -78,14 +78,14 @@ public interface BusinessObject extends DataObject {
 	/**
 	 * Perform an efficient read using a query. This requires the use of a view
 	 * @param settings The user entered settings
-	 * @return list of BusinesObject instances
+	 * @return list of BusinesObject instances. NOTE: these objects are not persistence managed
 	 */
 	public List<?> query(Settings settings);
 
 	/**
 	 * Update a persistent object according to the level specified in the parameters
 	 * @param settings The user entered settings
-	 * @return a non-persistence managed DataObject
+	 * @return a persistence managed DataObject
 	 */
 	public BusinessObject update(Settings settings);
 
@@ -190,14 +190,6 @@ public interface BusinessObject extends DataObject {
 	public void invokePostLogic(Settings settings);
 
 	/**
-	 * When used in a collection, what property is uniquely represented in a non-instance specific manner 
-	 * This is set using an annotation on the domain model class. Used in path expressions.
-	 * This is currently restricted to a single property.
-	 * @return Property object
-	 */	
-	public ExtendedProperty getCollectionKeyProperty();
-
-	/**
 	 * If this object represents a collection, then returns its collection of objects as a list of ExtendedDataObjects
 	 * @return list of instances wrapped as BusinessObjects
 	 */
@@ -209,7 +201,7 @@ public interface BusinessObject extends DataObject {
 	 * @param propertyResult The result from a query
 	 * @throws Exception if property cannot be found
 	 */
-	void set(String propertyPath, Map<String, Object> propertyResult) throws Exception;
+	void set(String propertyPath, Map<String, Object> propertyResult, EntityType domainEntityType) throws Exception;
 	
 	/**
 	 * Responsible for creating a new data object whose lifecycle is linked with this object.
@@ -220,7 +212,19 @@ public interface BusinessObject extends DataObject {
 	 * @return new BusinessObject 
 	 * @throws Exception when creating an instance
 	 */
-	public BusinessObject createDataObject(Object id, Type instanceType, Property property) throws Exception;	
+	public BusinessObject createDataObject(Object id, Type instanceType, Property property) throws Exception;
+	
+	/**
+	 * Create a new Data object given a Surrogate key and a natural key
+	 * 
+	 * @param id surrogate key
+	 * @param naturalKeyValues natural key
+	 * @param instanceType Type of the object to be created
+	 * @param property The property where the created object will be set
+	 * @return new BusinessObject
+	 * @throws Exception when creating the BusinessObject
+	 */
+	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property) throws Exception;	
 
 	/**
 	 * This method is used to create a new data object that has to be in the scope of the data object that creates it.
@@ -332,19 +336,19 @@ public interface BusinessObject extends DataObject {
 	
 	/**
 	 * Get a business object of the same type as the current business object but with different id
-	 * @param id identifier
-	 * @param bo type of the object we need to get
+	 * @param id surrogate key value
+	 * @param type domain type irrespective of whether we are obtaining an external or a domain object
 	 * @return BusinessObject if found, null otherwise
 	 */
-	public BusinessObject getByEntityKey(Object id, Type type);	
-
+	public BusinessObject getBySurrogateKey(Object id, Type type);
+	
 	/**
-	 * Get a business object of the same type as the current business object but with different id
-	 * @param id identifier
-	 * @param bo BusinessObject whose type will be utilized in the search
+	 * Get a business object of the same type as the current business object but with different natural key
+	 * @param naturalKeyValues naturalkey values
+	 * @param type  domain type irrespective of whether we are obtaining an external or a domain object
 	 * @return BusinessObject if found, null otherwise
 	 */
-	public BusinessObject getByEntityKey(Object id, BusinessObject bo);
+	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type);	
 
 	/**
 	 * Get the object from the object graph for open property

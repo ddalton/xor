@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface XorEntity {
-    String[] userKeyProperty();                        // the property that is unique across all instances (optional) 
+    String[] naturalKey();                        // the property that is unique across all instances (optional) 
     boolean collectionUserKey() default false;       // signifies that it is only unique in collections
     boolean immutable() default false;
 }

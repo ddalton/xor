@@ -72,7 +72,7 @@ public interface ExtendedProperty extends Property {
 	/**
 	 * Use reflection to get the value of this property from the dataObject
 	 * @param dataObject whose parameter value is to be returned
-	 * @param prefetch cache used to efficiently obtain collections and entities
+	 * @param cache Prefetch cache used to efficiently obtain collections and entities
 	 * @return value
 	 */
 	public Object getValue(Object dataObject, PrefetchCache cache);
@@ -80,7 +80,7 @@ public interface ExtendedProperty extends Property {
 	/**
 	 * Use reflection to set the value of this property on the dataObject
 	 * @param dataObject whose parameter needs to be set
-	 * @param prefetch cache used to efficiently obtain collections and entities
+	 * @param cache Prefetch cache cache used to efficiently obtain collections and entities
 	 * @param propertyValue the value that needs to be set
 	 */
 	public void setValue(Object dataObject, Object propertyValue, PrefetchCache cache);	

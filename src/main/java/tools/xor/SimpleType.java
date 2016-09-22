@@ -165,4 +165,28 @@ public class SimpleType implements BasicType {
 	public Object newInstance(Object instance) {
 		return instance;
 	}
+
+	/**
+	 * Usually takes a toString() value and reconstitutes the object from it
+	 * @param value This is an object's value represented as a string
+	 * @return
+	 */
+	public Object unmarshall(String value) {
+
+		if(instanceClass != String.class) {
+			if(value == null || "".equals(value)) {
+				return null;
+			}
+		}
+
+		if( Boolean.class == instanceClass || Boolean.TYPE == instanceClass ) return Boolean.parseBoolean( value );
+		if( Byte.class == instanceClass || Byte.TYPE == instanceClass ) return Byte.parseByte( value );
+		if( Short.class == instanceClass || Short.TYPE == instanceClass) return Short.parseShort( value );
+		if( Integer.class == instanceClass || Integer.TYPE == instanceClass ) return Integer.parseInt( value );
+		if( Long.class == instanceClass || Long.TYPE == instanceClass) return Long.parseLong( value );
+		if( Float.class == instanceClass || Float.TYPE == instanceClass) return Float.parseFloat( value );
+		if( Double.class == instanceClass || Double.TYPE == instanceClass) return Double.parseDouble( value );
+
+		return value;
+	}
 }

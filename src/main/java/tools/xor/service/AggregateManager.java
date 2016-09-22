@@ -66,6 +66,7 @@ import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
@@ -1291,7 +1292,7 @@ public class AggregateManager implements Xor {
 			ObjectCreator oc = new ObjectCreator(
 				getDAS(),
 				getPersistenceOrchestrator(),
-				MapperDirection.DOMAINTOEXTERNAL);
+				MapperDirection.EXTERNALTODOMAIN);
 
 			// The Excel should have a single sheet containing the denormalized data
 			// Create a JSONObject for each row
@@ -1302,11 +1303,17 @@ public class AggregateManager implements Xor {
 			for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
 				Row row = entitySheet.getRow(i);
 
-				String idName = ((EntityType)settings.getEntityType()).getIdentifierProperty().getName();
+				Property idProperty = ((EntityType)settings.getEntityType()).getIdentifierProperty();
+				String idName = idProperty.getName();
 				if(!colMap.containsKey(idName)) {
 					throw new RuntimeException("The Excel sheet needs to have the entity identifier column");
 				}
+
+				// TODO: Create a JSON object and then extract the value with the correct type
 				Object idValue = getCellValue(row.getCell(colMap.get(idName)));
+				if(idProperty.getType() instanceof SimpleType) {
+					idValue = ((SimpleType)idProperty.getType()).unmarshall(idValue.toString());
+				}
 
 				// Get a child business object of the same type
 				// TODO: Get by user key
@@ -1327,7 +1334,10 @@ public class AggregateManager implements Xor {
 
 				for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
 					Cell cell = row.getCell(entry.getValue());
-					bo.set(entry.getKey(), getCellValue(cell));
+					Object cellValue = getCellValue(cell);
+					Property property = ((EntityType)settings.getEntityType()).getProperty(entry.getKey());
+					cellValue = ((SimpleType)property.getType()).unmarshall(cellValue.toString());
+					bo.set(entry.getKey(), cellValue);
 				}
 			}
 			for(BusinessObject root: roots.keySet()) {

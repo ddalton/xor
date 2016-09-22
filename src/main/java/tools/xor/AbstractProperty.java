@@ -551,13 +551,13 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 		return uniqueKey;
 	}	
-	
-	// TODO: What happens if one of the key fields represents an Open Property?	
+
 	/**
+	 * TODO: What happens if one of the key fields represents an Open Property?
 	 * Set the foreign key from bo to propertyValue keys for TO_ONE relationship
 	 * and from bo (element) to owner keys for To_MANY relationship
+	 *
 	 * @param bo The target of the foreign key
-	 * @param propertyValue The target of the foreign key
 	 * @param foreignKey The key/value mapping(s) for the foreign key
 	 */
 	private void setForeignKey(BusinessObject bo, Map<String, Object> foreignKey) {

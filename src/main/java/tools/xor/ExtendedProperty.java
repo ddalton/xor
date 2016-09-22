@@ -311,7 +311,7 @@ public interface ExtendedProperty extends Property {
 	 * This key does not have to be as precise as a natural key of the element if there is one as
 	 * the collection is just a restriction of the element table.
 	 * 
-	 * The <CollectionKey, Owner key> typically represents the natural key of the element
+	 * The (CollectionKey, Owner key) typically represents the natural key of the element
 	 * 
 	 * @return collection key
 	 */

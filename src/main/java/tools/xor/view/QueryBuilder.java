@@ -167,6 +167,13 @@ public class QueryBuilder {
 			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, null);
 		}
 
+		// User OQL
+		if(view.getContentView() != null && view.getContentView().getUserOQLQuery() != null) {
+			String oqlString = view.getContentView().getUserOQLQuery().getQueryString();
+			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, null);
+		}
+
+		// System OQL
 		StringBuilder HQL = generateOQLQuery(callInfo, callInfo.getInputObjectCreator().getPersistenceOrchestrator(), filters);
 		
 		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);

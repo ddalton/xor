@@ -64,6 +64,7 @@ import tools.xor.ExcelJsonTypeMapper;
 import tools.xor.ExtendedProperty;
 import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
+import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SimpleType;
@@ -427,7 +428,8 @@ public class AggregateManager implements Xor {
 			getPersistenceOrchestrator().flush();
 
 		MapperDirection direction = MapperDirection.EXTERNALTOEXTERNAL;
-		if(das.getTypeMapper().isDomain( getEntityClass(entity, settings) ))
+		if( (settings.getEntityType() != null && settings.getEntityType().isOpen()) ||
+			das.getTypeMapper().isDomain( getEntityClass(entity, settings) )  )
 			direction = MapperDirection.DOMAINTOEXTERNAL;
 		if(settings.doBaseline()) {
 			direction = direction.toDomain();
@@ -435,10 +437,17 @@ public class AggregateManager implements Xor {
 
 		ObjectCreator oc = new ObjectCreator(das, getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);
-		BusinessObject from = oc.createDataObject(entity, (EntityType) oc.getType( getEntityClass(entity, settings) ), null, null);
 
-		// Get the narrowed class
-		settings.initNarrowClass(getTypeNarrower(), entity, typeMapper);
+		Type fromType = settings.getEntityType();
+		if(fromType == null || !fromType.isOpen()) {
+			fromType = oc.getType( getEntityClass(entity, settings) );
+		}
+		BusinessObject from = oc.createDataObject(entity, fromType, null, null);
+
+		// Get the narrowed class, if this is not an open type
+		if( !(settings.getEntityType() != null && settings.getEntityType().isOpen()) ) {
+			settings.initNarrowClass(getTypeNarrower(), entity, typeMapper);
+		}
 
 		List<?> dataObjects = from.query(settings);
 

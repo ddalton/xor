@@ -260,4 +260,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		createSPProperty();
 		super.checkOpenPropertyCollectionUpdate();
 	}
+
+	@Test
+	public void checkOpenTypeCrossJoin() {
+		super.checkOpenTypeCrossJoin();
+	}
 }

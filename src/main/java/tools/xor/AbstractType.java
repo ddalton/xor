@@ -95,6 +95,10 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	protected void initMeta() {
+		if(isOpen()) {
+			return;
+		}
+
 		initGetterMethods();
 		initSetterMethods();
 		initFields();
@@ -153,9 +157,16 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public void defineSubtypes(List<Type> types) {
 		subTypes = new HashSet<EntityType>();
-		
+
+		if(this.getInstanceClass() == null) {
+			return;
+		}
+
 		for(Type type: types) {
 			if(type instanceof EntityType) {
+				if(type.getInstanceClass() == null) {
+					continue;
+				}
 				if (this.getInstanceClass().isAssignableFrom(type.getInstanceClass()) &&
 					this.getInstanceClass() != type.getInstanceClass()) {
 					subTypes.add((EntityType) type);

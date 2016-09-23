@@ -38,6 +38,7 @@ import tools.xor.AbstractBO;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
@@ -477,6 +478,11 @@ public class QueryView {
 	 * @return the parent QueryViewProperty
 	 */
 	private QueryViewProperty getParentViewProperty(String attribute, boolean doFetch) {
+		String openAttribute = attribute;
+		if(this.aggregateType instanceof OpenType && attribute.indexOf(OpenType.DELIM) != -1) {
+			attribute = attribute.substring(attribute.indexOf(OpenType.DELIM)+1);
+		}
+
 		attribute = QueryViewProperty.qualifyProperty(attribute);
 		String parentPath = getParentPath(attribute);
 
@@ -526,8 +532,9 @@ public class QueryView {
 		QueryViewProperty viewProperty = new QueryViewProperty(true, aggregateType);
 		viewPropertyByPath.put(QueryViewProperty.ROOT_PROPERTY_NAME, viewProperty);
 
-		for(Map.Entry<String, String> attribute: attributes.entrySet())
+		for(Map.Entry<String, String> attribute: attributes.entrySet()) {
 			addViewProperty(attribute.getKey(), false, true, attribute.getValue());
+		}
 		
 		// This has to come before adding filters since
 		// we need to fetch these properties. On contrast, the filter properties
@@ -596,19 +603,38 @@ public class QueryView {
 				sb.append("\r\npath" + entry.getKey() + ", column: " + entry.getValue().toString());
 			}
 			logger.debug(sb.toString());
-		}		
+		}
+
+		if(aggregateType instanceof OpenType) {
+			sortedPath = new ArrayList<String>();
+			for(String path: aggregateSlice.getAttributeList()) {
+				sortedPath.add(QueryViewProperty.qualifyProperty(path));
+			}
+		}
 		
 		augmentedAttributes = new LinkedHashMap<String, ColumnMeta>(); // maintain the order
+		int position = 0;
 		for(String path: sortedPath) {
 			ColumnMeta columnMeta = augmentedAttributeMap.get(path);
 			augmentedAttributes.put(path, columnMeta);
-			if(aggregateSlice != null && aggregateSlice.getNativeQuery() != null) { // check that the attribute is covered by the native query
-				int position = aggregateSlice.getNativeQuery().getPosition(QueryViewProperty.unqualifyProperty(path));
-				if(position == -1) {
-					logger.warn("The native query does not populate the attribute " + QueryViewProperty.unqualifyProperty(path) + " for view: " + getViewName());
-					aggregateSlice.getNativeQuery().setUsable(false);
-				} else
-					columnMeta.setPosition(position);
+			if(aggregateSlice != null) { // check that the attribute is covered by the native query
+				if(aggregateSlice.getNativeQuery() != null) {
+					position = aggregateSlice.getNativeQuery().getPosition(
+						QueryViewProperty.unqualifyProperty(
+							path));
+					if (position == -1) {
+						logger.warn(
+							"The native query does not populate the attribute "
+								+ QueryViewProperty.unqualifyProperty(path) + " for view: "
+								+ getViewName());
+						aggregateSlice.getNativeQuery().setUsable(false);
+					}
+					else {
+						columnMeta.setPosition(position);
+					}
+				} else {
+					columnMeta.setPosition(position++);
+				}
 			}
 		}
 
@@ -698,8 +724,11 @@ public class QueryView {
 		if(ClassUtil.getDimensionCount(obj) == 1) {
 			Object[] queryRow = (Object[])obj;
 
-			String idPropertyName = ((EntityType)this.aggregateType).getIdentifierProperty().getName();
-			Object idValue = getQueryValue(queryRow, idPropertyName);
+			Object idValue = null;
+			if(((EntityType)this.aggregateType).getIdentifierProperty() != null) {
+				String idPropertyName = ((EntityType)this.aggregateType).getIdentifierProperty().getName();
+				idValue = getQueryValue(queryRow, idPropertyName);
+			}
 
 			String entityName = (String) getQueryValue(queryRow, QueryViewProperty.ENTITYNAME_ATTRIBUTE);
 			Type type = entity.getType();
@@ -707,14 +736,12 @@ public class QueryView {
 				// This is padded with space based on the largest type name if a CASE statement is used
 				entityName = entityName.trim();
 				type = entity.getObjectCreator().getDAS().getType(entityName);
-			} 
-			/*else {
-				// Query API always returns an external type
-				type = entity.getObjectCreator().getDAS().getExternalType(this.aggregateType.getName());
-			}*/
+			}
 
 			// find and create data object
-			result = ((AbstractBO)entity).getBySurrogateKey(idValue, this.aggregateType);
+			if(idValue != null) {
+				result = ((AbstractBO)entity).getBySurrogateKey(idValue, this.aggregateType);
+			}
 			if(result == null) {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
@@ -728,8 +755,9 @@ public class QueryView {
 
 	public void normalize(BusinessObject root, Object[] queryResultRow) throws Exception {
 		Map<Integer, ColumnMeta> metaMap = new HashMap<Integer, ColumnMeta>();
-		for(ColumnMeta columnMeta: augmentedAttributes.values())
+		for(ColumnMeta columnMeta: augmentedAttributes.values()) {
 			metaMap.put(columnMeta.getPosition(), columnMeta);
+		}
 
 		Map<String, Object> propertyResult = new HashMap<String, Object>();
 		for(int i = 0; i < queryResultRow.length; i++) {

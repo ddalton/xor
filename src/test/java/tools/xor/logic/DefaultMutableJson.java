@@ -28,7 +28,9 @@ import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +40,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
 import tools.xor.AssociationSetting;
 import tools.xor.ImmutableJsonProperty;
+import tools.xor.OpenType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
@@ -46,6 +50,7 @@ import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.view.AggregateView;
+import tools.xor.view.OQLQuery;
 
 public abstract class DefaultMutableJson extends AbstractDBTest {
 	@Autowired
@@ -949,5 +954,30 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		
 		// Change the quantity value for Supplier parts P1-S1 from 300 to 500
 		
-	}	
+	}
+
+	public void checkOpenTypeCrossJoin()
+	{
+		createSPData();
+
+
+		Set<String> properties = new HashSet<String>();
+		properties.add(tools.xor.db.sp.P.class.getName() + OpenType.DELIM + "partNo");
+		properties.add(tools.xor.db.sp.S.class.getName() + OpenType.DELIM + "supplierNo");
+		OpenType crossJoin = new OpenType("crossjoin", properties);
+		aggregateManager.getDAS().addOpenType(crossJoin);
+
+		Settings settings = new Settings();
+		settings.setEntityType(crossJoin);
+		AggregateView view = new AggregateView("CROSS");
+		settings.setView(view);
+		view.setAttributeList(new ArrayList<String>(properties));
+
+		OQLQuery q = new OQLQuery();
+		q.setQueryString("SELECT p.partNo, s.supplierNo FROM S s, P p");
+		view.setUserOQLQuery(q);
+
+		List o = aggregateService.query(null, settings);
+		System.out.println("OQL Query Output size : " + o.size());
+	}
 }

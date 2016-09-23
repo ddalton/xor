@@ -205,15 +205,18 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	 * JsonValue.NULL
 	 */
 	public Class<?> toExternal(Class<?> domainClass) {
-		
-		if(unchanged.contains(domainClass)) {
-			return domainClass;
-		}
-		
-		if(Set.class.isAssignableFrom(domainClass) ||
+
+		// domainClass can be null for an open type
+		if(domainClass != null) {
+			if (unchanged.contains(domainClass)) {
+				return domainClass;
+			}
+
+			if (Set.class.isAssignableFrom(domainClass) ||
 				List.class.isAssignableFrom(domainClass) ||
 				domainClass.isArray()) {
-			return JSONArray.class;
+				return JSONArray.class;
+			}
 		}
 		
 		return JSONObject.class;		

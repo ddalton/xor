@@ -549,6 +549,15 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public void set(String propertyPath, Map<String, Object> propertyResult, EntityType domainEntityType) throws Exception {
 
+		if(domainEntityType.isOpen()) {
+			String propertyName = propertyPath.substring(propertyPath.indexOf(OpenType.DELIM)+1);
+			Property property = getType().getProperty(propertyName);
+			((ExtendedProperty)property).setValue(
+				this,
+				propertyResult.get(QueryViewProperty.qualifyProperty(propertyPath)));
+			return;
+		}
+
 		// If we are setting a null value then nothing needs to be done
 		if( propertyResult.get(QueryViewProperty.qualifyProperty(propertyPath) ) == null)
 			return;
@@ -1122,9 +1131,9 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		try {
-			//Class<?> desiredClass = settings.doBaseline() ? settings.getNarrowedClass() : getObjectCreator().getDAS().getTypeMapper().toExternal(settings.getNarrowedClass());
-			//getObjectCreator().getDAS().getType(settings.getNarrowedClass());
-			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, (EntityType) getObjectCreator().getDAS().getType(settings.getNarrowedClass())));
+			Class<?> narrowedClass = settings.getNarrowedClass();
+			Type targetType = narrowedClass != null ? getObjectCreator().getDAS().getType(settings.getNarrowedClass()) : settings.getEntityType();
+			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, targetType));
 			
 			// Needed to hold references to open property created objects
 			if(oc.getCreationStrategy().needsObjectGraph()) {
@@ -1237,7 +1246,12 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public Type getDomainType() {
-		return getObjectCreator().getDAS().getType(getObjectCreator().getTypeMapper().toDomain(getType().getInstanceClass()));
+		if(getType().isOpen()) {
+			return ((EntityType)getType()).getDomainType();
+		}
+		return getObjectCreator().getDAS().getType(
+			getObjectCreator().getTypeMapper().toDomain(
+				getType().getInstanceClass()));
 	}
 
 	@Override

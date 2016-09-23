@@ -50,7 +50,8 @@ public interface Type
 
   /**
    * Returns the Java class that this type represents.
-   * @return the Java class.
+   * Does not make sense for an open type as it can be a composition of properties from multiple types.
+   * @return the Java class and null if open type
    */
   Class<?> getInstanceClass();
 

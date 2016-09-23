@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -186,6 +187,7 @@ public class SimpleType implements BasicType {
 		if( Long.class == instanceClass || Long.TYPE == instanceClass) return Long.parseLong( value );
 		if( Float.class == instanceClass || Float.TYPE == instanceClass) return Float.parseFloat( value );
 		if( Double.class == instanceClass || Double.TYPE == instanceClass) return Double.parseDouble( value );
+		if (BigDecimal.class == instanceClass) return new BigDecimal(value);
 
 		return value;
 	}

@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import tools.xor.AbstractType;
 import tools.xor.EntityType;
 import tools.xor.ExternalType;
+import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.SimpleTypeFactory;
@@ -62,7 +63,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	protected DASFactory        dasFactory;
 	protected Map<String, AggregateView> views = new ConcurrentHashMap<String, AggregateView>();
 	protected Map<Class<?>, Map<String, Object>> narrowedClassByView = new ConcurrentHashMap<Class<?>, Map<String,Object>>();
-	protected boolean           autoWireModel;
 
 	private volatile boolean needsUpdate;
 	
@@ -72,7 +72,24 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	protected void addDerivedType(String className, Type type) {
 		addType(className, type, derivedTypes);
-	}	
+	}
+
+	@Override
+	public void addOpenType(OpenType type) {
+		if(types.containsKey(type.getName())) {
+			throw new RuntimeException("A type with the same name exists, please choose a different name for the open type: " + type.getName());
+		}
+		type.setProperty(this);
+		addType(type.getName(), type);
+
+		Class<?> derivedClass = typeMapper.toExternal(type.getInstanceClass());
+		if(derivedClass != null) {
+			ExternalType derived = typeMapper.createExternalType((EntityType)type, derivedClass);
+			derivedTypes.put(derived.getName(), derived);
+			derived.setProperty(this);
+			setBiDirectionOnDerivedType(derived);
+		}
+	}
 
 	protected void addType(String className, Type type) {
 		addType(className, type, types);

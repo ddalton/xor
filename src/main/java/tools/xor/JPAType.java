@@ -235,11 +235,9 @@ public class JPAType extends AbstractType {
 			}
 		}
 
-		if(isEmbedded())
+		// Default is field
+		//if(isEmbedded())
 			return AccessType.FIELD;
-
-		// Should not come here
-		throw new IllegalStateException("The persistent class " + getName() + " does not have any JPA annotations");
 	}
 
 	@Override

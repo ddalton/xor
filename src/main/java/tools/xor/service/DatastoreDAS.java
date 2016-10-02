@@ -115,7 +115,10 @@ public class DatastoreDAS extends AbstractDataAccessService {
 		for(EntityType<?> classMapping: classMappings){ 
 			logger.debug("     Adding JPA persisted class: " + classMapping.getName());
 			defineTypes(classMapping);
-		}		
+		}
+
+		// Set the super type
+		defineSuperType();
 
 		// Set the base types
 		setBaseTypes();		
@@ -134,9 +137,7 @@ public class DatastoreDAS extends AbstractDataAccessService {
 		
 		for(Type type: dataType.getEmbeddableTypes()) {
 			addType(type.getName(), type);
-		}		
-		
-		defineSuperType();
+		}
 	}
 
 	protected void defineProperties() {

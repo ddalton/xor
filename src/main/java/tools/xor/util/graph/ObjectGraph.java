@@ -372,7 +372,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		}
 
 		if(logger.isDebugEnabled()) {
-			System.out.println("ObjectGraph took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+			logger.debug("ObjectGraph took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
 		}
 	}
 	

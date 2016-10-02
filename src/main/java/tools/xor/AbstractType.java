@@ -164,7 +164,7 @@ public abstract class AbstractType implements EntityType {
 
 		for(Type type: types) {
 			if(type instanceof EntityType) {
-				if(type.getInstanceClass() == null) {
+				if(type.isOpen() || type.getInstanceClass() == null) {
 					continue;
 				}
 				if (this.getInstanceClass().isAssignableFrom(type.getInstanceClass()) &&
@@ -851,8 +851,13 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public void initPositionProperty() {
-		for(Property property: properties.values())
+		if(isOpen()) {
+			return;
+		}
+
+		for(Property property: properties.values()) {
 			((ExtendedProperty)property).initPositionProperty();
+		}
 	}	
 
 	@Override

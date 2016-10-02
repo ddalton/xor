@@ -201,6 +201,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	protected void postProcess() {
+
 		initPositionProperty();
 		
 		initDerived();
@@ -527,7 +528,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	private void initRootType() {
 		for (Type type : getUniqueTypes()) {
-			if (AbstractType.class.isAssignableFrom(type.getClass())) {
+			if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
 				((AbstractType)type).initRootEntityType(this);
 			}
 		}
@@ -548,8 +549,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	protected void initDerived() {
 		for(Type type: getUniqueTypes()) {
-			if(SimpleType.class.isAssignableFrom(type.getClass()))
+			if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
 				continue;
+			}
 			Class<?> derivedClass = typeMapper.toExternal(type.getInstanceClass());
 			if(derivedClass != null) {
 				Type derived = typeMapper.createExternalType((EntityType) type, derivedClass);

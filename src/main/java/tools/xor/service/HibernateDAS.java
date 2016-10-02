@@ -69,6 +69,9 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 			defineTypes(classMapping);
 		}
 
+		// Set the super type
+		defineSuperType();
+
 		// Set the base types
 		setBaseTypes();
 
@@ -89,8 +92,6 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 		for(Type type: dataType.getEmbeddableTypes()) {
 			addType(type.getName(), type);
 		}
-		
-		defineSuperType();
 	}
 
 	protected void defineProperties() {

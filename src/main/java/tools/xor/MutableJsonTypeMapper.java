@@ -77,7 +77,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	@Override
 	public Class<?> toDomain(Class<?> externalClass) {
 		if(!isDomain(externalClass)) {
-			throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object. Check if the domain package path is correct.");
+			throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object. Check if the domain package path '" + this.domainPackagePath + "' is correct.");
 		}
 		return externalClass;
 	}

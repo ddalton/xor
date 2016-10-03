@@ -547,6 +547,13 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
+	private boolean isOpenDomainType(ExternalType derivedType) {
+		// If the domain type is open, then we cannot
+		// infer the properties. For e.g., an open domain type
+		// does not have a Java class and is populated dynamically
+		return derivedType.getDomainType().isOpen();
+	}
+
 	protected void initDerived() {
 		for(Type type: getUniqueTypes()) {
 			if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
@@ -563,13 +570,21 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		for (Type type : getUniqueDerivedTypes()) {
 			if (ExternalType.class.isAssignableFrom(type.getClass())) {
 				ExternalType derivedType = (ExternalType) type;
+
+				if(isOpenDomainType(derivedType)) {
+					continue;
+				}
 				derivedType.setProperty(this);
 			}
 		}		
 
 		for (Type type : getUniqueDerivedTypes()) {
-			if (ExternalType.class.isAssignableFrom(type.getClass())) {
+			if (!type.isOpen() && ExternalType.class.isAssignableFrom(type.getClass())) {
 				ExternalType derivedType = (ExternalType) type;
+
+				if(isOpenDomainType(derivedType)) {
+					continue;
+				}
 				setBiDirectionOnDerivedType(derivedType);
 			}
 		}			

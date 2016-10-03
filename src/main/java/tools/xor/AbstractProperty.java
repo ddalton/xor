@@ -289,7 +289,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return getterMethod;
 	}
 
-	private void initBusinessLogicAnnotations() {
+	protected void initBusinessLogicAnnotations() {
 		
 		if(getContainingType().getLambdas(getName()) != null) {
 			lambdas = getContainingType().getLambdas(getName());

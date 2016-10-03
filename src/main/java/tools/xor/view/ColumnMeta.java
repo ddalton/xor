@@ -72,15 +72,26 @@ public class ColumnMeta {
 		else if(attributePath.endsWith(QueryViewProperty.MAP_KEY_ATTRIBUTE))
 			result = queryCapability.getMapKeyMechanism(viewProperty.getAlias());		
 		else if(result == null) { // no alias
-			if(viewProperty.getParent() != null)
-				result = viewProperty.getParent().getAlias() + viewProperty.getPropertyPath().substring(viewProperty.getParent().getPropertyPath().length());
-			else 
+			if(viewProperty.getParent() != null) {
+
+				String propertyFragment = viewProperty.getPropertyPath().substring(
+					viewProperty.getParent().getPropertyPath().length());
+
+				// Is this an id property
+				if(propertyFragment.equals(Settings.PATH_DELIMITER + ((EntityType)viewProperty.getParent().getType()).getIdentifierProperty().getName())) {
+					result = queryCapability.getSurrogateValueMechanism(viewProperty.getParent().getAlias(), propertyFragment);
+				} else {
+					result = viewProperty.getParent().getAlias() + propertyFragment;
+				}
+			} else {
 				result = viewProperty.getPropertyPath();
+			}
 		} else {
 			if(viewProperty.isEntity()) {
 				String idName = ((EntityType)viewProperty.getType()).getIdentifierProperty().getName();
-				if(attributePath.equals(QueryViewProperty.qualifyProperty(idName)) )
-					result = result + Settings.PATH_DELIMITER + idName;
+				if(attributePath.equals(QueryViewProperty.qualifyProperty(idName)) ) {
+					result = queryCapability.getSurrogateValueMechanism(result, Settings.PATH_DELIMITER + idName);
+				}
 			}
 		}
 

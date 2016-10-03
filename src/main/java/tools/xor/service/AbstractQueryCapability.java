@@ -39,5 +39,10 @@ public abstract class AbstractQueryCapability implements QueryCapability {
 	@Override
 	public String getListIndexMechanism(String queryAlias) {
 		return "INDEX(" + queryAlias + ")";
-	}	
+	}
+
+	@Override
+	public String getSurrogateValueMechanism(String queryAlias, String idFragment) {
+		return queryAlias + idFragment;
+	}
 }

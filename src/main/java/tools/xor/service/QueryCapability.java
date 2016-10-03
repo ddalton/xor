@@ -19,9 +19,6 @@
 
 package tools.xor.service;
 
-
-
-
 public interface QueryCapability {
 	   
     /**
@@ -50,5 +47,13 @@ public interface QueryCapability {
 	 * @param queryAlias of the type in a query 
 	 * @return index mechanism value
      */
-	public String getListIndexMechanism(String queryAlias);    
+	public String getListIndexMechanism(String queryAlias);
+
+    /**
+     * Returns the mechanism used to obtain the surrogate key value
+     * @param queryAlias of the type in a query
+     * @param idFragment the name of the surrogate key prepended by the path delimiter
+     * @return surrogate mechanism value
+     */
+    public String getSurrogateValueMechanism(String queryAlias, String idFragment);
 }

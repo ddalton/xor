@@ -48,6 +48,11 @@ public class ExternalProperty extends AbstractProperty {
 		this.domainProperty = domainProperty;
 		setElementType(elementType);
 	}
+
+	@Override
+	protected void initBusinessLogicAnnotations() {
+		// Business logic not supported on external types
+	}
 	
 	private void setElementType(Type eType) {
 		this.elementType = eType;
@@ -67,11 +72,7 @@ public class ExternalProperty extends AbstractProperty {
 	
 	@Override
 	public String getName() {
-		if(isOpenContent()) {
-			return name;
-		} else {
-			return domainProperty.getName();
-		}
+		return domainProperty.getName();
 	}
 
 	@Override

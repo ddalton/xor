@@ -22,8 +22,11 @@ package tools.xor.logic;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,5 +152,24 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 
 		FileInputStream is = new FileInputStream("queryTaskChildren.xlsx");
 		aggregateService.importDenormalized(is, settings);
+	}
+
+	public void importCSV() throws Exception
+	{
+		Settings settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+
+		Reader csvData = new FileReader("task.csv");
+		aggregateService.importBulk(csvData, settings);
+
+		// query the task object
+		settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setDenormalized(true);
+		settings.setView(aggregateService.getView("TASKCHILDREN"));
+		List<?> result = aggregateService.query(null, settings);
+
+		// Includes header row
+		assert(result.size() == 2);
 	}
 }

@@ -62,4 +62,10 @@ public class JPADenormalizedQueryTest extends DenormalizedQueryTest {
 	{
 		super.updateTaskChildren();
 	}
+
+	@Test
+	public void importCSV() throws Exception
+	{
+		super.importCSV();
+	}
 }

@@ -3,6 +3,7 @@ package tools.xor.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.util.List;
 
 import tools.xor.Settings;
@@ -82,6 +83,16 @@ public interface Xor {
 	 * @param settings from the user
 	 */
 	public void exportDenormalized(OutputStream outputStream, Settings settings);
+
+	/**
+	 * Imports a CSV file containing entities. The id should be null.
+	 * This method automatically sets up a view based on the fields in the CSV header.
+	 *
+	 * @param csvData
+	 * @param settings
+	 * @throws Exception
+	 */
+	public void importBulk (Reader csvData, Settings settings) throws Exception;
 
 	/**
 	 * Imports the denormalized excel

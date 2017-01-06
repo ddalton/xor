@@ -47,7 +47,7 @@ public class MutableBO extends AbstractBO {
 		CallInfo callInfo = new CallInfo(this, null, null, null);
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(settings.getAction()); // Since the default global action can be either UPDATE or MERGE
-		this.createAggregate();
+		this.createAggregate(settings.getView());
 
 		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
@@ -77,7 +77,7 @@ public class MutableBO extends AbstractBO {
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(AggregateAction.CREATE);
 		this.getObjectCreator().setShare(true);
-		this.createAggregate();
+		this.createAggregate(settings.getView());
 		Date a = new Date();
 
 		// Create an object creator for the target root
@@ -115,7 +115,7 @@ public class MutableBO extends AbstractBO {
 		CallInfo callInfo = new CallInfo(this, null, null, null);
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(AggregateAction.CLONE);
-		this.createAggregate();
+		this.createAggregate(settings.getView());
 
 		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);

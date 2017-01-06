@@ -95,6 +95,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	
 	public static final String BASE = "BASE_";
 	public static final String RECURSIVE = "RECURSIVE_";
+	public static final String DOMAIN = "DOMAIN:";
 
 	// The user can specify child branches if necessary directly. 
 	// NOTE: If one or more child branch are specified, then only the child branches are executed.
@@ -408,7 +409,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		
 		if(stateGraph != null) {
 			for(Map.Entry<String, StateGraph<State, Edge<State>>> entry: stateGraph.entrySet()) {
-				result.addStateGraph(entry.getKey(), entry.getValue().copy());
+				result.stateGraph.put(entry.getKey(), entry.getValue().copy());
 			}
 		}
 		
@@ -516,28 +517,40 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		return this.stateGraph;
 	}
 	
-	public void setStateGraph(Map<String, StateGraph<State, Edge<State>>> value) {
-		this.stateGraph = value;
+	public void addStateGraph(EntityType type, StateGraph<State, Edge<State>> value) {
+
+		stateGraph.put(getEntityName(type), value);
 	}
-	
-	public void addStateGraph(String entityName, StateGraph<State, Edge<State>> value) {
-		stateGraph.put(entityName, value);
+
+	private String getEntityName(EntityType type) {
+		if(type.isDomainType()) {
+			return DOMAIN + type.getName();
+		} else {
+			return type.getName();
+		}
 	}
-	
+
+	/**
+	 * Cache the generated state graph by EntityType.
+	 * Note: We need to make a distinction between Domain and Reference entity types otherwise
+	 * we could end up thrashing between building the graph for these two types.
+	 *
+	 * @param entityType
+	 * @return
+	 */
 	public StateGraph<State, Edge<State>> getStateGraph(EntityType entityType) {
-		if(!stateGraph.containsKey(entityType.getName())) {
-			stateGraph.put(entityType.getName(), DFAtoRE.build(this, entityType));
+
+		String entityName = getEntityName(entityType);
+
+		if(!stateGraph.containsKey(entityName) ) {
+			stateGraph.put(entityName, DFAtoRE.build(this, entityType));
 		}
 		
-		return stateGraph.get(entityType.getName());
+		return stateGraph.get(entityName);
 	}
 
 	@Override
 	public int compareTo(AggregateView o) {
 		return (name.equals(o.getName())) ? (version - o.getVersion()) : name.compareTo(o.getName());
 	}
-
-	public void rebuild(EntityType type) {
-		stateGraph.put(type.getName(), DFAtoRE.build(this, type));
-	}	
 }

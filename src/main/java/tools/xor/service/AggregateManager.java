@@ -348,7 +348,9 @@ public class AggregateManager implements Xor
 			try {
 				return (businessObject != null) ? businessObject.getInstance() : null;
 			} finally {
-				getPersistenceOrchestrator().setFlushMode(oldFlushMode);
+				if(oldFlushMode != null) {
+					getPersistenceOrchestrator().setFlushMode(oldFlushMode);
+				}
 				if (settings.doPostFlush()) {
 					getPersistenceOrchestrator().flush();
 				}

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import tools.xor.util.ObjectCreator;
+import tools.xor.view.AggregateView;
 
 public interface BusinessObject extends DataObject {
 
@@ -333,6 +334,12 @@ public interface BusinessObject extends DataObject {
 	 * It also demarcates the spanning tree of the graph based on containment relationships
 	 */		
 	public void createAggregate();
+
+	/**
+	 * Specifying the view improves the performance of this method as only the fields in the view need to be processed.
+	 * @param view
+	 */
+	public void createAggregate(AggregateView view);
 	
 	/**
 	 * Get a business object of the same type as the current business object but with different id
@@ -348,7 +355,7 @@ public interface BusinessObject extends DataObject {
 	 * @param type  domain type irrespective of whether we are obtaining an external or a domain object
 	 * @return BusinessObject if found, null otherwise
 	 */
-	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type);	
+	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type);
 
 	/**
 	 * Get the object from the object graph for open property

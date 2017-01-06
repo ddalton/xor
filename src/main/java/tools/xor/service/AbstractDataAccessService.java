@@ -269,7 +269,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			result.setAttributeList(new ArrayList<String>(paths));
 			
 			DFAtoRE dfaRE = new DFAtoRE(type);
-			result.addStateGraph(type.getName(), dfaRE.getFullStateGraph());
+			result.addStateGraph(type, dfaRE.getFullStateGraph());
 
 			views.put(viewName, result);
 		}

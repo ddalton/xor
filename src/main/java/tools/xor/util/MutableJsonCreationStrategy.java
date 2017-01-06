@@ -127,7 +127,7 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(
-				"JSONCreationStrategy#newInstance from: " + (from == null ? "null" : from)
+				"JSONCreationStrategy#newInstance from: " + (from == null ? "null" : from.getClass().getName())
 					+ ", toClass: " + (toClass == null ? "null" : toClass.getName())
 					+ ", result: " + (result == null ? "null" : result.getClass().getName()));
 		}

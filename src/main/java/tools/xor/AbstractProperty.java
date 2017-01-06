@@ -663,10 +663,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}		
 	}
 
+	@Override public boolean isReadOnly ()
+	{
+		return false;
+	}
+
 	@Override
 	public void setValue(Object dataObject, Object propertyValue, PrefetchCache cache) 
 	{	
-		if(field == null && getterMethod == null) {
+		if(field == null && setterMethod == null) {
 			
 			if(isOpenContent() && dataObject != null) {
 				// We should always receive a persistence managed propertyValue object
@@ -858,14 +863,19 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
 					//setterFunction.accept(instance, propertyValue);
 				} catch (Exception e) { // fallback to field access
-					logger.warn("Falling back to field access for method : " + setterMethod.getName());					
+					if(setterMethod != null) {
+						logger.warn(
+							"Falling back to field access for method : " + setterMethod.getName());
+					}
 					ClassUtil.invokeFieldAsPrivileged(instance, field, propertyValue, false);
 				}
 			} else {
 				try {
 					ClassUtil.invokeFieldAsPrivileged(instance, field, propertyValue, false);
 				} catch (Exception e) { // fallback to method access
-					logger.warn("Falling back to method access for field : " + field.getName());
+					if(field != null) {
+						logger.warn("Falling back to method access for field : " + field.getName());
+					}
 					//setterFunction.accept(instance, propertyValue);
 					ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);	
 				}

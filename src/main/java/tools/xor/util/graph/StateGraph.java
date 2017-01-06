@@ -45,7 +45,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		this.root = aggregateRoot; 
 	}
 	
-	private V getRootState() {
+	public V getRootState() {
 		return states.get(root);
 	}
 	

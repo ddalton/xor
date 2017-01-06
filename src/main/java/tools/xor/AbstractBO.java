@@ -37,6 +37,9 @@ import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.view.AggregateView;
 import tools.xor.view.QueryViewProperty;
 
 public abstract class AbstractBO implements BusinessObject {
@@ -1306,29 +1309,59 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		return copy;
 	}
-	
+
 	@Override
 	public void createAggregate() {
+		this.createAggregate(null);
+	}
+
+	@Override
+	public void createAggregate (AggregateView view) {
 
 		// Loop through the data object properties and if it is not a data type, then create a Data Object wrapper and recurse
 		objectCreator.clearVisited();
-		createWrapper(this);
+
+		State rootState = null;
+		StateGraph sg = null;
+		if(view != null) {
+			sg = view.getStateGraph((EntityType)getType());
+			rootState = sg.getRootState();
+		}
+		createWrapper(this, null, rootState, sg);
 
 		objectCreator.clearVisited();
 	}	
 	
-	protected void createWrapper(BusinessObject parent) {
+	protected void createWrapper(BusinessObject parent, Property support, State state, StateGraph sg) {
 		
 		for(BusinessObject child: parent.getList()) {
 			if(parent.getContainmentProperty().isContainment()) {
 				child.setContainer(parent);
 				child.setContainmentProperty(parent.getContainmentProperty());
 			}
-			createWrapper(child);
+
+			if(sg != null) {
+				// Is this property in view? yes then process it else skip it
+				if (sg.getOutEdge(state, support.getName()) != null) {
+					createWrapper(
+						child, support,
+						(State)sg.getOutEdge(state, support.getName()).getEnd(), sg);
+				} else {
+					return;
+				}
+			} else {
+				createWrapper(child, null, null, null);
+			}
 		}
 
 		for(Property property: parent.getType().getProperties()) {	
 			if(!((ExtendedProperty) property).isDataType()) {
+
+				// Is this property in view? yes, process it else skip it
+				if(sg != null && sg.getOutEdge(state, property.getName()) == null) {
+					continue;
+				}
+
 				Object propertyInstance = ((ExtendedProperty)property).getValue(parent);
 				if(propertyInstance == null)
 					continue;
@@ -1358,7 +1391,18 @@ public abstract class AbstractBO implements BusinessObject {
 				if(!property.isContainment()) 
 					continue;
 
-				createWrapper(child);				
+				if(sg != null) {
+					// Is this property in view? yes, process it else skip it
+					if (sg.getOutEdge(state, property.getName()) != null) {
+						createWrapper(
+							child, property,
+							(State)sg.getOutEdge(state, property.getName()).getEnd(), sg);
+					} else {
+						continue;
+					}
+				} else {
+					createWrapper(child, null, null, null);
+				}
 			}
 		}
 	}

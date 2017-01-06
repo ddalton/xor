@@ -39,7 +39,7 @@ import tools.xor.util.graph.ObjectGraph;
 public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 	
-	private POJOCreationStrategy pojoCS;
+	protected POJOCreationStrategy pojoCS;
 	
 	private static final Set<Class<?>> unchanged = new HashSet<Class<?>>();
 	
@@ -65,11 +65,14 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 		unchanged.add(double.class);	
 		unchanged.add(BigDecimal.class);
 		unchanged.add(BigInteger.class);
-	}	
+	}
 	
 	public MutableJsonCreationStrategy(ObjectCreator objectCreator) {
 		super(objectCreator);
-		
+		setDomainCreationStrategy(objectCreator);
+	}
+
+	protected void setDomainCreationStrategy(ObjectCreator objectCreator) {
 		pojoCS = new POJOCreationStrategy(objectCreator);
 	}
 	

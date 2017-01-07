@@ -1521,12 +1521,10 @@ public class AggregateManager implements Xor
 			}
 		}
 
-		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(
 			getDAS(),
 			getPersistenceOrchestrator(),
 			MapperDirection.EXTERNALTODOMAIN);
-
 
 		int count = 1;
 		for(
@@ -1534,20 +1532,23 @@ public class AggregateManager implements Xor
 			:parser)
 
 		{
-			BusinessObject bo = oc.createDataObject(
-				AbstractBO.createInstance(oc, null, settings.getEntityType()),
-				settings.getEntityType(),
-				null,
-				null);
+			JSONObject json = new JSONObject();
 			for (Map.Entry<String, Property> entry : propertyMap.entrySet()) {
 				Object cellValue = csvRecord.get(entry.getKey());
 				Property property = propertyMap.get(entry.getKey());
 				cellValue = ((SimpleType)property.getType()).unmarshall(cellValue.toString());
 
-				bo.set(entry.getKey(), cellValue);
+				json.put(entry.getKey(), cellValue);
 			}
 
-			this.update(bo.getInstance(), settings);
+			this.create(json, settings);
+
+			// We clear the input object creator since each record is a separate entity
+			if(oc.getPersistenceOrchestrator() == null) {
+				oc.setPersistenceOrchestrator(getPersistenceOrchestrator());
+			}
+			oc.clearState();
+
 			if(count++%BULK_BATCH_SIZE == 0) {
 				getPersistenceOrchestrator().flush();
 				getPersistenceOrchestrator().clear();

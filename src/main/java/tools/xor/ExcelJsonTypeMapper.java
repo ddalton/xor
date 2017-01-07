@@ -24,15 +24,11 @@ import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
 
 public class ExcelJsonTypeMapper extends MutableJsonTypeMapper {
-	
-	@Override
-	public TypeMapper newInstance(MapperDirection direction) {
-		MutableJsonTypeMapper mapper = new ExcelJsonTypeMapper();
-		mapper.setDirection(direction);
-		mapper.setDomainPackagePath(getDomainPackagePath());
 
-		return mapper;		
-	}	
+	@Override
+	protected TypeMapper createInstance() {
+		return new ExcelJsonTypeMapper();
+	}
 	
 	@Override
 	public CreationStrategy getCreationStrategy(ObjectCreator oc) {

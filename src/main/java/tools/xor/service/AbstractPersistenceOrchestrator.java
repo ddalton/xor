@@ -56,6 +56,11 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	public void clear() {
 		// Overridden by subclasses
 	}
+
+	@Override
+	public void clear(Set<Object> ids) {
+		// Overridden by subclasses
+	}
 	
 	@Override 
 	public void refresh(Object object) {
@@ -81,7 +86,19 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 			return findByProperty(from.getDomainType(), param);
 		} else
 			return null;
-	}	
+	}
+
+	/**
+	 * Give a chance to shortcircuit the persistence loading if we know for sure that the
+	 * given object is a transient object.
+	 * For example, we know that the identifier was generated when the object was created etc.
+	 *
+	 * @param from the user given object
+	 * @return
+	 */
+	protected boolean isTransient(BusinessObject from) {
+		return false;
+	}
 	
 	@Override
 	public Object getPersistentObject(CallInfo callInfo, TypeMapper typeMapper) {
@@ -96,6 +113,10 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		if(type.isEmbedded()) // We don't separately load embedded values from the database
 			return null;
 
+		if(isTransient(from)) {
+			return null;
+		}
+
 		if(!(callInfo.getSettings().getAction() == AggregateAction.CLONE) )
 			persistentObject = getByUserKey(callInfo, type);
 
@@ -106,7 +127,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 			}
 
 			Serializable id = (Serializable) identifierProperty.getValue(from);
-			if(id != null) {
+			if(id != null && !"".equals(id)) {
 				Class<?> desiredClass = typeMapper.toDomain(type.getInstanceClass(), from);
 				persistentObject = findById(desiredClass, id);
 			} 

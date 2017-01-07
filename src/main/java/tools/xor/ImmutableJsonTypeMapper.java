@@ -196,11 +196,16 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	@Override
 	public boolean isDomain(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(domainPackagePath));
-	}		
+	}
+
+	@Override
+	protected TypeMapper createInstance() {
+		return new ImmutableJsonTypeMapper();
+	}
 
 	@Override
 	public TypeMapper newInstance(MapperDirection direction) {
-		ImmutableJsonTypeMapper mapper = new ImmutableJsonTypeMapper();
+		ImmutableJsonTypeMapper mapper = (ImmutableJsonTypeMapper)createInstance();
 		mapper.setDirection(direction);
 		mapper.setDomainPackagePath(getDomainPackagePath());
 

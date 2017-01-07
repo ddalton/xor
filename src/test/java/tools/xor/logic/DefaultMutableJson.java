@@ -21,7 +21,9 @@ package tools.xor.logic;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -979,5 +981,24 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		List o = aggregateService.query(null, settings);
 		System.out.println("OQL Query Output size : " + o.size());
+	}
+
+	public void importCSV() throws Exception
+	{
+		Settings settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+
+		Reader csvData = new FileReader("task.csv");
+		aggregateService.importBulk(csvData, settings);
+
+		// query the task object
+		settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setDenormalized(true);
+		settings.setView(aggregateService.getView("TASKCHILDREN"));
+		List<?> result = aggregateService.query(null, settings);
+
+		// Includes header row
+		assert(result.size() == 2);
 	}
 }

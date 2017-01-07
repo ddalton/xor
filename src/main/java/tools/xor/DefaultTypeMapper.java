@@ -46,11 +46,16 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	@Override
 	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo) {
 		return clazz;
-	}		
-	
+	}
+
+	@Override
+	protected TypeMapper createInstance() {
+		return new DefaultTypeMapper();
+	}
+
 	@Override 
 	public TypeMapper newInstance(MapperDirection direction) {
-		TypeMapper mapper = new DefaultTypeMapper();
+		TypeMapper mapper = createInstance();
 		mapper.setDirection(direction);
 		
 		return mapper;

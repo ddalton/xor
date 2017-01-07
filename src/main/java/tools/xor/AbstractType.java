@@ -347,7 +347,13 @@ public abstract class AbstractType implements EntityType {
 		targetProperty = Introspector.decapitalize(targetProperty);
 		return readerMethods.get(targetProperty);
 	}
-	
+
+	@Override
+	public Method getSetterMethod(String targetProperty){
+		targetProperty = Introspector.decapitalize(targetProperty);
+		return updaterMethods.get(targetProperty);
+	}
+
 	protected void initSetterMethods() {
 
 		// Get all methods declared by the class or interface.
@@ -382,12 +388,7 @@ public abstract class AbstractType implements EntityType {
 			instanceClass = instanceClass.getSuperclass();
 		}
 		updaterMethods = Collections.unmodifiableMap(map);
-	}		
-
-	@Override
-	public Method getSetterMethod(String targetProperty){
-		return updaterMethods.get(targetProperty);
-	}	
+	}
 	
 	public void initFields() {
 

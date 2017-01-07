@@ -153,23 +153,4 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 		FileInputStream is = new FileInputStream("queryTaskChildren.xlsx");
 		aggregateService.importDenormalized(is, settings);
 	}
-
-	public void importCSV() throws Exception
-	{
-		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
-
-		Reader csvData = new FileReader("task.csv");
-		aggregateService.importBulk(csvData, settings);
-
-		// query the task object
-		settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
-		settings.setDenormalized(true);
-		settings.setView(aggregateService.getView("TASKCHILDREN"));
-		List<?> result = aggregateService.query(null, settings);
-
-		// Includes header row
-		assert(result.size() == 2);
-	}
 }

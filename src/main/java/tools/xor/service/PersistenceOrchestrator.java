@@ -20,6 +20,7 @@
 package tools.xor.service;
 
 import java.util.Map;
+import java.util.Set;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -100,6 +101,14 @@ public interface PersistenceOrchestrator {
      * Clears any objects held in the persistence cache
      */
     public void clear();
+
+    /**
+     * Clear a specific set of objects containing the following ids.
+     * Might not be supported by all PersistenceOrchestrators
+     *
+     * @param ids the id of objects that need to be cleared
+     */
+    public void clear(Set<Object> ids);
     
     /**
      * Refreshes the object held in the persistence cache

@@ -133,14 +133,19 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	@Override
 	public boolean isDomain(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(domainPackagePath) && !clazz.getCanonicalName().endsWith(DTO_SUFFIX));
-	}		
+	}
+
+	@Override
+	protected TypeMapper createInstance() {
+		return new DTOTypeMapper();
+	}
 
 	@Override
 	public TypeMapper newInstance(MapperDirection direction) {
-		DTOTypeMapper mapper = new DTOTypeMapper();
+		DTOTypeMapper mapper = (DTOTypeMapper)createInstance();
 		mapper.setDirection(direction);
-		mapper.setExternalPackagePath(getExternalPackagePath());
 		mapper.setDomainPackagePath(getDomainPackagePath());
+		mapper.setExternalPackagePath(getExternalPackagePath());
 
 		return mapper;		
 	}	

@@ -20,6 +20,7 @@
 package tools.xor.util;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -163,6 +164,14 @@ public class ObjectCreator {
 	}
 
 	public void clearState() {
+		// The set of objects that we would like to give the persistence managed session
+		// an opportunity to process before the referenced is removed
+		Set<Object> ids = new HashSet<Object>();
+		for(BusinessObject bo: instanceDataObjectMap.values()) {
+			ids.add(bo.getIdentifierValue());
+		}
+
+		getPersistenceOrchestrator().clear(ids);
 		instanceDataObjectMap = new IdentityHashMap<Object, BusinessObject>(); 
 	}
 

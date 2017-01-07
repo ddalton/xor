@@ -239,12 +239,16 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 
 	@Override
 	public TypeMapper newInstance(MapperDirection direction) {
-		MutableJsonTypeMapper mapper = new MutableJsonTypeMapper();
+		MutableJsonTypeMapper mapper = (MutableJsonTypeMapper)createInstance();
 		mapper.setDirection(direction);
 		mapper.setDomainPackagePath(getDomainPackagePath());
 
 		return mapper;		
-	}	
+	}
+
+	protected TypeMapper createInstance() {
+		return new MutableJsonTypeMapper();
+	}
 	
 	@Override
 	public CreationStrategy getCreationStrategy(ObjectCreator oc) {

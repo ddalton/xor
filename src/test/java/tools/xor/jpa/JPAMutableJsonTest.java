@@ -265,4 +265,10 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void checkOpenTypeCrossJoin() {
 		super.checkOpenTypeCrossJoin();
 	}
+
+	@Test
+	public void importCSV() throws Exception
+	{
+		super.importCSV();
+	}
 }

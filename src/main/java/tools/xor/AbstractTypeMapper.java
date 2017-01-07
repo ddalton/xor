@@ -27,7 +27,13 @@ import tools.xor.util.POJOCreationStrategy;
 
 public abstract class AbstractTypeMapper implements TypeMapper {
 	private MapperDirection direction;
-	
+
+	/**
+	 * Should be overridden by subclasses to return the correct type
+	 * @return
+	 */
+	abstract protected TypeMapper createInstance();
+
 	@Override
 	public Class<?> toDomain(Type type) {
 		return toDomain(type.getInstanceClass());

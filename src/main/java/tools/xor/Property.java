@@ -29,6 +29,7 @@
 package tools.xor;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A representation of a Property in the {@link Type type} of a {@link DataObject data object}.
@@ -126,8 +127,10 @@ public interface Property
   /**
    * Returns the expanded property names rooted at this property. 
    * This is typically one entry and can be more than one when dealing with 
-   * embedded types
+   * embedded types.
+   * @param examined Avoids processing these types and is useful for avoiding getting stuck in
+   *                 a loop
    * @return a list of properties
    */
-  List<String> expand();
+  List<String> expand(Set<Type> examined);
 }

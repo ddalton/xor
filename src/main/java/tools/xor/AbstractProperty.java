@@ -1076,15 +1076,16 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public Property getDomainProperty() {
 		return this;
 	}
-	
+
 	@Override
-	public List<String> expand() {
+	public List<String> expand(Set<Type> examined) {
 		List<String> result = new LinkedList<String>();
 		
 		if(getType() instanceof EntityType) {
-			if(((EntityType)getType()).isEmbedded()) {
+			if(((EntityType)getType()).isEmbedded() && !examined.contains(getType())) {
+				examined.add(getType());
 				for(Property p: getType().getProperties()) {
-					for(String embeddedPropertyName: p.expand()) {
+					for(String embeddedPropertyName: p.expand(examined)) {
 						result.add(getName() + Settings.PATH_DELIMITER + embeddedPropertyName);
 					}
 				}

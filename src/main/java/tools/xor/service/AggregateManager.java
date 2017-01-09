@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -1140,7 +1141,7 @@ public class AggregateManager implements Xor
 					continue;
 				}
 				// Handle embedded objects and expand them if necessary
-				propertyPaths.addAll(property.expand());
+				propertyPaths.addAll(property.expand(new HashSet<Type>()));
 			}
 
 			for (String propertyPath : propertyPaths) {

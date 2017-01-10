@@ -22,6 +22,15 @@ url: http://xor.tools
 
 logo: /img/logo-2x.png
 
+gems:
+  - jekyll-avatar
+  - jekyll-feed
+  - jekyll-mentions
+  - jekyll-redirect-from
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jemoji
+
 exclude:
   - README.md
   - .gitignore

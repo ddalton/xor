@@ -38,7 +38,7 @@ public class HibernateQuery extends AbstractQuery {
 	}
 
 	@Override
-	public Object getSingleResult() {
+	public Object getSingleResult(QueryView queryView) {
 		return hibQuery.uniqueResult();
 	}
 

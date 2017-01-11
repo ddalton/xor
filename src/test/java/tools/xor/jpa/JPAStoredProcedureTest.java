@@ -34,7 +34,7 @@ import tools.xor.logic.DefaultStoredProcedure;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-VO-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
+@TransactionConfiguration(defaultRollback = false)
 @Transactional
 public class JPAStoredProcedureTest extends DefaultStoredProcedure {
 

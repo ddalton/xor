@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.mail.Store;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.ParameterMode;
 
 import org.apache.log4j.LogManager;
@@ -80,6 +83,10 @@ public class StoredProcedureQuery extends AbstractQuery {
 		}
 	}
 
+	public StoredProcedure getStoredProcedure() {
+		return this.sp;
+	}
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	/**
@@ -96,98 +103,84 @@ public class StoredProcedureQuery extends AbstractQuery {
 		OutputLocation ol = sp.getOutputLocation().get(resultCount-1);
 		List result = new ArrayList();
 		try {
+			boolean hasMoreResults = false;
 			if(resultCount++ == 1) {
 				// When requesting the result for the first time, we execute
 				// the query
-				sp.getCallableStatement().execute();
+				hasMoreResults = sp.getCallableStatement().execute();
 			}
 			
-			// Each viewBranch specifies the output location 
-			//TODO: Dilip
-			//StoredProcedure outputSP = viewBranch.
+			// Each viewBranch specifies the output location
+			ResultSet rs = null;
 			if(ol.getType() == OutputType.RETURN) {
-				// Handle getMoreResults after this call
-				ResultSet rs = sp.getCallableStatement().getResultSet();
-				
-				// If the resultlist is empty from the StoredProcedure then
-				// get the types from the AggregateView
-				List<Type> attributeTypes = getAttributeTypes(viewBranch);
-				if(attributeTypes.isEmpty()) {
-					attributeTypes = viewBranch.getAttributeTypes();
-				}
-
-				// The size should match with the max columns in the result set
-				Object[] row = new Object[attributeTypes.size()];
-				
-				int columnIndex = 0;
-				for(Type type: attributeTypes) {
-					// Get the value from the ResultSet, JDBC columnIndex starts from 1
-					// TODO: Dilip
-					//row[columnIndex++] = type.getValue(rs, columnIndex);
-				}
+				// getMoreResults after this call will need to be invoked if the stored procedure
+				// is returning more result sets. Since this is not very reliable
+				// will not implement it by default and will consider adding it only through
+				// a config parameter if needed.
+				rs = (ResultSet)sp.getCallableStatement().getObject(1);
 
 			} else {
-				/*TODO: Dilip
-				sp.getCallableStatement()
-				Object obj = spQuery.getOutputParameterValue(sp.getOutputLocation().getParameter());
-				if(obj instanceof List) {
-					return (List) obj;
-				} else {
-					List result = new ArrayList();
-					result.add(obj);
-					return result;
+				// Look for the result from an OUT parameter.
+				for (ParameterMapping param : sp.parameterList) {
+					if (param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
+
+						// get cursor and cast it to ResultSet
+						rs = (ResultSet) sp.getCallableStatement().getObject(param.position);
+						break;
+					}
 				}
-				*/
 			}
+
+			// If the resultlist is empty from the StoredProcedure then
+			// get the types from the AggregateView
+			List<Type> attributeTypes = getAttributeTypes(viewBranch);
+			if(attributeTypes.isEmpty()) {
+				attributeTypes = viewBranch.getAttributeTypes();
+			}
+
+			while(rs.next()) {
+				// The size should match with the max columns in the result set
+				Object[] row = new Object[attributeTypes.size()];
+				result.add(row);
+
+				int columnIndex = 0;
+				for (Type type : attributeTypes) {
+					// Get the value from the ResultSet, JDBC columnIndex starts from 1
+					row[columnIndex++] = ParameterMapping.getValue(
+						type.getInstanceClass(),
+						rs,
+						columnIndex);
+				}
+			}
+
 		} catch (SQLException e) {
-			ClassUtil.wrapRun(e);
+			throw ClassUtil.wrapRun(e);
 		}
-		
-		//TODO: Dilip
+
 		return result;
-		
-		/*
-		 * Look at http://ahexamples.blogspot.com/2014/05/example-of-java-jdbc-call.html
-		 * 
-		 		try {
-			final CallableStatement statement = (CallableStatement) getSession().getTransactionCoordinator()
-					.getJdbcCoordinator()
-					.getStatementPreparer()
-					.prepareStatement( call, true );
-
-
-			// prepare parameters
-			int i = 1;
-
-			for ( ParameterRegistrationImplementor parameter : registeredParameters ) {
-				parameter.prepare( statement, i );
-				if ( parameter.getMode() == ParameterMode.REF_CURSOR ) {
-					i++;
-				}
-				else {
-					i += parameter.getSqlTypes().length;
-				}
-			}
-
-			return new ProcedureOutputsImpl( this, statement );
-			
-			NOTE: look at executeQuery instead of execute for READ action
-			Also, support multiple result sets, by this way, multiple round trips to the DB is avoided.
-		 */
 	}
 
 	@Override
-	public Object getSingleResult() {
-		//TODO: Dilip
-		//return spQuery.getSingleResult();
-		throw new UnsupportedOperationException();
+	/**
+	 * @throws javax.persistence.NoResultException if there is no result
+	 * @throws javax.persistence.NonUniqueResultException if more than one result
+	 */
+	public Object getSingleResult(QueryView queryView) {
+		List result = getResultList(queryView);
+		if(result.size() == 0) {
+			throw new NoResultException();
+		}
+		if(result.size() > 1) {
+			throw new NonUniqueResultException();
+		}
+
+		return result.get(0);
 	}
 
 	@Override
 	public void setParameter(String name, Object value) {
 		ParameterMapping param = paramMap.get(name);
-		//TODO: Dilip
-		//param.type.setSQLValue(sp.getCallableStatement(), param.position, value);
+		param.setValue(sp.getCallableStatement(), value);
 	}
 
 	@Override
@@ -213,125 +206,54 @@ public class StoredProcedureQuery extends AbstractQuery {
 	
 	@Override
 	public void prepare(EntityType entityType, QueryView queryView) {
-		/*
-		 * Needed to set IN, INOUT - setParameter
-		 * OUT, INOUT - this method
-		 * 
-		 	@Override
-	public void prepare(CallableStatement statement, int startIndex) throws SQLException {
-		// initially set up the Type we will use for binding as the explicit type.
-		Type typeToUse = hibernateType;
-		int[] sqlTypesToUse = sqlTypes;
 
-		// however, for Calendar binding with an explicit TemporalType we may need to adjust this...
-		if ( bind != null && bind.getExplicitTemporalType() != null ) {
-			if ( Calendar.class.isInstance( bind.getValue() ) ) {
-				switch ( bind.getExplicitTemporalType() ) {
-					case TIMESTAMP: {
-						typeToUse = CalendarType.INSTANCE;
-						sqlTypesToUse = typeToUse.sqlTypes( session().getFactory() );
-						break;
+		// A Java Type can map to multiple SQL types, so it is mandatory for the user
+		// to specify the parameter type
+		if(sp.getParameterList() != null) {
+			for(ParameterMapping param: sp.getParameterList()) {
+				
+				if(param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
+					if(param.type == null) {
+						throw new RuntimeException("type is mandatory for OUT/INOUT parameter [name: " + param.name + ", attribute: " + param.attribute + "]");
 					}
-					case DATE: {
-						typeToUse = CalendarDateType.INSTANCE;
-						sqlTypesToUse = typeToUse.sqlTypes( session().getFactory() );
-						break;
-					}
-					case TIME: {
-						typeToUse = CalendarTimeType.INSTANCE;
-						sqlTypesToUse = typeToUse.sqlTypes( session().getFactory() );
-						break;
-					}
-				}
-			}
-		}
-
-		this.startIndex = startIndex;
-		if ( mode == ParameterMode.IN || mode == ParameterMode.INOUT || mode == ParameterMode.OUT ) {
-			if ( mode == ParameterMode.INOUT || mode == ParameterMode.OUT ) {
-				if ( sqlTypesToUse.length > 1 ) {
-					// there is more than one column involved; see if the Hibernate Type can handle
-					// multi-param extraction...
-					final boolean canHandleMultiParamExtraction =
-							ProcedureParameterExtractionAware.class.isInstance( hibernateType )
-									&& ( (ProcedureParameterExtractionAware) hibernateType ).canDoExtraction();
-					if ( ! canHandleMultiParamExtraction ) {
-						// it cannot...
-						throw new UnsupportedOperationException(
-								"Type [" + hibernateType + "] does support multi-parameter value extraction"
-						);
+					registerOutParameter(param.position, param);
+				} else { // IN parameters
+					if(param.attribute != null) {
+						// Value taken from the entity attribute
+						ExtendedProperty p = (ExtendedProperty) entityType.getProperty(param.attribute);
+						if(!p.getType().isDataType()) {
+							throw new RuntimeException("The attribute should refer to a simple type");
+						}
 					}
 				}
-				for ( int i = 0; i < sqlTypesToUse.length; i++ ) {
-					statement.registerOutParameter( startIndex + i, sqlTypesToUse[i] );
-				}
-			}
-
-			if ( mode == ParameterMode.INOUT || mode == ParameterMode.IN ) {
-				if ( bind == null || bind.getValue() == null ) {
-					// the user did not bind a value to the parameter being processed.  That might be ok *if* the
-					// procedure as defined in the database defines a default value for that parameter.
-					// Unfortunately there is not a way to reliably know through JDBC metadata whether a procedure
-					// parameter defines a default value.  So we simply allow the procedure execution to happen
-					// assuming that the database will complain appropriately if not setting the given parameter
-					// bind value is an error.
-					log.debugf(
-							"Stored procedure [%s] IN/INOUT parameter [%s] not bound; assuming procedure defines default value",
-							procedureCall.getProcedureName(),
-							this
-					);
-				}
-				else {
-					typeToUse.nullSafeSet( statement, bind.getValue(), startIndex, session() );
-				}
-			}
-		}
-		else {
-			// we have a REF_CURSOR type param
-			if ( procedureCall.getParameterStrategy() == ParameterStrategy.NAMED ) {
-				session().getFactory().getServiceRegistry()
-						.getService( RefCursorSupport.class )
-						.registerRefCursorParameter( statement, getName() );
-			}
-			else {
-				session().getFactory().getServiceRegistry()
-						.getService( RefCursorSupport.class )
-						.registerRefCursorParameter( statement, startIndex );
 			}
 		}
 	}
-		 */
-		
-		
-		if(sp.getParameterList() != null) {
-			for(ParameterMapping param: sp.getParameterList()) {
-				if(param.type == null || param.type == void.class) {
-					// set the type
-					if(param.attribute == null) {
-						throw new RuntimeException("For non-attribute parameters the type has to be specified, since it cannot be inferred");
-					}
-					ExtendedProperty p = (ExtendedProperty) entityType.getProperty(param.attribute);
-					if(!p.getType().isDataType()) {
-						throw new RuntimeException("The attribute should refer to a simple type");
-					}
-					param.type = p.getType().getInstanceClass();
-				}
-				
-				if(param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
-					registerOutParameter(param.position, param);
-				}
+
+	private void registerOutParameter (int position, ParameterMapping param)
+	{
+		try {
+
+			int sqlType = 0;
+			try {
+				// Obtain a dialect specific type e.g., OracleTypes.CURSOR
+				sqlType = Integer.parseInt(param.type);
+			}
+			catch (NumberFormatException e) {
+				// Fallback to java.sql.Types
+				sqlType = (int)java.sql.Types.class.getDeclaredField(param.type).get(null);
+			}
+
+			if (sqlType == java.sql.Types.NUMERIC || sqlType == java.sql.Types.DECIMAL) {
+				sp.callableStatement.registerOutParameter(position, sqlType, param.scale);
+			}
+			else {
+				sp.callableStatement.registerOutParameter(position, sqlType);
 			}
 		}
-	}	
-	
-	private void registerOutParameter(int position, ParameterMapping param) {
-		/* TODO: Dilip
-		if(param.type.getSQLType() == java.sql.Types.NUMERIC || param.type.getSQLType() == java.sql.Types.DECIMAL) {
-			sp.callableStatement.registerOutParameter(position, param.type.getSQLType(), param.scale);
-		} else {
-			sp.callableStatement.registerOutParameter(position, param.type.getSQLType());
+		catch (Exception e) {
+			throw ClassUtil.wrapRun(e);
 		}
-		*/
 	}
 	
 	private List<Type> getAttributeTypes(QueryView viewBranch) {

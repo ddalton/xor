@@ -27,7 +27,7 @@ public interface Query {
 
 	/**
 	 * Get the result from the query
-	 * @param queryView view
+	 * @param queryView to identify the attribute types to hydrate
 	 * @return query result
 	 */
 	@SuppressWarnings("rawtypes")
@@ -35,9 +35,10 @@ public interface Query {
 
 	/**
 	 * Get single result from the query
+	 * @param queryView to identify the attribute types to hydrate
 	 * @return single result object
 	 */
-	public Object getSingleResult();
+	public Object getSingleResult(QueryView queryView);
 	
 	/**
 	 * set the value for a parameter

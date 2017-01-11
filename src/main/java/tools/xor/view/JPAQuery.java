@@ -39,7 +39,7 @@ public class JPAQuery extends AbstractQuery {
 	}
 
 	@Override
-	public Object getSingleResult() {
+	public Object getSingleResult(QueryView queryView) {
 		return jpaQuery.getSingleResult();
 	}
 

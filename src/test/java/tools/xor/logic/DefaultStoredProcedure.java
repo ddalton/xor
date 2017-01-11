@@ -32,6 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.AggregateAction;
+import tools.xor.Settings;
+import tools.xor.db.base.Person;
 import tools.xor.service.AggregateManager;
 import tools.xor.view.AggregateView;
 import tools.xor.view.ParameterMapping;
@@ -40,12 +42,32 @@ import tools.xor.view.StoredProcedure;
 public class DefaultStoredProcedure extends AbstractDBTest {
 	
 	@Autowired
-	protected AggregateManager aggregateService;	
-	
+	protected AggregateManager aggregateService;
+
+	final String NAME = "GEORGE_WASHINGTON";
+	final String DISPLAY_NAME = "George Washington";
+	final String DESCRIPTION = "First President of the United States of America";
+	final String USER_NAME = "georgewashington";
+
 	protected void singleReadSP() throws UnsupportedEncodingException, JAXBException {
 		AggregateView view = aggregateService.getView("BASICINFO_SP");
-		outputSP(view);	
+		outputSP(view);
+/*
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
 
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// read the person object using a DataObject
+		Settings settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Person.class));
+		settings.setDenormalized(true);
+		settings.setView(aggregateService.getView("BASICINFO_SP"));
+		List result = aggregateService.query(new Person(), settings);
+*/
 		assert(view.getStoredProcedure().size() == 2);
 	}
 	
@@ -107,7 +129,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		// extra1
 		pm = new ParameterMapping();
 		pm.setName("extra1");
-		pm.setType(String.class);
+		pm.setType("VARCHAR");
 		pm.setDefaultValue("ABC");
 		pm.setMode(ParameterMode.IN);
 		pmList.add(pm);		
@@ -115,7 +137,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		// extra2
 		pm = new ParameterMapping();
 		pm.setName("extra2");
-		pm.setType(Date.class);
+		pm.setType("DATE");
 		pm.setDefaultValue("2013-10-21T13:28:06.419Z");
 		pm.setMode(ParameterMode.OUT);
 		pmList.add(pm);	
@@ -123,7 +145,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		// extra2
 		pm = new ParameterMapping();
 		pm.setName("extra3");
-		pm.setType(void.class);
+		pm.setType("DATE");
 		pm.setMode(ParameterMode.OUT);
 		pmList.add(pm);			
 		

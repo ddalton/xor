@@ -31,6 +31,8 @@ import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryView;
+import tools.xor.view.StoredProcedure;
+import tools.xor.view.StoredProcedureQuery;
 
 public class DenormalizedQueryOperation extends QueryOperation {
 	
@@ -64,10 +66,15 @@ public class DenormalizedQueryOperation extends QueryOperation {
 
 			NativeQuery nativeQuery = branch.view().getNativeQuery();
 			List<String> selectedColumns;
-			if(nativeQuery != null) 
+			if(nativeQuery != null) {
 				selectedColumns = nativeQuery.getResultList();
-			else
-				selectedColumns = query.getColumns();
+			} else {
+				if(query instanceof StoredProcedureQuery) {
+					selectedColumns = ((StoredProcedureQuery) query).getStoredProcedure().getResultList();
+				} else {
+					selectedColumns = query.getColumns();
+				}
+			}
 			result.add(selectedColumns.toArray());
 
 			for(Object obj: query.getResultList(branch)) {

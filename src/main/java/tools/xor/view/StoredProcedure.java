@@ -106,12 +106,32 @@ public class StoredProcedure {
 		return this.callableStatement;
 	}
 
-	private String getParamString() {
-		StringBuilder result = new StringBuilder();
-		if(parameterList != null && parameterList.size() > 0) {
-			for (int i = 1; i < parameterList.size(); i++) {
-				result.append("?,");
+	private boolean hasReturnValue() {
+		boolean result = false;
+		for (OutputLocation ol : getOutputLocation()) {
+			if (ol.getType() == OutputLocation.OutputType.RETURN) {
+				result = true;
+				break;
 			}
+		}
+
+		return result;
+	}
+
+	private String getParamString ()
+	{
+		StringBuilder result = new StringBuilder();
+
+
+		int numParams = parameterList == null ? 0 : parameterList.size();
+		if (hasReturnValue()) {
+			numParams--;
+		}
+
+		for (int i = 1; i < numParams; i++) {
+			result.append("?,");
+		}
+		if(numParams > 0) {
 			result.append("?");
 		}
 
@@ -130,12 +150,23 @@ public class StoredProcedure {
 		}
 
 		StringBuilder result = new StringBuilder();
+
+		if(hasReturnValue()) {
+			result.append("{? = call ");
+		} else {
+			result.append("{call ");
+		}
+
 		result
-			.append("{call ")
-			.append(name)
-			.append("(")
-			.append(getParamString())
-			.append(")}");
+			.append(name);
+
+		String paramString = getParamString();
+		if(paramString.trim().length() > 0) {
+			result.append("(")
+				.append(getParamString())
+				.append(")");
+		}
+		result.append("}");
 
 		callString = result.toString();
 		return callString;

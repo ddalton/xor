@@ -56,7 +56,8 @@
 	
 	<!-- Initialize DataSource with a stored procedure -->
 	<jdbc:initialize-database data-source="dataSource">
-        <jdbc:script location="classpath:sp-hsql.sql" separator="/;"/>
+        <!--jdbc:script location="classpath:sp-hsql.sql" separator="/;"/-->
+        <jdbc:script location="classpath:sp-oracle.sql" separator="/;"/>
 	</jdbc:initialize-database>	
 
 	<bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">

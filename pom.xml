@@ -245,6 +245,12 @@
             <version>2.4</version>
         </dependency>
 
+	<dependency>
+	    <groupId>commons-configuration</groupId>
+	    <artifactId>commons-configuration</artifactId>
+	    <version>1.10</version>
+	</dependency>
+
         <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>

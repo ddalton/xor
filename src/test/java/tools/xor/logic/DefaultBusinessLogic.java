@@ -24,12 +24,9 @@ import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
-import tools.xor.AssociationSetting;
 import tools.xor.Settings;
 import tools.xor.db.base.Rate;
 import tools.xor.db.base.Technician;
-import tools.xor.db.pm.Task;
-import tools.xor.db.pm.TaskDetails;
 import tools.xor.service.AggregateManager;
 
 public class DefaultBusinessLogic extends AbstractDBTest {
@@ -73,7 +70,7 @@ public class DefaultBusinessLogic extends AbstractDBTest {
 		
 		assert(technician.getId() != null);
 		
-		String comment = technician.getComment();
+		String comment = technician.getComments();
 		assert(comment != null);
 		assert(comment.equals("SetRate"));
 	}

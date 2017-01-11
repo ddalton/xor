@@ -24,7 +24,6 @@ import javax.persistence.Entity;
 import javax.persistence.OneToOne;
 
 import tools.xor.AggregateAction;
-import tools.xor.ExtendedProperty.Phase;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorLambda;
@@ -34,7 +33,7 @@ public class Technician extends Person {
 
 	private Rate rate;
 	private String skill;
-	private String comment;
+	private String comments;
 
 	public String getSkill() {
 		return skill;
@@ -65,15 +64,15 @@ public class Technician extends Person {
 	@XorLambda(property="rate")
 	public static void updateRate(@XorDomain Technician current, @XorExternal(path="rate") Rate rate) {
 		current.rate = rate;
-		current.comment = "SetRate";
+		current.comments = "SetRate";
 	}
 
-	public String getComment() {
-		return comment;
+	public String getComments () {
+		return comments;
 	}
 
-	public void setComment(String comment) {
-		this.comment = comment;
+	public void setComments (String comments) {
+		this.comments = comments;
 	}
 	
 }

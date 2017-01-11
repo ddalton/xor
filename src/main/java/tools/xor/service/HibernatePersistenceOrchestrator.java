@@ -47,6 +47,7 @@ import org.hibernate.jdbc.Work;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.Type;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.view.AggregateView;
 import tools.xor.view.HibernateQuery;
 import tools.xor.view.Query;
@@ -70,16 +71,18 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	 * @param data any additional data that needs to be passed by the user
 	 */
 	public HibernatePersistenceOrchestrator(Object sessionContext, Object data) {
-		Logger logger = Logger.getLogger(SQL_LOGGER);
-		Enumeration<RollingFileAppender> e = logger.getAllAppenders();
-		while ( e.hasMoreElements() ){
-			RollingFileAppender appender = e.nextElement();
-			Layout original = appender.getLayout();
-			if(SQLLogLayout.class.isAssignableFrom(original.getClass()))
-				continue;
-			
-			appender.setLayout(new SQLLogLayout(original));
-			appender.activateOptions();
+		if(ApplicationConfiguration.config().getBoolean("sql.stacktrace")) {
+			Logger logger = Logger.getLogger(SQL_LOGGER);
+			Enumeration<RollingFileAppender> e = logger.getAllAppenders();
+			while (e.hasMoreElements()) {
+				RollingFileAppender appender = e.nextElement();
+				Layout original = appender.getLayout();
+				if (SQLLogLayout.class.isAssignableFrom(original.getClass()))
+					continue;
+
+				appender.setLayout(new SQLLogLayout(original));
+				appender.activateOptions();
+			}
 		}
 	}	
 	

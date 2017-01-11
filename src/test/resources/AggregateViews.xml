@@ -79,7 +79,7 @@
 			     required for a read stored procedure.
 				 The Output location could either represent the result or one of the
 				 OUT parameters if defined -->
-			<!--parameterList name="returnValue" mode="OUT" type="-10"/-->
+			<parameterList name="returnValue" mode="OUT" type="-10"/>
 			<outputLocation type="RETURN"/>
 			<!--outputLocation type="PARAMETER"/-->
 			<!-- The result list should match the attribute list 
@@ -140,7 +140,7 @@
 			<resultList>[BASICINFO]</resultList>		
 			<resultList>TYPE_</resultList>				
 			<queryString>
-				<![CDATA[SELECT uuid,
+				<![CDATA[SELECT p.uuid,
 							  name,
 							  displayname,
 							  description,
@@ -151,7 +151,7 @@
 							  LEFT JOIN Employee e
 							ON p.uuid = e.uuid]]>
 			</queryString>
-			<identifierClause>WHERE UUID</identifierClause>				
+			<identifierClause>WHERE p.UUID</identifierClause>				
 		</nativeQuery>
 	</aggregateView>	
 	<aggregateView>

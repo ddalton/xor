@@ -19,10 +19,12 @@
 
 package tools.xor.view;
 
+import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,11 +36,11 @@ import javax.persistence.ParameterMode;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Type;
 import tools.xor.util.ClassUtil;
-import tools.xor.view.OutputLocation.OutputType;
 
 /**
 The syntax for invoking a stored procedure in JDBC is shown below. Note that the square brackets indicate that what is between them is optional; they are not themselves part of the syntax.
@@ -64,7 +66,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	
 	// If a stored procedure is returning multiple results and an error occurs,
 	// this variable helps to debug on which result call the error occurred
-	private int resultCount = 1;
+	private int resultCount = 0;
 
 	public StoredProcedureQuery(StoredProcedure sp) {
 
@@ -100,61 +102,111 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 * mapping to a different resultSet.
 	 */
 	public List getResultList(QueryView viewBranch) {
-		OutputLocation ol = sp.getOutputLocation().get(resultCount-1);
-		List result = new ArrayList();
-		try {
-			boolean hasMoreResults = false;
-			if(resultCount++ == 1) {
-				// When requesting the result for the first time, we execute
-				// the query
-				hasMoreResults = sp.getCallableStatement().execute();
-			}
-			
-			// Each viewBranch specifies the output location
-			ResultSet rs = null;
-			if(ol.getType() == OutputType.RETURN) {
-				// getMoreResults after this call will need to be invoked if the stored procedure
-				// is returning more result sets. Since this is not very reliable
-				// will not implement it by default and will consider adding it only through
-				// a config parameter if needed.
-				rs = (ResultSet)sp.getCallableStatement().getObject(1);
+		boolean isMultiple = sp.isMultiple();
+		Map<Integer, QueryView> branchPosition = new HashMap<Integer, QueryView>();
 
-			} else {
-				// Look for the result from an OUT parameter.
-				for (ParameterMapping param : sp.parameterList) {
-					if (param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
-
-						// get cursor and cast it to ResultSet
-						rs = (ResultSet) sp.getCallableStatement().getObject(param.position);
-						break;
+		if(isMultiple) {
+			if(viewBranch.getSubBranches().size() > 0) {
+				for (QueryView subBranch : viewBranch.getSubBranches()) {
+					if (subBranch.view() != null) {
+						StoredProcedure branchSP = subBranch.view().getStoredProcedure(
+							AggregateAction.READ);
+						OutputLocation ol = branchSP.getOutputLocation();
+						branchPosition.put(ol.getPosition(), subBranch);
+					}
+					else {
+						throw new RuntimeException(
+							"Auto-branch is not supported with Stored-Procedures as the fields are not known beforehand."
+								+ "Explicitly create the child branches to take advantage of the Stored-Procedure's multiple result sets");
 					}
 				}
+			} else {
+				OutputLocation ol = sp.getOutputLocation();
+				branchPosition.put(ol.getPosition(), viewBranch);
 			}
+		}
 
-			// If the resultlist is empty from the StoredProcedure then
-			// get the types from the AggregateView
-			List<Type> attributeTypes = getAttributeTypes(viewBranch);
-			if(attributeTypes.isEmpty()) {
-				attributeTypes = viewBranch.getAttributeTypes();
-			}
-
-			while(rs.next()) {
-				// The size should match with the max columns in the result set
-				Object[] row = new Object[attributeTypes.size()];
-				result.add(row);
-
-				int columnIndex = 0;
-				for (Type type : attributeTypes) {
-					// Get the value from the ResultSet, JDBC columnIndex starts from 1
-					row[columnIndex++] = ParameterMapping.getValue(
-						type.getInstanceClass(),
-						rs,
-						columnIndex);
+		List result = new ArrayList();
+		try {
+			ResultSet rs = null;
+			boolean hasResults = false;
+			do {
+				if (resultCount++ == 0) {
+					// When requesting the result for the first time, we execute
+					// the query
+					// The stored procedure only need to contain queries
+					if(sp.isImplicit()) {
+						sp.getStatement().executeQuery(sp.getCallString());
+						hasResults = sp.getStatement().getMoreResults();
+					} else {
+						((CallableStatement)sp.getStatement()).execute();
+					}
+				} else {
+					// Only makes sense for implicit results
+					hasResults = sp.getStatement().getMoreResults();
 				}
-			}
 
-		} catch (SQLException e) {
+				// Each viewBranch specifies the output location
+				if(sp.isImplicit()) {
+					if(hasResults) {
+						rs = sp.getStatement().getResultSet();
+						if (branchPosition.containsKey(resultCount)) {
+							result.addAll(extractResults(rs, branchPosition.get(resultCount)));
+						}
+					}
+				}
+				else {
+					// Look for the result from an OUT parameter.
+					for (ParameterMapping param : sp.parameterList) {
+						if (param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
+
+							// get cursor and cast it to ResultSet
+							rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(param.position);
+							QueryView subBranch = branchPosition.get(param.position);
+							result.addAll(extractResults(rs, subBranch));
+						}
+					}
+				}
+
+			} while (hasResults || sp.getStatement().getUpdateCount() != -1);
+
+		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
+		} finally {
+			try {
+				sp.getStatement().close();
+			} catch (SQLException e) {
+				throw ClassUtil.wrapRun(e);
+			}
+		}
+
+		return result;
+	}
+
+	private List extractResults(ResultSet rs, QueryView subBranch) throws SQLException
+	{
+		List result = new ArrayList();
+
+		// If the resultlist is empty from the StoredProcedure then
+		// get the types from the AggregateView
+		List<Type> attributeTypes = getAttributeTypes(subBranch);
+		if (attributeTypes.isEmpty()) {
+			attributeTypes = subBranch.getAttributeTypes();
+		}
+
+		while (rs.next()) {
+			// The size should match with the max columns in the result set
+			Object[] row = new Object[attributeTypes.size()];
+			result.add(row);
+
+			int columnIndex = 0;
+			for (Type type : attributeTypes) {
+				// Get the value from the ResultSet, JDBC columnIndex starts from 1
+				row[columnIndex++] = ParameterMapping.getValue(
+					type.getInstanceClass(),
+					rs,
+					columnIndex);
+			}
 		}
 
 		return result;
@@ -180,7 +232,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	@Override
 	public void setParameter(String name, Object value) {
 		ParameterMapping param = paramMap.get(name);
-		param.setValue(sp.getCallableStatement(), value);
+		param.setValue((CallableStatement) sp.getStatement(), value);
 	}
 
 	@Override
@@ -192,7 +244,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	public void setMaxResults(int limit) {
 		if(sp.getMaxResults() != null) {
 			try {
-				sp.callableStatement.setMaxRows(Integer.valueOf(sp.getMaxResults()));
+				sp.statement.setMaxRows(Integer.valueOf(sp.getMaxResults()));
 			} catch (SQLException e) {
 				logger.warn("Unable to set maxRows: " + e.getMessage());
 			}
@@ -235,6 +287,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		try {
 
 			int sqlType = 0;
+			CallableStatement callableStatement = (CallableStatement)sp.statement;
 			try {
 				// Obtain a dialect specific type e.g., OracleTypes.CURSOR
 				sqlType = Integer.parseInt(param.type);
@@ -245,10 +298,10 @@ public class StoredProcedureQuery extends AbstractQuery {
 			}
 
 			if (sqlType == java.sql.Types.NUMERIC || sqlType == java.sql.Types.DECIMAL) {
-				sp.callableStatement.registerOutParameter(position, sqlType, param.scale);
+				callableStatement.registerOutParameter(position, sqlType, param.scale);
 			}
 			else {
-				sp.callableStatement.registerOutParameter(position, sqlType);
+				callableStatement.registerOutParameter(position, sqlType);
 			}
 		}
 		catch (Exception e) {
@@ -258,12 +311,16 @@ public class StoredProcedureQuery extends AbstractQuery {
 	
 	private List<Type> getAttributeTypes(QueryView viewBranch) {
 		int initialCapacity = 0;
-		if(sp.getResultList() != null) {
-			initialCapacity = sp.getResultList().size();
+
+		List<String> resultFields = new ArrayList<>();
+		StoredProcedure branchSP = viewBranch.view().getStoredProcedure(AggregateAction.READ);
+		if(branchSP.getResultList() != null) {
+			resultFields = branchSP.getResultList();
 		}
+		initialCapacity = resultFields.size();
 		
 		List<Type> result = new ArrayList<>(initialCapacity);
-		for(String attr: sp.getResultList()) {
+		for(String attr: resultFields) {
 			ExtendedProperty p = (ExtendedProperty) viewBranch.getAggregateType().getProperty(attr);
 			if(!p.getType().isDataType()) {
 				throw new RuntimeException("The attribute should refer to a simple type");

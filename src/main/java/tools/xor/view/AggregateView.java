@@ -28,12 +28,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.MatchResult;
 
+import javax.mail.Store;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
@@ -259,6 +261,21 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 
 	public void setNativeQuery(NativeQuery nativeQuery) {
 		this.nativeQuery = nativeQuery;
+	}
+
+	public StoredProcedure getStoredProcedure(final AggregateAction action) {
+		StoredProcedure result = null;
+
+		if(getStoredProcedure() != null) {
+			for (StoredProcedure sp : getStoredProcedure()) {
+				if (sp.getAction() == action) {
+					result = sp.copy();
+					break;
+				}
+			}
+		}
+
+		return result;
 	}
 
 	public List<StoredProcedure> getStoredProcedure() {

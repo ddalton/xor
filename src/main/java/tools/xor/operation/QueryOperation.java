@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ProcessingStage;
@@ -36,6 +37,7 @@ import tools.xor.util.ClassUtil;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryView;
+import tools.xor.view.StoredProcedure;
 
 public class QueryOperation extends AbstractOperation {
 
@@ -55,12 +57,18 @@ public class QueryOperation extends AbstractOperation {
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
 		QueryView aggregateView = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
-		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();	
-		
+		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();
+
 		// Put in loop if there are sub-branches
 		if(aggregateView.getSubBranches().size() > 1) {
-			for(QueryView branch: aggregateView.getSubBranches())
-				executeBranch(branch, uniqueList, qb, callInfo);
+			StoredProcedure sp = aggregateView.view().getStoredProcedure(AggregateAction.READ);
+			if(sp != null && sp.isMultiple()) {
+				executeBranch(aggregateView, uniqueList, qb, callInfo);
+			} else {
+				for (QueryView branch : aggregateView.getSubBranches()) {
+					executeBranch(branch, uniqueList, qb, callInfo);
+				}
+			}
 		} else {
 			executeBranch(aggregateView, uniqueList, qb, callInfo);
 		}
@@ -79,6 +87,13 @@ public class QueryOperation extends AbstractOperation {
 		
 		return query;				
 	}
+
+	protected Query getQueryInstance(QueryView branch, QueryBuilder qb, CallInfo callInfo) {
+		qb.init((BusinessObject) callInfo.getInput(), branch, callInfo.getSettings().getAdditionalFilters());
+		Query query = createQuery(branch, callInfo, qb);
+
+		return query;
+	}
 	
 	protected void checkSecurity(QueryView branch, CallInfo callInfo) {
 		if(branch.isCrossAggregate() && !callInfo.getSettings().permitCrossAggregate())
@@ -86,8 +101,8 @@ public class QueryOperation extends AbstractOperation {
 	}
 	
 	private void executeBranch(QueryView branch, Map<BusinessObject, Object> uniqueList, QueryBuilder qb, CallInfo callInfo) {
-		qb.init((BusinessObject) callInfo.getInput(), branch, callInfo.getSettings().getAdditionalFilters());	
-		Query query = createQuery(branch, callInfo, qb);
+
+		Query query = getQueryInstance(branch, qb, callInfo);
 		
 		try {
 			checkSecurity(branch, callInfo);

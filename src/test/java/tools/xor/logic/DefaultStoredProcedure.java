@@ -52,14 +52,16 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 	protected void singleReadSP() throws UnsupportedEncodingException, JAXBException {
 		AggregateView view = aggregateService.getView("BASICINFO_SP");
 		outputSP(view);
-/*
+
 		Person person = new Person();
 		person.setName(NAME);
 		person.setDisplayName(DISPLAY_NAME);
 		person.setDescription(DESCRIPTION);
 		person.setUserName(USER_NAME);
 
-		person = (Person) aggregateService.create(person, new Settings());
+		Settings s = new Settings();
+		s.setPostFlush(true);
+		person = (Person) aggregateService.create(person, s);
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
@@ -67,8 +69,8 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		settings.setDenormalized(true);
 		settings.setView(aggregateService.getView("BASICINFO_SP"));
 		List result = aggregateService.query(new Person(), settings);
-*/
-		assert(view.getStoredProcedure().size() == 2);
+
+		assert(result.size() == 2);
 	}
 	
 	private StoredProcedure getReadSP() {

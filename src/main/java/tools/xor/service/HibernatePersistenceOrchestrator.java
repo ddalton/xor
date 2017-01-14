@@ -224,7 +224,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 			break;
 			
 		case SP:
-			createCallableStatement(sp);
+			createStatement(sp);
 			result = new StoredProcedureQuery(sp);
 			break;			
 
@@ -236,7 +236,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	}
 	
 	@Override
-	protected void createCallableStatement(final StoredProcedure sp) {
+	protected void createStatement (final StoredProcedure sp) {
 		
 		getSession().doWork(new Work() {
 		    @Override
@@ -246,7 +246,11 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 					if(!dbmd.supportsStoredProcedures()) {
 						throw new UnsupportedOperationException("Stored procedures with JDBC escape syntax is not supported");
 					}
-					sp.setCallableStatement(conn.prepareCall(sp.jdbcCallString()));
+					if(sp.isImplicit()) {
+						sp.setStatement(conn.createStatement());
+					} else {
+						sp.setStatement(conn.prepareCall(sp.jdbcCallString()));
+					}
 				} catch (SQLException e) {
 					logger.info("Unable to retrieve JDBC metadata: " + e.getMessage());
 				} 

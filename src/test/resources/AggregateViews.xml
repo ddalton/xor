@@ -74,20 +74,19 @@
 		<storedProcedure>
 			<name>GetPersonBasic</name>
 			<action>READ</action>
+        		<!--implicit>true</implicit-->
+        		<!--multiple>true</multiple-->
+			<outputLocation position="1"/>
 			<!--parameterList attribute="id" mode="IN" /-->
 			<!-- OutputLocation is optional for an update stored procedure, but is
-			     required for a read stored procedure.
-				 The Output location could either represent the result or one of the
-				 OUT parameters if defined -->
-			<parameterList name="returnValue" mode="OUT" type="-10"/>
-			<outputLocation type="RETURN"/>
-			<!--outputLocation type="PARAMETER"/-->
+			     required for a read stored procedure that is not implicit.-->
+			<parameterList name="returnValue" mode="OUT" returnType="true" position="1" type="-10"/>
 			<!-- The result list should match the attribute list 
 			     The result list is optional and is only necessary if the order/number of columns are
 				 different.
 				 If the result list is not specified we then go by the attribute list order
 			-->
-			<!--callString>select GetPersonBasic() from dual</callString-->
+			<!--callString>begin GetPersonBasic; end;</callString-->
 			<resultList>id</resultList>
 			<resultList>name</resultList>
 			<resultList>displayName</resultList>

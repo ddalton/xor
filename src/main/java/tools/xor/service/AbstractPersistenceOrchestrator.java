@@ -40,7 +40,7 @@ import tools.xor.view.StoredProcedure;
 public abstract class AbstractPersistenceOrchestrator implements PersistenceOrchestrator {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-	protected abstract void createCallableStatement(StoredProcedure sp);
+	protected abstract void createStatement (StoredProcedure sp);
 	
 	@Override
 	public boolean supportsVersionTracking() {

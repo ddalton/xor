@@ -174,7 +174,7 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 		return result;
 	}	
 	
-	protected void createCallableStatement(StoredProcedure sp) {
+	protected void createStatement (StoredProcedure sp) {
 		throw new UnsupportedOperationException("Stored procedure is not supported");
 	}
 

@@ -4,35 +4,21 @@ import javax.xml.bind.annotation.XmlAttribute;
 
 
 public class OutputLocation {
-	@XmlAttribute
-	private String name;
 	
 	private String parameter;
-	
-	private OutputType type;
-	
-	// Indexed from 1. Useful if the stored procedure is 
-	// returning multiple results and not all the results are neede
+
+	// Indexed from 1. Useful if the stored procedure is
+	// returning multiple results and not all the results are needed
 	// The position specifies which result this corresponds to
+	// used for validation
 	private int position;
-	
-	// The mechanism used by the stored procedure to return the output
-	public enum OutputType {
-		RETURN,
-		PARAMETER;
-	}
 	
 	public OutputLocation copy() {
 		OutputLocation result = new OutputLocation();
-		result.name = name;
 		result.parameter = parameter;
-		result.type = type;
+		result.position = position;
 
 		return result;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 	
     @XmlAttribute(name = "parameter")
@@ -43,13 +29,15 @@ public class OutputLocation {
 	public void setParameter(String parameter) {
 		this.parameter = parameter;
 	}
-	
-    @XmlAttribute(name = "type")
-	public OutputType getType() {
-		return this.type;
+
+	@XmlAttribute(name = "position")
+	public int getPosition ()
+	{
+		return position;
 	}
 
-	public void setType(OutputType type) {
-		this.type = type;
-	};	
+	public void setPosition (int position)
+	{
+		this.position = position;
+	}
 }

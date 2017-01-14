@@ -221,16 +221,21 @@
             <artifactId>hibernate-entitymanager</artifactId>
             <version>${hibernate.version}</version>
         </dependency>
-        <dependency>
+        <!--dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.6.4</version>
-        </dependency>
-        <dependency>
+        </dependency-->
+        <!--dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.6.4</version>
-        </dependency>
+        </dependency-->
+<dependency>
+    <groupId>log4j</groupId>
+    <artifactId>log4j</artifactId>
+    <version>1.2.17</version>
+</dependency>
 
         <!-- needed for running standalone java apps -->
         <dependency>
@@ -344,11 +349,22 @@
             <scope>compile</scope>
         </dependency>
 
-    <dependency>
+    <!--dependency>
       <groupId>com.oracle</groupId>
       <artifactId>ojdbc6</artifactId>
       <version>11.2.0.4</version>
+    </dependency-->
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>ojdbc7</artifactId>
+      <version>12.1.0.1</version>
     </dependency>
+
+        <dependency>
+            <groupId>com.sap.db</groupId>
+            <artifactId>ngdbc</artifactId>
+            <version>1.1</version>
+        </dependency>
 
     </dependencies>
 

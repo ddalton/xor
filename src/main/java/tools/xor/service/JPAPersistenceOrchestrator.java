@@ -21,6 +21,7 @@ package tools.xor.service;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -43,6 +44,8 @@ import javax.persistence.criteria.Root;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.hibernate.Session;
+import org.hibernate.jdbc.Work;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.Type;
@@ -170,7 +173,7 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 			break;
 			
 		case SP:
-			createCallableStatement(sp);
+			createStatement(sp);
 			result = new StoredProcedureQuery(sp);
 			break;
 
@@ -181,27 +184,37 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 		return result;
 	}	
 	
-	protected void createCallableStatement(StoredProcedure sp) {
-		java.sql.Connection conn = null;
+	protected void createStatement (final StoredProcedure sp) {
 		try {
-			getEntityManager().unwrap(java.sql.Connection.class);
-		} catch(PersistenceException pe) {
-			try {
-				// try hibernate provider
-				conn = getEntityManager().unwrap(org.hibernate.internal.SessionImpl.class).connection();
-			} catch (Exception e) {
-				throw new RuntimeException("Unable to obtain the JDBC connection");
-			}
+			Session session = getEntityManager().unwrap(Session.class);
+			session.doWork(
+				new Work()
+				{
+					@Override
+					public void execute (Connection connection) throws SQLException
+					{
+						// do whatever you need to do with the connection
+						// test
+						try {
+							DatabaseMetaData dbmd = connection.getMetaData();
+							if(!dbmd.supportsStoredProcedures()) {
+								throw new UnsupportedOperationException("Stored procedures with JDBC escape syntax is not supported");
+							}
+
+							if(sp.isImplicit()) {
+								sp.setStatement(connection.createStatement());
+							} else {
+								sp.setStatement(connection.prepareCall(sp.jdbcCallString()));
+							}
+						} catch (SQLException e) {
+							logger.info("Unable to retrieve JDBC metadata: " + e.getMessage());
+						}
+					}
+				});
 		}
-		try {
-			DatabaseMetaData dbmd = conn.getMetaData();
-			if(!dbmd.supportsStoredProcedures()) {
-				throw new UnsupportedOperationException("Stored procedures with JDBC escape syntax is not supported");
-			}
-			sp.setCallableStatement(conn.prepareCall(sp.jdbcCallString()));
-		} catch (SQLException e) {
-			logger.info("Unable to retrieve JDBC metadata: " + e.getMessage());
-		} 
+		catch (PersistenceException pe) {
+			throw new RuntimeException("Unable to obtain the JDBC connection");
+		}
 	}
 
 	@Override

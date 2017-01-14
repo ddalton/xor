@@ -25,6 +25,7 @@ import javax.xml.bind.JAXBException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
@@ -34,11 +35,11 @@ import tools.xor.logic.DefaultStoredProcedure;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-VO-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = false)
-@Transactional
 public class JPAStoredProcedureTest extends DefaultStoredProcedure {
 
 	@Test
+	@Commit
+	@Transactional
 	public void singleReadSP() throws UnsupportedEncodingException, JAXBException {
 		super.singleReadSP();
 	}

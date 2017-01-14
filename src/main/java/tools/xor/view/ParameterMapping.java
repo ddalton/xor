@@ -39,8 +39,10 @@ public class ParameterMapping {
 	
 	@XmlAttribute
 	ParameterMode mode = ParameterMode.IN;  // Default is IN
+
+	boolean returnType;
 	
-	@XmlTransient
+	@XmlAttribute
 	int position;
 
 	static Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<Class, JavaConverter>();
@@ -549,6 +551,16 @@ public class ParameterMapping {
 
 	public void setMode(ParameterMode mode) {
 		this.mode = mode;
+	}
+
+	@XmlAttribute
+	public boolean isReturnType() {
+		return this.returnType;
+	}
+
+	public void setReturnType (boolean value)
+	{
+		this.returnType = value;
 	}
 
 	public void setValue(CallableStatement cs, Object value) {

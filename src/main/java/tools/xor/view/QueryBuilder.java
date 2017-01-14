@@ -141,15 +141,10 @@ public class QueryBuilder {
 		//		and can work with all the databases that the user uses.
 		
 		if(view.getContentView() != null && view.getContentView().getStoredProcedure() != null) {
-			StoredProcedure querySP = null;
-			for(StoredProcedure sp: view.getContentView().getStoredProcedure()) {
-				if(sp.getAction() == AggregateAction.READ) {
-					querySP = sp;
-					break;
-				}
-			}
+			StoredProcedure querySP = view.getContentView().getStoredProcedure(AggregateAction.READ);
+
 			if(querySP != null) {
-				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(querySP.getName(), QueryType.SP, querySP);
+				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().	getQuery(querySP.getName(), QueryType.SP, querySP);
 			}
 		}
 

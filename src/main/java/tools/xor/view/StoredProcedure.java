@@ -19,13 +19,12 @@
 
 package tools.xor.view;
 
-import java.sql.CallableStatement;
-import java.util.List;
+import tools.xor.AggregateAction;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
-
-import tools.xor.AggregateAction;
+import java.sql.Statement;
+import java.util.List;
 
 /**
  * TODO: some common functionality between NativeQuery and StoredProcedure?
@@ -35,13 +34,17 @@ import tools.xor.AggregateAction;
 public class StoredProcedure {
 
 	protected String                 name;
-	protected String                 callString;
 	protected AggregateAction        action;
 	protected List<ParameterMapping> parameterList;
-	protected List<OutputLocation>   outputLocation;	// List to represent different locations for multiple results
-	protected List<String>           resultList;	
-	protected CallableStatement      callableStatement;
-	
+	protected List<String>           resultList;
+	protected OutputLocation         outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
+	protected Statement              statement;
+	protected String                 callString;
+	protected boolean                implicit;          // By default a callable statement is created,
+
+	// Set this to true if the code implicitly returns resultsets
+	protected boolean           multiple; // flag to denote if it supports multiple resultsets
+
 	@XmlAttribute
 	private String maxResults;
 
@@ -77,11 +80,11 @@ public class StoredProcedure {
 		this.parameterList = parameterList;
 	}
 
-	public List<OutputLocation> getOutputLocation() {
+	public OutputLocation getOutputLocation() {
 		return outputLocation;
 	}
 
-	public void setOutputLocation(List<OutputLocation> outputLocation) {
+	public void setOutputLocation(OutputLocation outputLocation) {
 		this.outputLocation = outputLocation;
 	}
 
@@ -96,24 +99,42 @@ public class StoredProcedure {
 	public String getMaxResults() {
 		return this.maxResults;
 	}
-	
-	public void setCallableStatement(CallableStatement cs) {
-		this.callableStatement = cs;
-	}
-	
+
 	@XmlTransient
-	public CallableStatement getCallableStatement() {
-		return this.callableStatement;
+	public Statement getStatement ()
+	{
+		return statement;
+	}
+
+	public void setStatement (Statement statement)
+	{
+		this.statement = statement;
 	}
 
 	private boolean hasReturnValue() {
 		boolean result = false;
-		for (OutputLocation ol : getOutputLocation()) {
-			if (ol.getType() == OutputLocation.OutputType.RETURN) {
+		for (ParameterMapping pm : parameterList) {
+			if(pm.isReturnType()) {
 				result = true;
 				break;
 			}
 		}
+
+		return result;
+	}
+
+	public StoredProcedure copy() {
+		StoredProcedure result = new StoredProcedure();
+		result.setName(name);
+		result.setCallString(callString);
+		result.setAction(action);
+		result.setParameterList(parameterList);
+		result.setOutputLocation(outputLocation);
+		result.setResultList(resultList);
+		result.setImplicit(implicit);
+		result.setMultiple(multiple);
+
+		// NOTE: we don't copy Statement as that is specific to the JDBC connection
 
 		return result;
 	}
@@ -170,5 +191,25 @@ public class StoredProcedure {
 
 		callString = result.toString();
 		return callString;
+	}
+
+	public boolean isImplicit ()
+	{
+		return implicit;
+	}
+
+	public void setImplicit (boolean implicit)
+	{
+		this.implicit = implicit;
+	}
+
+	public boolean isMultiple ()
+	{
+		return multiple;
+	}
+
+	public void setMultiple (boolean multiple)
+	{
+		this.multiple = multiple;
 	}
 }

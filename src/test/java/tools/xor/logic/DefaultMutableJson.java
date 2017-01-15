@@ -30,10 +30,14 @@ import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,8 +45,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.AssociationSetting;
+import tools.xor.EntityType;
 import tools.xor.ImmutableJsonProperty;
 import tools.xor.OpenType;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Employee;
@@ -988,8 +994,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
 
-		Reader csvData = new FileReader("task.csv");
-		aggregateService.importBulk(csvData, settings);
+		aggregateService.importCSV("bulk/", settings);
 
 		// query the task object
 		settings = new Settings();
@@ -999,6 +1004,6 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		List<?> result = aggregateService.query(null, settings);
 
 		// Includes header row
-		assert(result.size() == 2);
+		assert(result.size() == 3);
 	}
 }

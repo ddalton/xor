@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.apache.log4j.LogManager;
@@ -47,7 +48,7 @@ public class MutableBO extends AbstractBO {
 		CallInfo callInfo = new CallInfo(this, null, null, null);
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(settings.getAction()); // Since the default global action can be either UPDATE or MERGE
-		this.createAggregate(settings.getView());
+		this.createAggregate(settings);
 
 		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
@@ -77,7 +78,7 @@ public class MutableBO extends AbstractBO {
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(AggregateAction.CREATE);
 		this.getObjectCreator().setShare(true);
-		this.createAggregate(settings.getView());
+		this.createAggregate(settings);
 		Date a = new Date();
 
 		// Create an object creator for the target root
@@ -86,8 +87,12 @@ public class MutableBO extends AbstractBO {
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
 		BusinessObject target = null;
-		
-		target = (BusinessObject) operation.createTarget(callInfo, (EntityType) settings.getEntityType());
+
+		Type entityType = settings.getEntityType();
+		if(callInfo.isBulkInput()) {
+			entityType = new ListType(ArrayList.class);
+		}
+		target = (BusinessObject) operation.createTarget(callInfo, entityType);
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);
@@ -115,7 +120,7 @@ public class MutableBO extends AbstractBO {
 		CallInfo callInfo = new CallInfo(this, null, null, null);
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(AggregateAction.CLONE);
-		this.createAggregate(settings.getView());
+		this.createAggregate(settings);
 
 		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);

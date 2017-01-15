@@ -824,7 +824,8 @@ public abstract class AbstractType implements EntityType {
 				if(path.contains(DFAtoRE.RECURSE_SYMBOL)) {
 					throw new RuntimeException("Recursive references currently not supported");
 				} else {
-					throw new RuntimeException("Property " + path + " not found. If this is an open property, ensure it is added to the type");
+					logger.info("Property " + path + " not found. If this is an open property, ensure it is added to the type");
+					return null;
 				}
 			}
 			Type propertyType = property.getType();

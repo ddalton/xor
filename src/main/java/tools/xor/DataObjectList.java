@@ -49,6 +49,10 @@ public class DataObjectList {
 	}
 
 	public List<BusinessObject> list() {
+		return list(null);
+	}
+
+	public List<BusinessObject> list(Settings settings) {
 		
 		// First check to see if dataObject refers to collection owner or the collection object
 		Object list = dataObject.getInstance();
@@ -64,10 +68,19 @@ public class DataObjectList {
 			return new ArrayList();
 		}
 		
-		
+		Type type = null;
+		ObjectCreator objectCreator = dataObject.getObjectCreator();
 		if(property == null && dataObject.getContainmentProperty() == null) {
 			if(!Map.class.isAssignableFrom(list.getClass())) {
-				throw new IllegalStateException("The container and the containment property is required, are you trying to process an association instead? [list class: " + list.getClass() +"]");
+				// Might be a dummy graph root for bulk processing
+				if(settings != null && collection.size() > 0) {
+					// We use the ObjectCreator to get the External type if relevant
+					type = objectCreator.getType(collection.iterator().next().getClass(), settings.getEntityType());
+				}
+				// Bulk support doesn't have this requirement
+				//else {
+				//	throw new IllegalStateException("The container and the containment property is required, are you trying to process an association instead? [list class: " + list.getClass() +"]");
+				//}
 			} else {
 				// Dynamic type
 				return new ArrayList();
@@ -80,15 +93,20 @@ public class DataObjectList {
 
 		// A property is provided for a collection owner 
 		// and a collection object should have a containment property unless it is an open property in which case we look at the property
-		Type type = (property != null) ? ((ExtendedProperty)property).getElementType() : ((ExtendedProperty)dataObject.getContainmentProperty()).getElementType();		
 		List<BusinessObject> result = new ArrayList<BusinessObject>(collection.size());
-		ObjectCreator objectCreator = dataObject.getObjectCreator();
-		
-		//if(objectCreator.getExistingDataObject(collection) != null)
-		//	System.out.println("*****!!!!!! has existing collection");
-		
-		for(Object element: collection) {
-			result.add(objectCreator.createDataObject(element, type, null, null));
+		if(collection.size() > 0) {
+			if (type == null) {
+				type = (property != null) ?
+					((ExtendedProperty)property).getElementType() :
+					((ExtendedProperty)dataObject.getContainmentProperty()).getElementType();
+			}
+
+			//if(objectCreator.getExistingDataObject(collection) != null)
+			//	System.out.println("*****!!!!!! has existing collection");
+
+			for (Object element : collection) {
+				result.add(objectCreator.createDataObject(element, type, null, null));
+			}
 		}
 
 		return result;

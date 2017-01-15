@@ -31,6 +31,7 @@ import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
+import tools.xor.ListType;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.Type;
@@ -78,13 +79,19 @@ public abstract class AbstractOperation implements Operation {
 				callInfo.getOutputRoot().getObjectPersister().processActions(callInfo.getSettings());
 			}
 		}
+
+		// Remove the dummy root node
+		if(callInfo.isBulkInput()) {
+			callInfo.getOutputObjectCreator().unregister((BusinessObject)callInfo.getInput());
+			callInfo.getOutputObjectCreator().unregister((BusinessObject)callInfo.getOutput());
+		}
 		
 		// Now we can persist the objects as all the links are set
 		// This might be necessary if the deferred and post logic actions if any
 		// are dependent on the identifier of newly created objects
 		if(callInfo.getSettings().doPersist()) {
 			persist(callInfo);
-		}		
+		}
 		
 		// Process the open property actions that were deferred
 		if(callInfo.getOutputRoot().getObjectPersister() != null) {
@@ -137,12 +144,16 @@ public abstract class AbstractOperation implements Operation {
 				BusinessObject source = (BusinessObject) callInfo.getInput();	
 				
 				// Get the property list for the current API version
-				List<Property> properties = callInfo.getProperties(source.getType());
-				CallInfo next = new CallInfo();
-				for(Property sourceProperty: properties) {
-					next.initOperation(this, null, callInfo, (ExtendedProperty) sourceProperty);
-					//CallInfo next = new CallInfo(null, callInfo, (ExtendedProperty) sourceProperty);
-					processAttribute(next); // recurse
+				if(callInfo.isBulkInput()) {
+					processBulk(callInfo);
+				} else {
+					List<Property> properties = callInfo.getProperties(source.getType());
+					CallInfo next = new CallInfo();
+					for (Property sourceProperty : properties) {
+						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
+						//CallInfo next = new CallInfo(null, callInfo, (ExtendedProperty) sourceProperty);
+						processAttribute(next); // recurse
+					}
 				}
 
 				if(!alreadyVisited) {
@@ -442,22 +453,35 @@ public abstract class AbstractOperation implements Operation {
 		}
 	}
 
-	protected void processCollection(CallInfo callInfo) throws Exception {
-
-		if(callInfo.isDataType())
-			return;
+	protected void processBulk(CallInfo callInfo) throws Exception
+	{
+		List boList = null;
+		if(callInfo.getParent() == null) {
+			boList = ((BusinessObject)callInfo.getInput()).getBulkList(callInfo.getSettings());
+		} else {
+			boList = ((BusinessObject)callInfo.getInput()).getList(callInfo.getInputProperty());
+		}
 
 		CallInfo next = new CallInfo();
-		for (Object nextSource : ((BusinessObject)callInfo.getInput()).getList(callInfo.getInputProperty())) {
+		for (Object nextSource : boList) {
 			next.init(nextSource, null, callInfo, null);
 			if(next.isCascadable()) {
 				next.setOutput(getExistingTarget(next));
 				if( next.getOutput() == null )
 					next.setOutput(createTarget(next, null));
-				processAttribute(next);			
-			} else
+				processAttribute(next);
+			} else {
 				next.setOutput(createTarget(next, ClassUtil.getInstance(nextSource), null));
+			}
 		}
+	}
+
+	protected void processCollection(CallInfo callInfo) throws Exception {
+
+		if(callInfo.isDataType())
+			return;
+
+		processBulk(callInfo);
 		cloneToMany(callInfo);
 	}
 	

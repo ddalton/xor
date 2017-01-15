@@ -118,8 +118,9 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	}
 	
 	public void persistGraph(ObjectCreator objectCreator, Settings settings) {
-		
-		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph((EntityType) root.getType());
+
+		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
+		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph(entityType);
 		persistRoots(objectCreator, sg);
 	}
 	

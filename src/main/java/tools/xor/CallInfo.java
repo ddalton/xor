@@ -182,7 +182,13 @@ public class CallInfo {
 		}
 
 		return result;
-	}	
+	}
+
+	public boolean isBulkInput ()
+	{
+		return getParent() == null && (getInput() instanceof BusinessObject
+			&& ((BusinessObject)getInput()).getType() instanceof ListType);
+	}
 
 	public CallInfo getParent() {
 		return parent;
@@ -269,7 +275,9 @@ public class CallInfo {
 	}
 	
 	public List<Property> getProperties(Type type) {
-		StateGraph sg = settings.getView().getStateGraph( ((EntityType) getOutputRoot().getType()).getDomainType() );
+		EntityType entityType = (EntityType)settings.getEntityType();
+		//StateGraph sg = settings.getView().getStateGraph( ((EntityType) getOutputRoot().getType()).getDomainType() );
+		StateGraph sg = settings.getView().getStateGraph( entityType.getDomainType() );
 		if(logger.isDebugEnabled()) {
 			logger.debug("Type: " + getOutputRoot().getType().getName() + ", view: " 
 					+ settings.getView().getName() 

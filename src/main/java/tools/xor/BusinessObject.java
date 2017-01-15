@@ -197,6 +197,13 @@ public interface BusinessObject extends DataObject {
 	public List<BusinessObject> getList();
 
 	/**
+	 * If this object represents a collection, then returns its collection of objects as a list of ExtendedDataObjects
+	 * @param settings needed to resolve root entity type when bulk processing
+	 * @return list of instances wrapped as BusinessObjects
+	 */
+	public List<BusinessObject> getBulkList(Settings settings);
+
+	/**
 	 * Set the property of this object using the values from propertyResult. This method is mainly used from a query result.
 	 * @param propertyPath The path representing property whose value needs to be set
 	 * @param propertyResult The result from a query
@@ -337,9 +344,9 @@ public interface BusinessObject extends DataObject {
 
 	/**
 	 * Specifying the view improves the performance of this method as only the fields in the view need to be processed.
-	 * @param view
+	 * @param settings the settings object from which the view is obtained
 	 */
-	public void createAggregate(AggregateView view);
+	public void createAggregate(Settings settings);
 	
 	/**
 	 * Get a business object of the same type as the current business object but with different id

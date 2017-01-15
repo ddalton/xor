@@ -1154,10 +1154,12 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public List<BusinessObject> getList() {
-		//if(listStore != null)
-		//	return listStore;
-		
-		return (new DataObjectList(this)).list();
+		return getBulkList(null);
+	}
+
+	@Override
+	public List<BusinessObject> getBulkList(Settings settings) {
+		return (new DataObjectList(this)).list(settings);
 	}
 
 	@Override
@@ -1316,41 +1318,47 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public void createAggregate (AggregateView view) {
+	public void createAggregate (Settings settings) {
 
 		// Loop through the data object properties and if it is not a data type, then create a Data Object wrapper and recurse
 		objectCreator.clearVisited();
 
+		Type entityType = getType();
+		if(entityType instanceof ListType) {
+			entityType = settings.getEntityType();
+		}
+
 		State rootState = null;
 		StateGraph sg = null;
-		if(view != null) {
-			sg = view.getStateGraph((EntityType)getType());
+		if(settings != null && settings.getView() != null) {
+			sg = settings.getView().getStateGraph((EntityType)entityType);
 			rootState = sg.getRootState();
 		}
-		createWrapper(this, null, rootState, sg);
+		createWrapper(settings, this, null, rootState, sg);
 
 		objectCreator.clearVisited();
 	}	
 	
-	protected void createWrapper(BusinessObject parent, Property support, State state, StateGraph sg) {
+	protected void createWrapper(Settings settings, BusinessObject parent, Property support, State state, StateGraph sg) {
 		
-		for(BusinessObject child: parent.getList()) {
-			if(parent.getContainmentProperty().isContainment()) {
+		for(BusinessObject child: parent.getBulkList(settings)) {
+			if(parent.getContainmentProperty() != null && parent.getContainmentProperty().isContainment()) {
 				child.setContainer(parent);
 				child.setContainmentProperty(parent.getContainmentProperty());
 			}
 
-			if(sg != null) {
+			if(sg != null && support != null) {
 				// Is this property in view? yes then process it else skip it
 				if (sg.getOutEdge(state, support.getName()) != null) {
 					createWrapper(
+						settings,
 						child, support,
 						(State)sg.getOutEdge(state, support.getName()).getEnd(), sg);
 				} else {
 					return;
 				}
 			} else {
-				createWrapper(child, null, null, null);
+				createWrapper(settings, child, null, null, null);
 			}
 		}
 
@@ -1395,13 +1403,14 @@ public abstract class AbstractBO implements BusinessObject {
 					// Is this property in view? yes, process it else skip it
 					if (sg.getOutEdge(state, property.getName()) != null) {
 						createWrapper(
+							settings,
 							child, property,
 							(State)sg.getOutEdge(state, property.getName()).getEnd(), sg);
 					} else {
 						continue;
 					}
 				} else {
-					createWrapper(child, null, null, null);
+					createWrapper(settings, child, null, null, null);
 				}
 			}
 		}

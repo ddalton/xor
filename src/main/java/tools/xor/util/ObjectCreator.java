@@ -38,10 +38,12 @@ import tools.xor.CallInfo;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ImmutableBO;
+import tools.xor.ListType;
 import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.service.DataAccessService;
@@ -384,7 +386,7 @@ public class ObjectCreator {
 		Object sourceInstance = ClassUtil.getInstance(ci.getInput());
 		Property sourceContainmentProperty = ci.getInputProperty();
 		BusinessObject container = null;
-		if(ci.getParent() != null) {
+		if(ci.getParent() != null && !ci.getParent().isBulkInput()) {
 			container = (BusinessObject)ci.getParent().getOutput();
 		}
 
@@ -492,10 +494,20 @@ public class ObjectCreator {
 
 			if(result == null) {
 				if(targetInstance == null) {
-					targetInstance = createInstance(sourceInstance, targetInstanceClass, targetType, container, containmentProperty);
+					// Exception for Bulk processing
+					if(targetType == null && domainEntityType instanceof ListType) {
+						targetType = domainEntityType;
+					}
+
+					targetInstance = createInstance(
+						sourceInstance,
+						targetInstanceClass,
+						targetType,
+						container,
+						containmentProperty);
 					if(targetInstance == null) {
 						logger.error(
-								"ObjectCreator#createTarget Unable to create targetInstance of class: "	+ targetInstanceClass.getName() 
+								"ObjectCreator#createTarget Unable to create targetInstance of class: "	+ targetInstanceClass.getName()
 								+ " and source instance: " + sourceInstance.getClass().getName()
 								+ " and target type: " + targetType.getName());
 					}

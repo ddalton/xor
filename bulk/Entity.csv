@@ -1,0 +1,3 @@
+XOR.id,XOR.type,scheduledFinish,displayName,description,createdOn,id,iconUrl,isCriticalSystemObject,updatedOn,version,detailedDescription,name,taskUri,depSeq
+ID1,tools.xor.db.pm.Task,,Setup HANA,Setup Tokyo version of SAP HANA,,,,false,,0,,SETUP_HANA,,
+ID2,tools.xor.db.pm.Task,,Setup DT,Setup Tokyo version of SAP HANA Dynamic Tiering,,,,false,,0,,SETUP_DT,,

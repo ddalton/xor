@@ -67,7 +67,13 @@ public class Constants {
 	  // Represents the sheet containing the root object in the aggregate 
 	  public static final String EXCEL_ENTITY_SHEET = "Entity";	  
 	  public static final String EXCEL_SHEET_PREFIX = "Sheet";
-	  public static final String EXCEL_INDEX_SHEET = "Sheet Index";	
+	  public static final String EXCEL_INDEX_SHEET = "Sheet Index";
+
+	  // Represents file names for CSV import
+	  public static final String CSV_ENTITY_SHEET = "Entity.csv";
+	  public static final String CSV_FILE_SUFFIX = ".csv";
+	  public static final String CSV_INDEX_SHEET = "SheetIndex.csv";
+
 	  
 	  // Synthetic identifier added to each object instance to help identify each object in an object graph
 	  public static final String OWNER_ID = XOR_PATH_PREFIX + "owner.id";

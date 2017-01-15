@@ -20,6 +20,8 @@
 package tools.xor.service;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +29,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -40,6 +43,8 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.poi.EncryptedDocumentException;
@@ -571,9 +576,17 @@ public class AggregateManager implements Xor
 				getDAS(),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
+
+			Type type = null;
+			// Collection type is used for bulk import/batching
+			if(entity instanceof Collection) {
+				type = getDAS().getType(entity.getClass());
+			} else {
+				type = oc.getType(entity.getClass(), settings.getEntityType());
+			}
 			BusinessObject from = oc.createDataObject(
 				entity,
-				(EntityType)oc.getType(entity.getClass(), settings.getEntityType()),
+				type,
 				null,
 				null);
 			oc.setRoot(from);
@@ -760,7 +773,7 @@ public class AggregateManager implements Xor
 			// 3. Associate the collections to their owners
 			// Replace all objectref prefix keys with the actual objects
 			// Replace all collection properties with the array objects
-			link(wb, idMap, collectionPropertyMap);
+			link(idMap, collectionPropertyMap);
 
 			// Find the root
 			Cell idCell = entityRow.getCell(colMap.get(Constants.XOR.ID));
@@ -789,8 +802,7 @@ public class AggregateManager implements Xor
 		}
 	}
 
-	private void link (Workbook wb,
-					   Map<String, JSONObject> idMap,
+	private void link (Map<String, JSONObject> idMap,
 					   Map<String, JSONArray> collectionPropertyMap)
 	{
 		// First link the collections to their owners
@@ -851,11 +863,76 @@ public class AggregateManager implements Xor
 	}
 
 	/**
+	 * Parse the give folder path containing the CSV files containing the entities and collections
+	 * of the aggregate.
 	 *
-	 * @param wb
-	 * @param collectionSheets Will be used in subsequent processing
+	 * @param path of the folder containing the CSV files, this may be organized into sub-folders
+	 *             for batching purposes
+	 * @param entitySheets files containing entity data
+	 * @param collectionSheets files capturing collection relationships.
 	 * @return
 	 */
+	private Map<String, JSONObject> parseEntities(String path,
+												  Map<String, String> entitySheets,
+												  Map<String, String> collectionSheets) throws
+		Exception
+	{
+		// First find all the entity sheets
+		try {
+			Reader entitySheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
+			CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
+
+			for (
+				CSVRecord csvRecord
+				: parser)
+
+			{
+				String entityInfo = csvRecord.get(1);
+
+				if (getProperty(entityInfo).isMany()) {
+					collectionSheets.put(csvRecord.get(0), entityInfo);
+				}
+				else {
+					entitySheets.put(csvRecord.get(0), entityInfo);
+				}
+			}
+		} catch (FileNotFoundException fnfe) {
+			// Harmless - it just means we are not importing associations
+		}
+
+
+		Map<String, JSONObject> idMap = new HashMap<String, JSONObject>();
+		for (Map.Entry<String, String> entry : entitySheets.entrySet()) {
+			processEntitySheet(path, entry.getKey(), idMap);
+		}
+
+		return idMap;
+	}
+
+
+	private void processEntitySheet (String path, String sheetName, Map<String, JSONObject> idMap) throws
+		Exception
+	{
+		// Ensure we have the XOR.id column in the entity sheet
+		Reader entitySheet = new FileReader(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
+		CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
+
+		// Get the entity class name
+		Map<String, Integer> colMap = parser.getHeaderMap();
+		if (!colMap.containsKey(Constants.XOR.ID)) {
+			throw new RuntimeException("XOR.id column is missing");
+		}
+
+		for(
+			CSVRecord csvRecord
+			:parser)
+
+		{
+			JSONObject entityJSON = getJSON(colMap, csvRecord);
+			idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
+		}
+	}
+
 	/**
 	 * Parse the given Excel workbook and group the entity and collection sheets separately.
 	 *
@@ -906,6 +983,51 @@ public class AggregateManager implements Xor
 		for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
 			JSONObject entityJSON = getJSON(colMap, entitySheet.getRow(i));
 			idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
+		}
+	}
+
+	private void processCollectionSheet (
+		String path,
+		String sheetName,
+		String entityInfo, Map<String, JSONArray> collectionPropertyMap,
+		Map<String, JSONObject> idMap) throws Exception
+	{
+		// Ensure we have the XOR.id column in the entity sheet
+		// Ensure we have the XOR.id column in the entity sheet
+		Reader entitySheet = new FileReader(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
+		CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
+
+		// Get the entity class name
+		Map<String, Integer> colMap = parser.getHeaderMap();
+
+		// A collection can have value objects, so XOR.ID is not mandatory
+		// But a collection entry should have a collection owner
+		if (!colMap.containsKey(Constants.XOR.OWNER_ID)) {
+			throw new RuntimeException("XOR.owner.id column is missing");
+		}
+
+		// process each collection entry
+		for(
+			CSVRecord csvRecord
+			:parser)
+
+		{
+			JSONObject collectionEntryJSON = getJSON(colMap, csvRecord);
+			String key = getCollectionKey(
+				collectionEntryJSON.getString(Constants.XOR.OWNER_ID),
+				entityInfo);
+			addCollectionEntry(collectionPropertyMap, key, collectionEntryJSON);
+
+			// If the collection element is an entity add it to the idMap also
+			if (collectionEntryJSON.has(Constants.XOR.ID)) {
+				try {
+					idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
+				}
+				catch (Exception e) {
+					String longStr = new Long(collectionEntryJSON.getLong(Constants.XOR.ID)).toString();
+					idMap.put(longStr, collectionEntryJSON);
+				}
+			}
 		}
 	}
 
@@ -977,6 +1099,34 @@ public class AggregateManager implements Xor
 		return false;
 	}
 
+	public static JSONObject getJSON (Map<String, Integer> colMap, CSVRecord row)
+	{
+		JSONObject entity = new JSONObject();
+
+		for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+			String value = row.get(entry.getValue());
+			if (isEmbeddedPath(entry.getKey())) {
+				setEmbeddableValue(entity, entry.getKey(), value);
+			}
+			else {
+				// set direct value
+				if (value != null) {
+					if(StringUtils.isNumeric(value)) {
+						entity.put(entry.getKey(), NumberUtils.toDouble(value));
+					} else {
+						entity.put(entry.getKey(), value);
+					}
+				}
+				else {
+					//entity.put(entry.getKey(), JSONObject.NULL);
+					entity.put(entry.getKey(), "");
+				}
+			}
+		}
+
+		return entity;
+	}
+
 	public static JSONObject getJSON (Map<String, Integer> colMap, Row row)
 	{
 		JSONObject entity = new JSONObject();
@@ -1046,6 +1196,23 @@ public class AggregateManager implements Xor
 		for (Map.Entry<String, String> entry : collectionSheets.entrySet()) {
 			processCollectionSheet(
 				wb,
+				entry.getKey(),
+				entry.getValue(),
+				collectionPropertyMap,
+				idMap);
+		}
+
+		return collectionPropertyMap;
+	}
+
+	private Map<String, JSONArray> parseCollections (String path,
+													 Map<String, String> collectionSheets,
+													 Map<String, JSONObject> idMap) throws Exception
+	{
+		Map<String, JSONArray> collectionPropertyMap = new HashMap<String, JSONArray>();
+		for (Map.Entry<String, String> entry : collectionSheets.entrySet()) {
+			processCollectionSheet(
+				path,
 				entry.getKey(),
 				entry.getValue(),
 				collectionPropertyMap,
@@ -1498,6 +1665,101 @@ public class AggregateManager implements Xor
 		}
 		else {
 			return "";
+		}
+	}
+
+	private void setView(Settings settings, CSVParser parser) {
+		// set the view
+		// TODO: For now we set the view only for the root entity
+		// Create view based on the CSV header fields
+		AggregateView view = new AggregateView("CSV_IMPORT");
+		List attrPath = new ArrayList();
+		view.setAttributeList(attrPath);
+		settings.setView(view);
+
+		Map<String, Integer> headerMap = parser.getHeaderMap();
+		Map<String, Property> propertyMap = new HashMap<String, Property>();
+		for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
+			Property property = ((EntityType)settings.getEntityType()).getProperty(entry.getKey());
+			if(property != null) {
+				propertyMap.put(entry.getKey(), property);
+				attrPath.add(entry.getKey());
+			}
+		}
+	}
+
+	public void importCSV (String path, Settings settings) throws Exception
+	{
+		validateImportExport();
+
+		try {
+			Reader entitySheet = new FileReader(path + Constants.XOR.CSV_ENTITY_SHEET);
+			CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
+
+			// Get the entity class name
+			Map<String, Integer> colMap = parser.getHeaderMap();
+			if (!colMap.containsKey(Constants.XOR.TYPE)) {
+				// TODO: Fallback to entity class in settings if provided
+				throw new RuntimeException("XOR.type column is missing");
+			}
+			setView(settings, parser);
+
+			List<Object> entityBatch = new LinkedList<>();
+			for(
+				CSVRecord csvRecord
+				:parser)
+
+			{
+				String entityClassName = csvRecord.get(colMap.get(Constants.XOR.TYPE));
+				try {
+					settings.setEntityClass(Class.forName(entityClassName));
+				}
+				catch (ClassNotFoundException e) {
+					throw new RuntimeException("Class " + entityClassName + " is not found");
+				}
+
+				/******************************************************
+				 * Algorithm
+				 *
+				 * 1. Create all objects with the XOR.id
+				 * 2. Create the collections
+				 * 3. Associate the collections to their owners
+				 * 4. Then finally call JSONTransformer.unpack to link the objects by XOR.id
+				 *
+				 ********************************************************/
+
+				// 1. Create all objects with the XOR.id
+				Map<String, String> collectionSheets = new HashMap<String, String>();
+				Map<String, String> entitySheets = new HashMap<String, String>();
+				entitySheets.put(Constants.XOR.EXCEL_ENTITY_SHEET, entityClassName);
+				Map<String, JSONObject> idMap = parseEntities(path, entitySheets, collectionSheets);
+
+				// 2. Create the collections
+				// The key in the collection property map is of the form <owner_xor_id>:<property>
+				Map<String, JSONArray> collectionPropertyMap = parseCollections(
+					path,
+					collectionSheets,
+					idMap);
+
+				// 3. Associate the collections to their owners
+				// Replace all objectref prefix keys with the actual objects
+				// Replace all collection properties with the array objects
+				link(idMap, collectionPropertyMap);
+
+				// Find the root
+				String rootId = csvRecord.get(colMap.get(Constants.XOR.ID));
+				JSONObject root = idMap.get(rootId);
+
+				entityBatch.add(root);
+			}
+
+			create(entityBatch, settings);
+		}
+		catch (EncryptedDocumentException e) {
+			throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");
+		}
+		catch (InvalidFormatException e) {
+			throw new RuntimeException("The provided inputstream is not valid. " + e.getMessage());
 		}
 	}
 

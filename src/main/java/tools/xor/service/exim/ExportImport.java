@@ -26,7 +26,8 @@ public interface ExportImport {
 	 *
 	 * @param filePath the file or the folder containing the aggregate to be imported
 	 * @param settings object
+	 * @return the result of the import
 	 * @throws IOException
 	 */
-	public void importAggregate (String filePath, Settings settings) throws IOException;
+	public Object importAggregate (String filePath, Settings settings) throws IOException;
 }

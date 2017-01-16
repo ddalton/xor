@@ -121,6 +121,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void checkExcelExport() throws JSONException, IOException {
 		super.checkExcelExport();
 	}
+
+	@Test
+	public void checkCSVExport() throws JSONException, IOException {
+		super.checkCSVExport();
+	}
 	
 	@Test
 	public void checkExcelImport() throws JSONException, IOException {

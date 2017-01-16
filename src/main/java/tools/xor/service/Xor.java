@@ -85,16 +85,6 @@ public interface Xor {
 	public void exportDenormalized(OutputStream outputStream, Settings settings);
 
 	/**
-	 * Imports a CSV file containing entities. The id should be null.
-	 * This method automatically sets up a view based on the fields in the CSV header.
-	 *
-	 * @param csvData
-	 * @param settings
-	 * @throws Exception
-	 */
-	public void importBulk (Reader csvData, Settings settings) throws Exception;
-
-	/**
 	 * Imports the denormalized excel
 	 * @param is InputStream of the Excel file
 	 * @param settings from the user
@@ -106,20 +96,20 @@ public interface Xor {
 	/**
 	 * This returns an Excel workbook object that can be used to generate an Excel file
 	 * 
-	 * @param os OutputStream of the Excel file
+	 * @param filePath the file/folder location.
 	 * @param inputObject object to export
 	 * @param settings from the user
 	 * @throws IOException if an error was encoutered while operating the OutputStream
 	 */
-	public void exportAggregate(OutputStream os, Object inputObject, Settings settings) throws IOException ;
+	public void exportAggregate(String filePath, Object inputObject, Settings settings) throws IOException ;
 	
 	/**
 	 * Import the aggregate expressed in an Excel file
 	 * 
-	 * @param is InputStream of the Excel file
+	 * @param filePath path to the file/folder
 	 * @param settings from the user
 	 * @return the id of the created object
 	 * @throws IOException  if an error was encoutered while operating the inputstream
 	 */
-	public Object importAggregate(InputStream is, Settings settings) throws IOException;
+	public Object importAggregate(String filePath, Settings settings) throws IOException;
 }

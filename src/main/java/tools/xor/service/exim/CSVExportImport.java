@@ -13,6 +13,7 @@ import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -41,6 +42,13 @@ public class CSVExportImport extends AbstractExportImport
         IOException {
 
         this.filePath = filePath;
+
+        File file = new File(this.filePath);
+        if (file.exists()) {
+            throw new RuntimeException("Folder '" + filePath + " exists! Please rename/delete existing folder.");
+        }
+
+        file.mkdirs();
     }
 
     @Override
@@ -188,8 +196,7 @@ public class CSVExportImport extends AbstractExportImport
                 addProperties(
                     getProperty(entityInfo).getName() + Settings.PATH_DELIMITER,
                     attrPath,
-                    sheetHeaderMap,
-                    (EntityType)getType(entityInfo)
+                    sheetHeaderMap
                 );
             }
         } finally {
@@ -197,7 +204,7 @@ public class CSVExportImport extends AbstractExportImport
         }
     }
 
-    @Override public void importAggregate (String filePath, Settings settings) throws IOException
+    @Override public Object importAggregate (String filePath, Settings settings) throws IOException
     {
         super.importAggregate(filePath, settings);
 
@@ -266,7 +273,7 @@ public class CSVExportImport extends AbstractExportImport
                     entityBatch.add(root);
                 }
 
-                am.create(entityBatch, settings);
+                return am.create(entityBatch, settings);
             } finally {
                 parser.close();
             }

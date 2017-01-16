@@ -58,10 +58,11 @@ public abstract class AbstractExportImport implements ExportImport
         return idMap;
     }
 
-    protected void addProperties(String prefix, List attrPath, Map<String, Integer> headerMap, EntityType entityType) {
+    protected void addProperties(String prefix, List attrPath, Map<String, Integer> headerMap) {
         for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
-            Property property = entityType.getProperty(entry.getKey());
-            if(property != null) {
+            String propertyName = entry.getKey();
+            //Property property = entityType.getProperty(entry.getKey());
+            if(!propertyName.startsWith(Constants.XOR.XOR_PATH_PREFIX) && !propertyName.startsWith(Constants.XOR.OBJECTREF)) {
                 attrPath.add(prefix + entry.getKey());
             }
         }
@@ -98,17 +99,17 @@ public abstract class AbstractExportImport implements ExportImport
 
         // Get the view fields for the entity
         Map<String, Integer> headerMap = getHeader(path, Constants.XOR.EXCEL_ENTITY_SHEET);
-        addProperties("", attrPath, headerMap, (EntityType)settings.getEntityType());
+        addProperties("", attrPath, headerMap);
 
         // Get the view fields for the relationships
         addRelationships(path, attrPath);
     }
 
     @Override
-    public void importAggregate (String filePath, Settings settings) throws IOException
+    public Object importAggregate (String filePath, Settings settings) throws IOException
     {
         validateImportExport();
-
+        return null;
     }
 
     @Override public void exportAggregate (String filePath,
@@ -172,7 +173,7 @@ public abstract class AbstractExportImport implements ExportImport
                               List<BusinessObject> boList,
                               BusinessObject owner)
     {
-        setupEntity(sheetName);
+        setupEntity(sheetName + Constants.XOR.CSV_FILE_SUFFIX);
 
         for (BusinessObject bo : boList) {
             if (bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {

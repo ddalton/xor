@@ -19,31 +19,7 @@
 
 package tools.xor.service;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.PostConstruct;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -54,13 +30,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
-
 import tools.xor.AbstractBO;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
@@ -70,11 +41,9 @@ import tools.xor.DefaultTypeMapper;
 import tools.xor.DefaultTypeNarrower;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
-import tools.xor.ExcelJsonTypeMapper;
 import tools.xor.ExtendedProperty;
 import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
-import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SimpleType;
@@ -86,9 +55,11 @@ import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DefaultAssociationStrategy;
 import tools.xor.custom.DefaultDetailStrategy;
 import tools.xor.custom.DetailStrategy;
+import tools.xor.service.exim.CSVExportImport;
+import tools.xor.service.exim.ExcelExportImport;
+import tools.xor.service.exim.ExportImport;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
@@ -96,6 +67,20 @@ import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Filter;
 import tools.xor.view.TypeVersion;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class AggregateManager implements Xor
@@ -658,35 +643,18 @@ public class AggregateManager implements Xor
 		return to.getNormalizedInstance(settings);
 	}
 
+	public void exportCSV(String filePath, Object inputObject, Settings settings) throws IOException
+	{
+		ExportImport exim = new CSVExportImport(this);
+		exim.exportAggregate(filePath, inputObject, settings);
+	}
+
 	@Override
-	public void exportAggregate (OutputStream os, Object inputObject, Settings settings) throws
+	public void exportAggregate (String filePath, Object inputObject, Settings settings) throws
 		IOException
 	{
-		validateImportExport();
-
-		BusinessObject to = readBO(inputObject, settings);
-		Set<BusinessObject> dataObject = to.getObjectCreator().getDataObjects();
-
-		// Get the container and the containment property and create a sheet of such objects
-		Map<String, List<BusinessObject>> sheetBO = new HashMap<String, List<BusinessObject>>();
-		for (BusinessObject bo : dataObject) {
-			if (bo.getContainer() != null && bo.getContainmentProperty() != null) {
-				String key = Constants.XOR.getExcelSheetFullName(
-					bo.getContainer().getType(),
-					bo.getContainmentProperty());
-				if (!sheetBO.containsKey(key)) {
-					sheetBO.put(key, new LinkedList<BusinessObject>());
-				}
-				List<BusinessObject> boList = sheetBO.get(key);
-				boList.add(bo);
-			}
-		}
-
-		Workbook wb = processSheetBO(to, sheetBO);
-		wb.write(os);
-		os.close();
-		wb.close();
-
+		ExportImport exim = new ExcelExportImport(this);
+		exim.exportAggregate(filePath, inputObject, settings);
 	}
 
 	private Map<String, Integer> getHeaderMap (Sheet sheet)
@@ -701,13 +669,6 @@ public class AggregateManager implements Xor
 		return colMap;
 	}
 
-	private void validateImportExport ()
-	{
-		if (!ExcelJsonTypeMapper.class.isAssignableFrom(this.getTypeMapper().getClass())) {
-			throw new RuntimeException("Import/Export can only work with ExcelJsonTypeMapper");
-		}
-	}
-
 	@Override
 	/**
 	 *  For now we handle only one aggregate entity in the document. 
@@ -716,377 +677,10 @@ public class AggregateManager implements Xor
 	 *  Ideally, we would want each entity to be in a separate document, 
 	 *  so we can process it efficiently using streaming.
 	 */
-	public Object importAggregate (InputStream is, Settings settings) throws IOException
+	public Object importAggregate (String filePath, Settings settings) throws IOException
 	{
-		validateImportExport();
-
-		try {
-			Workbook wb = WorkbookFactory.create(is);
-
-			Sheet entitySheet = wb.getSheet(Constants.XOR.EXCEL_ENTITY_SHEET);
-			if (entitySheet == null) {
-				throw new RuntimeException("The entity sheet is missing");
-			}
-
-			// Get the entity class name
-			Map<String, Integer> colMap = getHeaderMap(entitySheet);
-			if (!colMap.containsKey(Constants.XOR.TYPE)) {
-				// TODO: Fallback to entity class in settings if provided
-				throw new RuntimeException("XOR.type column is missing");
-			}
-			Row entityRow = entitySheet.getRow(1);
-			if (entityRow == null) {
-				throw new RuntimeException("Entity row is missing");
-			}
-			Cell typeCell = entityRow.getCell(colMap.get(Constants.XOR.TYPE));
-			String entityClassName = typeCell.getStringCellValue();
-			try {
-				settings.setEntityClass(Class.forName(entityClassName));
-			}
-			catch (ClassNotFoundException e) {
-				throw new RuntimeException("Class " + entityClassName + " is not found");
-			}
-
-			/******************************************************
-			 * Algorithm
-			 *
-			 * 1. Create all objects with the XOR.id 
-			 * 2. Create the collections
-			 * 3. Associate the collections to their owners
-			 * 4. Then finally call JSONTransformer.unpack to link the objects by XOR.id
-			 *
-			 ********************************************************/
-
-			// 1. Create all objects with the XOR.id
-			Map<String, String> collectionSheets = new HashMap<String, String>();
-			Map<String, String> entitySheets = new HashMap<String, String>();
-			entitySheets.put(Constants.XOR.EXCEL_ENTITY_SHEET, entityClassName);
-			Map<String, JSONObject> idMap = parseEntities(wb, entitySheets, collectionSheets);
-
-			// 2. Create the collections
-			// The key in the collection property map is of the form <owner_xor_id>:<property>
-			Map<String, JSONArray> collectionPropertyMap = parseCollections(
-				wb,
-				collectionSheets,
-				idMap);
-
-			// 3. Associate the collections to their owners
-			// Replace all objectref prefix keys with the actual objects
-			// Replace all collection properties with the array objects
-			link(idMap, collectionPropertyMap);
-
-			// Find the root
-			Cell idCell = entityRow.getCell(colMap.get(Constants.XOR.ID));
-			String rootId = idCell.getStringCellValue();
-			JSONObject root = idMap.get(rootId);
-
-			// Finally persist the root object
-			// call the update persistence method
-			Class entityClass;
-			try {
-				entityClass = Class.forName(root.getString(Constants.XOR.TYPE));
-			}
-			catch (ClassNotFoundException | JSONException e) {
-				throw new RuntimeException(
-					"Unable to construct root entity. Either the class is not found or the class name is missing");
-			}
-
-			return update(root, entityClass);
-
-		}
-		catch (EncryptedDocumentException e) {
-			throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");
-		}
-		catch (InvalidFormatException e) {
-			throw new RuntimeException("The provided inputstream is not valid. " + e.getMessage());
-		}
-	}
-
-	private void link (Map<String, JSONObject> idMap,
-					   Map<String, JSONArray> collectionPropertyMap)
-	{
-		// First link the collections to their owners
-		for (Map.Entry<String, JSONArray> entry : collectionPropertyMap.entrySet()) {
-			String collectionKey = entry.getKey();
-			String[] tokens = collectionKey.split(":");
-			String ownerId = tokens[0];
-			String collectionProperty = tokens[1];
-
-			JSONObject owner = idMap.get(ownerId);
-			if (owner == null) {
-				throw new RuntimeException(
-					"Unable to find collection owner with XOR.id " + ownerId);
-			}
-			owner.put(collectionProperty, entry.getValue());
-		}
-
-		// Link all the object references
-		for (JSONObject entity : idMap.values()) {
-			// Iterate through all the object references
-			JSONArray fields = entity.names();
-			for (int i = 0; i < fields.length(); i++) {
-				String property = fields.getString(i);
-				if (property.startsWith(Constants.XOR.OBJECTREF)) {
-					JSONObject toOne = idMap.get(entity.getString(property));
-					if (toOne == null) {
-						logger.info(
-							"Unable to find object reference: " + entity.getString(property));
-						continue;
-					}
-					String reference = property.substring(Constants.XOR.OBJECTREF.length());
-
-					// replace the object reference with actual reference
-					setEmbeddableValue(entity, reference, toOne, property);
-				}
-			}
-		}
-	}
-
-	private Type getType (String entityInfo)
-	{
-		// Parse the entity classname from this
-		String[] tokens = entityInfo.split(":");
-		if (tokens.length != 2) {
-			throw new RuntimeException(
-				"The entity info column in sheet map is not in <classname>:<property> format: "
-					+ entityInfo);
-		}
-		return getDAS().getType(tokens[0]);
-	}
-
-	private Property getProperty (String entityInfo)
-	{
-		Type type = getType(entityInfo);
-
-		String[] tokens = entityInfo.split(":");
-		return type.getProperty(tokens[1]);
-	}
-
-	/**
-	 * Parse the give folder path containing the CSV files containing the entities and collections
-	 * of the aggregate.
-	 *
-	 * @param path of the folder containing the CSV files, this may be organized into sub-folders
-	 *             for batching purposes
-	 * @param entitySheets files containing entity data
-	 * @param collectionSheets files capturing collection relationships.
-	 * @return
-	 */
-	private Map<String, JSONObject> parseEntities(String path,
-												  Map<String, String> entitySheets,
-												  Map<String, String> collectionSheets) throws
-		Exception
-	{
-		// First find all the entity sheets
-		try {
-			Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
-			CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());
-
-			for (
-				CSVRecord csvRecord
-				: parser)
-
-			{
-				String entityInfo = csvRecord.get(1);
-
-				if (getProperty(entityInfo).isMany()) {
-					collectionSheets.put(csvRecord.get(0), entityInfo);
-				}
-				else {
-					entitySheets.put(csvRecord.get(0), entityInfo);
-				}
-			}
-		} catch (FileNotFoundException fnfe) {
-			// Harmless - it just means we are not importing associations
-		}
-
-
-		Map<String, JSONObject> idMap = new HashMap<String, JSONObject>();
-		for (Map.Entry<String, String> entry : entitySheets.entrySet()) {
-			processEntitySheet(path, entry.getKey(), idMap);
-		}
-
-		return idMap;
-	}
-
-
-	private void processEntitySheet (String path, String sheetName, Map<String, JSONObject> idMap) throws
-		Exception
-	{
-		// Ensure we have the XOR.id column in the entity sheet
-		Reader entitySheet = new FileReader(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
-		CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
-
-		// Get the entity class name
-		Map<String, Integer> colMap = parser.getHeaderMap();
-		if (!colMap.containsKey(Constants.XOR.ID)) {
-			throw new RuntimeException("XOR.id column is missing");
-		}
-
-		for(
-			CSVRecord csvRecord
-			:parser)
-
-		{
-			JSONObject entityJSON = getJSON(colMap, csvRecord);
-			idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
-		}
-	}
-
-	/**
-	 * Parse the given Excel workbook and group the entity and collection sheets separately.
-	 *
-	 * @param wb               given workbook
-	 * @param entitySheets     Sheets containing entity data
-	 * @param collectionSheets Sheets capturing collection relationships. Will be used in subsequent processing
-	 * @return a map of JSON entities keyed by their XOR id
-	 */
-	private Map<String, JSONObject> parseEntities (Workbook wb,
-												   Map<String, String> entitySheets,
-												   Map<String, String> collectionSheets)
-	{
-		// First find all the entity sheets
-		Sheet sheetMap = wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET);
-
-		// SheetName is in first column
-		// Entity type and property is in second column
-		for (int i = 0; i <= sheetMap.getLastRowNum(); i++) {
-			Row row = sheetMap.getRow(i);
-			String entityInfo = row.getCell(1).getStringCellValue();
-
-			if (getProperty(entityInfo).isMany()) {
-				collectionSheets.put(row.getCell(0).getStringCellValue(), entityInfo);
-			}
-			else {
-				entitySheets.put(row.getCell(0).getStringCellValue(), entityInfo);
-			}
-		}
-
-		Map<String, JSONObject> idMap = new HashMap<String, JSONObject>();
-		for (Map.Entry<String, String> entry : entitySheets.entrySet()) {
-			processEntitySheet(wb, entry.getKey(), idMap);
-		}
-
-		return idMap;
-	}
-
-	private void processEntitySheet (Workbook wb, String sheetName, Map<String, JSONObject> idMap)
-	{
-		// Ensure we have the XOR.id column in the entity sheet
-		Sheet entitySheet = wb.getSheet(sheetName);
-		Map<String, Integer> colMap = getHeaderMap(entitySheet);
-		if (!colMap.containsKey(Constants.XOR.ID)) {
-			throw new RuntimeException("XOR.id column is missing");
-		}
-
-		// process each entity
-		for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
-			JSONObject entityJSON = getJSON(colMap, entitySheet.getRow(i));
-			idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
-		}
-	}
-
-	private void processCollectionSheet (
-		String path,
-		String sheetName,
-		String entityInfo, Map<String, JSONArray> collectionPropertyMap,
-		Map<String, JSONObject> idMap) throws Exception
-	{
-		// Ensure we have the XOR.id column in the entity sheet
-		// Ensure we have the XOR.id column in the entity sheet
-		Reader entitySheet = new FileReader(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
-		CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
-
-		// Get the entity class name
-		Map<String, Integer> colMap = parser.getHeaderMap();
-
-		// A collection can have value objects, so XOR.ID is not mandatory
-		// But a collection entry should have a collection owner
-		if (!colMap.containsKey(Constants.XOR.OWNER_ID)) {
-			throw new RuntimeException("XOR.owner.id column is missing");
-		}
-
-		// process each collection entry
-		for(
-			CSVRecord csvRecord
-			:parser)
-
-		{
-			JSONObject collectionEntryJSON = getJSON(colMap, csvRecord);
-			String key = getCollectionKey(
-				collectionEntryJSON.getString(Constants.XOR.OWNER_ID),
-				entityInfo);
-			addCollectionEntry(collectionPropertyMap, key, collectionEntryJSON);
-
-			// If the collection element is an entity add it to the idMap also
-			if (collectionEntryJSON.has(Constants.XOR.ID)) {
-				try {
-					idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
-				}
-				catch (Exception e) {
-					String longStr = new Long(collectionEntryJSON.getLong(Constants.XOR.ID)).toString();
-					idMap.put(longStr, collectionEntryJSON);
-				}
-			}
-		}
-	}
-
-	private void processCollectionSheet (
-		Workbook wb,
-		String sheetName,
-		String entityInfo, Map<String, JSONArray> collectionPropertyMap,
-		Map<String, JSONObject> idMap)
-	{
-		// Ensure we have the XOR.id column in the entity sheet
-		Sheet collectionSheet = wb.getSheet(sheetName);
-		Map<String, Integer> colMap = getHeaderMap(collectionSheet);
-
-		// A collection can have value objects, so XOR.ID is not mandatory
-		// But a collection entry should have a collection owner
-		if (!colMap.containsKey(Constants.XOR.OWNER_ID)) {
-			throw new RuntimeException("XOR.owner.id column is missing");
-		}
-
-		// process each collection entry
-		for (int i = 1; i <= collectionSheet.getLastRowNum(); i++) {
-			JSONObject collectionEntryJSON = getJSON(colMap, collectionSheet.getRow(i));
-			String key = getCollectionKey(
-				collectionEntryJSON.getString(Constants.XOR.OWNER_ID),
-				entityInfo);
-			addCollectionEntry(collectionPropertyMap, key, collectionEntryJSON);
-
-			// If the collection element is an entity add it to the idMap also
-			if (collectionEntryJSON.has(Constants.XOR.ID)) {
-				try {
-					idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
-				}
-				catch (Exception e) {
-					String longStr = new Long(collectionEntryJSON.getLong(Constants.XOR.ID)).toString();
-					idMap.put(longStr, collectionEntryJSON);
-				}
-			}
-		}
-	}
-
-	private String getCollectionKey (String ownerXorKey, String entityInfo)
-	{
-		return ownerXorKey + ":" + getProperty(entityInfo).getName();
-	}
-
-	private void addCollectionEntry (Map<String, JSONArray> collectionPropertyMap,
-									 String key,
-									 JSONObject collectionEntryJSON)
-	{
-		JSONArray collection = null;
-		if (collectionPropertyMap.containsKey(key)) {
-			collection = collectionPropertyMap.get(key);
-		}
-		else {
-			collection = new JSONArray();
-			collectionPropertyMap.put(key, collection);
-		}
-
-		collection.put(collectionEntryJSON);
+		ExportImport exim = new ExcelExportImport(this);
+		return exim.importAggregate(filePath, settings);
 	}
 
 	private static boolean isEmbeddedPath (String propertyPath)
@@ -1185,215 +779,6 @@ public class AggregateManager implements Xor
 		embeddable.put(path, value);
 		if (replacedProperty != null) {
 			embeddable.remove(replacedProperty);
-		}
-	}
-
-	private Map<String, JSONArray> parseCollections (Workbook wb,
-													 Map<String, String> collectionSheets,
-													 Map<String, JSONObject> idMap)
-	{
-		Map<String, JSONArray> collectionPropertyMap = new HashMap<String, JSONArray>();
-		for (Map.Entry<String, String> entry : collectionSheets.entrySet()) {
-			processCollectionSheet(
-				wb,
-				entry.getKey(),
-				entry.getValue(),
-				collectionPropertyMap,
-				idMap);
-		}
-
-		return collectionPropertyMap;
-	}
-
-	private Map<String, JSONArray> parseCollections (String path,
-													 Map<String, String> collectionSheets,
-													 Map<String, JSONObject> idMap) throws Exception
-	{
-		Map<String, JSONArray> collectionPropertyMap = new HashMap<String, JSONArray>();
-		for (Map.Entry<String, String> entry : collectionSheets.entrySet()) {
-			processCollectionSheet(
-				path,
-				entry.getKey(),
-				entry.getValue(),
-				collectionPropertyMap,
-				idMap);
-		}
-
-		return collectionPropertyMap;
-	}
-
-	/**
-	 * Generate the Excel sheets based on entities and collections
-	 * TODO: Should the map be topologically ordered?
-	 *
-	 * @param to      root entity
-	 * @param sheetBO map of the sheet name and the entities/relationships within that sheet
-	 * @return the generated Excel workbook
-	 */
-	private Workbook processSheetBO (BusinessObject to, Map<String, List<BusinessObject>> sheetBO)
-	{
-
-		SXSSFWorkbook wb = new SXSSFWorkbook();
-		wb.setCompressTempFiles(true);
-
-		List<BusinessObject> entityBOList = new LinkedList<BusinessObject>();
-		entityBOList.add(to);
-		createBOSheet(wb, Constants.XOR.EXCEL_ENTITY_SHEET, null, entityBOList, null);
-
-		int sheetNo = 1;
-		Map<String, String> sheetMap = new HashMap<String, String>();
-		for (Map.Entry<String, List<BusinessObject>> entry : sheetBO.entrySet()) {
-			// Create a sheet
-			String sheetName = Constants.XOR.EXCEL_SHEET_PREFIX + sheetNo++;
-			sheetMap.put(entry.getKey(), sheetName);
-			createBOSheet(wb, sheetName, entry.getKey(), entry.getValue(), null);
-		}
-		writeSheetMap(wb, sheetMap);
-
-		return wb;
-	}
-
-	private void createBOSheet (Workbook wb,
-								String sheetName,
-								String entityInfo,
-								List<BusinessObject> boList,
-								BusinessObject owner)
-	{
-
-		int colNo = 0;
-		int rowNo = 1;
-		SXSSFSheet sh = (SXSSFSheet)wb.getSheet(sheetName);
-		if (sh == null) {
-			sh = (SXSSFSheet)wb.createSheet(sheetName);
-		}
-		else {
-			rowNo = sh.getLastRowNum() + 1;
-		}
-		Map<String, Integer> propertyColIndex = new HashMap<String, Integer>();
-
-		for (BusinessObject bo : boList) {
-			if (bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {
-				createBOSheet(
-					wb,
-					sheetName,
-					entityInfo,
-					bo.getList(),
-					(BusinessObject)bo.getContainer());
-				continue;
-			}
-
-			List<String> propertyPaths = new ArrayList<String>();
-
-			// Based on polymorphism, the actual instance can be a different subtype
-			// so we need to get a fresh property list and calculate the column indexes
-			// as new properties might be present and would need to be mapped to additional columns
-			if (owner == null && bo.getContainer() != null) {
-				owner = (BusinessObject)bo.getContainer();
-			}
-			if (owner != null) {
-				propertyPaths.add(Constants.XOR.OWNER_ID);
-			}
-			propertyPaths.add(Constants.XOR.ID);
-			propertyPaths.add(Constants.XOR.TYPE);
-			for (Property property : bo.getType().getProperties()) {
-				if (property.isMany()) {
-					propertyPaths.add(ExcelJsonCreationStrategy.getCollectionTypeKey(property));
-
-					// Collections are handled separately
-					continue;
-				}
-				// Skip open content until we come with a default serialized form for empty object
-				// Currently it fails validation since empty string does not equal JSONObject
-				if (property.isOpenContent()) {
-					continue;
-				}
-				// Handle embedded objects and expand them if necessary
-				propertyPaths.addAll(property.expand(new HashSet<Type>()));
-			}
-
-			for (String propertyPath : propertyPaths) {
-				if (!propertyColIndex.containsKey(propertyPath)) {
-					propertyColIndex.put(propertyPath, colNo++);
-				}
-			}
-
-			// TODO: add columns only if the value is not null
-			Row row = sh.createRow(rowNo++);
-			for (String propertyPath : propertyPaths) {
-				Cell cell = row.createCell(propertyColIndex.get(propertyPath));
-				Object value = null;
-				if (Constants.XOR.OWNER_ID.equals(propertyPath)) {
-					value = owner.getOpenProperty(Constants.XOR.ID);
-				}
-				else if (Constants.XOR.ID.equals(propertyPath) || propertyPath.startsWith(
-					Constants.XOR.TYPE + Constants.XOR.SEP)) {
-					value = bo.getOpenProperty(propertyPath);
-				}
-				else if (Constants.XOR.TYPE.equals(propertyPath)) {
-					value = bo.getInstanceClassName();
-				}
-				else if (propertyPath.startsWith(Constants.XOR.OBJECTREF)) {
-					String path = propertyPath.substring(Constants.XOR.OBJECTREF.length());
-					value = bo.getExistingDataObject(Settings.convertToBOPath(path));
-					if (value != null && value instanceof BusinessObject) {
-						value = ((BusinessObject)value).getOpenProperty(Constants.XOR.ID);
-					}
-					else if (value != null) {
-						throw new RuntimeException(
-							"ObjectRef needs to refer to an Entity: " + value.toString());
-					}
-				}
-				else {
-					value = bo.get(Settings.convertToBOPath(propertyPath));
-				}
-				if (value != null) {
-					cell.setCellValue(value.toString());
-				}
-			}
-		}
-
-		writeColumnNames(sh, propertyColIndex);
-	}
-
-	private void writeSheetMap (SXSSFWorkbook wb, Map<String, String> sheetMap)
-	{
-		SXSSFSheet sh = (SXSSFSheet)wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
-
-		// Write header
-		Row headerRow = sh.createRow(0);
-		Cell sheetName = headerRow.createCell(0);
-		Cell propertyName = headerRow.createCell(1);
-		sheetName.setCellValue("Sheet name");
-		propertyName.setCellValue("Relationship");
-
-
-		int rowNo = 1;
-		for (Map.Entry<String, String> entry : sheetMap.entrySet()) {
-			Row row = sh.createRow(rowNo++);
-			Cell sheetNameCell = row.createCell(0);
-			Cell propertyNameCell = row.createCell(1);
-			sheetNameCell.setCellValue(entry.getValue());
-			propertyNameCell.setCellValue(entry.getKey());
-		}
-
-		sh.autoSizeColumn(0);
-		sh.autoSizeColumn(1);
-		wb.setSheetOrder(Constants.XOR.EXCEL_INDEX_SHEET, 1);
-	}
-
-	private void writeColumnNames (SXSSFSheet sh, Map<String, Integer> propertyColIndex)
-	{
-		Row row = sh.getRow(0);
-		if (row != null) {
-			// Column names have already been populated
-			return;
-		}
-
-		row = sh.createRow(0);
-		for (Map.Entry<String, Integer> entry : propertyColIndex.entrySet()) {
-			Cell cell = row.createCell(entry.getValue());
-			cell.setCellValue(entry.getKey());
-			sh.autoSizeColumn(entry.getValue());
 		}
 	}
 
@@ -1676,184 +1061,11 @@ public class AggregateManager implements Xor
 		}
 	}
 
-	private void addProperties(String prefix, List attrPath, Map<String, Integer> headerMap, EntityType entityType) {
-		for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
-			Property property = entityType.getProperty(entry.getKey());
-			if(property != null) {
-				attrPath.add(prefix + entry.getKey());
-			}
-		}
-	}
-
-	private void setView(Settings settings, String path) throws IOException
+	public void importCSV (String filePath, Settings settings) throws Exception
 	{
-		// set the view
-		// TODO: For now we set the view only for the root entity
-		// Create view based on the CSV header fields
-		AggregateView view = new AggregateView("CSV_IMPORT");
-		List attrPath = new ArrayList();
-		view.setAttributeList(attrPath);
-		settings.setView(view);
-
-		// Get the view fields for the entity
-		Reader entitySheet = new FileReader(path + Constants.XOR.CSV_ENTITY_SHEET);
-		CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
-		Map<String, Integer> headerMap = parser.getHeaderMap();
-		addProperties("", attrPath, headerMap, (EntityType)settings.getEntityType());
-
-		// Get the view fields for the relationships
-		Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
-		parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());
-		for (
-			CSVRecord csvRecord
-			: parser)
-
-		{
-			String entityInfo = csvRecord.get(1);
-			Reader sheet = new FileReader(path + csvRecord.get(0) + Constants.XOR.CSV_FILE_SUFFIX);
-			CSVParser sheetParser = new CSVParser(sheet, CSVFormat.DEFAULT.withHeader());
-			Map<String, Integer> sheetHeaderMap = sheetParser.getHeaderMap();
-
-			addProperties(getProperty(entityInfo).getName() + Settings.PATH_DELIMITER,
-				attrPath,
-				sheetHeaderMap,
-				(EntityType)getType(entityInfo)
-			);
-		}
+		ExportImport exim = new CSVExportImport(this);
+		exim.importAggregate(filePath, settings);
 	}
-
-	public void importCSV (String path, Settings settings) throws Exception
-	{
-		validateImportExport();
-
-		try {
-			Reader entitySheet = new FileReader(path + Constants.XOR.CSV_ENTITY_SHEET);
-			CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
-
-			// Get the entity class name
-			Map<String, Integer> colMap = parser.getHeaderMap();
-			if (!colMap.containsKey(Constants.XOR.TYPE)) {
-				// TODO: Fallback to entity class in settings if provided
-				throw new RuntimeException("XOR.type column is missing");
-			}
-			setView(settings, path);
-
-			List<Object> entityBatch = new LinkedList<>();
-			for(
-				CSVRecord csvRecord
-				:parser)
-
-			{
-				String entityClassName = csvRecord.get(colMap.get(Constants.XOR.TYPE));
-				try {
-					settings.setEntityClass(Class.forName(entityClassName));
-				}
-				catch (ClassNotFoundException e) {
-					throw new RuntimeException("Class " + entityClassName + " is not found");
-				}
-
-				/******************************************************
-				 * Algorithm
-				 *
-				 * 1. Create all objects with the XOR.id
-				 * 2. Create the collections
-				 * 3. Associate the collections to their owners
-				 * 4. Then finally call JSONTransformer.unpack to link the objects by XOR.id
-				 *
-				 ********************************************************/
-
-				// 1. Create all objects with the XOR.id
-				Map<String, String> collectionSheets = new HashMap<String, String>();
-				Map<String, String> entitySheets = new HashMap<String, String>();
-				entitySheets.put(Constants.XOR.EXCEL_ENTITY_SHEET, entityClassName);
-				Map<String, JSONObject> idMap = parseEntities(path, entitySheets, collectionSheets);
-
-				// 2. Create the collections
-				// The key in the collection property map is of the form <owner_xor_id>:<property>
-				Map<String, JSONArray> collectionPropertyMap = parseCollections(
-					path,
-					collectionSheets,
-					idMap);
-
-				// 3. Associate the collections to their owners
-				// Replace all objectref prefix keys with the actual objects
-				// Replace all collection properties with the array objects
-				link(idMap, collectionPropertyMap);
-
-				// Find the root
-				String rootId = csvRecord.get(colMap.get(Constants.XOR.ID));
-				JSONObject root = idMap.get(rootId);
-
-				entityBatch.add(root);
-			}
-
-			create(entityBatch, settings);
-		}
-		catch (EncryptedDocumentException e) {
-			throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");
-		}
-		catch (InvalidFormatException e) {
-			throw new RuntimeException("The provided inputstream is not valid. " + e.getMessage());
-		}
-	}
-
-	@Override
-	public void importBulk (Reader csvData, Settings settings) throws Exception
-	{
-		CSVParser parser = new CSVParser(csvData, CSVFormat.DEFAULT.withHeader());
-		Map<String, Integer> headerMap = parser.getHeaderMap();
-		Map<String, Property> propertyMap = new HashMap<String, Property>();
-
-		// Create view based on the CSV header fields
-		AggregateView view = new AggregateView("CSV_IMPORT");
-		List path = new ArrayList();
-		view.setAttributeList(path);
-		settings.setView(view);
-
-		for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
-			Property property = ((EntityType)settings.getEntityType()).getProperty(entry.getKey());
-			if(property != null) {
-				propertyMap.put(entry.getKey(), property);
-				path.add(entry.getKey());
-			}
-		}
-
-		ObjectCreator oc = new ObjectCreator(
-			getDAS(),
-			getPersistenceOrchestrator(),
-			MapperDirection.EXTERNALTODOMAIN);
-
-		int count = 1;
-		for(
-			CSVRecord csvRecord
-			:parser)
-
-		{
-			JSONObject json = new JSONObject();
-			for (Map.Entry<String, Property> entry : propertyMap.entrySet()) {
-				Object cellValue = csvRecord.get(entry.getKey());
-				Property property = propertyMap.get(entry.getKey());
-				cellValue = ((SimpleType)property.getType()).unmarshall(cellValue.toString());
-
-				json.put(entry.getKey(), cellValue);
-			}
-
-			this.create(json, settings);
-
-			// We clear the input object creator since each record is a separate entity
-			if(oc.getPersistenceOrchestrator() == null) {
-				oc.setPersistenceOrchestrator(getPersistenceOrchestrator());
-			}
-			oc.clearState();
-
-			if(count++%BULK_BATCH_SIZE == 0) {
-				getPersistenceOrchestrator().flush();
-				getPersistenceOrchestrator().clear();
-			}
-		}
-	}
-
-
 
 	@Override
 	public void importDenormalized (InputStream is, Settings settings) throws

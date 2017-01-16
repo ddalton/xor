@@ -72,13 +72,12 @@ public class ExcelExportImport extends AbstractExportImport
 
             addProperties(getProperty(entityInfo).getName() + Settings.PATH_DELIMITER,
                 attrPath,
-                sheetHeaderMap,
-                (EntityType)getType(entityInfo)
+                sheetHeaderMap
             );
         }
     }
 
-    @Override public void importAggregate (String filePath, Settings settings) throws IOException
+    @Override public Object importAggregate (String filePath, Settings settings) throws IOException
     {
         super.importAggregate(filePath, settings);
 
@@ -146,7 +145,7 @@ public class ExcelExportImport extends AbstractExportImport
                 entityBatch.add(root);
             }
 
-            am.create(entityBatch, settings);
+            return am.create(entityBatch, settings);
         }
         catch (EncryptedDocumentException e) {
             throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");
@@ -154,6 +153,8 @@ public class ExcelExportImport extends AbstractExportImport
         catch (InvalidFormatException e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 
     @Override
@@ -165,7 +166,7 @@ public class ExcelExportImport extends AbstractExportImport
 
         // SheetName is in first column
         // Entity type and property is in second column
-        for (int i = 0; i <= sheetMap.getLastRowNum(); i++) {
+        for (int i = 1; i <= sheetMap.getLastRowNum(); i++) {
             Row row = sheetMap.getRow(i);
             String entityInfo = row.getCell(1).getStringCellValue();
 

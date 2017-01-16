@@ -473,6 +473,11 @@ public abstract class AbstractOperation implements Operation {
 			} else {
 				next.setOutput(createTarget(next, ClassUtil.getInstance(nextSource), null));
 			}
+
+			if(callInfo.isBulkInput()) {
+				Object outputInstance = ((BusinessObject)next.getOutput()).getInstance();
+				((List)((BusinessObject)callInfo.getOutput()).getInstance()).add(outputInstance);
+			}
 		}
 	}
 

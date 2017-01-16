@@ -19,6 +19,7 @@
 
 package tools.xor.logic;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -38,6 +39,7 @@ import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -421,10 +423,64 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 			assert(child.getId() != null);
 		}
 		
-	    FileOutputStream out = new FileOutputStream("taskExcel.xlsx");
-		aggregateService.exportAggregate(out, task, settings);
-	}	
-	
+	    //FileOutputStream out = new FileOutputStream("taskExcel.xlsx");
+		//aggregateService.exportAggregate(out, task, settings);
+		aggregateService.exportAggregate("taskExcel.xlsx", task, settings);
+	}
+
+
+	protected void checkCSVExport() throws JSONException, IOException {
+		final String TASK_NAME = "SETUP_DSL";
+		final String CHILD_TASK_NAME = "TASK_1";
+
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+		json.put("openField", "Success");
+
+		// Create and add 1 child task
+		JSONObject child1 = new JSONObject();
+		child1.put("name", CHILD_TASK_NAME);
+		child1.put("displayName", "Task 1");
+		child1.put("description", "This is the first child task");
+		child1.put("openField", "Success");
+
+		JSONArray jsonArray = new JSONArray();
+		jsonArray.put(child1);
+		json.put("taskChildren", jsonArray);
+
+		JSONObject childDetails = new JSONObject();
+		childDetails.put("version", "0");
+		child1.put("taskDetails", childDetails);
+
+		Settings settings = getSettings();
+		settings.addAssociation( new AssociationSetting(TaskDetails.class));
+		settings.setEntityClass(Task.class);
+		Task task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+		assert(task.getName().equals(TASK_NAME));
+		assert(task.getTaskChildren() != null);
+		System.out.println("Children size: " + task.getTaskChildren().size());
+		assert(task.getTaskChildren().size() == 1);
+		for(Task child: task.getTaskChildren()) {
+			System.out.println("Task name: " + child.getName());
+		}
+		for(Task child: task.getTaskChildren()) {
+			assert(child.getId() != null);
+		}
+
+		// delete existing folder
+		String folder = "taskcsv/";
+		File directory = new File(folder);
+		if(directory.exists()) {
+			FileUtils.deleteDirectory(directory);
+		}
+
+		aggregateService.exportCSV(folder, task, settings);
+	}
+
 
 	protected void checkExcelExportView() throws JSONException, IOException {
 		final String TASK_NAME = "SETUP_DSL";
@@ -478,19 +534,22 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 			assert(child.getId() != null);
 		}
 		
-	    FileOutputStream out = new FileOutputStream("taskExcelChunking.xlsx");
-		aggregateService.exportAggregate(out, task, settings);
+	    //FileOutputStream out = new FileOutputStream("taskExcelChunking.xlsx");
+		//aggregateService.exportAggregate(out, task, settings);
+		aggregateService.exportAggregate("taskExcelChunking.xlsx", task, settings);
 	}		
 	
 	protected void checkExcelImport() throws JSONException, IOException {
-		FileInputStream in = new FileInputStream("taskOneChild.xlsx");
+		//FileInputStream in = new FileInputStream("taskOneChild.xlsx");
 		
 		final String TASK_NAME = "SETUP_DSL";
 		final String CHILD_TASK_NAME = "TASK_1";		
 		
 		Settings settings = getSettings();
 		settings.addAssociation( new AssociationSetting(TaskDetails.class));		
-		Task task = (Task) aggregateService.importAggregate(in, settings);
+		//Task task = (Task) aggregateService.importAggregate(in, settings);
+		List result = (List)aggregateService.importAggregate("taskOneChild.xlsx", settings);
+		Task task = (Task) result.get(0);
 		
 		assert(task.getId() != null);
 		assert(task.getName().equals(TASK_NAME));
@@ -505,13 +564,15 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	}
 	
 	protected void checkExcelImport100() throws JSONException, IOException {
-		FileInputStream in = new FileInputStream("task100Child.xlsx");
+		//FileInputStream in = new FileInputStream("task100Child.xlsx");
 		
 		final String TASK_NAME = "SETUP_DSL";
 		
 		Settings settings = getSettings();
 		settings.addAssociation( new AssociationSetting(TaskDetails.class));		
-		Task task = (Task) aggregateService.importAggregate(in, settings);
+		//Task task = (Task) aggregateService.importAggregate(in, settings);
+		List result = (List) aggregateService.importAggregate("task100Child.xlsx", settings);
+		Task task = (Task) result.get(0);
 		
 		assert(task.getId() != null);
 		assert(task.getName().equals(TASK_NAME));

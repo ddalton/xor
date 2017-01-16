@@ -1,0 +1,32 @@
+package tools.xor.service.exim;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.util.List;
+
+import tools.xor.Settings;
+
+public interface ExportImport {
+
+	/**
+	 * Exports an aggregate. Currently designed to export a single aggregate.
+	 *
+	 * @param filePath the file or the folder containing the result of the export
+	 * @param inputObject the aggregate to be exported
+	 * @param settings object
+	 * @throws IOException
+	 */
+	public void exportAggregate(String filePath, Object inputObject, Settings settings) throws
+		IOException;
+
+	/**
+	 * Imports one or more aggregates. An aggregate is an entity including its relationship objects.
+	 *
+	 * @param filePath the file or the folder containing the aggregate to be imported
+	 * @param settings object
+	 * @throws IOException
+	 */
+	public void importAggregate (String filePath, Settings settings) throws IOException;
+}

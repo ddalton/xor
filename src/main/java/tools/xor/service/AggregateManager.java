@@ -599,7 +599,7 @@ public class AggregateManager implements Xor
 		return flushHandler.instance();
 	}
 
-	private BusinessObject readBO (Object entity, Settings settings)
+	public BusinessObject readBO (Object entity, Settings settings)
 	{
 		owLogger.debug("Performing read operation");
 
@@ -1162,7 +1162,7 @@ public class AggregateManager implements Xor
 		setEmbeddableValue(base, path, value, null);
 	}
 
-	private static void setEmbeddableValue (JSONObject base,
+	public static void setEmbeddableValue (JSONObject base,
 											String path,
 											Object value,
 											String replacedProperty)
@@ -1720,7 +1720,6 @@ public class AggregateManager implements Xor
 				(EntityType)getType(entityInfo)
 			);
 		}
-
 	}
 
 	public void importCSV (String path, Settings settings) throws Exception

@@ -879,8 +879,8 @@ public class AggregateManager implements Xor
 	{
 		// First find all the entity sheets
 		try {
-			Reader entitySheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
-			CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
+			Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
+			CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());
 
 			for (
 				CSVRecord csvRecord
@@ -1111,7 +1111,7 @@ public class AggregateManager implements Xor
 			else {
 				// set direct value
 				if (value != null) {
-					if(StringUtils.isNumeric(value)) {
+					if(NumberUtils.isNumber(value)) {
 						entity.put(entry.getKey(), NumberUtils.toDouble(value));
 					} else {
 						entity.put(entry.getKey(), value);
@@ -1359,7 +1359,15 @@ public class AggregateManager implements Xor
 	{
 		SXSSFSheet sh = (SXSSFSheet)wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
 
-		int rowNo = 0;
+		// Write header
+		Row headerRow = sh.createRow(0);
+		Cell sheetName = headerRow.createCell(0);
+		Cell propertyName = headerRow.createCell(1);
+		sheetName.setCellValue("Sheet name");
+		propertyName.setCellValue("Relationship");
+
+
+		int rowNo = 1;
 		for (Map.Entry<String, String> entry : sheetMap.entrySet()) {
 			Row row = sh.createRow(rowNo++);
 			Cell sheetNameCell = row.createCell(0);
@@ -1668,7 +1676,17 @@ public class AggregateManager implements Xor
 		}
 	}
 
-	private void setView(Settings settings, CSVParser parser) {
+	private void addProperties(String prefix, List attrPath, Map<String, Integer> headerMap, EntityType entityType) {
+		for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
+			Property property = entityType.getProperty(entry.getKey());
+			if(property != null) {
+				attrPath.add(prefix + entry.getKey());
+			}
+		}
+	}
+
+	private void setView(Settings settings, String path) throws IOException
+	{
 		// set the view
 		// TODO: For now we set the view only for the root entity
 		// Create view based on the CSV header fields
@@ -1677,15 +1695,32 @@ public class AggregateManager implements Xor
 		view.setAttributeList(attrPath);
 		settings.setView(view);
 
+		// Get the view fields for the entity
+		Reader entitySheet = new FileReader(path + Constants.XOR.CSV_ENTITY_SHEET);
+		CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
 		Map<String, Integer> headerMap = parser.getHeaderMap();
-		Map<String, Property> propertyMap = new HashMap<String, Property>();
-		for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
-			Property property = ((EntityType)settings.getEntityType()).getProperty(entry.getKey());
-			if(property != null) {
-				propertyMap.put(entry.getKey(), property);
-				attrPath.add(entry.getKey());
-			}
+		addProperties("", attrPath, headerMap, (EntityType)settings.getEntityType());
+
+		// Get the view fields for the relationships
+		Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
+		parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());
+		for (
+			CSVRecord csvRecord
+			: parser)
+
+		{
+			String entityInfo = csvRecord.get(1);
+			Reader sheet = new FileReader(path + csvRecord.get(0) + Constants.XOR.CSV_FILE_SUFFIX);
+			CSVParser sheetParser = new CSVParser(sheet, CSVFormat.DEFAULT.withHeader());
+			Map<String, Integer> sheetHeaderMap = sheetParser.getHeaderMap();
+
+			addProperties(getProperty(entityInfo).getName() + Settings.PATH_DELIMITER,
+				attrPath,
+				sheetHeaderMap,
+				(EntityType)getType(entityInfo)
+			);
 		}
+
 	}
 
 	public void importCSV (String path, Settings settings) throws Exception
@@ -1702,7 +1737,7 @@ public class AggregateManager implements Xor
 				// TODO: Fallback to entity class in settings if provided
 				throw new RuntimeException("XOR.type column is missing");
 			}
-			setView(settings, parser);
+			setView(settings, path);
 
 			List<Object> entityBatch = new LinkedList<>();
 			for(

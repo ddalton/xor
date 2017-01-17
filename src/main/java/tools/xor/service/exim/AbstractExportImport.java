@@ -143,9 +143,10 @@ public abstract class AbstractExportImport implements ExportImport
      * Generate the Excel sheets based on entities and collections
      * TODO: Should the map be topologically ordered?
      *
+     * @param filePath path to the Excel file or the CSV folder
      * @param to      root entity
      * @param sheetBO map of the sheet name and the entities/relationships within that sheet
-     * @return the generated Excel workbook
+     * @throws IOException when the file cannot be written to
      */
     protected void processBO (String filePath,
                               BusinessObject to,

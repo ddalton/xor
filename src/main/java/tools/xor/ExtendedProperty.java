@@ -320,7 +320,7 @@ public interface ExtendedProperty extends Property {
 	/**
 	 * Set the collection key for this property. The property should represent a TO_MANY relationship
 	 * 
-	 * @param collectionKey
+	 * @param collectionKey set of properties forming the collection key
 	 */
 	public void setCollectionKey(Set<String> collectionKey);
 }

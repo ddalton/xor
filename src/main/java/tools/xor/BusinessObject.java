@@ -207,6 +207,7 @@ public interface BusinessObject extends DataObject {
 	 * Set the property of this object using the values from propertyResult. This method is mainly used from a query result.
 	 * @param propertyPath The path representing property whose value needs to be set
 	 * @param propertyResult The result from a query
+	 * @param domainEntityType the domain EntityType
 	 * @throws Exception if property cannot be found
 	 */
 	void set(String propertyPath, Map<String, Object> propertyResult, EntityType domainEntityType) throws Exception;
@@ -296,6 +297,7 @@ public interface BusinessObject extends DataObject {
 
 	/**
 	 * Returns the collection element key value. This method is invoked on the Collection Element data object
+	 * @param property from which collections specific metadata is obtained
 	 * @return value of the element key
 	 */
 	public Object getCollectionElementKey(Property property);

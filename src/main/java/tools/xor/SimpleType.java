@@ -170,7 +170,7 @@ public class SimpleType implements BasicType {
 	/**
 	 * Usually takes a toString() value and reconstitutes the object from it
 	 * @param value This is an object's value represented as a string
-	 * @return
+	 * @return reconstitued java object
 	 */
 	public Object unmarshall(String value) {
 

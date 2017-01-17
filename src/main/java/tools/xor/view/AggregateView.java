@@ -552,8 +552,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	 * Note: We need to make a distinction between Domain and Reference entity types otherwise
 	 * we could end up thrashing between building the graph for these two types.
 	 *
-	 * @param entityType
-	 * @return
+	 * @param entityType for which the corresponding StateGraph needs to be built
+	 * @return StateGraph instance for the given type for this view
 	 */
 	public StateGraph<State, Edge<State>> getStateGraph(EntityType entityType) {
 

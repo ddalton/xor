@@ -30,7 +30,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 
 	/**
 	 * Should be overridden by subclasses to return the correct type
-	 * @return
+	 * @return TypeMapper instance
 	 */
 	abstract protected TypeMapper createInstance();
 

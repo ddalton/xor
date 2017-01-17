@@ -94,7 +94,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	 * For example, we know that the identifier was generated when the object was created etc.
 	 *
 	 * @param from the user given object
-	 * @return
+	 * @return true if the given object is a transient object
 	 */
 	protected boolean isTransient(BusinessObject from) {
 		return false;
@@ -102,6 +102,10 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	
 	@Override
 	public Object getPersistentObject(CallInfo callInfo, TypeMapper typeMapper) {
+		if(callInfo.isBulkInput()) {
+			return null;
+		}
+
 		BusinessObject from = (BusinessObject) callInfo.getInput();
 		Object persistentObject = null;
 

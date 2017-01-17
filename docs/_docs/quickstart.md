@@ -4,14 +4,14 @@ title: Quick-start guide
 permalink: /docs/quickstart/
 ---
 
-For the impatient, here's how to get a boilerplate XOR site up and running.
-Add the following dependency to your pom.xml file.
+For the impatient, here's how to get XOR.
+Add the following dependency to your Maven pom.xml file.
 
 ```sh
 <dependency>
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
-    <version>1.2.5</version>
+    <version>1.2.11</version>
 </dependency>
 ```
 

@@ -113,6 +113,13 @@ public interface DataObject extends Serializable
   Object get(Property property);
 
   /**
+   * Returns the value of a String property identified by the specified path.
+   * @param path the path to a valid object and property.
+   * @return the String value of the specified property.
+   */
+  String getString(java.lang.String path);
+
+  /**
    * Sets the value of the given property of the object to the new value.
    * <p>
    * If the property is {@link Property#isMany many-valued},

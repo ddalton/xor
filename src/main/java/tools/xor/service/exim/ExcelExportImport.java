@@ -57,11 +57,22 @@ public class ExcelExportImport extends AbstractExportImport
         return colMap;
     }
 
+    private boolean hasRelationships() {
+        if(wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET) == null) {
+            return false;
+        }
+
+        return true;
+    }
+
     @Override
     protected void addRelationships(String path, List attrPath) throws IOException
     {
-
         Sheet relationshipSheet = wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET);
+        if(!hasRelationships()) {
+            return;
+        }
+
         for (int i = 1; i <= relationshipSheet.getLastRowNum(); i++) {
             Row row = relationshipSheet.getRow(i);
             String entityInfo = row.getCell(1).getStringCellValue();
@@ -92,17 +103,17 @@ public class ExcelExportImport extends AbstractExportImport
 
             // Get the entity class name
             Map<String, Integer> colMap = getHeaderMap(entitySheet);
-            if (!colMap.containsKey(Constants.XOR.TYPE)) {
-                // TODO: Fallback to entity class in settings if provided
-                throw new RuntimeException("XOR.type column is missing");
-            }
-
             setView(settings, filePath);
 
             List<Object> entityBatch = new LinkedList<>();
             for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
                 JSONObject entityJSON = am.getJSON(colMap, entitySheet.getRow(i));
+
+                if(!entityJSON.has(Constants.XOR.TYPE)) {
+                    throw new RuntimeException("XOR.type column is missing");
+                }
                 String entityClassName = entityJSON.getString(Constants.XOR.TYPE);
+
                 try {
                     settings.setEntityClass(Class.forName(entityClassName));
                 }
@@ -163,6 +174,9 @@ public class ExcelExportImport extends AbstractExportImport
     {
         // First find all the entity sheets
         Sheet sheetMap = wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET);
+        if(!hasRelationships()) {
+            return;
+        }
 
         // SheetName is in first column
         // Entity type and property is in second column
@@ -325,6 +339,9 @@ public class ExcelExportImport extends AbstractExportImport
         Cell propertyName = headerRow.createCell(1);
         sheetName.setCellValue(getRelationshipHeaderCol1());
         propertyName.setCellValue(getRelationshipHeaderCol2());
+
+        // Reset the row counter
+        entitySheetRowNo = 1;
     }
 
     @Override

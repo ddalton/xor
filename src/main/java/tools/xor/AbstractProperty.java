@@ -566,7 +566,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			bo.set(entry.getKey(), entry.getValue());
 		}
 
-	}		
+	}
+
+	@Override
+	public String getStringValue(Object dataObject) {
+		Object value = getValue(dataObject);
+
+		return (value == null) ? (String)value : value.toString();
+	}
 	
 	@Override
 	public Object getValue(Object dataObject) {

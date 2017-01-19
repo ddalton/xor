@@ -153,7 +153,7 @@ public class ObjectCreator {
 		return entitiesByKey.get(key);		
 	}	
 
-	public Set<BusinessObject> getDataObjects() {
+	public Set<BusinessObject> 	getDataObjects() {
 		// Retrieve an Identity set
 		Set<BusinessObject> result = Collections.newSetFromMap(new IdentityHashMap<BusinessObject, Boolean>());
 
@@ -287,6 +287,8 @@ public class ObjectCreator {
 		}
 		dataObject.setInstance(targetInstance);	
 
+		// NOTE: dataObject is registered only after its primitive typed properties have
+		// been populated. See AbstractOperation#process
 		if(targetInstance != null) {
 			dataObject = register(dataObject);
 		}
@@ -309,6 +311,21 @@ public class ObjectCreator {
 		if(MutableBO.class.isAssignableFrom(existingBO.getClass())) {
 			objectGraph.replaceInstance((MutableBO) existingBO, existingBO.getInstance());
 		}
+	}
+
+	private String getNaturalKeyString(Set<String> naturalKey) {
+		StringBuilder naturaKeyString = new StringBuilder("");
+		for(String key: naturalKey) {
+			if(naturaKeyString.length() == 0) {
+				naturaKeyString.append("{");
+			} else {
+				naturaKeyString.append(",");
+			}
+			naturaKeyString.append(key);
+		}
+		naturaKeyString.append("}");
+
+		return naturaKeyString.toString();
 	}
 
 	/**
@@ -338,8 +355,14 @@ public class ObjectCreator {
 				if(existingRootType == newRootType) {
 					if(share)
 						return existing;
-					else
-						throw new IllegalStateException("Creating two data objects for the same id and root type");
+					else {
+						if(((EntityType)newDataObject.getType()).getNaturalKey() != null) {
+							throw new IllegalStateException("NaturalKey field(s) " + getNaturalKeyString(((EntityType)newDataObject.getType()).getNaturalKey()) + " is either not populated or has duplicate values. Please check.");
+						} else {
+							throw new IllegalStateException(
+								"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated.");
+						}
+					}
 				} else if(existingRootType.getInstanceClass().isAssignableFrom(newRootType.getInstanceClass())) {
 					// New data object is of a more specific type (This could be a proxy created by the persistent mechanism)
 					Object oldInstance = existing.getInstance();
@@ -358,12 +381,13 @@ public class ObjectCreator {
 				// Register if it is a persistent instance
 				newDataObject.addEntity(newDataObject);
 			}
-		} else {
-			throw new IllegalStateException("New data object was registered by a different means!");
-		}
 
-		// Do the actual registration
-		recordIO(result.getInstance(), result);
+			// Do the actual registration
+			recordIO(result.getInstance(), result);
+		} else {
+			// This is ok. The object might have already been registered using a Bi-dir association.
+			//throw new IllegalStateException("New data object was registered by a different means!");
+		}
 
 		return result;
 	}
@@ -512,6 +536,7 @@ public class ObjectCreator {
 								+ " and target type: " + targetType.getName());
 					}
 				}
+
 				result = createDataObject(sourceInstance, targetInstance, targetType, container, containmentProperty);
 			}
 

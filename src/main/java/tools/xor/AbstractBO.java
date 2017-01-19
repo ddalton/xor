@@ -130,24 +130,49 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public void setModified(boolean modified) {
 		this.modified = modified;
-	}	
+	}
+
+	@Override
+	public EntityKey getSurrogateKey () {
+		return getObjectCreator().getTypeMapper().getSurrogateKey(getIdentifierValue(), getType());
+	}
+
+	@Override
+	public EntityKey getNaturalKey() {
+		return getObjectCreator().getTypeMapper().getNaturalKey(getIdentifierValue(), this);
+	}
 
 	@Override
 	public void addEntity(BusinessObject entity) {
-		Object id = entity.getIdentifierValue();
-		if(id != null) {
+		/*Object id = entity.getIdentifierValue();
+		if (id != null) {
 			EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, entity);
 			getObjectCreator().addByEntityKey(entityKey, entity);
-		}
+		}*/
+
+
+		// add entity by its surrogate and natural keys
+		EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(entity.getIdentifierValue(), entity.getType());
+		EntityKey naturalKey = getObjectCreator().getTypeMapper().getNaturalKey(entity.getIdentifierValue(), entity);
+
+		getObjectCreator().addByEntityKey(surrogateKey, entity);
+		getObjectCreator().addByEntityKey(naturalKey, entity);
+
 	}
 
 	@Override
 	public void removeEntity(BusinessObject entity) {
-		Object id = entity.getIdentifierValue();
-		if(id != null) { 
-			EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, entity);
-			getObjectCreator().removeByEntityKey(entityKey);
-		}
+		/*
+		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(
+			entity.getIdentifierValue(),
+			entity);
+		getObjectCreator().removeByEntityKey(entityKey);
+		*/
+
+		EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(entity.getIdentifierValue(), entity.getType());
+		EntityKey naturalKey = getObjectCreator().getTypeMapper().getNaturalKey(entity.getIdentifierValue(), entity);
+		getObjectCreator().removeByEntityKey(surrogateKey);
+		getObjectCreator().removeByEntityKey(naturalKey);
 	}
 
 	/**
@@ -156,9 +181,49 @@ public abstract class AbstractBO implements BusinessObject {
 	 */
 	@Override
 	public BusinessObject getEntity(BusinessObject entity) {
-		
-		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(entity.getIdentifierValue(), entity);
+
+/*
+		EntityKey entityKey =  getEntityKey(entity);
 		return getObjectCreator().getByEntityKey(entityKey);
+*/
+
+		BusinessObject existingEntity = null;
+
+		// First try by natural key
+		EntityKey entityKey = entity.getNaturalKey();
+		if (entityKey != null) {
+			existingEntity = getObjectCreator().getByEntityKey(entityKey);
+
+			// The natural field values could have changed during the creation/clone/update
+			// operations. So check it again.
+			EntityKey existingEK = (existingEntity == null) ? null : existingEntity.getNaturalKey();
+			if (existingEK == null || !existingEK.equals(entityKey)) {
+
+				// Remove the incorrect natural key mapping to the existing BO
+				getObjectCreator().removeByEntityKey(entityKey);
+
+				// Update the existing BO with the correct natural key mapping
+				if (existingEK != null && existingEntity != null) {
+					getObjectCreator().addByEntityKey(
+						existingEK,
+						existingEntity);
+				}
+
+				// The existing BO is mapped to the incorrect natural key
+				existingEntity = null;
+			}
+		}
+
+		// try using the surrogate key
+		if(existingEntity == null) {
+			entityKey = entity.getSurrogateKey();
+			if(entityKey != null) {
+				existingEntity = getObjectCreator().getByEntityKey(entityKey);
+			}
+		}
+
+		return existingEntity;
+
 	}
 	
 	@Override
@@ -468,6 +533,17 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 
 		return null;
+	}
+
+	@Override
+	public String getString(String path) {
+		ExtendedProperty ep = (ExtendedProperty)getType().getProperty(path);
+		if(ep == null) {
+			// This can be null if the path represents a built-in property like XOR. or
+			// |XOR|
+			return null;
+		}
+		return ep.getStringValue(this);
 	}
 
 	@Override
@@ -911,6 +987,12 @@ public abstract class AbstractBO implements BusinessObject {
 	public Object get(Property property) {
 		if(this.instance == null)
 			return null;
+
+		if(property == null) {
+			// This can happen if additional properties are used by the system
+			// such as UserKey and this field is not present while importing content.
+			return null;
+		}
 		
 		if(property.isOpenContent()) {
 			return getOpenPropertyValue(property.getName());			

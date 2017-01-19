@@ -705,11 +705,11 @@ public class AggregateManager implements Xor
 			else {
 				// set direct value
 				if (value != null) {
-					if(NumberUtils.isNumber(value)) {
-						entity.put(entry.getKey(), NumberUtils.toDouble(value));
-					} else {
+					//if(NumberUtils.isNumber(value)) {
+					//	entity.put(entry.getKey(), NumberUtils.toDouble(value));
+					//} else {
 						entity.put(entry.getKey(), value);
-					}
+					//}
 				}
 				else {
 					//entity.put(entry.getKey(), JSONObject.NULL);
@@ -1108,7 +1108,8 @@ public class AggregateManager implements Xor
 
 				// Get a child business object of the same type
 				// TODO: Get by user key
-				EntityKey ek = oc.getTypeMapper().getEntityKey(idValue, settings.getEntityType());
+				//EntityKey ek = oc.getTypeMapper().getEntityKey(idValue, settings.getEntityType());
+				EntityKey ek = oc.getTypeMapper().getSurrogateKey(idValue, settings.getEntityType());
 				BusinessObject bo = oc.getByEntityKey(ek);
 				if (bo == null) {
 					

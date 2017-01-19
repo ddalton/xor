@@ -19,6 +19,7 @@
 
 package tools.xor.operation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +39,8 @@ import tools.xor.Type;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+
+import javax.swing.text.html.parser.Entity;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
@@ -140,8 +143,9 @@ public abstract class AbstractOperation implements Operation {
 
 		try {
 			if(!callInfo.isDataType()) {
-				boolean alreadyVisited = ((BusinessObject)callInfo.getOutput()).isVisited();
-				BusinessObject source = (BusinessObject) callInfo.getInput();	
+				BusinessObject source = (BusinessObject) callInfo.getInput();
+				BusinessObject target = (BusinessObject) callInfo.getOutput();
+				boolean alreadyVisited = target.isVisited();
 				
 				// Get the property list for the current API version
 				if(callInfo.isBulkInput()) {
@@ -149,10 +153,33 @@ public abstract class AbstractOperation implements Operation {
 				} else {
 					List<Property> properties = callInfo.getProperties(source.getType());
 					CallInfo next = new CallInfo();
+
+					List<Property> propertyReferences = new ArrayList<Property>();
 					for (Property sourceProperty : properties) {
+						if(next.isDataType()) {
+
+							// Simple properties are processed first as we need this information
+							// to form EntityKey using userKey
+							next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
+							processAttribute(next);
+						} else {
+							propertyReferences.add(sourceProperty);
+						}
+					}
+
+					// Register the object now, so property references can find this object
+					if (target.getType() instanceof EntityType) {
+						EntityType entityType = (EntityType)target.getType();
+						if (!entityType.isEmbedded() && target.getInstance() != null &&
+							callInfo.getStage() == ProcessingStage.UPDATE) {
+							target.addEntity(target);
+						}
+					}
+
+					// Process the property references
+					for (Property sourceProperty : propertyReferences) {
 						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
-						//CallInfo next = new CallInfo(null, callInfo, (ExtendedProperty) sourceProperty);
-						processAttribute(next); // recurse
+						processAttribute(next);
 					}
 				}
 

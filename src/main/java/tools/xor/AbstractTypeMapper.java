@@ -148,7 +148,10 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}	
 	
 	/**
-	 * Return an entity key that is preferable NaturalEntityKey or a SurrogateEntityKey
+	 * Return an entity key that is preferable NaturalEntityKey or a SurrogateEntityKey.
+	 * EntityKeys are problematic for objects that are being created.
+	 * For e.g., the id might not be present or the natural key fields might not have
+	 * yet been set.
 	 * 
 	 * @param id optional identifier
 	 * @param type can be domain or external type
@@ -156,12 +159,20 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	 * @return EntityKey
 	 */
 	public EntityKey getEntityKey(Object id, Type type, BusinessObject bo) {
-				
-		if(id == null)
-			return null;
+
+
+		if (bo == null) {
+			if (id == null) {
+				return null;
+			}
+		} else {
+			if(!(bo.getType() instanceof EntityType)) {
+				return null;
+			}
+		}
 
 		if(bo == null && !EntityType.class.isAssignableFrom(type.getClass()))
-			throw new IllegalArgumentException("type has to refer to a Data Object");
+			throw new IllegalArgumentException("type has to refer to a EntityType");
 
 		EntityType rootEntityType = null;
 		
@@ -172,11 +183,14 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		}
 
 		String domainTypeName = rootEntityType.getDomainType().getName();
-		//if(ExternalType.class.isAssignableFrom(rootEntityType.getClass())) {
-		//	domainTypeName = toDomain(rootEntityType.getInstanceClass(), bo).getName();
-		//}
+
+		if(id == null) {
+			return null;
+		}
 
 		// Try to obtain by NaturalKey
+		// TODO: If the natural key fields are populated before the object is registered
+		// then this should be preferred over the Surrogate Key
 		if(rootEntityType.getNaturalKey() != null && bo != null) {
 			try {
 				return NaturalKeyStrategy.getInstance().execute(bo, domainTypeName);
@@ -184,11 +198,57 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 				//Fall through to surrogate key, the natural key values are not populated;
 			}
 		}
-		
+
 		if(!(id instanceof String) || !"".equals(id.toString().trim())) {
 			return new SurrogateEntityKey(id, domainTypeName);
 		}
 		
 		return null;
+	}
+
+	public EntityKey getSurrogateKey(Object id, Type type) {
+		if(id == null) {
+			return null;
+		}
+
+		if(!(type instanceof EntityType)) {
+			return null;
+		}
+
+		EntityType entityType = (EntityType) type;
+
+		if(!(id instanceof String) || !"".equals(id.toString().trim())) {
+			return new SurrogateEntityKey(id, getEntityKeyTypeName(entityType));
+		}
+
+		return null;
+	}
+
+	private String getEntityKeyTypeName(Type type) {
+		EntityType rootEntityType = ((EntityType)type).getRootEntityType();
+		return rootEntityType.getDomainType().getName();
+	}
+
+	public EntityKey getNaturalKey(Object id, BusinessObject bo) {
+		if (bo == null || bo.getInstance() == null) {
+			return null;
+		}
+
+		if(!(bo.getType() instanceof EntityType)) {
+			return null;
+		}
+
+		EntityType entityType = (EntityType) bo.getType();
+		EntityKey result = null;
+		if(entityType.getNaturalKey() != null && bo != null) {
+			try {
+				result = NaturalKeyStrategy.getInstance().execute(bo, getEntityKeyTypeName(entityType
+					));
+			} catch (IllegalStateException ise) {
+				//the natural key values are not populated.
+			}
+		}
+
+		return result;
 	}
 }

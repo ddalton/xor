@@ -243,7 +243,7 @@ public abstract class AbstractExportImport implements ExportImport
                     }
                 }
                 else {
-                    value = bo.get(Settings.convertToBOPath(propertyPath));
+                    value = bo.getString(propertyPath);
                 }
                 if (value != null) {
                     writeEntityItemPropertyValue(value.toString());
@@ -260,7 +260,6 @@ public abstract class AbstractExportImport implements ExportImport
     {
         setupRelationship();
 
-        int rowNo = 1;
         for (Map.Entry<String, String> entry : sheetMap.entrySet()) {
             prepareItem();
             writeRelationshipItem(entry.getValue(), entry.getKey());

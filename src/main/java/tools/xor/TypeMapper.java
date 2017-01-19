@@ -171,7 +171,7 @@ public interface TypeMapper {
 	 * @param type Type
 	 * @return EntityKey
 	 */
-	public EntityKey getEntityKey(Object id, Type type);
+	@Deprecated public EntityKey getEntityKey(Object id, Type type);
 	
 	/**
 	 * Get the EntityKey object that is used as the key in the ObjectCreator
@@ -183,7 +183,12 @@ public interface TypeMapper {
 	 * @param bo BusinessObject from which the Type is inferred
 	 * @return EntityKey
 	 */
-	public EntityKey getEntityKey(Object id, BusinessObject bo);	
+	@Deprecated public EntityKey getEntityKey(Object id, BusinessObject bo);
+
+
+	public EntityKey getSurrogateKey(Object id, Type type);
+
+	public EntityKey getNaturalKey(Object id, BusinessObject ob);
 	
 	/**
 	 * Check to see if we are created external Business object(s)

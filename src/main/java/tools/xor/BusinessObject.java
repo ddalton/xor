@@ -162,13 +162,25 @@ public interface BusinessObject extends DataObject {
 	 * @param propertyName The name of the open property
 	 * @return value of open property
 	 */
-	public String getOpenProperty(String propertyName);	
+	public String getOpenProperty(String propertyName);
 
-	/** 
+	/**
 	 * Records this entity in the ObjectCreator of this BusinessObject using the id and entity type
 	 * @param entity BusinessObject to be added
 	 */
 	public void addEntity(BusinessObject entity);
+
+	/**
+	 * Returns the SurrogateEntityKey instance for this entity
+	 * @return the surrogate entity key
+	 */
+	public EntityKey getSurrogateKey ();
+
+	/**
+	 * Returns the NaturalEntityKey instance for this entity
+	 * @return the natural entity key
+	 */
+	public EntityKey getNaturalKey ();
 
 	/**
 	 * Retrieves an entity by its id and entity type. This can be useful to find if there is a different

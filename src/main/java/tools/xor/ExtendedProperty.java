@@ -56,6 +56,16 @@ public interface ExtendedProperty extends Property {
 	public AccessType getAccessType();
 
 	/**
+	 * This is an optimization to prevent conversion to an instance of DomainType and
+	 * back to a String.
+	 * Useful when exporting.
+	 *
+	 * @param dataObject
+	 * @return
+	 */
+	public String getStringValue (Object dataObject);
+
+	/**
 	 * Use reflection to get the value of this property from the dataObject
 	 * @param dataObject whose parameter value is to be returned
 	 * @return value

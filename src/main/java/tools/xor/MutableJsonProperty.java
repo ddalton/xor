@@ -314,6 +314,28 @@ public class MutableJsonProperty extends ExternalProperty {
 							   ExternalType parentType, Type elementType) {
 		super(name, domainProperty, type, parentType, elementType);
 	}
+
+	@Override
+	public String getStringValue(Object dataObject)
+	{
+		Object instance = ClassUtil.getInstance(dataObject);
+		if (JSONObject.class.isAssignableFrom(instance.getClass())) {
+			JSONObject json = (JSONObject)instance;
+
+			try {
+				Object value = json.get(getName());
+				if(value instanceof String) {
+					return json.getString(getName());
+				} else {
+					return (String)value;
+				}
+			} catch (Exception e) {
+				return null;
+			}
+		}
+
+		return getValue(dataObject).toString();
+	}
 	
 	@Override
 	public Object getValue(Object dataObject, PrefetchCache prefetchCache) 

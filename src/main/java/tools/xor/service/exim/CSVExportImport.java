@@ -7,14 +7,12 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.EncryptedDocumentException;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -175,9 +173,24 @@ public class CSVExportImport extends AbstractExportImport
         }
     }
 
+    private boolean hasRelationships(String path) {
+        String relationshipFilePath = path + Constants.XOR.CSV_INDEX_SHEET;
+        File file = new File(relationshipFilePath);
+        if(!file.exists()) {
+            // Relationships are not required
+            return false;
+        }
+
+        return true;
+    }
+
     @Override
     protected void addRelationships(String path, List attrPath) throws IOException
     {
+        if(!hasRelationships(path)) {
+            return;
+        }
+
         Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
         CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());
 
@@ -209,16 +222,25 @@ public class CSVExportImport extends AbstractExportImport
         super.importAggregate(filePath, settings);
 
         try {
+            if(filePath == null || "".equals(filePath.trim())) {
+                throw new IllegalArgumentException("filePath is required and needs to point to a directory.");
+            }
+
+            File folder = new File(filePath);
+            if(!folder.isDirectory()) {
+                throw new IllegalArgumentException("filePath " + filePath + " should represent a directory name.");
+            }
+
+            if(!filePath.endsWith(File.separator)) {
+                filePath += File.separator;
+            }
+
             Reader entitySheet = new FileReader(filePath + Constants.XOR.CSV_ENTITY_SHEET);
             CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
 
             try {
                 // Get the entity class name
                 Map<String, Integer> colMap = parser.getHeaderMap();
-                if (!colMap.containsKey(Constants.XOR.TYPE)) {
-                    // TODO: Fallback to entity class in settings if provided
-                    throw new RuntimeException("XOR.type column is missing");
-                }
                 setView(settings, filePath);
 
                 List<Object> entityBatch = new LinkedList<>();
@@ -227,12 +249,17 @@ public class CSVExportImport extends AbstractExportImport
                     : parser)
 
                 {
+                    if(!colMap.containsKey(Constants.XOR.TYPE)) {
+                        throw new RuntimeException("XOR.type column is missing");
+                    }
+
                     String entityClassName = csvRecord.get(colMap.get(Constants.XOR.TYPE));
+
                     try {
                         settings.setEntityClass(Class.forName(entityClassName));
                     }
                     catch (ClassNotFoundException e) {
-                        throw new RuntimeException("Class " + entityClassName + " is not found");
+                        throw new RuntimeException("Class " + entityClassName + " is not found. Ensure the XOR.type column is populated.");
                     }
 
                     /******************************************************
@@ -352,6 +379,10 @@ public class CSVExportImport extends AbstractExportImport
     protected void populateMaps(String path, Map<String, String> entitySheets,
                  Map<String, String> collectionSheets) throws IOException
     {
+        if(!hasRelationships(path)) {
+            return;
+        }
+
         // First find all the entity sheets
         try(Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
             CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader())) {

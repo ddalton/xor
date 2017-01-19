@@ -320,6 +320,27 @@ public class ImmutableJsonProperty extends ExternalProperty {
 			ExternalType parentType, Type externalType) {
 		super(domainProperty, type, parentType, externalType);
 	}
+
+	@Override
+	public String getStringValue(Object dataObject)
+	{
+		Object instance = ClassUtil.getInstance(dataObject);
+		if(JsonObject.class.isAssignableFrom(instance.getClass())) {
+			JsonObject json = (JsonObject)instance;
+			try {
+				Object value = json.get(getName());
+				if(value instanceof String) {
+					return json.getString(getName());
+				} else {
+					return (String)value;
+				}
+			} catch (Exception e) {
+				return null;
+			}
+		}
+
+		return getValue(dataObject).toString();
+	}
 	
 	@Override
 	public Object getValue(Object dataObject, PrefetchCache prefetchCache) 

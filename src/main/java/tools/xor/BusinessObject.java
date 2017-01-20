@@ -384,4 +384,10 @@ public interface BusinessObject extends DataObject {
 	 * @return BusinessObject value of the open property
 	 */
 	public BusinessObject getOpenPropertyValue(String name);
+
+	/**
+	 * Gets the settings instance under whose scope this BusinessObject was created.
+	 * @return settings instance
+	 */
+	public Settings getSettings();
 }

@@ -442,6 +442,7 @@ public class AggregateManager implements Xor
 
 		try {
 			ObjectCreator oc = new ObjectCreator(
+				settings,
 				das,
 				getPersistenceOrchestrator(),
 				MapperDirection.DOMAINTODOMAIN);
@@ -491,7 +492,7 @@ public class AggregateManager implements Xor
 			direction = direction.toDomain();
 		}
 
-		ObjectCreator oc = new ObjectCreator(das, getPersistenceOrchestrator(), direction);
+		ObjectCreator oc = new ObjectCreator(settings, das, getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);
 
 		Type fromType = settings.getEntityType();
@@ -508,22 +509,6 @@ public class AggregateManager implements Xor
 		List<?> dataObjects = from.query(settings);
 
 		return dataObjects;
-	}
-
-	public void linkBackPointer (Object entity)
-	{
-		ObjectCreator oc = new ObjectCreator(
-			getDAS(),
-			getPersistenceOrchestrator(),
-			MapperDirection.EXTERNALTOEXTERNAL);
-		MutableBO dataObject = (MutableBO)oc.createDataObject(
-			entity,
-			(EntityType)oc.getType(entity.getClass()),
-			null,
-			null);
-		oc.setShare(true);
-		dataObject.createAggregate();
-		dataObject.linkBackPointer();
 	}
 
 	public int getViewVersion ()
@@ -558,6 +543,7 @@ public class AggregateManager implements Xor
 
 		try {
 			ObjectCreator oc = new ObjectCreator(
+				settings,
 				getDAS(),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
@@ -615,6 +601,7 @@ public class AggregateManager implements Xor
 			getPersistenceOrchestrator().refresh(entity);
 
 		ObjectCreator oc = new ObjectCreator(
+			settings,
 			getDAS(),
 			getPersistenceOrchestrator(),
 			MapperDirection.DOMAINTOEXTERNAL);
@@ -797,6 +784,7 @@ public class AggregateManager implements Xor
 
 		try {
 			ObjectCreator oc = new ObjectCreator(
+				settings,
 				getDAS(),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
@@ -1081,6 +1069,7 @@ public class AggregateManager implements Xor
 
 			// Create an object creator for the target root
 			ObjectCreator oc = new ObjectCreator(
+				settings,
 				getDAS(),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);

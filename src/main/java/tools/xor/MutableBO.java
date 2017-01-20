@@ -51,7 +51,7 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
@@ -82,7 +82,7 @@ public class MutableBO extends AbstractBO {
 		Date a = new Date();
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
@@ -123,7 +123,7 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
 		callInfo.setOutputObjectCreator(oc);
 		CloneOperation operation = new CloneOperation();
 		callInfo.setOperation(operation);

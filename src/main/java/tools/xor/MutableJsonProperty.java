@@ -53,16 +53,17 @@ public class MutableJsonProperty extends ExternalProperty {
 	private volatile Converter converter;
 	
 	public interface Converter {
-		public void setExternal(JSONObject jsonObject, String name, Object object) throws JSONException;
-		public Object toDomain(JSONObject jsonObject, String key) throws JSONException;
+		public void setExternal(Settings settings, JSONObject jsonObject, String name, Object object) throws JSONException;
+		public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException;
 
 		/**
 		 * We have to use an array builder since there is no "name" property
 		 *
+		 * @param settings under which this operation is performed
 		 * @param jsonArray object
 		 * @param object to add to the array
 		 */
-		public void   add(JSONArray jsonArray, Object object);
+		public void   add(Settings settings, JSONArray jsonArray, Object object);
 	}
 
 	public static void registerConverter(Class<?> clazz, Converter converter) {
@@ -87,7 +88,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	
 	abstract public static class AbstractConverter implements Converter {
 		@Override
-		public void setExternal(JSONObject jsonObject, String name, Object object) throws JSONException {
+		public void setExternal(Settings settings, JSONObject jsonObject, String name, Object object) throws JSONException {
 			jsonObject.put(name, object);
 		}
 	}
@@ -97,13 +98,13 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 
 						return jsonObject.getBoolean(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((Boolean) object);
 					}
 				}
@@ -114,7 +115,7 @@ public class MutableJsonProperty extends ExternalProperty {
 			new AbstractConverter() {
 				
 				@Override
-				public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+				public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 					if(jsonObject.has(key)) {
 						Object value = jsonObject.get(key);
 						if(value instanceof BigDecimal) 
@@ -126,7 +127,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				}
 
 				@Override
-				public void add(JSONArray jsonArray, Object object) {
+				public void add(Settings settings, JSONArray jsonArray, Object object) {
 					jsonArray.put((BigDecimal) object);
 				}
 			}
@@ -136,7 +137,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						if(jsonObject.has(key)) {
 							Object value = jsonObject.get(key);
 							if(value instanceof BigInteger) 
@@ -148,7 +149,7 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((BigInteger) object);
 					}
 				}
@@ -158,12 +159,12 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						return jsonObject.getDouble(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((Double) object);
 					}
 				}
@@ -174,12 +175,12 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						return (float) jsonObject.getDouble(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((Float) object);
 					}
 				}
@@ -190,12 +191,12 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						return jsonObject.getInt(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((Integer) object);
 					}
 				}
@@ -206,12 +207,12 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						return jsonObject.getLong(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((Long) object);
 					}
 				}
@@ -222,42 +223,62 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {	
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						return jsonObject.getString(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put((String) object);
 					}
 				}
-			);		
-		
+			);
+
 		convertersByClass.put(Date.class,
 				new AbstractConverter() {
+
 					@Override
-					public void setExternal(JSONObject jsonObject, String name, Object object) throws JSONException {
-						DateFormat df = new SimpleDateFormat(ISO8601_FORMAT);
-						jsonObject.put(name, object == null ? null : df.format(object));
+					public void setExternal(Settings settings, JSONObject jsonObject, String name, Object object) throws JSONException {
+						if(settings.getDateForm() == Settings.DateForm.FORMATTED) {
+							DateFormat df = new SimpleDateFormat(settings.getDateFormat());
+							jsonObject.put(name, object == null ? null : df.format(object));
+						} else {
+							jsonObject.put(name, object == null ? null : ((Date)object).getTime());
+						}
 					}
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
-						DateFormat df = new SimpleDateFormat(ISO8601_FORMAT);
-						String dateString = jsonObject.getString(key);
-						try {
-							return dateString == null ? null : ("".equals(dateString) ? null : df.parse(dateString));
-						} catch (ParseException e) {
-							logger.warn("DynamicProperty#getObject problem parsing date string: " 
-									+ dateString + ", message: " + e.getMessage());
-							return null;
-						}						
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+						if(settings.getDateForm() == Settings.DateForm.FORMATTED) {
+							DateFormat df = new SimpleDateFormat(settings.getDateFormat());
+							String dateString = jsonObject.getString(key);
+							try {
+								return dateString == null ?
+									null :
+									("".equals(dateString) ? null : df.parse(dateString));
+							}
+							catch (ParseException e) {
+								logger.warn(
+									"DynamicProperty#getObject problem parsing date string: "
+										+ dateString + ", message: " + e.getMessage());
+								return null;
+							}
+						} else {
+							String dateString = jsonObject.getString(key);
+							return dateString == null ?
+								null :
+								("".equals(dateString) ? null : Long.parseLong(dateString));
+						}
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
-						DateFormat df = new SimpleDateFormat(ISO8601_FORMAT);
-						jsonArray.put(object == null ? null : df.format(object));
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
+						if(settings.getDateForm() == Settings.DateForm.FORMATTED) {
+							DateFormat df = new SimpleDateFormat(settings.getDateFormat());
+							jsonArray.put(object == null ? null : df.format(object));
+						} else {
+							jsonArray.put(object == null ? null : ((Date)object).getTime());
+						}
 					}
 				}
 			);	
@@ -271,13 +292,13 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						// We cannot handle it here since we do not know the type
 						return jsonObject.get(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put(object == null ? null : (JSONObject)object);
 					}
 				}
@@ -287,13 +308,13 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 						// We cannot handle it here since we do not know the type
 						return jsonObject.get(key);
 					}
 
 					@Override
-					public void add(JSONArray jsonArray, Object object) {
+					public void add(Settings settings, JSONArray jsonArray, Object object) {
 						jsonArray.put(object == null ? null : (JSONArray)object);
 					}
 				}
@@ -316,7 +337,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public String getStringValue(Object dataObject)
+	public String getStringValue(BusinessObject dataObject)
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 		if (JSONObject.class.isAssignableFrom(instance.getClass())) {
@@ -338,13 +359,13 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 	
 	@Override
-	public Object getValue(Object dataObject, PrefetchCache prefetchCache) 
+	public Object getValue(BusinessObject dataObject)
 	{	
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JSONObject.class.isAssignableFrom(instance.getClass())) {
 			JSONObject json = (JSONObject) instance;
 			try {
-				Object value = toDomain(json, getName());
+				Object value = toDomain(dataObject.getSettings(), json, getName());
 				if(logger.isDebugEnabled()) {
 					logger.debug("DynamicProperty#getValue Property: " + getName() + ", value: " + (value == null? "null" : value.toString()) 
 							+ ", input: " + (value == null ? "null": value.toString()) );
@@ -363,13 +384,13 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public void setValue(Object dataObject, Object propertyValue, PrefetchCache prefetchCache) 
+	public void setValue(Settings settings, Object dataObject, Object propertyValue)
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JSONObject.class.isAssignableFrom(instance.getClass())) {
 			JSONObject jsonObject = (JSONObject) instance;
 			try {
-				setExternal(jsonObject, getName(), propertyValue);
+				setExternal(settings, jsonObject, getName(), propertyValue);
 			} catch (JSONException e) {
 				throw ClassUtil.wrapRun(e);
 			}
@@ -391,25 +412,25 @@ public class MutableJsonProperty extends ExternalProperty {
 		return converter;
 	}
 	
-	private void setExternal(JSONObject jsonObject, String name, Object propertyValue) throws JSONException {
+	private void setExternal(Settings settings, JSONObject jsonObject, String name, Object propertyValue) throws JSONException {
 		if(getConverter() != null) {
-			getConverter().setExternal(jsonObject, name, propertyValue);
+			getConverter().setExternal(settings, jsonObject, name, propertyValue);
 		} else {
 			Object instanceObj = propertyValue;
 			if(BusinessObject.class.isAssignableFrom(propertyValue.getClass())) {
 				instanceObj = ((BusinessObject)propertyValue).getInstance();
 			}
 			if(JSONObject.class.isAssignableFrom(instanceObj.getClass())) {
-				convertersByClass.get(JSONObject.class).setExternal( jsonObject, name, instanceObj);	
+				convertersByClass.get(JSONObject.class).setExternal( settings, jsonObject, name, instanceObj);
 			} else if (JSONArray.class.isAssignableFrom(instanceObj.getClass())) {
-				convertersByClass.get(JSONArray.class).setExternal( jsonObject, name, instanceObj);	
+				convertersByClass.get(JSONArray.class).setExternal( settings, jsonObject, name, instanceObj);
 			}
 		}		
 	}
 	
-	private Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+	private Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 		if(getConverter() != null) {
-			return getConverter().toDomain(jsonObject, key);
+			return getConverter().toDomain(settings, jsonObject, key);
 		} else {
 			if(logger.isDebugEnabled()) {
 				logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass() 
@@ -423,7 +444,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public void addElement(Object dataObject, Object element) {
+	public void addElement(BusinessObject dataObject, Object element) {
 
 		if(!JSONArray.class.isAssignableFrom(((BusinessObject) dataObject).getInstance().getClass())) {
 			throw new IllegalArgumentException("DynamicProperty#addElement dataObject instance " 
@@ -432,13 +453,13 @@ public class MutableJsonProperty extends ExternalProperty {
 
 		JSONArray jsonArray = (JSONArray) ((BusinessObject) dataObject).getInstance();
 		if(convertersByClass.containsKey(element.getClass())) {
-			convertersByClass.get(element.getClass()).add(jsonArray, element);
+			convertersByClass.get(element.getClass()).add(dataObject.getSettings(), jsonArray, element);
 		} else {
 
 			if(JSONObject.class.isAssignableFrom(element.getClass())) {
-				convertersByClass.get(JSONObject.class).add( jsonArray, element);	
+				convertersByClass.get(JSONObject.class).add(dataObject.getSettings(), jsonArray, element);
 			} else if (JSONArray.class.isAssignableFrom(element.getClass())) {
-				convertersByClass.get(JSONArray.class).add(jsonArray, element);	
+				convertersByClass.get(JSONArray.class).add(dataObject.getSettings(), jsonArray, element);
 			} else {
 				logger.error("DynamicProperty#addElement element " + element.getClass() + " is not of type JsonValue/JsonObjectBuilder/JsonArrayBuilder");
 			}

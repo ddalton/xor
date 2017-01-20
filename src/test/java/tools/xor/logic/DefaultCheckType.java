@@ -80,8 +80,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		assert(task.getAssignedTo().getId() != null);
 		
 		// read the person object using a DataObject
-		ObjectCreator oc = new ObjectCreator(das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		settings = getSettings();
+		ObjectCreator oc = new ObjectCreator(settings, das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		settings.addAssociation(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		settings.setEntityType(taskType);
@@ -129,7 +129,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		
 		EntityType taskType = (EntityType) das.getType(Task.class);
-		ObjectCreator oc = new ObjectCreator(das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(new Settings(), das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		
 		Property property = taskType.getProperty("name");
@@ -160,7 +160,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		
 		EntityType taskType = (EntityType) das.getType(Task.class);
-		ObjectCreator oc = new ObjectCreator(das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(new Settings(), das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		
 		Property property = taskType.getProperty("name");

@@ -381,7 +381,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		// get the incoming edges and set the value to the new copy
 		vertex.setInstance(newInstance);
 		for(BusinessEdge edge: getInEdges(vertex)) {
-			((ExtendedProperty) edge.getProperty()).setValue(edge.getStart().getInstance(), edge.getEnd().getInstance());
+			((ExtendedProperty) edge.getProperty()).setValue(edge.getStart(), edge.getEnd().getInstance());
 		}
 	}
 }

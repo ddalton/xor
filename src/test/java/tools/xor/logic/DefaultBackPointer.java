@@ -27,8 +27,13 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.EntityType;
+import tools.xor.MapperDirection;
+import tools.xor.MutableBO;
+import tools.xor.Settings;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ObjectCreator;
 
 public class DefaultBackPointer extends AbstractDBTest {
 
@@ -72,7 +77,25 @@ public class DefaultBackPointer extends AbstractDBTest {
 	public void resetAssociation() {
 		A = null;
 		B = null;
-	}		
+	}
+
+
+	public void linkBackPointer (Object entity)
+	{
+		ObjectCreator oc = new ObjectCreator(
+			new Settings(),
+			aggregateService.getDAS(),
+			aggregateService.getPersistenceOrchestrator(),
+			MapperDirection.EXTERNALTOEXTERNAL);
+		MutableBO dataObject = (MutableBO)oc.createDataObject(
+			entity,
+			(EntityType)oc.getType(entity.getClass()),
+			null,
+			null);
+		oc.setShare(true);
+		dataObject.createAggregate();
+		dataObject.linkBackPointer();
+	}
 
 	public void oneToManyLink() {
 		Set<Task> children = new HashSet<Task>();
@@ -80,7 +103,7 @@ public class DefaultBackPointer extends AbstractDBTest {
 		A.setTaskChildren(children);
 		
 		assert(B.getTaskParent() == null);
-		aggregateService.linkBackPointer(A);
+		linkBackPointer(A);
 
 		// Check that B's parent is A		
 		assert(A.getTaskChildren() != null && A.getTaskChildren().size() == 1);
@@ -91,7 +114,7 @@ public class DefaultBackPointer extends AbstractDBTest {
 		A.setAuditTask(B);
 		
 		assert(B.getAuditedTask() == null);
-		aggregateService.linkBackPointer(A);
+		linkBackPointer(A);
 
 		// Check that B's parent is A		
 		assert(B.getAuditedTask() == A);

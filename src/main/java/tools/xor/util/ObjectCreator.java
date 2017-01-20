@@ -64,20 +64,26 @@ public class ObjectCreator {
 	// This map also records the target instance and the target DataObject
 	private Map<Object, BusinessObject>    instanceDataObjectMap = new Reference2ReferenceOpenHashMap<Object, BusinessObject>();
 	private Map<EntityKey, BusinessObject> entitiesByKey = new Object2ReferenceOpenHashMap<EntityKey, BusinessObject>();
-	private DataAccessService                  das;
-	private PersistenceOrchestrator            persistenceOrchestrator;
-	private TypeMapper                         typeMapper;
-	private boolean                            share; // when registering if another object with the same id and type is found, it will be returned
-	private CreationStrategy                   creationStrategy; // JSON or POJO?
-	private boolean                            readOnly; // The objects are read only
-	private ObjectGraph                        objectGraph; // represents the Object graph of the object we need to persist
-	private BusinessObject                     root; // represents the root object
+	private DataAccessService              das;
+	private PersistenceOrchestrator        persistenceOrchestrator;
+	private TypeMapper                     typeMapper;
+	private boolean                        share; // when registering if another object with the same id and type is found, it will be returned
+	private CreationStrategy               creationStrategy; // JSON or POJO?
+	private boolean                        readOnly; // The objects are read only
+	private ObjectGraph                    objectGraph; // represents the Object graph of the object we need to persist
+	private BusinessObject                 root; // represents the root object
+	private Settings                       settings; // the criteria under which this instance operates
 
-	public ObjectCreator(DataAccessService das, PersistenceOrchestrator po, MapperDirection direction) {
+	public ObjectCreator(Settings settings, DataAccessService das, PersistenceOrchestrator po, MapperDirection direction) {
+		this.settings = settings;
 		this.das = das;
 		this.persistenceOrchestrator = po;
 		this.typeMapper = das.getTypeMapper().newInstance(direction);
 		this.creationStrategy = this.typeMapper.getCreationStrategy(this);
+	}
+
+	public Settings getSettings() {
+		return this.settings;
 	}
 	
 	public boolean isReadOnly() {

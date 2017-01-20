@@ -322,7 +322,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public String getStringValue(Object dataObject)
+	public String getStringValue(BusinessObject dataObject)
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JsonObject.class.isAssignableFrom(instance.getClass())) {
@@ -343,7 +343,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 	
 	@Override
-	public Object getValue(Object dataObject, PrefetchCache prefetchCache) 
+	public Object getValue(BusinessObject dataObject)
 	{	
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JsonObject.class.isAssignableFrom(instance.getClass())) {
@@ -364,7 +364,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public void setValue(Object dataObject, Object propertyValue, PrefetchCache prefetchCache) 
+	public void setValue(Settings settings, Object dataObject, Object propertyValue)
 	{	
 		Object instance = ClassUtil.getInstance(dataObject);
 		if(JsonObjectBuilder.class.isAssignableFrom(instance.getClass())) {
@@ -409,7 +409,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 
 	@Override
-	public void addElement(Object dataObject, Object element) {
+	public void addElement(BusinessObject dataObject, Object element) {
 
 		if(!JsonArrayBuilder.class.isAssignableFrom(((BusinessObject) dataObject).getInstance().getClass())) {
 			throw new IllegalArgumentException("DynamicProperty#addElement dataObject instance " 

@@ -52,7 +52,34 @@ public class Settings {
 	public static final String USERKEY_OVERRIDE = URI_PATH_DELIMITER + "USERKEY" + URI_PATH_DELIMITER;	
 	
 	public static final int    INITIAL_API_VERSION = 1;
-	public static final int    CURRENT_API_VERSION = 1;	
+	public static final int    CURRENT_API_VERSION = 1;
+
+	public enum DateForm {
+		FORMATTED,
+		NUMBER
+	};
+
+	protected DateForm dateForm = DateForm.FORMATTED;
+	public DateForm getDateForm ()
+	{
+		return dateForm;
+	}
+
+	public void setDateForm (DateForm dateForm)
+	{
+		this.dateForm = dateForm;
+	}
+
+	protected String dateFormat = MutableJsonProperty.ISO8601_FORMAT; // this is the default format and can be overridden
+	public String getDateFormat ()
+	{
+		return dateFormat;
+	}
+
+	public void setDateFormat (String dateFormat)
+	{
+		this.dateFormat = dateFormat;
+	}
 	
 	protected boolean supportsPostLogic;
 	

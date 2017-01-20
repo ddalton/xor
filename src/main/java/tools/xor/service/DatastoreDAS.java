@@ -39,6 +39,7 @@ import com.google.appengine.api.datastore.KeyFactory;
 import tools.xor.JPAType;
 import tools.xor.ModelConstraint;
 import tools.xor.MutableJsonProperty;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.util.JPAUtil;
@@ -74,7 +75,7 @@ public class DatastoreDAS extends AbstractDataAccessService {
 		MutableJsonProperty.Converter c = new MutableJsonProperty.AbstractConverter() {
 			
 			@Override
-			public Object toDomain(JSONObject jsonObject, String key) throws JSONException {
+			public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 				if(jsonObject.has(key)) {
 					Object value = jsonObject.get(key);
 					if(value instanceof Key) {
@@ -88,12 +89,12 @@ public class DatastoreDAS extends AbstractDataAccessService {
 			}
 			
 			@Override
-			public void add(JSONArray jsonArray, Object object) {
+			public void add(Settings settigns, JSONArray jsonArray, Object object) {
 				jsonArray.put(KeyFactory.keyToString((Key)object));
 			}
 			
 			@Override
-			public void setExternal(JSONObject jsonObject, String name, Object object) throws JSONException {
+			public void setExternal(Settings settings, JSONObject jsonObject, String name, Object object) throws JSONException {
 				jsonObject.put(name,  KeyFactory.keyToString((Key)object));
 			}
 		};

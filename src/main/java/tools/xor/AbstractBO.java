@@ -606,11 +606,11 @@ public abstract class AbstractBO implements BusinessObject {
 			propertyInstance = oc.createInstance(instanceType);
 			if(!instanceType.isDataType()) {
 				if(((EntityType)instanceType).getIdentifierProperty() != null ) {
-					((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(propertyInstance, id);
+					((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(oc.getSettings(), propertyInstance, id);
 				} 
 				if(((EntityType)instanceType).getNaturalKey() != null && naturalKeyValues != null) {
 					for(String key: ((EntityType)instanceType).getNaturalKey()) {
-						((ExtendedProperty)((EntityType)instanceType).getProperty(key)).setValue(propertyInstance, naturalKeyValues.get(key));
+						((ExtendedProperty)((EntityType)instanceType).getProperty(key)).setValue(oc.getSettings(), propertyInstance, naturalKeyValues.get(key));
 					}
 				}
 			}
@@ -1146,15 +1146,19 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public BusinessObject load(Settings settings) {
+	public BusinessObject load (Settings settings)
+	{
 		CallInfo callInfo = new CallInfo(this, null, null, null);
 		settings.setAction(AggregateAction.LOAD);
-		callInfo.setSettings(settings);		
+		callInfo.setSettings(settings);
 
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(
+			settings,
+			getObjectCreator().getDAS(),
+			getObjectCreator().getPersistenceOrchestrator(),
+			MapperDirection.DOMAINTODOMAIN);
 		return oc.createTarget(callInfo);
 	}
-	
 
 	@Override
 	public DataObject read(Settings settings) {
@@ -1167,7 +1171,7 @@ public abstract class AbstractBO implements BusinessObject {
 		callInfo.setSettings(settings);		
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTOEXTERNAL);
 		oc.setReadOnly(true);
 		
 		callInfo.setOutputObjectCreator(oc);
@@ -1205,7 +1209,7 @@ public abstract class AbstractBO implements BusinessObject {
 		if(settings.doBaseline()) // We need to return a domain object
 			direction = direction.toDomain();
 		
-		ObjectCreator oc = new ObjectCreator(getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), direction);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);
 		
 		callInfo.setOutputObjectCreator(oc);
@@ -1388,7 +1392,7 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		for(String propertyName: ((EntityType)getType()).getInitializedProperties()) {
 			Object propertyValue = ((ExtendedProperty)getProperty(propertyName)).getValue(this);
-			((ExtendedProperty)getProperty(propertyName)).setValue(copy, propertyValue);
+			((ExtendedProperty)getProperty(propertyName)).setValue(getSettings(), copy, propertyValue);
 		}
 		
 		return copy;
@@ -1505,5 +1509,9 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		BusinessEdge<BusinessObject> edge = objectCreator.getObjectGraph().getOutEdge(this, name);
 		return edge == null ? null : edge.getEnd();
+	}
+
+	public Settings getSettings() {
+		return objectCreator.getSettings();
 	}
 }

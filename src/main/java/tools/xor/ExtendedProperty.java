@@ -60,40 +60,34 @@ public interface ExtendedProperty extends Property {
 	 * back to a String.
 	 * Useful when exporting.
 	 *
-	 * @param dataObject
-	 * @return
+	 * @param dataObject whose property value is to be returned
+	 * @return property value
 	 */
-	public String getStringValue (Object dataObject);
+	public String getStringValue (BusinessObject dataObject);
 
 	/**
 	 * Use reflection to get the value of this property from the dataObject
 	 * @param dataObject whose parameter value is to be returned
 	 * @return value
 	 */
-	public Object getValue(Object dataObject);
+	public Object getValue(BusinessObject dataObject);
 
 	/**
 	 * Use reflection to set the value of this property on the dataObject
-	 * @param dataObject whose parameter needs to be set
+	 * @param dataObject whose parameter needs to be set.
 	 * @param propertyValue the value that needs to be set
 	 */
-	public void setValue(Object dataObject, Object propertyValue);
-	
-	/**
-	 * Use reflection to get the value of this property from the dataObject
-	 * @param dataObject whose parameter value is to be returned
-	 * @param cache Prefetch cache used to efficiently obtain collections and entities
-	 * @return value
-	 */
-	public Object getValue(Object dataObject, PrefetchCache cache);
+	public void setValue(BusinessObject dataObject, Object propertyValue);
 
 	/**
 	 * Use reflection to set the value of this property on the dataObject
-	 * @param dataObject whose parameter needs to be set
-	 * @param cache Prefetch cache cache used to efficiently obtain collections and entities
+	 * @param settings under which this value is being set
+	 * @param dataObject whose parameter needs to be set. This cannot be BusinessObject
+	 *                   because there are some instances where the BusinessObject instance
+	 *                   is not yet created when this method is invoked.
 	 * @param propertyValue the value that needs to be set
 	 */
-	public void setValue(Object dataObject, Object propertyValue, PrefetchCache cache);	
+	public void setValue(Settings settings, Object dataObject, Object propertyValue);
 	
 	/**
 	 * Adds a collection element to the dataobject that represents a collection
@@ -101,7 +95,7 @@ public interface ExtendedProperty extends Property {
 	 * @param dataObject the collection
 	 * @param element collection element
 	 */
-	public void addElement(Object dataObject, Object element);
+	public void addElement(BusinessObject dataObject, Object element);
 	
 	/**
 	 * Adds a map entry

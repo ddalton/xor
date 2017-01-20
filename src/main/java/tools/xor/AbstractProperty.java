@@ -569,21 +569,11 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public String getStringValue(Object dataObject) {
+	public String getStringValue(BusinessObject dataObject) {
 		Object value = getValue(dataObject);
 
 		return (value == null) ? (String)value : value.toString();
 	}
-	
-	@Override
-	public Object getValue(Object dataObject) {
-		return getValue(dataObject, null);
-	}
-
-	@Override
-	public void setValue(Object dataObject, Object propertyValue) {
-		setValue(dataObject, propertyValue, null);
-	}	
 
 	/**
 	 * @param dataObject here refers to a persistence managed object as the external objects
@@ -591,8 +581,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 * @return value of the property in the given dataObject
 	 */
 	@Override
-	public Object getValue(Object dataObject, PrefetchCache cache) 
-	{	
+	public Object getValue(BusinessObject dataObject)
+	{
+		PrefetchCache cache = dataObject.getSettings().getPrefetchCache();
 		if(field == null && getterMethod == null) {
 			if(isOpenContent() && dataObject != null) {
 				// We should always receive a persistence managed dataObject
@@ -676,7 +667,12 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public void setValue(Object dataObject, Object propertyValue, PrefetchCache cache) 
+	public void setValue(BusinessObject dataObject, Object propertyValue) {
+		setValue(dataObject.getSettings(), dataObject, propertyValue);
+	}
+
+	@Override
+	public void setValue(Settings settings, Object dataObject, Object propertyValue)
 	{	
 		if(field == null && setterMethod == null) {
 			
@@ -706,7 +702,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}	
 
 	@Override
-	public void addElement(Object dataObject, Object element) {
+	public void addElement(BusinessObject dataObject, Object element) {
 		java.util.Collection targetCollection = (java.util.Collection) ((BusinessObject) dataObject).getInstance();
 		targetCollection.add(element);
 	}

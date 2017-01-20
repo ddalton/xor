@@ -7,7 +7,9 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.EncryptedDocumentException;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CSVExportImport extends AbstractExportImport
 {
@@ -63,6 +66,8 @@ public class CSVExportImport extends AbstractExportImport
     @Override
     protected void setupEntity (String name) {
         try {
+            name += Constants.XOR.CSV_FILE_SUFFIX;
+
             //initialize FileWriter object
             FileWriter fileWriter = new FileWriter(filePath + name);
 
@@ -74,8 +79,8 @@ public class CSVExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void setupPropertyColumns(List<String> propertyPaths) {
-        super.setupPropertyColumns(propertyPaths);
+    protected Set<String> setupPropertyColumns(List<String> propertyPaths, Type type) {
+        Set<String> result = super.setupPropertyColumns(propertyPaths, type);
 
         Object [] FILE_HEADER = new String[propertyColIndex.size()];
 
@@ -89,10 +94,12 @@ public class CSVExportImport extends AbstractExportImport
         } catch (IOException ioe) {
             throw ClassUtil.wrapRun(ioe);
         }
+
+        return result;
     }
 
     @Override
-    protected void prepareEntityItemProperty(String propertyPath) {
+    protected void prepareEntityItemProperty(String propertyPath, Set<String> requiredColumns) {
         // do nothing
     }
 
@@ -129,7 +136,7 @@ public class CSVExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void writeEntityHeader () {
+    protected void writeEntityHeader (String sheetName, EntityType entityType) {
         if(csvPrinter != null) {
             try {
                 csvPrinter.close();

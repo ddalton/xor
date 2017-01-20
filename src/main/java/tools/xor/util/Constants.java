@@ -68,6 +68,7 @@ public class Constants {
 	  public static final String EXCEL_ENTITY_SHEET = "Entity";	  
 	  public static final String EXCEL_SHEET_PREFIX = "Sheet";
 	  public static final String EXCEL_INDEX_SHEET = "Relationships";
+	  public static final String EXCEL_INFO_SHEET = "Info";
 
 	  // Represents file names for CSV import
 	  public static final String CSV_FILE_SUFFIX = ".csv";

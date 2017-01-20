@@ -809,6 +809,30 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
+	public boolean isNullable(String path) {
+		int delim = path.indexOf(Settings.PATH_DELIMITER);
+
+		if(delim == -1) {
+			if(properties == null) {
+				throw new IllegalStateException("Properties not found for type: " + getName() + " with class: " + getInstanceClass().getName());
+			}
+			Property p = properties.get(path);
+			return p == null || p.isNullable();
+		} else {
+			Property property = getProperty(path.substring(0, delim));
+			if(property == null) {
+				logger.info("Property " + path + " not found. If this is an open property, ensure it is added to the type");
+				return true;
+			}
+
+			Type propertyType = property.getType();
+			if(property.isMany())
+				propertyType = ((ExtendedProperty)property).getElementType();
+			return property.isNullable() || ((EntityType)propertyType).isNullable(path.substring(delim+1));
+		}
+	}
+
+	@Override
 	public Property getProperty(String path) {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
 

@@ -254,4 +254,16 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param das DataAccessService for this type
 	 */
 	public void setDAS(DataAccessService das);
+
+	/**
+	 * Returns whether or not all a property represented by
+	 * property is not specified by SDO.
+	 * @return true if this property is nullable.
+	 */
+	/**
+	 * Returns whether or any of the property in the propertyPath chain is nullable
+	 * @param propertyPath to a property. This can refer to an indirect property i.e., property path
+	 * @return true if any property in the property path is nullable or if the property is not found
+	 */
+	public boolean isNullable(String propertyPath);
 }

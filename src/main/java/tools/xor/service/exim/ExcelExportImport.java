@@ -3,15 +3,23 @@ package tools.xor.service.exim;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
@@ -24,6 +32,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ExcelExportImport extends AbstractExportImport
 {
@@ -32,6 +41,9 @@ public class ExcelExportImport extends AbstractExportImport
     private int entitySheetRowNo;
     private Row row;
     private Cell cell;
+
+    private CellStyle headerStyle;
+    private CellStyle requiredStyle;
 
     public ExcelExportImport (AggregateManager am)
     {
@@ -269,7 +281,38 @@ public class ExcelExportImport extends AbstractExportImport
     protected void setupExport(String filePath) throws FileNotFoundException
     {
         wb = new SXSSFWorkbook();
+
         ((SXSSFWorkbook)wb).setCompressTempFiles(true);
+
+        requiredStyle = wb.createCellStyle();
+        requiredStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+        requiredStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        setBorder(requiredStyle, CellStyle.BORDER_THIN, IndexedColors.GREY_25_PERCENT.getIndex());
+
+        headerStyle = wb.createCellStyle();
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        setBorder(headerStyle, CellStyle.BORDER_THIN, IndexedColors.AUTOMATIC.getIndex());
+        Font font= wb.createFont();
+        font.setFontHeightInPoints((short)11);
+        font.setFontName("Times New Roman");
+        font.setColor(IndexedColors.BLACK.getIndex());
+        font.setBold(true);
+        font.setItalic(false);
+        headerStyle.setFont(font);
+    }
+
+    private void setBorder (CellStyle style, short borderType,
+                            short borderColor)
+    {
+        style.setBorderLeft(borderType);
+        style.setBorderTop(borderType);
+        style.setBorderBottom(borderType);
+        style.setBorderRight(borderType);
+        style.setBottomBorderColor(borderColor);
+        style.setTopBorderColor(borderColor);
+        style.setLeftBorderColor(borderColor);
+        style.setRightBorderColor(borderColor);
     }
 
     @Override
@@ -303,8 +346,11 @@ public class ExcelExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void prepareEntityItemProperty(String propertyPath) {
+    protected void prepareEntityItemProperty(String propertyPath, Set<String> requiredColumns) {
         cell = row.createCell(propertyColIndex.get(propertyPath));
+        if(requiredColumns.contains(propertyPath)) {
+            cell.setCellStyle(requiredStyle);
+        }
     }
 
     @Override
@@ -313,7 +359,7 @@ public class ExcelExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void writeEntityHeader ()
+    protected void writeEntityHeader (String sheetName, EntityType entityType)
     {
         Row row = sh.getRow(0);
         if (row != null) {
@@ -325,8 +371,105 @@ public class ExcelExportImport extends AbstractExportImport
         for (Map.Entry<String, Integer> entry : propertyColIndex.entrySet()) {
             Cell cell = row.createCell(entry.getValue());
             cell.setCellValue(entry.getKey());
+            cell.setCellStyle(headerStyle);
             sh.autoSizeColumn(entry.getValue());
         }
+
+        writeInfo(sheetName, entityType);
+    }
+
+
+    private void writeInfo(String sheetName, EntityType entityType) {
+        Sheet infoSheet = wb.getSheet(Constants.XOR.EXCEL_INFO_SHEET);
+        if (infoSheet == null) {
+            CellStyle blankBG = wb.createCellStyle();
+            blankBG.setFillForegroundColor(IndexedColors.WHITE.getIndex());
+            blankBG.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            CellStyle separator = wb.createCellStyle();
+            separator.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            separator.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+            infoSheet = wb.createSheet(Constants.XOR.EXCEL_INFO_SHEET);
+            wb.setSheetOrder(Constants.XOR.EXCEL_INFO_SHEET, 0);
+
+            Row infoRow = infoSheet.createRow(0);
+            infoRow.setRowStyle(blankBG);
+            infoRow = infoSheet.createRow(1);
+            infoRow.setRowStyle(blankBG);
+            Cell cell = infoRow.createCell(1);
+            cell.setCellValue("Legend");
+
+            infoRow = infoSheet.createRow(2);
+            infoRow.setRowStyle(blankBG);
+            cell = infoRow.createCell(1);
+            cell.setCellStyle(requiredStyle);
+            cell = infoRow.createCell(2);
+            cell.setCellValue("Required");
+
+            infoRow = infoSheet.createRow(3);
+            infoRow.setRowStyle(blankBG);
+            infoRow = infoSheet.createRow(4);
+            infoRow.setRowStyle(separator);
+        }
+
+        int startRow = infoSheet.getLastRowNum() + 2;
+        Row sheetDetailsRow = infoSheet.createRow(startRow);
+        infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,0,1));
+        Cell cell = sheetDetailsRow.createCell(0);
+        cell.setCellValue("Sheet Name: " + sheetName);
+
+        infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,2,4));
+        cell = sheetDetailsRow.createCell(2);
+        cell.setCellValue("Entity: " + entityType.getName());
+
+        // Create header area
+        startRow++;
+        sheetDetailsRow = infoSheet.createRow(startRow);
+        cell = sheetDetailsRow.createCell(0);
+        cell.setCellValue("Property");
+        cell.setCellStyle(headerStyle);
+        cell = sheetDetailsRow.createCell(1);
+        cell.setCellValue("Type");
+        cell.setCellStyle(headerStyle);
+        cell = sheetDetailsRow.createCell(2);
+        cell.setCellValue("Vector");
+        cell.setCellStyle(headerStyle);
+        cell = sheetDetailsRow.createCell(3);
+        cell.setCellValue("Required");
+        cell.setCellStyle(headerStyle);
+        cell = sheetDetailsRow.createCell(4);
+        cell.setCellValue("isOpen");
+        cell.setCellStyle(headerStyle);
+
+        EntityType domainType = entityType.getDomainType();
+        for(Property property: domainType.getProperties()) {
+            startRow++;
+            sheetDetailsRow = infoSheet.createRow(startRow);
+            cell = sheetDetailsRow.createCell(0);
+            cell.setCellValue(property.getName());
+            cell = sheetDetailsRow.createCell(1);
+
+            if(property.isMany()) {
+                String typeName = ((ExtendedProperty)property).getElementType() == null ?
+                    property.getType().getName() :
+                    ((ExtendedProperty)property).getElementType().getName();
+                cell.setCellValue(typeName);
+            } else {
+                cell.setCellValue(property.getType().getName());
+            }
+            cell = sheetDetailsRow.createCell(2);
+            cell.setCellValue(property.isMany() ? "true" : "");
+            cell = sheetDetailsRow.createCell(3);
+            cell.setCellValue(property.isNullable() ? "" : "true");
+            cell = sheetDetailsRow.createCell(4);
+            cell.setCellValue(property.isOpenContent() ? "true" : "");
+        }
+
+        infoSheet.autoSizeColumn(0);
+        infoSheet.autoSizeColumn(1);
+        infoSheet.autoSizeColumn(2);
+        infoSheet.autoSizeColumn(3);
+        infoSheet.autoSizeColumn(4);
     }
 
     @Override
@@ -339,6 +482,10 @@ public class ExcelExportImport extends AbstractExportImport
         Cell propertyName = headerRow.createCell(1);
         sheetName.setCellValue(getRelationshipHeaderCol1());
         propertyName.setCellValue(getRelationshipHeaderCol2());
+
+        // set header style
+        sheetName.setCellStyle(headerStyle);
+        propertyName.setCellStyle(headerStyle);
 
         // Reset the row counter
         entitySheetRowNo = 1;

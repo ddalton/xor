@@ -15,6 +15,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.view.AggregateView;
 
+import javax.swing.text.html.parser.Entity;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -174,7 +175,8 @@ public abstract class AbstractExportImport implements ExportImport
                               List<BusinessObject> boList,
                               BusinessObject owner)
     {
-        setupEntity(sheetName + Constants.XOR.CSV_FILE_SUFFIX);
+        EntityType entityType = null;
+        setupEntity(sheetName);
 
         for (BusinessObject bo : boList) {
             if (bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {
@@ -183,6 +185,9 @@ public abstract class AbstractExportImport implements ExportImport
                     bo.getList(),
                     (BusinessObject)bo.getContainer());
                 continue;
+            }
+            if(entityType == null) {
+                entityType = (EntityType)bo.getType();
             }
 
             List<String> propertyPaths = new ArrayList<String>();
@@ -198,6 +203,9 @@ public abstract class AbstractExportImport implements ExportImport
             }
             propertyPaths.add(Constants.XOR.ID);
             propertyPaths.add(Constants.XOR.TYPE);
+
+            // We want to have all required columns in the beginning
+            List<String> requiredPropertyPaths = new ArrayList<String>();
             for (Property property : bo.getType().getProperties()) {
                 if (property.isMany()) {
                     propertyPaths.add(ExcelJsonCreationStrategy.getCollectionTypeKey(property));
@@ -214,12 +222,12 @@ public abstract class AbstractExportImport implements ExportImport
                 propertyPaths.addAll(property.expand(new HashSet<Type>()));
             }
 
-            setupPropertyColumns(propertyPaths);
+            Set<String> requiredColumns = setupPropertyColumns(propertyPaths, bo.getType());
 
             // TODO: add columns only if the value is not null
             prepareItem();
             for (String propertyPath : propertyPaths) {
-                prepareEntityItemProperty(propertyPath);
+                prepareEntityItemProperty(propertyPath, requiredColumns);
                 Object value;
                 if (Constants.XOR.OWNER_ID.equals(propertyPath)) {
                     value = owner.getOpenProperty(Constants.XOR.ID);
@@ -252,7 +260,7 @@ public abstract class AbstractExportImport implements ExportImport
             finishupItem();
         }
 
-        writeEntityHeader();
+        writeEntityHeader(sheetName, entityType);
     }
 
     protected void writeRelationshipMap (String filePath, Map<String, String> sheetMap) throws
@@ -339,7 +347,30 @@ public abstract class AbstractExportImport implements ExportImport
         }
     }
 
-    protected void setupPropertyColumns(List<String> propertyPaths) {
+    /**
+     * Re-orders the property paths so that the required columns are at the beginning
+     * @param propertyPaths that need to be re-ordered
+     * @param type of the entity
+     * @return the set of required columns
+     */
+    protected Set<String> setupPropertyColumns(List<String> propertyPaths, Type type) {
+        EntityType entityType = (EntityType) type;
+
+        List<String> requiredPropertyPaths = new ArrayList<>();
+        List<String> nullablePropertyPaths = new ArrayList<>();
+        // Move required columns to the beginning
+        for(String pp: propertyPaths) {
+            //Property p = entityType.getProperty(pp);
+            //if (p != null && !p.isNullable()) {
+            if(!entityType.isNullable(pp)) {
+                requiredPropertyPaths.add(pp);
+            } else {
+                nullablePropertyPaths.add(pp);
+            }
+        }
+        propertyPaths = new ArrayList<>(requiredPropertyPaths);
+        propertyPaths.addAll(nullablePropertyPaths);
+
         propertyColIndex = new HashMap<String, Integer>();
 
         int colNo = 0;
@@ -348,6 +379,8 @@ public abstract class AbstractExportImport implements ExportImport
                 propertyColIndex.put(propertyPath, colNo++);
             }
         }
+
+        return new HashSet<String>(requiredPropertyPaths);
     }
 
     protected abstract void processEntitySheet (String path, String sheetName, Map<String, JSONObject> idMap) throws
@@ -372,13 +405,12 @@ public abstract class AbstractExportImport implements ExportImport
 
     protected abstract void writeRelationshipItem (String name, String entityInfo);
 
-    protected abstract void prepareEntityItemProperty (String propertyPath);
+    protected abstract void prepareEntityItemProperty (String propertyPath, Set<String> requiredColumns);
 
     protected abstract void writeEntityItemPropertyValue (String value);
 
-    protected abstract void writeEntityHeader ();
+    protected abstract void writeEntityHeader (String sheetName, EntityType entityType);
 
     protected abstract void setupExport (String filePath) throws
         IOException;
-
 }

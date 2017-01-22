@@ -251,6 +251,21 @@ public interface ExtendedProperty extends Property {
 	 * @return backref property name
 	 */
 	public String getMappedByName();
+	
+	/**
+	 * Checks if the Column has unique attribute set as true or has a unique constraints
+	 * defined on this property
+	 * 
+	 * @return true if the column has unique values
+	 */
+	public boolean isUnique();	
+	
+	/**
+	 * Currently applicable only for StringType
+	 * 
+	 * @return length of the string column
+	 */
+	public int getLength();
 
 	/**
 	 * Method to check meta information on a property to see if it can be updated

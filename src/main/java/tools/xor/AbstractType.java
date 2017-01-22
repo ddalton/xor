@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -447,6 +449,29 @@ public abstract class AbstractType implements EntityType {
 
 		rootEntityType = (EntityType) das.getType(rootEntityClass);
 	}	
+	
+	@Override
+	public List<Set<String>> getCandidateKeys() {
+		
+		Class<?> instanceClass = getInstanceClass();	
+		Table table = null;
+		do {
+			table = (Table) getClassAnnotation(das, instanceClass, Table.class);
+			if(table != null && table.annotationType() == Table.class) {
+				break;
+			}
+
+			instanceClass = instanceClass.getSuperclass();
+		} while (table == null && instanceClass != null);
+		
+		UniqueConstraint[] ucs = table.uniqueConstraints();
+		List<Set<String>> result = new ArrayList<>(ucs.length);
+		for(UniqueConstraint uc: ucs) {
+			result.add(new HashSet<String>(Arrays.asList(uc.columnNames())));
+		}
+		
+		return result;
+	}
 	
 	protected void initClassAnnotations() {
 
@@ -923,5 +948,18 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public Object newInstance(Object instance) {
 		 return ClassUtil.newInstance(getInstanceClass());
+	}	
+	
+	@Override
+	public Object generate(Settings settings, Property property) {
+		Object result = newInstance(null);
+		
+		for(Property p: getProperties()) {
+			if(p.getType().isDataType()) {
+				((ExtendedProperty)p).setValue(settings, result, ((BasicType)p.getType()).generate(settings, p));
+			}
+		}
+		
+		return result;
 	}	
 }

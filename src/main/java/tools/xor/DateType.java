@@ -27,6 +27,25 @@ import java.util.Date;
  * 
  */
 public class DateType extends SimpleType {
+	
+	private long min = 0;
+	private long max = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years from current time
+
+	public long getMin() {
+		return min;
+	}
+
+	public void setMin(Date min) {
+		this.min = min.getTime();
+	}
+
+	public long getMax() {
+		return max;
+	}
+
+	public void setMax(Date max) {
+		this.max = max.getTime();
+	}
 
 	public DateType(Class<?> clazz) {
 		super(clazz);
@@ -46,4 +65,9 @@ public class DateType extends SimpleType {
 		
 		return null;
 	}
+	
+	public Object generate(Settings settings, Property property) {
+		double range = getMax() - getMin();
+		return new Date((long) (getMin() + (Math.random() * range)));
+	}	
 }

@@ -41,4 +41,8 @@ public class ArrayType extends SimpleType {
 
 		return toArray;
 	}
+	
+	public Object generate(Settings settings, Property property) {
+		throw new UnsupportedOperationException("generate method not supported for ArrayType");
+	}	
 }

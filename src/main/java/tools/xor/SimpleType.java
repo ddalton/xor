@@ -191,4 +191,8 @@ public class SimpleType implements BasicType {
 
 		return value;
 	}
+	
+	public Object generate(Settings settings, Property property) {
+		throw new UnsupportedOperationException("generate method not supported for unknown type");
+	}	
 }

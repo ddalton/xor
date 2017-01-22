@@ -70,6 +70,14 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public void setNaturalKey(String[] keys);	
 	
 	/**
+	 * List of all candidate keys supported by the entity.
+	 * Includes the natural key if one is designated as such.
+	 * 
+	 * @return the candidate keys.
+	 */
+	public List<Set<String>> getCandidateKeys();	
+	
+	/**
 	 * Returns the property that refers to the version of the entity
 	 * @return Property object
 	 */

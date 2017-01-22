@@ -21,6 +21,8 @@ package tools.xor;
 
 import tools.xor.service.DataAccessService;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -33,8 +35,39 @@ import java.util.Set;
  */
 public class SimpleTypeFactory {
 
-   public static SimpleType getType(Class<?> clazz, DataAccessService das) {
-		if (clazz.isArray()) {
+	/**
+	 * Creates the Simple Java Data type.
+	 * The number of if-then-else should not impact performance significantly because
+	 * this is invoked only during startup.
+	 * 
+	 * @param clazz the java class
+	 * @param das the DataAccessService instance
+	 * @return the Type instance
+	 */
+	public static SimpleType getType(Class<?> clazz, DataAccessService das) {
+		if(String.class == clazz) {
+			return new StringType(clazz);	  
+		} else if (BigInteger.class == clazz) {
+			return new BigIntegerType(clazz);
+		} else if (BigDecimal.class == clazz) {
+			return new BigDecimalType(clazz);
+		} else if (boolean.class == clazz || Boolean.class == clazz) {
+			return new BooleanType(clazz);
+		} else if (byte.class == clazz || Byte.class == clazz) {
+			return new ByteType(clazz);
+		} else if (short.class == clazz || Short.class == clazz) {
+			return new ShortType(clazz);			
+		} else if (char.class == clazz || Character.class == clazz) {
+			return new CharType(clazz);			
+		} else if (int.class == clazz || Integer.class == clazz) {
+			return new IntType(clazz);
+		} else if (long.class == clazz || Long.class == clazz) {
+			return new LongType(clazz);			
+		} else if (float.class == clazz || Float.class == clazz) {
+			return new FloatType(clazz);
+		} else if (double.class == clazz || Double.class == clazz) {
+			return new DoubleType(clazz);			
+		} else if (clazz.isArray()) {
 			return new ArrayType(clazz);
 		} else if(Date.class.isAssignableFrom(clazz)) {
 			return new DateType(clazz);
@@ -49,6 +82,6 @@ public class SimpleTypeFactory {
 		} else {
 			return new SimpleType(clazz, das);
 		}
-   }
+	}
 
 }

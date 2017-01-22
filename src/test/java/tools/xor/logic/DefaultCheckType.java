@@ -36,6 +36,7 @@ import tools.xor.db.base.ChapterType;
 import tools.xor.db.base.Facet;
 import tools.xor.db.base.Person;
 import tools.xor.db.base.Technician;
+import tools.xor.db.pm.AddressEntity;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
@@ -179,4 +180,13 @@ public class DefaultCheckType extends AbstractDBTest {
 		}
 		System.out.println("checkReflectionSetter[Direct call] took " + ((new Date()).getTime() - start.getTime()) + " milliseconds");		
 	}	
+	
+	protected void generateSimple() {
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType addressType = (EntityType) das.getType(AddressEntity.class);
+		
+		AddressEntity address = (AddressEntity) addressType.generate(new Settings(), null);
+		System.out.println("Address street: " + address.getStreet());
+		assert(address.getStreet().length() > 0);
+	}
 }

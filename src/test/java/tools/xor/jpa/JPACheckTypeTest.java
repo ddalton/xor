@@ -53,4 +53,9 @@ public class JPACheckTypeTest extends DefaultCheckType {
 	public void checkReflectionSetter() {
 		super.checkReflectionSetter();
 	}	
+	
+	@Test
+	public void generateSimple() {
+		super.generateSimple();
+	}
 }

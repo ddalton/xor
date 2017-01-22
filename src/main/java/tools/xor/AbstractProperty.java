@@ -35,6 +35,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MapKey;
 import javax.persistence.OrderBy;
+import javax.persistence.UniqueConstraint;
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import org.apache.log4j.LogManager;
@@ -106,10 +107,11 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	protected ExtendedProperty positionProperty;
 	protected ExtendedProperty mapKeyOf;
 	protected ExtendedProperty indexOf;
-	protected boolean          hasIdAnnotation;	
+	protected boolean          hasIdAnnotation;	 // Convert to Boolean type for lazy initialization and caching
 	private String       mapPath;
 	private Property     mappedBy;
 	private Property     mapOf;
+	private Boolean      unique; 
 	private Type         type;
 	private EntityType   parentType;
 
@@ -1048,7 +1050,61 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			result = manyToMany.mappedBy();
 
 		return result;
-	}		
+	}	
+	
+	private Column getColumnAnnotation() {
+		javax.persistence.Column col = null;
+		
+		if(getterMethod != null) {
+			col = getterMethod.getAnnotation(javax.persistence.Column.class);	
+		}
+		
+		if(col == null && field != null) {
+			col = field.getAnnotation(javax.persistence.Column.class);		
+		}
+
+		return col;
+	}
+	
+	@Override
+	public boolean isUnique() {
+		
+		// optimization
+		if(unique != null) {
+			return unique;
+		}
+		unique = Boolean.FALSE;
+		
+		// Check Column annotation first
+		javax.persistence.Column col = getColumnAnnotation();
+		
+		if(col != null) {
+			unique = col.unique();
+		}
+
+		// Check unique constraints
+		if(!unique && getType() instanceof EntityType) {
+			EntityType entityType = (EntityType) getType();
+			for(Set<String> uniqueConstraint: entityType.getCandidateKeys()) {
+				if(uniqueConstraint.size() == 1 && uniqueConstraint.iterator().next().equals(getName())) {
+					unique = Boolean.TRUE;
+					break;
+				}
+			}
+		}
+
+		return unique;
+	}
+	
+	@Override
+	public int getLength() {
+		javax.persistence.Column col = getColumnAnnotation();
+		if(col != null) {
+			return col.length();
+		}
+		
+		return StringType.DEFAULT_LENGTH;
+	}
 	
 	@Override
 	public boolean isUpdatable() {

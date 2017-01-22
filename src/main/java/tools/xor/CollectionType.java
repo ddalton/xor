@@ -36,4 +36,8 @@ public class CollectionType extends SimpleType {
 	public Object newInstance(Object instance) {
 		return ClassUtil.newInstance(instance.getClass());
 	}
+	
+	public Object generate(Settings settings, Property property) {
+		throw new UnsupportedOperationException("No SimpleType instance found for class: " + getInstanceClass().getName());
+	}	
 }

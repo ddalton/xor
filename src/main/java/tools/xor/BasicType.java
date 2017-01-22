@@ -37,4 +37,12 @@ public interface BasicType extends Type {
 	 * @return new object instance
 	 */
 	public Object newInstance(Object instance);
+	
+	/**
+	 * Generates object(s) based on the property settings and also the general setting.
+	 * @param settings controlling the generation
+	 * @param property controlling the generation such as Uniqueness etc
+	 * @return the generated object
+	 */
+	public Object generate(Settings settings, Property property);
 }

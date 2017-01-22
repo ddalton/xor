@@ -20,6 +20,7 @@
 package tools.xor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dilip Dalton
@@ -35,4 +36,17 @@ public class ListType extends SimpleType {
 	public Object newInstance(Object instance) {
 		return new ArrayList<Object>();
 	}
+	
+	public Object generate(Settings settings, Property property) {
+		List result = new ArrayList();
+		
+		// TODO: move this to settings
+		int fanOut = (int) (Math.random() * 1000);
+		EntityType elementType = (EntityType) ((ExtendedProperty)property).getElementType();
+		for(int i = 0; i < fanOut; i++) {
+			result.add(elementType.generate(settings, property));
+		}
+		
+		return result;
+	}		
 }

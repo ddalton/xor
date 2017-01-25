@@ -286,6 +286,11 @@ public abstract class AbstractExportImport implements ExportImport
         return "Relationship";
     }
 
+    protected String getEntityTypeCol3 ()
+    {
+        return "Entity Type";
+    }
+
     protected String getCollectionKey (String ownerXorKey, String entityInfo)
     {
         return ownerXorKey + ":" + getProperty(entityInfo).getName();

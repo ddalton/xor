@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ public class ExcelExportImport extends AbstractExportImport
     private int entitySheetRowNo;
     private Row row;
     private Cell cell;
+    private Set<String> entityInfo = new HashSet<String>();
 
     private CellStyle headerStyle;
     private CellStyle requiredStyle;
@@ -341,8 +343,16 @@ public class ExcelExportImport extends AbstractExportImport
     protected void writeRelationshipItem(String name, String entityInfo) {
         Cell sheetNameCell = row.createCell(0);
         Cell propertyNameCell = row.createCell(1);
+        Cell entityTypeCell = row.createCell(2);
         sheetNameCell.setCellValue(name);
         propertyNameCell.setCellValue(entityInfo);
+
+        Property property = getProperty(entityInfo);
+        String entityTypeName = property.getType().getName();
+        if(((ExtendedProperty)property).isMany()) {
+            entityTypeName = ((ExtendedProperty)property).getElementType().getName();
+        }
+        entityTypeCell.setCellValue(entityTypeName);
     }
 
     @Override
@@ -380,6 +390,12 @@ public class ExcelExportImport extends AbstractExportImport
 
 
     private void writeInfo(String sheetName, EntityType entityType) {
+        if(entityInfo.contains(entityType.getName())) {
+            return;
+        } else {
+            entityInfo.add(entityType.getName());
+        }
+
         Sheet infoSheet = wb.getSheet(Constants.XOR.EXCEL_INFO_SHEET);
         if (infoSheet == null) {
             CellStyle blankBG = wb.createCellStyle();
@@ -415,12 +431,17 @@ public class ExcelExportImport extends AbstractExportImport
         int startRow = infoSheet.getLastRowNum() + 2;
         Row sheetDetailsRow = infoSheet.createRow(startRow);
         infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,0,1));
+        cell = sheetDetailsRow.createCell(0);
+        cell.setCellValue("Entity: " + entityType.getName());
+        /*
+        infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,0,1));
         Cell cell = sheetDetailsRow.createCell(0);
         cell.setCellValue("Sheet Name: " + sheetName);
 
         infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,2,4));
         cell = sheetDetailsRow.createCell(2);
         cell.setCellValue("Entity: " + entityType.getName());
+        */
 
         // Create header area
         startRow++;
@@ -480,12 +501,15 @@ public class ExcelExportImport extends AbstractExportImport
         Row headerRow = sh.createRow(0);
         Cell sheetName = headerRow.createCell(0);
         Cell propertyName = headerRow.createCell(1);
+        Cell entityType = headerRow.createCell(2);
         sheetName.setCellValue(getRelationshipHeaderCol1());
         propertyName.setCellValue(getRelationshipHeaderCol2());
+        entityType.setCellValue(getEntityTypeCol3());
 
         // set header style
         sheetName.setCellStyle(headerStyle);
         propertyName.setCellStyle(headerStyle);
+        entityType.setCellStyle(headerStyle);
 
         // Reset the row counter
         entitySheetRowNo = 1;
@@ -495,6 +519,7 @@ public class ExcelExportImport extends AbstractExportImport
     protected void finishupRelationship() {
         sh.autoSizeColumn(0);
         sh.autoSizeColumn(1);
+        sh.autoSizeColumn(2);
         wb.setSheetOrder(Constants.XOR.EXCEL_INDEX_SHEET, 1);
     }
 

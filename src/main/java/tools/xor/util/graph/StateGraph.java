@@ -6,12 +6,15 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 import tools.xor.AssociationSetting;
+import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.MatchType;
@@ -667,7 +670,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 	}
 	
-	
 	public boolean supportsDynamicUpdate() {
 		for(V state: getVertices()) {
 			if(!((EntityType)state.getType()).supportsDynamicUpdate()) {
@@ -677,4 +679,58 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		
 		return true;
 	}
+	
+	private JSONObject createObject(
+			Map<State, List<JSONObject>> stateObjectMap,
+			Map<JSONObject, State> objectStateMap,
+			JSONObject jsonObject) {
+		JSONObject result = new JSONObject();
+		stateObjectMap.put(key, value)
+	}
+			
+	
+	/**
+	 * Generates a random object graph using JSON objects.
+	 * 
+	 * @param size decides the number of objects in the object graph
+	 * @param sparseness decides how sparse the graph is. This depicts the ratio between the number of vertices vs the number of edges
+	 *        So greater the number, the more dense the graph is.
+	 *        Takes a value between 0.0f and 1.0f
+	 * @return the generated object graph
+	 */
+	public JSONObject generateObjectGraph(EntitySize entitySize, float sparseness) {
+		/*
+		 * Use BFS to traverse the graph since we want to give all states an opportunity to participate in the object graph.
+		 * Keep a map between the state and the list of JSONObjects
+		 * When traversing an ASSOCIATION, randomly choose a JSONObject based on the target state.
+		 * If the ASSOCIATION is a COMPOSITION, then create a new JSONObject.
+		 * 
+		 * Assume no other behavior on a relationship.
+		 */
+
+		 //Set all nodes to "not visited". This is by having the visited set as empty
+		 Set<JSONObject> visited = new HashSet<JSONObject>();
+		 Map<State, List<JSONObject>> stateObjectMap = new HashMap<State, List<JSONObject>>();
+		 Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
+		 
+		 Queue q = new LinkedList();
+		 
+
+		 q.enqueue(createObject(), getRootState());
+
+		   while ( q ≠ empty ) do
+		   {
+		      x = q.dequeue();
+
+		      if ( x has not been visited )
+		      {
+		         visited[x] = true;         // Visit node x !
+
+		         for ( every edge (x, y)  /* we are using all edges ! */ )    
+		            if ( y has not been visited )   
+			       q.enqueue(y);       // Use the edge (x,y) !!!
+		      }
+		   }		
+		
+	}	
 }

@@ -12,9 +12,11 @@ import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
+import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;

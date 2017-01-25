@@ -39,6 +39,7 @@ public class StringType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		return RandomStringUtils.randomAscii(getLength());
+		int stringLen = (int)(Math.random() * getLength());
+		return RandomStringUtils.randomAscii(stringLen);
 	}	
 }

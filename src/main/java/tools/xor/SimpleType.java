@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 
@@ -193,6 +194,19 @@ public class SimpleType implements BasicType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		throw new UnsupportedOperationException("generate method not supported for unknown type");
-	}	
+		// generate method not supported for unknown type
+		return null;
+	}
+
+	protected JSONArray generateArray(Settings settings, Property property) {
+		JSONArray result = new JSONArray();
+
+		int fanOut = (int) (Math.random() * settings.getEntitySize().size() * settings.getSparseness());
+		EntityType elementType = (EntityType) ((ExtendedProperty)property).getElementType();
+		for(int i = 0; i < fanOut; i++) {
+			result.put(elementType.generate(settings, property));
+		}
+
+		return result;
+	}
 }

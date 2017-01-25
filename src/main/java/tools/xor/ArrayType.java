@@ -19,6 +19,8 @@
 
 package tools.xor;
 
+import org.json.JSONArray;
+
 import java.lang.reflect.Array;
 
 
@@ -43,6 +45,6 @@ public class ArrayType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		throw new UnsupportedOperationException("generate method not supported for ArrayType");
+		return super.generateArray(settings, property);
 	}	
 }

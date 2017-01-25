@@ -125,7 +125,7 @@ public abstract class CollectionUpdateAction implements Executable {
 		if(input.getInstance() instanceof Collection) {
 			collection = (Collection) input.getInstance();
 		} else if(input.getInstance() instanceof JSONArray) {
-			collection = ClassUtil.jsonArrayToCollection((JSONArray) input.getInstance());
+			collection = ClassUtil.jsonArrayToList((JSONArray)input.getInstance());
 		}
 
 		Map<Object, Set<String>> result = new HashMap<Object, Set<String>>();

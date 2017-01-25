@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import org.json.JSONArray;
 import tools.xor.util.ClassUtil;
 
 
@@ -38,6 +39,6 @@ public class CollectionType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		throw new UnsupportedOperationException("No SimpleType instance found for class: " + getInstanceClass().getName());
+		return super.generateArray(settings, property);
 	}	
 }

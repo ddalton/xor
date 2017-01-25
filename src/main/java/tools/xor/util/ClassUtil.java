@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Access;
@@ -338,17 +339,17 @@ public class ClassUtil {
 		return Settings.encodeParam(name);
 	}
 	
-	public static Collection jsonArrayToCollection(JSONArray jsonArray) {
-		Collection collection = new ArrayList<>( jsonArray.length() );
+	public static List jsonArrayToList (JSONArray jsonArray) {
+		List list = new ArrayList<>( jsonArray.length() );
 		try {
 			for(int i = 0; i < jsonArray.length(); i++) {
-				collection.add(jsonArray.get(i));
+				list.add(jsonArray.get(i));
 			}
 		} catch (JSONException e) {
 			throw ClassUtil.wrapRun(e);
 		}
 		
-		return collection;
+		return list;
 	}
 	
 	public static boolean intersectsTags(String[] tags, String[] otherTags) {

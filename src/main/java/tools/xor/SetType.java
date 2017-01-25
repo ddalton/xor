@@ -20,6 +20,7 @@
 package tools.xor;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.json.JSONArray;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -52,15 +53,6 @@ public class SetType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		Set result = new HashSet();
-		
-		// TODO: move this to settings
-		int fanOut = (int) (Math.random() * 1000);
-		EntityType elementType = (EntityType) ((ExtendedProperty)property).getElementType();
-		for(int i = 0; i < fanOut; i++) {
-			result.add(elementType.generate(settings, property));
-		}
-		
-		return result;
+		return super.generateArray(settings, property);
 	}	
 }

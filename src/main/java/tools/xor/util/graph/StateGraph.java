@@ -11,9 +11,11 @@ import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tools.xor.AssociationSetting;
+import tools.xor.BasicType;
 import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -680,25 +682,29 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return true;
 	}
 	
-	private JSONObject createObject(
+	private void addObject(
 			Map<State, List<JSONObject>> stateObjectMap,
 			Map<JSONObject, State> objectStateMap,
-			JSONObject jsonObject) {
-		JSONObject result = new JSONObject();
-		stateObjectMap.put(key, value)
+			State state,
+			JSONObject object) {
+
+		List<JSONObject> list = stateObjectMap.get(state);
+		if(list == null) {
+			list = new ArrayList<JSONObject>();
+			stateObjectMap.put(state, list);
+		}
+		list.add(object);
+		objectStateMap.put(object, state);
 	}
 			
 	
 	/**
 	 * Generates a random object graph using JSON objects.
-	 * 
-	 * @param size decides the number of objects in the object graph
-	 * @param sparseness decides how sparse the graph is. This depicts the ratio between the number of vertices vs the number of edges
-	 *        So greater the number, the more dense the graph is.
-	 *        Takes a value between 0.0f and 1.0f
+	 *
 	 * @return the generated object graph
 	 */
-	public JSONObject generateObjectGraph(EntitySize entitySize, float sparseness) {
+	public JSONObject generateObjectGraph (Settings settings)
+	{
 		/*
 		 * Use BFS to traverse the graph since we want to give all states an opportunity to participate in the object graph.
 		 * Keep a map between the state and the list of JSONObjects
@@ -708,29 +714,86 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		 * Assume no other behavior on a relationship.
 		 */
 
-		 //Set all nodes to "not visited". This is by having the visited set as empty
-		 Set<JSONObject> visited = new HashSet<JSONObject>();
-		 Map<State, List<JSONObject>> stateObjectMap = new HashMap<State, List<JSONObject>>();
-		 Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
-		 
-		 Queue q = new LinkedList();
-		 
+		//Set all nodes to "not visited". This is by having the visited set as empty
+		Set<JSONObject> visited = new HashSet<JSONObject>();
+		Map<State, List<JSONObject>> stateObjectMap = new HashMap<State, List<JSONObject>>();
+		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
 
-		 q.enqueue(createObject(), getRootState());
+		Queue<JSONObject> q = new LinkedList();
 
-		   while ( q ≠ empty ) do
-		   {
-		      x = q.dequeue();
+		JSONObject result = (JSONObject)((EntityType)getRootState().getType()).generate(settings, null);
+		addObject(
+			stateObjectMap,
+			objectStateMap,
+			getRootState(),
+			result);
+		q.add(result);
 
-		      if ( x has not been visited )
-		      {
-		         visited[x] = true;         // Visit node x !
+		while (!q.isEmpty()) {
+			// Check limits
+			if(objectStateMap.size() > settings.getEntitySize().size()) {
+				break;
+			}
 
-		         for ( every edge (x, y)  /* we are using all edges ! */ )    
-		            if ( y has not been visited )   
-			       q.enqueue(y);       // Use the edge (x,y) !!!
-		      }
-		   }		
-		
+			JSONObject entity = q.remove();
+			if (!visited.contains(entity)) {
+				// Mark as visited
+				visited.add(entity);
+
+				for (Property property : objectStateMap.get(entity).getType().getProperties()) {
+					// target type
+					ExtendedProperty extendedProperty = (ExtendedProperty)property;
+					if( extendedProperty.isDataType()) {
+						continue;
+					}
+
+					Type targetType = extendedProperty.getType();
+					Type targetEntityType = targetType;
+					if (extendedProperty.isMany()) {
+						targetEntityType = extendedProperty.getElementType();
+					}
+					int size = stateObjectMap.get(targetEntityType) != null ?
+						stateObjectMap.get(targetEntityType).size() :
+						0;
+					Object target;
+					if (property.isContainment() || size == 0) {
+
+						State state = states.get(targetEntityType);
+
+						// Check if the state is out of scope
+						if(state == null) {
+							continue;
+						}
+
+						target = ((BasicType)targetType).generate(settings, extendedProperty);
+						if(target instanceof JSONObject) {
+							addObject(
+								stateObjectMap,
+								objectStateMap,
+								state,
+								(JSONObject)target);
+							q.add((JSONObject)target);
+						} else if(target instanceof JSONArray) {
+							for(int i = 0; i < ((JSONArray)target).length(); i++) {
+								JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
+								addObject(
+									stateObjectMap,
+									objectStateMap,
+									state,
+									jsonObject);
+								q.add(jsonObject);
+							}
+						}
+					}
+					else {
+						List<JSONObject> entitiesToChooseFrom = stateObjectMap.get(targetType);
+						target = entitiesToChooseFrom.get((int)(Math.random() * (size - 1)));
+					}
+					entity.put(property.getName(), target);
+				}
+			}
+		}
+
+		return result;
 	}	
 }

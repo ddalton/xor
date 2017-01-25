@@ -147,6 +147,34 @@ public class Settings {
 	// User provided data that is efficiently obtained
 	private PrefetchCache prefetchCache;
 
+	// Settings related to data generation
+	private EntitySize entitySize = EntitySize.MEDIUM;
+	private float sparseness = 1.0f;
+
+	/** decides how sparse the graph is. This depicts the ratio between the number of vertices vs the number of edges
+	 *    So greater the number, the more dense the graph is.
+	 *    Takes a value between 0.0f and 1.0f
+	 * @return the sparseness value
+	 */
+	public float getSparseness ()
+	{
+		return sparseness;
+	}
+
+	public void setSparseness (float sparseness)
+	{
+		this.sparseness = sparseness;
+	}
+
+	public EntitySize getEntitySize ()
+	{
+		return entitySize;
+	}
+
+	public void setEntitySize (EntitySize entitySize)
+	{
+		this.entitySize = entitySize;
+	}
 
 	public Object getSessionContext() {
 		return sessionContext;

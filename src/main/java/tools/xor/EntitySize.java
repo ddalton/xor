@@ -28,19 +28,16 @@ package tools.xor;
  *
  */
 public enum EntitySize {
-    SMALL(25, 1),  // Has a maximum of 25 objects and loops are 1 level deep
-    MEDIUM(250, 3), // Has a maximum of 250 objects and loops are 3 levels deep
-    LARGE(2500, 5),  // Has a maximum of 2500 objects and loops are 5 levels deep
-    XLARGE(25000, 10); // Has have a maximum of 25000 objects and loops are upto 10 levels deep
+    SMALL(25),  // Has a maximum of 25 objects
+    MEDIUM(250), // Has a maximum of 250 objects
+    LARGE(2500),  // Has a maximum of 2500 objects
+    XLARGE(25000); // Has have a maximum of 25000 objects
 	
 	private final int size; // maximum number of objects
-	private final int depth; // max depth
 	
-    EntitySize(int size, int depth) {
+    EntitySize(int size) {
         this.size = size;
-        this.depth = depth;
     }	
     
-    private double size() { return this.size; }
-    private double depth() { return this.depth; }
+    public int size() { return this.size; }
 }

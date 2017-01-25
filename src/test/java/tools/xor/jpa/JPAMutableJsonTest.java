@@ -276,4 +276,10 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 		super.importCSV();
 	}
+
+	@Test
+	public void generateMediumSizedEntity() throws IOException
+	{
+		super.generateMediumSizedEntity();
+	}
 }

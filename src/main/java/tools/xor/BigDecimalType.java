@@ -23,8 +23,8 @@ import java.math.BigDecimal;
 
 public class BigDecimalType extends SimpleType {
 
-	private BigDecimal min = null;
-	private BigDecimal max = null;	
+	private BigDecimal min = BigDecimal.ONE;
+	private BigDecimal max = new BigDecimal((new Long(Long.MAX_VALUE)).toString());
 
 	public BigDecimal getMin() {
 		return min;

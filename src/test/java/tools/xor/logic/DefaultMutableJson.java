@@ -59,6 +59,8 @@ import tools.xor.db.pm.Task;
 import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
+import tools.xor.service.DataAccessService;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;
 
@@ -1066,5 +1068,30 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		// Includes header row
 		assert(result.size() == 3);
+	}
+
+	protected void generateMediumSizedEntity() throws IOException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		Settings settings = new Settings();
+		settings.setEntityType(taskType);
+		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.init(aggregateManager);
+		StateGraph sg = settings.getView().getStateGraph(taskType);
+
+		JSONObject task = (JSONObject) sg.generateObjectGraph(new Settings());
+		System.out.println("Task name: " + task.get("name"));
+
+		Object children = task.get("taskChildren");
+		assert(children instanceof JSONArray);
+
+		JSONArray childrenArray = (JSONArray) children;
+		assert(childrenArray.length() > 0);
+
+		// Try and persist this now
+		Task persistedTask = (Task) aggregateManager.create(task, settings);
+
+		aggregateService.exportAggregate("taskRandomMedium.xlsx", persistedTask, settings);
 	}
 }

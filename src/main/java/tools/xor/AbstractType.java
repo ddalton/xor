@@ -43,6 +43,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.json.JSONObject;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
@@ -52,6 +53,7 @@ import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
 import tools.xor.view.AggregateView;
 
@@ -952,13 +954,14 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public Object generate(Settings settings, Property property) {
-		Object result = newInstance(null);
+		JSONObject result = new JSONObject();
 		
 		for(Property p: getProperties()) {
-			if(p.getType().isDataType()) {
-				((ExtendedProperty)p).setValue(settings, result, ((BasicType)p.getType()).generate(settings, p));
+			if( ((ExtendedProperty) p).isDataType()) {
+				result.put(p.getName(), ((BasicType)p.getType()).generate(settings, p));
 			}
 		}
+		result.put(Constants.XOR.TYPE, getInstanceClass().getName());
 		
 		return result;
 	}	

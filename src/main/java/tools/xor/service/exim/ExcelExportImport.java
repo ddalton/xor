@@ -15,6 +15,8 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tools.xor.EntityType;
@@ -37,7 +39,7 @@ import java.util.Set;
 public class ExcelExportImport extends AbstractExportImport
 {
     private Workbook wb;
-    private SXSSFSheet sh;
+    private XSSFSheet sh; // We cannot use the streaming version since we write the header after writing the body
     private int entitySheetRowNo;
     private Row row;
     private Cell cell;
@@ -280,9 +282,7 @@ public class ExcelExportImport extends AbstractExportImport
     @Override
     protected void setupExport(String filePath) throws FileNotFoundException
     {
-        wb = new SXSSFWorkbook();
-
-        ((SXSSFWorkbook)wb).setCompressTempFiles(true);
+        wb = new XSSFWorkbook();
 
         requiredStyle = wb.createCellStyle();
         requiredStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
@@ -318,9 +318,9 @@ public class ExcelExportImport extends AbstractExportImport
     @Override
     protected void setupEntity(String sheetName) {
         entitySheetRowNo = 1;
-        sh = (SXSSFSheet)wb.getSheet(sheetName);
+        sh = (XSSFSheet)wb.getSheet(sheetName);
         if (sh == null) {
-            sh = (SXSSFSheet)wb.createSheet(sheetName);
+            sh = (XSSFSheet)wb.createSheet(sheetName);
         }
         else {
             entitySheetRowNo = sh.getLastRowNum() + 1;
@@ -474,7 +474,7 @@ public class ExcelExportImport extends AbstractExportImport
 
     @Override
     protected void setupRelationship() {
-        sh = (SXSSFSheet)wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
+        sh = (XSSFSheet)wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
 
         // Write header
         Row headerRow = sh.createRow(0);

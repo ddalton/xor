@@ -43,7 +43,7 @@ public class DataObjectList {
 		else if(list instanceof Map)
 			collection = ((Map<Object, Object>) list).values();
 		else if(list instanceof JSONArray) 
-			collection = ClassUtil.jsonArrayToCollection((JSONArray) list);
+			collection = ClassUtil.jsonArrayToList((JSONArray)list);
 		
 		return collection;
 	}

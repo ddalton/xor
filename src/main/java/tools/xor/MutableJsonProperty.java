@@ -249,6 +249,11 @@ public class MutableJsonProperty extends ExternalProperty {
 					
 					@Override
 					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+						Object date = jsonObject.get(key);
+						if(date instanceof Date) {
+							return date;
+						}
+
 						if(settings.getDateForm() == Settings.DateForm.FORMATTED) {
 							DateFormat df = new SimpleDateFormat(settings.getDateFormat());
 							String dateString = jsonObject.getString(key);

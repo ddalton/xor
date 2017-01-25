@@ -30,6 +30,7 @@ import java.util.TreeMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.json.JSONArray;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -74,11 +75,22 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		
 		// TODO: checkOutOfSync()
 	
-	}		
+	}
+
+	private List extractList(BusinessObject bo) {
+		List list = null;
+		if(bo.getInstance() instanceof List) {
+			list = (List) bo.getInstance();
+		} else if(bo.getInstance() instanceof JSONArray) {
+			list = ClassUtil.jsonArrayToList((JSONArray)bo.getInstance());
+		}
+
+		return list;
+	}
 
 	@Override
 	public Map<Object, Set<String>> getElementKeysMap(BusinessObject input) {
-		List list = (List) input.getInstance();
+		List list = extractList(input);
 
 		Map<Object, Set<String>> result = new HashMap<Object, Set<String>>();
 		for(int i = 0; i < list.size(); i++) {
@@ -119,9 +131,10 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		if(output == null)
 			return;
 
-		List inputList = (List) input.getInstance();
+		List inputList = extractList(input);
 		List outputList = (List) output.getInstance();
 
+		// TODO: Need to truncate by natural or surrogate keys
 		if(outputList.size() > inputList.size()) // truncate the remaining portion
 			truncateToSize(outputList, inputList.size());
 	}

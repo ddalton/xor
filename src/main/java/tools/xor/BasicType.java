@@ -40,6 +40,8 @@ public interface BasicType extends Type {
 	
 	/**
 	 * Generates object(s) based on the property settings and also the general setting.
+	 * The generated data is in external form. For example, JSONObject
+	 *
 	 * @param settings controlling the generation
 	 * @param property controlling the generation such as Uniqueness etc
 	 * @return the generated object

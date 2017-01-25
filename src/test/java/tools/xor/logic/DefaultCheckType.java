@@ -21,6 +21,8 @@ package tools.xor.logic;
 
 import java.util.Date;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -41,6 +43,8 @@ import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.view.AggregateView;
 
 public class DefaultCheckType extends AbstractDBTest {
 	
@@ -185,8 +189,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 		EntityType addressType = (EntityType) das.getType(AddressEntity.class);
 		
-		AddressEntity address = (AddressEntity) addressType.generate(new Settings(), null);
-		System.out.println("Address street: " + address.getStreet());
-		assert(address.getStreet().length() > 0);
+		JSONObject address = (JSONObject) addressType.generate(new Settings(), null);
+		System.out.println("Address street: " + address.get("street"));
+		assert(address.get("street").toString().length() > 0);
 	}
 }

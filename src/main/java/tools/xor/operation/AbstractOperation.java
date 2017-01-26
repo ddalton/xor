@@ -501,7 +501,7 @@ public abstract class AbstractOperation implements Operation {
 				next.setOutput(createTarget(next, ClassUtil.getInstance(nextSource), null));
 			}
 
-			if(callInfo.isBulkInput()) {
+			if(callInfo.isBulkInput() && callInfo.getStage() == ProcessingStage.UPDATE) {
 				Object outputInstance = ((BusinessObject)next.getOutput()).getInstance();
 				((List)((BusinessObject)callInfo.getOutput()).getInstance()).add(outputInstance);
 			}

@@ -288,4 +288,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 		super.generateMediumSizedDomainEntity();
 	}
+
+	@Test
+	public void sharedOwnedBy() {
+		super.sharedOwnedBy();
+	}
 }

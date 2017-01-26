@@ -167,7 +167,13 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 				} else {
 					// Collection, so go to the owner and get the element type
 					ExtendedProperty property = callInfo.getParent().getInputProperty();
-					result = ((ExtendedProperty)property.getDomainProperty()).getElementType().getInstanceClass();
+					Type type = null;
+					if(property == null && callInfo.getParent().isBulkInput()) {
+						type = callInfo.getSettings().getEntityType();
+					} else {
+						type = ((ExtendedProperty)property.getDomainProperty()).getElementType();
+					}
+					result = type.getInstanceClass();
 				}
 			}
 			break;

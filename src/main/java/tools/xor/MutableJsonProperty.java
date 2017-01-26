@@ -353,7 +353,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				if(value instanceof String) {
 					return json.getString(getName());
 				} else {
-					return (String)value;
+					return value == null ? null : value.toString();
 				}
 			} catch (Exception e) {
 				return null;

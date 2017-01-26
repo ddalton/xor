@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1122,5 +1123,62 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Task persistedTask = (Task) aggregateManager.create(task, settings);
 
 		aggregateService.exportAggregate("taskRandomMediumDomain.xlsx", persistedTask, settings);
+	}
+
+	/**
+	 * Create 2 task objects having the same ownedBy object. Natural key is userName.
+	 */
+	protected void sharedOwnedBy() {
+
+		// Create Person
+		JSONObject person = new JSONObject();
+		person.put("userName", "tcostner");
+		person.put("commonName", "Timothy Costner");
+
+		// Create task1
+		JSONObject json1 = new JSONObject();
+		json1.put("name", "SETUP_DSL");
+		json1.put("displayName", "Setup DSL");
+		json1.put("description", "Setup high-speed broadband internet using DSL technology");
+		json1.put("ownedBy", person);
+
+		// Create task2
+		JSONObject json2 = new JSONObject();
+		json2.put("name", "HOMEWORK");
+		json2.put("displayName", "Homework");
+		json2.put("description", "Homework from school");
+		json2.put("ownedBy", person); // Should share the person reference - check
+
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType personType = (EntityType) das.getType(Person.class);
+		personType.setNaturalKey(new String[] { "userName"});
+		Settings settings = new Settings();
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		settings.setEntityType(taskType);
+		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.init(aggregateManager);
+		//settings.setPostFlush(true);
+
+		// Try and persist task 1 now
+		List<Object> entityBatch = new LinkedList<>();
+		entityBatch.add(json1);
+		entityBatch.add(json2);
+		//Task persistedTask1 = (Task) aggregateManager.create(json1, settings);
+		//Task persistedTask2 = (Task) aggregateManager.create(json2, settings);
+
+		// Ensure both tasks point to the same Person instance
+		//Person p = persistedTask1.getOwnedBy();
+		Object obj = aggregateManager.create(entityBatch, settings);
+
+		assert(obj instanceof List);
+		if(obj instanceof List) {
+			List list = (List) obj;
+			assert(list.size() == 2);
+
+			Task t1 = (Task) list.get(0);
+			Task t2 = (Task) list.get(1);
+
+			assert(t1.getOwnedBy() == t2.getOwnedBy());
+		}
 	}
 }

@@ -21,6 +21,8 @@ package tools.xor;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -421,8 +423,15 @@ public abstract class AbstractBO implements BusinessObject {
 
 		if(path.equals(PATH_DELIMITER)) { // root
 			DataObject result = this;
-			while(result.getContainer() != null)
+			Map loopDetector = new IdentityHashMap<>();
+			loopDetector.put(this, null);
+			while(result.getContainer() != null) {
 				result = result.getContainer();
+				if(loopDetector.containsKey(result)) {
+					throw new RuntimeException("Container loop detected - check if id is getting overwritten");
+				}
+				loopDetector.put(result, null);
+			}
 			return result;
 		}
 

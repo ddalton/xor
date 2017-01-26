@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
+import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 

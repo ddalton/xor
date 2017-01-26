@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -1093,5 +1094,33 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Task persistedTask = (Task) aggregateManager.create(task, settings);
 
 		aggregateService.exportAggregate("taskRandomMedium.xlsx", persistedTask, settings);
+	}
+
+	protected void generateMediumSizedDomainEntity() throws IOException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+		InputStream inputStream = new FileInputStream("DomainValues.xlsx");
+		das.initGenerators(inputStream);
+
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		Settings settings = new Settings();
+		settings.setEntityType(taskType);
+		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.init(aggregateManager);
+		StateGraph sg = settings.getView().getStateGraph(taskType);
+
+		JSONObject task = (JSONObject) sg.generateObjectGraph(new Settings());
+		System.out.println("Task name: " + task.get("name"));
+
+		Object children = task.get("taskChildren");
+		assert(children instanceof JSONArray);
+
+		JSONArray childrenArray = (JSONArray) children;
+		assert(childrenArray.length() > 0);
+
+		// Try and persist this now
+		Task persistedTask = (Task) aggregateManager.create(task, settings);
+
+		aggregateService.exportAggregate("taskRandomMediumDomain.xlsx", persistedTask, settings);
 	}
 }

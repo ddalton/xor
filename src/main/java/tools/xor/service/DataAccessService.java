@@ -19,6 +19,7 @@
 
 package tools.xor.service;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -213,4 +214,10 @@ public interface DataAccessService {
 	 * @param type the provided meta type
 	 */
 	public void addOpenType(OpenType type);
+
+	/**
+	 * Initialize the generators needed for data generating from an Excel file
+	 * @param is InputStream of the Excel domain values file
+	 */
+	public void initGenerators(InputStream is);
 }

@@ -19,6 +19,9 @@
 
 package tools.xor.service;
 
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,18 +33,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import tools.xor.AbstractType;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.ExternalType;
 import tools.xor.OpenType;
 import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.SimpleType;
 import tools.xor.SimpleTypeFactory;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
 import tools.xor.exception.MultipleClassForPropertyException;
+import tools.xor.generator.Choices;
+import tools.xor.generator.Generator;
+import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.util.AggregatePropertyPaths;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
@@ -611,4 +626,75 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		return new QueryBuilder();
 	}
 
+	public void initGenerators(InputStream is) {
+		try {
+			Workbook wb = WorkbookFactory.create(is);
+
+			Sheet domainSheet = wb.getSheet(Constants.XOR.DOMAIN_TYPE_SHEET);
+			if (domainSheet == null) {
+				throw new RuntimeException("The Domain types sheet is missing");
+			}
+
+			for (int i = 1; i <= domainSheet.getLastRowNum(); i++) {
+				Row row = domainSheet.getRow(i);
+				String entityTypeName = row.getCell(1).getStringCellValue();
+				String sheetName = row.getCell(0).getStringCellValue();
+
+				EntityType entityType = (EntityType)getType(entityTypeName);
+				Sheet entitySheet = wb.getSheet(sheetName);
+				processDomainValues(entityType, entitySheet);
+			}
+
+		} catch (Exception e) {
+			throw ClassUtil.wrapRun(e);
+		}
+	}
+
+	private void processDomainValues(EntityType entityType, Sheet entitySheet) throws
+		ClassNotFoundException,
+		NoSuchMethodException,
+		IllegalAccessException,
+		InvocationTargetException,
+		InstantiationException
+	{
+		Map<String, Integer> headerMap = ExcelExportImport.getHeaderMap(entitySheet);
+
+		// Process each property
+		for(Map.Entry<String, Integer> entry: headerMap.entrySet()) {
+			ExtendedProperty property = (ExtendedProperty)entityType.getProperty(entry.getKey());
+			if( !property.isDataType() ) {
+				// Only simple types supported for domain values
+				continue;
+			}
+
+			Row row = entitySheet.getRow(1);
+			Class generatorClass = Class.forName(row.getCell(entry.getValue()).getStringCellValue());
+			List<String> list = new ArrayList<String>();
+			for(int i = 2; i < entitySheet.getLastRowNum(); i++) {
+				row = entitySheet.getRow(i);
+				Cell cell = row.getCell(entry.getValue());
+
+				String value = null;
+				if (cell != null) {
+					try {
+						if (cell.getStringCellValue() != null) {
+							value = cell.getStringCellValue();
+						}
+					}
+					catch (Exception e) {
+						value = Double.toString(cell.getNumericCellValue());
+					}
+				}
+				if(value == null) {
+					break;
+				}
+				list.add(value);
+			}
+
+			String[] values = list.toArray(new String[list.size()]);
+			SimpleType simpleType = (SimpleType)property.getType();
+			Constructor cd = generatorClass.getConstructor(String[].class);
+			property.setGenerator((Generator)cd.newInstance((Object)values));
+		}
+	}
 }

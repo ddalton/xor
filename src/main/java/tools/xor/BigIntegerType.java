@@ -19,9 +19,13 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import java.math.BigInteger;
 
 public class BigIntegerType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private BigInteger min = BigInteger.ONE;
 	private BigInteger max = new BigInteger( (new Long(Long.MAX_VALUE)).toString() );	
@@ -47,7 +51,15 @@ public class BigIntegerType extends SimpleType {
 	}	
 	
 	public Object generate(Settings settings, Property property) {
-		long range = max.longValue() - min.longValue();
-		return new BigInteger((new Long((long) (min.longValue() + (Math.random() * range)))).toString());
+		BigInteger minimum = this.min;
+		BigInteger maximum = this.max;
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getBigInteger();
+		}
+
+		long range = maximum.longValue() - minimum.longValue();
+		return new BigInteger((new Long((long) (minimum.longValue() + (Math.random() * range)))).toString());
 	}		
 }

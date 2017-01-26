@@ -19,6 +19,12 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import tools.xor.generator.DateRange;
+import tools.xor.generator.Generator;
+import tools.xor.generator.Range;
+
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -27,7 +33,8 @@ import java.util.Date;
  * 
  */
 public class DateType extends SimpleType {
-	
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
 	private long min = 0;
 	private long max = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years from current time
 
@@ -67,7 +74,13 @@ public class DateType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		double range = getMax() - getMin();
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getDateValue();
+		}
+
+		long  range = getMax() - getMin();
 		return new Date((long) (getMin() + (Math.random() * range)));
 	}	
 }

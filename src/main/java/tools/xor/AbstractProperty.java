@@ -49,6 +49,7 @@ import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
+import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ClassUtil;
@@ -114,6 +115,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	private Boolean      unique; 
 	private Type         type;
 	private EntityType   parentType;
+	private Generator generator;
 
 	// Collection related
 	protected Type       keyType;
@@ -1183,4 +1185,11 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		this.collectionKey = Collections.unmodifiableSet(value);
 	}
 
+	public void setGenerator(Generator generator) {
+		this.generator = generator;
+	}
+
+	public Generator getGenerator() {
+		return this.generator;
+	}
 }

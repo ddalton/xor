@@ -20,8 +20,12 @@
 package tools.xor;
 
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 public class StringType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
 	public static final int DEFAULT_LENGTH = 255;
 
 	private int length = DEFAULT_LENGTH;
@@ -39,7 +43,13 @@ public class StringType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		int stringLen = (int)(Math.random() * getLength());
-		return RandomStringUtils.randomAscii(stringLen);
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getStringValue();
+		} else {
+			int stringLen = (int)(Math.random() * getLength());
+			return RandomStringUtils.randomAscii(stringLen);
+		}
 	}	
 }

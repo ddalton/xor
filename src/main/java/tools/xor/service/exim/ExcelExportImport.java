@@ -61,7 +61,7 @@ public class ExcelExportImport extends AbstractExportImport
         return getHeaderMap(sheet);
     }
 
-    private Map<String, Integer> getHeaderMap (Sheet sheet)
+    public static Map<String, Integer> getHeaderMap (Sheet sheet)
     {
         Map<String, Integer> colMap = new HashMap<String, Integer>();
         Row headerRow = sheet.getRow(0);

@@ -282,4 +282,10 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 		super.generateMediumSizedEntity();
 	}
+
+	@Test
+	public void generateMediumSizedDomainEntity() throws IOException
+	{
+		super.generateMediumSizedDomainEntity();
+	}
 }

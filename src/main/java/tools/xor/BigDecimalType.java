@@ -19,9 +19,15 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import tools.xor.generator.DateRange;
+import tools.xor.generator.Range;
+
 import java.math.BigDecimal;
 
 public class BigDecimalType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private BigDecimal min = BigDecimal.ONE;
 	private BigDecimal max = new BigDecimal((new Long(Long.MAX_VALUE)).toString());
@@ -47,7 +53,14 @@ public class BigDecimalType extends SimpleType {
 	}	
 	
 	public Object generate(Settings settings, Property property) {
-		long range = max.longValue() - min.longValue();
-		return max.subtract(min).multiply( new BigDecimal( (new Double(Math.random())).toString() ) );
+		BigDecimal minimum = this.min;
+		BigDecimal maximum = this.max;
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getBigDecimal();
+		}
+
+		return maximum.subtract(minimum).multiply( new BigDecimal( (new Double(Math.random())).toString() ) );
 	}		
 }

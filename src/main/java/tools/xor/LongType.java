@@ -19,7 +19,11 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class LongType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private long min = Long.MIN_VALUE;
 	private long max = Long.MAX_VALUE;	
@@ -45,7 +49,15 @@ public class LongType extends SimpleType {
 	}	
 	
 	public Object generate(Settings settings, Property property) {
-		long range = getMax() - getMin();
-		return (long) (getMin() + (Math.random() * range));
+		long minimum = this.min;
+		long maximum = this.max;
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getLongValue();
+		}
+
+		long range = maximum - minimum;
+		return (long) (minimum + (Math.random() * range));
 	}		
 }

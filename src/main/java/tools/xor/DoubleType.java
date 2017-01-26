@@ -19,7 +19,11 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class DoubleType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private double min = Double.MIN_VALUE;
 	private double max = Double.MAX_VALUE;	
@@ -45,6 +49,12 @@ public class DoubleType extends SimpleType {
 	}	
 	
 	public Object generate(Settings settings, Property property) {
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getDoubleValue();
+		}
+
 		double range = getMax() - getMin();
 		return getMin() + (Math.random() * range);
 	}	

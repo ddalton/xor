@@ -19,7 +19,11 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class ByteType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private byte min = Byte.MIN_VALUE;
 	private byte max = Byte.MAX_VALUE;	
@@ -45,7 +49,13 @@ public class ByteType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		long range = getMax() - getMin();
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getByteValue();
+		}
+
+		byte range = (byte) (getMax() - getMin());
 		return (byte) (getMin() + (Math.random() * range));
 	}		
 }

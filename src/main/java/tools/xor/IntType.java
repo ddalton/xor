@@ -19,7 +19,11 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class IntType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private int min = Integer.MIN_VALUE;
 	private int max = Integer.MAX_VALUE;	
@@ -45,7 +49,13 @@ public class IntType extends SimpleType {
 	}
 	
 	public Object generate(Settings settings, Property property) {
-		float range = getMax() - getMin();
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getIntValue();
+		}
+
+		int range = getMax() - getMin();
 		return getMin() + (Math.random() * range);
 	}		
 }

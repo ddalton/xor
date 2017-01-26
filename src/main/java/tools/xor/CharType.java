@@ -19,7 +19,11 @@
 
 package tools.xor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class CharType extends SimpleType {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private char min = Character.MIN_VALUE;
 	private char max = Character.MAX_VALUE;	
@@ -45,7 +49,13 @@ public class CharType extends SimpleType {
 	}	
 	
 	public Object generate(Settings settings, Property property) {
-		long range = getMax() - getMin();
+
+		ExtendedProperty ep = (ExtendedProperty) property;
+		if(ep.getGenerator() != null) {
+			return ep.getGenerator().getCharValue();
+		}
+
+		char range = (char) (getMax() - getMin());
 		return (char) (getMin() + (Math.random() * range));
 	}		
 }

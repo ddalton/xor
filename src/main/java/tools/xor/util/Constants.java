@@ -75,6 +75,8 @@ public class Constants {
 	  public static final String CSV_ENTITY_SHEET = EXCEL_ENTITY_SHEET + CSV_FILE_SUFFIX;
 	  public static final String CSV_INDEX_SHEET = EXCEL_INDEX_SHEET + CSV_FILE_SUFFIX;
 
+	  // Domain values for data generation
+	  public static final String DOMAIN_TYPE_SHEET = "Domain types";
 	  
 	  // Synthetic identifier added to each object instance to help identify each object in an object graph
 	  public static final String OWNER_ID = XOR_PATH_PREFIX + "owner.id";

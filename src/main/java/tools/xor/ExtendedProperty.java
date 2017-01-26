@@ -27,6 +27,7 @@ import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import tools.xor.AbstractProperty.LambdaResult;
 import tools.xor.event.PropertyEvent;
+import tools.xor.generator.Generator;
 
 public interface ExtendedProperty extends Property {
 	
@@ -342,4 +343,16 @@ public interface ExtendedProperty extends Property {
 	 * @param collectionKey set of properties forming the collection key
 	 */
 	public void setCollectionKey(Set<String> collectionKey);
+
+	/**
+	 * Set the Generator to be used for this property
+	 * @param generator instance
+	 */
+	public void setGenerator(Generator generator);
+
+	/**
+	 * Get the Generator instance configured on this property
+	 * @return generator instance
+	 */
+	public Generator getGenerator();
 }

@@ -150,6 +150,7 @@ public class Settings {
 	// Settings related to data generation
 	private EntitySize entitySize = EntitySize.MEDIUM;
 	private float sparseness = 1.0f;
+	private boolean generateVisual;
 
 	/** decides how sparse the graph is. This depicts the ratio between the number of vertices vs the number of edges
 	 *    So greater the number, the more dense the graph is.
@@ -651,5 +652,14 @@ public class Settings {
 	public void setPrefetchCache(PrefetchCache prefetchCache) {
 		this.prefetchCache = prefetchCache;
 	}
-	
+
+	public boolean isGenerateVisual ()
+	{
+		return generateVisual;
+	}
+
+	public void setGenerateVisual (boolean generateVisual)
+	{
+		this.generateVisual = generateVisual;
+	}
 }

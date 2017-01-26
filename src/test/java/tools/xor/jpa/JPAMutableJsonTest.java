@@ -45,6 +45,7 @@ import tools.xor.db.sp.S;
 import tools.xor.db.sp.SP;
 import tools.xor.logic.DefaultMutableJson;
 import tools.xor.service.DataAccessService;
+import tools.xor.util.graph.ObjectGraph;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })

@@ -1082,7 +1082,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.init(aggregateManager);
 		StateGraph sg = settings.getView().getStateGraph(taskType);
 
-		JSONObject task = (JSONObject) sg.generateObjectGraph(new Settings());
+		settings.setSparseness(0.1f);
+		JSONObject task = (JSONObject) sg.generateObjectGraph(settings);
 		System.out.println("Task name: " + task.get("name"));
 
 		Object children = task.get("taskChildren");
@@ -1092,6 +1093,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		assert(childrenArray.length() > 0);
 
 		// Try and persist this now
+		settings.setGenerateVisual(true);
 		Task persistedTask = (Task) aggregateManager.create(task, settings);
 
 		aggregateService.exportAggregate("taskRandomMedium.xlsx", persistedTask, settings);

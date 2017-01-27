@@ -31,6 +31,7 @@ import org.json.JSONObject;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.MutableJsonTypeMapper;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.graph.ObjectGraph;
@@ -40,31 +41,9 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 	
 	protected POJOCreationStrategy pojoCS;
-	
-	private static final Set<Class<?>> unchanged = new HashSet<Class<?>>();
-	
-	static {
-		unchanged.add(String.class);
-		unchanged.add(java.util.Date.class);
-		unchanged.add(Boolean.class);
-		unchanged.add(Void.class);
-		unchanged.add(Character.class);
-		unchanged.add(Byte.class);
-		unchanged.add(Short.class);
-		unchanged.add(Integer.class);
-		unchanged.add(Long.class);
-		unchanged.add(Float.class);
-		unchanged.add(Double.class);
-		unchanged.add(boolean.class);
-		unchanged.add(char.class);
-		unchanged.add(byte.class);
-		unchanged.add(short.class);
-		unchanged.add(int.class);
-		unchanged.add(long.class);
-		unchanged.add(float.class);
-		unchanged.add(double.class);	
-		unchanged.add(BigDecimal.class);
-		unchanged.add(BigInteger.class);
+
+	protected static Set<Class<?>> getUnchanged() {
+		return MutableJsonTypeMapper.getUnchanged();
 	}
 	
 	public MutableJsonCreationStrategy(ObjectCreator objectCreator) {
@@ -115,7 +94,7 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 			Property containmentProperty) throws Exception {
 		
 		Object result = null;
-		if(unchanged.contains(toClass)) {
+		if(getUnchanged().contains(toClass)) {
 			result = from;
 		} else if(toClass == JSONObject.class || type.getInstanceClass() == JSONObject.class) {
 			result = new JSONObject();

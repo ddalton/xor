@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +65,14 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		unchanged.add(long.class);
 		unchanged.add(float.class);
 		unchanged.add(double.class);		
+	}
+
+	public static synchronized void addUnchanged(Class clazz) {
+		unchanged.add(clazz);
+	}
+
+	public static Set<Class<?>> getUnchanged() {
+		return unchanged;
 	}
 
 	public String getDomainPackagePath() {

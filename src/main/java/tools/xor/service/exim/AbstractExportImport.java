@@ -175,6 +175,10 @@ public abstract class AbstractExportImport implements ExportImport
                               List<BusinessObject> boList,
                               BusinessObject owner)
     {
+        if(boList == null || boList.size() == 0) {
+            return;
+        }
+
         EntityType entityType = null;
         setupEntity(sheetName);
 

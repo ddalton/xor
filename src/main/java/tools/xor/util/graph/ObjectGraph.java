@@ -293,6 +293,9 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		// and set the root 
 		for(BusinessObject dataObject: objectCreator.getDataObjects()) {
 			V root = getAggregateRoot((V) dataObject);
+			if (root == null) {
+				continue;
+			}
 			aggregateRoots.put((V) dataObject, root);
 			distinctRoots.put(root, root);
 		}
@@ -303,18 +306,36 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	private V getAggregateRoot(V dataObject) {
 		while(dataObject.getContainer() != null) {
 			Property property = dataObject.getContainmentProperty();
-			
-			// If the property to the data object is not cascade
-			// then we have reached the root
+
 			if(property == null) {
-				dataObject = (V) dataObject.getContainer();
+				// If the containment property is not present then it is
+				// a collection element. Check the containment property of the collection object.
+
+				property = dataObject.getContainer().getContainmentProperty();
+				if(property.isContainment()) {
+					dataObject = (V)dataObject.getContainer().getContainer();
+				} else {
+					return dataObject;
+				}
 			} else {
+				// If the property to the data object is not cascade
+				// then we have reached the root
 				if(property.isContainment()) {
 					// Go up one level
 					dataObject = (V) dataObject.getContainer();
 				} else {
-					// found the root
-					return dataObject;
+					// Potential root
+
+					// We only persist entities
+					if( !(dataObject.getType() instanceof EntityType) ) {
+						return null;
+					}
+					if(((EntityType)dataObject.getType()).isEmbedded()) {
+						// Embedded types are not directly persisted
+						return null;
+					} else {
+						return dataObject;
+					}
 				}
 			}
 		}

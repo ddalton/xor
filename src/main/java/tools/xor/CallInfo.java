@@ -250,12 +250,6 @@ public class CallInfo {
 				return (result) ? getParent().getInputProperty().getElementType().isDataType(input) : false;
 			}
 
-			/*
-			if(input != null)
-				return !BusinessObject.class.isAssignableFrom(input.getClass());
-			if(output != null)
-				return !BusinessObject.class.isAssignableFrom(output.getClass());
-			*/
 			// Using instanceof for performance reasons
 			if(input != null)
 				return ! (input instanceof BusinessObject);
@@ -263,10 +257,6 @@ public class CallInfo {
 				return ! (output instanceof BusinessObject);
 
 		} else {
-			// Open property always work on an Entity object
-			if(getInputProperty().isOpenContent()) {
-				return false;
-			}
 			boolean result = getInputProperty().isDataType();
 			return (result) ? getInputProperty().getType().isDataType(input) : false;
 		}

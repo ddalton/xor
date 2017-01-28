@@ -203,7 +203,7 @@ public class SimpleType implements BasicType {
 		JSONArray result = new JSONArray();
 
 		int fanOut = (int) (Math.random() * settings.getEntitySize().size() * settings.getSparseness());
-		EntityType elementType = (EntityType) ((ExtendedProperty)property).getElementType();
+		BasicType elementType = (BasicType)((ExtendedProperty)property).getElementType();
 		for(int i = 0; i < fanOut; i++) {
 			result.put(elementType.generate(settings, property));
 		}

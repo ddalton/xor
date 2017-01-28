@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.AggregateAction;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -272,6 +273,13 @@ public abstract class AbstractOperation implements Operation {
 
 	
 		if(executeDataUpdate(ci, Phase.PRE)) {
+			return;
+		}
+
+		// Read only properties should not be modified
+		if (ci.getInputProperty() != null && ci.getInputProperty().isReadOnly() && !(
+			ci.getSettings().getAction() == AggregateAction.READ ||
+				ci.getSettings().getAction() == AggregateAction.LOAD)) {
 			return;
 		}
 

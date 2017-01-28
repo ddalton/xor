@@ -218,7 +218,12 @@ public class ObjectCreator {
 	}
 
 	public Object createDataType(Object instance, Property property) throws Exception {
-		Object result = creationStrategy.newInstance(instance, (BasicType) property.getType(), null);
+		Class<?> toClass = null;
+		if(!property.isMany()) {
+			toClass = (instance == null) ? null : instance.getClass();
+		}
+
+		Object result = creationStrategy.newInstance(instance, (BasicType) property.getType(), toClass);
 
 		if(logger.isDebugEnabled()) {
 			logger.debug("ObjectCreator#createDataType instance: " + (instance==null?"null":instance.toString())
@@ -235,8 +240,9 @@ public class ObjectCreator {
 		if(container != null && containmentProperty == null && (container.getContainmentProperty() == null || !container.getContainmentProperty().isMany()) )
 			throw new RuntimeException("Cannot access the database without a containment property from the container [containmentProperty: " 
 					+ (containmentProperty == null ? "null": containmentProperty.getName()) + "]");
-		
-		if(containmentProperty != null && !containmentProperty.isContainment()) {
+
+		// We always treat the collection object as not-shareable. So its container and containmentProperty is always populated.
+		if(containmentProperty != null && !containmentProperty.isContainment() && !containmentProperty.isMany()) {
 			container = null;
 			containmentProperty = null;
 		}

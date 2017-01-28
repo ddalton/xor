@@ -224,7 +224,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		return null;
 	}
 
-	private String getEntityKeyTypeName(Type type) {
+	public static String getEntityKeyTypeName(Type type) {
 		EntityType rootEntityType = ((EntityType)type).getRootEntityType();
 		return rootEntityType.getDomainType().getName();
 	}

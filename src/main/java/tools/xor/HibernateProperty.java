@@ -68,22 +68,12 @@ public class HibernateProperty extends AbstractProperty {
 	}
 
 	@Override
-	public boolean isContainment() {
-		if(isCascaded())
+	public boolean isContainment ()
+	{
+		if (isCascaded())
 			return true;
 
-		if(isDataType()) {
-			if(isMany()) {
-				if((EntityType.class.isAssignableFrom(getElementType().getClass())))
-					return ((EntityType)getElementType()).isEmbedded();
-			}
-			return true;
-		} else {
-			if((EntityType.class.isAssignableFrom(getType().getClass())))
-				return ((EntityType)getType()).isEmbedded();
-		}
-
-		return false;
+		return super.isContainment();
 	}	
 	
 	public Configuration getConfiguration() {
@@ -114,11 +104,6 @@ public class HibernateProperty extends AbstractProperty {
 	@Override
 	public Object getDefault() {
 		return null;
-	}
-
-	@Override
-	public boolean isReadOnly() {
-		return !hibernateProperty.isUpdateable();
 	}
 
 	@Override

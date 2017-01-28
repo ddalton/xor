@@ -1082,7 +1082,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.init(aggregateManager);
 		StateGraph sg = settings.getView().getStateGraph(taskType);
 
-		settings.setSparseness(0.05f);
+		settings.setSparseness(1.0f);
 		JSONObject task = (JSONObject) sg.generateObjectGraph(settings);
 		System.out.println("Task name: " + task.get("name"));
 

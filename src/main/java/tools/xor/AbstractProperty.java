@@ -66,6 +66,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	protected AccessType accessType;
 	protected boolean    alwaysInitialized;
+	private boolean      readOnly;
 	
 	private   VersionInfo versionInfo;
 
@@ -523,11 +524,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			return accessType;
 		}
 	}
-
-	@Override
-	public boolean isContainment() {
-		return false;
-	}
 	
 	// TODO: What happens if one of the key fields represents an Open Property?
 	private Map<String, Object> getForeignKeyFromSource(BusinessObject sourceBO) {
@@ -667,7 +663,12 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	@Override public boolean isReadOnly ()
 	{
-		return false;
+		return this.readOnly;
+	}
+
+	@Override public void setReadOnly (boolean value)
+	{
+		this.readOnly = value;
 	}
 
 	@Override
@@ -828,9 +829,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	private Object query(Object dataObject) 
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
-		if(isOpenContent() && dataObject instanceof BusinessObject) {
-			instance = ClassUtil.getInstance(((BusinessObject)dataObject).getContainer());
-		}
+		//if(isOpenContent() && dataObject instanceof BusinessObject) {
+		//	instance = ClassUtil.getInstance(((BusinessObject)dataObject).getContainer());
+		//}
 
 		// Set the value in the field  
 		try {
@@ -1191,5 +1192,22 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	public Generator getGenerator() {
 		return this.generator;
+	}
+
+
+	@Override
+	public boolean isContainment() {
+		if(isDataType()) {
+			return true;
+		} else {
+			if(isMany()) {
+				if((EntityType.class.isAssignableFrom(getElementType().getClass())))
+					return ((EntityType)getElementType()).isEmbedded();
+			} else if((EntityType.class.isAssignableFrom(getType().getClass()))) {
+				return ((EntityType)getType()).isEmbedded();
+			}
+		}
+
+		return false;
 	}
 }

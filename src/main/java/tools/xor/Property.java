@@ -82,6 +82,16 @@ public interface Property
   boolean isReadOnly();
 
   /**
+   * Allow the modeller to set a property as read-only. We don't want to delegate this
+   * functionality to the underlying ORM/persistence mechanism, since it makes its own
+   * judgement on whether a property should be read-only. This may not always be right,
+   * for example bi-dir relationship.
+   *
+   * @param value true if the property is read-only
+   */
+  void setReadOnly(boolean value);
+
+  /**
    * Returns the opposite Property if the Property is bi-directional or null otherwise.
    * @return the opposite Property if the Property is bi-directional or null
    */

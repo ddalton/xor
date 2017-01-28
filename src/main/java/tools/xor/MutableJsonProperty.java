@@ -270,9 +270,14 @@ public class MutableJsonProperty extends ExternalProperty {
 							}
 						} else {
 							String dateString = jsonObject.getString(key);
-							return dateString == null ?
+							Long timeInMillis = dateString == null ?
 								null :
 								("".equals(dateString) ? null : Long.parseLong(dateString));
+							if(timeInMillis != null) {
+								return new Date(timeInMillis);
+							} else {
+								return null;
+							}
 						}
 					}
 
@@ -484,7 +489,7 @@ public class MutableJsonProperty extends ExternalProperty {
 		} catch (JSONException e) {
 			throw ClassUtil.wrapRun(e);
 		}
-	}	
+	}
 	
 	@Override
 	protected Type getExternalKeyType(DataAccessService das) {

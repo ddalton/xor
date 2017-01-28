@@ -90,7 +90,7 @@ public abstract class AbstractBO implements BusinessObject {
 	
 	@Override
 	public boolean isDependent() {
-		return getContainmentProperty() != null;
+		return getContainmentProperty() != null && getContainmentProperty().isContainment();
 	}	
 
 	@Override
@@ -1426,7 +1426,8 @@ public abstract class AbstractBO implements BusinessObject {
 		State rootState = null;
 		StateGraph sg = null;
 		if(settings != null && settings.getView() != null) {
-			sg = settings.getView().getStateGraph((EntityType)entityType);
+			// Need to get the StateGraph from the domain type
+			sg = settings.getView().getStateGraph( ((EntityType)entityType).getDomainType() );
 			rootState = sg.getRootState();
 		}
 		createWrapper(settings, this, null, rootState, sg);
@@ -1479,7 +1480,9 @@ public abstract class AbstractBO implements BusinessObject {
 				else {
 					BusinessObject container = parent;
 					Property containmentProperty = property;
-					if(!property.isContainment()) {
+
+					// We always treat the collection object as not-shareable. So its container and containmentProperty is always populated.
+					if(!property.isContainment() && !property.isMany()) {
 						container = null;
 						containmentProperty = null;
 					}

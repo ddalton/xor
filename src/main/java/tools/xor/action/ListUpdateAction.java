@@ -42,6 +42,8 @@ import tools.xor.util.Constants;
 
 
 public class ListUpdateAction extends CollectionUpdateAction {
+	private static final Logger logger = LogManager.getLogger(new Exception()
+			.getStackTrace()[0].getClassName());
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
 
 	private PropertyKey key;
@@ -91,6 +93,9 @@ public class ListUpdateAction extends CollectionUpdateAction {
 	@Override
 	public Map<Object, Set<String>> getElementKeysMap(BusinessObject input) {
 		List list = extractList(input);
+		if(list == null) {
+			logger.warn("Input is not of correct type, i.e., a collection.");
+		}
 
 		Map<Object, Set<String>> result = new HashMap<Object, Set<String>>();
 		for(int i = 0; i < list.size(); i++) {

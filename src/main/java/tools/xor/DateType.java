@@ -68,7 +68,10 @@ public class DateType extends SimpleType {
 		} else if (instance instanceof Timestamp) {
 			Timestamp ts = (Timestamp) instance;
 			return new Timestamp(ts.getTime());
-		}		
+		} else if(instance != null && Date.class.isAssignableFrom(instance.getClass())) {
+			// Date subclass, return unchanged as we don't know how to construct it
+			return instance;
+		}
 		
 		return null;
 	}

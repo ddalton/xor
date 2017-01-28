@@ -28,6 +28,7 @@ import org.json.JSONArray;
 
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.SurrogateKeyStrategy;
 
 public class DataObjectList {
 
@@ -105,6 +106,17 @@ public class DataObjectList {
 			//	System.out.println("*****!!!!!! has existing collection");
 
 			for (Object element : collection) {
+				// check if it can be found by the entity key, as some collections return only
+				// the ids for performance reasons
+				if(type instanceof EntityType) {
+					String entityTypeName = AbstractTypeMapper.getEntityKeyTypeName(type);
+					EntityKey entityKey = new SurrogateEntityKey(element, entityTypeName);
+					BusinessObject bo = objectCreator.getByEntityKey(entityKey);
+					if(bo != null) {
+						result.add(bo);
+						continue;
+					}
+				}
 				result.add(objectCreator.createDataObject(element, type, null, null));
 			}
 		}

@@ -92,8 +92,7 @@ public class ExternalProperty extends AbstractProperty {
 
 	@Override
 	public boolean isReadOnly() {
-		// Don't make assumptions on external type as this is a separate type
-		return false;
+		return getDomainProperty().isReadOnly();
 	}
 
 	@Override

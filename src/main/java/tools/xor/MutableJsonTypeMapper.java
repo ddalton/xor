@@ -223,7 +223,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 
 		// domainClass can be null for an open type
 		if(domainClass != null) {
-			if (unchanged.contains(domainClass)) {
+			if (getUnchanged().contains(domainClass)) {
 				return domainClass;
 			}
 

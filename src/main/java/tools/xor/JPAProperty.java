@@ -75,7 +75,6 @@ public class JPAProperty extends AbstractProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private Attribute<?, ?> attribute;
-	private boolean         readOnly;
 	private boolean         isPropertyMapped; // Are the JPA mappings on the getter	
 	private boolean         isFieldMapped;    // Are the JPA mappings on the field
 	private boolean         hasVersionAnnotation;	
@@ -282,18 +281,7 @@ public class JPAProperty extends AbstractProperty {
 		if(cascaded)
 			return true;
 
-		if(isDataType()) {
-			if(isMany()) {
-				if((EntityType.class.isAssignableFrom(getElementType().getClass())))
-					return ((EntityType)getElementType()).isEmbedded();
-			}
-			return true;
-		} else {
-			if((EntityType.class.isAssignableFrom(getType().getClass())))
-				return ((EntityType)getType()).isEmbedded();
-		}
-
-		return false;
+		return super.isContainment();
 	}
 
 	/**
@@ -302,15 +290,6 @@ public class JPAProperty extends AbstractProperty {
 	@Override
 	public Object getDefault() {
 		return null;
-	}
-
-	@Override
-	public boolean isReadOnly() {
-		return readOnly;
-	}
-
-	public void setReadOnly(JPADAS das) {
-		readOnly = !isUpdatable();	
 	}
 
 	@Override

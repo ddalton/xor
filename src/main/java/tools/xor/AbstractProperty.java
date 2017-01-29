@@ -67,6 +67,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	protected AccessType accessType;
 	protected boolean    alwaysInitialized;
 	private boolean      readOnly;
+	private Map<String, Object> constraints;
 	
 	private   VersionInfo versionInfo;
 
@@ -1209,5 +1210,17 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 
 		return false;
+	}
+
+	@Override
+	public Map<String, Object> getConstraints() {
+		return Collections.unmodifiableMap(constraints == null ? new HashMap<String, Object>() : constraints);
+	}
+
+	public void addConstraint(String key, Object value) {
+		if(constraints == null) {
+			constraints = new HashMap<String, Object>();
+		}
+		constraints.put(key, value);
 	}
 }

@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.json.JSONArray;
 
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.SurrogateKeyStrategy;
@@ -105,10 +106,13 @@ public class DataObjectList {
 			//if(objectCreator.getExistingDataObject(collection) != null)
 			//	System.out.println("*****!!!!!! has existing collection");
 
+			List toBeLoaded = new ArrayList();
+			Property collectionProperty = (property != null) ? property : dataObject.getContainmentProperty();
 			for (Object element : collection) {
 				// check if it can be found by the entity key, as some collections return only
 				// the ids for performance reasons
-				if(type instanceof EntityType) {
+
+				if(type instanceof EntityType && collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
 					String entityTypeName = AbstractTypeMapper.getEntityKeyTypeName(type);
 					EntityKey entityKey = new SurrogateEntityKey(element, entityTypeName);
 					BusinessObject bo = objectCreator.getByEntityKey(entityKey);
@@ -117,6 +121,16 @@ public class DataObjectList {
 						continue;
 					}
 				}
+				toBeLoaded.add(element);
+			}
+
+			// Bulk load the collection of references
+			if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
+				PersistenceOrchestrator po = dataObject.getObjectCreator().getPersistenceOrchestrator();
+				po.findByIds((EntityType)type, toBeLoaded);
+			}
+
+			for(Object element: toBeLoaded) {
 				result.add(objectCreator.createDataObject(element, type, null, null));
 			}
 		}
@@ -124,6 +138,11 @@ public class DataObjectList {
 		return result;
 	}
 
+	/**
+	 * This constructor is for DataObject representing the collection owner
+	 * @param dataObject collection owner
+	 * @param property collection property
+	 */
 	public DataObjectList(BusinessObject dataObject, Property property) {
 		this.dataObject = dataObject;
 		this.property = property;		

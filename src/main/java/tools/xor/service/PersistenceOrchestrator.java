@@ -19,11 +19,14 @@
 
 package tools.xor.service;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.view.AggregateView;
@@ -44,7 +47,18 @@ public interface PersistenceOrchestrator {
      * @param id of the entity
      * @return Persistence managed object
      */
-	public Object findById(Class<?> persistentClass, Object id);	
+	public Object findById(Class<?> persistentClass, Object id);
+
+    /**
+     * Batch fetch a list of ids from the database.
+     * Main use case is to initialize a collection of object references.
+     * @see tools.xor.ExtendedProperty#isCollectionOfReferences()
+     *
+     * @param entityType Type of entities we want to find/load
+     * @param ids of the entities
+     * @return list of persistence managed objects
+     */
+    public List<Object> findByIds(EntityType entityType, final Collection ids);
 	
 	/**
 	 * Find the entity by one or more property values

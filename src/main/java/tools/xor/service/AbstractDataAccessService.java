@@ -128,12 +128,14 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	
 	@Override
 	public Type getType(Class<?> clazz) {
-		Type result = getType(clazz.getName());		
+
+		Type result = getType(clazz.getName());
 
 		// create a Type object for this class
 		if(result == null) {
 			//result = new SimpleType(clazz);
 			result = SimpleTypeFactory.getType(clazz, this);
+
 			addType(clazz.getName(), result);
 		}
 

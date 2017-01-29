@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 public class IntType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-	private int min = Integer.MIN_VALUE;
+	private int min = 0;
 	private int max = Integer.MAX_VALUE;	
 
 	public int getMin() {
@@ -56,6 +56,6 @@ public class IntType extends SimpleType {
 		}
 
 		int range = getMax() - getMin();
-		return getMin() + (Math.random() * range);
+		return getMin() + ((int)(Math.random() * range));
 	}		
 }

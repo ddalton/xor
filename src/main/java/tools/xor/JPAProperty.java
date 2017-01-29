@@ -378,5 +378,10 @@ public class JPAProperty extends AbstractProperty {
 		}
 
 		return false;
-	}		
+	}
+
+	@Override public boolean isCollectionOfReferences ()
+	{
+		return false;
+	}
 }

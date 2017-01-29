@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -175,6 +176,14 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	@Override
 	public Object findById(Class<?> persistentClass, Object id) {
 		return getSession().get(persistentClass, (Serializable) id);
+	}
+
+	@Override
+	public List<Object> findByIds(EntityType entityType, final Collection ids) {
+		org.hibernate.Query query = getSession().createQuery(
+			"SELECT e FROM " + entityType.getName() + " e WHERE e.id in :ids");
+		query.setParameter("ids", ids);
+		return query.list();
 	}
 	
 	private List<Object> getResult(Type type, Map<String, Object> propertyValues) {

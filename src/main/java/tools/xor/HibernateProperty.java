@@ -210,4 +210,9 @@ public class HibernateProperty extends AbstractProperty {
 		return false;
 	}
 
+	@Override public boolean isCollectionOfReferences ()
+	{
+		return false;
+	}
+
 }

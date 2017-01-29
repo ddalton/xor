@@ -29,6 +29,7 @@
 package tools.xor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -143,4 +144,17 @@ public interface Property
    * @return a list of properties
    */
   List<String> expand(Set<Type> examined);
+
+  /**
+   * Get the constraints that are on this property such as field length etc...
+   * @return map of constraints
+   */
+  Map<String, Object> getConstraints();
+
+  /**
+   * Add a property constraint
+   * @param key constraint name
+   * @param value constraint value
+   */
+  void addConstraint(String key, Object value);
 }

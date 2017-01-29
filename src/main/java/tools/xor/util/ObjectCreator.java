@@ -365,9 +365,12 @@ public class ObjectCreator {
 				EntityType existingRootType = ((EntityType)existing.getType()).getRootEntityType();
 				EntityType newRootType = ((EntityType)newDataObject.getType()).getRootEntityType();
 				if(existingRootType == newRootType) {
-					if(share)
+					// Embedded data objects are not shareable
+					if(share && !existingRootType.isEmbedded()) {
+						// Make sure we can re-fetch the BO by the other instance also
+						recordIO(newDataObject.getInstance(), existing);
 						return existing;
-					else {
+					} else {
 						if(((EntityType)newDataObject.getType()).getNaturalKey() != null) {
 							throw new IllegalStateException("NaturalKey field(s) " + getNaturalKeyString(((EntityType)newDataObject.getType()).getNaturalKey()) + " is either not populated or has duplicate values. Please check.");
 						} else {

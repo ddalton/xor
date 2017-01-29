@@ -30,8 +30,10 @@ import org.json.JSONArray;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.DataObjectList;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.Property;
 import tools.xor.util.ClassUtil;
 
 
@@ -83,56 +85,46 @@ public abstract class CollectionUpdateAction implements Executable {
 			if(element.getCollectionElementKey(callInfo.getOutputProperty()) != null)
 				outputMap.put(element.getCollectionElementKey(callInfo.getOutputProperty()), element);		
 
-		Set<Object> inputIds = new HashSet<Object>();
-		if(callInfo.getInput() != null) {
-			List<BusinessObject> inputList = input.getList();
-			for(int i = 0; i < inputList.size(); i++) {
-				BusinessObject element = inputList.get(i);
-				Object key = element.getCollectionElementKey(callInfo.getInputProperty());
-				if(key != null)
-					inputIds.add(key);
-			}
+		if(input != null) {
+			// Create the data objects and load them into the ObjectCreator cache
+			List<BusinessObject> boList = input.getList();
+			processLinks(outputMap, input, callInfo, new CallInfo());
+		}
+	}
 
-			Map<Object, Set<String>> elementKeys = getElementKeysMap(input);
-			
-			CallInfo next = new CallInfo();
-			for(BusinessObject sourceElement: inputList) {
-				Set<String> keys = elementKeys.get(sourceElement.getInstance());			
-				Object id = sourceElement.getCollectionElementKey(callInfo.getInputProperty());
+	public void processLinks (Map outputMap,
+							  BusinessObject input,
+							  CallInfo callInfo,
+							  CallInfo next) throws
+		Exception
+	{
+		Collection collection = null;
+		if (input.getInstance() instanceof Collection) {
+			collection = (Collection)input.getInstance();
+		}
+		else if (input.getInstance() instanceof JSONArray) {
+			collection = ClassUtil.jsonArrayToList((JSONArray)input.getInstance());
+		}
 
-				boolean isNew = id == null || !outputMap.containsKey(id);
-
-				if(keys != null)
-					for(String key: keys)
-						processLink(key, sourceElement, next, callInfo, isNew);
-				else
-					processLink(null, sourceElement, next, callInfo, isNew);					
-			}
+		for (Object obj : collection) {
+			processLink(null, obj, next, callInfo, outputMap);
 		}
 	}
 	
-	private void processLink(String key, BusinessObject sourceElement, CallInfo next, CallInfo callInfo, boolean isNew) throws Exception {
+	protected void processLink(String key, Object sourceInstance, CallInfo next, CallInfo callInfo, Map outputMap) throws Exception {
+		BusinessObject input  = ((BusinessObject)callInfo.getInput());
+		BusinessObject sourceElement = input.getObjectCreator().getExistingDataObject(sourceInstance);
+		// element should not be null since it should have been loaded earlier
+		// through call to list
+		Object id = sourceElement.getCollectionElementKey(callInfo.getInputProperty());
+		boolean isNew = id == null || !outputMap.containsKey(id);
+
 		next.init(sourceElement, null, callInfo, null);
 		
 		EntityType targetType = ((tools.xor.EntityType)sourceElement.getType()).getDomainType();
 		next.setOutput(callInfo.getOutputObjectCreator().createTarget(next, null, targetType));
 		
 		linkElement(next, key, isNew);		
-	}
-
-	public Map<Object, Set<String>> getElementKeysMap(BusinessObject input) {
-		Collection collection = null;
-		if(input.getInstance() instanceof Collection) {
-			collection = (Collection) input.getInstance();
-		} else if(input.getInstance() instanceof JSONArray) {
-			collection = ClassUtil.jsonArrayToList((JSONArray)input.getInstance());
-		}
-
-		Map<Object, Set<String>> result = new HashMap<Object, Set<String>>();
-		for(Object object: collection)
-			result.put(object, null);
-
-		return result;
 	}
 
 	public void unlinkElements(CallInfo callInfo) {

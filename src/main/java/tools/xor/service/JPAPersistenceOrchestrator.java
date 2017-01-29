@@ -24,7 +24,9 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -113,6 +115,14 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	@Override
 	public Object findById(Class<?> persistentClass, Object id) {
 	   return getEntityManager().find(persistentClass, (Serializable) id);
+	}
+
+	@Override
+	public List<Object> findByIds(EntityType entityType, final Collection ids) {
+		javax.persistence.Query query = getEntityManager().createQuery(
+			"SELECT e FROM " + entityType.getName() + " e WHERE e.id in :ids");
+		query.setParameter("ids", ids);
+		return query.getResultList();
 	}
 	
 	private List<Object> getResult(Type type, Map<String, Object> propertyValues) {

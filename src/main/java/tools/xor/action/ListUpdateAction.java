@@ -20,8 +20,10 @@
 package tools.xor.action;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +38,7 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ExtendedProperty;
 import tools.xor.ProcessingStage;
+import tools.xor.Property;
 import tools.xor.operation.AbstractOperation;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -91,25 +94,19 @@ public class ListUpdateAction extends CollectionUpdateAction {
 	}
 
 	@Override
-	public Map<Object, Set<String>> getElementKeysMap(BusinessObject input) {
+	public void processLinks (Map outputMap,
+							  BusinessObject input,
+							  CallInfo callInfo,
+							  CallInfo next) throws
+		Exception
+	{
 		List list = extractList(input);
-		if(list == null) {
-			logger.warn("Input is not of correct type, i.e., a collection.");
-		}
 
-		Map<Object, Set<String>> result = new HashMap<Object, Set<String>>();
 		for(int i = 0; i < list.size(); i++) {
-			Object object = list.get(i);
-			Set<String> keys = result.get(object);
-			if(keys == null) {
-				keys = new HashSet<String>();
-				result.put(object, keys);
-			}
-			keys.add(Integer.toString(i));
+			Object obj = list.get(i);
+			processLink((new Integer(i)).toString(), obj, next, callInfo, outputMap);
 		}
-
-		return result;
-	}	
+	}
 
 	@Override
 	public void addAction(Executable action) {

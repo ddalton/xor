@@ -34,6 +34,7 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ExtendedProperty;
 import tools.xor.ProcessingStage;
+import tools.xor.Property;
 import tools.xor.operation.AbstractOperation;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -78,24 +79,21 @@ public class MapUpdateAction extends CollectionUpdateAction {
 		else
 			throw new IllegalArgumentException("A Map can have only add, remove actions");
 	}
-	
+
 	@Override
-	public Map<Object, Set<String>> getElementKeysMap(BusinessObject input) {
+	public void processLinks (Map outputMap,
+							  BusinessObject input,
+							  CallInfo callInfo,
+							  CallInfo next) throws
+		Exception
+	{
 		Map map = (Map) input.getInstance();
 
-		Map<Object, Set<String>> result = new HashMap<Object, Set<String>>();
 		for(Object item: map.entrySet()) {
 			Map.Entry entry = (Map.Entry) item;
-			Set<String> keys = result.get(entry.getValue());
-			if(keys == null) {
-				keys = new HashSet<String>();
-				result.put(entry.getValue(), keys);
-			}
-			keys.add(entry.getKey().toString());
+			processLink(entry.getKey().toString(), entry.getValue(), next, callInfo, outputMap);
 		}
-
-		return result;
-	}	
+	}
 
 	@Override
 	public PropertyKey getKey() {

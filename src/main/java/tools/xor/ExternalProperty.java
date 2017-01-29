@@ -181,5 +181,10 @@ public class ExternalProperty extends AbstractProperty {
 	@Override
 	public boolean isSet() {
 		return domainProperty.isSet();
-	}	
+	}
+
+	@Override public boolean isCollectionOfReferences ()
+	{
+		return false;
+	}
 }

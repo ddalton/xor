@@ -355,4 +355,11 @@ public interface ExtendedProperty extends Property {
 	 * @return generator instance
 	 */
 	public Generator getGenerator();
+
+	/**
+	 * This is applicable only if the property references a collection and
+	 * if the collection only contains references, for example identifiers.
+	 * @return
+	 */
+	public boolean isCollectionOfReferences();
 }

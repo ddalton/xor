@@ -19,6 +19,8 @@
 
 package tools.xor.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +42,7 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 
 import tools.xor.BusinessObject;
+import tools.xor.EntityType;
 import tools.xor.Type;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateView;
@@ -104,6 +107,11 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 		} catch (EntityNotFoundException e) {
 			throw ClassUtil.wrapRun(e);
 		}
+	}
+
+	@Override
+	public List<Object> findByIds(EntityType entityType, final Collection ids) {
+		return new ArrayList(datastore.get(ids).values());
 	}
 	
 	private List<Object> getResult(Type type, Map<String, Object> propertyValues) {

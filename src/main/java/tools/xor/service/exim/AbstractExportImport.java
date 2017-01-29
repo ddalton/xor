@@ -264,6 +264,10 @@ public abstract class AbstractExportImport implements ExportImport
             finishupItem();
         }
 
+        if(entityType == null) {
+            logger.warn("EntityType is missing - Check if all data has been loaded/read from DB.");
+        }
+
         writeEntityHeader(sheetName, entityType);
     }
 

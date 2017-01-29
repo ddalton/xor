@@ -30,6 +30,7 @@ import tools.xor.AggregateAction;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
@@ -473,7 +474,15 @@ public abstract class AbstractOperation implements Operation {
 			sourceCollection = (java.util.Collection) object;
 
 			for(Object source: sourceCollection) {
-				BusinessObject target = (BusinessObject) callInfo.getOutputObjectCreator().getExistingDataObject(source);
+				BusinessObject target = null;
+				if(callInfo.getInputProperty().isCollectionOfReferences()) {
+					EntityKey surrogateKey = callInfo.getOutputObjectCreator().getTypeMapper().getSurrogateKey(
+						source,
+						callInfo.getOutputProperty().getElementType());
+					target = callInfo.getOutputObjectCreator().getByEntityKey(surrogateKey);
+				} else {
+					target = (BusinessObject) callInfo.getOutputObjectCreator().getExistingDataObject(source);
+				}
 				callInfo.getOutputProperty().addElement(((BusinessObject) callInfo.getOutput()), target.getInstance());
 			}			
 		} else if(callInfo.getInputProperty().isMap()) {

@@ -55,6 +55,10 @@ public class DataObjectList {
 	}
 
 	public List<BusinessObject> list(Settings settings) {
+
+		if(settings == null) {
+			settings = dataObject.getSettings();
+		}
 		
 		// First check to see if dataObject refers to collection owner or the collection object
 		Object list = dataObject.getInstance();
@@ -127,11 +131,23 @@ public class DataObjectList {
 			// Bulk load the collection of references
 			if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
 				PersistenceOrchestrator po = dataObject.getObjectCreator().getPersistenceOrchestrator();
-				po.findByIds((EntityType)type, toBeLoaded);
+				List persistedInstances = po.findByIds((EntityType)type, toBeLoaded);
+				if(persistedInstances != null) {
+					for (Object persisted : persistedInstances) {
+						// cache the persisted instance in the ObjectCreator
+						result.add(objectCreator.createDataObject(persisted, type, null, null));
+					}
+				}
 			}
 
-			for(Object element: toBeLoaded) {
-				result.add(objectCreator.createDataObject(element, type, null, null));
+			// handle those objects that include those that are not persisted here
+			for (Object element : toBeLoaded) {
+				if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences() && (settings.getAction() == AggregateAction.LOAD || settings.getAction() == AggregateAction.READ)) {
+					EntityKey surrogateKey = objectCreator.getTypeMapper().getSurrogateKey(element, type);
+					result.add(objectCreator.getByEntityKey(surrogateKey));
+				} else {
+					result.add(objectCreator.createDataObject(element, type, null, null));
+				}
 			}
 		}
 

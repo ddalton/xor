@@ -268,7 +268,10 @@ public abstract class AbstractExportImport implements ExportImport
             logger.warn("EntityType is missing - Check if all data has been loaded/read from DB.");
         }
 
-        writeEntityHeader(sheetName, entityType);
+        // EntityType can be null if the collection is empty
+        if(entityType != null) {
+            writeEntityHeader(sheetName, entityType);
+        }
     }
 
     protected void writeRelationshipMap (String filePath, Map<String, String> sheetMap) throws

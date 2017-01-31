@@ -456,7 +456,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			new Dimension(vv.getGraphLayout().getSize()));
 
 		// Write image to a png file
-		File outputfile = new File("graph.png");
+		File outputfile = new File(settings.getGraphFileName());
 
 		try {
 			ImageIO.write(image, "png", outputfile);

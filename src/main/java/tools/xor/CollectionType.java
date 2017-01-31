@@ -20,8 +20,10 @@
 package tools.xor;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import tools.xor.util.ClassUtil;
 
+import java.util.List;
 
 /**
  * @author Dilip Dalton
@@ -37,8 +39,9 @@ public class CollectionType extends SimpleType {
 	public Object newInstance(Object instance) {
 		return ClassUtil.newInstance(instance.getClass());
 	}
-	
-	public Object generate(Settings settings, Property property) {
-		return super.generateArray(settings, property);
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
 	}	
 }

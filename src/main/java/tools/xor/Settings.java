@@ -150,7 +150,11 @@ public class Settings {
 	// Settings related to data generation
 	private EntitySize entitySize = EntitySize.MEDIUM;
 	private float sparseness = 1.0f;
-	private boolean generateVisual;
+	private String graphFileName;
+	private Map<String, Float> collectionSparseness = new HashMap<String, Float>(); // Currently the logic is based on exact match
+
+	// Transient
+	private Map<Class<?>, Boolean> shouldCreateIfMissing;
 
 	/** decides how sparse the graph is. This depicts the ratio between the number of vertices vs the number of edges
 	 *    So greater the number, the more dense the graph is.
@@ -160,6 +164,32 @@ public class Settings {
 	public float getSparseness ()
 	{
 		return sparseness;
+	}
+
+	public float getSparseness(String rootedAt) {
+		if(rootedAt != null && collectionSparseness.containsKey(rootedAt)) {
+			return collectionSparseness.get(rootedAt);
+		}
+
+		return getSparseness();
+	}
+
+	public boolean isShouldCreate(Class<?> clazz) {
+		if(shouldCreateIfMissing == null && associationSettings.size() > 0) {
+			// populate
+			shouldCreateIfMissing = new HashMap<>();
+			for(AssociationSetting setting: associationSettings) {
+				if(setting.getEntityClass() != null) {
+					shouldCreateIfMissing.put(setting.getEntityClass(), setting.getCreateIfMissing());
+				}
+			}
+		}
+
+		if(shouldCreateIfMissing != null && shouldCreateIfMissing.containsKey(clazz)) {
+			return shouldCreateIfMissing.get(clazz);
+		}
+
+		return true;
 	}
 
 	public void setSparseness (float sparseness)
@@ -655,11 +685,26 @@ public class Settings {
 
 	public boolean isGenerateVisual ()
 	{
-		return generateVisual;
+		return this.graphFileName != null && !"".equals(this.graphFileName.trim());
 	}
 
-	public void setGenerateVisual (boolean generateVisual)
+	public void setGraphFileName (String graphFileName)
 	{
-		this.generateVisual = generateVisual;
+		this.graphFileName = graphFileName;
 	}
+
+	public String getGraphFileName() {
+		return this.graphFileName;
+	}
+
+	public Map<String, Float> getCollectionSparseness ()
+	{
+		return collectionSparseness;
+	}
+
+	public void setCollectionSparseness (Map<String, Float> collectionSparseness)
+	{
+		this.collectionSparseness = collectionSparseness;
+	}
+
 }

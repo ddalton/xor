@@ -19,6 +19,10 @@
 
 package tools.xor;
 
+import org.json.JSONObject;
+
+import java.util.List;
+
 /**
  * This type is useful for representing data that does not have properties.
  * @author daltond
@@ -40,11 +44,16 @@ public interface BasicType extends Type {
 	
 	/**
 	 * Generates object(s) based on the property settings and also the general setting.
-	 * The generated data is in external form. For example, JSONObject
+	 * The generated data is in external form, i.e., JSONObject.
 	 *
 	 * @param settings controlling the generation
 	 * @param property controlling the generation such as Uniqueness etc
+	 * @param rootedAt the object where this property is rooted at, i.e., owner
+	 * @param entitiesToChooseFrom list of entities already created for this type
 	 * @return the generated object
 	 */
-	public Object generate(Settings settings, Property property);
+	public Object generate (Settings settings,
+							Property property,
+							JSONObject rootedAt,
+							List<JSONObject> entitiesToChooseFrom);
 }

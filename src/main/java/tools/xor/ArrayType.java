@@ -19,10 +19,10 @@
 
 package tools.xor;
 
-import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.lang.reflect.Array;
-
+import java.util.List;
 
 /**
  * @author Dilip Dalton
@@ -43,8 +43,9 @@ public class ArrayType extends SimpleType {
 
 		return toArray;
 	}
-	
-	public Object generate(Settings settings, Property property) {
-		return super.generateArray(settings, property);
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
 	}	
 }

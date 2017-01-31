@@ -24,9 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 
 /**
  * SimpleType have no properties
@@ -193,19 +195,25 @@ public class SimpleType implements BasicType {
 
 		return value;
 	}
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		// generate method not supported for unknown type
 		return null;
 	}
 
-	protected JSONArray generateArray(Settings settings, Property property) {
+	protected JSONArray generateArray(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		JSONArray result = new JSONArray();
 
-		int fanOut = (int) (Math.random() * settings.getEntitySize().size() * settings.getSparseness());
+		String path = rootedAt == null ? null : (rootedAt.has(Constants.XOR.GEN_PATH) ?
+			rootedAt.getString(Constants.XOR.GEN_PATH) : null);
+		path = Constants.XOR.walkDown(path, property);
+		float sparseness = settings.getSparseness(path);
+
+		int fanOut = (int) (Math.random() * settings.getEntitySize().size() * sparseness);
 		BasicType elementType = (BasicType)((ExtendedProperty)property).getElementType();
 		for(int i = 0; i < fanOut; i++) {
-			result.put(elementType.generate(settings, property));
+			result.put(elementType.generate(settings, property, rootedAt, entitiesToChooseFrom));
 		}
 
 		return result;

@@ -21,8 +21,10 @@ package tools.xor;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public class BigIntegerType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -49,8 +51,9 @@ public class BigIntegerType extends SimpleType {
 	public BigIntegerType(Class<?> clazz) {
 		super(clazz);
 	}	
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		BigInteger minimum = this.min;
 		BigInteger maximum = this.max;
 

@@ -51,7 +51,6 @@ import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
 import tools.xor.exception.MultipleClassForPropertyException;
-import tools.xor.generator.Choices;
 import tools.xor.generator.Generator;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.util.AggregatePropertyPaths;

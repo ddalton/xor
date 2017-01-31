@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 
 import java.lang.annotation.Annotation;
@@ -274,4 +275,5 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @return true if any property in the property path is nullable or if the property is not found
 	 */
 	public boolean isNullable(String propertyPath);
+
 }

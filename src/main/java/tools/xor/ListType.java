@@ -20,6 +20,7 @@
 package tools.xor;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,9 @@ public class ListType extends SimpleType {
 	public Object newInstance(Object instance) {
 		return new ArrayList<Object>();
 	}
-	
-	public Object generate(Settings settings, Property property) {
-		return super.generateArray(settings, property);
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
 	}		
 }

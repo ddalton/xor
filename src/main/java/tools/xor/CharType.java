@@ -21,6 +21,9 @@ package tools.xor;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import java.util.List;
 
 public class CharType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -47,8 +50,9 @@ public class CharType extends SimpleType {
 	public CharType(Class<?> clazz) {
 		super(clazz);
 	}	
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 
 		ExtendedProperty ep = (ExtendedProperty) property;
 		if(ep.getGenerator() != null) {

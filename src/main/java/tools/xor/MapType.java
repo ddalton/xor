@@ -23,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -42,11 +43,12 @@ public class MapType extends SimpleType {
 	public Object newInstance(Object instance) {
 		return new HashMap<Object, Object>();
 	}
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		JSONObject result = new JSONObject();
 
-		JSONArray jsonArray = super.generateArray(settings, property);
+		JSONArray jsonArray = super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
 		for(int i = 0; i < jsonArray.length(); i++) {
 			result.put(KEY_PREFIX+i, jsonArray.get(i));
 		}

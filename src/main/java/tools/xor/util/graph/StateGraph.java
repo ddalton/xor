@@ -721,7 +721,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		Queue<JSONObject> q = new LinkedList();
 
-		JSONObject result = (JSONObject)((EntityType)getRootState().getType()).generate(settings, null);
+		JSONObject result = (JSONObject)((EntityType)getRootState().getType()).generate(
+			settings,
+			null,
+			null,
+			null);
 		addObject(
 			stateObjectMap,
 			objectStateMap,
@@ -731,7 +735,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		while (!q.isEmpty()) {
 			// Check limits
-			if(objectStateMap.size() > settings.getEntitySize().size()) {
+			if (objectStateMap.size() > settings.getEntitySize().size()) {
 				break;
 			}
 
@@ -739,11 +743,14 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			if (!visited.contains(entity)) {
 				// Mark as visited
 				visited.add(entity);
+				String path = entity.has(Constants.XOR.GEN_PATH) ?
+					entity.getString(Constants.XOR.GEN_PATH) : null;
 
 				for (Property property : objectStateMap.get(entity).getType().getProperties()) {
+
 					// target type
 					ExtendedProperty extendedProperty = (ExtendedProperty)property;
-					if( extendedProperty.isDataType()) {
+					if (extendedProperty.isDataType()) {
 						continue;
 					}
 
@@ -752,42 +759,42 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					if (extendedProperty.isMany()) {
 						targetEntityType = extendedProperty.getElementType();
 					}
-					int size = stateObjectMap.get(targetEntityType) != null ?
-						stateObjectMap.get(targetEntityType).size() :
-						0;
 					Object target;
-					if (property.isContainment() || size == 0) {
 
-						State state = states.get(targetEntityType);
+					State state = states.get(targetEntityType);
 
-						// Check if the state is out of scope
-						if(state == null) {
-							continue;
-						}
+					// Check if the state is out of scope
+					if (state == null) {
+						continue;
+					}
 
-						target = ((BasicType)targetType).generate(settings, extendedProperty);
-						if(target instanceof JSONObject) {
+					path = Constants.XOR.walkDown(path, property);
+					//target = ((BasicType)targetType).generate(settings, extendedProperty, path);
+					target = ((BasicType)targetType).generate(
+						settings,
+						extendedProperty,
+						entity,
+						stateObjectMap.get(targetEntityType));
+					if (target instanceof JSONObject) {
+						addObject(
+							stateObjectMap,
+							objectStateMap,
+							state,
+							(JSONObject)target);
+						q.add((JSONObject)target);
+						((JSONObject)target).put(Constants.XOR.GEN_PATH, path);
+					}
+					else if (target instanceof JSONArray) {
+						for (int i = 0; i < ((JSONArray)target).length(); i++) {
+							JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
 							addObject(
 								stateObjectMap,
 								objectStateMap,
 								state,
-								(JSONObject)target);
-							q.add((JSONObject)target);
-						} else if(target instanceof JSONArray) {
-							for(int i = 0; i < ((JSONArray)target).length(); i++) {
-								JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
-								addObject(
-									stateObjectMap,
-									objectStateMap,
-									state,
-									jsonObject);
-								q.add(jsonObject);
-							}
+								jsonObject);
+							q.add(jsonObject);
+							jsonObject.put(Constants.XOR.GEN_PATH, path);
 						}
-					}
-					else {
-						List<JSONObject> entitiesToChooseFrom = stateObjectMap.get(targetType);
-						target = entitiesToChooseFrom.get((int)(Math.random() * (size - 1)));
 					}
 					entity.put(property.getName(), target);
 				}

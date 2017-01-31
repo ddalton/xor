@@ -21,8 +21,10 @@ package tools.xor;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.json.JsonArray;
@@ -51,8 +53,9 @@ public class SetType extends SimpleType {
 		} else
 			return new ObjectOpenHashSet<Object>();
 	}
-	
-	public Object generate(Settings settings, Property property) {
-		return super.generateArray(settings, property);
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
 	}	
 }

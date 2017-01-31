@@ -19,13 +19,18 @@
 
 package tools.xor;
 
+import org.json.JSONObject;
+
+import java.util.List;
+
 public class BooleanType extends SimpleType {
 
 	public BooleanType(Class<?> clazz) {
 		super(clazz);
 	}	
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		return (Math.random()*Integer.MAX_VALUE)%2 == 0 ? Boolean.TRUE : Boolean.FALSE;
 	}		
 }

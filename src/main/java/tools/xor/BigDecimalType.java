@@ -21,10 +21,12 @@ package tools.xor;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import tools.xor.generator.DateRange;
 import tools.xor.generator.Range;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class BigDecimalType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -51,8 +53,9 @@ public class BigDecimalType extends SimpleType {
 	public BigDecimalType(Class<?> clazz) {
 		super(clazz);
 	}	
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		BigDecimal minimum = this.min;
 		BigDecimal maximum = this.max;
 

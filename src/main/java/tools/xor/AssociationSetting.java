@@ -23,6 +23,7 @@ public final class AssociationSetting {
 	private final MatchType matchType;
 	private final Class<?> entityClass;
 	private final String pathSuffix;
+	private final Boolean createIfMissing;
 
 	/**
 	 * If including a type to be part of the view, then
@@ -31,15 +32,21 @@ public final class AssociationSetting {
 	 * @param entityClass the class of the Type
 	 */
 	public AssociationSetting(Class<?> entityClass) {
+		this(entityClass, Boolean.TRUE);
+	}
+
+	public AssociationSetting(Class<?> entityClass, Boolean createIfMissing) {
 		this.entityClass = entityClass;
 		this.matchType = MatchType.TYPE;
 		this.pathSuffix = null;
+		this.createIfMissing = createIfMissing;
 	}
 
 	public AssociationSetting(String pathSuffix) {
 		this.pathSuffix = pathSuffix;
 		this.matchType = MatchType.PATH;
 		this.entityClass = null;
+		this.createIfMissing = Boolean.TRUE;
 	}
 	
 	public Class<?> getEntityClass() {
@@ -52,7 +59,13 @@ public final class AssociationSetting {
 
 	public MatchType getMatchType() {
 		return matchType;
-	}	
+	}
+
+	public Boolean getCreateIfMissing ()
+	{
+		return createIfMissing;
+	}
+
 
 	public boolean isAggregatePart(CallInfo ci) {
 		if(matchType == MatchType.TYPE) {

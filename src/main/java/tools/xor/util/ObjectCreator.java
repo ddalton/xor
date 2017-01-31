@@ -538,25 +538,37 @@ public class ObjectCreator {
 						targetType = domainEntityType;
 					}
 
-					targetInstance = createInstance(
-						sourceInstance,
-						targetInstanceClass,
-						targetType,
-						container,
-						containmentProperty);
-					if(targetInstance == null) {
-						logger.error(
-								"ObjectCreator#createTarget Unable to create targetInstance of class: "	+ targetInstanceClass.getName()
-								+ " and source instance: " + sourceInstance.getClass().getName()
-								+ " and target type: " + targetType.getName());
+					if(settings.isShouldCreate(targetInstanceClass)) {
+						targetInstance = createInstance(
+							sourceInstance,
+							targetInstanceClass,
+							targetType,
+							container,
+							containmentProperty);
+						if (targetInstance == null) {
+							logger.error(
+								"ObjectCreator#createTarget Unable to create targetInstance of class: "
+									+ targetInstanceClass.getName()
+									+ " and source instance: " + sourceInstance.getClass().getName()
+									+ " and target type: " + targetType.getName());
+						}
 					}
 				}
 
-				result = createDataObject(sourceInstance, targetInstance, targetType, container, containmentProperty);
+				if(targetInstance != null) {
+					result = createDataObject(
+						sourceInstance,
+						targetInstance,
+						targetType,
+						container,
+						containmentProperty);
+				}
 			}
 
 			// Give opportunity for reference objects to have any post processing done by the DAS
-			das.postProcess(targetInstance, ci.getSettings().isAutoWire());
+			if(targetInstance != null) {
+				das.postProcess(targetInstance, ci.getSettings().isAutoWire());
+			}
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}	

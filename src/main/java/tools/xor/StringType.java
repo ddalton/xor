@@ -22,7 +22,10 @@ package tools.xor;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import tools.xor.util.Constants;
+
+import java.util.List;
 
 public class StringType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -32,8 +35,9 @@ public class StringType extends SimpleType {
 	public StringType(Class<?> clazz) {
 		super(clazz);
 	}
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 
 		ExtendedProperty ep = (ExtendedProperty) property;
 		if(ep.getGenerator() != null) {

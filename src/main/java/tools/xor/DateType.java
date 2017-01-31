@@ -21,12 +21,14 @@ package tools.xor;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import tools.xor.generator.DateRange;
 import tools.xor.generator.Generator;
 import tools.xor.generator.Range;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Dilip Dalton
@@ -75,8 +77,9 @@ public class DateType extends SimpleType {
 		
 		return null;
 	}
-	
-	public Object generate(Settings settings, Property property) {
+
+	@Override
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 
 		ExtendedProperty ep = (ExtendedProperty) property;
 		if(ep.getGenerator() != null) {

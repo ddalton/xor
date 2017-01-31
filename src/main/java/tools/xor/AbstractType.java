@@ -51,6 +51,7 @@ import tools.xor.annotation.XorEntity;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
+import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -953,16 +954,24 @@ public abstract class AbstractType implements EntityType {
 	}	
 	
 	@Override
-	public Object generate(Settings settings, Property property) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		JSONObject result = new JSONObject();
+
+		// For containment or entities with natural keys use the generator to populate the values
+		// otherwise we link with an existing object
+		if (property != null && !property.isContainment() && getNaturalKey() == null
+			&& entitiesToChooseFrom != null && entitiesToChooseFrom.size() > 0) {
+			result = entitiesToChooseFrom.get(
+				(int)(Math.random() * (entitiesToChooseFrom.size() - 1)));
+		}
 		
 		for(Property p: getProperties()) {
 			if( ((ExtendedProperty) p).isDataType()) {
-				result.put(p.getName(), ((BasicType)p.getType()).generate(settings, p));
+				result.put(p.getName(), ((BasicType)p.getType()).generate(settings, p, rootedAt, entitiesToChooseFrom));
 			}
 		}
 		result.put(Constants.XOR.TYPE, getInstanceClass().getName());
 		
 		return result;
-	}	
+	}
 }

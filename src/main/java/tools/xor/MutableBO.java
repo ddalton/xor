@@ -83,6 +83,7 @@ public class MutableBO extends AbstractBO {
 
 		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);

@@ -26,6 +26,7 @@ import java.util.Set;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.AbstractType;
 import tools.xor.AbstractTypeNarrower;
 import tools.xor.Settings;
 import tools.xor.Type;
@@ -147,7 +148,12 @@ public class State implements Vertex {
 	
 	@Override
 	public String toString() {
+
 		return getName();
+
+		// Use simple name for now so it is easier to view in large object graphs
+		// Might need to go bar to FQDN for accuracy reasons
+		//return AbstractType.getBaseName(getType());
 	}
 }
 

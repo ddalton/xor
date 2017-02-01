@@ -1,31 +1,11 @@
 package tools.xor.util.graph;
 
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseGraph;
-import edu.uci.ics.jung.visualization.*;
-import edu.uci.ics.jung.visualization.decorators.EdgeShape;
-import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
-import edu.uci.ics.jung.visualization.renderers.Renderer;
+import edu.uci.ics.jung.graph.util.EdgeType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
+import tools.xor.AbstractType;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
@@ -36,7 +16,16 @@ import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 
-import javax.imageio.ImageIO;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 //import javax.swing.*;
 
 /**
@@ -427,75 +416,25 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	}
 
 	public void generateVisual (Settings settings) {
-
-		VisualizationViewer<Integer,String> vv =
-			new VisualizationViewer<Integer,String>(new FRLayout(getObjectGraph(settings)),
-				new Dimension (3840,2160));
-
-
-		// Create the VisualizationImageServer
-		// vv is the VisualizationViewer containing my graph
-		VisualizationImageServer<Integer, String> vis =
-			new VisualizationImageServer<Integer, String>(vv.getGraphLayout(),
-				vv.getGraphLayout().getSize());
-
-		// Configure the VisualizationImageServer the same way
-		// you did your VisualizationViewer. In my case e.g.
-
-		vis.setBackground(Color.WHITE);
-		vis.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<String>());
-		vis.getRenderContext().setEdgeShapeTransformer(new EdgeShape.Line<Integer, String>());
-		vis.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Integer>());
-		vis.getRenderer().getVertexLabelRenderer()
-			.setPosition(Renderer.VertexLabel.Position.CNTR);
-
-		// Create the buffered image
-		BufferedImage image = (BufferedImage) vis.getImage(
-			new Point2D.Double(vv.getGraphLayout().getSize().getWidth() / 2,
-				vv.getGraphLayout().getSize().getHeight() / 2),
-			new Dimension(vv.getGraphLayout().getSize()));
-
-		// Write image to a png file
-		File outputfile = new File(settings.getGraphFileName());
-
-		try {
-			ImageIO.write(image, "png", outputfile);
-		} catch (IOException e) {
-			// Exception handling
-		}
-	}
-
-	public Graph getGraph() {
-		Graph<Integer, String> g = new SparseGraph<Integer, String>();
-		g.addVertex((Integer)1);
-		g.addVertex((Integer)2);
-		g.addVertex((Integer)3);
-		g.addEdge("A", 1, 2);
-		g.addEdge("B", 2, 3);
-		g.addEdge("C", 3, 1);
-		return g;
+		settings.generateVisual(getObjectGraph(settings));
 	}
 
 	public Graph getObjectGraph(Settings settings) {
-		Map<V, Integer> vertices = new IdentityHashMap<V, Integer>();
-
-		Integer j = 0;
 
 		build(this.root, settings);
 
 		Iterator vertexIter = getVertices().iterator();
-		int i = 1;
-		Graph<Integer, String> g = new SparseGraph<Integer, String>();
+		Graph<V, String> g = new SparseGraph<V, String>();
+		Map<V, String> vertices = new IdentityHashMap<V, String>();
 		while(vertexIter.hasNext()) {
-			g.addVertex(i);
-			vertices.put((V)vertexIter.next(), i++);
+			V vertex = (V)vertexIter.next();
+			g.addVertex(vertex);
 		}
 
+		Integer j = 0;
 		Iterator edgeIter = getEdges().iterator();
 		while(edgeIter.hasNext()) {
 			E edge = (E)edgeIter.next();
-			Integer start = vertices.get(edge.getStart());
-			Integer end = vertices.get(edge.getEnd());
 
 			Property p = edge.getProperty();
 			String edgeName = (p == null) ? (j++).toString() : (p.getName()+j++);
@@ -503,7 +442,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			if (g.containsEdge(edgeName)) {
 				System.out.println("Contains edge: " + edgeName);
 			} else{
-				g.addEdge(edgeName, start, end);
+				g.addEdge(edgeName, (V) edge.getStart(), (V) edge.getEnd(), EdgeType.DIRECTED);
 			}
 		}
 

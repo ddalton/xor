@@ -974,4 +974,14 @@ public abstract class AbstractType implements EntityType {
 		
 		return result;
 	}
+
+	public static String getBaseName(Type type)
+	{
+		if (type.getName().indexOf(Settings.PATH_DELIMITER) != -1) {
+			return type.getName().substring(
+				type.getName().lastIndexOf(Settings.PATH_DELIMITER) + 1);
+		} else {
+			return type.getName();
+		}
+	}
 }

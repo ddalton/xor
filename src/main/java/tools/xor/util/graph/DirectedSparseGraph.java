@@ -158,7 +158,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			edges.add(edge);
 			edgesByPair.put(pair, edges);
 		}
-		
+
 		if(pairByEdge.containsKey(edge) && !pairByEdge.get(edge).equals(pair)) {
 			throw new IllegalStateException("The edge refers to a different pair");
 		}

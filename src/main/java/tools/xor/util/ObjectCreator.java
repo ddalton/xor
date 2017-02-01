@@ -325,11 +325,14 @@ public class ObjectCreator {
 		}
 	}
 
-	private String getNaturalKeyString(Set<String> naturalKey) {
-		StringBuilder naturaKeyString = new StringBuilder("");
+	private String getNaturalKeyString(EntityType entityType) {
+
+		Set<String> naturalKey = entityType.getNaturalKey();
+
+		StringBuilder naturaKeyString = new StringBuilder(entityType.getName());
 		for(String key: naturalKey) {
 			if(naturaKeyString.length() == 0) {
-				naturaKeyString.append("{");
+				naturaKeyString.append(" {");
 			} else {
 				naturaKeyString.append(",");
 			}
@@ -365,14 +368,21 @@ public class ObjectCreator {
 				EntityType existingRootType = ((EntityType)existing.getType()).getRootEntityType();
 				EntityType newRootType = ((EntityType)newDataObject.getType()).getRootEntityType();
 				if(existingRootType == newRootType) {
-					// Embedded data objects are not shareable
-					if(share && !existingRootType.isEmbedded()) {
+					// Embedded data objects without natural keys are not shareable
+					if(share && !(existingRootType.isEmbedded() && ((EntityType)newDataObject.getType()).getNaturalKey() == null)) {
 						// Make sure we can re-fetch the BO by the other instance also
 						recordIO(newDataObject.getInstance(), existing);
+						if(newDataObject.getIdentifierValue() != null) {
+							// Make sure to evict the temporarily created object by the persistence
+							// layer so it does not save it during flush
+							Set tempId = new HashSet();
+							tempId.add(newDataObject.getIdentifierValue());
+							getPersistenceOrchestrator().clear(tempId);
+						}
 						return existing;
 					} else {
 						if(((EntityType)newDataObject.getType()).getNaturalKey() != null) {
-							throw new IllegalStateException("NaturalKey field(s) " + getNaturalKeyString(((EntityType)newDataObject.getType()).getNaturalKey()) + " is either not populated or has duplicate values. Please check.");
+							throw new IllegalStateException("NaturalKey field(s) " + getNaturalKeyString((EntityType)newDataObject.getType()) + " is either not populated or has duplicate values. Please check.");
 						} else {
 							throw new IllegalStateException(
 								"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated.");

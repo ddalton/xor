@@ -1526,4 +1526,11 @@ public abstract class AbstractBO implements BusinessObject {
 	public Settings getSettings() {
 		return objectCreator.getSettings();
 	}
+
+	@Override
+	public String toString() {
+		// Use simple name for now so it is easier to view in large object graphs
+		// Might need to go bar to FQDN for accuracy reasons
+		return AbstractType.getBaseName(getType());
+	}
 }

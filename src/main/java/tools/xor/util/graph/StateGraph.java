@@ -3,12 +3,17 @@ package tools.xor.util.graph;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseGraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -802,5 +807,35 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		return result;
-	}	
+	}
+
+	public void generateVisual (Settings settings) {
+		settings.generateVisual(getStateGraph(settings));
+	}
+
+	public Graph getStateGraph(Settings settings) {
+
+		Iterator vertexIter = getVertices().iterator();
+		Graph<V, String> g = new SparseGraph<V, String>();
+		while(vertexIter.hasNext()) {
+			V vertex = (V)vertexIter.next();
+			g.addVertex(vertex);
+		}
+
+		Integer j = 0;
+		Iterator edgeIter = getEdges().iterator();
+		while(edgeIter.hasNext()) {
+			E edge = (E)edgeIter.next();
+			String edgeName = edge.getName();
+			edgeName = (edgeName == null) ? (j++).toString() : (edgeName+j++);
+
+			if (g.containsEdge(edgeName)) {
+				System.out.println("Contains edge: " + edgeName);
+			} else{
+				g.addEdge(edgeName, edge.getStart(), edge.getEnd(), EdgeType.DIRECTED);
+			}
+		}
+
+		return g;
+	}
 }

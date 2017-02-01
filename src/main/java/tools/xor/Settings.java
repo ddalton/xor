@@ -19,6 +19,11 @@
 
 package tools.xor;
 
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,6 +31,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.uci.ics.jung.algorithms.layout.FRLayout;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.visualization.VisualizationImageServer;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.decorators.EdgeShape;
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
+import edu.uci.ics.jung.visualization.renderers.Renderer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -36,6 +48,8 @@ import tools.xor.custom.DetailStrategy;
 import tools.xor.service.AggregateManager;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
+
+import javax.imageio.ImageIO;
 
 /**
  * TODO: Convert the fields to final and only use the builder to create the Settings object
@@ -294,14 +308,14 @@ public class Settings {
 			}
 			//this.view = am.getDAS().getView( AbstractType.getViewName(entityType) );
 			this.view = am.getDAS().getView((EntityType) entityType);
-
-			if(associationSettings != null && associationSettings.size() > 0) {
-				// Make a copy of the view and enhance it with the associations needed to be traversed
-				view = view.copy();
-				view.getStateGraph((EntityType) entityType).enhance(associationSettings, am);				
-			}
 		} else if(view.getName() == null || "".equals(view.getName().trim())) {
 			throw new IllegalStateException("A name for the AggregateView is required");
+		}
+
+		if(associationSettings != null && associationSettings.size() > 0) {
+			// Make a copy of the view and enhance it with the associations needed to be traversed
+			view = view.copy();
+			view.getStateGraph((EntityType) entityType).enhance(associationSettings, am);
 		}
 
 		this.filters = populateFilters(queryParams);
@@ -706,5 +720,50 @@ public class Settings {
 	{
 		this.collectionSparseness = collectionSparseness;
 	}
+
+	public void generateVisual (Graph graph) {
+		final Dimension SMALL = new Dimension(1280, 1024);
+		final Dimension LARGE = new Dimension(3840, 2160);
+
+		Dimension graphSize = LARGE;
+		if(graph.getVertices().size() < 50) {
+			graphSize = SMALL;
+		}
+
+		VisualizationViewer<Integer,String> vv =
+			new VisualizationViewer<Integer,String>(new FRLayout(graph), graphSize);
+
+		// Create the VisualizationImageServer
+		// vv is the VisualizationViewer containing my graph
+		VisualizationImageServer<Integer, String> vis =
+			new VisualizationImageServer<Integer, String>(vv.getGraphLayout(),
+				vv.getGraphLayout().getSize());
+
+		// Configure the VisualizationImageServer the same way
+		// you did your VisualizationViewer. In my case e.g.
+
+		vis.setBackground(Color.WHITE);
+		vis.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<String>());
+		vis.getRenderContext().setEdgeShapeTransformer(new EdgeShape.Line<Integer, String>());
+		vis.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<Integer>());
+		vis.getRenderer().getVertexLabelRenderer()
+			.setPosition(Renderer.VertexLabel.Position.CNTR);
+
+		// Create the buffered image
+		BufferedImage image = (BufferedImage) vis.getImage(
+			new Point2D.Double(vv.getGraphLayout().getSize().getWidth() / 2,
+				vv.getGraphLayout().getSize().getHeight() / 2),
+			new Dimension(vv.getGraphLayout().getSize()));
+
+		// Write image to a png file
+		File outputfile = new File(getGraphFileName());
+
+		try {
+			ImageIO.write(image, "png", outputfile);
+		} catch (IOException e) {
+			// Exception handling
+		}
+	}
+
 
 }

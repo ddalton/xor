@@ -31,6 +31,7 @@ public class StringType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	public static final int DEFAULT_LENGTH = 255;
+	public static final int MIN_LENGTH = 4; // to avoid empty strings in natural keys
 
 	public StringType(Class<?> clazz) {
 		super(clazz);
@@ -48,6 +49,9 @@ public class StringType extends SimpleType {
 				length = (int)ep.getConstraints().get(Constants.XOR.CONS_LENGTH);
 			}
 			int stringLen = (int)(Math.random() * length);
+			if (stringLen < MIN_LENGTH) {
+				stringLen = (MIN_LENGTH > length) ? length : MIN_LENGTH;
+			}
 			return RandomStringUtils.randomAscii(stringLen);
 		}
 	}	

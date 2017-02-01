@@ -208,11 +208,16 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		}
 
 
-		if(((java.util.Collection<Object>)collection).size() == Integer.parseInt(action.getPosition().toString()) )
+		if(((java.util.Collection<Object>)collection).size() == Integer.parseInt(action.getPosition().toString()) ) {
 			((java.util.Collection<Object>)collection).add(ClassUtil.getInstance(collectionElement));
-		else
-			throw new IllegalArgumentException("Trying to add a list element at the wrong position: " + action.getPosition() + ", list size: " + 
-					((java.util.Collection<Object>)collection).size());
+		} else {
+			throw new IllegalArgumentException(
+				"Trying to add a list element at the wrong position: " + action.getPosition() + ", list size: "
+					+ ((java.util.Collection<Object>)collection).size()
+					+ ". Check if the ORM is using a different API for populating this property - "
+					+ collectionProperty.getContainingType().getName() + "#" + collectionProperty.getName()
+			);
+		}
 
 	}		
 }

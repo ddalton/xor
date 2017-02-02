@@ -157,4 +157,12 @@ public interface Property
    * @param value constraint value
    */
   void addConstraint(String key, Object value);
+
+  /**
+   * The persistence layer specifies the mechanism on retrieving and
+   * setting the value of this property. This is done through the
+   * PersistenceOrchestrator.
+   * @return true if the ORM manages the property access
+   */
+  boolean isManaged();
 }

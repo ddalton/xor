@@ -586,6 +586,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	{
 		PrefetchCache cache = dataObject.getSettings().getPrefetchCache();
 		if(field == null && getterMethod == null) {
+			if(isManaged()) {
+				return query(dataObject);
+			}
+
 			if(isOpenContent() && dataObject != null) {
 				// We should always receive a persistence managed dataObject
 				BusinessObject bo = (BusinessObject) dataObject;
@@ -650,12 +654,16 @@ public abstract class AbstractProperty implements ExtendedProperty {
 				
 				return value;
 			}
-			
+
 			// The object does not have the desired property
 			String[] params = new String[2];
 			params[0] = getName();
 			params[1] = getType().getInstanceClass().getName();
-			logger.warn(I18NUtils.getResource(  "exception.propertyNotFound",I18NUtils.CORE_RESOURCES, params));			
+			logger.warn(
+				I18NUtils.getResource(
+					"exception.propertyNotFound",
+					I18NUtils.CORE_RESOURCES,
+					params));
 			return null;
 		} else {		
 			return query(dataObject);
@@ -681,6 +689,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public void setValue(Settings settings, Object dataObject, Object propertyValue)
 	{	
 		if(field == null && setterMethod == null) {
+			if(isManaged()) {
+				executeUpdate(dataObject, propertyValue);
+			}
 			
 			if(isOpenContent() && dataObject != null) {
 				// We should always receive a persistence managed propertyValue object
@@ -827,7 +838,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return new LambdaResult(result, resultPreviousCallback);
 	}		
 
-	private Object query(Object dataObject) 
+	protected Object query(Object dataObject)
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 		//if(isOpenContent() && dataObject instanceof BusinessObject) {
@@ -859,7 +870,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}	
 
-	private <T> void executeUpdate(Object dataObject, Object propertyValue) 
+	protected <T> void executeUpdate(Object dataObject, Object propertyValue)
 	{
 		// We need to work with the instance objects and not the DataObject objects
 		Object instance = ClassUtil.getInstance(dataObject);
@@ -1222,5 +1233,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			constraints = new HashMap<String, Object>();
 		}
 		constraints.put(key, value);
+	}
+
+	@Override
+	public boolean isManaged() {
+		return false;
 	}
 }

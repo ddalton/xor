@@ -28,12 +28,12 @@ package tools.xor;
  *
  */
 public enum EntitySize {
-    SMALL(25),  // Has a maximum of 25 objects
-    MEDIUM(250), // Has a maximum of 250 objects
-    LARGE(2500),  // Has a maximum of 2500 objects
-    XLARGE(25000); // Has have a maximum of 25000 objects
+    SMALL(35),
+    MEDIUM(350),
+    LARGE(1500),
+    XLARGE(10000);
 	
-	private final int size; // maximum number of objects
+	private final int size; // maximum number of objects in the object graph
 	
     EntitySize(int size) {
         this.size = size;

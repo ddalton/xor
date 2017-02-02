@@ -2,6 +2,7 @@ package tools.xor.util.graph;
 
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseGraph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -424,7 +425,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		build(this.root, settings);
 
 		Iterator vertexIter = getVertices().iterator();
-		Graph<V, String> g = new SparseGraph<V, String>();
+		Graph<V, String> g = new SparseMultigraph<V, String>();
 		Map<V, String> vertices = new IdentityHashMap<V, String>();
 		while(vertexIter.hasNext()) {
 			V vertex = (V)vertexIter.next();

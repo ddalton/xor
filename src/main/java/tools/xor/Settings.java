@@ -723,11 +723,19 @@ public class Settings {
 
 	public void generateVisual (Graph graph) {
 		final Dimension SMALL = new Dimension(1280, 1024);
-		final Dimension LARGE = new Dimension(3840, 2160);
+		final Dimension MEDIUM = new Dimension(3840, 2160);
+		final Dimension LARGE = new Dimension(5120, 2880);
+		final Dimension XLARGE = new Dimension(7680, 4320);
 
-		Dimension graphSize = LARGE;
-		if(graph.getVertices().size() < 50) {
+		Dimension graphSize;
+		if(graph.getVertices().size() < EntitySize.SMALL.size()*2) {
 			graphSize = SMALL;
+		} else if(graph.getVertices().size() < EntitySize.MEDIUM.size()*1.2) {
+			graphSize = MEDIUM;
+		} else if(graph.getVertices().size() < EntitySize.LARGE.size()*1.1) {
+			graphSize = LARGE;
+		} else {
+			graphSize = XLARGE;
 		}
 
 		VisualizationViewer<Integer,String> vv =

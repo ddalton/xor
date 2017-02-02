@@ -65,6 +65,6 @@ public final class Edge<V extends Vertex> {
 	
 	@Override
 	public String toString() {
-		return start.getName() + "->" + end.getName();
+		return start.getName() + "--" + getName() + "-->" + end.getName();
 	}
 }

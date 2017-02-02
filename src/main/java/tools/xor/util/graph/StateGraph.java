@@ -13,6 +13,7 @@ import java.util.Set;
 
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseGraph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -332,10 +333,23 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		for(Property property: from.getType().getProperties()) {
 			Type propertyType = GraphUtil.getPropertyType(property);
 			sgLogger.debug(Constants.Format.getIndentString(2) + "Processing property: " + property.getName() + ", property type: " + propertyType.getName());
+			/*
+			System.out.println(
+				Constants.Format.getIndentString(2) + "Processing property: " + property.getName()
+					+ ", from: " + from.getType().getName() + "#" + propertyType.getName()
+					+ ", to: " + to.getType().getName()
+			);*/
+
 			if(propertyType.getName().equals(to.getType().getName()) ) {
 				// add the transition
 				if(getOutEdge((V) from, property.getName()) == null) {
 					sgLogger.debug(Constants.Format.getIndentString(3) + "Adding association for property: " + property.getName() + " and type: " + to.getType().getName());
+					/*System.out.println(
+						Constants.Format.getIndentString(3) + "Adding association for property: "
+							+ property.getName() + " and from: " + from.getType().getName() + "#" + propertyType.getName()
+							+ ", to: " + to.getType().getName()
+					);*/
+
 					addEdge((E) new Edge(property.getName(), from, to, true));
 				}
 			}
@@ -816,7 +830,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	public Graph getStateGraph(Settings settings) {
 
 		Iterator vertexIter = getVertices().iterator();
-		Graph<V, String> g = new SparseGraph<V, String>();
+		Graph<V, String> g = new SparseMultigraph<V, String>();
 		while(vertexIter.hasNext()) {
 			V vertex = (V)vertexIter.next();
 			g.addVertex(vertex);

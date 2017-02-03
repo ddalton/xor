@@ -205,7 +205,7 @@ public class SimpleType implements BasicType {
 	protected JSONArray generateArray(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
 		JSONArray result = new JSONArray();
 
-		String path = rootedAt == null ? null : (rootedAt.has(Constants.XOR.GEN_PATH) ?
+		String path = (rootedAt == null) ? null : (rootedAt.has(Constants.XOR.GEN_PATH) ?
 			rootedAt.getString(Constants.XOR.GEN_PATH) : null);
 		path = Constants.XOR.walkDown(path, property);
 		float sparseness = settings.getSparseness(path);

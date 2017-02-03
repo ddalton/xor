@@ -787,7 +787,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						continue;
 					}
 
-					path = Constants.XOR.walkDown(path, property);
+					String objectPath = Constants.XOR.walkDown(path, property);
 					//target = ((BasicType)targetType).generate(settings, extendedProperty, path);
 					target = ((BasicType)targetType).generate(
 						settings,
@@ -801,7 +801,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							state,
 							(JSONObject)target);
 						q.add((JSONObject)target);
-						((JSONObject)target).put(Constants.XOR.GEN_PATH, path);
+						((JSONObject)target).put(Constants.XOR.GEN_PATH, objectPath);
 					}
 					else if (target instanceof JSONArray) {
 						for (int i = 0; i < ((JSONArray)target).length(); i++) {
@@ -812,7 +812,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 								state,
 								jsonObject);
 							q.add(jsonObject);
-							jsonObject.put(Constants.XOR.GEN_PATH, path);
+							jsonObject.put(Constants.XOR.GEN_PATH, objectPath);
 						}
 					}
 					entity.put(property.getName(), target);

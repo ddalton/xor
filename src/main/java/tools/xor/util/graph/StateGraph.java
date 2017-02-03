@@ -841,7 +841,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		while(edgeIter.hasNext()) {
 			E edge = (E)edgeIter.next();
 			String edgeName = edge.getName();
-			edgeName = (edgeName == null) ? (j++).toString() : (edgeName+j++);
+			edgeName = (edgeName == null) ? (j++).toString() : edgeName;
 
 			if (g.containsEdge(edgeName)) {
 				System.out.println("Contains edge: " + edgeName);

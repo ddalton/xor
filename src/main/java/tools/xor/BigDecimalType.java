@@ -24,8 +24,10 @@ import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.generator.DateRange;
 import tools.xor.generator.Range;
+import tools.xor.util.Constants;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 public class BigDecimalType extends SimpleType {
@@ -59,11 +61,18 @@ public class BigDecimalType extends SimpleType {
 		BigDecimal minimum = this.min;
 		BigDecimal maximum = this.max;
 
+		int scale = 0;
+
 		ExtendedProperty ep = (ExtendedProperty) property;
 		if(ep.getGenerator() != null) {
 			return ep.getGenerator().getBigDecimal();
+		} else if(ep.getConstraints().containsKey(Constants.XOR.CONS_SCALE)) {
+			scale = (int)ep.getConstraints().get(Constants.XOR.CONS_SCALE);
 		}
 
-		return maximum.subtract(minimum).multiply( new BigDecimal( (new Double(Math.random())).toString() ) );
+		BigDecimal result = maximum.subtract(minimum).multiply( new BigDecimal( (new Double(Math.random())).toString() ) );
+		result = result.setScale(scale, RoundingMode.HALF_UP);
+
+		return result;
 	}		
 }

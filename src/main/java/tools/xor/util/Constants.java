@@ -82,8 +82,12 @@ public class Constants {
 	  public static final String OWNER_ID = XOR_PATH_PREFIX + "owner.id";
 	  
 	  public static final String CALLBACK = "_CALLBACK_";
-	  public static final String CONS_LENGTH = "_LENGTH_";
 	  public static final String GEN_PATH = "_PATH_";
+
+	  // Property constraints
+	  public static final String CONS_LENGTH = "_LENGTH_";
+	  public static final String CONS_PRECISION = "_PRECISION_";
+	  public static final String CONS_SCALE = "_SCALE_";
 	  
 	  public static String getExcelSheetFullName(Type type, Property property) {
 		  return type.getName() + ":" + property.getName();

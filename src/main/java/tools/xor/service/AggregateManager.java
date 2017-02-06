@@ -713,9 +713,11 @@ public class AggregateManager implements Xor
 		JSONObject entity = new JSONObject();
 
 		for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
-			Cell cell = row.getCell(entry.getValue());
+			Cell cell = row.getCell(entry.getValue(), Row.RETURN_BLANK_AS_NULL);
 			if (isEmbeddedPath(entry.getKey())) {
-				setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
+				if(cell != null) {
+					setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
+				}
 			}
 			else {
 				// set direct value
@@ -729,8 +731,7 @@ public class AggregateManager implements Xor
 					}
 				}
 				else {
-					//entity.put(entry.getKey(), JSONObject.NULL);
-					entity.put(entry.getKey(), "");
+					// Skip processing null values
 				}
 			}
 		}

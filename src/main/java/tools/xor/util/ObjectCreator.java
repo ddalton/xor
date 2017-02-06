@@ -297,7 +297,7 @@ public class ObjectCreator {
 					containmentProperty,
 					this);
 		}
-		dataObject.setInstance(targetInstance);	
+		dataObject.setInstance(targetInstance);
 
 		// NOTE: dataObject is registered only after its primitive typed properties have
 		// been populated. See AbstractOperation#process
@@ -327,10 +327,8 @@ public class ObjectCreator {
 
 	private String getNaturalKeyString(EntityType entityType) {
 
-		Set<String> naturalKey = entityType.getNaturalKey();
-
 		StringBuilder naturaKeyString = new StringBuilder(entityType.getName());
-		for(String key: naturalKey) {
+		for(String key: entityType.getNaturalKey()) {
 			if(naturaKeyString.length() == 0) {
 				naturaKeyString.append(" {");
 			} else {
@@ -360,6 +358,12 @@ public class ObjectCreator {
 		if(instance == null) 
 			throw new IllegalStateException("No persistent state found - possible data corruption");
 
+		if( !newDataObject.getType().isDataType() && ((EntityType)newDataObject.getType()).isEmbedded()) {
+			// Embedded instances are not shareable, so we don't register them
+			recordIO(result.getInstance(), result);
+			return result;
+		}
+
 		// If an existing persistent object is already present, check if it is of a more general type, if so it has to be replaced
 		// with the current object
 		BusinessObject existing = newDataObject.getEntity(newDataObject);
@@ -385,7 +389,9 @@ public class ObjectCreator {
 							throw new IllegalStateException("NaturalKey field(s) " + getNaturalKeyString((EntityType)newDataObject.getType()) + " is either not populated or has duplicate values. Please check.");
 						} else {
 							throw new IllegalStateException(
-								"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated.");
+								"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated. [type: "
+									+ existingRootType.getDomainType().getName() + ", id: "
+									+ newDataObject.getIdentifierValue() + "]" + (existingRootType.isEmbedded() ? ". Check your data as sharing of embedded objects is not allowed." : ""));
 						}
 					}
 				} else if(existingRootType.getInstanceClass().isAssignableFrom(newRootType.getInstanceClass())) {

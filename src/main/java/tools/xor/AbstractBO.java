@@ -19,19 +19,10 @@
 
 package tools.xor;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.QueryOperation;
 import tools.xor.operation.ReadOperation;
@@ -41,8 +32,14 @@ import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AggregateView;
 import tools.xor.view.QueryViewProperty;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class AbstractBO implements BusinessObject {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -687,7 +684,7 @@ public abstract class AbstractBO implements BusinessObject {
 					// Set the natural key if there is one
 					Map<String, Object> naturalKeyValues = new HashMap<String, Object>();
 					if(((EntityType)property.getType()).getNaturalKey() != null) {
-						Set<String> naturalKey = ((EntityType)property.getType()).getNaturalKey();
+						Collection<String> naturalKey = ((EntityType)property.getType()).getNaturalKey();
 						if(naturalKey != null) {
 							for(String key: naturalKey) {
 								Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
@@ -740,7 +737,7 @@ public abstract class AbstractBO implements BusinessObject {
 				// Get by the natural key if there is one
 				Map<String, Object> naturalKeyValues = new HashMap<String, Object>();	
 				if(((EntityType)elementType).getNaturalKey() != null) {
-					Set<String> naturalKey = ((EntityType)elementType).getNaturalKey();
+					Collection<String> naturalKey = ((EntityType)elementType).getNaturalKey();
 					for(String key: naturalKey) {
 						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
 						naturalKeyValues.put(key, keyValue);

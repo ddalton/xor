@@ -25,5 +25,6 @@ public enum PersistenceType
 	METADATA,
 	JPA,
 	DATASTORE,
-	AML
+	AML,
+	EOF
 }

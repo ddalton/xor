@@ -73,7 +73,7 @@ public abstract class AbstractType implements EntityType {
 	private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
-	private Set<String>             naturalKey;
+	private List<String>             naturalKey;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -934,13 +934,18 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	@Override
-	public Set<String> getNaturalKey() {
+	public List<String> getNaturalKey() {
 		return this.naturalKey;
 	}
 	
 	@Override
 	public void setNaturalKey(String[] keys) {
-		this.naturalKey = new HashSet<String>(Arrays.asList(keys));
+		this.naturalKey = Arrays.asList(keys);
+
+		// validation
+		if(new HashSet<String>(this.naturalKey).size() != this.naturalKey.size()) {
+			throw new RuntimeException("Duplicate natural key components not allowed: " + keys);
+		}
 	}
 	
 	@Override

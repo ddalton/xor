@@ -54,7 +54,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	
 	public interface Converter {
 		public void setExternal(Settings settings, JSONObject jsonObject, String name, Object object) throws JSONException;
-		public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException;
+		public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException;
 
 		/**
 		 * We have to use an array builder since there is no "name" property
@@ -98,7 +98,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 
 						return jsonObject.getBoolean(key);
 					}
@@ -115,7 +115,7 @@ public class MutableJsonProperty extends ExternalProperty {
 			new AbstractConverter() {
 				
 				@Override
-				public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+				public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 					if(jsonObject.has(key)) {
 						Object value = jsonObject.get(key);
 						if(value instanceof BigDecimal) 
@@ -137,7 +137,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						if(jsonObject.has(key)) {
 							Object value = jsonObject.get(key);
 							if(value instanceof BigInteger) 
@@ -159,7 +159,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						return jsonObject.getDouble(key);
 					}
 
@@ -175,7 +175,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						return (float) jsonObject.getDouble(key);
 					}
 
@@ -191,7 +191,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						return jsonObject.getInt(key);
 					}
 
@@ -207,7 +207,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						return jsonObject.getLong(key);
 					}
 
@@ -223,7 +223,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {	
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						return jsonObject.getString(key);
 					}
 
@@ -248,7 +248,7 @@ public class MutableJsonProperty extends ExternalProperty {
 					}
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						Object date = jsonObject.get(key);
 						if(date instanceof Date) {
 							return date;
@@ -302,7 +302,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						// We cannot handle it here since we do not know the type
 						return jsonObject.get(key);
 					}
@@ -318,7 +318,7 @@ public class MutableJsonProperty extends ExternalProperty {
 				new AbstractConverter() {
 					
 					@Override
-					public Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
+					public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 						// We cannot handle it here since we do not know the type
 						return jsonObject.get(key);
 					}
@@ -440,7 +440,7 @@ public class MutableJsonProperty extends ExternalProperty {
 	
 	private Object toDomain(Settings settings, JSONObject jsonObject, String key) throws JSONException {
 		if(getConverter() != null) {
-			return getConverter().toDomain(settings, jsonObject, key);
+			return getConverter().toDomain(settings, jsonObject, this, key);
 		} else {
 			if(logger.isDebugEnabled()) {
 				logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass() 

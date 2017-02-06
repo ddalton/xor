@@ -69,11 +69,10 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 	private Object getByUserKey(CallInfo callInfo, EntityType type) {
 		BusinessObject from = (BusinessObject) callInfo.getInput();
-		Set<String> userKey = type.getNaturalKey();
 
-		if(userKey != null) {
+		if(type.getNaturalKey() != null) {
 			Map<String, Object> param = new HashMap<String, Object>();
-			for(String key: userKey) {
+			for(String key: type.getNaturalKey()) {
 				if(from.get(key) == null)
 					continue;
 				

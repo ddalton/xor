@@ -133,6 +133,14 @@ public abstract class AbstractDASFactory implements DASFactory {
 			return das.get(name);
 		}
 
+		// Enterprise Objects Framework (EO) persistence uses a custom implementation
+		if(persistenceType == null || persistenceType == PersistenceType.EOF) {
+			das.put(name, createCustomDAS(typeMapper, name));
+			injectDependencies(das.get(name), name);
+			das.get(name).define();
+			return das.get(name);
+		}
+
 		return das.get(name);
 	}
 

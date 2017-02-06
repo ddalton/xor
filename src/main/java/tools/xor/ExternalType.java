@@ -245,9 +245,9 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
-	public Set<String> getNaturalKey() {
+	public List<String> getNaturalKey() {
 		if(domainType.getNaturalKey() != null)
-			return new HashSet<String>(domainType.getNaturalKey());
+			return domainType.getNaturalKey();
 		else
 			return null;
 	}

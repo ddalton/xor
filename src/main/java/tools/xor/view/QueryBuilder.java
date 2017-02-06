@@ -144,7 +144,7 @@ public class QueryBuilder {
 			StoredProcedure querySP = view.getContentView().getStoredProcedure(AggregateAction.READ);
 
 			if(querySP != null) {
-				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().	getQuery(querySP.getName(), QueryType.SP, querySP);
+				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(querySP.getName(), QueryType.SP, querySP);
 			}
 		}
 

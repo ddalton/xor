@@ -65,6 +65,12 @@ public class ExcelExportImport extends AbstractExportImport
     {
         Map<String, Integer> colMap = new HashMap<String, Integer>();
         Row headerRow = sheet.getRow(0);
+
+        // Check if sheet is empty
+        if(headerRow == null) {
+            return colMap;
+        }
+
         for (int i = 0; i < headerRow.getLastCellNum(); i++) {
             Cell headerCell = headerRow.getCell(i);
             colMap.put(headerCell.getStringCellValue(), i);
@@ -97,7 +103,12 @@ public class ExcelExportImport extends AbstractExportImport
                 path,
                 row.getCell(0).getStringCellValue());
 
-            addProperties(getProperty(entityInfo).getName() + Settings.PATH_DELIMITER,
+            Property property = getProperty(entityInfo);
+            // if the property is not found or if the sheet is empty continue
+            if(property == null || sheetHeaderMap.size() == 0) {
+                continue;
+            }
+            addProperties(property.getName() + Settings.PATH_DELIMITER,
                 attrPath,
                 sheetHeaderMap
             );
@@ -200,7 +211,13 @@ public class ExcelExportImport extends AbstractExportImport
             Row row = sheetMap.getRow(i);
             String entityInfo = row.getCell(1).getStringCellValue();
 
-            if (getProperty(entityInfo).isMany()) {
+            Property property = getProperty(entityInfo);
+            if(property == null) {
+                // Meta-data has changed between the time import and export was done
+                // or the configuration during import is not the same as it was during export
+                continue;
+            }
+            if (property.isMany()) {
                 collectionSheets.put(row.getCell(0).getStringCellValue(), entityInfo);
             }
             else {
@@ -254,15 +271,25 @@ public class ExcelExportImport extends AbstractExportImport
         Sheet collectionSheet = wb.getSheet(sheetName);
         Map<String, Integer> colMap = getHeaderMap(collectionSheet);
 
+        // empty sheet
+        if(colMap.size() == 0) {
+            return;
+        }
+
         // A collection can have value objects, so XOR.ID is not mandatory
         // But a collection entry should have a collection owner
         if (!colMap.containsKey(Constants.XOR.OWNER_ID)) {
-            throw new RuntimeException("XOR.owner.id column is missing");
+            throw new RuntimeException("XOR.owner.id column is missing in sheet: " + sheetName);
         }
 
         // process each collection entry
         for (int i = 1; i <= collectionSheet.getLastRowNum(); i++) {
-            JSONObject collectionEntryJSON = am.getJSON(colMap, collectionSheet.getRow(i));
+            Row row = collectionSheet.getRow(i);
+            if(row == null) {
+                // skip empty rows
+                continue;
+            }
+            JSONObject collectionEntryJSON = am.getJSON(colMap, row);
             String key = getCollectionKey(
                 collectionEntryJSON.getString(Constants.XOR.OWNER_ID),
                 entityInfo);

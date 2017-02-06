@@ -62,7 +62,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Returns the key that the entity is uniquely referred by the user
 	 * @return the fields in the natural key
 	 */
-	public Set<String> getNaturalKey();	
+	public List<String> getNaturalKey();
 	
 	/**
 	 * Set the natural key for this type

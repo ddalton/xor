@@ -573,6 +573,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public String getStringValue(BusinessObject dataObject) {
 		Object value = getValue(dataObject);
 
+		if(isMany() && value != null && "".equals(value.toString())) {
+			value = null;
+		}
+
 		return (value == null) ? (String)value : value.toString();
 	}
 

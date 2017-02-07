@@ -128,25 +128,47 @@ public class DataObjectList {
 				toBeLoaded.add(element);
 			}
 
+			BusinessObject collectionOwner = null;
+			if(!type.isDataType() && ((EntityType)type).isEmbedded()) {
+				collectionOwner = dataObject;
+			}
+
 			// Bulk load the collection of references
 			if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
 				PersistenceOrchestrator po = dataObject.getObjectCreator().getPersistenceOrchestrator();
 				List persistedInstances = po.findByIds((EntityType)type, toBeLoaded);
 				if(persistedInstances != null) {
+
 					for (Object persisted : persistedInstances) {
 						// cache the persisted instance in the ObjectCreator
-						result.add(objectCreator.createDataObject(persisted, type, null, null));
+						result.add(objectCreator.createDataObject(persisted, type, collectionOwner, null));
 					}
 				}
 			}
 
 			// handle those objects that include those that are not persisted here
 			for (Object element : toBeLoaded) {
-				if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences() && (settings.getAction() == AggregateAction.LOAD || settings.getAction() == AggregateAction.READ)) {
-					EntityKey surrogateKey = objectCreator.getTypeMapper().getSurrogateKey(element, type);
-					result.add(objectCreator.getByEntityKey(surrogateKey));
+				if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
+					if (settings.getAction() == AggregateAction.LOAD || settings.getAction() == AggregateAction.READ) {
+						EntityKey surrogateKey = objectCreator.getTypeMapper().getSurrogateKey(
+							element,
+							type);
+						result.add(objectCreator.getByEntityKey(surrogateKey));
+					}  else {
+						try {
+							BusinessObject collectionElement = dataObject.createDataObject(
+								element,
+								type);
+							collectionElement.setContainer(collectionOwner);
+							collectionElement.setContainmentProperty(null);
+							result.add(collectionElement);
+						}catch (Exception e) {
+							// TODO: push this exception down
+							throw new RuntimeException(e);
+						}
+					}
 				} else {
-					result.add(objectCreator.createDataObject(element, type, null, null));
+					result.add(objectCreator.createDataObject(element, type, collectionOwner, null));
 				}
 			}
 		}

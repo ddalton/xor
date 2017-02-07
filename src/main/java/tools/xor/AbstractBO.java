@@ -1472,9 +1472,9 @@ public abstract class AbstractBO implements BusinessObject {
 					throw new IllegalStateException("Property refers to a DataObject, but the object is not a DataObject");
 
 				BusinessObject child = null;
-				if(target != null)
-					child = (BusinessObject) target;
-				else {
+				if(target != null) {
+					child = (BusinessObject)target;
+				} else {
 					BusinessObject container = parent;
 					Property containmentProperty = property;
 

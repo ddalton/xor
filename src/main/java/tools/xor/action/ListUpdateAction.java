@@ -207,9 +207,14 @@ public class ListUpdateAction extends CollectionUpdateAction {
 			throw ClassUtil.wrapRun(e);
 		}
 
-
-		if(((java.util.Collection<Object>)collection).size() == Integer.parseInt(action.getPosition().toString()) ) {
-			((java.util.Collection<Object>)collection).add(ClassUtil.getInstance(collectionElement));
+		int listSize = ((java.util.List<Object>)collection).size();
+		int position = Integer.parseInt(action.getPosition().toString());
+		if(listSize == position ) {
+			((java.util.List<Object>)collection).add(ClassUtil.getInstance(collectionElement));
+		} else if (listSize > position)
+		{
+			// replace the item at the postion
+			((java.util.List<Object>)collection).set(position, ClassUtil.getInstance(collectionElement));
 		} else {
 			throw new IllegalArgumentException(
 				"Trying to add a list element at the wrong position: " + action.getPosition() + ", list size: "

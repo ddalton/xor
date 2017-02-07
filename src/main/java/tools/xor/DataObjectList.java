@@ -128,9 +128,10 @@ public class DataObjectList {
 				toBeLoaded.add(element);
 			}
 
-			BusinessObject collectionOwner = null;
+			// We want the collectionDataObject
+			BusinessObject collectionDataObject = null;
 			if(!type.isDataType() && ((EntityType)type).isEmbedded()) {
-				collectionOwner = dataObject;
+				collectionDataObject = property == null ? dataObject : null;
 			}
 
 			// Bulk load the collection of references
@@ -141,7 +142,7 @@ public class DataObjectList {
 
 					for (Object persisted : persistedInstances) {
 						// cache the persisted instance in the ObjectCreator
-						result.add(objectCreator.createDataObject(persisted, type, collectionOwner, null));
+						result.add(objectCreator.createDataObject(persisted, type, collectionDataObject, null));
 					}
 				}
 			}
@@ -159,7 +160,7 @@ public class DataObjectList {
 							BusinessObject collectionElement = dataObject.createDataObject(
 								element,
 								type);
-							collectionElement.setContainer(collectionOwner);
+							collectionElement.setContainer(collectionDataObject);
 							collectionElement.setContainmentProperty(null);
 							result.add(collectionElement);
 						}catch (Exception e) {
@@ -168,7 +169,7 @@ public class DataObjectList {
 						}
 					}
 				} else {
-					result.add(objectCreator.createDataObject(element, type, collectionOwner, null));
+					result.add(objectCreator.createDataObject(element, type, collectionDataObject, null));
 				}
 			}
 		}

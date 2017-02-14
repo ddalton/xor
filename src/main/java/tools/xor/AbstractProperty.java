@@ -840,9 +840,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 		
 		return new LambdaResult(result, resultPreviousCallback);
-	}		
+	}
 
-	protected Object query(Object dataObject)
+	/**
+	 * This method is public since not all use cases pass in a DataObject instance
+	 * @param dataObject instance
+	 * @return value of the property
+	 */
+	public Object query(Object dataObject)
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 		//if(isOpenContent() && dataObject instanceof BusinessObject) {

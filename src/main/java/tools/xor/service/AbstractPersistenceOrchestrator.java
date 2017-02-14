@@ -72,7 +72,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 		if(type.getNaturalKey() != null) {
 			Map<String, Object> param = new HashMap<String, Object>();
-			for(String key: type.getNaturalKey()) {
+			for(String key: type.getExpandedNaturalKey()) {
 				if(from.get(key) == null)
 					continue;
 				

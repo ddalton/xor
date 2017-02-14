@@ -44,7 +44,7 @@ public class NaturalKeyStrategy implements EntityKeyStrategy {
 		}
 
 		Map<String, Object> naturalKey = new HashMap<String, Object>();
-		for(String key: ((EntityType)bo.getType()).getNaturalKey()) {
+		for(String key: ((EntityType)bo.getType()).getExpandedNaturalKey()) {
 			Object keyValue = bo.get(key);
 			if(keyValue == null) {
 				continue;

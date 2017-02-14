@@ -290,7 +290,7 @@ public class QueryViewProperty {
 			} else { // entity
 				// add USERKEY
 				if( ((EntityType)type).getNaturalKey() != null ) {
-					for(String key: ((EntityType)type).getNaturalKey()) {
+					for(String key: ((EntityType)type).getExpandedNaturalKey()) {
 						result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + key, this));
 					}
 				}

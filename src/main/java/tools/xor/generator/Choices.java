@@ -19,10 +19,77 @@
 
 package tools.xor.generator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
+
+/**
+ * We treat the input as a Double to be aligned with POI library numeric value of a cell
+ * being returned as a double type.
+ */
 public class Choices extends DefaultGenerator
 {
     public Choices (String[] arguments)
     {
         super(arguments);
+    }
+
+    @Override
+    public byte getByteValue ()
+    {
+        return Double.valueOf(getValues()[getPosition()]).byteValue();
+    }
+
+    @Override
+    public short getShortValue ()
+    {
+        return Double.valueOf(getValues()[getPosition()]).shortValue();
+    }
+
+    @Override
+    public char getCharValue ()
+    {
+        return (char) getIntValue();
+    }
+
+    @Override
+    public int getIntValue ()
+    {
+        return Double.valueOf(getValues()[getPosition()]).intValue();
+    }
+
+    @Override
+    public long getLongValue ()
+    {
+        return Double.valueOf(getValues()[getPosition()]).longValue();
+    }
+
+    @Override
+    public Date getDateValue() {
+        return new Date(getLongValue());
+    }
+
+    @Override
+    public Double getDoubleValue ()
+    {
+        return Double.valueOf(getValues()[getPosition()]);
+    }
+
+    @Override
+    public Float getFloatValue ()
+    {
+        return Double.valueOf(getValues()[getPosition()]).floatValue();
+    }
+
+    @Override
+    public BigDecimal getBigDecimal ()
+    {
+        return new BigDecimal(new Long(getLongValue()).toString());
+    }
+
+    @Override
+    public BigInteger getBigInteger ()
+    {
+        return new BigInteger(new Long(getLongValue()).toString());
     }
 }

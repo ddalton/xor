@@ -752,10 +752,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			result);
 		q.add(result);
 
+		// Needed to flush the remaining objects in the queue
+		boolean flush = false;
+
 		while (!q.isEmpty()) {
 			// Check limits
 			if (objectStateMap.size() > settings.getEntitySize().size()) {
-				break;
+				flush = true;
 			}
 
 			JSONObject entity = q.remove();
@@ -794,7 +797,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						extendedProperty,
 						entity,
 						stateObjectMap.get(targetEntityType));
-					if (target instanceof JSONObject) {
+					// Add this object only if it is a required relationship
+					if (target instanceof JSONObject && (!flush || !extendedProperty.isNullable())) {
 						addObject(
 							stateObjectMap,
 							objectStateMap,
@@ -802,8 +806,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							(JSONObject)target);
 						q.add((JSONObject)target);
 						((JSONObject)target).put(Constants.XOR.GEN_PATH, objectPath);
+						entity.put(property.getName(), target);
 					}
-					else if (target instanceof JSONArray) {
+					else if (target instanceof JSONArray && !flush) {
 						for (int i = 0; i < ((JSONArray)target).length(); i++) {
 							JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
 							addObject(
@@ -814,8 +819,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							q.add(jsonObject);
 							jsonObject.put(Constants.XOR.GEN_PATH, objectPath);
 						}
+						if(((JSONArray)target).length() > 0) {
+							entity.put(property.getName(), target);
+						}
 					}
-					entity.put(property.getName(), target);
 				}
 			}
 		}

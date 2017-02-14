@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import tools.xor.AbstractProperty;
 import tools.xor.AggregateAction;
 import tools.xor.BasicType;
 import tools.xor.BusinessEdge;
@@ -37,6 +38,7 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableBO;
 import tools.xor.ListType;
 import tools.xor.MapperDirection;
@@ -49,6 +51,8 @@ import tools.xor.TypeMapper;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.graph.ObjectGraph;
+
+import javax.swing.text.html.parser.Entity;
 
 /**
  * This class is used to create the appropriate instances of the copy, given the
@@ -259,6 +263,16 @@ public class ObjectCreator {
 		}
 
 		if(result == null) {
+			// Handle the case where the natural key points to entities
+			if(targetType instanceof EntityType && ((EntityType)targetType).getNaturalKey() != null) {
+				for(String key: ((EntityType)targetType).getNaturalKey()) {
+					Property pKey = targetType.getProperty(key);
+					if(pKey.getType() instanceof EntityType) {
+						Object keyInstance = ((AbstractProperty)pKey).query(targetInstance);
+						this.createDataObject(null, keyInstance, pKey.getType(), null, null);
+					}
+				}
+			}
 			result = this.createDataObject(null, targetInstance, targetType, container, containmentProperty);
 		}
 
@@ -281,8 +295,10 @@ public class ObjectCreator {
 	private BusinessObject createDataObject(Object sourceInstance, Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty) {
 
 		BusinessObject dataObject = instanceDataObjectMap.get(targetInstance);
-		if(dataObject != null && sourceInstance != null) {
-			recordIO(sourceInstance, dataObject);
+		if(dataObject != null) {
+			if(sourceInstance != null) {
+				recordIO(sourceInstance, dataObject);
+			}
 			return dataObject;
 		}
 
@@ -327,8 +343,8 @@ public class ObjectCreator {
 
 	private String getNaturalKeyString(EntityType entityType) {
 
-		StringBuilder naturaKeyString = new StringBuilder(entityType.getName());
-		for(String key: entityType.getNaturalKey()) {
+		StringBuilder naturaKeyString = new StringBuilder();
+		for(String key: entityType.getExpandedNaturalKey()) {
 			if(naturaKeyString.length() == 0) {
 				naturaKeyString.append(" {");
 			} else {
@@ -338,7 +354,7 @@ public class ObjectCreator {
 		}
 		naturaKeyString.append("}");
 
-		return naturaKeyString.toString();
+		return new StringBuilder().append(entityType.getName()).append(naturaKeyString).toString();
 	}
 
 	/**

@@ -253,6 +253,14 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
+	public List<String> getExpandedNaturalKey() {
+		if(domainType.getExpandedNaturalKey() != null)
+			return domainType.getExpandedNaturalKey();
+		else
+			return null;
+	}
+
+	@Override
 	public boolean supportsDynamicUpdate() {
 		return domainType.supportsDynamicUpdate();
 	}

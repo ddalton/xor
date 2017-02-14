@@ -367,6 +367,24 @@ public class MutableJsonProperty extends ExternalProperty {
 
 		return getValue(dataObject).toString();
 	}
+
+	@Override
+	public Object query(Object dataObject) {
+		Object instance = ClassUtil.getInstance(dataObject);
+		if(JSONObject.class.isAssignableFrom(instance.getClass())) {
+			JSONObject json = (JSONObject) instance;
+			try {
+				return json.get(getName());
+			} catch (JSONException e) {
+				// This property was not found
+				return null;
+			}
+		} else {
+			// This is at INFO level, because on read we try to read from the JsonObjectBuilder which is not allowed
+			logger.info("DynamicProperty#getValue dataObject instance is not a JsonObject " + instance.getClass().getName());
+			return null;
+		}
+	}
 	
 	@Override
 	public Object getValue(BusinessObject dataObject)
@@ -376,10 +394,6 @@ public class MutableJsonProperty extends ExternalProperty {
 			JSONObject json = (JSONObject) instance;
 			try {
 				Object value = toDomain(dataObject.getSettings(), json, getName());
-				if(logger.isDebugEnabled()) {
-					logger.debug("DynamicProperty#getValue Property: " + getName() + ", value: " + (value == null? "null" : value.toString()) 
-							+ ", input: " + (value == null ? "null": value.toString()) );
-				}
 				return value;
 			} catch (JSONException e) {
 				// This property was not found
@@ -443,8 +457,7 @@ public class MutableJsonProperty extends ExternalProperty {
 			return getConverter().toDomain(settings, jsonObject, this, key);
 		} else {
 			if(logger.isDebugEnabled()) {
-				logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass() 
-						+ ", jsonValue: " + jsonObject.get(key) 
+				logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass()
 						+ ", type name: " + getType().getName() 
 						+ ", domain type: " + getDomainProperty().getType().getInstanceClass().getName());
 			}

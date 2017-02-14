@@ -30,8 +30,8 @@ package tools.xor;
 public enum EntitySize {
     SMALL(35),
     MEDIUM(350),
-    LARGE(1500),
-    XLARGE(10000);
+    LARGE(1000),
+    XLARGE(3500);
 	
 	private final int size; // maximum number of objects in the object graph
 	

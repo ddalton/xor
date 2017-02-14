@@ -554,7 +554,12 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public Object get(String path) {
-		return getPathObject(path);
+		// TODO: need to fix this
+		if(path.indexOf(Settings.PATH_DELIMITER) != -1) {
+			return getPathObject(Settings.convertToBOPath(path));
+		} else {
+			return getPathObject(path);
+		}
 	}
 
 	protected DataObject getDeepestContainer(String path) {
@@ -615,7 +620,7 @@ public abstract class AbstractBO implements BusinessObject {
 					((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(oc.getSettings(), propertyInstance, id);
 				} 
 				if(((EntityType)instanceType).getNaturalKey() != null && naturalKeyValues != null) {
-					for(String key: ((EntityType)instanceType).getNaturalKey()) {
+					for(String key: ((EntityType)instanceType).getExpandedNaturalKey()) {
 						((ExtendedProperty)((EntityType)instanceType).getProperty(key)).setValue(oc.getSettings(), propertyInstance, naturalKeyValues.get(key));
 					}
 				}
@@ -684,7 +689,7 @@ public abstract class AbstractBO implements BusinessObject {
 					// Set the natural key if there is one
 					Map<String, Object> naturalKeyValues = new HashMap<String, Object>();
 					if(((EntityType)property.getType()).getNaturalKey() != null) {
-						Collection<String> naturalKey = ((EntityType)property.getType()).getNaturalKey();
+						Collection<String> naturalKey = ((EntityType)property.getType()).getExpandedNaturalKey();
 						if(naturalKey != null) {
 							for(String key: naturalKey) {
 								Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
@@ -737,7 +742,7 @@ public abstract class AbstractBO implements BusinessObject {
 				// Get by the natural key if there is one
 				Map<String, Object> naturalKeyValues = new HashMap<String, Object>();	
 				if(((EntityType)elementType).getNaturalKey() != null) {
-					Collection<String> naturalKey = ((EntityType)elementType).getNaturalKey();
+					Collection<String> naturalKey = ((EntityType)elementType).getExpandedNaturalKey();
 					for(String key: naturalKey) {
 						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
 						naturalKeyValues.put(key, keyValue);

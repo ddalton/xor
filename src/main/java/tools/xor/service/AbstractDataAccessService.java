@@ -52,6 +52,8 @@ import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
 import tools.xor.exception.MultipleClassForPropertyException;
 import tools.xor.generator.Generator;
+import tools.xor.generator.LinkedChoices;
+import tools.xor.generator.Lot;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ClassUtil;
@@ -660,8 +662,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	{
 		Map<String, Integer> headerMap = ExcelExportImport.getHeaderMap(entitySheet);
 
-		// Process each property
+		Lot lot = null;
 		for(Map.Entry<String, Integer> entry: headerMap.entrySet()) {
+			// Process each property
 			ExtendedProperty property = (ExtendedProperty)entityType.getProperty(entry.getKey());
 			if( !property.isDataType() ) {
 				// Only simple types supported for domain values
@@ -693,9 +696,16 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			}
 
 			String[] values = list.toArray(new String[list.size()]);
-			SimpleType simpleType = (SimpleType)property.getType();
 			Constructor cd = generatorClass.getConstructor(String[].class);
-			property.setGenerator((Generator)cd.newInstance((Object)values));
+
+			Generator gen = (Generator)cd.newInstance((Object)values);
+			if(gen instanceof LinkedChoices) {
+				if(lot == null) {
+					lot = new Lot(((LinkedChoices)gen).getValues().length);
+				}
+				((LinkedChoices)gen).setLot(lot);
+			}
+			property.setGenerator(gen);
 		}
 	}
 }

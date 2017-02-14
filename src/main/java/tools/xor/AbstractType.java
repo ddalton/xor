@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.json.JSONObject;
+import sun.awt.image.ImageWatched;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
@@ -52,6 +53,7 @@ import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
 import tools.xor.generator.Generator;
+import tools.xor.generator.LinkedChoices;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -74,6 +76,7 @@ public abstract class AbstractType implements EntityType {
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
 	private List<String>             naturalKey;
+	private List<String>             expandedNaturalKey;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -937,6 +940,30 @@ public abstract class AbstractType implements EntityType {
 	public List<String> getNaturalKey() {
 		return this.naturalKey;
 	}
+
+	@Override
+	public List<String> getExpandedNaturalKey() {
+		if(this.expandedNaturalKey == null) {
+			this.expandedNaturalKey = new ArrayList<>();
+
+			if( this.naturalKey != null) {
+				for (String key : this.naturalKey) {
+					Property p = getProperty(key);
+					if (!p.getType().isDataType() && p.getType() instanceof EntityType) {
+						// expand
+						EntityType entityType = (EntityType)p.getType();
+						for (String subKey : entityType.getExpandedNaturalKey()) {
+							this.expandedNaturalKey.add(key + Settings.PATH_DELIMITER + subKey);
+						}
+					}
+					else {
+						this.expandedNaturalKey.add(key);
+					}
+				}
+			}
+		}
+		return this.expandedNaturalKey;
+	}
 	
 	@Override
 	public void setNaturalKey(String[] keys) {
@@ -969,10 +996,24 @@ public abstract class AbstractType implements EntityType {
 			result = entitiesToChooseFrom.get(
 				(int)(Math.random() * (entitiesToChooseFrom.size() - 1)));
 		}
-		
+
+		boolean castLot = false;
 		for(Property p: getProperties()) {
 			if( ((ExtendedProperty) p).isDataType()) {
-				result.put(p.getName(), ((BasicType)p.getType()).generate(settings, p, rootedAt, entitiesToChooseFrom));
+
+				// Get a new lot value and link all the LinkedChoices fields together
+				// for this entity
+				Generator gen = ((ExtendedProperty)p).getGenerator();
+				if(p != null && gen instanceof LinkedChoices && !castLot) {
+					((LinkedChoices)gen).castLot();
+					castLot = true;
+				}
+
+				result.put(p.getName(), ((BasicType)p.getType()).generate(
+						settings,
+						p,
+						rootedAt,
+						entitiesToChooseFrom));
 			}
 		}
 		result.put(Constants.XOR.TYPE, getInstanceClass().getName());

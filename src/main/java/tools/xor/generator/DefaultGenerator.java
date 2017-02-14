@@ -99,10 +99,10 @@ public class DefaultGenerator implements Generator
         int maximum = Integer.MAX_VALUE;
 
         if (values.length >= 1) {
-            minimum = Integer.parseInt(values[0]);
+            minimum = Double.valueOf(values[0]).intValue();
         }
         if (values.length >= 2) {
-            maximum = Integer.parseInt(values[1]);
+            maximum = Double.valueOf(values[1]).intValue();
         }
 
         int range = maximum - minimum;
@@ -202,18 +202,23 @@ public class DefaultGenerator implements Generator
         return new BigInteger((new Long((long) (minimum.longValue() + (Math.random() * range)))).toString());
     }
 
+    protected int getPosition() {
+        if(getValues().length == 0) {
+            throw new RuntimeException("Choices generator needs to have a minimum of 1 value.");
+        }
+
+        int result =  (int) (Math.random() * (getValues().length+1));
+        if(result == getValues().length) {
+            result--;
+        }
+
+        return result;
+    }
+
     @Override
     public String getStringValue ()
     {
-        int pos = (int) (Math.random() * getValues().length);
-        if(pos == getValues().length) {
-            pos--;
-        }
-        if(pos >= 0) {
-            return getValues()[pos];
-        } else {
-            logger.warn("Choices is empty");
-            return null;
-        }
+        int pos = getPosition();
+        return getValues()[pos];
     }
 }

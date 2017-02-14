@@ -92,8 +92,9 @@ public class DataObjectList {
 				return new ArrayList();
 			}
 		}
-		
-		if(dataObject.getContainmentProperty() != null && !dataObject.getContainmentProperty().isMany()) {
+
+		// Check if the list is being invoked on the wrong properly and fail gracefully
+		if(property == null && dataObject.getContainmentProperty() != null && !dataObject.getContainmentProperty().isMany()) {
 			return new ArrayList();
 		}
 

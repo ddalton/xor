@@ -392,7 +392,7 @@ public class ObjectCreator {
 					if(share && !(existingRootType.isEmbedded() && ((EntityType)newDataObject.getType()).getNaturalKey() == null)) {
 						// Make sure we can re-fetch the BO by the other instance also
 						recordIO(newDataObject.getInstance(), existing);
-						if(newDataObject.getIdentifierValue() != null) {
+						if(newDataObject.getIdentifierValue() != null && !newDataObject.getIdentifierValue().equals(existing.getIdentifierValue())) {
 							// Make sure to evict the temporarily created object by the persistence
 							// layer so it does not save it during flush
 							Set tempId = new HashSet();

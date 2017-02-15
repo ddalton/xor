@@ -171,7 +171,12 @@ public class ExcelExportImport extends AbstractExportImport
                     collectionSheets,
                     idMap);
 
-                // 3. Associate the collections to their owners
+                // 3. Normalize collection entities
+                // We need to swizzle the collection entity with the entity to share
+                // that entity across collections
+                swizzleCollectionElement(idMap, collectionPropertyMap);
+
+                // 4. Associate the collections to their owners
                 // Replace all objectref prefix keys with the actual objects
                 // Replace all collection properties with the array objects
                 link(idMap, collectionPropertyMap);
@@ -297,13 +302,7 @@ public class ExcelExportImport extends AbstractExportImport
 
             // If the collection element is an entity add it to the idMap also
             if (collectionEntryJSON.has(Constants.XOR.ID)) {
-                try {
-                    idMap.put(collectionEntryJSON.getString(Constants.XOR.ID), collectionEntryJSON);
-                }
-                catch (Exception e) {
-                    String longStr = new Long(collectionEntryJSON.getLong(Constants.XOR.ID)).toString();
-                    idMap.put(longStr, collectionEntryJSON);
-                }
+                idMap.put(getId(collectionEntryJSON), collectionEntryJSON);
             }
         }
     }

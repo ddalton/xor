@@ -327,6 +327,31 @@ public abstract class AbstractExportImport implements ExportImport
         collection.put(collectionEntryJSON);
     }
 
+    protected void swizzleCollectionElement (Map<String, JSONObject> idMap,
+                         Map<String, JSONArray> collectionPropertyMap) {
+
+        // Create a new collection pointing to the write entity JSONObject instance
+        for (Map.Entry<String, JSONArray> entry : collectionPropertyMap.entrySet()) {
+            JSONArray swizzled = new JSONArray();
+            JSONArray original = entry.getValue();
+            for(int i = 0; i < original.length(); i++) {
+                JSONObject json = original.getJSONObject(i);
+                if(json.has(Constants.XOR.ID)) {
+                    JSONObject entity = idMap.get(getId(json));
+                    if(entity == null) {
+                        throw new RuntimeException("Cannot find collection entity with id: " + json.get(Constants.XOR.ID));
+                    }
+                    swizzled.put(entity);
+                } else {
+                    swizzled.put(entry);
+                }
+            }
+
+            // replace the collection
+            collectionPropertyMap.put(entry.getKey(), swizzled);
+        }
+    }
+
     protected void link (Map<String, JSONObject> idMap,
                        Map<String, JSONArray> collectionPropertyMap)
     {
@@ -401,6 +426,20 @@ public abstract class AbstractExportImport implements ExportImport
         }
 
         return new HashSet<String>(requiredPropertyPaths);
+    }
+
+    protected String getId (JSONObject json)
+    {
+        String result = null;
+
+        try {
+            result = json.getString(Constants.XOR.ID);
+        }
+        catch (Exception e) {
+            result = new Long(json.getLong(Constants.XOR.ID)).toString();
+        }
+
+        return result;
     }
 
     protected abstract void processEntitySheet (String path, String sheetName, Map<String, JSONObject> idMap) throws

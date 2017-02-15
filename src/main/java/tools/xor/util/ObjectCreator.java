@@ -263,16 +263,6 @@ public class ObjectCreator {
 		}
 
 		if(result == null) {
-			// Handle the case where the natural key points to entities
-			if(targetType instanceof EntityType && ((EntityType)targetType).getNaturalKey() != null) {
-				for(String key: ((EntityType)targetType).getNaturalKey()) {
-					Property pKey = targetType.getProperty(key);
-					if(pKey.getType() instanceof EntityType) {
-						Object keyInstance = ((AbstractProperty)pKey).query(targetInstance);
-						this.createDataObject(null, keyInstance, pKey.getType(), null, null);
-					}
-				}
-			}
 			result = this.createDataObject(null, targetInstance, targetType, container, containmentProperty);
 		}
 
@@ -318,6 +308,19 @@ public class ObjectCreator {
 		// NOTE: dataObject is registered only after its primitive typed properties have
 		// been populated. See AbstractOperation#process
 		if(targetInstance != null) {
+			// Handle the case where the natural key points to entities
+			if(targetType instanceof EntityType && ((EntityType)targetType).getNaturalKey() != null) {
+				for(String key: ((EntityType)targetType).getNaturalKey()) {
+					Property pKey = targetType.getProperty(key);
+					if(pKey.getType() instanceof EntityType) {
+						Object keyInstance = ((AbstractProperty)pKey).query(targetInstance);
+						if(keyInstance != null) {
+							this.createDataObject(null, keyInstance, pKey.getType(), null, null);
+						}
+					}
+				}
+			}
+
 			dataObject = register(dataObject);
 		}
 

@@ -148,10 +148,14 @@ public class DataObjectList {
 				}
 			}
 
+			// For collection of references, need to check if this is a persistent owner
+			boolean isPersistentOwner = (property == null && dataObject.getContainer() != null
+				&& ((BusinessObject)dataObject.getContainer()).isPersistent()) ? true : false;
+
 			// handle those objects that include those that are not persisted here
 			for (Object element : toBeLoaded) {
 				if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
-					if (settings.getAction() == AggregateAction.LOAD || settings.getAction() == AggregateAction.READ) {
+					if (settings.getAction() == AggregateAction.LOAD || settings.getAction() == AggregateAction.READ || isPersistentOwner) {
 						EntityKey surrogateKey = objectCreator.getTypeMapper().getSurrogateKey(
 							element,
 							type);

@@ -158,11 +158,10 @@ public abstract class AbstractOperation implements Operation {
 
 					List<Property> propertyReferences = new ArrayList<Property>();
 					for (Property sourceProperty : properties) {
+						// Simple properties are processed first as we need this information
+						// to form EntityKey using userKey
+						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
 						if(next.isDataType()) {
-
-							// Simple properties are processed first as we need this information
-							// to form EntityKey using userKey
-							next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
 							processAttribute(next);
 						} else {
 							propertyReferences.add(sourceProperty);

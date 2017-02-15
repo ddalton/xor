@@ -91,7 +91,11 @@ public abstract class AbstractExportImport implements ExportImport
 
     protected void setView(Settings settings, String path) throws IOException
     {
-        // set the view
+        // set the view only if the user has not provided a view
+        if(settings.getView() != null) {
+            return;
+        }
+
         // Create view based on the CSV header fields
         AggregateView view = new AggregateView("CSV_IMPORT");
         List attrPath = new ArrayList();

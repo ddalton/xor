@@ -11,6 +11,7 @@ import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.ListType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.Edge;
@@ -422,7 +423,13 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 	public Graph getObjectGraph(Settings settings) {
 
-		build(this.root, settings);
+		if(this.root.getType() instanceof ListType) {
+			for(BusinessObject bo: this.root.getList()) {
+				build(bo, settings);
+			}
+		} else {
+			build(this.root, settings);
+		}
 
 		Iterator vertexIter = getVertices().iterator();
 		Graph<V, String> g = new SparseMultigraph<V, String>();

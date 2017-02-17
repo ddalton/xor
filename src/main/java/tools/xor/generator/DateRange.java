@@ -47,8 +47,9 @@ public class DateRange extends DefaultGenerator
         try {
             if(getValues().length >= 1 ) {
                 minimum = (df.parse(getValues()[0])).getTime();
-            } else if(getValues().length >= 2) {
-                maximum = (df.parse(getValues()[1])).getTime();
+                if(getValues().length >= 2) {
+                    maximum = (df.parse(getValues()[1])).getTime();
+                }
             }
         }
         catch (ParseException e) {

@@ -49,6 +49,7 @@ import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.Type;
 import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.Constants;
 import tools.xor.view.AggregateView;
 import tools.xor.view.HibernateQuery;
 import tools.xor.view.Query;
@@ -72,7 +73,8 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	 * @param data any additional data that needs to be passed by the user
 	 */
 	public HibernatePersistenceOrchestrator(Object sessionContext, Object data) {
-		if(ApplicationConfiguration.config().getBoolean("sql.stacktrace")) {
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.SQL_STACK)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.SQL_STACK)) {
 			Logger logger = Logger.getLogger(SQL_LOGGER);
 			Enumeration<RollingFileAppender> e = logger.getAllAppenders();
 			while (e.hasMoreElements()) {

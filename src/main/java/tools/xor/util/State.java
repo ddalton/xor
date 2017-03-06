@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 
 import tools.xor.AbstractType;
 import tools.xor.AbstractTypeNarrower;
+import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 
@@ -148,11 +149,20 @@ public class State implements Vertex {
 	
 	@Override
 	public String toString() {
+		StringBuilder result = new StringBuilder(getName());
 
-		return getName();
+		if(type instanceof EntityType) {
+			// first check if the graph has been topologically sorted
+			int order = ((EntityType)type).getOrder();
+			if(order >= Constants.XOR.TOPO_ORDERING_START) {
+				result = new StringBuilder("[").append(order).append("]").append(result);
+			}
+		}
+
+		return result.toString();
 
 		// Use simple name for now so it is easier to view in large object graphs
-		// Might need to go bar to FQDN for accuracy reasons
+		// Might need to go to FQDN for accuracy reasons
 		//return AbstractType.getBaseName(getType());
 	}
 }

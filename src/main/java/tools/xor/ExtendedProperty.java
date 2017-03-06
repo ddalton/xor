@@ -359,7 +359,7 @@ public interface ExtendedProperty extends Property {
 	/**
 	 * This is applicable only if the property references a collection and
 	 * if the collection only contains references, for example identifiers.
-	 * @return
+	 * @return true if the property returns a collection of ids
 	 */
 	public boolean isCollectionOfReferences();
 }

@@ -56,6 +56,7 @@ import tools.xor.generator.LinkedChoices;
 import tools.xor.generator.Lot;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.util.AggregatePropertyPaths;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
@@ -227,7 +228,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		initRootType();
 		
 //		initViews();
-		
+
 		initOrder();
 	}
 	
@@ -240,16 +241,23 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				stateGraph.addVertex(new State(type, false));
 			}
 		}
+
 		stateGraph.populateEdges();
-		
 		try {
 			stateGraph.toposort();
 		} catch(RuntimeException re) {
-			logger.warn(GraphUtil.printGraph(stateGraph));
 			throw re;
 		}	
 		
 		stateGraph.orderTypes();
+
+		// Print out the graph if so configured
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
+			Settings settings = new Settings();
+			settings.setGraphFileName("ApplicationStateGraph.png");
+			stateGraph.generateVisual(settings);
+		}
 	}
 	
 	@Override

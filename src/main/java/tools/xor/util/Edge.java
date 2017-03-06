@@ -27,6 +27,8 @@ public final class Edge<V extends Vertex> {
 	private final V start;
 	private final V end;
 	private final boolean qualified;
+	private final boolean reversed; // Denotes that the edge is the reverse of the actual relationship.
+	                                // This is utilized for Topological sorting.
 
 	public String getName() {
 		return name;
@@ -49,10 +51,15 @@ public final class Edge<V extends Vertex> {
 	}
 
 	public Edge(String name, V start, V end, boolean qualify) {
+		this(name, start, end, qualify, false);
+	}
+
+	public Edge(String name, V start, V end, boolean qualify, boolean reversed) {
 		this.name = name;
 		this.start = start;
 		this.end = end;
 		this.qualified = qualify;
+		this.reversed = reversed;
 	}
 
 	public String getQualifiedName() {
@@ -61,6 +68,10 @@ public final class Edge<V extends Vertex> {
 		} else {
 			return name;
 		}
+	}
+
+	public Edge reverse() {
+		return new Edge(name, end, start, false, this.reversed ^ true);
 	}
 	
 	@Override

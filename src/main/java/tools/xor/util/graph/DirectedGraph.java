@@ -139,10 +139,20 @@ public interface DirectedGraph<V, E> {
 
 	/**
 	 * Reverse the start and end vertices to change the 
-	 * direction of the edge
+	 * direction of the edge.
+	 *
 	 * @param edge object
 	 */
 	public void reverseEdge(E edge);
+
+	/**
+	 * This is dependent upon the implementation since the edge object
+	 * needs to be replaced with another edge object.
+	 *
+	 * @param edge object
+	 * @return the reversed edge. This is not the same instance as the given edge.
+	 */
+	public E getReversedEdge(E edge);
 	
 	/**
 	 * Get a topoologically sorted list of the DAG

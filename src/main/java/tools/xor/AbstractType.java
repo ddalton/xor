@@ -137,11 +137,13 @@ public abstract class AbstractType implements EntityType {
 		
 		return result;
 	}
-	
+
+	@Override
 	public int getOrder() {
 		return this.order;
 	}
-	
+
+	@Override
 	public void setOrder(int value) {
 		this.order = value;
 	}
@@ -764,7 +766,9 @@ public abstract class AbstractType implements EntityType {
 
 	@Override
 	public boolean isDataType() {
-		return properties.size() == 0;
+		// Depending on provider implementations, open types might not have their properties populated
+		// and if that is the case, they will not be treated as a BusinessObject
+		return properties == null || properties.size() == 0;
 	}
 
 	@Override
@@ -814,6 +818,10 @@ public abstract class AbstractType implements EntityType {
 	public List<Property> getProperties(int apiVersion) {
 		if(propertiesByVersion.containsKey(apiVersion) ) {
 			return propertiesByVersion.get(apiVersion);
+		}
+
+		if(properties == null) {
+			return null;
 		}
 
 		List<Property> result = null;

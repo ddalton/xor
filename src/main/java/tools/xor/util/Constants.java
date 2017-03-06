@@ -44,6 +44,12 @@ public class Constants {
     	return (indentLevel > 0) ? (new String(new char[indentLevel]).replace("\0", Constants.Format.INDENT_STRING)) : "";
     }
   }
+
+	// Constants related to XOR configuration
+	public static class Config {
+		public static final String TOPO_VISUAL = "toposort.visual";
+		public static final String SQL_STACK = "sql.stacktrace";
+	}
   
   
   // Constants related to XOR serialization between JavaScript client and the Java server
@@ -88,6 +94,9 @@ public class Constants {
 	  public static final String CONS_LENGTH = "_LENGTH_";
 	  public static final String CONS_PRECISION = "_PRECISION_";
 	  public static final String CONS_SCALE = "_SCALE_";
+
+	  // Graph related
+	  public static final int TOPO_ORDERING_START = 1;
 	  
 	  public static String getExcelSheetFullName(Type type, Property property) {
 		  return type.getName() + ":" + property.getName();

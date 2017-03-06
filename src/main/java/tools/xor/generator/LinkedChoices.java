@@ -17,6 +17,8 @@ public class LinkedChoices extends Choices
      * Used to notify the generator that the next entity is being processed.
      * This will help the generator to get the next lot (random) number.
      * The lot number is shared by multiple columns that need to be grouped together.
+     *
+     * @return the lot value
      */
     public int castLot ()
     {

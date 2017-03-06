@@ -702,6 +702,12 @@ public class Settings {
 		return this.graphFileName != null && !"".equals(this.graphFileName.trim());
 	}
 
+	/**
+	 * Set the file name used for graph visuals of the state and object graphs.
+	 * Generation in the PNG format is the only one supported.
+	 *
+	 * @param graphFileName with the png extension.
+	 */
 	public void setGraphFileName (String graphFileName)
 	{
 		this.graphFileName = graphFileName;

@@ -29,7 +29,7 @@ import tools.xor.util.Vertex;
 public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	private static final Logger cfLogger = LogManager.getLogger(Constants.Log.CYCLE_FINDER);
 	
-	public static final int START = 1;
+	public static final int START = Constants.XOR.TOPO_ORDERING_START;
 	
 	private Map<Integer, V> vertices;         // A vertex may not have an edge
 	private Map<V, Collection<E>> inEdges;  // Get all incoming edges to a vertex
@@ -121,8 +121,12 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 		
 		cfLogger.debug("Restoring reversed edges");
 		for(Map.Entry<E, Pair<V>> entry: reversed.entrySet()) {
-			reverseEdge(entry.getKey());
+			performReverse(entry.getKey());
 		}
+
+		// clear
+		unlinked.clear();
+		reversed.clear();
 	}
 
 	@Override 
@@ -225,18 +229,30 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			inEdges.remove(pair.getEnd());
 		}
 	}
-	
-	@Override
-	public void reverseEdge(E edge) {
-		Pair<V> pair = pairByEdge.get(edge);		
-		
+
+	private E performReverse(E edge) {
+		Pair<V> pair = pairByEdge.get(edge);
+
 		// remove existing edge
 		removeEdge(edge);
 
 		// add edge with reversed vertices
+		edge = getReversedEdge(edge);
 		addEdge(edge, pair.getEnd(), pair.getStart());
-		
+
+		return edge;
+	}
+	
+	@Override
+	public void reverseEdge(E edge) {
+		edge = performReverse(edge);
+
 		reversed.put(edge, pairByEdge.get(edge));
+	}
+
+	@Override
+	public E getReversedEdge(E edge) {
+		return edge;
 	}
 	
 	@Override

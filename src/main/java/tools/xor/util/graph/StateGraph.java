@@ -620,26 +620,34 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 	/**
 	 * Renumber the vertices based on topological order
-	 * Cascaded relationships are reversed because it represents
-	 * IS_DEPENDED_BY and required relationships model
-	 * IS_DEPENDED_ON
+	 * Cascaded relationships are reversed because it represents IS_DEPENDED_BY and
+	 * required relationships models IS_DEPENDED_ON
 	 */
 	@Override
 	public List<V> toposort() {
+
+		List<E> edgesToReverse = new ArrayList<E>();
+
 		// Go through all the types and reverse the cascaded relationships
 		for(V state: getVertices()) {
 			if(state.getType().getProperties() != null) {
 				for(Property p: state.getType().getProperties()) {
 					if(outTransitions.get(state) != null && outTransitions.get(state).containsKey(p.getName())) {
-						if(!p.isContainment() && p.isNullable()) {
-							unlinkEdge(outTransitions.get(state).get(p.getName()));
-						}
 						if(p.isContainment()) {
-							reverseEdge(outTransitions.get(state).get(p.getName()));
+							// We process them later as we don't want to be thrashing the edge
+							// reversal depending upon how we traverse the graph
+							edgesToReverse.add(outTransitions.get(state).get(p.getName()));
+						} else if (p.isNullable()) {
+							unlinkEdge(outTransitions.get(state).get(p.getName()));
 						}
 					}
 				}
 			}
+		}
+
+		// perform the reverse
+		for(E edge: edgesToReverse) {
+			reverseEdge(edge);
 		}
 
 		// Remove all self loops
@@ -661,7 +669,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		return sorted;
 	}
-	
+
+	@Override
+	public E getReversedEdge(E edge) {
+		return (E)edge.reverse();
+	}
+
 	public void orderTypes() {
 		for(V state: getVertices()) {
 			int order = getId(state);
@@ -676,18 +689,27 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	public void populateEdges() {
 		// Go through every state and add the edges
-		for(V state: getVertices()) {
-			if(!state.getType().isDataType()) {
-				for(Property p: state.getType().getProperties()) {
-					//sgLogger.debug("checking edge " + p.getName() + " of type " + p.getType().getName() );
-					if(states.containsKey(p.getType()) ) {
-						Edge<State> edge = new Edge<State>(p.getName(), state, states.get(p.getType()));
-						
-						sgLogger.debug("Adding edge " + p.getName() + " to type " + state.getType().getName() );
-						addEdge((E) edge);
+		try {
+			for (V state : getVertices()) {
+				if (!state.getType().isDataType()) {
+					for (Property p : state.getType().getProperties()) {
+						//sgLogger.debug("checking edge " + p.getName() + " of type " + p.getType().getName() );
+						if (states.containsKey(p.getType())) {
+							Edge<State> edge = new Edge<State>(
+								p.getName(),
+								state,
+								states.get(p.getType()));
+
+							sgLogger.debug(
+								"Adding edge " + p.getName() + " to type "
+									+ state.getType().getName());
+							addEdge((E)edge);
+						}
 					}
 				}
 			}
+		} catch (NullPointerException npe) {
+			npe.printStackTrace();
 		}
 	}
 	
@@ -720,6 +742,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	/**
 	 * Generates a random object graph using JSON objects.
 	 *
+	 * @param settings used to control the size of the generated object graph
 	 * @return the generated object graph
 	 */
 	public JSONObject generateObjectGraph (Settings settings)
@@ -843,18 +866,19 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			g.addVertex(vertex);
 		}
 
-		Integer j = 0;
+		Integer dup = 0;
+		Integer unknown = 0;
 		Iterator edgeIter = getEdges().iterator();
 		while(edgeIter.hasNext()) {
 			E edge = (E)edgeIter.next();
 			String edgeName = edge.getName();
-			edgeName = (edgeName == null) ? (j++).toString() : edgeName;
+			edgeName = (edgeName == null) ? (unknown++).toString() : edgeName;
 
 			if (g.containsEdge(edgeName)) {
-				System.out.println("Contains edge: " + edgeName);
-			} else{
-				g.addEdge(edgeName, edge.getStart(), edge.getEnd(), EdgeType.DIRECTED);
+				edgeName += "." + (dup++).toString();
 			}
+
+			g.addEdge(edgeName, edge.getStart(), edge.getEnd(), EdgeType.DIRECTED);
 		}
 
 		return g;

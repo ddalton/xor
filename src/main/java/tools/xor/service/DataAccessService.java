@@ -117,8 +117,14 @@ public interface DataAccessService {
 	public PersistenceType getAccessType();
 
 	/**
-	 * Synchronize any modified views with the view objects
-	 * held in main memory
+	 *
+	 * Go through all the registered shapes and sync them.
+	 * This will synchronize any modified views with the view objects
+	 * held in main memory.
+	 *
+	 * This should be invoked after all the shapes are registered with the
+	 * DataAccessService.
+	 *
 	 * @param am AggregateManager
 	 * @param avVersions views grouped by view name
 	 */

@@ -39,6 +39,7 @@ import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
@@ -141,9 +142,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	@XmlTransient
 	private Set<String> exactAttributes; // These do not have the recursive operand (*) and
 	                                     // and exact match can be performed
-	
+
 	@XmlTransient
-	private DataAccessService DAS; // The data access service with which this view is associated
+	private Shape shape; // The Shape with which this view is associated
 	
 	@XmlTransient
 	private Map<ViewKey, QueryView>  viewCache = new ConcurrentHashMap<ViewKey, QueryView>();	
@@ -287,19 +288,19 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	}
 
 	@XmlTransient
-	public DataAccessService getDAS() {
-		return DAS;
+	public Shape getShape() {
+		return this.shape;
 	}
 
-	public void setDAS(DataAccessService dAS) {
-		DAS = dAS;
-		
+	public void setShape(Shape shape) {
+		this.shape = shape;
+
 		if(children != null) {
 			for(AggregateView child: children) {
-				child.setDAS(dAS);
+				child.setShape(shape);
 			}
-		}		
-	}	
+		}
+	}
 
 	public List<String> getAttributeList() {
 		if(attributeList == null && children != null) { // UNION functionality
@@ -430,7 +431,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 			}
 		}
 		
-		result.setDAS(getDAS());
+		result.setShape(getShape());
 
 		return result;
 	}
@@ -514,7 +515,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 			throw new IllegalStateException("Cannot refer to more than one view in an attribute: " + attribute);
 		}
 		String viewName = getViewReference(attribute);
-		AggregateView view = getDAS().getView(viewName);
+		AggregateView view = getShape().getView(viewName);
 
 		if(!view.isExpanded()) {
 			view.expand();

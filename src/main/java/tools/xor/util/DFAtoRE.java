@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 
 import tools.xor.Property;
 import tools.xor.Type;
+import tools.xor.service.Shape;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 
@@ -57,10 +58,10 @@ public class DFAtoRE {
 	public DFAtoRE() {
 	}
 
-	public DFAtoRE(Type aggregateType) {
+	public DFAtoRE(Type aggregateType, Shape shape) {
 		this.aggregateType = aggregateType;
-		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType);
-		buildDFA();
+		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType, shape);
+		buildDFA(shape);
 		DFAtoNFA.processInheritance(this.stateGraph);
 		solve();
 	}
@@ -649,10 +650,11 @@ public class DFAtoRE {
 	 * This changes the state graph
 	 * 
 	 * @param type to set
+	 * @param shape on which the state graph is based
 	 */
-	public void setAggregateType(Type type) {
+	public void setAggregateType(Type type, Shape shape) {
 		this.aggregateType = type;
-		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType);
+		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType, shape);
 	}
 
 	public void addState(State state) {
@@ -696,14 +698,14 @@ public class DFAtoRE {
 		stateGraph.scopeStart(finishState);
 	}	
 
-	private void buildDFA() {
+	private void buildDFA(Shape shape) {
 		// build the set of states and transitions for the aggregate type
 		StackFrame sf = new StackFrame();
 		State startState = new State(aggregateType, true);
 		stateGraph.addVertex(startState);
 		sf.navigationPath.push(startState);
 		
-		execute(sf);
+		execute(sf, shape);
 	}
 	
 	/**
@@ -730,7 +732,7 @@ public class DFAtoRE {
 		}
 
 		State startState = new State(type, true);
-		StateGraph<State, Edge<State>> constrainedGraph = new StateGraph<State, Edge<State>>(type);
+		StateGraph<State, Edge<State>> constrainedGraph = new StateGraph<State, Edge<State>>(type, aggregateView.getShape());
 		constrainedGraph.addVertex(startState);
 		
 		for(String attrPath: aggregateView.getAttributeList()) {
@@ -744,11 +746,11 @@ public class DFAtoRE {
 		Stack<State> navigationPath = new Stack<State>();		
 	}	
 	
-	protected void execute(StackFrame sf) {
+	protected void execute(StackFrame sf, Shape shape) {
 		State state = sf.navigationPath.peek();
 		Type type = state.getType();
 		for(Property childProperty: type.getProperties()) {
-			Type propertyType = GraphUtil.getPropertyType(childProperty);
+			Type propertyType = GraphUtil.getPropertyEntityType(childProperty, shape);
 
 			// Don't walk through reference associations unless they are required
 			if(childProperty != null && !childProperty.isContainment() && childProperty.isNullable() )
@@ -779,7 +781,7 @@ public class DFAtoRE {
 				// Don't follow for required reference association
 				if(processEndState && (childProperty == null || childProperty.isContainment())) {
 					sf.navigationPath.push(endState);
-					execute(sf);
+					execute(sf, shape);
 				}
 			}
 		}

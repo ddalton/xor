@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
+import tools.xor.service.Shape;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
 import tools.xor.util.DFAtoRE.UnionExpression;
@@ -47,11 +48,11 @@ public class AggregatePropertyPaths {
 				SimpleType.class.isAssignableFrom(property.getType().getClass());
 	}
 	
-	public static Set<String> enumerate(Type aggregateType) {
+	public static Set<String> enumerate(Type aggregateType, Shape shape) {
 		Set<String> paths = aggregatePaths.get(aggregateType);
 
 		if(!aggregatePaths.containsKey(aggregateType)) { 
-			DFAtoRE dfaRE = new DFAtoRE(aggregateType);
+			DFAtoRE dfaRE = new DFAtoRE(aggregateType, shape);
 			Map<State, Expression> expressions = dfaRE.getRegEx();
 
 			paths  = new HashSet<String>();

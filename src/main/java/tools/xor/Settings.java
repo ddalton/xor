@@ -19,14 +19,14 @@
 
 package tools.xor;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,7 +45,7 @@ import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
-import tools.xor.service.AggregateManager;
+import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
 
@@ -295,11 +295,11 @@ public class Settings {
 		return this.associationSettings;
 	}
 	
-	public void init(AggregateManager am) {
-		init(this.view, null, am);
+	public void init(Shape shape) {
+		init(this.view, null, shape);
 	}
 
-	public void init(AggregateView aView, Map<String, String> queryParams, AggregateManager am) {
+	public void init(AggregateView aView, Map<String, String> queryParams, Shape shape) {
 
 		this.view = aView;
 		if(this.view == null) {
@@ -307,7 +307,7 @@ public class Settings {
 				throw new RuntimeException("EntityType is required to resolve the default view");
 			}
 			//this.view = am.getDAS().getView( AbstractType.getViewName(entityType) );
-			this.view = am.getDAS().getView((EntityType) entityType);
+			this.view = shape.getView((EntityType)entityType);
 		} else if(view.getName() == null || "".equals(view.getName().trim())) {
 			throw new IllegalStateException("A name for the AggregateView is required");
 		}
@@ -315,7 +315,7 @@ public class Settings {
 		if(associationSettings != null && associationSettings.size() > 0) {
 			// Make a copy of the view and enhance it with the associations needed to be traversed
 			view = view.copy();
-			view.getStateGraph((EntityType) entityType).enhance(associationSettings, am);
+			view.getStateGraph((EntityType) entityType).enhance(associationSettings, shape);
 		}
 
 		this.filters = populateFilters(queryParams);

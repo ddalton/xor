@@ -63,7 +63,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Type dir = das.getType(Directory.class);
 		AggregateView view = aggregateManager.getDAS().getView((EntityType) dir);
 
-		Set<String> paths = AggregatePropertyPaths.enumerate(dir);
+		Set<String> paths = AggregatePropertyPaths.enumerate(dir, das.getShape());
 		System.out.println("********* Directory model paths **********");
 		for(String path: paths) {
 			System.out.println(path);
@@ -89,7 +89,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type person = das.getType(Person.class);
-		Set<String> paths = AggregatePropertyPaths.enumerate(person);
+		Set<String> paths = AggregatePropertyPaths.enumerate(person, das.getShape());
 
 		assert(paths.size() > 0);
 		assert(paths.contains("userName"));
@@ -132,7 +132,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type task = das.getType(Task.class);
-		Set<String> paths = AggregatePropertyPaths.enumerate(task);
+		Set<String> paths = AggregatePropertyPaths.enumerate(task, das.getShape());
 
 		assert(paths.size() > 0);
 		
@@ -153,7 +153,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 				);
 		
 		Type patent = das.getType(Patent.class);
-		paths = AggregatePropertyPaths.enumerate(patent);
+		paths = AggregatePropertyPaths.enumerate(patent, das.getShape());
 		// Print the paths
 		Level oldLevel = logger.getLevel();
 		//logger.setLevel(Level.DEBUG);
@@ -190,7 +190,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t3 = new Edge(INPUT_B, stateB, stateB);
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 
 		re.getGraph().addEdge(t1);
 		re.getGraph().addEdge(t2);
@@ -239,7 +239,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateC, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 
 		// A is both start and finish state
 		stateA.setFinishState(true);
@@ -310,7 +310,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 
 		stateD.setFinishState(true);
 		
@@ -367,7 +367,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 		
 		stateB.setFinishState(true);
 
@@ -424,7 +424,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 		
 		// A is both start and finish state
 		stateA.setFinishState(true);
@@ -482,7 +482,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 		
 		stateC.setFinishState(true);
 		
@@ -527,7 +527,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t2 = new Edge(INPUT_C, stateB, stateC);	
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A);
+		re.setAggregateType(A, aggregateManager.getDAS().getShape());
 
 		stateC.setFinishState(true);
 		
@@ -547,7 +547,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		Type task = das.getType(Task.class);
 		
-		DFAtoRE re = new DFAtoRE(task);
+		DFAtoRE re = new DFAtoRE(task, das.getShape());
 		Map<State, Expression> regEx = re.getRegEx();
 		
 		for(State state: regEx.keySet()) {

@@ -30,6 +30,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
+import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
@@ -50,10 +51,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	private Map<Type, V> states = new HashMap<Type, V>();
 	private Map<V, Map<String, E>> outTransitions = new HashMap<V, Map<String, E>>(); 
 	private Map<Type, List<Property>> attrByType = new HashMap<Type, List<Property>>();
+	private Shape shape; // The shape of type system on which this state graph is based
 	
-	public StateGraph(Type aggregateRoot) {
+	public StateGraph(Type aggregateRoot, Shape shape) {
 		super();
-		this.root = aggregateRoot; 
+		this.root = aggregateRoot;
+		this.shape = shape;
 	}
 	
 	public V getRootState() {
@@ -133,7 +136,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 */
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
 		
-		StateGraph<V, E> result = new StateGraph<V, E>(this.root);
+		StateGraph<V, E> result = new StateGraph<V, E>(this.root, this.shape);
 		
 		Map<V, V> oldNew = new HashMap<V, V>();
 		for(V v: getVertices()) {
@@ -169,6 +172,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * @return list of properties
 	 */
 	public List<Property> next(Type type) {
+
+		// Ensure the type is coerced to the correct shape
+		if(shape != null) {
+			type = shape.getType(type.getName());
+		}
+
 		if(attrByType.containsKey(type)) {
 			return attrByType.get(type);
 		}
@@ -250,9 +259,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * We cannot just rebuild a part of the state graph with new state graph if we don't account for the sharing.
 	 * 
 	 * @param associations new properties e.g., open properties being added to the state graph
-	 * @param am used to obtain the type service 
+	 * @param shape of the type being enhanced
 	 */
-	public void enhance(List<AssociationSetting> associations, AggregateManager am) {
+	public void enhance(List<AssociationSetting> associations, Shape shape) {
 
 		if(sgLogger.isDebugEnabled()) {
 			sgLogger.debug("Enhancing the state graph with associations/Types");
@@ -270,7 +279,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		List<EntityType> types = new ArrayList<EntityType>();
 		for(AssociationSetting assoc: associations) {
 			if(assoc.getMatchType() == MatchType.TYPE) {
-				Type type = am.getDAS().getType(assoc.getEntityClass());
+				Type type = shape.getType(assoc.getEntityClass());
 				if(type == null) {
 					throw new RuntimeException("Unable to get the type for class: " + assoc.getClass().getName());
 				}
@@ -285,7 +294,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		for(EntityType type: types) {
 			//System.out.println("Type: " + type.getName());
-			extend(type, am);
+			extend(type, shape);
 		}
 
 	}
@@ -294,9 +303,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 *  Probably should be called before create(String path...)
 	 * 
 	 * @param additionalType to extend
-	 * @param am AggregateManager
+	 * @param shape of the type being extended
 	 */
-	public void extend(EntityType additionalType, AggregateManager am) {
+	public void extend(EntityType additionalType, Shape shape) {
 		if(this.states.containsKey(additionalType)) {
 			logger.warn("Already includes the type being extended: " + additionalType.getName());
 		}
@@ -304,7 +313,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		if(additionalType.isDataType()) {
 			throw new RuntimeException("Type " + additionalType.getName() + " has to be an entity type");
 		}
-		StateGraph<State, Edge<State>> addendum = am.getDAS().getView((EntityType) additionalType)
+		StateGraph<State, Edge<State>> addendum = shape.getView((EntityType)additionalType)
 				.getStateGraph((EntityType) additionalType)
 				.copy((Map<Type, State>) this.states);
 		
@@ -331,7 +340,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	// TODO: this does not handle inheritance. @see DFAtoNFA
 	private void link(State from, State to) {
 		for(Property property: from.getType().getProperties()) {
-			Type propertyType = GraphUtil.getPropertyType(property);
+			Type propertyType = GraphUtil.getPropertyEntityType(property, shape);
 			sgLogger.debug(Constants.Format.getIndentString(2) + "Processing property: " + property.getName() + ", property type: " + propertyType.getName());
 			/*
 			System.out.println(
@@ -377,7 +386,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				logger.error("Unable to add unknown attribute to state graph: " + attribute + " to state: " + current.getType().getName());
 				return;
 			}
-			Type propertyType = GraphUtil.getPropertyType(childProperty);
+			Type propertyType = GraphUtil.getPropertyEntityType(childProperty, shape);
 			if(propertyType.isDataType()) {
 				// This is an attribute of this state
 				current.addAttribute(childProperty.getName());
@@ -588,7 +597,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 		
 		for(Property p: type.getProperties()) {
-			if(p.getType().isDataType() && !p.isMany()) {
+			Type propertyType = GraphUtil.getPropertyType(p, shape);
+			if(propertyType.isDataType() && !p.isMany()) {
 				StringBuilder attrPath = new StringBuilder(regionNode.getAnchorPath());
 				attrPath.append(Settings.PATH_DELIMITER);
 				attrPath.append(p.getName());
@@ -600,7 +610,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					// Process a type interior to a region
 					processRegion(
 							regionRoot, 
-							new QueryView(regionNode, p.getName(), p.getType() ),
+							new QueryView(regionNode, p.getName(), propertyType ),
 							result,
 							processed);
 				} else {
@@ -693,12 +703,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			for (V state : getVertices()) {
 				if (!state.getType().isDataType()) {
 					for (Property p : state.getType().getProperties()) {
-						//sgLogger.debug("checking edge " + p.getName() + " of type " + p.getType().getName() );
-						if (states.containsKey(p.getType())) {
+						Type propertyType = GraphUtil.getPropertyType(p, shape);
+						//sgLogger.debug("checking edge " + p.getName() + " of type " + propertyType.getName() );
+						if (states.containsKey(propertyType)) {
 							Edge<State> edge = new Edge<State>(
 								p.getName(),
 								state,
-								states.get(p.getType()));
+								states.get(propertyType));
 
 							sgLogger.debug(
 								"Adding edge " + p.getName() + " to type "
@@ -799,12 +810,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						continue;
 					}
 
-					Type targetType = extendedProperty.getType();
-					Type targetEntityType = targetType;
-					if (extendedProperty.isMany()) {
-						targetEntityType = extendedProperty.getElementType();
-					}
-					Object target;
+					Type targetType = GraphUtil.getPropertyType(extendedProperty, shape);
+					Type targetEntityType = GraphUtil.getPropertyEntityType(extendedProperty, shape);
 
 					State state = states.get(targetEntityType);
 
@@ -815,7 +822,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 					String objectPath = Constants.XOR.walkDown(path, property);
 					//target = ((BasicType)targetType).generate(settings, extendedProperty, path);
-					target = ((BasicType)targetType).generate(
+					Object target = ((BasicType)targetType).generate(
 						settings,
 						extendedProperty,
 						entity,

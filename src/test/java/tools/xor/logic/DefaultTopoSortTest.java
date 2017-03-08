@@ -37,7 +37,7 @@ public class DefaultTopoSortTest {
 		State task = new State(chapterType, false);	
 		State category = new State(categoryType, false);
 		State facet = new State(FacetType, false);
-		StateGraph<State, Edge<State>> dg = new StateGraph<State, Edge<State>>(chapterType);
+		StateGraph<State, Edge<State>> dg = new StateGraph<State, Edge<State>>(chapterType, das.getShape());
 		
 		dg.addVertex(category);
 		dg.addVertex(task);

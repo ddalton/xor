@@ -13,7 +13,7 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
    3. SQL
    4. Stored procedure
 5. Support Excel import/export for Perf data population
-
+6. Shape support - type of versioning
 
 
 
@@ -120,23 +120,3 @@ http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/JavaDocumentAPIB
 http://stackoverflow.com/questions/13121062/what-is-the-exact-datastore-and-memcache-entity-size-limit-and-how-is-it-calc
 
 
-
-
-Versioning
-==========
-The viewFiles folder will have versions folders underneath it, e.g., 
-
-20
-19
-18
-17
-
-Each version folder will have only those views that have changed.
-A function called regenerate will merge all views valid until a certain version to keep the versions manageable
-and also to deprecate old versions.
-
-so e.g., merge(16) will regenerate all views not present in versions 17 and higher
-
-Additionally, types whose structure has been changed in an non-supportable way will need to be 
-marked in the AggregateManager along with the minimum version and a maxium version if that type is no longer
-available. If the type is not listed here then it is supported across all versions.

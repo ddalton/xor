@@ -90,7 +90,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		settings.addAssociation(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		settings.setEntityType(taskType);
-		settings.init(aggregateManager);
+		settings.init(das.getShape());
 		
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		settings.setAssociationStrategy(new TestAssociationStrategy()); // Explicitly set the association strategy if not going through the AggregateManager

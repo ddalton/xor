@@ -1079,7 +1079,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
 		settings.addAssociation(new AssociationSetting(Person.class));
-		settings.init(aggregateManager);
+		settings.init(das.getShape());
 		StateGraph sg = settings.getView().getStateGraph(taskType);
 
 		settings.setSparseness(1.0f);
@@ -1111,7 +1111,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
 		settings.addAssociation(new AssociationSetting(Person.class));
-		settings.init(aggregateManager);
+		settings.init(das.getShape());
 		StateGraph sg = settings.getView().getStateGraph(taskType);
 
 		JSONObject task = (JSONObject) sg.generateObjectGraph(new Settings());
@@ -1160,7 +1160,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		settings.setEntityType(taskType);
 		settings.addAssociation(new AssociationSetting(Person.class));
-		settings.init(aggregateManager);
+		settings.init(das.getShape());
 		//settings.setPostFlush(true);
 
 		// Try and persist task 1 now

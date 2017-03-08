@@ -68,7 +68,7 @@ public class MetaModel {
 	public List<String> getAttributePaths(String aggregateName) {
 		Type type = getDAS().getType(aggregateName);
 		List<String> paths = new ArrayList<String>();
-		paths.addAll(AggregatePropertyPaths.enumerate(type));
+		paths.addAll(AggregatePropertyPaths.enumerate(type, getDAS().getShape()));
 		
 		paths = sortPaths(paths);
 		

@@ -23,7 +23,7 @@ public class TopoSortTest {
 		State stateA = new State(root, false);	
 		State stateB = new State(new TypeTest("B"), false);
 		State stateC = new State(new TypeTest("C"), false);
-		StateGraph<State, Edge<State>> dg = new StateGraph<State, Edge<State>>(root);
+		StateGraph<State, Edge<State>> dg = new StateGraph<State, Edge<State>>(root, null);
 		
 		dg.addVertex(stateA);
 		dg.addVertex(stateB);

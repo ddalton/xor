@@ -25,19 +25,35 @@ import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
+import tools.xor.service.Shape;
 import tools.xor.util.graph.StateGraph;
 
 
 public class GraphUtil {
 
+	public static Type getPropertyType(Property property, Shape shape) {
+		Type result = property.getType();
 
-	public static Type getPropertyType(Property property) {
+		// Coerce to the correct shape
+		if(shape != null) {
+			result = shape.getType(result.getName());
+		}
+
+		return result;
+	}
+
+	public static Type getPropertyEntityType(Property property, Shape shape) {
 		Type result = property.getType();
 		//if(SimpleType.class.isAssignableFrom(result.getClass())) {
 		if(result instanceof SimpleType) {
 			if(property != null && property.isMany())
 				result = ((ExtendedProperty)property).getElementType();
-		}			
+		}
+
+		// Coerce to the correct shape
+		if(shape != null) {
+			result = shape.getType(result.getName());
+		}
 
 		return result;
 	}

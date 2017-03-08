@@ -76,15 +76,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	
 	protected TypeMapper        typeMapper;
 	protected DASFactory        dasFactory;
-	protected Map<String, AggregateView> views = new ConcurrentHashMap<String, AggregateView>();
-
-	// Could change by shape, currently we focus only on the default shape
-	protected Map<Class<?>, Map<String, Object>> narrowedClassByView = new ConcurrentHashMap<Class<?>, Map<String,Object>>();
 
 	protected static final String DEFAULT_SHAPE = "_DEFAULT_";
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
-
-	private volatile boolean needsUpdate;
 	
 	public AbstractDataAccessService(DASFactory factory) {
 		this.dasFactory = factory;
@@ -202,7 +196,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	protected void initOrder(Shape shape) {
 		// State graph of all the entity types in topological order
 		// Entity state graph is most likely a forest, so there is no root state
-		StateGraph<State, Edge<State>> stateGraph = new StateGraph<State, Edge<State>>(null);
+		StateGraph<State, Edge<State>> stateGraph = new StateGraph<State, Edge<State>>(null, shape);
 		for(Type type: getTypes()) {
 			if(EntityType.class.isAssignableFrom(type.getClass())) {
 				stateGraph.addVertex(new State(type, false));
@@ -229,275 +223,54 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	
 	@Override
 	public List<String> getViewNames() {
-		List<String> result = new ArrayList<String>();
-		
-		for(AggregateView view: views.values()) {
-			result.add(view.getName());
-		}
-		
-		return result;
+		return getShape().getViewNames();
 	}	
 	
 	@Override
 	public AggregateView getView(String viewName) {
-		return views.get(viewName);
+		return getShape().getView(viewName);
 	}	
 	
 	@Override
 	public List<AggregateView> getViews() {
-		return new ArrayList<AggregateView>(views.values());
+		return getShape().getViews();
 	}
 	
 	@Override
 	public AggregateView getView(EntityType type) {
-
-		String viewName = AbstractType.getViewName(type);
-		AggregateView result = views.get(viewName);
-
-		if(result == null) {
-			result = new AggregateView(type, viewName);
-			result.setDAS(this);
-			Set<String> paths = AggregatePropertyPaths.enumerate(type);
-			
-			result.setAttributeList(new ArrayList<String>(paths));
-			
-			DFAtoRE dfaRE = new DFAtoRE(type);
-			result.addStateGraph(type, dfaRE.getFullStateGraph());
-
-			views.put(viewName, result);
-		}
-
-		return result;
+		return getShape().getView(type);
 	}
 
 	@Override
 	public void addView(AggregateView view) {
-		if(views.containsKey(view.getName())) {
-			throw new RuntimeException("There is an existing view with this name: " + view.getName());
-		}
-
-		views.put(view.getName(), view);
+		getShape().addView(view);
 	}
 	
 	@Override
 	public AggregateView getBaseView(EntityType type) {
-
-		String viewName = AbstractType.getBaseViewName(type);
-		AggregateView result = views.get(viewName);
-
-		if(result == null) {
-			result = new AggregateView();
-			result.setDAS(this);
-			Set<String> paths = AggregatePropertyPaths.enumerateBase(type);
-			
-			result.setAttributeList(new ArrayList<String>(paths));
-			result.setName(viewName);
-
-			views.put(viewName, result);
-		}
-
-		return result;
-	}		
-	
-	/**
-	 * Expand view references
-	 */
-	private void denormalize() {
-		checkViewCycles();
-		
-		for(AggregateView view: views.values()) {
-			if(view.hasViewReference()) {
-				view.expand();
-			}
-		}
+		return getShape().getBaseView(type);
 	}
 	
 	@Override
 	public void sync(AggregateManager am, Map<String, List<AggregateView>> avVersions) {
-
-		for(List<AggregateView> versions: avVersions.values()) {
-			AggregateView selected = versions.get(0);
-			if(am.getViewVersion() < selected.getVersion()) {
-				throw new IllegalStateException("Unable to find a view for the selected version: " + am.getViewVersion());
-			}
-			for(int i = versions.size()-1; i >= 0; i--) {
-				if(versions.get(i).getVersion() <= am.getViewVersion()) {
-					selected = versions.get(i);
-					break;
-				}
-			}
-
-			selected.setDAS(this);
-			views.put(selected.getName(), selected);
+		for(Shape shape: shapes.values()) {
+			shape.sync(am, avVersions);
 		}
-		denormalize();
-		needsUpdate = true;
 	}
 
 	@Override
 	public void refresh(TypeNarrower typeNarrower) {
-		if(needsUpdate) {
-			if(narrowedClassByView != null) {
-				for(Class<?> clazz: narrowedClassByView.keySet())
-					populateNarrowedClass(clazz, typeNarrower);
-			}
-
-			needsUpdate = false;
-		}
-	}	
-	
-	private void checkViewCycles() {
-		DirectedGraph<AggregateView, Edge> dg = new DirectedSparseGraph<AggregateView, Edge>();
-		
-		// Add the views as state objects
-		for(AggregateView view: views.values()) {
-			Set<String> viewReferences = view.getViewReferences();
-			for(String edge: viewReferences) {
-				AggregateView start = view;
-				AggregateView end = views.get(edge);
-				
-				// self loop
-				if(start == end) {
-					throw new IllegalStateException("Self-loop cycle found in view references: " + edge);
-				}
-				dg.addEdge(new Edge<AggregateView>(edge, start, end), start, end);
-			}
-		}
-		
-		List<List<Vertex>> cycles = dg.getCircuits();
-		if(cycles.size() > 0) {
-			throw new IllegalStateException("Cycle found in view references: " + GraphUtil.printCycles(cycles));
-		}
-			
+		getShape().refresh(typeNarrower);
 	}
 
 	@Override
 	public Class<?> getNarrowedClass(Class<?> entityClass, String viewName) {
-		Map<String, Object> narrowedByView = narrowedClassByView.get(entityClass);
-		Object result = narrowedByView.get(viewName);
-		
-		if(logger.isDebugEnabled()) {
-			logger.debug("AggregateViews#getNarrowedClass(entityClass: " + entityClass.getName()
-					+ ", viewName: " + viewName);			
-			for(Map.Entry<String, Object> entry: narrowedByView.entrySet()) {
-				logger.debug("view: " + entry.getKey() + " narrowed class: " + ((Class<?>)entry.getValue()).getName());
-			}
-			if (result != null) {
-				logger.debug("getNarrowedClass: " + ((Class<?>)result).getName());
-			}
-		}
-		
-		if(result == null)
-			return null; // The entityClass is not applicable for this view
-
-		if(Class.class.isAssignableFrom(result.getClass()))
-			return (Class<?>) result;
-
-		if(Set.class.isAssignableFrom(result.getClass())) {
-			logger.error("Multiple sub-classes found, use a dynamic/custom TypeNarrower class to resolve this");
-			return entityClass;
-		}
-
-		return null;
+		return getShape().getNarrowedClass(entityClass, viewName);
 	}	
 	
 	@Override
 	public void populateNarrowedClass(Class<?> superClass, TypeNarrower typeNarrower) {
-
-		if(narrowedClassByView.get(superClass) != null) // already populated
-			return;
-
-		// Re-build in case the view has changed
-		narrowedClassByView.put(superClass, new HashMap<String, Object>());
-
-		// do the population for all views
-		Map<String, Object> byViews = narrowedClassByView.get(superClass);
-		nextView: for(AggregateView view: views.values()) {
-
-			Class<?> narrowedClass = null;
-			Set multipleNarrowedClass = new HashSet();
-			for(String propertyPath: view.getAttributeList()) {
-				String propertyName = QueryViewProperty.getRootName(propertyPath);
-				Class<?> potentialNarrowedClass = typeNarrower.narrow(superClass, propertyName);
-				if(potentialNarrowedClass == null)
-					continue nextView; // This view property does not exist for this superClass or its sub-classes
-
-				logger.debug("narrowedClass: " + (narrowedClass!=null ? narrowedClass.getName() : "null" )
-						+ ", potentialNarrowedClass: " + potentialNarrowedClass.getName());
-
-				if(narrowedClass == null) {
-					narrowedClass = potentialNarrowedClass;
-				} else {
-					if(!narrowedClass.isAssignableFrom(potentialNarrowedClass))
-						multipleNarrowedClass.add(potentialNarrowedClass);
-					else
-						narrowedClass = potentialNarrowedClass; // Update it
-				}
-			}
-
-			if(multipleNarrowedClass.size() > 0) { // Might contain multiple classes or one or more MultipleClassForPropertyException objects
-				multipleNarrowedClass.add(narrowedClass);
-
-				Object commonClass = findCommonClass(multipleNarrowedClass);
-				if(commonClass != null) {
-					byViews.put(view.getName(), (Class<?>)commonClass);
-
-				}
-			} else
-				byViews.put(view.getName(), narrowedClass);
-		}
-	}
-
-	private Object findCommonClass(Set result) {
-		// First set all the classes to be eligble
-		Map<Class<?>, Boolean> eligibleClass = new HashMap<Class<?>, Boolean>();
-
-		for(Object obj: result) {
-			if(Class.class.isAssignableFrom(obj.getClass()))
-				eligibleClass.put((Class<?>) obj, Boolean.TRUE);
-			else if(MultipleClassForPropertyException.class.isAssignableFrom(obj.getClass())) {
-				MultipleClassForPropertyException me = (MultipleClassForPropertyException) obj;
-				for(Class<?> clazz: me.getMatchedClasses())
-					eligibleClass.put((Class<?>) obj, Boolean.TRUE);					
-			}
-		}
-
-		// markInEligible
-		for(Object obj: result)
-			markInEligible(eligibleClass, (Class<?>) obj);
-
-		Set<Class<?>> multipleCommonClasses = new HashSet<Class<?>>();
-		for(Map.Entry<Class<?>, Boolean> eligibleEntry: eligibleClass.entrySet()) {
-			if(eligibleEntry.getValue())
-				multipleCommonClasses.add(eligibleEntry.getKey());
-		}
-
-		if(multipleCommonClasses.size() == 0)
-			return null;
-		else if(multipleCommonClasses.size() == 1)
-			return multipleCommonClasses.iterator().next();
-		else
-			return multipleCommonClasses;
-	}
-
-	private void markInEligible(Map<Class<?>, Boolean> eligibleClass, Object obj) {
-		next: for( Map.Entry<Class<?>, Boolean> entry : eligibleClass.entrySet()) {
-			if(!entry.getValue()) // already ineligible
-				continue;
-
-			if(Class.class.isAssignableFrom(obj.getClass())) {
-				if( ((Class<?>) obj).isAssignableFrom(entry.getKey()))
-					continue;
-
-			} else if(MultipleClassForPropertyException.class.isAssignableFrom(obj.getClass())) {
-				MultipleClassForPropertyException me = (MultipleClassForPropertyException) obj;
-
-				for(Class<?> clazz: me.getMatchedClasses())
-					if( clazz.isAssignableFrom(entry.getKey()))
-						continue next;
-			}
-			eligibleClass.put(entry.getKey(), Boolean.FALSE);
-		}
+		getShape().populateNarrowedClass(superClass, typeNarrower);
 	}
 
 	/**

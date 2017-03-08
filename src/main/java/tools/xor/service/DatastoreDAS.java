@@ -108,7 +108,9 @@ public class DatastoreDAS extends AbstractDataAccessService {
 	}
 
 	@Override
-	public void define() {
+	public void addShape(String name) {
+
+		Shape shape = getOrCreateShape(name);
 
 		Metamodel metaModel = emf.getMetamodel();
 		Set<EntityType<?>> classMappings = metaModel.getEntities();
@@ -116,34 +118,34 @@ public class DatastoreDAS extends AbstractDataAccessService {
 		logger.info("Getting the list of JPA mapped classes");  		
 		for(EntityType<?> classMapping: classMappings){ 
 			logger.debug("     Adding JPA persisted class: " + classMapping.getName());
-			defineTypes(classMapping);
+			defineTypes(classMapping, shape);
 		}
 
 		// Set the super type
-		defineSuperType();
+		defineSuperType(shape);
 
 		// Set the base types
-		setBaseTypes();		
+		setBaseTypes(shape);
 
 		// Define the properties for the Types 
 		// This will end up defining the simple types
-		defineProperties();	
+		defineProperties(shape);
 		
-		postProcess();			
+		postProcess(shape);
 	}
 
-	protected void defineTypes(EntityType<?> classMapping) {
+	protected void defineTypes(EntityType<?> classMapping, Shape shape) {
 		JPAType dataType = new JPAType(classMapping);
 		logger.debug("Defined data type: " + dataType.getName());
-		addType(classMapping.getJavaType().getName(), dataType);
+		shape.addType(classMapping.getJavaType().getName(), dataType);
 		
 		for(Type type: dataType.getEmbeddableTypes()) {
-			addType(type.getName(), type);
+			shape.addType(type.getName(), type);
 		}
 	}
 
-	protected void defineProperties() {
-		for(Type type: types.values()) {
+	protected void defineProperties(Shape shape) {
+		for(Type type: shape.getUniqueTypes()) {
 			if(JPAType.class.isAssignableFrom(type.getClass())) {
 				JPAType jPAType = (JPAType) type;
 				//jPAType.setProperty(this);
@@ -151,7 +153,7 @@ public class DatastoreDAS extends AbstractDataAccessService {
 		}
 
 		// Link the bi-directional relationship between the properties
-		for(Type type: types.values()) {
+		for(Type type: shape.getUniqueTypes()) {
 			if(JPAType.class.isAssignableFrom(type.getClass())) {
 				JPAType jPAType = (JPAType) type;
 				//jPAType.setOpposite(this);
@@ -159,8 +161,8 @@ public class DatastoreDAS extends AbstractDataAccessService {
 		}		
 	}	
 
-	protected void setBaseTypes() {
-		for(Type type: types.values()) {
+	protected void setBaseTypes(Shape shape) {
+		for(Type type: shape.getUniqueTypes()) {
 			if(JPAType.class.isAssignableFrom(type.getClass())) {
 				
 				JPAType jPAType = (JPAType) type;
@@ -172,28 +174,13 @@ public class DatastoreDAS extends AbstractDataAccessService {
 				Class<?> base = jPAType.getEntityType().getJavaType().getSuperclass();
 
 				if(base != null) {
-					Type baseType = types.get(base.getName());
+					Type baseType = shape.getType(base.getName());
 					if(baseType != null) 
 						baseTypes.add(baseType);
 				}
 				jPAType.setBaseType(baseTypes);
 			}
 		}
-	}
-
-	@Override
-	public List<String> getAggregateList() {
-		List<String> result = new ArrayList<String>();
-
-		Metamodel metaModel = emf.getMetamodel();
-		Set<EntityType<?>> classMappings = metaModel.getEntities();
-
-		for(EntityType<?> classMapping: classMappings){ 
-			defineTypes(classMapping);
-			result.add(classMapping.getJavaType().getName());
-		}		
-		
-		return result;
 	}
 
 	@Override

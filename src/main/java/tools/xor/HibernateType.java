@@ -31,6 +31,7 @@ import org.hibernate.mapping.PersistentClass;
 
 import tools.xor.service.DataAccessService;
 import tools.xor.service.HibernateDAS;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
 public class HibernateType extends AbstractType {
@@ -102,7 +103,7 @@ public class HibernateType extends AbstractType {
 		return getInstanceClass().isAssignableFrom(object.getClass());
 	}
 
-	public void setProperty(HibernateDAS dataAccessService) {
+	public void setProperty(HibernateDAS dataAccessService, Shape shape) {
 		if(properties == null) {
 			// populate the properties for this type
 			properties = new HashMap<String, Property>();	
@@ -113,7 +114,7 @@ public class HibernateType extends AbstractType {
 
 				Type propertyType = dataAccessService.getType(hibernateProperty.getType().getReturnedClass());
 				HibernateProperty property = new HibernateProperty(hibernateProperty, propertyType, this, dataAccessService.getConfiguration());
-				property.init(dataAccessService);
+				property.init(dataAccessService, shape);
 				properties.put(property.getName(), property);
 			}		
 

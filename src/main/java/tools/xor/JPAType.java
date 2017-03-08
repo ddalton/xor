@@ -35,6 +35,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.service.JPADAS;
+import tools.xor.service.Shape;
 
 public class JPAType extends AbstractType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
@@ -107,7 +108,7 @@ public class JPAType extends AbstractType {
 		return getInstanceClass().isAssignableFrom(object.getClass());
 	}
 
-	public void setProperty(JPADAS dataAccessService) {
+	public void setProperty(JPADAS dataAccessService, Shape shape) {
 		if(properties == null) {
 			// populate the properties for this type
 			properties = new HashMap<String, Property>();	
@@ -126,7 +127,7 @@ public class JPAType extends AbstractType {
 					versionProperty = property;
 					logger.debug("JPA version attribute name: " + versionProperty.getName());
 				}
-				property.init(dataAccessService);
+				property.init(dataAccessService, shape);
 				properties.put(property.getName(), property);
 			}		
 		} 		

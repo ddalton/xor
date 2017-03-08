@@ -52,6 +52,7 @@ import tools.xor.event.PropertyEvent;
 import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.I18NUtils;
@@ -497,7 +498,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return result;
 	}	
 
-	public abstract void init(DataAccessService das);
+	public abstract void init(DataAccessService das, Shape shape);
 
 	protected void executePrePropertyLogic(CallInfo ci, Method prePropertyLogic) 
 	{

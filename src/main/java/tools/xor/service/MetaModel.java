@@ -43,13 +43,6 @@ public class MetaModel {
 		return das;
 	}
 
-	public List<String> getAggregateList() {
-		List<String> result = getDAS().getAggregateList();
-		Collections.sort(result);
-		
-		return result;
-	}
-
 	public List<String> getViewList() {
 		List<String> result = getDAS().getViewNames();
 		Collections.sort(result);

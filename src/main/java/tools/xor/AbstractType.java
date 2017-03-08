@@ -55,6 +55,7 @@ import tools.xor.annotation.XorLambda;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LinkedChoices;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
@@ -438,8 +439,9 @@ public abstract class AbstractType implements EntityType {
 	/**
 	 * Initialize both the root entity type and also the parent entity type
 	 * @param das to get the Type
+	 * @param shape of the type
 	 */
-	public void initRootEntityType(DataAccessService das) {
+	public void initRootEntityType(DataAccessService das, Shape shape) {
 		Class<?> rootEntityClass = getInstanceClass();
 
 		Class<?> parentClass = rootEntityClass.getSuperclass();		
@@ -455,7 +457,7 @@ public abstract class AbstractType implements EntityType {
 			parentClass = parentClass.getSuperclass();
 		}
 
-		rootEntityType = (EntityType) das.getType(rootEntityClass);
+		rootEntityType = (EntityType) shape.getType(rootEntityClass);
 	}	
 	
 	@Override

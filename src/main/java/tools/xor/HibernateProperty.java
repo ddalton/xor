@@ -35,6 +35,7 @@ import org.hibernate.type.CollectionType;
 
 import tools.xor.service.DataAccessService;
 import tools.xor.service.HibernateDAS;
+import tools.xor.service.Shape;
 import tools.xor.util.HibernateUtil;
 
 public class HibernateProperty extends AbstractProperty {
@@ -122,16 +123,16 @@ public class HibernateProperty extends AbstractProperty {
 	}		
 
 	@Override
-	public void init(DataAccessService das) {
+	public void init(DataAccessService das, Shape shape) {
 		HibernateDAS hibernateDAS = (HibernateDAS) das;
 
 		if(isMany()) {
 			if(hibernateProperty.getType().isCollectionType()) {
 				CollectionType collType = (CollectionType) hibernateProperty.getType();
 				CollectionPersister cp = HibernateUtil.getCollectionPersister(hibernateDAS.getSessionFactory(), collType);
-				keyType = (cp.getIndexType() == null) ? null : das.getType(cp.getIndexType().getReturnedClass());
+				keyType = (cp.getIndexType() == null) ? null : shape.getType(cp.getIndexType().getReturnedClass());
 				
-				elementType = das.getType(cp.getElementType().getReturnedClass());			
+				elementType = shape.getType(cp.getElementType().getReturnedClass());
 			}
 		} 
 	}

@@ -26,7 +26,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.service.DataAccessService;
-
+import tools.xor.service.Shape;
 
 /**
  * SimpleType have no properties
@@ -59,7 +59,7 @@ public class ImmutableJsonType extends ExternalType {
 	}	
 
 	@Override
-	public void setProperty(DataAccessService dataAccessService) {
+	public void setProperty(DataAccessService dataAccessService, Shape shape) {
 		if(properties == null) {
 			// populate the properties for this type
 			properties = new HashMap<String, Property>();	
@@ -69,19 +69,19 @@ public class ImmutableJsonType extends ExternalType {
 				if(externalClass == null)
 					throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 
-				Type propertyType = dataAccessService.getExternalType(domainProperty.getType().getName());
+				Type propertyType = shape.getExternalType(domainProperty.getType().getName());
 				Type elementType = null;
 				if(((ExtendedProperty)domainProperty).getElementType() != null) {
-					elementType = dataAccessService.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
+					elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
 				}
 				if(propertyType == null) {
 					Class<?> propertyClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 					logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
-					propertyType = dataAccessService.getType(propertyClass);
+					propertyType = shape.getType(propertyClass);
 				}
 				ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this, elementType);
 				
-				dynamicProperty.init(dataAccessService);
+				dynamicProperty.init(dataAccessService, shape);
 				logger.debug("[" + getName() + "] Domain property name: " + abstractProperty.getName() + ", type name: " + dynamicProperty.getJavaType());
 				properties.put(dynamicProperty.getName(), dynamicProperty);
 			}			

@@ -70,6 +70,7 @@ import org.apache.log4j.Logger;
 
 import tools.xor.service.DataAccessService;
 import tools.xor.service.JPADAS;
+import tools.xor.service.Shape;
 
 public class JPAProperty extends AbstractProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -239,17 +240,17 @@ public class JPAProperty extends AbstractProperty {
 
 	
 	@Override
-	public void init(DataAccessService das) {
+	public void init(DataAccessService das, Shape shape) {
 		if(isOpenContent() && attribute != null) {
 			throw new IllegalStateException("Cannot define an open property with the same name as a persistence managed property");
 		}
 		
 		if( attribute != null && PluralAttribute.class.isAssignableFrom(attribute.getClass()) ) {
 			PluralAttribute<?, ?, ?> pluralAttribute = (PluralAttribute<?, ?, ?>) attribute;
-			elementType = das.getType(pluralAttribute.getElementType().getJavaType());
+			elementType = shape.getType(pluralAttribute.getElementType().getJavaType());
 			if(MapAttribute.class.isAssignableFrom(attribute.getClass())) {
 				MapAttribute<?, ?, ?> mapAttribute = (MapAttribute<?, ?, ?>) attribute;
-				keyType = das.getType(mapAttribute.getKeyJavaType());
+				keyType = shape.getType(mapAttribute.getKeyJavaType());
 			}
 		}		
 	}	

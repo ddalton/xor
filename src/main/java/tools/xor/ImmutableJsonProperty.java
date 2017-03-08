@@ -39,6 +39,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
 /**
@@ -447,12 +448,12 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}	
 	
 	@Override
-	protected Type getExternalKeyType(DataAccessService das) {
-		return das.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
+	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
+		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
 	}	
 	
 	@Override
-	protected Type getExternalElementType(DataAccessService das) {
-		return das.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
+	protected Type getExternalElementType(DataAccessService das, Shape shape) {
+		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
 	}	
 }

@@ -74,84 +74,60 @@ import tools.xor.view.QueryViewProperty;
 public abstract class AbstractDataAccessService implements DataAccessService {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	protected TypeMapper        typeMapper;	
-	protected Map<String, Type> types = new ConcurrentHashMap<String, Type>();
-	protected Map<String, Type> derivedTypes = new ConcurrentHashMap<String, Type>();	
+	protected TypeMapper        typeMapper;
 	protected DASFactory        dasFactory;
 	protected Map<String, AggregateView> views = new ConcurrentHashMap<String, AggregateView>();
+
+	// Could change by shape, currently we focus only on the default shape
 	protected Map<Class<?>, Map<String, Object>> narrowedClassByView = new ConcurrentHashMap<Class<?>, Map<String,Object>>();
+
+	protected static final String DEFAULT_SHAPE = "_DEFAULT_";
+	protected Map<String, Shape> shapes; // Contains all the initialized shapes
 
 	private volatile boolean needsUpdate;
 	
 	public AbstractDataAccessService(DASFactory factory) {
 		this.dasFactory = factory;
+		this.shapes = new HashMap<>();
+		shapes.put(DEFAULT_SHAPE, new Shape(DEFAULT_SHAPE, null, this));
 	}
 
-	protected void addDerivedType(String className, Type type) {
-		addType(className, type, derivedTypes);
+	@Override
+	public Shape getShape() {
+		return shapes.get(DEFAULT_SHAPE);
+	}
+
+	protected Shape getOrCreateShape(String name) {
+		Shape shape = shapes.get(name);
+		if(shape == null) {
+			shape = new Shape(name, shapes.get(DEFAULT_SHAPE), this);
+			shapes.put(name, shape);
+		}
+
+		return shape;
 	}
 
 	@Override
 	public void addOpenType(OpenType type) {
-		if(types.containsKey(type.getName())) {
-			throw new RuntimeException("A type with the same name exists, please choose a different name for the open type: " + type.getName());
-		}
-		type.setProperty(this);
-		addType(type.getName(), type);
-
-		Class<?> derivedClass = typeMapper.toExternal(type.getInstanceClass());
-		if(derivedClass != null) {
-			ExternalType derived = typeMapper.createExternalType((EntityType)type, derivedClass);
-			derivedTypes.put(derived.getName(), derived);
-			derived.setProperty(this);
-			setBiDirectionOnDerivedType(derived);
-		}
-	}
-
-	protected void addType(String className, Type type) {
-		addType(className, type, types);
-	}
-
-	protected void addType(String className, Type type, Map<String, Type> typeMap) {
-		typeMap.put(className, type);
-
-		if(EntityType.class.isAssignableFrom(type.getClass())) {
-			((EntityType)type).setDAS(this);
-			String entityName = ((EntityType)type).getEntityName();
-			if(entityName != null && !className.equals(entityName)) {
-				if(typeMap.containsKey(entityName)) {
-					if(!className.equals(typeMap.get(entityName).getInstanceClass().getName()))
-						throw new RuntimeException("Type " + typeMap.get(entityName).getName() + " already exists for entityName: " + entityName);
-				} else
-					typeMap.put(entityName, type);
-			}
-		}
+		getShape().addOpenType(type);
 	}
 	
 	@Override
 	public Type getType(Class<?> clazz) {
 
-		Type result = getType(clazz.getName());
-
-		// create a Type object for this class
-		if(result == null) {
-			//result = new SimpleType(clazz);
-			result = SimpleTypeFactory.getType(clazz, this);
-
-			addType(clazz.getName(), result);
-		}
-
-		return result;
+		return getShape().getType(clazz);
 	}
 
 	/**
 	 * This is a performance intensive method. So we now define subtypes as and when they are
 	 * needed.
 	 * For this to work we save the DataAccessService instance along with the EntityType.
+	 *
+	 * @param shape of the type being defined
 	 */
-	protected void defineSuperType (){
+	protected void defineSuperType (Shape shape){
 		List<EntityType> entityTypes = new ArrayList<EntityType>();
-		for(Type type: getUniqueTypes()) {
+		for(Type type: shape.getUniqueTypes()) {
 			if(!EntityType.class.isAssignableFrom(type.getClass()))
 				continue;
 			
@@ -176,26 +152,17 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	@Override
 	public Type getExternalType(Class<?> clazz) {
-		Type result = derivedTypes.get(clazz.getName());
-
-		// create a Type object for this class
-		if (result == null) {
-			//result = new SimpleType(clazz);
-			result = SimpleTypeFactory.getType(clazz, this);
-			addDerivedType(clazz.getName(), result);
-		}
-
-		return result;
-	}	
+		return getShape().getExternalType(clazz);
+	}
 
 	@Override
 	public Type getType(String name) {
-		return types.get(name);
+		return getShape().getType(name);
 	}
 
 	@Override
 	public Type getExternalType(String name) {
-		return derivedTypes.get(name);
+		return getShape().getExternalType(name);
 	}	
 
 	@Override
@@ -205,7 +172,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	@Override
 	public List<Type> getTypes() {
-		return new ArrayList<Type>(getUniqueTypes());
+		return new ArrayList<Type>(getShape().getUniqueTypes());
 	}	
 
 	@Override
@@ -219,20 +186,20 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
-	protected void postProcess() {
+	protected void postProcess(Shape shape) {
 
-		initPositionProperty();
+		initPositionProperty(shape);
 		
-		initDerived();
+		initDerived(shape);
 
-		initRootType();
+		initRootType(shape);
 		
-//		initViews();
+//		initViews(shape);
 
-		initOrder();
+		initOrder(shape);
 	}
 	
-	protected void initOrder() {
+	protected void initOrder(Shape shape) {
 		// State graph of all the entity types in topological order
 		// Entity state graph is most likely a forest, so there is no root state
 		StateGraph<State, Edge<State>> stateGraph = new StateGraph<State, Edge<State>>(null);
@@ -255,7 +222,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
 			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
 			Settings settings = new Settings();
-			settings.setGraphFileName("ApplicationStateGraph.png");
+			settings.setGraphFileName("ApplicationStateGraph_" + shape.getName() + ".png");
 			stateGraph.generateVisual(settings);
 		}
 	}
@@ -536,101 +503,29 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	/**
 	 * This can be a performance issue depending on how many entities there are in the system
 	 */
-	private void initViews() {
-		for(Type type: types.values()) {
+	private void initViews(Shape shape) {
+
+		for(Type type: shape.getUniqueTypes()) {
 			if(EntityType.class.isAssignableFrom(type.getClass())) {
 				getView((EntityType) type);
 			}
 		}
 	}
-	
-	private Set<Type> getUniqueTypes() {
-		return new HashSet<Type>(types.values());
-	}
-	
-	private Set<Type> getUniqueDerivedTypes() {
-		return new HashSet<Type>(derivedTypes.values());
+
+	private void initRootType(Shape shape) {
+		shape.initRootType();
 	}
 
-	private void initRootType() {
-		for (Type type : getUniqueTypes()) {
-			if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
-				((AbstractType)type).initRootEntityType(this);
-			}
-		}
-		for (Type type : getUniqueDerivedTypes()) {
-			if (AbstractType.class.isAssignableFrom(type.getClass())) {
-				((AbstractType)type).initRootEntityType(this);
-			}
-		}			
-	}
-	
-	private void initPositionProperty() {
-		for (Type type : getUniqueTypes()) {
-			if (AbstractType.class.isAssignableFrom(type.getClass())) {
-				((AbstractType)type).initPositionProperty();
-			}
-		}
+	private void initPositionProperty(Shape shape) {
+		shape.initPositionProperty();
 	}
 
-	private boolean isOpenDomainType(ExternalType derivedType) {
-		// If the domain type is open, then we cannot
-		// infer the properties. For e.g., an open domain type
-		// does not have a Java class and is populated dynamically
-		return derivedType.getDomainType().isOpen();
-	}
-
-	protected void initDerived() {
-		for(Type type: getUniqueTypes()) {
-			if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
-				continue;
-			}
-			Class<?> derivedClass = typeMapper.toExternal(type.getInstanceClass());
-			if(derivedClass != null) {
-				Type derived = typeMapper.createExternalType((EntityType) type, derivedClass);
-				derivedTypes.put(derived.getName(), derived);
-			}
-		}
-
-		// init the derived properties
-		for (Type type : getUniqueDerivedTypes()) {
-			if (ExternalType.class.isAssignableFrom(type.getClass())) {
-				ExternalType derivedType = (ExternalType) type;
-
-				if(isOpenDomainType(derivedType)) {
-					continue;
-				}
-				derivedType.setProperty(this);
-			}
-		}		
-
-		for (Type type : getUniqueDerivedTypes()) {
-			if (!type.isOpen() && ExternalType.class.isAssignableFrom(type.getClass())) {
-				ExternalType derivedType = (ExternalType) type;
-
-				if(isOpenDomainType(derivedType)) {
-					continue;
-				}
-				setBiDirectionOnDerivedType(derivedType);
-			}
-		}			
+	protected void initDerived(Shape shape) {
+		shape.initDerived();
 	}
 
 	public void addProperty (EntityType type, Property openProperty) {
-		type.addProperty(openProperty);
-		
-		if(derivedTypes.containsKey(type.getName())) {
-			ExternalType derived = (ExternalType) derivedTypes.get(type.getName());
-			if(derived == null) {
-				throw new RuntimeException("Cannot find the derived type for: " + type.getName());
-			}
-			Property derivedProperty = derived.defineProperty(this, openProperty);
-			derived.addProperty(derivedProperty);
-		}
-	}
-
-	protected void setBiDirectionOnDerivedType(ExternalType derivedType) {
-		derivedType.setOpposite(this);
+		getShape().addProperty(type, openProperty);
 	}
 
 	public QueryBuilder getQueryBuilder() {

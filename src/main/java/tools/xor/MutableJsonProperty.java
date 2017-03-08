@@ -35,6 +35,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
 /**
@@ -505,12 +506,12 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 	
 	@Override
-	protected Type getExternalKeyType(DataAccessService das) {
-		return das.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
+	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
+		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
 	}	
 	
 	@Override
-	protected Type getExternalElementType(DataAccessService das) {
-		return das.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
+	protected Type getExternalElementType(DataAccessService das, Shape shape) {
+		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
 	}	
 }

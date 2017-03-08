@@ -29,6 +29,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 
 public class ExternalProperty extends AbstractProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
@@ -110,20 +111,20 @@ public class ExternalProperty extends AbstractProperty {
 		return null;
 	}
 	
-	protected Type getExternalKeyType(DataAccessService das) {
-		return das.getExternalType(das.getTypeMapper().toExternal(domainProperty.getKeyType().getInstanceClass()));
+	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
+		return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getKeyType().getInstanceClass()));
 	}	
 	
-	protected Type getExternalElementType(DataAccessService das) {
-		return das.getExternalType(das.getTypeMapper().toExternal(domainProperty.getElementType().getInstanceClass()));
+	protected Type getExternalElementType(DataAccessService das, Shape shape) {
+		return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getElementType().getInstanceClass()));
 	}
 
 	@Override
-	public void init(DataAccessService das) {
+	public void init(DataAccessService das, Shape shape) {
 		if(domainProperty.getKeyType() != null)
-			keyType = getExternalKeyType(das);
+			keyType = getExternalKeyType(das, shape);
 		if(domainProperty.getElementType() != null) 
-			elementType = getExternalElementType(das);
+			elementType = getExternalElementType(das, shape);
 		
 		if( (field != null && AbstractType.isWrapperType(field.getType())) || 
 				(getterMethod != null && AbstractType.isWrapperType(getterMethod.getReturnType()))

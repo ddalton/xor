@@ -96,7 +96,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 				if( ((HibernateDAS)das.get(name)).getConfiguration() == null)
 					throw new RuntimeException("Could not get Hibernate configuration.");
 
-				das.get(name).define();
+				das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
 				return das.get(name);
 			}
 		} catch(BeanCreationException e) {
@@ -107,7 +107,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 			if(persistenceType == null || persistenceType == PersistenceType.JPA) {
 				das.put(name, createJPADAS(typeMapper, name));
 				injectDependencies(das.get(name), name);
-				das.get(name).define();
+				das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
 				return das.get(name);
 			}
 		} catch (BeanCreationException e) {
@@ -118,7 +118,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 			if(persistenceType == null || persistenceType == PersistenceType.DATASTORE) {
 				das.put(name, createCustomDAS(typeMapper, name));
 				injectDependencies(das.get(name), name);
-				das.get(name).define();
+				das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
 				return das.get(name);
 			}
 		} catch (BeanCreationException e) {
@@ -129,7 +129,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 		if(persistenceType == null || persistenceType == PersistenceType.AML) {
 			das.put(name, createCustomDAS(typeMapper, name));
 			injectDependencies(das.get(name), name);
-			das.get(name).define();
+			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
 			return das.get(name);
 		}
 
@@ -137,7 +137,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 		if(persistenceType == null || persistenceType == PersistenceType.EOF) {
 			das.put(name, createCustomDAS(typeMapper, name));
 			injectDependencies(das.get(name), name);
-			das.get(name).define();
+			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
 			return das.get(name);
 		}
 

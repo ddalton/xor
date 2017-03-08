@@ -56,7 +56,9 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 	public abstract Configuration getConfiguration();
 
 	@Override
-	public void define() {
+	public void addShape(String name) {
+		Shape shape = getOrCreateShape(name);
+
 		Configuration conf = getConfiguration();
 		Iterator<PersistentClass> classMappings = conf.getClassMappings();
 
@@ -66,44 +68,44 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 					.next();
 			logger.debug("     Adding hibernate persisted class: "
 					+ classMapping.getClassName());
-			defineTypes(classMapping);
+			defineTypes(classMapping, shape);
 		}
 
 		// Set the super type
-		defineSuperType();
+		defineSuperType(shape);
 
 		// Set the base types
-		setBaseTypes();
+		setBaseTypes(shape);
 
 		// Define the properties for the Types
 		// This will end up defining the simple types
-		defineProperties();
+		defineProperties(shape);
 		
-		postProcess();
+		postProcess(shape);
 	}
 
-	protected void defineTypes(PersistentClass classMapping) {
+	protected void defineTypes(PersistentClass classMapping, Shape shape) {
 		HibernateType dataType = new HibernateType( HibernateUtil.getEntityType(getSessionFactory(), classMapping.getEntityName()),
 				classMapping);
 		
 		logger.debug("Defined data type: " + dataType.getName());
-		addType(dataType.getName(), dataType);
+		shape.addType(dataType.getName(), dataType);
 		
 		for(Type type: dataType.getEmbeddableTypes()) {
-			addType(type.getName(), type);
+			shape.addType(type.getName(), type);
 		}
 	}
 
-	protected void defineProperties() {
-		for (Type type : types.values()) {
+	protected void defineProperties(Shape shape) {
+		for (Type type : shape.getUniqueTypes()) {
 			if (HibernateType.class.isAssignableFrom(type.getClass())) {
 				HibernateType hibernateType = (HibernateType) type;
-				hibernateType.setProperty(this);
+				hibernateType.setProperty(this, shape);
 			}
 		}
 
 		// Link the bi-directional relationship between the properties
-		for (Type type : types.values()) {
+		for (Type type : shape.getUniqueTypes()) {
 			if (HibernateType.class.isAssignableFrom(type.getClass())) {
 				HibernateType hibernateType = (HibernateType) type;
 				hibernateType.setOpposite(this);
@@ -111,8 +113,8 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 		}
 	}
 
-	protected void setBaseTypes() {
-		for (Type type : types.values()) {
+	protected void setBaseTypes(Shape shape) {
+		for (Type type : shape.getUniqueTypes()) {
 			if (HibernateType.class.isAssignableFrom(type.getClass())) {
 				HibernateType hibernateType = (HibernateType) type;
 				if(hibernateType.getHibernateType().isComponentType())
@@ -122,30 +124,13 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 				PersistentClass base = ((PersistentClass)hibernateType.getHibernateClass()).getSuperclass();
 
 				if (base != null) {
-					Type baseType = types.get(base.getEntityName());
+					Type baseType = shape.getType(base.getEntityName());
 					if (baseType != null)
 						baseTypes.add(baseType);	
 				}
 				hibernateType.setBaseType(baseTypes);
 			}
 		}
-	}
-
-	@Override
-	public List<String> getAggregateList() {
-		List<String> result = new ArrayList<String>();
-		
-		Configuration conf = getConfiguration();
-		Iterator<PersistentClass> classMappings = conf.getClassMappings();
-
-		logger.info("Getting the list of hibernate mapped classes");
-		while (classMappings.hasNext()) {
-			PersistentClass classMapping = (PersistentClass) classMappings
-					.next();
-			result.add(classMapping.getEntityName());
-		}
-		
-		return result;
 	}
 
 	@Override

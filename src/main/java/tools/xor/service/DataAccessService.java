@@ -39,10 +39,21 @@ import tools.xor.view.QueryBuilder;
  *
  */
 public interface DataAccessService {
+
+	/**
+	 * Returns the shape in the current session/thread. So it needs to be overridden by
+	 * subclasses.
+	 *
+	 * @return Shape of types
+	 */
+	public Shape getShape();
+
 	/**
 	 * Build the Type and Property objects for the static API
+	 *
+	 * @param name of the Shape represting the type system
 	 */
-	public void define();
+	public void addShape(String name);
 	
 	/**
 	 * Return the type associated with a particular DataObject
@@ -98,12 +109,6 @@ public interface DataAccessService {
 	 * @return query builder object
 	 */
 	public QueryBuilder getQueryBuilder();
-	
-	/**
-	 * Lists the names of the aggregates
-	 * @return list of persistence managed entities
-	 */
-	public List<String> getAggregateList();
 	
 	/**
 	 * Returns the access type

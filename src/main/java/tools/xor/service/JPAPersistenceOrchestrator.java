@@ -48,9 +48,14 @@ import org.apache.log4j.Logger;
 
 import org.hibernate.Session;
 import org.hibernate.jdbc.Work;
+import tools.xor.AbstractBO;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
+import tools.xor.MapperDirection;
+import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
 import tools.xor.view.JPAQuery;
 import tools.xor.view.Query;
@@ -82,6 +87,13 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	@Override 
 	public void clear() {
 		getEntityManager().clear();
+	}
+
+	@Override
+	public void clear(Set<Object> bos) {
+		for(Object bo: bos) {
+			getEntityManager().detach(ClassUtil.getInstance(bo));
+		}
 	}
 	
 	@Override 
@@ -240,13 +252,31 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	}	
 	
 	@Override
-	public void attach(BusinessObject bo, AggregateView view) {
-		
-		if( view.getStateGraph((EntityType) bo.getType()).supportsDynamicUpdate() ) {
-			// reattaches the object to the session
-			getEntityManager().lock(bo.getInstance(), LockModeType.NONE);
+	public void attach(BusinessObject input, Settings settings) {
+
+		AggregateView view = settings.getView();
+		EntityType type = (EntityType)settings.getEntityType();
+		if( view.getStateGraph(type).supportsDynamicUpdate() ) {
+
+			ObjectCreator oc = input.getObjectCreator();
+			oc.getCreationStrategy().patchInstance((EntityType)settings.getEntityType());
+			try {
+				Object instance = AbstractBO.createInstance(
+					input.getObjectCreator(),
+					input.getIdentifierValue(),
+					null,
+					settings.getEntityType(),
+					true);
+
+				// reattaches the object to the session
+				getEntityManager().lock(instance, LockModeType.NONE);
+			}
+			catch (Exception e) {
+				throw ClassUtil.wrapRun(e);
+			}
+
 		} else {
-			throw new UnsupportedOperationException("The entity type " + bo.getType().getName() 
+			throw new UnsupportedOperationException("The entity type " + settings.getEntityType().getName()
 					+ " does not support dynamic update for the view " + view.getName());
 		}
 	}	

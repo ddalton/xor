@@ -44,35 +44,14 @@ optimization
 
 **********************[Nice to have]**************************************
 
-Batch support -
-  We will not have explicit batch support, but rather implement only inverse bi-dir handling that will behave like a batch if the toMany side is not automatically linked up.
-  In other words, if the persistence needs to be done only from child knowing parent, we should not have to instantiate and populate the collection there by avoiding this overhead and improving performance.
-
-  The existing test cases need to support this change in behavior.
-
-  Also, clean up the test cases and have a uniform model (Maybe borrow the northwind database or the supplier/parts/orders/locations database in CJ Date)
+Clean up the test cases and have a uniform model (Maybe borrow the northwind database or the supplier/parts/orders/locations database in CJ Date)
 
 
-2. Test queryOperation, that automatically attaches domain objects to the session
-
-2.1 Test modified aggregates
-
-2.2 Test concurrency and session and entityManager
+2.2 Test concurrency of session and entityManager
 
 
-3. Additional JSON tests (View, map)
-
-4. Test snapshot based optimistic concurrency control. Change summary is not needed.
 5. Create a model with no version attribute
    e.g., UPDATE task SET name = <new_name>, description = <new_desc> WHERE name = <snapshot_name> AND description = <snapshot_desc>
-
-6. Implement StoredProcedureQuery
-7. Paging (start and count) and order by and start based off order by column
-8. Denormalized query and update???
-
-10  support view update and stale version short circuit
-    transform flag in settings
-    Test both simple value and collection using filter
 
 
 12 Add JUnit tests for the following:
@@ -88,7 +67,6 @@ Batch support -
     - Not very scalable to handle large number of users, but very low latency
       for small deployment
 
-15 Create test case for an extensible Facet
 
 
 3. Release XOR product

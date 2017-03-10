@@ -440,6 +440,11 @@ public abstract class AbstractOperation implements Operation {
 		if(sourceType.isEmbedded()) // embedded type
 			return false;
 
+		// Baseline objects need to have their id populated
+		if(ci.getSettings().doBaseline()) {
+			return false;
+		}
+
 		if(ci.getInputProperty().getName().equals( sourceType.getIdentifierProperty().getName()) )
 			return true;
 

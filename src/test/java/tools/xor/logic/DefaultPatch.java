@@ -19,7 +19,9 @@
 
 package tools.xor.logic;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,6 +31,7 @@ import tools.xor.db.base.Consultant;
 import tools.xor.db.vo.base.ConsultantVO;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ObjectCreator;
 
 public class DefaultPatch extends AbstractDBTest {
 	@Autowired
@@ -81,18 +84,24 @@ public class DefaultPatch extends AbstractDBTest {
 		assert(result.getDescription().equals(DESCRIPTION));
 		assert(result.getType().equals(TYPE));
 		assert(result.getField() == null);
+
+		// Make sure to evict since we don't want patch to conflict with the exiting
+		// managed instance
+		Set<Object> objects = new HashSet<>();
+		objects.add(consultant);
+		aggregateManager.getPersistenceOrchestrator().clear(objects);
 		
 		return result;
 	}
 	
-	private void updateConsultant(ConsultantVO result, String type, String field, Settings settings) {
+	private Consultant updateConsultant(ConsultantVO result, String type, String field, Settings settings) {
 		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
 		
 		//TODO: might have to get version
 		result.setType(type);
 		result.setField(field);
 		System.out.println("View object: " + settings.getView());
-		aggregateManager.patch(result, settings);
+		Consultant consultant = (Consultant)aggregateManager.patch(result, settings);
 		
 		PersonVO person = new PersonVO();
 		person.setId(result.getId());
@@ -110,6 +119,8 @@ public class DefaultPatch extends AbstractDBTest {
 		assert(result.getDisplayName().equals(DISPLAY_NAME));
 		assert(result.getType().equals(type));
 		assert(result.getField() == null);
+
+		return consultant;
 	}
 		
 	public void patchConsultant() {
@@ -123,16 +134,26 @@ public class DefaultPatch extends AbstractDBTest {
 	 */
 	public void patchConsultantVersion() {
 		ConsultantVO consultant = createConsultant();
-		updateConsultant(consultant, NEW_TYPE, NEW_FIELD, new Settings());
+		Consultant managedConsultant = updateConsultant(consultant, NEW_TYPE, NEW_FIELD, new Settings());
 		
 		Settings settings = new Settings();
 		settings.setPreClear(true);
 		ConsultantVO result = new ConsultantVO();
 		result.setId(consultant.getId());
+		result.setVersion(consultant.getVersion());
+
+		assert(consultant.getVersion() != null);
+
+		Set<Object> objects = new HashSet<>();
+		objects.add(managedConsultant);
+		aggregateManager.getPersistenceOrchestrator().clear(objects);
+
 		result.setName(consultant.getName());
 		result.setDisplayName(consultant.getDisplayName());
 		result.setDescription(NEW_DESCRIPTION2);
 		result.setUserName(consultant.getUserName());
-		updateConsultant(result, NEW_TYPE2, NEW_FIELD2, settings);
+		managedConsultant = updateConsultant(result, NEW_TYPE2, NEW_FIELD2, settings);
+
+		assert(managedConsultant.getDescription().equals(NEW_DESCRIPTION2));
 	}
 }

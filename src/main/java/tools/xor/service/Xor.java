@@ -51,7 +51,10 @@ public interface Xor {
 	/**
 	 * Optimized form of update where the user can specify the how much of an object to update
 	 * Similar to Update but we do not walk a managed object and patch it, rather
-	 * we can query the data optimally and make it managed and update it
+	 * we can query the data optimally and make it managed and update it.
+	 *
+	 * This approach has a greater chance of getting Stale exception since the latest
+	 * version information is not used, rather the user provided version information is used.
 	 * 
 	 * @param   inputObject    The input object from the user in external form
 	 * @param   settings       User specified settings

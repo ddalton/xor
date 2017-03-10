@@ -175,18 +175,6 @@ public class ObjectCreator {
 		return result;
 	}
 
-	public void clearState() {
-		// The set of objects that we would like to give the persistence managed session
-		// an opportunity to process before the referenced is removed
-		Set<Object> ids = new HashSet<Object>();
-		for(BusinessObject bo: instanceDataObjectMap.values()) {
-			ids.add(bo.getIdentifierValue());
-		}
-
-		getPersistenceOrchestrator().clear(ids);
-		instanceDataObjectMap = new IdentityHashMap<Object, BusinessObject>(); 
-	}
-
 	/**
 	 * Returns true if the given class is under a package that starts with
 	 * "java.".
@@ -398,9 +386,9 @@ public class ObjectCreator {
 						if(newDataObject.getIdentifierValue() != null && !newDataObject.getIdentifierValue().equals(existing.getIdentifierValue())) {
 							// Make sure to evict the temporarily created object by the persistence
 							// layer so it does not save it during flush
-							Set tempId = new HashSet();
-							tempId.add(newDataObject.getIdentifierValue());
-							getPersistenceOrchestrator().clear(tempId);
+							Set objectsToClear = new HashSet();
+							objectsToClear.add(newDataObject);
+							getPersistenceOrchestrator().clear(objectsToClear);
 						}
 						return existing;
 					} else {
@@ -623,7 +611,11 @@ public class ObjectCreator {
 		//setEmbeddedInstance(instance, targetType);
 
 		return instance;
-	}	
+	}
+
+	public Object patchInstance(EntityType targetType) throws Exception {
+		return creationStrategy.patchInstance(targetType);
+	}
 
 	public void clearVisited() {
 		for(Object object: instanceDataObjectMap.values()) {

@@ -33,6 +33,7 @@ import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
+import tools.xor.Settings;
 import tools.xor.TypeMapper;
 import tools.xor.view.AggregateView;
 import tools.xor.view.StoredProcedure;
@@ -131,7 +132,10 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 			Serializable id = (Serializable) identifierProperty.getValue(from);
 			if(id != null && !"".equals(id)) {
-				Class<?> desiredClass = typeMapper.toDomain(type.getInstanceClass(), from);
+				Class<?> desiredClass = typeMapper.toDomain(
+					type.isDomainType() ?
+						type.getInstanceClass() :
+						type.getDomainType().getInstanceClass(), from);
 				persistentObject = findById(desiredClass, id);
 			} 
 		}
@@ -174,7 +178,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	
 
 	@Override
-	public void attach(BusinessObject bo, AggregateView view) {
+	public void attach(BusinessObject input, Settings settings) {
 		throw new UnsupportedOperationException("The reattach operation is not supported");
 	}	
 	

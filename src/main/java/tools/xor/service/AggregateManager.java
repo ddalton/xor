@@ -20,7 +20,6 @@
 package tools.xor.service;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.poi.EncryptedDocumentException;
@@ -43,7 +42,6 @@ import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.MapperDirection;
-import tools.xor.MutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SimpleType;
@@ -813,7 +811,7 @@ public class AggregateManager implements Xor
 	@Override
 	public void delete (Object entity, Settings settings)
 	{
-		// TODO: 
+		getPersistenceOrchestrator().delete(entity);
 	}
 
 	@Override
@@ -823,12 +821,24 @@ public class AggregateManager implements Xor
 		checkAndSet(settings, entity);
 		settings.setBaseline(true);
 
-		BusinessObject o = queryOne(entity, settings);
-
 		// attach it to the persistence layer
-		getPersistenceOrchestrator().attach(o, settings.getView());
+		ObjectCreator oc = new ObjectCreator(
+			settings,
+			getDAS(),
+			getPersistenceOrchestrator(),
+			MapperDirection.EXTERNALTODOMAIN);
+
+		BusinessObject bo = oc.createDataObject(
+			entity,
+			//entityType,
+			oc.getType(entity.getClass(), settings.getEntityType()),
+			null,
+			null);
+
+		getPersistenceOrchestrator().attach(bo, settings);
 
 		// update the just attached object with the original object
+		// update the id and the version information
 		return update(entity, settings);
 	}
 

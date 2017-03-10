@@ -595,10 +595,25 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 	
 	public static Object createInstance(ObjectCreator oc, Object id, Type instanceType) throws Exception {
-		return createInstance(oc, id, null, instanceType);
+		return createInstance(oc, id, null, instanceType, false);
 	}
-	
+
 	public static Object createInstance(ObjectCreator oc, Object id, Map<String, Object> naturalKeyValues, Type instanceType) throws Exception {
+		return createInstance(oc, id, naturalKeyValues, instanceType, false);
+	}
+
+	/**
+	 * Create a java object based on the Object creator.
+	 *
+	 * @param oc used to create the java object
+	 * @param id of the java object
+	 * @param naturalKeyValues business key
+	 * @param instanceType type of the object
+	 * @param isPatch true if the object is being created solely for the purpose of patching. This is an update optimization.
+	 * @return new domain instance
+	 * @throws Exception during object creation
+	 */
+	public static Object createInstance(ObjectCreator oc, Object id, Map<String, Object> naturalKeyValues, Type instanceType, boolean isPatch) throws Exception {
 		Object propertyInstance = null;
 		
 		// We will use the already loaded object in session if one is available
@@ -614,7 +629,11 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		if(propertyInstance == null) {
-			propertyInstance = oc.createInstance(instanceType);
+			if(isPatch) {
+				propertyInstance = oc.patchInstance((EntityType)instanceType);
+			} else {
+				propertyInstance = oc.createInstance(instanceType);
+			}
 			if(!instanceType.isDataType()) {
 				if(((EntityType)instanceType).getIdentifierProperty() != null ) {
 					((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(oc.getSettings(), propertyInstance, id);
@@ -1326,6 +1345,21 @@ public abstract class AbstractBO implements BusinessObject {
 			return null;
 
 		return idProperty.getValue(this);
+	}
+
+	@Override
+	public Object getVersionValue() {
+		if(instance == null)
+			return null;
+
+		if(!EntityType.class.isAssignableFrom(getType().getClass()))
+			return null;
+
+		ExtendedProperty versionProperty = (ExtendedProperty) ((EntityType)getType()).getVersionProperty();
+		if(versionProperty == null)
+			return null;
+
+		return versionProperty.getValue(this);
 	}
 
 	@Override

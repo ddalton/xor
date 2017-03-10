@@ -43,6 +43,7 @@ import com.google.appengine.api.datastore.Query.FilterPredicate;
 
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateView;
@@ -192,7 +193,7 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 	}	
 	
 	@Override
-	public void attach(BusinessObject bo, AggregateView view) {
+	public void attach(BusinessObject bo, Settings settings) {
 		
 		// Datastore supports dynamic update by default, so nothing to do here
 	}	

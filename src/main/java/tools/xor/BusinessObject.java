@@ -156,6 +156,12 @@ public interface BusinessObject extends DataObject {
 	 * @return id value
 	 */
 	public Object getIdentifierValue();
+
+	/**
+	 * Gets the version for a persistent instance. This is needed for optimistic concurrency control.
+	 * @return version value
+	 */
+	public Object getVersionValue();
 	
 	/**
 	 * Gets the open property value. Applicable only for dynamic objects such as JSONObject

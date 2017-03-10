@@ -23,6 +23,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
 import tools.xor.BusinessObject;
+import tools.xor.EntityType;
 import tools.xor.Settings;
 
 
@@ -99,5 +100,9 @@ public abstract class AbstractCreationStrategy implements CreationStrategy {
 	@Override
 	public boolean needsObjectGraph() {
 		return false;
+	}
+
+	public Object patchInstance(EntityType entityType) {
+		return ClassUtil.newInstance(entityType.getInstanceClass());
 	}
 }

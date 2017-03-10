@@ -27,6 +27,7 @@ import java.util.Set;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.view.AggregateView;
@@ -120,9 +121,9 @@ public interface PersistenceOrchestrator {
      * Clear a specific set of objects containing the following ids.
      * Might not be supported by all PersistenceOrchestrators
      *
-     * @param ids the id of objects that need to be cleared
+     * @param businessObjects that need to be cleared/evicted
      */
-    public void clear(Set<Object> ids);
+    public void clear(Set<Object> businessObjects);
     
     /**
      * Refreshes the object held in the persistence cache
@@ -184,16 +185,21 @@ public interface PersistenceOrchestrator {
 	public Query getQuery(String queryString, QueryType queryType, StoredProcedure sp);
 	
 	/**
-	 * If the persistence orchestrator can take a user created object and transform it
-	 * to a persistence managed object (i.e, track changes)
+	 * If the persistence orchestrator can dynamically track a user object (i.e, track changes),
+     * then this operation will allow the user to do just that.
+     *
 	 * This is in contrast to merge where only a managed object can be managed and
 	 * not a user created object
-	 * For this to work, the view needs to support dynamic update
-	 * 
-	 * @param bo The object wrapper being reattached
-	 * @param view The view representing the scope of the update
-	 */
-	public void attach(BusinessObject bo, AggregateView view);
+	 * For this to work, the view needs to support dynamic update.
+     *
+     * This is an update optimization to avoid a select of the whole entity from the database
+     * for an update of only a few fields and not the whole entity.
+	 *
+     * @param input entity
+	 * @param settings containing the entityType of the object to be created and
+     *                 attached to the Persistence layer, so it becomes managed
+     */
+	public void attach(BusinessObject input, Settings settings);
 	
 	/**
 	 * Checks to see if stored procedure support 

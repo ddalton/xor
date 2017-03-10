@@ -21,6 +21,7 @@ package tools.xor.util;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
 
@@ -49,7 +50,15 @@ public interface CreationStrategy {
 	 * @return new instance
 	 * @throws Exception when trying to create a new java object 
 	 */
-	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container, Property containmentProperty) throws Exception;	
+	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container, Property containmentProperty) throws Exception;
+
+	/**
+	 * Creates and attaches an object for patching. The id and version attributes need to be populated.
+	 *
+	 * @param entityType entity type
+	 * @return domain object ready for patching
+	 */
+	public Object patchInstance(EntityType entityType);
 	
 	/**
 	 * Give a chance for the creation strategy to do any final conversion on the root object

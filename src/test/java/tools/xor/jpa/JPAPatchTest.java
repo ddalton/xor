@@ -38,5 +38,9 @@ public class JPAPatchTest extends DefaultPatch {
 	public void patchConsultant() {
 		super.patchConsultant();
 	}
-	
+
+	@Test(expected=UnsupportedOperationException.class)
+	public void patchConsultantBulk() {
+		super.patchConsultantBulk();
+	}
 }

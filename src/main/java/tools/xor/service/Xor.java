@@ -55,12 +55,31 @@ public interface Xor {
 	 *
 	 * This approach has a greater chance of getting Stale exception since the latest
 	 * version information is not used, rather the user provided version information is used.
+	 * Alternatively it can take a snapshot object as input instead of version information.
+	 * The snapshot is the last known valid state of the object by the caller.
+	 *
+	 * Do not use this method if the values being updated are influenced/influences business
+	 * logic decisions, update method is the preferred approach in this case. The patch method
+	 * is provided purely from a performance optimization perspective. It is best to run
+	 * the patch operation in its own transaction.
+	 *
+	 * patch only supports first level (x = y) updates, 2nd (x.y = z) and higher level updates
+	 * are not supported.
+	 * Very efficient to use this in bulk update mode, as the updates will be batched by the
+	 * underlying persistence mechanism.
 	 * 
-	 * @param   inputObject    The input object from the user in external form
+	 * @param   inputObject    List of input objects from the user in external form
+	 * @param   inputSnapshot  List of input snapshot objects.
+	 *                         Snapshot refers to object state fetched by the user before modification.
+	 *                         We have to set the snapshot if the object is not in cache because
+	 *                         the persistence manager needs a baseline/snapshot for dirty checking
+	 *                         and this will do it, if the version property is not being used for
+	 *                         this entity.
+	 *                         This parameter is optional.
 	 * @param   settings       User specified settings
-	 * @return The persistence managed object
+	 * @return list of persistence managed objects
 	 */	
-	public Object patch(Object inputObject, Settings settings);
+	public List patch(List inputObject, List inputSnapshot, Settings settings);
 	
 	/**
 	 * Get a list of the objects in external form
@@ -76,7 +95,7 @@ public interface Xor {
 	 * @param   entity       The input object from the user in managed form
 	 * @param   settings     User specified settings
 	 * @return A persistence managed object that is a copy of the input entity
-	 * @see Xor#patch(Object, Settings)
+	 * @see Xor#patch(List, List,  Settings)
 	 */	
 	public Object clone(Object entity, Settings settings);	
 	

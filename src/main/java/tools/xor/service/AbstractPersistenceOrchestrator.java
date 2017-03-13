@@ -27,6 +27,8 @@ import java.util.Set;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.hibernate.LockOptions;
+import tools.xor.AbstractBO;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -35,6 +37,8 @@ import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.TypeMapper;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
 import tools.xor.view.StoredProcedure;
 
@@ -177,10 +181,50 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	}	
 	
 
+	protected void performAttach(BusinessObject input, Object instance) {
+		throw new UnsupportedOperationException("The reattach operation is either not supported or not yet implemented");
+	}
+
 	@Override
-	public void attach(BusinessObject input, Settings settings) {
-		throw new UnsupportedOperationException("The reattach operation is not supported");
-	}	
+	public Object attach (BusinessObject input, BusinessObject snapshot, Settings settings)
+	{
+		Object instance = null;
+
+		AggregateView view = settings.getView();
+		EntityType type = (EntityType)settings.getEntityType();
+		if (view.getStateGraph(type).supportsDynamicUpdate()) {
+
+			EntityType entityType = (EntityType)settings.getEntityType();
+			ObjectCreator oc = input.getObjectCreator();
+			try {
+				instance = AbstractBO.createInstance(
+					input.getObjectCreator(),
+					input.getIdentifierValue(),
+					null,
+					entityType,
+					true);
+				if(entityType.getVersionProperty() != null ) {
+					((ExtendedProperty)entityType.getVersionProperty()).setValue(oc.getSettings(), instance, input.getVersionValue());
+				} else {
+					ClassUtil.initSingleLevel(input, snapshot, settings);
+				}
+
+				// At this point it is implementation specific, and it overridden by subclass implementations
+				performAttach(input, instance);
+			}
+			catch (Exception e) {
+				throw ClassUtil.wrapRun(e);
+			}
+
+		}
+		else {
+			throw new UnsupportedOperationException(
+				"The entity type " + settings.getEntityType().getName()
+					+ " does not support dynamic update for the view " + view.getName());
+		}
+
+		return instance;
+	}
 	
 	@Override
 	public boolean supportsStoredProcedure() {

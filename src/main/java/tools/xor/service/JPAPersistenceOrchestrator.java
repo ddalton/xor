@@ -46,6 +46,7 @@ import javax.persistence.criteria.Root;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.hibernate.LockOptions;
 import org.hibernate.Session;
 import org.hibernate.jdbc.Work;
 import tools.xor.AbstractBO;
@@ -249,37 +250,13 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 		}
 		
 		return null;
-	}	
-	
+	}
+
 	@Override
-	public void attach(BusinessObject input, Settings settings) {
-
-		AggregateView view = settings.getView();
-		EntityType type = (EntityType)settings.getEntityType();
-		if( view.getStateGraph(type).supportsDynamicUpdate() ) {
-
-			ObjectCreator oc = input.getObjectCreator();
-			oc.getCreationStrategy().patchInstance((EntityType)settings.getEntityType());
-			try {
-				Object instance = AbstractBO.createInstance(
-					input.getObjectCreator(),
-					input.getIdentifierValue(),
-					null,
-					settings.getEntityType(),
-					true);
-
-				// reattaches the object to the session
-				getEntityManager().lock(instance, LockModeType.NONE);
-			}
-			catch (Exception e) {
-				throw ClassUtil.wrapRun(e);
-			}
-
-		} else {
-			throw new UnsupportedOperationException("The entity type " + settings.getEntityType().getName()
-					+ " does not support dynamic update for the view " + view.getName());
-		}
-	}	
+	protected void performAttach(BusinessObject input, Object instance) {
+		// reattaches the object to the session
+		getEntityManager().lock(instance, LockModeType.NONE);
+	}
 	
 	@Override
 	public boolean supportsStoredProcedure() {

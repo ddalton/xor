@@ -14,13 +14,14 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
    4. Stored procedure
 5. Support Excel import/export for Perf data population
 6. Shape support - type of versioning
+7. Loose coupling between persistence and JSON/External models - Model mirroring technology.
 
 
 
 
 View meta information
 =====================
-Add support for providing cascade information from XML files for each entity. The entity is FQCN.
+Add support for providing cascade information from XML files for each entity. The entity is FQCN [Only EntitySets]
 With this information we efficiently retrieve using JPAViewBranchTest#testTaskQueryableRegions.
 [NOTE] Queries for cascaded loops need to be provided by user. Raise this as an error if not provided.
 Once this is done, all loops need to be removed (i.e., the non-cascaded backref)
@@ -47,12 +48,7 @@ optimization
 Clean up the test cases and have a uniform model (Maybe borrow the northwind database or the supplier/parts/orders/locations database in CJ Date)
 
 
-2.2 Test concurrency of session and entityManager
-
-
-5. Create a model with no version attribute
-   e.g., UPDATE task SET name = <new_name>, description = <new_desc> WHERE name = <snapshot_name> AND description = <snapshot_desc>
-
+2.2 Test concurrency of session and entityManager (from ODOR)
 
 12 Add JUnit tests for the following:
    1. Performance - show performance using a stored procedure for a view
@@ -67,9 +63,6 @@ Clean up the test cases and have a uniform model (Maybe borrow the northwind dat
     - Not very scalable to handle large number of users, but very low latency
       for small deployment
 
-
-
-3. Release XOR product
 
 
 *******************

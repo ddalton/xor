@@ -42,6 +42,15 @@ public class MutableBO extends AbstractBO {
 			objectPersister = new ObjectPersister();
 	}
 
+	protected Type getEntityType(CallInfo callInfo, Settings settings) {
+		Type entityType = settings.getEntityType();
+		if(callInfo.isBulkInput()) {
+			entityType = new ListType(ArrayList.class);
+		}
+
+		return entityType;
+	}
+
 	@Override
 	public BusinessObject update(Settings settings) {
 		// clone the task object using a DataObject
@@ -57,7 +66,7 @@ public class MutableBO extends AbstractBO {
 		callInfo.setOperation(operation);
 		BusinessObject target = null;
 		
-		target = (BusinessObject) operation.createTarget(callInfo, (EntityType) settings.getEntityType());
+		target = (BusinessObject) operation.createTarget(callInfo, getEntityType(callInfo, settings));
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);
@@ -89,11 +98,7 @@ public class MutableBO extends AbstractBO {
 		callInfo.setOperation(operation);
 		BusinessObject target = null;
 
-		Type entityType = settings.getEntityType();
-		if(callInfo.isBulkInput()) {
-			entityType = new ListType(ArrayList.class);
-		}
-		target = (BusinessObject) operation.createTarget(callInfo, entityType);
+		target = (BusinessObject) operation.createTarget(callInfo, getEntityType(callInfo, settings));
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);

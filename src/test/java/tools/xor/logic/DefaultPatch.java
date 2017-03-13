@@ -19,6 +19,7 @@
 
 package tools.xor.logic;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,6 +94,58 @@ public class DefaultPatch extends AbstractDBTest {
 		
 		return result;
 	}
+
+	private List createConsultantBulk() {
+		final int BULKSIZE = 10;
+
+		// create person
+		List consultants = new ArrayList();
+
+		for(int i = 0; i < BULKSIZE; i++) {
+			Consultant consultant = new Consultant();
+			consultant.setName(NAME+i);
+			consultant.setDisplayName(DISPLAY_NAME+i);
+			consultant.setDescription(DESCRIPTION+i);
+			consultant.setUserName(USER_NAME+i);
+			consultant.setField(FIELD);
+			consultant.setType(TYPE);
+			consultants.add(consultant);
+		}
+
+		consultants = (List)aggregateManager.create(consultants, new Settings());
+		PersonVO person = new PersonVO();
+		//person.setId(((Consultant)consultants.get(0)).getId());
+
+		// read the person object using a DataObject
+		Settings settings = new Settings();
+		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
+		System.out.println("View object: " + settings.getView());
+
+		// We order by name so the first person is guaranteed to end with "0"
+		settings.addFunctionFilter("asc(name)");
+		List<?> toList = aggregateManager.query(person, settings);
+
+		assert(toList.size() == 10);
+
+		ConsultantVO result = null;
+		if(ConsultantVO.class.isAssignableFrom(toList.get(0).getClass()))
+			result = (ConsultantVO) toList.get(0);
+
+		assert(result != null);
+		assert(result.getName().equals(NAME+0));
+		assert(result.getDisplayName().equals(DISPLAY_NAME+0));
+		assert(result.getDescription().equals(DESCRIPTION+0));
+		assert(result.getType().equals(TYPE));
+		assert(result.getField() == null);
+
+		// Make sure to evict since we don't want patch to conflict with the exiting
+		// managed instance
+		Set<Object> objects = new HashSet<>();
+		objects.addAll(consultants);
+		aggregateManager.getPersistenceOrchestrator().clear(objects);
+
+		return toList;
+	}
 	
 	private Consultant updateConsultant(ConsultantVO result, String type, String field, Settings settings) {
 		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
@@ -101,7 +154,10 @@ public class DefaultPatch extends AbstractDBTest {
 		result.setType(type);
 		result.setField(field);
 		System.out.println("View object: " + settings.getView());
-		Consultant consultant = (Consultant)aggregateManager.patch(result, settings);
+
+		List input = new ArrayList();
+		input.add(result);
+		Consultant consultant = (Consultant)(aggregateManager.patch(input, null, settings)).get(0);
 		
 		PersonVO person = new PersonVO();
 		person.setId(result.getId());
@@ -122,11 +178,50 @@ public class DefaultPatch extends AbstractDBTest {
 
 		return consultant;
 	}
+
+	private Consultant updateConsultantBulk(List consultantVOList, String type, String field, Settings settings) {
+		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
+
+		//TODO: might have to get version
+		for(int i = 0; i < consultantVOList.size(); i++) {
+			ConsultantVO result = (ConsultantVO)consultantVOList.get(i);
+			result.setType(type);
+			result.setField(field);
+		}
+		Consultant consultant = (Consultant)(aggregateManager.patch(consultantVOList, null, settings)).get(0);
+
+		PersonVO person = new PersonVO();
+		settings = new Settings();
+		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
+		settings.addFunctionFilter("asc(name)");
+		List<?> toList = aggregateManager.query(person, settings);
+
+		assert(toList.size() == 10);
+
+		ConsultantVO result = null;
+		if(ConsultantVO.class.isAssignableFrom(toList.get(0).getClass())) {
+			result = (ConsultantVO)toList.get(0);
+
+			assert (result != null);
+			assert (result.getName().equals(NAME+0));
+			assert (result.getDisplayName().equals(DISPLAY_NAME+0));
+			assert (result.getType().equals(type));
+			assert (result.getField() == null);
+		}
+
+		return consultant;
+	}
 		
 	public void patchConsultant() {
 		
 		ConsultantVO result = createConsultant();
 		updateConsultant(result, NEW_TYPE, NEW_FIELD, new Settings());
+	}
+
+	public void patchConsultantBulk() {
+
+		List result = createConsultantBulk();
+		updateConsultantBulk(result, NEW_TYPE, NEW_FIELD, new Settings());
 	}
 	
 	/**

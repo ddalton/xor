@@ -143,7 +143,7 @@ public class QueryOperation extends AbstractOperation {
 	@Override
 	protected void postVisited(CallInfo ci) {
 		if(ci.getStage() == ProcessingStage.CREATE && ci.getSettings().doBaseline() ) {
-			ci.getOutputObjectCreator().getPersistenceOrchestrator().attach((BusinessObject) ci.getOutput(), ci.getSettings());
+			ci.getOutputObjectCreator().getPersistenceOrchestrator().attach((BusinessObject) ci.getOutput(), null, ci.getSettings());
 		}
 	}	
 }

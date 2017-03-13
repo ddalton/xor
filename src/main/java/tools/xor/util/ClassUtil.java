@@ -46,7 +46,9 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.stereotype.Component;
 
 import tools.xor.BusinessObject;
+import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
+import tools.xor.view.AggregateView;
 
 @Component
 public class ClassUtil {
@@ -361,5 +363,25 @@ public class ClassUtil {
 		}
 		
 		return true;
-	}	
+	}
+
+	public static void initSingleLevel (Object instance, BusinessObject bo, Settings settings)
+	{
+		if(bo == null) {
+			return;
+		}
+
+		AggregateView view = settings.getView();
+		for(String propertyName: view.getAttributeList()) {
+			ExtendedProperty property = (ExtendedProperty) bo.getType().getProperty(propertyName);
+			if(property.isIdentifier()) {
+				continue;
+			}
+
+			property.setValue(
+				settings,
+				instance,
+				property.getValue(bo));
+		}
+	}
 }

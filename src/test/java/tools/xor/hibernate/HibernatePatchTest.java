@@ -59,4 +59,9 @@ public class HibernatePatchTest extends DefaultPatch {
 	public void patchConsultantVersion() {
 		super.patchConsultantVersion();
 	}
+
+	@Test
+	public void patchConsultantBulk() {
+		super.patchConsultantBulk();
+	}
 }

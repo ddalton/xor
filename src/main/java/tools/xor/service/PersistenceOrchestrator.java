@@ -196,10 +196,14 @@ public interface PersistenceOrchestrator {
      * for an update of only a few fields and not the whole entity.
 	 *
      * @param input entity
+     * @param snapshot object, if non-versioned optimisted locking is being used, then
+     *                 the fields in the object will be used for optimistic modification check
 	 * @param settings containing the entityType of the object to be created and
      *                 attached to the Persistence layer, so it becomes managed
+     *
+     * @return the newly created object that was attached to the session
      */
-	public void attach(BusinessObject input, Settings settings);
+	public Object attach(BusinessObject input, BusinessObject snapshot, Settings settings);
 	
 	/**
 	 * Checks to see if stored procedure support 

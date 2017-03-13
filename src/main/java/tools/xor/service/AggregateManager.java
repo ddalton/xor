@@ -466,11 +466,17 @@ public class AggregateManager implements Xor
 
 	private Class<?> getEntityClass (Object inputObject, Settings settings)
 	{
-		return inputObject == null ?
-			(settings.getEntityClass() != null ?
-				settings.getEntityClass() :
-				settings.getEntityType().getInstanceClass()) :
-			inputObject.getClass();
+		if(inputObject == null) {
+			if(settings.getEntityClass() != null) {
+				return settings.getEntityClass();
+			} else {
+				return settings.getEntityType().getInstanceClass();
+			}
+		} else if(inputObject instanceof List && ((List)inputObject).size() > 0) {
+			return ((List)inputObject).get(0).getClass();
+		} else {
+			return inputObject.getClass();
+		}
 	}
 
 	private List<?> queryInternal (Object entity, Settings settings)
@@ -546,16 +552,9 @@ public class AggregateManager implements Xor
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
 
-			Type type = null;
-			// Collection type is used for bulk import/batching
-			if(entity instanceof Collection) {
-				type = getDAS().getType(entity.getClass());
-			} else {
-				type = oc.getType(entity.getClass(), settings.getEntityType());
-			}
 			BusinessObject from = oc.createDataObject(
 				entity,
-				type,
+				getEntityType(entity, oc, settings),
 				null,
 				null);
 			oc.setRoot(from);
@@ -566,6 +565,18 @@ public class AggregateManager implements Xor
 		}
 
 		return flushHandler.instance();
+	}
+
+	protected Type getEntityType(Object entity, ObjectCreator oc, Settings settings) {
+		Type type = null;
+		// Collection type is used for bulk import/batching
+		if(entity instanceof Collection) {
+			type = getDAS().getType(entity.getClass());
+		} else {
+			type = oc.getType(entity.getClass(), settings.getEntityType());
+		}
+
+		return type;
 	}
 
 	public BusinessObject readBO (Object entity, Settings settings)
@@ -787,9 +798,10 @@ public class AggregateManager implements Xor
 				getDAS(),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
+
 			BusinessObject from = oc.createDataObject(
 				entity,
-				(EntityType)oc.getType(entity.getClass(), settings.getEntityType()),
+				getEntityType(entity, oc, settings),
 				null,
 				null);
 			oc.setRoot(from);
@@ -815,11 +827,39 @@ public class AggregateManager implements Xor
 	}
 
 	@Override
-	public Object patch (Object entity, Settings settings)
+	public List patch (List entity, List snapshot, Settings settings)
 	{
 		owLogger.debug("Performing update operation");
 		checkAndSet(settings, entity);
 		settings.setBaseline(true);
+
+		if (snapshot != null && !(snapshot instanceof List)) {
+			throw new RuntimeException(
+				"snapshot should also be a list mirroring the input entity list");
+		}
+
+		List entityList = (List)entity;
+		List snapshotList = (List)snapshot;
+		for (int i = 0; i < entityList.size(); i++) {
+			attach(
+				entityList.get(i),
+				snapshot == null ? null : snapshotList.get(i),
+				settings);
+		}
+
+		// Now that the optimized persistence managed objects are in the cache
+		// we are ready to update them
+		Object updatedObjects = update(entity, settings);
+		if(updatedObjects instanceof List) {
+			return (List) updatedObjects;
+		} else {
+			List result = new ArrayList();
+			result.add(updatedObjects);
+			return result;
+		}
+	}
+
+	private void attach(Object entity, Object snapshot, Settings settings) {
 
 		// attach it to the persistence layer
 		ObjectCreator oc = new ObjectCreator(
@@ -835,11 +875,26 @@ public class AggregateManager implements Xor
 			null,
 			null);
 
-		getPersistenceOrchestrator().attach(bo, settings);
+		BusinessObject snapshotBO = null;
+		if(snapshot != null) {
+			snapshotBO = oc.createDataObject(
+				snapshot,
+				//entityType,
+				oc.getType(entity.getClass(), settings.getEntityType()),
+				null,
+				null);
+		}
 
-		// update the just attached object with the original object
-		// update the id and the version information
-		return update(entity, settings);
+		// If the object is not present in the cache then we will perform
+		// a short-circuit attach, i.e., avoid going to the Database
+		// NOTE: Not all persistence managers support this and in that case
+		// an exception is thrown and the update method should be used instead.
+		Object instance = getPersistenceOrchestrator().getCached(
+			bo.getDomainType().getInstanceClass(),
+			bo.getIdentifierValue());
+		if(instance == null) {
+			getPersistenceOrchestrator().attach(bo, snapshotBO, settings);
+		}
 	}
 
 	@Override

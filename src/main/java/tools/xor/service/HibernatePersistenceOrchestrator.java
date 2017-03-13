@@ -294,39 +294,8 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	}
 
 	@Override
-	public void attach (BusinessObject input, Settings settings)
-	{
-
-		AggregateView view = settings.getView();
-		EntityType type = (EntityType)settings.getEntityType();
-		if (view.getStateGraph(type).supportsDynamicUpdate()) {
-
-			EntityType entityType = (EntityType)settings.getEntityType();
-			ObjectCreator oc = input.getObjectCreator();
-			try {
-				Object instance = AbstractBO.createInstance(
-					input.getObjectCreator(),
-					input.getIdentifierValue(),
-					null,
-					entityType,
-					true);
-				if(entityType.getVersionProperty() != null ) {
-					((ExtendedProperty)entityType.getVersionProperty()).setValue(oc.getSettings(), instance, input.getVersionValue());
-				}
-
-				// reattaches the object to the session
-				getSession().buildLockRequest(LockOptions.NONE).lock(instance);
-			}
-			catch (Exception e) {
-				throw ClassUtil.wrapRun(e);
-			}
-
-		}
-		else {
-			throw new UnsupportedOperationException(
-				"The entity type " + settings.getEntityType().getName()
-					+ " does not support dynamic update for the view " + view.getName());
-		}
+	protected void performAttach(BusinessObject input, Object instance) {
+		// reattaches the object to the session
+		getSession().buildLockRequest(LockOptions.NONE).lock(instance);
 	}
-
 }

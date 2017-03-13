@@ -190,13 +190,7 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 	@Override
 	public Object getCached(Class<?> persistentClass, Object id) {
 		return null;
-	}	
-	
-	@Override
-	public void attach(BusinessObject bo, Settings settings) {
-		
-		// Datastore supports dynamic update by default, so nothing to do here
-	}	
+	}
 	
 	@Override
 	public boolean supportsStoredProcedure() {

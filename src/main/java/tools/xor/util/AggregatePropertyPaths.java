@@ -58,13 +58,24 @@ public class AggregatePropertyPaths {
 			paths  = new HashSet<String>();
 			for(Map.Entry<State, Expression> entry: expressions.entrySet()) {
 				Type type = entry.getKey().getType();
+				UnionExpression ue = null;
 				for(Property childProperty: type.getProperties()) {
 					if(isSimpleProperty(childProperty)) {
+						if(ue == null) {
+							ue = new UnionExpression(new LiteralExpression(childProperty.getName()));
+						} else {
+							ue.addAlternate(new LiteralExpression(childProperty.getName()));
+						}
+						/*
 						for(String prefix: getExpression(entry.getValue() )) {
 							String path = prefix.concat(childProperty.getName());
 							paths.add(path);
 						}
+						*/
 					}
+				}
+				if(ue != null) {
+					paths.add(entry.getValue() + ue.toString());
 				}
 			}
 

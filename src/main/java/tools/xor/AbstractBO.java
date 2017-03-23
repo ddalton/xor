@@ -554,7 +554,6 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public Object get(String path) {
-		// TODO: need to fix this
 		if(path.indexOf(Settings.PATH_DELIMITER) != -1) {
 			return getPathObject(Settings.convertToBOPath(path));
 		} else {
@@ -695,12 +694,7 @@ public abstract class AbstractBO implements BusinessObject {
 				}
 
 				if( ((EntityType)property.getType()).isEmbedded() ) {
-					// Is this true? 
-					// TODO: Check if the embedded object gets created
-					// What about collection of embedded objects?
-					// Maybe we only allow the fast path of object creation, i.e., the result needs to be sorted
-					//   and we use this ability to construct the fields as we scan through each row.
-					//   This also allows optimization using OpenCL
+					// TODO: What about collection of embedded objects?
 					continue; // Embedded objects are automatically created as part of its lifecycle owner
 				}
 

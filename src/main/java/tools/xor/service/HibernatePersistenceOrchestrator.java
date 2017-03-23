@@ -20,6 +20,7 @@
 package tools.xor.service;
 
 import java.io.Serializable;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -281,7 +282,29 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 				} 
 		    }
 		});
-	}	
+	}
+
+	public static class BlobCreator implements Work {
+
+		Blob blob;
+
+		public Blob getBlob() {
+			return this.blob;
+		}
+
+		@Override public void execute (Connection connection) throws SQLException
+		{
+			this.blob = connection.createBlob();
+		}
+	}
+
+	@Override
+	public Blob createBlob() {
+		BlobCreator blobCreator = new BlobCreator();
+		getSession().doWork(blobCreator);
+
+		return blobCreator.getBlob();
+	}
 
 	@Override
 	public Object getCached(Class<?> persistentClass, Object id) {

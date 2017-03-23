@@ -20,6 +20,7 @@
 package tools.xor.service;
 
 import java.io.Serializable;
+import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

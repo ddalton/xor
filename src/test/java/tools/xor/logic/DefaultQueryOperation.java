@@ -49,6 +49,7 @@ import tools.xor.db.enums.common.ValueTypeEnum;
 import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
+import tools.xor.view.AggregateView;
 
 public class DefaultQueryOperation extends AbstractDBTest {
 	@Autowired
@@ -348,6 +349,68 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Task prioritize = child1.getName().equals("FIX_DEFECTS") ? child2 : child1;
 		assert(fixDefects.getTaskChildren() != null && fixDefects.getTaskChildren().size() == 2);
 		assert(prioritize.getTaskChildren() == null || prioritize.getTaskChildren().size() == 0);
+	}
+
+	public void queryTaskGrandChildrenRegEx()
+	{
+		// Create a task
+		Task userStory = new Task();
+		userStory.setName("DEFECTS");
+		userStory.setDisplayName("Defects");
+		userStory.setDescription("User story to address product defects");
+		userStory = (Task)aggregateService.create(userStory, new Settings());
+
+		// Create 2 children
+		Task A = new Task();
+		A.setName("FIX_DEFECTS");
+		A.setDisplayName("Fix defects");
+		A.setDescription("Task to track the defect fixing effort");
+
+		Task d1 = new Task();
+		d1.setName("DEFECT 1");
+		d1.setDisplayName("Defect 1");
+		d1.setDescription("First defect");
+		Task d2 = new Task();
+		d2.setName("DEFECT 2");
+		d2.setDisplayName("Defect 2");
+		d2.setDescription("Second defect");
+		Set<Task> c = new HashSet<Task>();
+		c.add(d1);
+		c.add(d2);
+		A.setTaskChildren(c);
+		A = (Task)aggregateService.create(A, new Settings());
+		A.setTaskParent(userStory);
+
+		Task B = new Task();
+		B.setName("PRIORITIZE_DEFECTS");
+		B.setDisplayName("Prioritize defects");
+		B.setDescription("Based upon the effort required for the defects prioritize them");
+		B = (Task)aggregateService.create(B, new Settings());
+		B.setTaskParent(userStory);
+
+		Set<Task> children = new HashSet<Task>();
+		children.add(A);
+		children.add(B);
+		userStory.setTaskChildren(children);
+
+		// query the task object
+		Settings settings = new Settings();
+		List<String> paths = new ArrayList<String>();
+
+		// In this REGEX we fetch tasks with no children or children 1 level deep
+		paths.add("(auditTask.|taskChildren.|dependants.){0,1}(description|isCriticalSystemObject|id|iconUrl|version|displayName|detailedDescription|name)");
+		AggregateView view = new AggregateView("REGEX_TGC");
+		view.setAttributeList(paths);
+		settings.setView(view);
+		userStory = (Task)aggregateService.read(userStory, settings);
+
+		Task root = (Task) userStory;
+		assert(root.getTaskChildren() != null && root.getTaskChildren().size() == 2);
+
+		Iterator<Task> iter = root.getTaskChildren().iterator();
+		Task child1 = iter.next();
+		Task child2 = iter.next();
+
 	}
 	
 	public void queryTaskGrandChildrenSkip() {

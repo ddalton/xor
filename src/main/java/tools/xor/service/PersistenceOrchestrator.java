@@ -19,6 +19,7 @@
 
 package tools.xor.service;
 
+import java.sql.Blob;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -219,5 +220,11 @@ public interface PersistenceOrchestrator {
 	 * @return persistence managed object
 	 */
 	public Object getTargetObject(BusinessObject source, String openPropertyName);
+
+    /**
+     * Create a Blob object using the underlying JDBC provider
+     * @return Blob instance
+     */
+    public Blob createBlob();
 
 }

@@ -23,6 +23,7 @@ import tools.xor.service.DataAccessService;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Blob;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -79,6 +80,8 @@ public class SimpleTypeFactory {
 			return new MapType(clazz);
 		} else if(Collection.class.isAssignableFrom(clazz)) {
 			return new CollectionType(clazz);
+		} else if(Blob.class.isAssignableFrom(clazz)) {
+			return new BlobType(clazz);
 		} else {
 			return new SimpleType(clazz, das);
 		}

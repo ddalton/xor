@@ -10,8 +10,6 @@ public class XSDCollectionGenerator extends AbstractGenerator {
 
 	@Override
 	public void generate(XSDVisitor coordinator) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

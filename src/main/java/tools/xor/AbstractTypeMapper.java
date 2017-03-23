@@ -188,9 +188,8 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 			return null;
 		}
 
-		// Try to obtain by NaturalKey
-		// TODO: If the natural key fields are populated before the object is registered
-		// then this should be preferred over the Surrogate Key
+		// Try to obtain by NaturalKey first and then the Surrogate Key
+		// Helps with entity import from a different system
 		if(rootEntityType.getNaturalKey() != null && bo != null) {
 			try {
 				return NaturalKeyStrategy.getInstance().execute(bo, domainTypeName);

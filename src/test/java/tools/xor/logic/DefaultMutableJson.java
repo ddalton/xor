@@ -28,7 +28,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Blob;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1184,5 +1186,68 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 			assert(t1.getOwnedBy() == t2.getOwnedBy());
 		}
+	}
+
+	protected void generatePicture() {
+		DataAccessService das = aggregateService.getDAS();
+		EntityType personType = (EntityType) das.getType(Person.class);
+		AggregateView view = das.getBaseView(personType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.setEntityType(personType);
+
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(personType);
+		JSONObject jsonObject = sg.generateObjectGraph(settings);
+
+		System.out.println("Generated jsonObject");
+
+		// Try and persist this now
+		Person persistedPerson = (Person) aggregateManager.create(jsonObject, settings);
+
+		try {
+			assert(persistedPerson.getPhoto() != null);
+			Blob blob = persistedPerson.getPhoto();
+			byte [] array = blob.getBytes( 1, ( int ) blob.length() );
+			File file = new File("PersonPhoto.png");
+			FileOutputStream out = new FileOutputStream( file );
+			out.write( array );
+			out.close();
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println(persistedPerson.getUserName());
+	}
+
+	protected void checkRegexView() throws JSONException {
+		final String TASK_NAME = "SETUP_DSL";
+
+		AggregateView view = new AggregateView("REGEX_VIEW");
+		List path = new ArrayList();
+		path.add("(name|displayName|description)");
+		view.setAttributeList(path);
+
+		// Create task
+		JSONObject json = new JSONObject();
+		json.put("name", TASK_NAME);
+		json.put("displayName", "Setup DSL");
+		json.put("description", "Setup high-speed broadband internet using DSL technology");
+
+		Settings settings = getSettings();
+		settings.setView(view);
+		settings.setEntityClass(Task.class);
+		Task task = (Task) aggregateService.create(json, settings);
+		assert(task.getId() != null);
+		assert(task.getName().equals(TASK_NAME));
+
+		Object jsonObject = aggregateService.read(task, settings);
+		JSONObject jsonTask = (JSONObject) jsonObject;
+		System.out.println("JSON string: " + jsonTask.toString());
+		assert( (jsonTask.get("name")).toString().equals(TASK_NAME));
 	}
 }

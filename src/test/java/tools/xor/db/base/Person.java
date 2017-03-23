@@ -22,6 +22,8 @@ package tools.xor.db.base;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.Lob;
+import java.sql.Blob;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -55,5 +57,18 @@ public class Person extends Identity {
 
 	public String getPassword() {
 		return this.password;
+	}
+
+	@Lob
+	private java.sql.Blob photo;
+
+	public Blob getPhoto ()
+	{
+		return photo;
+	}
+
+	public void setPhoto (Blob photo)
+	{
+		this.photo = photo;
 	}
 }

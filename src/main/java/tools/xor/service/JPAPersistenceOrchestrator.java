@@ -21,6 +21,7 @@ package tools.xor.service;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -238,6 +239,15 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 		catch (PersistenceException pe) {
 			throw new RuntimeException("Unable to obtain the JDBC connection");
 		}
+	}
+
+	@Override
+	public Blob createBlob() {
+		HibernatePersistenceOrchestrator.BlobCreator blobCreator = new HibernatePersistenceOrchestrator.BlobCreator();
+		Session session = getEntityManager().unwrap(Session.class);
+		session.doWork(blobCreator);
+
+		return blobCreator.getBlob();
 	}
 
 	@Override

@@ -19,6 +19,7 @@
 
 package tools.xor.service;
 
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -195,5 +196,10 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 	@Override
 	public boolean supportsStoredProcedure() {
 		return false;
+	}
+
+	@Override public Blob createBlob ()
+	{
+		throw new UnsupportedOperationException("Blob type is not supported");
 	}
 }

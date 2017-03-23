@@ -20,6 +20,7 @@
 package tools.xor.view;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.Store;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -95,6 +98,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	public static final String VIEW_REFERENCE_NAME_REGEX = "^.*\\[\\s*(\\w+)\\s*\\].*";
 	public static final String VIEW_REFERENCE_MULTIPLE_REGEX = "^(.*)(\\[\\s*(\\w+)\\s*\\]).*(\\[\\s*\\w+\\s*\\].*)";
 	public static final String VIEW_REFERENCE_PREFIX_REGEX = "^(.*)\\[\\s*\\w+\\s*\\].*";
+	public static final String REGEX_STRING = "[\\*\\?\\+\\[\\{\\|\\(\\)\\^\\$]";
+	public static final Pattern REGEX_STRING_MATCHER = Pattern.compile(REGEX_STRING);
 	
 	public static final String BASE = "BASE_";
 	public static final String RECURSIVE = "RECURSIVE_";
@@ -142,6 +147,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	@XmlTransient
 	private Set<String> exactAttributes; // These do not have the recursive operand (*) and
 	                                     // and exact match can be performed
+
+	@XmlTransient
+	private Map<String, Pattern> regexAttributes;
 
 	@XmlTransient
 	private Shape shape; // The Shape with which this view is associated
@@ -494,6 +502,19 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		
 		// Find and substitute the view references
 		attributeList = getExpandedList(getAttributeList());
+
+		// Get the RegEx attributes
+		Map<String, Pattern> regexMap = new HashMap<>();
+		for(String attrPath: this.attributeList) {
+			if(DFAtoRE.isRegex(attrPath)) {
+				regexMap.put(attrPath, Pattern.compile(attrPath));
+			}
+		}
+		if(regexMap.size() > 0) {
+			this.setRegexAttributes(regexMap);
+		}
+
+		setExpanded(true);
 	}
 	
 	public List<String> getExpandedList(List<String> input) {
@@ -517,6 +538,11 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		String viewName = getViewReference(attribute);
 		AggregateView view = getShape().getView(viewName);
 
+		// Attributes might be referring to a RegEx expression
+		if(view == null) {
+			return this.attributeList;
+		}
+
 		if(!view.isExpanded()) {
 			view.expand();
 		}
@@ -528,6 +554,28 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		}
 		
 		return expandedAttributes;
+	}
+
+	@XmlTransient
+	public Map<String, Pattern> getRegexAttributes() {
+		return this.regexAttributes;
+	}
+
+	public void setRegexAttributes(Map<String, Pattern> regexAttributes) {
+		this.regexAttributes = regexAttributes;
+	}
+
+	public boolean matches(String path) {
+		if(regexAttributes != null) {
+			for(Pattern p: regexAttributes.values()) {
+				Matcher matcher = p.matcher(path);
+				if(matcher.matches() || matcher.hitEnd()) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 	
 	@XmlTransient

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -46,7 +47,7 @@ import tools.xor.view.AggregateView;
 public class DFAtoRE {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public static final String UNION_SYMBOL   = "+";
+	public static final String UNION_SYMBOL   = "|";
 	public static final String RECURSE_SYMBOL = "*";
 
 	private Type                  aggregateType;
@@ -200,7 +201,10 @@ public class DFAtoRE {
 	}	
 
 	/**
-	 * Uses the '+' operator. For example, A + B
+	 * Uses the '|' operator. For example, A|B
+	 * NOTE: Do not provide a space otherwise the pattern being matched should also have
+	 * the corresponding space.
+	 *
 	 * @author daltond
 	 *
 	 */
@@ -380,14 +384,16 @@ public class DFAtoRE {
 			StringBuilder result = new StringBuilder();
 			for(Expression expression: children) {
 				if(result.length() > 0)
-					result.append(" " + UNION_SYMBOL + " ");
+					result.append(UNION_SYMBOL);
 				result.append(expression.toString());
 			}
-			if(children.size() < 2)
-				throw new IllegalStateException("Union expression should consist of 2 or more expressions");
-
-			result.insert(0, "(");
-			result.append(")");
+			if(children.size() < 2) {
+				logger.warn(
+					"Union expression should consist of 2 or more expressions");
+			} else {
+				result.insert(0, "(");
+				result.append(")");
+			}
 
 			return result.toString();			
 		}
@@ -498,6 +504,15 @@ public class DFAtoRE {
 		private LiteralExpression() {
 		}
 
+		/**
+		 * By default the literal refers to a graph edge. We support string
+		 * literals by overloading this capability.
+		 * @param value
+		 */
+		public LiteralExpression(String value) {
+			this.transition = new Edge(value, null, null);
+		}
+
 		public LiteralExpression(Edge transition) {
 			this.transition = transition;
 		}
@@ -539,7 +554,8 @@ public class DFAtoRE {
 
 		@Override
 		public String toString() {
-			return (this == LiteralExpression.EMPTY_STRING) ? LiteralExpression.EPSILON : (transition.getQualifiedName());
+			//return (this == LiteralExpression.EMPTY_STRING) ? LiteralExpression.EPSILON : (transition.getQualifiedName());
+			return (this == LiteralExpression.EMPTY_STRING) ? "" : (transition.getQualifiedName());
 		}
 
 		@Override
@@ -707,16 +723,17 @@ public class DFAtoRE {
 		
 		execute(sf, shape);
 	}
-	
+
 	/**
-	 * Remove all spaces and parenthesis and RECURSE '*' characters
-	 * 
-	 * @param attrPath given attribute path
-	 * @return a normalized path that can be easily processed
+	 * Any attribute path that is not of the form
+	 * attr1.attr2
+	 * is considered as a regular expression
+	 *
+	 * @param attrPath
+	 * @return
 	 */
-	private static String normalize(String attrPath) {
-		// TODO: test this
-		return attrPath.replaceAll("[ ()*]+", "");
+	public static boolean isRegex(String attrPath) {
+		return AggregateView.REGEX_STRING_MATCHER.matcher(attrPath).find();
 	}
 	
 	/**
@@ -734,9 +751,12 @@ public class DFAtoRE {
 		State startState = new State(type, true);
 		StateGraph<State, Edge<State>> constrainedGraph = new StateGraph<State, Edge<State>>(type, aggregateView.getShape());
 		constrainedGraph.addVertex(startState);
-		
+
+		Map<String, Pattern> regexMap = new HashMap<>();
 		for(String attrPath: aggregateView.getAttributeList()) {
-			constrainedGraph.extend(normalize(attrPath), startState, false);
+			if(!isRegex(attrPath)) {
+				constrainedGraph.extend(attrPath, startState, false);
+			}
 		}
 		
 		return constrainedGraph;

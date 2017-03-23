@@ -351,11 +351,14 @@ public class AggregateManager implements Xor
 	{
 		Class<?> inputObjectClass = getEntityClass(inputObject, settings);
 
-		if (getPersistenceOrchestrator() == null)
+		if (getPersistenceOrchestrator() == null) {
 			setPersistenceOrchestrator(dasFactory.getPersistenceOrchestrator(settings.getSessionContext()));
+		}
+		settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
 
-		if (settings.getAssociationStrategy() == null)
+		if (settings.getAssociationStrategy() == null) {
 			settings.setAssociationStrategy(associationStrategy);
+		}
 
 		if (settings.getEntityType() == null) {
 
@@ -393,6 +396,10 @@ public class AggregateManager implements Xor
 					sgLogger.debug(settings.getView().getStateGraph((EntityType)settings.getEntityType()).dumpState());
 				}
 			}
+		}
+
+		if(settings.getView() != null && !settings.getView().isExpanded()) {
+			settings.getView().expand();
 		}
 
 		if (owLogger.isDebugEnabled()) {

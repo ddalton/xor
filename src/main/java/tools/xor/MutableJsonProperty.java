@@ -21,9 +21,12 @@ package tools.xor;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Blob;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,6 +98,28 @@ public class MutableJsonProperty extends ExternalProperty {
 	}
 	
 	static {
+		convertersByClass.put(Blob.class,
+			new AbstractConverter() {
+
+				@Override
+				public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
+
+					try {
+						Blob result = settings.getPersistenceOrchestrator().createBlob();
+						result.setBytes(1, Base64.getDecoder().decode(jsonObject.getString(key)));
+						return result;
+					}
+					catch (Exception e) {
+						throw ClassUtil.wrapRun(e);
+					}
+				}
+
+				@Override
+				public void add(Settings settings, JSONArray jsonArray, Object object) {
+					jsonArray.put(Base64.getEncoder().encodeToString((byte[])object));
+				}
+			}
+		);
 		convertersByClass.put(Boolean.class,
 				new AbstractConverter() {
 					

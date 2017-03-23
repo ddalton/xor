@@ -169,7 +169,6 @@ public class DataObjectList {
 							collectionElement.setContainmentProperty(null);
 							result.add(collectionElement);
 						}catch (Exception e) {
-							// TODO: push this exception down
 							throw new RuntimeException(e);
 						}
 					}

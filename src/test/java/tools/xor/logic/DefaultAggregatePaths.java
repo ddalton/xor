@@ -92,9 +92,10 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Set<String> paths = AggregatePropertyPaths.enumerate(person, das.getShape());
 
 		assert(paths.size() > 0);
-		assert(paths.contains("userName"));
-		assert(paths.contains("name"));
-		assert(paths.contains("version"));
+		String path = paths.iterator().next();
+		assert(path.contains("userName"));
+		assert(path.contains("name"));
+		assert(path.contains("version"));
 	}
 	
 	@Test
@@ -135,21 +136,20 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Set<String> paths = AggregatePropertyPaths.enumerate(task, das.getShape());
 
 		assert(paths.size() > 0);
+		String path = paths.iterator().next();
 		
-		assert(paths.contains("(taskChildren. + dependants. + auditTask.)*scheduledFinish") ||
-				paths.contains("(dependants. + taskChildren. + auditTask.)*scheduledFinish") ||
-				paths.contains("(taskChildren. + auditTask. + dependants.)*scheduledFinish") ||
-				paths.contains("(auditTask. + dependants. + taskChildren.)*scheduledFinish") ||
-				paths.contains("(dependants. + auditTask. + taskChildren.)*scheduledFinish") ||
-				paths.contains("(auditTask. + taskChildren. + dependants.)*scheduledFinish")
-				);
-		
-		assert(paths.contains("(taskChildren. + dependants. + auditTask.)*name") ||
-				paths.contains("(dependants. + taskChildren. + auditTask.)*name") ||
-				paths.contains("(taskChildren. + auditTask. + dependants.)*name") ||
-				paths.contains("(auditTask. + dependants. + taskChildren.)*name") ||
-				paths.contains("(dependants. + auditTask. + taskChildren.)*name") ||
-				paths.contains("(auditTask. + taskChildren. + dependants.)*name")
+		assert(path.startsWith("(taskChildren.|dependants.|auditTask.)*quote.(") ||
+			path.startsWith("(dependants.|taskChildren.|auditTask.)*quote.(") ||
+			path.startsWith("(taskChildren.|auditTask.|dependants.)*quote.(") ||
+			path.startsWith("(auditTask.|dependants.|taskChildren.)*quote.(") ||
+			path.startsWith("(dependants.|auditTask.|taskChildren.)*quote.(") ||
+			path.startsWith("(auditTask.|taskChildren.|dependants.)*quote.(") ||
+			path.startsWith("(taskChildren.|dependants.|auditTask.)*(") ||
+			path.startsWith("(dependants.|taskChildren.|auditTask.)*(") ||
+			path.startsWith("(taskChildren.|auditTask.|dependants.)*(") ||
+			path.startsWith("(auditTask.|dependants.|taskChildren.)*(") ||
+			path.startsWith("(dependants.|auditTask.|taskChildren.)*(") ||
+			path.startsWith("(auditTask.|taskChildren.|dependants.)*(")
 				);
 		
 		Type patent = das.getType(Patent.class);
@@ -158,8 +158,8 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Level oldLevel = logger.getLevel();
 		//logger.setLevel(Level.DEBUG);
 		StringBuilder pathstr = new StringBuilder("\n");
-		for(String path: paths) {
-			pathstr.append(path + "\n");
+		for(String p: paths) {
+			pathstr.append(p + "\n");
 		}
 		logger.debug(pathstr);
 		logger.setLevel(oldLevel);
@@ -254,22 +254,22 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		re.createEquations(); 
 		Expression result = re.processEquations();
 
-		assert(result.toString().equals( "(ab + (b + aa)(ba)*(bb + a))*") ||
-				result.toString().equals( "(ab + (b + aa)(ba)*(a + bb))*") ||
-				result.toString().equals( "(ab + (aa + b)(ba)*(bb + a))*") ||
-				result.toString().equals( "(ab + (aa + b)(ba)*(a + bb))*") ||
-				result.toString().equals( "((aa + b)(ba)*(bb + a) + ab)*") ||
-				result.toString().equals( "((aa + b)(ba)*(a + bb) + ab)*") ||
-				result.toString().equals( "((b + aa)(ba)*(bb + a) + ab)*") ||
-				result.toString().equals( "((b + aa)(ba)*(a + bb) + ab)*") ||
-				result.toString().equals( "(ba + (bb + a)(ab)*(b + aa))*") ||
-				result.toString().equals( "(ba + (bb + a)(ab)*(aa + b))*") ||
-				result.toString().equals( "(ba + (a + bb)(ab)*(b + aa))*") ||
-				result.toString().equals( "(ba + (a + bb)(ab)*(aa + b))*") ||
-				result.toString().equals( "((bb + a)(ab)*(aa + b) + ba)*") ||
-				result.toString().equals( "((a + bb)(ab)*(aa + b) + ba)*") ||
-				result.toString().equals( "((bb + a)(ab)*(b + aa) + ba)*") ||
-				result.toString().equals( "((a + bb)(ab)*(b + aa) + ba)*"));				
+		assert(result.toString().equals( "(ab|(b|aa)(ba)*(bb|a))*") ||
+				result.toString().equals( "(ab|(b|aa)(ba)*(a|bb))*") ||
+				result.toString().equals( "(ab|(aa|b)(ba)*(bb|a))*") ||
+				result.toString().equals( "(ab|(aa|b)(ba)*(a|bb))*") ||
+				result.toString().equals( "((aa|b)(ba)*(bb|a)|ab)*") ||
+				result.toString().equals( "((aa|b)(ba)*(a|bb)|ab)*") ||
+				result.toString().equals( "((b|aa)(ba)*(bb|a)|ab)*") ||
+				result.toString().equals( "((b|aa)(ba)*(a|bb)|ab)*") ||
+				result.toString().equals( "(ba|(bb|a)(ab)*(b|aa))*") ||
+				result.toString().equals( "(ba|(bb|a)(ab)*(aa|b))*") ||
+				result.toString().equals( "(ba|(a|bb)(ab)*(b|aa))*") ||
+				result.toString().equals( "(ba|(a|bb)(ab)*(aa|b))*") ||
+				result.toString().equals( "((bb|a)(ab)*(aa|b)|ba)*") ||
+				result.toString().equals( "((a|bb)(ab)*(aa|b)|ba)*") ||
+				result.toString().equals( "((bb|a)(ab)*(b|aa)|ba)*") ||
+				result.toString().equals( "((a|bb)(ab)*(b|aa)|ba)*"));
 
 	}	
 
@@ -324,7 +324,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		re.createEquations(); 
 		Expression result = re.processEquations();
 
-		assert(result.toString().equals( "a*b(cdb + b)*cd") || result.toString().equals( "a*b(b + cdb)*cd"));		
+		assert(result.toString().equals( "a*b(cdb|b)*cd") || result.toString().equals( "a*b(b|cdb)*cd"));
 	}	
 	
 	@Test
@@ -381,7 +381,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		re.createEquations(); 
 		Expression result = re.processEquations();
 
-		assert(result.toString().equals( "a*b(cdb + b)*") || result.toString().equals( "a*b(b + cdb)*"));		
+		assert(result.toString().equals( "a*b(cdb|b)*") || result.toString().equals( "a*b(b|cdb)*"));
 	}
 	
 	@Test
@@ -496,7 +496,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		re.createEquations(); 
 		Expression result = re.processEquations();
 
-		assert(result.toString().equals( "a*b(cdb + b)*c") || result.toString().equals( "a*b(b + cdb)*c") || result.toString().equals("a*bb*c(dbb*c)*"));		
+		assert(result.toString().equals( "a*b(cdb|b)*c") || result.toString().equals( "a*b(b|cdb)*c") || result.toString().equals("a*bb*c(dbb*c)*"));
 	}
 	
 	@Test
@@ -553,19 +553,19 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		for(State state: regEx.keySet()) {
 			Expression exp = regEx.get(state);
 			if(state.getName().endsWith("Task")) {
-				assert(exp.toString().equals("(taskChildren. + auditTask. + dependants.)*") ||
-						exp.toString().equals("(auditTask. + taskChildren. + dependants.)*") ||
-						exp.toString().equals("(dependants. + taskChildren. + auditTask.)*") ||
-						exp.toString().equals("(dependants. + auditTask. + taskChildren.)*") ||
-						exp.toString().equals("(taskChildren. + dependants. + auditTask.)*") ||
-						exp.toString().equals("(auditTask. + dependants. + taskChildren.)*"));						
+				assert(exp.toString().equals("(taskChildren.|auditTask.|dependants.)*") ||
+						exp.toString().equals("(auditTask.|taskChildren.|dependants.)*") ||
+						exp.toString().equals("(dependants.|taskChildren.|auditTask.)*") ||
+						exp.toString().equals("(dependants.|auditTask.|taskChildren.)*") ||
+						exp.toString().equals("(taskChildren.|dependants.|auditTask.)*") ||
+						exp.toString().equals("(auditTask.|dependants.|taskChildren.)*"));
 			} else if (state.getName().endsWith("Quote")) {			
-				assert(exp.toString().equals("(taskChildren. + auditTask. + dependants.)*quote.") ||
-						exp.toString().equals("(auditTask. + taskChildren. + dependants.)*quote.") ||
-						exp.toString().equals("(dependants. + taskChildren. + auditTask.)*quote.") ||
-						exp.toString().equals("(dependants. + auditTask. + taskChildren.)*quote.") ||
-						exp.toString().equals("(taskChildren. + dependants. + auditTask.)*quote.") ||
-						exp.toString().equals("(auditTask. + dependants. + taskChildren.)*quote."));				
+				assert(exp.toString().equals("(taskChildren.|auditTask.|dependants.)*quote.") ||
+						exp.toString().equals("(auditTask.|taskChildren.|dependants.)*quote.") ||
+						exp.toString().equals("(dependants.|taskChildren.|auditTask.)*quote.") ||
+						exp.toString().equals("(dependants.|auditTask.|taskChildren.)*quote.") ||
+						exp.toString().equals("(taskChildren.|dependants.|auditTask.)*quote.") ||
+						exp.toString().equals("(auditTask.|dependants.|taskChildren.)*quote."));
 			}
 		}
 	}

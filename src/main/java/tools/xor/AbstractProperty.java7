@@ -20,11 +20,6 @@
 package tools.xor;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -35,13 +30,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MapKey;
 import javax.persistence.OrderBy;
+import javax.persistence.UniqueConstraint;
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import org.apache.log4j.LogManager;
@@ -80,9 +74,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	// The following fields are used to set/retrieve value
 	protected Method     getterMethod;
-    protected Function   getterFunction;
-    protected Method     setterMethod;
-    protected BiConsumer setterFunction;
+	protected Method     setterMethod;  
 	
 	protected Field      field;
 	
@@ -353,55 +345,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}
 
-	private void initGetterFunction() {
-		try {
-			MethodHandles.Lookup caller = MethodHandles.lookup();
-			MethodType getter=MethodType.methodType(getterMethod.getReturnType());
-			MethodHandle target=caller.findVirtual(getContainingType().getInstanceClass(), getterMethod.getName(), getter);
-			MethodType func= target.type();
-			/*
-			CallSite site = LambdaMetafactory.metafactory(caller,
-					"get",
-					MethodType.methodType(Supplier.class),
-					func.generic(), target, func);
-			*/
-			CallSite site = LambdaMetafactory.metafactory(
-				caller,
-				"apply",
-				MethodType.methodType(Function.class),
-				func.generic(), target, func);
-
-			MethodHandle factory = site.getTarget();
-			getterFunction =  (Function) factory.invokeExact();
-
-		} catch (Throwable t) {
-			logger.error("Error while creating lambda funcation for getter method: " + getName() + ", Message: " + t.getMessage());
-			getterFunction = null;
-		}
-	}
-
-	private void initSetterFunction() {
-		try {
-			MethodHandles.Lookup caller = MethodHandles.lookup();
-
-			MethodType setter = MethodType.methodType(Void.TYPE, setterMethod.getParameterTypes()[0]);
-			MethodHandle target = caller.findVirtual(getContainingType().getInstanceClass(),
-					setterMethod.getName(), setter);
-			MethodType func = target.type();
-			MethodType samMethodType = func.changeParameterType(0, Object.class).changeParameterType(1, Object.class);
-			CallSite site = LambdaMetafactory.metafactory(caller, "accept",
-					MethodType.methodType(BiConsumer.class),
-					samMethodType, target, func);
-
-			MethodHandle factory = site.getTarget();
-			setterFunction = (BiConsumer) factory.invokeExact();
-
-		} catch (Throwable t) {
-			logger.error("Error while creating lambda funcation for setter method: " + getName() + ", Message: " + t.getMessage());
-			setterFunction = null;
-		}
-	}
-
 	protected void init ()
 	{
 		Class<?> instanceClass = getContainingType().getInstanceClass();
@@ -427,11 +370,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			}
 			return;
 		}
-		setterMethod = getContainingType().getSetterMethod(getName());
-
-		// Lambda
-		initGetterFunction();
-		initSetterFunction();
+		setterMethod = getContainingType().getSetterMethod(getName());		
 
 		initApiVersion();
 		initByAnnotations();
@@ -920,8 +859,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		try {
 			if(AccessType.PROPERTY.equals(getAccessType())) {
 				try {
-					//return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);
-					return getterFunction.apply(instance);
+					return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);
+					//return getterFunction.apply(instance);
 				} catch (Exception e) { // fallback to field access
 					logger.warn("Falling back to field access for method : " + getterMethod.getName());
 					return ClassUtil.invokeFieldAsPrivileged(instance, field, null, true);
@@ -931,8 +870,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					return ClassUtil.invokeFieldAsPrivileged(instance, field, null, true);
 				} catch (Exception e) { // fallback to method access
 					logger.warn("Falling back to method access for field : " + field.getName());
-					return getterFunction.apply(instance);
-					//return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);
+					//return getterFunction.apply(instance);
+					return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);	
 				}
 
 			} 
@@ -951,8 +890,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		try {
 			if(AccessType.PROPERTY.equals(getAccessType())) {
 				try {
-					//ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
-					setterFunction.accept(instance, propertyValue);
+					ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
+					//setterFunction.accept(instance, propertyValue);
 				} catch (Exception e) { // fallback to field access
 					if(setterMethod != null) {
 						logger.warn(
@@ -967,8 +906,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					if(field != null) {
 						logger.warn("Falling back to method access for field : " + field.getName());
 					}
-					setterFunction.accept(instance, propertyValue);
-					//ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
+					//setterFunction.accept(instance, propertyValue);
+					ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);	
 				}
 			} 
 		} catch (Exception e) {

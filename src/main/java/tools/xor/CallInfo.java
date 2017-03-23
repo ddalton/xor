@@ -19,8 +19,10 @@
 
 package tools.xor;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -276,7 +278,31 @@ public class CallInfo {
 			logger.debug("State graph is " + ( (sg==null) ? "NOT":"") + " present");
 		}
 		
-		return ((AbstractType)type).getProperties(sg.next( ((EntityType)type).getDomainType() ), settings.getApiVersion());
+		List<Property> exactProperties = ((AbstractType)type).getProperties(sg.next( ((EntityType)type).getDomainType() ), settings.getApiVersion());
+
+		if(settings.getView().getRegexAttributes() != null) {
+			// Get the RegEx properties
+			Set<String> isIncluded = new HashSet<>();
+			for (Property p : exactProperties) {
+				isIncluded.add(p.getName());
+			}
+			for (Property p : ((AbstractType)type).getProperties(settings.getApiVersion())) {
+				// Is the property already included
+				if (isIncluded.contains(p.getName())) {
+					continue;
+				}
+
+				// Evaluate the regex
+				String pPath = (getInputPropertyPath() == null || "".equals(getInputPropertyPath())) ?
+					p.getName() :
+					(getInputPropertyPath() + Settings.PATH_DELIMITER + p.getName());
+				if (settings.getView().matches(pPath)) {
+					exactProperties.add(p);
+				}
+			}
+		}
+
+		return exactProperties;
 	}
 
 	public String getInputPropertyPath() {
@@ -346,8 +372,8 @@ public class CallInfo {
 		EntityType targetType = (EntityType) ((BusinessObject) getParent().getOutput()).getType();
 		ExtendedProperty targetProperty = (ExtendedProperty) targetType.getProperty(getInputProperty().getName());
 		if(targetProperty == null) {
-			throw new RuntimeException(
-				"Property " + getInputProperty().getName() + " is missing from the type " + targetType.getName());
+			logger.warn("Property " + getInputProperty().getName() + " is missing from the type " + targetType.getName());
+			return null;
 		}
 		return targetProperty.getValue((BusinessObject)getParent().getOutput());
 	}

@@ -45,15 +45,16 @@ import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
 
 import javax.imageio.ImageIO;
 
 /**
- * TODO: Convert the fields to final and only use the builder to create the Settings object
- * @author family
+ * @author Dilip Dalton
  *
  */
 public class Settings {
@@ -94,11 +95,12 @@ public class Settings {
 	{
 		this.dateFormat = dateFormat;
 	}
+
+	protected PersistenceOrchestrator persistenceOrchestrator;
 	
 	protected boolean supportsPostLogic;
 	
 	// The entity type on which the data is based
-	// TODO: can evolve to an IDL operation
 	protected Type entityType;
 
 	// If the scope is ContentScope.VIEW then the actual view is referenced in this property
@@ -186,6 +188,16 @@ public class Settings {
 		}
 
 		return getSparseness();
+	}
+
+	public PersistenceOrchestrator getPersistenceOrchestrator ()
+	{
+		return this.persistenceOrchestrator;
+	}
+
+	public void setPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
+	{
+		this.persistenceOrchestrator = persistenceOrchestrator;
 	}
 
 	public boolean isShouldCreate(Class<?> clazz) {
@@ -436,8 +448,11 @@ public class Settings {
 		return view;
 	}
 
+	/**
+	 * Set a simple view, i.e., one that does not need a StateGraph @see init
+	 * @param view in effect
+	 */
 	public void setView(AggregateView view) {
-		// TODO: call init instead
 		this.view = view;
 	}
 
@@ -553,9 +568,15 @@ public class Settings {
 			return;
 
 		if(entity != null) {
-			narrowedClass = typeNarrower.narrow(entity, getView().getName());
-			if(narrowedClass == null) {
-				throw new IllegalArgumentException("The entityClass is not applicable for this view. Check if the entity object for the correct class was passed in.");
+			if(getView().getRegexAttributes() == null) {
+				narrowedClass = typeNarrower.narrow(entity, getView().getName());
+				if (narrowedClass == null) {
+					throw new IllegalArgumentException(
+						"The entityClass is not applicable for this view. Check if the entity object for the correct class was passed in.");
+				}
+			} else {
+				throw new IllegalArgumentException(
+					"Type narrowing is not supported on a view containing RegEx attributes. Use read() instead of query().");
 			}
 		} else {
 			narrowedClass = getEntityType().getInstanceClass();

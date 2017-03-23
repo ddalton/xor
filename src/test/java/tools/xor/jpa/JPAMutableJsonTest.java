@@ -294,4 +294,14 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void sharedOwnedBy() {
 		super.sharedOwnedBy();
 	}
+
+	@Test
+	public void generatePicture() {
+		super.generatePicture();
+	}
+
+	@Test
+	public void checkRegexView() {
+		super.checkRegexView();
+	}
 }

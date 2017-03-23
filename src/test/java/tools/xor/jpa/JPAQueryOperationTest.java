@@ -67,7 +67,12 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	@Test
 	public void queryTaskGrandChildren() {
 		super.queryTaskGrandChildren();
-	}			
+	}
+
+	@Test
+	public void queryTaskGrandChildrenRegEx() {
+		super.queryTaskGrandChildrenRegEx();
+	}
 	
 	@Test
 	public void queryTaskGrandChildrenSkip() {

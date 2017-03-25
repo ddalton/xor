@@ -57,10 +57,12 @@ public class MutableBO extends AbstractBO {
 		CallInfo callInfo = new CallInfo(this, null, null, null);
 		callInfo.setSettings(settings);	
 		callInfo.getSettings().setAction(settings.getAction()); // Since the default global action can be either UPDATE or MERGE
+		this.getObjectCreator().setShare(true);
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
 		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);

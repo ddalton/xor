@@ -507,7 +507,7 @@ public class DFAtoRE {
 		/**
 		 * By default the literal refers to a graph edge. We support string
 		 * literals by overloading this capability.
-		 * @param value
+		 * @param value of the literal
 		 */
 		public LiteralExpression(String value) {
 			this.transition = new Edge(value, null, null);
@@ -729,8 +729,8 @@ public class DFAtoRE {
 	 * attr1.attr2
 	 * is considered as a regular expression
 	 *
-	 * @param attrPath
-	 * @return
+	 * @param attrPath full path of an attribute/pattern
+	 * @return true if the path refers to a RegEx
 	 */
 	public static boolean isRegex(String attrPath) {
 		return AggregateView.REGEX_STRING_MATCHER.matcher(attrPath).find();

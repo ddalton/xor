@@ -286,6 +286,10 @@ public class ObjectCreator {
 					containmentProperty,
 					this);
 		} else {
+			// coerce type to the correct shape
+			if(targetType instanceof EntityType && ((EntityType)targetType).isDomainType() ) {
+				targetType = das.getType(targetType.getName());
+			}
 			dataObject = new MutableBO(targetType,
 					container,
 					containmentProperty,

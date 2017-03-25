@@ -26,6 +26,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -912,16 +913,12 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public Object query(Object dataObject)
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
-		//if(isOpenContent() && dataObject instanceof BusinessObject) {
-		//	instance = ClassUtil.getInstance(((BusinessObject)dataObject).getContainer());
-		//}
 
 		// Set the value in the field  
 		try {
 			if(AccessType.PROPERTY.equals(getAccessType())) {
 				try {
-					//return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);
-					return getterFunction.apply(instance);
+					return invokeGetter(instance);
 				} catch (Exception e) { // fallback to field access
 					logger.warn("Falling back to field access for method : " + getterMethod.getName());
 					return ClassUtil.invokeFieldAsPrivileged(instance, field, null, true);
@@ -931,15 +928,27 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					return ClassUtil.invokeFieldAsPrivileged(instance, field, null, true);
 				} catch (Exception e) { // fallback to method access
 					logger.warn("Falling back to method access for field : " + field.getName());
-					return getterFunction.apply(instance);
-					//return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);
+					return invokeGetter(instance);
 				}
 
 			} 
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}
-	}	
+	}
+
+	private Object invokeGetter(Object instance) throws
+		InvocationTargetException,
+		IllegalAccessException
+	{
+		if(getterFunction != null) {
+			// Use Lambda mechanism for slightly faster invocation
+			return getterFunction.apply(instance);
+		} else {
+			// Fallback to reflection
+			return ClassUtil.invokeMethodAsPrivileged(instance, getterMethod);
+		}
+	}
 
 	protected <T> void executeUpdate(Object dataObject, Object propertyValue)
 	{
@@ -951,8 +960,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		try {
 			if(AccessType.PROPERTY.equals(getAccessType())) {
 				try {
-					//ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
-					setterFunction.accept(instance, propertyValue);
+					invokeSetter(instance, propertyValue);
 				} catch (Exception e) { // fallback to field access
 					if(setterMethod != null) {
 						logger.warn(
@@ -967,12 +975,24 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					if(field != null) {
 						logger.warn("Falling back to method access for field : " + field.getName());
 					}
-					setterFunction.accept(instance, propertyValue);
-					//ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
+					invokeSetter(instance, propertyValue);
 				}
 			} 
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
+		}
+	}
+
+	private void invokeSetter(Object instance, Object propertyValue) throws
+		InvocationTargetException,
+		IllegalAccessException
+	{
+		if(setterFunction != null) {
+			// Use Lambda mechanism for slightly faster invocation
+			setterFunction.accept(instance, propertyValue);
+		} else {
+			// Fallback to reflection
+			ClassUtil.invokeMethodAsPrivileged(instance, setterMethod, propertyValue);
 		}
 	}
 

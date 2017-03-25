@@ -27,6 +27,7 @@ import tools.xor.generator.Range;
 import tools.xor.util.Constants;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
 
@@ -62,12 +63,17 @@ public class BigDecimalType extends SimpleType {
 		BigDecimal maximum = this.max;
 
 		int scale = 0;
-
 		ExtendedProperty ep = (ExtendedProperty) property;
 		if(ep.getGenerator() != null) {
 			return ep.getGenerator().getBigDecimal();
-		} else if(ep.getConstraints().containsKey(Constants.XOR.CONS_SCALE)) {
-			scale = (int)ep.getConstraints().get(Constants.XOR.CONS_SCALE);
+		} else {
+			if (ep.getConstraints().containsKey(Constants.XOR.CONS_SCALE)) {
+				scale = (int)ep.getConstraints().get(Constants.XOR.CONS_SCALE);
+			}
+			if (ep.getConstraints().containsKey(Constants.XOR.CONS_PRECISION)) {
+				int precision = (int)ep.getConstraints().get(Constants.XOR.CONS_PRECISION);
+				maximum = new BigDecimal(BigInteger.TEN.pow(precision));
+			}
 		}
 
 		BigDecimal result = maximum.subtract(minimum).multiply( new BigDecimal( (new Double(Math.random())).toString() ) );

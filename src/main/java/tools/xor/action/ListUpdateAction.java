@@ -83,11 +83,15 @@ public class ListUpdateAction extends CollectionUpdateAction {
 	}
 
 	private List extractList(BusinessObject bo) {
-		List list = null;
-		if(bo.getInstance() instanceof List) {
-			list = (List) bo.getInstance();
-		} else if(bo.getInstance() instanceof JSONArray) {
-			list = ClassUtil.jsonArrayToList((JSONArray)bo.getInstance());
+		List list = new ArrayList();
+
+		if(bo != null) {
+			if (bo.getInstance() instanceof List) {
+				list = (List)bo.getInstance();
+			}
+			else if (bo.getInstance() instanceof JSONArray) {
+				list = ClassUtil.jsonArrayToList((JSONArray)bo.getInstance());
+			}
 		}
 
 		return list;

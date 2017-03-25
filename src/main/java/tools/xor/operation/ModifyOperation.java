@@ -26,9 +26,11 @@ import org.apache.log4j.Logger;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableJsonProperty;
 import tools.xor.ProcessingStage;
+import tools.xor.Type;
 import tools.xor.action.AddElementAction;
 import tools.xor.action.CollectionUpdateAction;
 import tools.xor.action.Executable;
@@ -58,10 +60,6 @@ public class ModifyOperation extends AbstractOperation {
 
 	@Override
 	public void processCollection(CallInfo callInfo) throws Exception {
-
-		// DILIP: This is processed by view
-		//if(!callInfo.isCascadable()) // Hibernate will not update this collection
-		//	return;
 
 		//if(callInfo.getStage() != ProcessingStage.UPDATE)
 		//	return;		
@@ -137,9 +135,19 @@ public class ModifyOperation extends AbstractOperation {
 	}
 
 	protected void linkToOne(CallInfo ci, Object value) {
-		if(ci.getOutputProperty().getAssociationType() != PersistentAttributeType.ONE_TO_ONE &&
-				ci.getOutputProperty().getAssociationType() != PersistentAttributeType.MANY_TO_ONE)
+
+		boolean isEmbeddedType = false;
+		Type type = ci.getOutputProperty().getType();
+		if(type instanceof EntityType && ((EntityType)type).isEmbedded()) {
+			isEmbeddedType = true;
+		}
+
+		// We like all TO_ONE and embedded relationships
+		if (ci.getOutputProperty().getAssociationType() != PersistentAttributeType.ONE_TO_ONE &&
+			ci.getOutputProperty().getAssociationType() != PersistentAttributeType.MANY_TO_ONE &&
+			!isEmbeddedType) {
 			return;
+		}
 
 		// If this is a uni-directional OneToOne, we just have to set the target to value
 		PropertyKey key            = new PropertyKey((BusinessObject)ci.getParentOutputEntity(), ci.getOutputProperty());
@@ -149,7 +157,7 @@ public class ModifyOperation extends AbstractOperation {
 		if(!isSameTarget(ci, value))		
 			ci.getOutputRoot().getObjectPersister().addAction(originalAction);			
 
-		if(ci.getOutputProperty().isBiDirectional()) {
+		if(!isEmbeddedType && ci.getOutputProperty().isBiDirectional()) {
 			PropertyKey newOppositeKey = new PropertyKey((BusinessObject)value, ci.getOutputProperty().getOpposite());	
 
 			// If the target has an existing opposite object, its backRef needs to be set to null 

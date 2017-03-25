@@ -737,16 +737,23 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	private void addObject(
 			Map<State, List<JSONObject>> stateObjectMap,
 			Map<JSONObject, State> objectStateMap,
+			Map<JSONObject, State> embeddedObjectStateMap,
 			State state,
 			JSONObject object) {
 
-		List<JSONObject> list = stateObjectMap.get(state);
-		if(list == null) {
-			list = new ArrayList<JSONObject>();
-			stateObjectMap.put(state, list);
+		// Embedded objects are not considered in the object graph limit
+		EntityType type = (EntityType)state.getType();
+		if(!type.isEmbedded()) {
+			List<JSONObject> list = stateObjectMap.get(state);
+			if (list == null) {
+				list = new ArrayList<JSONObject>();
+				stateObjectMap.put(state, list);
+			}
+			list.add(object);
+			objectStateMap.put(object, state);
+		} else {
+			embeddedObjectStateMap.put(object, state);
 		}
-		list.add(object);
-		objectStateMap.put(object, state);
 	}
 			
 	
@@ -771,6 +778,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		Set<JSONObject> visited = new HashSet<JSONObject>();
 		Map<State, List<JSONObject>> stateObjectMap = new HashMap<State, List<JSONObject>>();
 		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
+		Map<JSONObject, State> embeddedObjectStateMap = new HashMap<JSONObject, State>();
 
 		Queue<JSONObject> q = new LinkedList();
 
@@ -782,6 +790,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		addObject(
 			stateObjectMap,
 			objectStateMap,
+			embeddedObjectStateMap,
 			getRootState(),
 			result);
 		q.add(result);
@@ -802,7 +811,16 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				String path = entity.has(Constants.XOR.GEN_PATH) ?
 					entity.getString(Constants.XOR.GEN_PATH) : null;
 
-				for (Property property : objectStateMap.get(entity).getType().getProperties()) {
+				Type entityType;
+				if(objectStateMap.containsKey(entity)) {
+					entityType = objectStateMap.get(entity).getType();
+				} else if(embeddedObjectStateMap.containsKey(entity)) {
+					entityType = embeddedObjectStateMap.get(entity).getType();
+				} else {
+					throw new RuntimeException("Unable to find entity - check if it was added using addObject() method");
+				}
+
+				for (Property property : entityType.getProperties()) {
 
 					// target type
 					ExtendedProperty extendedProperty = (ExtendedProperty)property;
@@ -832,6 +850,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						addObject(
 							stateObjectMap,
 							objectStateMap,
+							embeddedObjectStateMap,
 							state,
 							(JSONObject)target);
 						q.add((JSONObject)target);
@@ -844,6 +863,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							addObject(
 								stateObjectMap,
 								objectStateMap,
+								embeddedObjectStateMap,
 								state,
 								jsonObject);
 							q.add(jsonObject);

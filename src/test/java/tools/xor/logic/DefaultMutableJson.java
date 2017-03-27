@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uci.ics.jung.graph.Graph;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.AssociationSetting;
+import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.ImmutableJsonProperty;
 import tools.xor.OpenType;
@@ -58,12 +60,15 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Employee;
+import tools.xor.db.base.LocationDetails;
+import tools.xor.db.base.ParkingSpot;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
 import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.util.Edge;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;
@@ -1249,5 +1254,65 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		JSONObject jsonTask = (JSONObject) jsonObject;
 		System.out.println("JSON string: " + jsonTask.toString());
 		assert( (jsonTask.get("name")).toString().equals(TASK_NAME));
+	}
+
+	public void exportEmployee () throws IOException
+	{
+
+		try {
+			DataAccessService das = aggregateService.getDAS();
+
+			EntityType employeeType = (EntityType)das.getType(Employee.class);
+			AggregateView view = das.getBaseView(employeeType).copy();
+			Settings settings = new Settings();
+			settings.setView(view);
+			settings.setEntityType(employeeType);
+			settings.addAssociation(new AssociationSetting(LocationDetails.class));
+			//settings.addAssociation(new AssociationSetting(ParkingSpot.class));
+
+			settings.setEntitySize(EntitySize.LARGE);
+
+			settings.init(das.getShape());
+			StateGraph sg = settings.getView().getStateGraph(employeeType);
+			settings.setGraphFileName("EmployeeStateGraph.png");
+			sg.generateVisual(settings);
+			System.out.println("!!!!!!!OUT EDGES: " + sg.getEdges().size());
+			for (Object edge : sg.getEdges()) {
+				Edge e = (Edge)edge;
+				System.out.println("Edge: " + e.toString());
+			}
+			Graph g = sg.getStateGraph(settings);
+			System.out.println("Total edges: " + g.getEdges().size());
+
+			settings.setSparseness(0.01f);
+			JSONObject employee = (JSONObject)sg.generateObjectGraph(settings);
+
+			// Try and persist this now
+			settings.setGraphFileName("EmployeeGraph.png");
+			settings.setPostFlush(true);
+			Employee persistedEmployee = (Employee)aggregateService.update(employee, settings);
+
+			assert(persistedEmployee.getLocation() != null);
+
+			aggregateService.exportAggregate("EmployeeRandomMedium.xlsx", persistedEmployee, settings);
+
+			aggregateService.delete(persistedEmployee, settings);
+
+			settings.setPreClear(true);
+
+			// Import the employee
+			Object obj = aggregateService.importAggregate("EmployeeRandomMedium.xlsx", settings);
+			assert(obj != null);
+
+			List objects = (List) obj;
+			assert(objects.size() == 1);
+
+			Employee e = (Employee)objects.get(0);
+			assert(e != null && e.getLocation() != null && e.getLocation().getOfficeNumber() > 0);
+
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

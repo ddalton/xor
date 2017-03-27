@@ -21,6 +21,7 @@ package tools.xor.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Blob;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -94,7 +95,7 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 			Property containmentProperty) throws Exception {
 		
 		Object result = null;
-		if(getUnchanged().contains(toClass)) {
+		if(getUnchanged().contains(toClass) || (from != null && from instanceof Blob)) {
 			result = from;
 		} else if(toClass == JSONObject.class || type.getInstanceClass() == JSONObject.class) {
 			result = new JSONObject();

@@ -30,7 +30,7 @@ public class BigIntegerType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private BigInteger min = BigInteger.ONE;
-	private BigInteger max = new BigInteger( (new Long(Long.MAX_VALUE)).toString() );	
+	private BigInteger max = new BigInteger( (new Long(Integer.MAX_VALUE)).toString() );
 
 	public BigInteger getMin() {
 		return min;

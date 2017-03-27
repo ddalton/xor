@@ -114,6 +114,13 @@ public interface DataObject extends Serializable
 
   /**
    * Returns the value of a String property identified by the specified path.
+   * This is an optimization API intended only for use in Export/Import and where
+   * the input DataObject is a JSONObject.
+   *
+   * This optimization API allows us to avoid the creation of DataObject wrappers
+   * for embedded objects and helps with performance on Aggregates that use a lot of
+   * embedded objects.
+   *
    * @param path the path to a valid object and property.
    * @return the String value of the specified property.
    */

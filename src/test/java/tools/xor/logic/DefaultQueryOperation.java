@@ -753,12 +753,10 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		task3.setDescription("Based upon the effort required for the defects prioritize them");
 		task3 = (Task) aggregateService.create(task3, new Settings());
 
-		task1 = (Task) aggregateService.read(new Task(), getSettings());		
-
 		// query the task object
 		Settings settings = new Settings();
 		settings.setView(aggregateService.getView("TASKFILTER"));		
-		List<?> toList = aggregateService.query(task1, settings);
+		List<?> toList = aggregateService.query(new Task(), settings);
 
 		assert(toList.size() == 3);		
 	}

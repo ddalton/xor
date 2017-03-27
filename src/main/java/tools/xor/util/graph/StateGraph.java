@@ -800,6 +800,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		while (!q.isEmpty()) {
 			// Check limits
+			// NOTE: if using a generator to share objects, then
+			// the resulting object graph will be smaller in the number of vertices since
+			// the objects get shared.
 			if (objectStateMap.size() > settings.getEntitySize().size()) {
 				flush = true;
 			}

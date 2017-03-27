@@ -96,10 +96,35 @@ public class MutableJsonProperty extends ExternalProperty {
 			jsonObject.put(name, object);
 		}
 	}
+
+
+	private static Object getBlobString(Object object) {
+
+		if(object instanceof Blob) {
+			Blob blob = (Blob) object;
+			try {
+				return Base64.getEncoder().encodeToString(blob.getBytes(1,
+							(int)blob.length()));
+			}
+			catch (SQLException e) {
+				throw ClassUtil.wrapRun(e);
+			}
+		} else if(object instanceof byte[]) {
+			return Base64.getEncoder().encodeToString((byte[])object);
+		}
+		else {
+			return object;
+		}
+	}
 	
 	static {
 		convertersByClass.put(Blob.class,
 			new AbstractConverter() {
+
+				@Override
+				public void setExternal(Settings settings, JSONObject jsonObject, String name, Object object) throws JSONException {
+					jsonObject.put(name, getBlobString(object));
+				}
 
 				@Override
 				public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
@@ -116,10 +141,11 @@ public class MutableJsonProperty extends ExternalProperty {
 
 				@Override
 				public void add(Settings settings, JSONArray jsonArray, Object object) {
-					jsonArray.put(Base64.getEncoder().encodeToString((byte[])object));
+					jsonArray.put(getBlobString(object));
 				}
 			}
 		);
+
 		convertersByClass.put(Boolean.class,
 				new AbstractConverter() {
 					

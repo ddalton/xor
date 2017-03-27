@@ -201,6 +201,10 @@ public class Settings {
 	}
 
 	public boolean isShouldCreate(Class<?> clazz) {
+		if(action == AggregateAction.LOAD) {
+			return false;
+		}
+		
 		if(shouldCreateIfMissing == null && associationSettings.size() > 0) {
 			// populate
 			shouldCreateIfMissing = new HashMap<>();

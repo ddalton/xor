@@ -304,4 +304,10 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void checkRegexView() {
 		super.checkRegexView();
 	}
+
+	@Test
+	public void exportEmployee() throws IOException
+	{
+		super.exportEmployee();
+	}
 }

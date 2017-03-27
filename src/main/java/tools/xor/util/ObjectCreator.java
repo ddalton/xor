@@ -577,7 +577,9 @@ public class ObjectCreator {
 								"ObjectCreator#createTarget Unable to create targetInstance of class: "
 									+ targetInstanceClass.getName()
 									+ " and source instance: " + sourceInstance.getClass().getName()
-									+ " and target type: " + targetType.getName());
+									+ " and target type: " + targetType.getName()
+									+ ". The instance has probably been deleted"
+							);
 						}
 					}
 				}

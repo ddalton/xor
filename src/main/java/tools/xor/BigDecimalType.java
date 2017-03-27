@@ -35,7 +35,7 @@ public class BigDecimalType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private BigDecimal min = BigDecimal.ONE;
-	private BigDecimal max = new BigDecimal((new Long(Long.MAX_VALUE)).toString());
+	private BigDecimal max = new BigDecimal((new Long(Integer.MAX_VALUE)).toString());
 
 	public BigDecimal getMin() {
 		return min;

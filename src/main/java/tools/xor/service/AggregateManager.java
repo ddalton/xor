@@ -634,7 +634,7 @@ public class AggregateManager implements Xor
 		from = from.load(settings);  // Get the persistent object
 
 		//  perform read on it
-		BusinessObject to = (BusinessObject)from.read(settings);
+		BusinessObject to = (from != null) ? (BusinessObject)from.read(settings) : null;
 
 		return to;
 	}
@@ -643,7 +643,7 @@ public class AggregateManager implements Xor
 	public Object read (Object entity, Settings settings)
 	{
 		BusinessObject to = readBO(entity, settings);
-		return to.getNormalizedInstance(settings);
+		return (to != null) ? to.getNormalizedInstance(settings) : null;
 	}
 
 	public void exportCSV(String filePath, Object inputObject, Settings settings) throws IOException
@@ -830,7 +830,18 @@ public class AggregateManager implements Xor
 	@Override
 	public void delete (Object entity, Settings settings)
 	{
-		getPersistenceOrchestrator().delete(entity);
+		owLogger.debug("Performing delete operation");
+		checkAndSet(settings, entity);
+
+		// Not necessary as we manage the back-pointers
+		FlushHandler flushHandler = new FlushHandler(settings);
+
+		try {
+			getPersistenceOrchestrator().delete(entity);
+
+		} finally {
+			flushHandler.done();
+		}
 	}
 
 	@Override

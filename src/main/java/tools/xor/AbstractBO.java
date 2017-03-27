@@ -549,7 +549,35 @@ public abstract class AbstractBO implements BusinessObject {
 			// |XOR|
 			return null;
 		}
-		return ep.getStringValue(this);
+
+		// Refers to an embedded object
+		if(path.contains(Settings.PATH_DELIMITER)) {
+			if (!(instance instanceof JSONObject)) {
+				throw new RuntimeException(
+					"The getString() API for embedded objects is intended for use only with JSONObject instances. See get() method for other objects types");
+			}
+			JSONObject embedded = (JSONObject)instance;
+			while(path.contains(Settings.PATH_DELIMITER)) {
+				String componentAttribute = path.substring(0, path.indexOf(Settings.PATH_DELIMITER));
+				path = path.substring(path.indexOf(Settings.PATH_DELIMITER) + 1);
+				if(!embedded.has(componentAttribute)) {
+					return null;
+				}
+				embedded = embedded.getJSONObject(componentAttribute);
+			}
+			if(!embedded.has(path)) {
+				return null;
+			}
+			Object value = embedded.get(path);
+			if(value instanceof String) {
+				return embedded.getString(path);
+			} else {
+				return value == null ? null : value.toString();
+			}
+		}
+		else {
+			return ep.getStringValue(this);
+		}
 	}
 
 	@Override
@@ -1451,6 +1479,10 @@ public abstract class AbstractBO implements BusinessObject {
 		Type entityType = getType();
 		if(entityType instanceof ListType) {
 			entityType = settings.getEntityType();
+		}
+
+		if(!(entityType instanceof EntityType)) {
+			throw new RuntimeException("BusinessObject external type is not recognized as an EntityType. Check if the correct TypeMapper is configured.");
 		}
 
 		State rootState = null;

@@ -27,6 +27,7 @@ import java.util.Map;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.AggregatePropertyPaths;
+import tools.xor.view.AggregateView;
 import tools.xor.view.QueryView;
 
 public class MetaModel {
@@ -49,23 +50,25 @@ public class MetaModel {
 		
 		return result;		
 	}
-	
-	public List<String> getFilterFunctionList() {
-		// TODO
-		return null;
+
+	public List<String> getTypeList() {
+		List<Type> types = getDAS().getTypes();
+		List<String> result = new ArrayList<String>(types.size());
+
+		for(Type type: types) {
+			result.add(type.getName());
+		}
+		Collections.sort(result);
+
+		return result;
 	}
 
-	public Type getType(String aggregateName) {
-		//TODO
-		return null;
+	public List<String> getViewAttributes(String viewName) {
+		AggregateView view = getDAS().getView(viewName);
+		return view.getAttributeList();
 	}
 
-	public QueryView getView(String viewName) {
-		// TODO
-		return null;
-	}
-
-	public List<String> getAttributePaths(String aggregateName) {
+	public List<String> getAggregateAttributes(String aggregateName) {
 		Type type = getDAS().getType(aggregateName);
 		List<String> paths = new ArrayList<String>();
 		paths.addAll(AggregatePropertyPaths.enumerate(type, getDAS().getShape()));

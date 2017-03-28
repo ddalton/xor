@@ -8,5 +8,7 @@
   docs:
   - architecture
   - view
+  - transform
+  - meta
   - performance
   - exim

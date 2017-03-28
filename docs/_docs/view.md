@@ -43,3 +43,54 @@ Below is a definition of the view we had just seen earlier.
     </aggregateView>
 </AggregateViews>
 ```
+
+## Regular Expressions
+Attributes can also be specified using Regular Expression syntax. This makes for a concise way of representing complex aggregate slices.
+
+In the example below, two equivalent views are depicted. The first uses the direct syntax and the second uses RegEx syntax. 
+In this view we want to retrieve some information about the task and its first level children and dependant tasks.
+
+
+![](/img/taskchildren.png)
+
+
+### Direct representation
+
+```
+<AggregateViews>
+    <aggregateView>
+        <name>TASKANDCHILDREN</name>
+        <attributeList>id</attributeList>
+        <attributeList>name</attributeList>
+        <attributeList>description</attributeList>
+        <attributeList>version</attributeList>
+        <attributeList>displayName</attributeList>
+        <attributeList>detailedDescription</attributeList>
+        <attributeList>taskChildren.id</attributeList>
+        <attributeList>taskChildren.name</attributeList>
+        <attributeList>taskChildren.description</attributeList>
+        <attributeList>taskChildren.version</attributeList>
+        <attributeList>taskChildren.displayName</attributeList>
+        <attributeList>taskChildren.detailedDescription</attributeList>
+        <attributeList>dependants.id</attributeList>
+        <attributeList>dependants.name</attributeList>
+        <attributeList>dependants.description</attributeList>
+        <attributeList>dependants.version</attributeList>
+        <attributeList>dependants.displayName</attributeList>
+        <attributeList>dependants.detailedDescription</attributeList>
+    </aggregateView>
+</AggregateViews>
+```
+
+### RegEx representation
+
+```
+<AggregateViews>
+    <aggregateView>
+        <name>TASKANDCHILDREN</name>
+        <attributeList>(taskChildren.|dependants.){0,1}(description|id|version|displayName|detailedDescription|name)</attributeList>
+    </aggregateView>
+</AggregateViews>
+```
+
+The reason this mechanism is helpful is because the Meta API depicts the contents of an aggregate using RegEx. This information can then be used to build the views containing the desired information.

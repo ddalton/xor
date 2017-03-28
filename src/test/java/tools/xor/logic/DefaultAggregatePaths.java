@@ -40,6 +40,7 @@ import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.MetaModel;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE;
@@ -572,7 +573,36 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	
 	@Test
 	public void checkOptionModel() {
-		List<String> paths = aggregateManager.getMetaModel().getAttributePaths("tools.xor.db.base.MetaEntity");
+		List<String> paths = aggregateManager.getMetaModel().getAggregateAttributes(
+			"tools.xor.db.base.MetaEntity");
 		assert(paths != null && paths.size() > 0);
+	}
+
+	public void metaViewList() {
+		MetaModel mm = aggregateManager.getMetaModel();
+		List<String> viewList = mm.getViewList();
+
+		System.out.println("||||||++++++++++ VIEWS +++++++++++++||||||||");
+		for(String view: viewList) {
+			System.out.println("View: " + view);
+		}
+
+		System.out.println("++++++++++ TASKCHILDREN +++++++++++++");
+		List<String> attrs = mm.getViewAttributes("TASKCHILDREN");
+		for(String attr: attrs) {
+			System.out.println("ATTR: " + attr);
+		}
+
+		System.out.println("++++++++++ TASK aggregate +++++++++++++");
+		attrs = mm.getAggregateAttributes(Task.class.getName());
+		for(String attr: attrs) {
+			System.out.println("ATTR: " + attr);
+		}
+
+		System.out.println("++++++++++ TYPES +++++++++++++");
+		List<String> types = mm.getTypeList();
+		for(String type: types) {
+			System.out.println("TYPE: " + type);
+		}
 	}
 }

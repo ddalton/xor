@@ -52,5 +52,10 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	@Test
 	public void checkOptionModel() {
 		super.checkOptionModel();		
-	}		
+	}
+
+	@Test
+	public void metaViewList() {
+		super.metaViewList();
+	}
 }

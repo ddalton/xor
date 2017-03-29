@@ -316,53 +316,79 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		StateGraph<State, Edge<State>> addendum = shape.getView((EntityType)additionalType)
 				.getStateGraph((EntityType) additionalType)
 				.copy((Map<Type, State>) this.states);
-		
-		// We pass in the current type's state graph so the common states between the two entities
-		// are not duplicated
-		// We make a copy, since we want to later
-		// iterate only through the states of the original map below
-		Map<Type, State> oldVertices = new HashMap<Type, State>(this.states);
 
-		if(sgLogger.isDebugEnabled()) {
-			sgLogger.debug("Enhancing type: " + 
-					additionalType.getName() + "[" + additionalType + "] with type: " + addendum.root.getName() + "[" + addendum.root + "]");
-		}
+		merge(addendum);
+	}
 
-		for(State state: oldVertices.values()) {
-			sgLogger.debug(Constants.Format.getIndentString(1) + "Processing state: " + state.getType().getName());
-			link(state, addendum.getRootState());
-			
-			// Ensure the state for the added type is linked to the existing states
-			link(addendum.getRootState(), state);
+	/**
+	 * Enlarges the current StateGraph with another StateGraph.
+	 *
+	 * @param other stategraph that will be merged with the current StateGraph
+	 */
+	public void merge(StateGraph<State, Edge<State>> other) {
+		// We pass in the current StateGraph's states so the common states between the two entities
+		// are not duplicated when the copy is made
+		StateGraph<State, Edge<State>> addendum = other.copy((Map<Type, State>) this.states);
+
+		// Link any missing edges from the states of the current StateGraph to the states
+		// in the other StateGraph
+		link(addendum);
+
+		// Copy the edges from the other StateGraph. This will also copy any additional states.
+		// This in essence combines the two graphs
+		// We need to copy only the out-edges from the states that are linked from addendum
+		// This step handles the inheritance edges
+		for(State addendumState: addendum.getStates().values()) {
+			if (this.getVertex(addendumState.getType()) != null) {
+				for (Edge<State> e : addendum.getOutEdges(addendumState)) {
+					addEdge((E)e);
+				}
+			}
 		}
 	}
 
-	// TODO: this does not handle inheritance. @see DFAtoNFA
-	private void link(State from, State to) {
-		for(Property property: from.getType().getProperties()) {
-			Type propertyType = GraphUtil.getPropertyEntityType(property, shape);
-			sgLogger.debug(Constants.Format.getIndentString(2) + "Processing property: " + property.getName() + ", property type: " + propertyType.getName());
-			/*
-			System.out.println(
-				Constants.Format.getIndentString(2) + "Processing property: " + property.getName()
-					+ ", from: " + from.getType().getName() + "#" + propertyType.getName()
-					+ ", to: " + to.getType().getName()
-			);*/
+	private void link(StateGraph<State, Edge<State>> addendum) {
+		// create 2 maps keyed by type name and value state for each StateGraph to do the linking
+		Map<String, State> propertyStateMap = new HashMap<>();
+		Map<String, State> addendumPropertyStateMap = new HashMap<>();
+		for(State state: this.states.values()) {
+			propertyStateMap.put(state.getType().getName(), state);
+		}
+		for(State state: addendum.getStates().values()) {
+			if(!propertyStateMap.containsKey(state.getType().getName())) {
+				addendumPropertyStateMap.put(state.getType().getName(), state);
+			}
+		}
 
-			if(propertyType.getName().equals(to.getType().getName()) ) {
-				// add the transition
-				if(getOutEdge((V) from, property.getName()) == null) {
-					sgLogger.debug(Constants.Format.getIndentString(3) + "Adding association for property: " + property.getName() + " and type: " + to.getType().getName());
-					/*System.out.println(
-						Constants.Format.getIndentString(3) + "Adding association for property: "
-							+ property.getName() + " and from: " + from.getType().getName() + "#" + propertyType.getName()
-							+ ", to: " + to.getType().getName()
-					);*/
+		// If all the states are already captured in the current StateGraph then there is
+		// nothing to extend
+		if(addendumPropertyStateMap.size() == 0) {
+			return;
+		}
 
-					addEdge((E) new Edge(property.getName(), from, to, true));
+		// Go through all the states in the StateGraph and add any edges for properties
+		// referring to the states in the addendum
+		for(State fromState: propertyStateMap.values()) {
+			for(Property property: fromState.getType().getProperties()) {
+				Type propertyType = GraphUtil.getPropertyEntityType(property, shape);
+				if(addendumPropertyStateMap.containsKey(propertyType.getName())) {
+					State toState = addendumPropertyStateMap.get(propertyType.getName());
+					addEdge((E) new Edge(property.getName(), fromState, toState, true));
 				}
 			}
-		}		
+		}
+
+		// Do the reverse, go through all the states in the addendum StateGraph and
+		// add any edges for properties referring to the states in the current StateGraph
+		for(State fromState: addendum.states.values()) {
+			for(Property property: fromState.getType().getProperties()) {
+				Type propertyType = GraphUtil.getPropertyEntityType(property, shape);
+				if(propertyStateMap.containsKey(propertyType.getName())) {
+					State toState = propertyStateMap.get(propertyType.getName());
+					addEdge((E) new Edge(property.getName(), fromState, toState, true));
+				}
+			}
+		}
 	}
 
 	public void extend(String path, V current, boolean initialize) {

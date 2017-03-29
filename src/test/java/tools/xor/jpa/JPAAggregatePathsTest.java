@@ -65,4 +65,14 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	public void generateStateGraph() {
 		super.generateStateGraph();
 	}
+
+	@Test
+	public void generateStateInheritanceGraph() {
+		super.generateStateInheritanceGraph();
+	}
+
+	@Test
+	public void generateStatePersonGraph() {
+		super.generateStatePersonGraph();
+	}
 }

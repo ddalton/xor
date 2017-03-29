@@ -137,9 +137,8 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	@Override
 	public Collection<E> getEdges() {
 		Collection<E> result = new HashSet<E>();
-		for(Collection<E> edges: outEdges.values()) {
-			result.addAll(edges);
-		}
+		result.addAll(pairByEdge.keySet());
+
 		return result;
 	}
 

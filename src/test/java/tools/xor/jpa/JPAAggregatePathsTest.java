@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.logic.DefaultAggregatePaths;
 
+import java.io.FileNotFoundException;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
 @TransactionConfiguration(defaultRollback = true)
@@ -57,5 +59,10 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	@Test
 	public void metaViewList() {
 		super.metaViewList();
+	}
+
+	@Test
+	public void generateStateGraph() {
+		super.generateStateGraph();
 	}
 }

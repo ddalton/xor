@@ -25,8 +25,7 @@ public enum AggregateAction {
     MERGE,
     CLONE,
     READ,
-    DIFF,
-    DELETE, // TODO
+    DELETE,
     LOAD;
 
 }

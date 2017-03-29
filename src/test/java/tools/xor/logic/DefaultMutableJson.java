@@ -21,6 +21,7 @@ package tools.xor.logic;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -1314,5 +1315,29 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void generateObjectGraph() throws FileNotFoundException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+		//InputStream inputStream = new FileInputStream("CoursesValues.xlsx");
+		//das.initGenerators(inputStream);
+
+		EntityType taskType = (EntityType)das.getType(Task.class);
+		AggregateView view = das.getView(taskType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.setEntityType(taskType);
+		settings.setEntitySize(EntitySize.LARGE);
+
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(taskType);
+		settings.setSparseness(0.01f);
+		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setGraphFileName("TaskGraph.png");
+		settings.setPostFlush(true);
+		aggregateManager.update(task, settings);
 	}
 }

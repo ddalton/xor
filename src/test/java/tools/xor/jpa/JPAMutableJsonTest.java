@@ -19,6 +19,7 @@
 
 package tools.xor.jpa;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -309,5 +310,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void exportEmployee() throws IOException
 	{
 		super.exportEmployee();
+	}
+
+	@Test
+	public void generateObjectGraph() throws FileNotFoundException
+	{
+		super.generateObjectGraph();
 	}
 }

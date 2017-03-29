@@ -19,20 +19,28 @@
 
 package tools.xor.logic;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uci.ics.jung.graph.Graph;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.AssociationSetting;
+import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Directory;
 import tools.xor.db.base.Patent;
@@ -604,5 +612,17 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		for(String type: types) {
 			System.out.println("TYPE: " + type);
 		}
+	}
+
+	public void generateStateGraph() {
+		Settings settings = new Settings();
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType taskType = (EntityType)das.getType(Task.class);
+
+		settings.setEntityType(taskType);
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(taskType);
+		settings.setGraphFileName("TaskStateGraph.png");
+		sg.generateVisual(settings);
 	}
 }

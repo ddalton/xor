@@ -6,8 +6,32 @@ permalink: /docs/view/
 
 XOR simplifies the access to the data using the concept of a view.
 
-## What is an XOR view?
-A view is a list of attributes that represents a subset of the entity.
+## Built-in views
+XOR generates views for the Basic and Aggregate scopes of all entities.
+
+The code to retrieve the built-in view for the Basic scope is:
+
+```
+DataAccessService das = aggregateService.getDAS();
+EntityType personType = (EntityType) das.getType(Person.class);
+AggregateView view = das.getBaseView(personType).copy();
+```
+
+The code to retrieve the built-in view for the Aggregate scope is:
+
+```
+DataAccessService das = aggregateService.getDAS();
+EntityType personType = (EntityType) das.getType(Person.class);
+AggregateView view = das.getView(personType).copy();
+```
+
+## Custom views
+
+A custom view can either restrict/enhance the scope of an entity.
+
+### Scope restriction
+
+A restricted view is a list of attributes that represents a subset of the entity.
 
 The diagram below shows an example of a One-to-One relationship. When the task object
 is accessed, the TaskDetails object might be also accessed depending on the fetch policy.
@@ -27,8 +51,7 @@ taskDetails.id
 This is the simplest explanation for a view. This concept applies to both read and update operations.
 For update, only the fields in the view get updated, the rest of the fields are unchanged.
 
-## How to define a view?
-By default XOR views are defined in a file called `AggregateViews.xml` located anywhere in the application classpath.
+By default XOR custom views are defined in a file called `AggregateViews.xml` located anywhere in the application classpath.
 Views can also be defined programmatically.
 Below is a definition of the view we had just seen earlier.
 
@@ -44,7 +67,7 @@ Below is a definition of the view we had just seen earlier.
 </AggregateViews>
 ```
 
-## Regular Expressions
+### Regular Expressions
 Attributes can also be specified using Regular Expression syntax. This makes for a concise way of representing complex aggregate slices.
 
 In the example below, two equivalent views are depicted. The first uses the direct syntax and the second uses RegEx syntax. 
@@ -53,8 +76,7 @@ In this view we want to retrieve some information about the task and its first l
 
 ![](/img/taskchildren.png)
 
-
-### Direct representation
+Expressed using object notation
 
 ```
 <AggregateViews>
@@ -82,7 +104,7 @@ In this view we want to retrieve some information about the task and its first l
 </AggregateViews>
 ```
 
-### RegEx representation
+The same example, but the object notation is represented concisely using RegEx
 
 ```
 <AggregateViews>
@@ -94,3 +116,34 @@ In this view we want to retrieve some information about the task and its first l
 ```
 
 The reason this mechanism is helpful is because the Meta API depicts the contents of an aggregate using RegEx. This information can then be used to build the views containing the desired information.
+
+### Scope extension
+
+The scope of a view can also be extended either programmatically or directly using object notation
+
+#### Extending using Domain class
+
+An aggregate can be extended to include all relationships from the types comprising the Aggregate entity to another entity of a particular domain class.
+In the example below the Task aggregate is extended to also include the Person aggregate in its scope.
+
+Note, the extension only occurs if there is atleast one relationship in the Task aggregate that refers to a Person type, otherwise there is no change in scope.
+All relationships are automatically added.
+
+```
+Settings settings = new Settings();
+DataAccessService das = aggregateManager.getDAS();
+EntityType taskType = (EntityType)das.getType(Task.class);
+
+settings.setEntityType(taskType);
+settings.addAssociation(new AssociationSetting(Person.class));
+```
+
+#### Extending using relationship name
+
+Alternatively, a scope can be extended in a more fine-grained way by specifying the desired relationships that need to be included in the view.
+
+```
+settings.addAssociation( new AssociationSetting("assignedTo"));	
+```
+
+In this example if assignedTo refers to a Person type, then we say here that we only want the assignedTo relationship and not any other relationships that refer to the Person type.

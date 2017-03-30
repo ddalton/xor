@@ -26,13 +26,26 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
+import tools.xor.AssociationSetting;
+import tools.xor.Settings;
+import tools.xor.Type;
+import tools.xor.db.base.Department;
+import tools.xor.db.common.Head;
+import tools.xor.db.pm.Task;
 import tools.xor.logic.DefaultMappedBy;
+import tools.xor.service.DataAccessService;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
 @TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAMappedByTest extends DefaultMappedBy {
+
+	@PersistenceContext
+	EntityManager entityManager;
 
 	@Test
 	public void checkOneToMany() {
@@ -62,5 +75,51 @@ public class JPAMappedByTest extends DefaultMappedBy {
 	@Test
 	public void checkListIndex() {
 		super.checkListIndex();
-	}	
+	}
+
+	@Test
+	public void saveRequired() {
+		Head h = new Head();
+		h.setName("Isaac Newton");
+
+		Department d = new Department();
+		d.setName("Mathematics");
+		d.setHead(h);
+
+		//entityManager.persist(d);
+
+		DataAccessService das = aggregateManager.getDAS();
+		Type deptType = das.getType(Department.class);
+		Settings settings = new Settings();
+		settings.setEntityType(deptType);
+		settings.addAssociation(new AssociationSetting(Head.class));
+		settings.init(das.getShape());
+
+		aggregateManager.create(d, settings);
+	}
+
+	@Test
+	public void deleteRequired() {
+		Head h = new Head();
+		h.setName("Isaac Newton");
+
+		Department d = new Department();
+		d.setName("Mathematics");
+		d.setHead(h);
+
+		DataAccessService das = aggregateManager.getDAS();
+		Type deptType = das.getType(Department.class);
+		Settings settings = new Settings();
+		settings.setPostFlush(true);
+		settings.setEntityType(deptType);
+		settings.addAssociation(new AssociationSetting(Head.class));
+		settings.init(das.getShape());
+
+		d = (Department)aggregateManager.create(d, settings);
+
+		// Delete
+		aggregateManager.delete(d, settings);
+
+
+	}
 }

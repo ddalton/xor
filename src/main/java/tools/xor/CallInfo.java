@@ -267,8 +267,11 @@ public class CallInfo {
 	}
 	
 	public List<Property> getProperties(Type type) {
+		if(settings.getView() == null) {
+			throw new RuntimeException("Ensure that settings.init() is called");
+		}
+
 		EntityType entityType = (EntityType)settings.getEntityType();
-		//StateGraph sg = settings.getView().getStateGraph( ((EntityType) getOutputRoot().getType()).getDomainType() );
 		StateGraph sg = settings.getView().getStateGraph( entityType.getDomainType() );
 		if(logger.isDebugEnabled()) {
 			logger.debug("Type: " + getOutputRoot().getType().getName() + ", view: " 

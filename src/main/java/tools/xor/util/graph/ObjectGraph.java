@@ -14,6 +14,8 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ListType;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
@@ -123,7 +125,15 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 		return hasPath((V) t.getEnd(), path);
 	}
-	
+
+	/**
+	 * Save the objects collected in the objectCreator instance to the persistence store.
+	 * A graph data structure is used so that the order of persistence operations is executed
+	 * correctly.
+	 *
+	 * @param objectCreator containing the objects to be persisted
+	 * @param settings controlling this operation
+	 */
 	public void persistGraph(ObjectCreator objectCreator, Settings settings) {
 
 		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
@@ -133,6 +143,21 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		if(settings.isGenerateVisual()) {
 			this.generateVisual(settings);
 		}
+	}
+
+	/**
+	 * Delete the objects collected in the objectCreator instance from the persistence store.
+	 * A graph data structure is used so that the order of persistence operations is executed
+	 * correctly.
+	 *
+	 * @param objectCreator containing the objects to be deleted
+	 * @param settings controlling this operation
+	 */
+	public void deleteGraph(ObjectCreator objectCreator, Settings settings) {
+
+		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
+		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph(entityType);
+		deleteRoots(objectCreator, sg);
 	}
 	
 	private void addTopologicalOrderedEdge(Property p, V source, V target ) {
@@ -336,9 +361,13 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	
 	class StateComparator implements Comparator<V> {
 		StateGraph<State, Edge<State>> sg;
+		private boolean areTypesOrdered;
 		
 		public StateComparator(StateGraph<State, Edge<State>> sg) {
 			this.sg = sg;
+
+			areTypesOrdered = (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
+				|| !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP));
 		}
 		
 		private State getByAncestorType(V vertex) {
@@ -374,7 +403,6 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		
 	    @Override
 	    public int compare(V a, V b) {
-	    	// sg.getVertex(a.getType());
 	    	State aVertex = getState(a); 
 	    	State bVertex = getState(b);
 	    	
@@ -389,8 +417,22 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	    		System.out.println("bVertex is null for type: " + b.getType().getName());
 	    	}
 	    	
-	    	int aOrder = sg.getId(aVertex);
-	    	int bOrder = sg.getId(bVertex);
+	    	int aOrder;
+	    	int bOrder;
+
+			// If the types have been topologically sorted then we retrieve the order
+			// information from the type
+			if(areTypesOrdered) {
+				aOrder = ((EntityType)aVertex.getType()).getOrder();
+				bOrder = ((EntityType)bVertex.getType()).getOrder();
+			}
+			// else we retrieve the order information from the StateGraph. This means
+			// that the StateGraph needs to be topologically sorted.
+			else {
+				aOrder = sg.getId(aVertex);
+				bOrder = sg.getId(bVertex);
+			}
+
 	    	return bOrder - aOrder;
 	    }
 	}	
@@ -405,7 +447,25 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		}
 
 		if(logger.isDebugEnabled()) {
-			logger.debug("ObjectGraph took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+			logger.debug("ObjectGraph persistRoots took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
+		}
+	}
+
+	private void deleteRoots(ObjectCreator objectCreator, StateGraph<State, Edge<State>> sg) {
+
+		Date start = new Date();
+		List<V> aggregateRoots = new ArrayList<V>(discoverAggregateRoots(objectCreator));
+		Collections.sort(aggregateRoots, new StateComparator(sg));
+
+		// deletion should be in the opposite order of create
+		Collections.reverse(aggregateRoots);
+
+		for(V root: aggregateRoots) {
+			objectCreator.getPersistenceOrchestrator().delete(root.getInstance());
+		}
+
+		if(logger.isDebugEnabled()) {
+			logger.debug("ObjectGraph deleteRoots took " + ((new Date().getTime()-start.getTime())/1000) + " seconds");
 		}
 	}
 	

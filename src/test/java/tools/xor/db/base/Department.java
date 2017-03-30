@@ -19,10 +19,13 @@
 
 package tools.xor.db.base;
 
+import tools.xor.db.common.Head;
+
 import java.util.Set;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
 
 @Entity
 public class Department extends Identity {
@@ -37,4 +40,17 @@ public class Department extends Identity {
 	public void setEmployees(Set<Employee> employees) {
 		this.employees = employees;
 	}
+
+	@OneToOne(optional = false)
+	public Head getHead ()
+	{
+		return head;
+	}
+
+	public void setHead (Head head)
+	{
+		this.head = head;
+	}
+
+	private Head head;
 }

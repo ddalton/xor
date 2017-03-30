@@ -532,15 +532,18 @@ public class ObjectCreator {
 
 			/* 
 			 * We need to fetch a persistent instance for the following:
-			 * 1. AggregateAction is CREATE or CLONE and the object being fetched is not part of the aggregate
+			 * 1. AggregateAction is CREATE, CLONE or DELETE and the object being fetched is not part of the aggregate
 			 * 2. Any UPDATE or MERGE action
 			 */
 			AggregateAction action = ci.getSettings().getAction();
 			boolean isDependent = false;
 			if(ci.getInput() != null)
 				isDependent = ((BusinessObject)ci.getInput()).isDependent();
-			boolean fetchPersistent =  ( (action == AggregateAction.CREATE || action == AggregateAction.CLONE) && !isDependent ) ||
-					(action == AggregateAction.MERGE || action == AggregateAction.UPDATE || action == AggregateAction.LOAD);
+			boolean fetchPersistent =
+				((action == AggregateAction.CREATE || action == AggregateAction.CLONE
+					|| action == AggregateAction.DELETE) && !isDependent) ||
+					(action == AggregateAction.MERGE || action == AggregateAction.UPDATE
+						|| action == AggregateAction.LOAD);
 			if( fetchPersistent && targetInstance == null) {
 
 				if(result == null) {
@@ -553,7 +556,7 @@ public class ObjectCreator {
 					
 					if(targetInstance != null) {
 						result = createDataObject(sourceInstance, targetInstance, targetType, container, containmentProperty);
-						((BusinessObject)result).setPersistent(true);
+						result.setPersistent(true);
 					}
 				}
 			} 
@@ -656,5 +659,9 @@ public class ObjectCreator {
 	
 	public void persistGraph(Settings settings) {
 		objectGraph.persistGraph(this, settings);
+	}
+
+	public void deleteGraph(Settings settings) {
+		objectGraph.deleteGraph(this, settings);
 	}
 }

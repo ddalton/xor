@@ -204,20 +204,25 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		stateGraph.populateEdges();
-		try {
-			stateGraph.toposort();
-		} catch(RuntimeException re) {
-			throw re;
-		}	
-		
-		stateGraph.orderTypes();
 
-		// Print out the graph if so configured
-		if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
-			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
-			Settings settings = new Settings();
-			settings.setGraphFileName("ApplicationStateGraph_" + shape.getName() + ".png");
-			stateGraph.generateVisual(settings);
+		if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
+			|| !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
+			try {
+				stateGraph.toposort();
+			}
+			catch (RuntimeException re) {
+				throw re;
+			}
+
+			stateGraph.orderTypes();
+
+			// Print out the graph if so configured
+			if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
+				&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
+				Settings settings = new Settings();
+				settings.setGraphFileName("ApplicationStateGraph_" + shape.getName() + ".png");
+				stateGraph.generateVisual(settings);
+			}
 		}
 	}
 	

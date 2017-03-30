@@ -33,5 +33,10 @@ public class DeleteOperation extends AbstractOperation {
 	@Override
 	protected boolean supportsCreate(CallInfo callInfo) {
 		return false;
-	}		
+	}
+
+	@Override
+	protected void persist(CallInfo callInfo) {
+		callInfo.getOutputObjectCreator().deleteGraph(callInfo.getSettings());
+	}
 }

@@ -45,6 +45,10 @@ public class ImmutableBO extends AbstractBO {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override public void delete (Settings settings)
+	{
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public DataObject clone(Settings settings) {

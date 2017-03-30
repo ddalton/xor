@@ -31,6 +31,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.Shape;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
@@ -88,6 +89,17 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		outLinks.put(edge.getName(), edge);
 		
 		super.addEdge(edge, start, end);
+	}
+
+	@Override
+	public void removeEdge(E edge) {
+		Map<String, E> outLinks = outTransitions.get(edge.getStart());
+		if(outLinks == null) {
+			throw new IllegalStateException("Unable to find outTransition entry for edge");
+		}
+		outLinks.remove(edge.getName());
+
+		super.removeEdge(edge);
 	}
 	
 	public E getOutEdge(V vertex, String name) {
@@ -297,6 +309,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			extend(type, shape);
 		}
 
+		// If the type system is not topologically ordered then we need to
+		// sort the StateGraph so we can get the correct ordering for create and delete
+		// operations to work correctly across aggregates
+		if(ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
+			toposort();
+		}
 	}
 	
 	/** Extend the state graph with the new type if needed and create all associations referencing this type in the state graph

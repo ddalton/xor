@@ -19,6 +19,7 @@
 
 package tools.xor.util;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
 import tools.xor.Settings;
 
 public final class Edge<V extends Vertex> {
@@ -62,6 +63,37 @@ public final class Edge<V extends Vertex> {
 		this.reversed = reversed;
 	}
 
+	@Override
+	/**
+	 * Have to use a different prime number when incorporating boolean fields in hashCode
+	 */
+	public int hashCode() {
+		int result = 17;
+		result = 37 * result + name.hashCode();
+		result = 37 * result + start.hashCode();
+		result = 37 * result + end.hashCode();
+		result = 41 * result + (qualified ? 1 : 0);
+		result = 43 * result + (reversed ? 1 : 0);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other == null) { return false; }
+		if (other == this) { return true; }
+		if (other.getClass() != getClass()) {
+			return false;
+		}
+
+		Edge otherEdge = (Edge) other;
+
+		return name.equals(otherEdge.name) &&
+			start.equals(otherEdge.start) &&
+			end.equals(otherEdge.end) &&
+			qualified == otherEdge.qualified &&
+			reversed == otherEdge.reversed;
+	}
+
 	public String getQualifiedName() {
 		if(qualified) {
 			return name + Settings.PATH_DELIMITER;
@@ -71,7 +103,7 @@ public final class Edge<V extends Vertex> {
 	}
 
 	public Edge reverse() {
-		return new Edge(name, end, start, false, this.reversed ^ true);
+		return new Edge(name, end, start, this.qualified, this.reversed ^ true);
 	}
 	
 	@Override

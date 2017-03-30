@@ -81,3 +81,49 @@ The implementation of a scope is a view.
 </div>
 
 Views are generated automatically for both the Basic and Aggregate scopes for an entity.
+
+## Simplifying Operations
+
+XOR does a topological sort on the entities and the relationships between them. The reason this is important is that this helps to automate the order in which entities need to be saved or deleted. The user does not have to hardcode the order and this makes the code more robust to changes.
+
+Consider the example below depicting the relationship between two aggregates. The head attribute in Department is a required field. This means that the department object cannot be saved unless the head object is saved first.
+
+![](/img/required.png)
+
+In JPA the following code is necessary to save the Department object sucessfully without throwing an exception:
+
+```
+@PersistenceContext
+EntityManager entityManager;
+
+Head h = new Head();
+h.setName("Isaac Newton");
+entityManager.persist(h);
+
+Department d = new Department();
+d.setName("Mathematics");
+d.setHead(h);
+entityManager.persist(d);
+```
+
+If there are large number of such relationships, then this order of persist operations need to be hardcoded. This also makes the code brittle and prone to needing more maintenance.
+
+Using XOR, this can be simplified with just one operation:
+
+```
+Head h = new Head();
+h.setName("Isaac Newton");
+
+Department d = new Department();
+d.setName("Mathematics");
+d.setHead(h);
+
+DataAccessService das = aggregateManager.getDAS();
+Type deptType = das.getType(Department.class);
+Settings settings = new Settings();
+settings.setEntityType(deptType);
+settings.addAssociation(new AssociationSetting(Head.class));
+settings.init(das.getShape());
+
+aggregateManager.create(d, settings);
+```

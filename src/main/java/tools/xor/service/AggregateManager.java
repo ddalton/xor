@@ -789,7 +789,7 @@ public class AggregateManager implements Xor
 	@Override
 	public Object update (Object entity, Settings settings)
 	{
-		owLogger.debug("Performing update operation");
+		owLogger.debug("Performing de operation");
 		checkAndSet(settings, entity);
 
 		if (settings.getAction() != AggregateAction.MERGE
@@ -837,7 +837,19 @@ public class AggregateManager implements Xor
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
-			getPersistenceOrchestrator().delete(entity);
+			ObjectCreator oc = new ObjectCreator(
+				settings,
+				getDAS(),
+				getPersistenceOrchestrator(),
+				MapperDirection.EXTERNALTODOMAIN);
+
+			BusinessObject from = oc.createDataObject(
+				entity,
+				getEntityType(entity, oc, settings),
+				null,
+				null);
+			oc.setRoot(from);
+			from.delete(settings);
 
 		} finally {
 			flushHandler.done();

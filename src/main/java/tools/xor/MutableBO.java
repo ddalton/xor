@@ -26,6 +26,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.operation.CloneOperation;
+import tools.xor.operation.DeleteOperation;
 import tools.xor.operation.ModifyOperation;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
@@ -66,9 +67,8 @@ public class MutableBO extends AbstractBO {
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
-		BusinessObject target = null;
-		
-		target = (BusinessObject) operation.createTarget(callInfo, getEntityType(callInfo, settings));
+
+		BusinessObject target = operation.createTarget(callInfo, getEntityType(callInfo, settings));
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);
@@ -98,9 +98,8 @@ public class MutableBO extends AbstractBO {
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
 		callInfo.setOperation(operation);
-		BusinessObject target = null;
 
-		target = (BusinessObject) operation.createTarget(callInfo, getEntityType(callInfo, settings));
+		BusinessObject target = operation.createTarget(callInfo, getEntityType(callInfo, settings));
 		oc.setObjectGraph(target);
 		callInfo.setOutput(target);
 		settings.setPersist(true);
@@ -122,6 +121,33 @@ public class MutableBO extends AbstractBO {
 	}
 
 	@Override
+	public void delete(Settings settings) {
+		// clone the task object using a DataObject
+		CallInfo callInfo = new CallInfo(this, null, null, null);
+		callInfo.setSettings(settings);
+		callInfo.getSettings().setAction(AggregateAction.DELETE);
+		this.getObjectCreator().setShare(true);
+		this.createAggregate(settings);
+
+		// Create an object creator for the target root
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+		oc.setShare(true);
+		callInfo.setOutputObjectCreator(oc);
+		DeleteOperation operation = new DeleteOperation();
+		callInfo.setOperation(operation);
+
+		BusinessObject target = operation.createTarget(callInfo, getEntityType(callInfo, settings));
+		if(target == null) {
+			throw new RuntimeException("Unable to find the entity to delete");
+		}
+
+		oc.setObjectGraph(target);
+		callInfo.setOutput(target);
+		settings.setPersist(true);
+		operation.execute(callInfo);
+	}
+
+	@Override
 	public DataObject clone(Settings settings) {
 
 		// clone the task object using a DataObject
@@ -138,7 +164,7 @@ public class MutableBO extends AbstractBO {
 		BusinessObject target = null;
 		
 		try {
-			target = (BusinessObject) operation.createTarget(callInfo, (EntityType) settings.getEntityType());
+			target = operation.createTarget(callInfo, (EntityType) settings.getEntityType());
 			oc.setObjectGraph(target);
 			callInfo.setOutput(target);
 			settings.setPersist(true);

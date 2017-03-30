@@ -49,6 +49,7 @@ public class Constants {
 	public static class Config {
 		public static final String TOPO_VISUAL = "toposort.visual";
 		public static final String SQL_STACK = "sql.stacktrace";
+		public static final String TOPO_SKIP = "toposort.skip";
 	}
   
   

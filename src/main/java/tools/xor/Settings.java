@@ -201,7 +201,7 @@ public class Settings {
 	}
 
 	public boolean isShouldCreate(Class<?> clazz) {
-		if(action == AggregateAction.LOAD) {
+		if(action == AggregateAction.LOAD || action == AggregateAction.DELETE) {
 			return false;
 		}
 		

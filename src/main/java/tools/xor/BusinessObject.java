@@ -100,6 +100,12 @@ public interface BusinessObject extends DataObject {
 	public DataObject create(Settings settings);
 
 	/**
+	 * Delete the object and any associated objects based on the view scope
+	 * @param settings The user entered settings
+	 */
+	public void delete(Settings settings);
+
+	/**
 	 * Copy the full data object instance based on the settings in the typeMapper
 	 * @param settings The user entered settings
 	 * @return persistence managed DataObject copy

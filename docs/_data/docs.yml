@@ -8,9 +8,9 @@
   docs:
   - architecture
   - view
-  - transform
   - meta
   - performance
   - visual
   - exim
+  - generation
   - operations

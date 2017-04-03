@@ -7,9 +7,10 @@ permalink: /docs/generation/
 One of the main benefits of using XOR is the ability to generate data.
 The view plays an important role here as it defines the scope of the data being generated.
 
-The two main aspects to generation are:
-1. Specifying Domain values
-2. Controlling collection sparseness
+There are three main dimensions to data generation:
+1. Specifying Domain values for primitive types
+2. Controlling collection sparseness for toMany relationships
+3. Specifying subtype for toOne relationship to entity having subtypes
 
 
 ## Domain values
@@ -144,3 +145,11 @@ XOR comes with a set of built-in generators. But the user can add their own vers
   </tbody>
 </table>
 </div>
+
+## Collection sparseness
+
+The data generation related to collections is what decides how big the object graph is. The collection sparseness is a global value and can be overridden on a per relationship basis.
+
+## Subtype selection
+
+If the persistence model has inheritance then the data generation has to be given the ability to create such subtypes.

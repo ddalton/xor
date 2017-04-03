@@ -43,6 +43,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Directory;
+import tools.xor.db.base.Employee;
 import tools.xor.db.base.Patent;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
@@ -649,5 +650,24 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		StateGraph sg = settings.getView().getStateGraph(personType);
 		settings.setGraphFileName("PersonInheritanceStateGraph.png");
 		sg.generateVisual(settings);
+	}
+
+	public void checkPersonSubTypes() {
+
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType personType = (EntityType)das.getType(Person.class);
+
+		Set<EntityType> personSubTypes = personType.getSubtypes();
+		assert(personSubTypes != null && personSubTypes.size() == 4);
+		Set<EntityType> personChildSubTypes = personType.getChildSubtypes();
+		assert(personChildSubTypes != null && personChildSubTypes.size() == 3);
+
+
+		EntityType employeeType = (EntityType)das.getType(Employee.class);
+
+		Set<EntityType> employeeSubTypes = employeeType.getSubtypes();
+		assert(employeeSubTypes != null && employeeSubTypes.size() == 1);
+		Set<EntityType> employeeChildSubTypes = employeeType.getChildSubtypes();
+		assert(employeeChildSubTypes != null && employeeChildSubTypes.size() == 1);
 	}
 }

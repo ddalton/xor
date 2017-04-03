@@ -29,10 +29,13 @@ import tools.xor.MatchType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.generator.DefaultGenerator;
+import tools.xor.generator.Generator;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
 import tools.xor.util.DFAtoRE.TypedExpression;
@@ -358,10 +361,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		// We need to copy only the out-edges from the states that are linked from addendum
 		// This step handles the inheritance edges
 		for(State addendumState: addendum.getStates().values()) {
-			if (this.getVertex(addendumState.getType()) != null) {
-				for (Edge<State> e : addendum.getOutEdges(addendumState)) {
-					addEdge((E)e);
-				}
+			addVertex((V)addendumState);
+			for (Edge<State> e : addendum.getOutEdges(addendumState)) {
+				addEdge((E)e);
 			}
 		}
 	}
@@ -800,7 +802,35 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			embeddedObjectStateMap.put(object, state);
 		}
 	}
-			
+
+	protected boolean hasSubStates(V vertex) {
+		for(E edge: getOutEdges(vertex)) {
+			if(DFAtoNFA.UNLABELLED.equals(edge.getName()) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Gets a list of all the subtype states
+	 *
+	 * @param vertex the root of the state inheritance hierarchy
+	 * @return a list of all states that are the descendants of the type of the input vertex
+	 */
+	protected List<State> getSubStates(V vertex) {
+		List<State> result = new ArrayList<State>();
+
+		for(EntityType entityType: ((EntityType)vertex.getType()).getSubtypes()) {
+			State state = getVertex(entityType);
+			if(state != null) {
+				result.add(state);
+			}
+		}
+
+		return result;
+	}
 	
 	/**
 	 * Generates a random object graph using JSON objects.
@@ -860,13 +890,15 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					entity.getString(Constants.XOR.GEN_PATH) : null;
 
 				Type entityType;
+				State parentState;
 				if(objectStateMap.containsKey(entity)) {
-					entityType = objectStateMap.get(entity).getType();
+					parentState = objectStateMap.get(entity);
 				} else if(embeddedObjectStateMap.containsKey(entity)) {
-					entityType = embeddedObjectStateMap.get(entity).getType();
+					parentState = embeddedObjectStateMap.get(entity);
 				} else {
 					throw new RuntimeException("Unable to find entity - check if it was added using addObject() method");
 				}
+				entityType = parentState.getType();
 
 				for (Property property : entityType.getProperties()) {
 
@@ -876,15 +908,39 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						continue;
 					}
 
-					Type targetType = GraphUtil.getPropertyType(extendedProperty, shape);
-					Type targetEntityType = GraphUtil.getPropertyEntityType(extendedProperty, shape);
+					Edge edge = getOutEdge((V)parentState, extendedProperty.getName());
+					State childState = null;
+					if(edge != null) {
+						childState = (State)edge.getEnd();
+						if(hasSubStates((V)childState)) {
+							Generator gen = extendedProperty.getGenerator();
+							if(gen == null) {
+								// Needed for inheritance handling
+								gen = new DefaultGenerator(null);
+								extendedProperty.setGenerator(gen);
+							}
+							EntityType childType = (EntityType)GraphUtil.getPropertyEntityType(extendedProperty, shape);
+							childType = gen.getSubType(childType);
+							childState = getVertex(childType);
+						}
+					}
 
+					// Is the state out of scope
+					if (childState == null) {
+					  continue;
+					}
+
+					Type targetEntityType = childState.getType();
+					Type targetType = (extendedProperty.isMany()) ? GraphUtil.getPropertyType(extendedProperty, shape) : targetEntityType;
+
+					/*
 					State state = states.get(targetEntityType);
 
 					// Check if the state is out of scope
 					if (state == null) {
 						continue;
 					}
+					*/
 
 					String objectPath = Constants.XOR.walkDown(path, property);
 					//target = ((BasicType)targetType).generate(settings, extendedProperty, path);
@@ -899,7 +955,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							stateObjectMap,
 							objectStateMap,
 							embeddedObjectStateMap,
-							state,
+							childState,
 							(JSONObject)target);
 						q.add((JSONObject)target);
 						((JSONObject)target).put(Constants.XOR.GEN_PATH, objectPath);
@@ -912,7 +968,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 								stateObjectMap,
 								objectStateMap,
 								embeddedObjectStateMap,
-								state,
+								childState,
 								jsonObject);
 							q.add(jsonObject);
 							jsonObject.put(Constants.XOR.GEN_PATH, objectPath);

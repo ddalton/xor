@@ -1340,4 +1340,29 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setPostFlush(true);
 		aggregateManager.update(task, settings);
 	}
+
+	public void generatePersonObjectGraph() throws FileNotFoundException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+		//InputStream inputStream = new FileInputStream("CoursesValues.xlsx");
+		//das.initGenerators(inputStream);
+
+		EntityType taskType = (EntityType)das.getType(Task.class);
+		AggregateView view = das.getView(taskType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.setEntityType(taskType);
+		settings.setEntitySize(EntitySize.MEDIUM);
+
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(taskType);
+		settings.setSparseness(0.01f);
+		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setGraphFileName("TaskPersonGraph.png");
+		settings.setPostFlush(true);
+		aggregateManager.update(task, settings);
+	}
 }

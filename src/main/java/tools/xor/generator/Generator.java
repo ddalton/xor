@@ -28,9 +28,13 @@
 
 package tools.xor.generator;
 
+import tools.xor.EntityType;
+import tools.xor.util.State;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
 
 public interface Generator
 {
@@ -100,4 +104,11 @@ public interface Generator
      * @return string value
      */
     String getStringValue();
+
+    /**
+     * Returns the desired descendant State
+     * @param entityType root type of the inheritance hierarchy
+     * @return the desired descendant state based on generator logic
+     */
+    EntityType getSubType (EntityType entityType);
 }

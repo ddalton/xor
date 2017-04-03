@@ -21,10 +21,14 @@ package tools.xor.generator;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import tools.xor.EntityType;
+import tools.xor.util.State;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class DefaultGenerator implements Generator
 {
@@ -220,5 +224,18 @@ public class DefaultGenerator implements Generator
     {
         int pos = getPosition();
         return getValues()[pos];
+    }
+
+    @Override public EntityType getSubType (EntityType entityType)
+    {
+        List<EntityType> subTypes = new ArrayList<EntityType>(entityType.getSubtypes());
+        subTypes.add(entityType);
+
+        int index =  (int) (Math.random() * (subTypes.size()+1));
+        if(index == subTypes.size()) {
+            index--;
+        }
+
+        return subTypes.get(index);
     }
 }

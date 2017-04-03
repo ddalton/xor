@@ -11,6 +11,11 @@ This information is useful in understanding all the types involved in an aggrega
 
 ![](/img/stategraph.png)
 
+<div class="note">
+  <h5>Notice the number before the state name</h5>
+  <p>The number represents the topological order between the different states. This information is useful in correctly saving/deleting an object comprised of more than one aggregate.</p>
+</div>
+
 The code needed to produce the above graph is:
 
 ```

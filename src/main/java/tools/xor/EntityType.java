@@ -156,12 +156,23 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param types of all types   
 	 */
 	public void defineSubtypes(List<Type> types);
+
+	/**
+	 * Find all the immediate subType entities of this type
+	 */
+	public void defineChildSubtypes();
 	
 	/**
 	 * Get a list of all the sub types of this type
 	 * @return subtypes
 	 */
 	public Set<EntityType> getSubtypes();
+
+	/**
+	 * Get a list of all the sub types that are the immediate children of this type
+	 * @return subtypes
+	 */
+	public Set<EntityType> getChildSubtypes();
 	
 	/**
 	 * Get a list of all properties for a given apiVersion

@@ -317,4 +317,10 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 		super.generateObjectGraph();
 	}
+
+	@Test
+	public void generatePersonObjectGraph() throws FileNotFoundException
+	{
+		super.generatePersonObjectGraph();
+	}
 }

@@ -258,16 +258,24 @@ public abstract class AbstractBO implements BusinessObject {
 			return (this.get(identifier) == null) ? null : this.get(identifier).toString();
 		}
 	}
-	
+
 	@Override
-	public String getInstanceClassName() {
+	public String getInstanceClassName ()
+	{
 		if(instance == null) {
-			return getType().getInstanceClass().getName();
+			return null;
 		}
-		
-		if(instance != JSONObject.class || !((JSONObject)instance).has(Constants.XOR.TYPE)) {
-			return objectCreator.getTypeMapper().toDomain(getType()).getName();
-		} else {
+
+		if (instance.getClass() != JSONObject.class || !((JSONObject)instance).has(Constants.XOR.TYPE)) {
+			if (instance.getClass() != JSONObject.class) {
+				return instance.getClass().getName();
+			}
+			else {
+				// Cannot get the specific type, so return the interface type
+				return getType().getName();
+			}
+		}
+		else {
 			return ((JSONObject)instance).getString(Constants.XOR.TYPE);
 		}
 	}
@@ -1593,6 +1601,11 @@ public abstract class AbstractBO implements BusinessObject {
 	public String toString() {
 		// Use simple name for now so it is easier to view in large object graphs
 		// Might need to go bar to FQDN for accuracy reasons
-		return AbstractType.getBaseName(getType());
+
+		// Prefer the actual object class name over type name due to polymorphism
+		// NOTE: For a dynamic type (JSON) getInstanceClassName() could return null.
+		String className = (getInstance() != null) ? AbstractType.getBaseName(getInstanceClassName()) : null;
+
+		return (className != null) ? className : AbstractType.getBaseName(getType().getName());
 	}
 }

@@ -72,7 +72,8 @@ public abstract class AbstractType implements EntityType {
 	private boolean                 aggregate;    // Does this type represent an aggregate according to the model - marked by the Aggregate annotation
 	protected Map<String, Property> properties;   // TODO: synchronize if properties are removed in future
 	protected EntityType            rootEntityType;
-	private   Set<EntityType>       subTypes;	
+	private   Set<EntityType>       subTypes;
+	private Set<EntityType>         childSubTypes;
 	private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
@@ -185,6 +186,32 @@ public abstract class AbstractType implements EntityType {
 			}
 		}
 	}
+
+	@Override
+	public void defineChildSubtypes() {
+		Map<Class, EntityType> subTypeMap = new HashMap<>();
+		for(EntityType entityType: subTypes) {
+			subTypeMap.put(entityType.getInstanceClass(), entityType);
+		}
+
+		// Check child/immediate subTypes
+		childSubTypes = new HashSet<EntityType>();
+		next: for(EntityType subType: subTypes) {
+			Class subTypeInstanceClass = subType.getInstanceClass().getSuperclass();
+			while(getInstanceClass() != subTypeInstanceClass) {
+				// If this is not an immediate subType then skip
+				if(subTypeMap.containsKey(subTypeInstanceClass)) {
+					continue next;
+				}
+				// Go up the inheritance hierarchy
+				subTypeInstanceClass = subTypeInstanceClass.getSuperclass();
+			}
+			// We should be at the root of the inheritance hierarchy. Just confirm to be safe.
+			if(getInstanceClass() == subTypeInstanceClass) {
+				childSubTypes.add(subType);
+			}
+		}
+	}
 	
 	@Override
 	public EntityType getSuperType() {
@@ -203,6 +230,17 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		return subTypes;
+	}
+
+	@Override
+	public Set<EntityType> getChildSubtypes() {
+		if(childSubTypes == null) {
+			// first ensure that the subTypes are initialized
+			getSubtypes();
+			defineChildSubtypes();
+		}
+
+		return childSubTypes;
 	}
 
 	protected Method getPolymorphicGetterMethod (String property)
@@ -1031,13 +1069,13 @@ public abstract class AbstractType implements EntityType {
 		return result;
 	}
 
-	public static String getBaseName(Type type)
+	public static String getBaseName(String className)
 	{
-		if (type.getName().indexOf(Settings.PATH_DELIMITER) != -1) {
-			return type.getName().substring(
-				type.getName().lastIndexOf(Settings.PATH_DELIMITER) + 1);
+		if (className.indexOf(Settings.PATH_DELIMITER) != -1) {
+			return className.substring(
+				className.lastIndexOf(Settings.PATH_DELIMITER) + 1);
 		} else {
-			return type.getName();
+			return className;
 		}
 	}
 }

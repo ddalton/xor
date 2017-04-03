@@ -75,4 +75,9 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	public void generateStatePersonGraph() {
 		super.generateStatePersonGraph();
 	}
+
+	@Test
+	public void checkPersonSubTypes() {
+		super.checkPersonSubTypes();
+	}
 }

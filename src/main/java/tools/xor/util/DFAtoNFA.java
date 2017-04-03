@@ -20,6 +20,7 @@
 package tools.xor.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +50,8 @@ import javax.swing.text.html.parser.Entity;
 public class DFAtoNFA {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
+	public static final String UNLABELLED = "";
+
 	public static void processInheritance(StateGraph<State, Edge<State>> stateGraph) {
 		Map<EntityType, State> entityTypeMap = new HashMap<EntityType, State>();
 		// maintain a stack of inheritance states to process
@@ -58,8 +61,9 @@ public class DFAtoNFA {
 			}
 		}
 
-		for(Map.Entry<EntityType, State> entry:  entityTypeMap.entrySet()) {
-
+		Collection<EntityType> entities = new HashSet(entityTypeMap.keySet());
+		for(EntityType entity:  entities) {
+/*
 			State superTypeState = entityTypeMap.get(entry.getKey());
 			for(EntityType subType: entry.getKey().getSubtypes()) {
 
@@ -72,10 +76,35 @@ public class DFAtoNFA {
 				// Add an empty edge from the supertype to the subtype
 				// This makes it a NFA, since only NFA allows empty edges
 				stateGraph.addEdge(
-					new Edge("", superTypeState, subTypeState),
+					new Edge(UNLABELLED, superTypeState, subTypeState),
 					superTypeState,
 					subTypeState);
 			}
+			*/
+			addChildTypes(entity, stateGraph, entityTypeMap);
+		}
+	}
+
+	private static void addChildTypes(EntityType entityType, StateGraph<State, Edge<State>> stateGraph, Map<EntityType, State> entityTypeMap) {
+
+		State entityState = entityTypeMap.get(entityType);
+		for(EntityType subType: entityType.getChildSubtypes()) {
+
+			State subTypeState = entityTypeMap.get(subType);
+			// extend the state set to include this new state
+			if(subTypeState == null) {
+				subTypeState = new State(subType, false);
+			}
+
+			// Add an empty edge from the supertype to the subtype
+			// This makes it a NFA, since only NFA allows empty edges
+			stateGraph.addEdge(
+				new Edge(UNLABELLED, entityState, subTypeState),
+				entityState,
+				subTypeState);
+			entityTypeMap.put(subType, subTypeState);
+
+			addChildTypes(subType, stateGraph, entityTypeMap);
 		}
 	}
 }

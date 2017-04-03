@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
@@ -212,6 +213,17 @@ public class SimpleType implements BasicType {
 
 		int fanOut = (int) (Math.random() * settings.getEntitySize().size() * sparseness);
 		BasicType elementType = (BasicType)((ExtendedProperty)property).getElementType();
+
+		// Handle inheritance (dynamic subType selection)
+		if(elementType instanceof EntityType) {
+			Generator gen = ((ExtendedProperty)property).getGenerator();
+			if(gen == null) {
+				gen = new DefaultGenerator(null);
+				((ExtendedProperty)property).setGenerator(gen);
+			}
+			elementType = gen.getSubType((EntityType)elementType);
+		}
+
 		for(int i = 0; i < fanOut; i++) {
 			result.put(elementType.generate(settings, property, rootedAt, entitiesToChooseFrom));
 		}

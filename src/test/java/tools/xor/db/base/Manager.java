@@ -29,7 +29,7 @@ import tools.xor.db.pm.Project;
 import tools.xor.exception.ApplicationException;
 
 @Entity
-public class Manager extends Person {
+public class Manager extends Employee {
 
 	private Set<Project> projects;
 

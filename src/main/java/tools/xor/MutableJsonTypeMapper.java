@@ -90,6 +90,19 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		}
 		return externalClass;
 	}
+
+	public static Class getEntityClass(final JSONObject jsonObject) {
+		if(jsonObject.has(Constants.XOR.TYPE)) {
+			String className = jsonObject.getString(Constants.XOR.TYPE);
+			try {
+				return Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException("Unable to find domain entity class: " + className);
+			}
+		}
+
+		throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
+	}
 	
 	@Override
 	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo) {
@@ -97,14 +110,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 			if(bo != null && bo.getInstance() != null) {
 				if(bo.getInstance() instanceof JSONObject) {
 					JSONObject jsonObject = (JSONObject) bo.getInstance();
-					if(jsonObject.has(Constants.XOR.TYPE)) {
-						String className = jsonObject.getString(Constants.XOR.TYPE);
-						try {
-							return Class.forName(className);
-						} catch (ClassNotFoundException e) {
-							throw new RuntimeException("Unable to find domain entity class: " + className);
-						}
-					}
+					return getEntityClass(jsonObject);
 				} else if(bo.getInstance() instanceof JSONArray) {
 					JSONObject container = (JSONObject) ((BusinessObject)bo.getContainer()).getInstance();
 					Property containmentProperty = bo.getContainmentProperty();

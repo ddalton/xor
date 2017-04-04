@@ -60,6 +60,7 @@ import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.db.base.Department;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.LocationDetails;
 import tools.xor.db.base.ParkingSpot;
@@ -1364,5 +1365,31 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setGraphFileName("TaskPersonGraph.png");
 		settings.setPostFlush(true);
 		aggregateManager.update(task, settings);
+	}
+
+	public void generateCollectionObjectGraph() throws FileNotFoundException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+
+		EntityType deptType = (EntityType)das.getType(Department.class);
+		AggregateView view = das.getView(deptType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.addAssociation(new AssociationSetting(Employee.class));
+		settings.setEntityType(deptType);
+		settings.setEntitySize(EntitySize.MEDIUM);
+
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(deptType);
+		settings.setGraphFileName("DeptStateGraph.png");
+		sg.generateVisual(settings);
+
+		settings.setSparseness(0.1f);
+		JSONObject dept = (JSONObject)sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setGraphFileName("DeptCollectionGraph.png");
+		settings.setPostFlush(true);
+		aggregateManager.update(dept, settings);
 	}
 }

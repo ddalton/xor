@@ -203,7 +203,8 @@ public class SimpleType implements BasicType {
 		return null;
 	}
 
-	protected JSONArray generateArray(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	protected JSONArray generateArray(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom)
+	{
 		JSONArray result = new JSONArray();
 
 		String path = (rootedAt == null) ? null : (rootedAt.has(Constants.XOR.GEN_PATH) ?
@@ -211,20 +212,20 @@ public class SimpleType implements BasicType {
 		path = Constants.XOR.walkDown(path, property);
 		float sparseness = settings.getSparseness(path);
 
-		int fanOut = (int) (Math.random() * settings.getEntitySize().size() * sparseness);
+		int fanOut = (int)(Math.random() * settings.getEntitySize().size() * sparseness);
 		BasicType elementType = (BasicType)((ExtendedProperty)property).getElementType();
 
-		// Handle inheritance (dynamic subType selection)
-		if(elementType instanceof EntityType) {
-			Generator gen = ((ExtendedProperty)property).getGenerator();
-			if(gen == null) {
-				gen = new DefaultGenerator(null);
-				((ExtendedProperty)property).setGenerator(gen);
-			}
-			elementType = gen.getSubType((EntityType)elementType);
+		Generator gen = ((ExtendedProperty)property).getGenerator();
+		if (gen == null) {
+			gen = new DefaultGenerator(null);
+			((ExtendedProperty)property).setGenerator(gen);
 		}
 
-		for(int i = 0; i < fanOut; i++) {
+		for (int i = 0; i < fanOut; i++) {
+			// Handle inheritance (dynamic subType selection)
+			if (elementType instanceof EntityType) {
+				elementType = gen.getSubType((EntityType)elementType);
+			}
 			result.put(elementType.generate(settings, property, rootedAt, entitiesToChooseFrom));
 		}
 

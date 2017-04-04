@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.json.JSONArray;
 
+import org.json.JSONObject;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
@@ -52,6 +53,39 @@ public class DataObjectList {
 
 	public List<BusinessObject> list() {
 		return list(null);
+	}
+
+	/**
+	 * If the element is a JSONObject then get the narrowed type based on XOR.type information
+	 * @param element of the collection
+	 * @param fallback type of the element, usually a parent type as defined in the domain model.
+	 * @return
+	 */
+	private Type getNarrowedElementType (Object element, Type fallback)
+	{
+		// This method is only applicable for EntityType
+		if( !(fallback instanceof EntityType) ) {
+			return fallback;
+		}
+		EntityType fallbackET = (EntityType) fallback;
+
+		Type type = null;
+		if (element instanceof JSONObject) {
+			try {
+				Class elementClass = MutableJsonTypeMapper.getEntityClass((JSONObject)element);
+
+				if(fallbackET.isDomainType()) {
+					type = dataObject.getObjectCreator().getDAS().getType(elementClass);
+				} else {
+					type = dataObject.getObjectCreator().getDAS().getExternalType(elementClass);
+				}
+			}
+			catch (Exception e) {
+				type = fallback;
+			}
+		}
+
+		return (type != null) ? type : fallback;
 	}
 
 	public List<BusinessObject> list(Settings settings) {
@@ -164,7 +198,7 @@ public class DataObjectList {
 						try {
 							BusinessObject collectionElement = dataObject.createDataObject(
 								element,
-								type);
+								getNarrowedElementType(element, type));
 							collectionElement.setContainer(collectionDataObject);
 							collectionElement.setContainmentProperty(null);
 							result.add(collectionElement);
@@ -173,7 +207,12 @@ public class DataObjectList {
 						}
 					}
 				} else {
-					result.add(objectCreator.createDataObject(element, type, collectionDataObject, null));
+					result.add(
+						objectCreator.createDataObject(
+							element,
+							getNarrowedElementType(element, type),
+							collectionDataObject,
+							null));
 				}
 			}
 		}

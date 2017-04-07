@@ -833,6 +833,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					} else if(XorExternalData.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = event.getSettings().getExternalData();
 					}
+					if(result[i] != null) {
+						System.out.println("!!!!!RESULT classname: " + result[i].getClass().getName());
+					}
 				}
 			}
 		}
@@ -1291,6 +1294,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	public void setGenerator(Generator generator) {
 		this.generator = generator;
+		this.generator.validate(this);
 	}
 
 	public Generator getGenerator() {

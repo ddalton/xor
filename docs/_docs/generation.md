@@ -148,8 +148,50 @@ XOR comes with a set of built-in generators. But the user can add their own vers
 
 ## Collection sparseness
 
-The data generation related to collections is what decides how big the object graph is. The collection sparseness is a global value and can be overridden on a per relationship basis.
+The data generation related to collections is what decides how big the object graph is. The collection sparseness is a global value and can be overridden on a per relationship basis. The sparseness value is a factor of the max number of objects in the object graph. So the maximum value is 1. 
+
+For example, if a large graph is being generated, then for a sparseness value of 0.1f, the collection can have anywhere from 1-100 elements in the collection. The number of elements is a random number within this range.
+
+![](/img/taskchildren.png)
+
+Using the above model, the following code has the global value is configured as 0.2f and the dependants collection relationship set to 0.1f.
+
+```
+Settings settings = new Settings();
+settings.setSparseness(0.2f);
+settings.getCollectionSparseness().put("dependants", 0.1f);
+```
 
 ## Subtype selection
 
 If the persistence model has inheritance then the data generation has to be given the ability to create such subtypes.
+The subtypes are randomly chosen when creating such objects. This can be controlled used the following built-in generators:
+
+<div class="mobile-side-scroller">
+<table>
+  <thead>
+    <tr>
+      <th>Generator class name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><p><code>tools.xor.generator.BoundedSubType</code></p></td>
+      <td><p>
+
+          Use this generator if the objects need to be bounded to a particular subtype and its subtypes.
+
+      </p></td>
+    </tr>
+    <tr>
+      <td><p><code>tools.xor.generator.SubTypeChoices</code></p></td>
+      <td><p>
+
+          Use this generator if the objects need to be constrained to a random subset of the subtypes.
+
+      </p></td>
+    </tr>
+  </tbody>
+</table>
+</div>

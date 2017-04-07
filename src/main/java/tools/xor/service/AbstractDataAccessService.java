@@ -24,11 +24,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -38,38 +35,26 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import tools.xor.AbstractType;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.ExternalType;
 import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.SimpleType;
-import tools.xor.SimpleTypeFactory;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
-import tools.xor.exception.MultipleClassForPropertyException;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LinkedChoices;
 import tools.xor.generator.Lot;
 import tools.xor.service.exim.ExcelExportImport;
-import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
-import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
-import tools.xor.util.Vertex;
-import tools.xor.util.graph.DirectedGraph;
-import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryBuilder;
-import tools.xor.view.QueryViewProperty;
 
 public abstract class AbstractDataAccessService implements DataAccessService {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -299,7 +284,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	protected void initDerived(Shape shape) {
-		shape.initDerived();
+		shape.deriveExternal();
 	}
 
 	public void addProperty (EntityType type, Property openProperty) {
@@ -345,17 +330,11 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 		Lot lot = null;
 		for(Map.Entry<String, Integer> entry: headerMap.entrySet()) {
-			// Process each property
-			ExtendedProperty property = (ExtendedProperty)entityType.getProperty(entry.getKey());
-			if( !property.isDataType() ) {
-				// Only simple types supported for domain values
-				continue;
-			}
 
 			Row row = entitySheet.getRow(1);
 			Class generatorClass = Class.forName(row.getCell(entry.getValue()).getStringCellValue());
 			List<String> list = new ArrayList<String>();
-			for(int i = 2; i < entitySheet.getLastRowNum(); i++) {
+			for(int i = 2; i <= entitySheet.getLastRowNum(); i++) {
 				row = entitySheet.getRow(i);
 				Cell cell = row.getCell(entry.getValue());
 
@@ -386,6 +365,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				}
 				((LinkedChoices)gen).setLot(lot);
 			}
+
+			ExtendedProperty property = (ExtendedProperty)entityType.getProperty(entry.getKey());
 			property.setGenerator(gen);
 		}
 	}

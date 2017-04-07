@@ -198,6 +198,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 		
 		V vertex = getVertex(type);
+
+		// check supertype
+		Type walkType = type;
+		while(vertex == null && walkType instanceof EntityType && ((EntityType)walkType).getSuperType() != null) {
+			walkType = ((EntityType)walkType).getSuperType();
+			vertex = getVertex(walkType);
+		}
 		if(vertex == null) {
 			for(Map.Entry<Type, V> entry: states.entrySet()) {
 				System.out.println("The type " + entry.getKey() + " has vertex " + entry.getValue() + " with name " + entry.getKey().getName());

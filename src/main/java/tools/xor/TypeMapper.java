@@ -22,6 +22,8 @@ package tools.xor;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ObjectCreator;
 
+import java.util.List;
+
 /**
  * The framework can be used with both single and dual model hierarchies.
  * In the single model hierarchy, both the JPA and JAXB annotations are defined on the same class
@@ -188,7 +190,7 @@ public interface TypeMapper {
 
 	public EntityKey getSurrogateKey(Object id, Type type);
 
-	public EntityKey getNaturalKey(Object id, BusinessObject ob);
+	public List<EntityKey> getNaturalKey(BusinessObject ob);
 	
 	/**
 	 * Check to see if we are created external Business object(s)

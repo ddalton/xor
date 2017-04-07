@@ -142,10 +142,18 @@ public class ClassUtil {
 			throws InvocationTargetException, IllegalAccessException 
 			{
 		if (Modifier.isPublic(method.getModifiers()))
-			if(args == null)
+			if(args == null) {
 				return method.invoke(target);
-			else
-				return method.invoke(target, args);
+			} else {
+				try {
+					return method.invoke(target, args);
+				}
+				catch (IllegalArgumentException e) {
+					System.out.println("@@@@ Method: " + method.getName() + ", args: " + args.toString());
+
+					e.printStackTrace();
+				}
+			}
 		return AccessController.doPrivileged(
 				new PrivilegedAction<Object>() {
 					public Object run() {

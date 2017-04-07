@@ -22,6 +22,7 @@ package tools.xor.generator;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.util.State;
 
 import java.math.BigDecimal;
@@ -206,9 +207,18 @@ public class DefaultGenerator implements Generator
         return new BigInteger((new Long((long) (minimum.longValue() + (Math.random() * range)))).toString());
     }
 
+    /**
+     * Calculates a random index position from 0 to values.size-1
+     * @return an int value
+     */
     protected int getPosition() {
         if(getValues().length == 0) {
             throw new RuntimeException("Choices generator needs to have a minimum of 1 value.");
+        }
+
+        // Optimization to avoid invoking random()
+        if(getValues().length == 1) {
+            return 0;
         }
 
         int result =  (int) (Math.random() * (getValues().length+1));
@@ -237,5 +247,10 @@ public class DefaultGenerator implements Generator
         }
 
         return subTypes.get(index);
+    }
+
+    @Override public void validate (ExtendedProperty property)
+    {
+
     }
 }

@@ -24,6 +24,8 @@ import tools.xor.util.NaturalKeyStrategy;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.POJOCreationStrategy;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractTypeMapper implements TypeMapper {
 	private MapperDirection direction;
@@ -217,35 +219,49 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		EntityType entityType = (EntityType) type;
 
 		if(!(id instanceof String) || !"".equals(id.toString().trim())) {
-			return new SurrogateEntityKey(id, getEntityKeyTypeName(entityType));
+			return new SurrogateEntityKey(id, getSurrogateKeyTypeName(entityType));
 		}
 
 		return null;
 	}
 
-	public static String getEntityKeyTypeName(Type type) {
+	public static String getSurrogateKeyTypeName (Type type) {
 		EntityType rootEntityType = ((EntityType)type).getRootEntityType();
 		return rootEntityType.getDomainType().getName();
 	}
 
-	public EntityKey getNaturalKey(Object id, BusinessObject bo) {
+	public static String getNaturalKeyTypeName (Type type) {
+		return ((EntityType)type).getDomainType().getName();
+	}
+
+	/**
+	 * Return a list of natural keys. There could be more than one if the supertype has
+	 * natural keys.
+	 *
+	 * @param bo business object
+	 * @return list of all keys including the natural keys of its super types
+	 */
+	public List<EntityKey> getNaturalKey(BusinessObject bo) {
+		List<EntityKey> result = new ArrayList<>();
+
 		if (bo == null || bo.getInstance() == null) {
-			return null;
+			return result;
 		}
 
 		if(!(bo.getType() instanceof EntityType)) {
-			return null;
+			return result;
 		}
 
 		EntityType entityType = (EntityType) bo.getType();
-		EntityKey result = null;
-		if(entityType.getNaturalKey() != null && bo != null) {
+		while(entityType != null && entityType.getNaturalKey() != null && bo != null) {
 			try {
-				result = NaturalKeyStrategy.getInstance().execute(bo, getEntityKeyTypeName(entityType
-					));
+				result.add(NaturalKeyStrategy.getInstance().execute(bo, getNaturalKeyTypeName(
+						entityType
+					)));
 			} catch (IllegalStateException ise) {
 				//the natural key values are not populated.
 			}
+			entityType = entityType.getSuperType();
 		}
 
 		return result;

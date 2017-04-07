@@ -216,7 +216,7 @@ public class SimpleType implements BasicType {
 		BasicType elementType = (BasicType)((ExtendedProperty)property).getElementType();
 
 		Generator gen = ((ExtendedProperty)property).getGenerator();
-		if (gen == null) {
+		if (gen == null && elementType instanceof EntityType) {
 			gen = new DefaultGenerator(null);
 			((ExtendedProperty)property).setGenerator(gen);
 		}

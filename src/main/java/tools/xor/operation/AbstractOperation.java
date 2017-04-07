@@ -34,15 +34,12 @@ import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
-import tools.xor.ListType;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-
-import javax.swing.text.html.parser.Entity;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
@@ -173,7 +170,10 @@ public abstract class AbstractOperation implements Operation {
 						EntityType entityType = (EntityType)target.getType();
 						if (!entityType.isEmbedded() && target.getInstance() != null &&
 							callInfo.getStage() == ProcessingStage.UPDATE) {
-							target.addEntity(target);
+							if(target.getObjectCreator().register(target) != target) {
+								// another object was already registered
+								return;
+							}
 						}
 					}
 
@@ -479,11 +479,12 @@ public abstract class AbstractOperation implements Operation {
 
 			for(Object source: sourceCollection) {
 				BusinessObject target = null;
+				Type elementType = callInfo.getOutputProperty().getElementType();
 				if(callInfo.getInputProperty().isCollectionOfReferences()) {
 					EntityKey surrogateKey = callInfo.getOutputObjectCreator().getTypeMapper().getSurrogateKey(
 						source,
-						callInfo.getOutputProperty().getElementType());
-					target = callInfo.getOutputObjectCreator().getByEntityKey(surrogateKey);
+						elementType);
+					target = callInfo.getOutputObjectCreator().getByEntityKey(surrogateKey, elementType);
 				} else {
 					target = (BusinessObject) callInfo.getOutputObjectCreator().getExistingDataObject(source);
 				}

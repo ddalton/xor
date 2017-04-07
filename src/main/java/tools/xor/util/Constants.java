@@ -50,6 +50,8 @@ public class Constants {
 		public static final String TOPO_VISUAL = "toposort.visual";
 		public static final String SQL_STACK = "sql.stacktrace";
 		public static final String TOPO_SKIP = "toposort.skip";
+		public static final String INCLUDE_EMBEDDED = "include.embedded";
+		public static final String ACTIVATE_DETECTORS = "detectors.activate";
 	}
   
   

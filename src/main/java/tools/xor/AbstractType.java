@@ -475,11 +475,18 @@ public abstract class AbstractType implements EntityType {
 	}	
 
 	/**
-	 * Initialize both the root entity type and also the parent entity type
+	 * Initialize the root superType
 	 * @param das to get the Type
 	 * @param shape of the type
 	 */
 	public void initRootEntityType(DataAccessService das, Shape shape) {
+
+		this.rootEntityType = this;
+
+		while(rootEntityType.getSuperType() != null) {
+			this.rootEntityType = rootEntityType.getSuperType();
+		}
+		/*
 		Class<?> rootEntityClass = getInstanceClass();
 
 		Class<?> parentClass = rootEntityClass.getSuperclass();		
@@ -496,6 +503,7 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		rootEntityType = (EntityType) shape.getType(rootEntityClass);
+		*/
 	}	
 	
 	@Override

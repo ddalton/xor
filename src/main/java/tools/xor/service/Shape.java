@@ -58,7 +58,7 @@ public class Shape
 
     // Move the following to Shape abstraction
     protected Map<String, Type> types = new ConcurrentHashMap<String, Type>();
-    protected Map<String, Type> derivedTypes = new ConcurrentHashMap<String, Type>();
+    protected Map<String, Type> externalTypes = new ConcurrentHashMap<String, Type>();
     protected DataAccessService das;
     protected String name;
     protected Shape parent;
@@ -115,8 +115,8 @@ public class Shape
         }
     }
 
-    protected void addDerivedType(String className, Type type) {
-        addType(className, type, derivedTypes);
+    protected void addExternalType (String className, Type type) {
+        addType(className, type, externalTypes);
     }
 
     /**
@@ -150,10 +150,10 @@ public class Shape
     public Type getExternalType(String name) {
 
         if(this.shapeStrategy == ShapeStrategy.COPY) {
-            return derivedTypes.get(name);
+            return externalTypes.get(name);
         } else if(this.shapeStrategy == ShapeStrategy.SHARED) {
-            if(derivedTypes.containsKey(name)) {
-                return derivedTypes.get(name);
+            if(externalTypes.containsKey(name)) {
+                return externalTypes.get(name);
             } else if(parent != null) {
                 return parent.getExternalType(name);
             }
@@ -184,7 +184,7 @@ public class Shape
         if (result == null) {
             //result = new SimpleType(clazz);
             result = SimpleTypeFactory.getType(clazz, das);
-            addDerivedType(clazz.getName(), result);
+            addExternalType(clazz.getName(), result);
         }
 
         return result;
@@ -197,68 +197,83 @@ public class Shape
         type.setProperty(das);
         addType(type.getName(), type);
 
-        Class<?> derivedClass = das.getTypeMapper().toExternal(type.getInstanceClass());
-        if(derivedClass != null) {
-            ExternalType derived = das.getTypeMapper().createExternalType(
+        Class<?> externalClass = das.getTypeMapper().toExternal(type.getInstanceClass());
+        if(externalClass != null) {
+            ExternalType externalType = das.getTypeMapper().createExternalType(
                 (EntityType)type,
-                derivedClass);
-            derivedTypes.put(derived.getName(), derived);
-            derived.setProperty(das, this);
-            setBiDirectionOnDerivedType(derived);
+                externalClass);
+            externalTypes.put(externalType.getName(), externalType);
+            externalType.setProperty(das, this);
+            setBiDirectionOnExternalType(externalType);
         }
     }
 
-    protected void setBiDirectionOnDerivedType(ExternalType derivedType) {
-        derivedType.setOpposite(das);
+    protected void setBiDirectionOnExternalType (ExternalType externalType) {
+        externalType.setOpposite(das);
+    }
+
+    protected void setSuperTypeOnExternalType (ExternalType externalType) {
+        if(externalType.getDomainType().getSuperType() == null) {
+            return;
+        }
+
+        Type type = getExternalType(externalType.getDomainType().getSuperType().getName());
+        if(type instanceof EntityType) {
+            externalType.setSuperType((EntityType)type);
+        }
     }
 
     public void addProperty (EntityType type, Property openProperty) {
         type.addProperty(openProperty);
 
-        if(derivedTypes.containsKey(type.getName())) {
-            ExternalType derived = (ExternalType) derivedTypes.get(type.getName());
-            if(derived == null) {
-                throw new RuntimeException("Cannot find the derived type for: " + type.getName());
+        if(externalTypes.containsKey(type.getName())) {
+            ExternalType externalType = (ExternalType) externalTypes.get(type.getName());
+            if(externalType == null) {
+                throw new RuntimeException("Cannot find the external type for: " + type.getName());
             }
-            Property derivedProperty = derived.defineProperty(das, openProperty, this);
-            derived.addProperty(derivedProperty);
+            Property externalProperty = externalType.defineProperty(das, openProperty, this);
+            externalType.addProperty(externalProperty);
         }
     }
 
-    protected void initDerived() {
+    protected void deriveExternal () {
         for(Type type: getUniqueTypes()) {
             if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
                 continue;
             }
-            Class<?> derivedClass = das.getTypeMapper().toExternal(type.getInstanceClass());
-            if(derivedClass != null) {
-                Type derived = das.getTypeMapper().createExternalType(
+            Class<?> externalClass = das.getTypeMapper().toExternal(type.getInstanceClass());
+            if(externalClass != null) {
+                Type externalType = das.getTypeMapper().createExternalType(
                     (EntityType)type,
-                    derivedClass);
-                derivedTypes.put(derived.getName(), derived);
+                    externalClass);
+                externalTypes.put(externalType.getName(), externalType);
             }
         }
 
-        // init the derived properties
-        for (Type type : getUniqueDerivedTypes()) {
+        // init the properties
+        for (Type type : getUniqueExternalTypes()) {
             if (ExternalType.class.isAssignableFrom(type.getClass())) {
-                ExternalType derivedType = (ExternalType) type;
+                ExternalType externalType = (ExternalType) type;
 
-                if(isOpenDomainType(derivedType)) {
+                if(isOpenDomainType(externalType)) {
                     continue;
                 }
-                derivedType.setProperty(das, this);
+                externalType.setProperty(das, this);
             }
         }
 
-        for (Type type : getUniqueDerivedTypes()) {
-            if (!type.isOpen() && ExternalType.class.isAssignableFrom(type.getClass())) {
-                ExternalType derivedType = (ExternalType) type;
+        for (Type type : getUniqueExternalTypes()) {
+            if(!ExternalType.class.isAssignableFrom(type.getClass())) {
+                continue;
+            }
 
-                if(isOpenDomainType(derivedType)) {
+            ExternalType externalType = (ExternalType) type;
+            setSuperTypeOnExternalType(externalType);
+            if (!type.isOpen()) {
+                if(isOpenDomainType(externalType)) {
                     continue;
                 }
-                setBiDirectionOnDerivedType(derivedType);
+                setBiDirectionOnExternalType(externalType);
             }
         }
     }
@@ -268,8 +283,8 @@ public class Shape
         return new HashSet<Type>(types.values());
     }
 
-    private Set<Type> getUniqueDerivedTypes() {
-        return new HashSet<Type>(derivedTypes.values());
+    private Set<Type> getUniqueExternalTypes () {
+        return new HashSet<Type>(externalTypes.values());
     }
 
     public void initRootType() {
@@ -278,7 +293,7 @@ public class Shape
                 ((AbstractType)type).initRootEntityType(das, this);
             }
         }
-        for (Type type : getUniqueDerivedTypes()) {
+        for (Type type : getUniqueExternalTypes()) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {
                 ((AbstractType)type).initRootEntityType(das, this);
             }
@@ -293,11 +308,11 @@ public class Shape
         }
     }
 
-    private boolean isOpenDomainType(ExternalType derivedType) {
+    private boolean isOpenDomainType(ExternalType externalType) {
         // If the domain type is open, then we cannot
         // infer the properties. For e.g., an open domain type
         // does not have a Java class and is populated dynamically
-        return derivedType.getDomainType().isOpen();
+        return externalType.getDomainType().isOpen();
     }
 
     public List<String> getViewNames() {

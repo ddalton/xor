@@ -15,7 +15,6 @@ import tools.xor.util.Constants;
 import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.view.AggregateView;
 
-import javax.swing.text.html.parser.Entity;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -175,6 +174,111 @@ public abstract class AbstractExportImport implements ExportImport
         writeRelationshipMap(filePath, sheetMap);
     }
 
+    /**
+     * This class is used to capture the header fields including the required fields
+     * that make up the Entity.
+     * This is especially useful to capture all the fields for a type hierarchy.
+     * Conceptually similar to JPA's SINGLE_TABLE per class hieararchy
+     */
+    static class EntityStructure {
+
+        List<String> properties;
+        Set<String> required;
+
+        public Set<String> getRequired ()
+        {
+            return required;
+        }
+
+        public void setRequired (Set<String> required)
+        {
+            this.required = required;
+        }
+
+        public List<String> getProperties ()
+        {
+            return properties;
+        }
+
+        public void setProperties (List<String> properties)
+        {
+            this.properties = properties;
+        }
+
+        private void extractSubTypes(List<BusinessObject> boList, Map<String, Type> subTypeMap) {
+
+            for (BusinessObject bo : boList) {
+                if (bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {
+                    extractSubTypes(bo.getList(), subTypeMap);
+                } else {
+                    Type type = bo.getType();
+                    if(!subTypeMap.containsKey(type.getName())) {
+                        subTypeMap.put(type.getName(), type);
+                    }
+                }
+            }
+        }
+
+        private void process(Map<String, Type> subTypeMap) {
+
+            this.properties = new ArrayList<>();
+            Map<Type, Set<String>> propertyMap = new HashMap<>();
+            for(Type type: subTypeMap.values()) {
+                if(type instanceof EntityType) {
+
+                    Set<String> typeProperties = new HashSet<>();
+                    for (Property property : type.getProperties()) {
+                        if (property.isMany()) {
+                            typeProperties.add(ExcelJsonCreationStrategy.getCollectionTypeKey(property));
+
+                            // Collections are handled separately
+                            continue;
+                        }
+                        // Skip open content until we come with a default serialized form for empty object
+                        // Currently it fails validation since empty string does not equal JSONObject
+                        if (property.isOpenContent()) {
+                            continue;
+                        }
+                        // Handle embedded objects and expand them if necessary
+                        typeProperties.addAll(property.expand(new HashSet<Type>()));
+                    }
+
+                    propertyMap.put(type, typeProperties);
+                }
+            }
+
+            Set<String> nullableProperties = new HashSet<>();
+            this.required = new HashSet<>();
+            for (Map.Entry<Type, Set<String>> entry : propertyMap.entrySet()) {
+                for(String propertyName: entry.getValue()) {
+                    if (!((EntityType)entry.getKey()).isNullable(propertyName)) {
+                        this.required.add(propertyName);
+                    }
+                    else {
+                        nullableProperties.add(propertyName);
+                    }
+                }
+            }
+            properties.addAll(this.required);
+            properties.addAll(nullableProperties);
+
+            // Meta fields
+            properties.add(Constants.XOR.OWNER_ID);
+            properties.add(Constants.XOR.ID);
+            properties.add(Constants.XOR.TYPE);
+        }
+
+        public static EntityStructure construct(List<BusinessObject> boList) {
+            EntityStructure es = new EntityStructure();
+
+            Map<String, Type> subTypeMap = new HashMap<String, Type>();
+            es.extractSubTypes(boList, subTypeMap);
+            es.process(subTypeMap);
+
+            return es;
+        }
+    }
+
     private void writeEntity (String sheetName,
                               List<BusinessObject> boList,
                               BusinessObject owner)
@@ -183,8 +287,18 @@ public abstract class AbstractExportImport implements ExportImport
             return;
         }
 
+        EntityStructure entityStructure = EntityStructure.construct(boList);
+
         EntityType entityType = null;
-        setupEntity(sheetName);
+        if (setupEntity(sheetName) ) {
+            propertyColIndex = new HashMap<String, Integer>();
+            int colNo = 0;
+            for (String propertyPath : entityStructure.getProperties()) {
+                if (!propertyColIndex.containsKey(propertyPath)) {
+                    propertyColIndex.put(propertyPath, colNo++);
+                }
+            }
+        }
 
         for (BusinessObject bo : boList) {
             if (bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {
@@ -198,6 +312,7 @@ public abstract class AbstractExportImport implements ExportImport
                 entityType = (EntityType)bo.getType();
             }
 
+            /*
             List<String> propertyPaths = new ArrayList<String>();
 
             // Based on polymorphism, the actual instance can be a different subtype
@@ -214,6 +329,8 @@ public abstract class AbstractExportImport implements ExportImport
 
             // We want to have all required columns in the beginning
             List<String> requiredPropertyPaths = new ArrayList<String>();
+
+
             for (Property property : bo.getType().getProperties()) {
                 if (property.isMany()) {
                     propertyPaths.add(ExcelJsonCreationStrategy.getCollectionTypeKey(property));
@@ -231,13 +348,14 @@ public abstract class AbstractExportImport implements ExportImport
             }
 
             Set<String> requiredColumns = setupPropertyColumns(propertyPaths, bo.getType());
+            */
 
-            // TODO: add columns only if the value is not null
+            // NOTE: nice to have to add columns only if the value is not null
             prepareItem();
-            for (String propertyPath : propertyPaths) {
-                prepareEntityItemProperty(propertyPath, requiredColumns);
+            for (String propertyPath : entityStructure.getProperties()) {
+                prepareEntityItemProperty(propertyPath, entityStructure.getRequired());
                 Object value;
-                if (Constants.XOR.OWNER_ID.equals(propertyPath)) {
+                if (Constants.XOR.OWNER_ID.equals(propertyPath) && owner != null) {
                     value = owner.getOpenProperty(Constants.XOR.ID);
                 }
                 else if (Constants.XOR.ID.equals(propertyPath) || propertyPath.startsWith(
@@ -327,10 +445,15 @@ public abstract class AbstractExportImport implements ExportImport
         collection.put(collectionEntryJSON);
     }
 
+    /**
+     * Swizzle duplicate object references to a single object
+     * @param idMap entity map keyed by id
+     * @param collectionPropertyMap collections
+     */
     protected void swizzleCollectionElement (Map<String, JSONObject> idMap,
                          Map<String, JSONArray> collectionPropertyMap) {
 
-        // Create a new collection pointing to the write entity JSONObject instance
+        // Create a new collection pointing to the right entity JSONObject instance
         for (Map.Entry<String, JSONArray> entry : collectionPropertyMap.entrySet()) {
             JSONArray swizzled = new JSONArray();
             JSONArray original = entry.getValue();
@@ -343,7 +466,7 @@ public abstract class AbstractExportImport implements ExportImport
                     }
                     swizzled.put(entity);
                 } else {
-                    swizzled.put(entry);
+                    swizzled.put(json);
                 }
             }
 
@@ -452,7 +575,12 @@ public abstract class AbstractExportImport implements ExportImport
 
     protected abstract void addRelationships(String path, List attrPath) throws IOException;
 
-    protected abstract void setupEntity (String name);
+    /**
+     * Sets up the Entity sheet/file.
+     * @param name of the Entity sheet/file to setup
+     * @return false if setup for the given name has already been performed, true otherwise
+     */
+    protected abstract boolean setupEntity (String name);
 
     protected abstract void setupRelationship ();
 

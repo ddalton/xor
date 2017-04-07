@@ -48,6 +48,7 @@ import tools.xor.custom.DetailStrategy;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Detector;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
 
@@ -168,6 +169,8 @@ public class Settings {
 	private float sparseness = 1.0f;
 	private String graphFileName;
 	private Map<String, Float> collectionSparseness = new HashMap<String, Float>(); // Currently the logic is based on exact match
+
+	private Detector detector;
 
 	// Transient
 	private Map<Class<?>, Boolean> shouldCreateIfMissing;
@@ -550,6 +553,13 @@ public class Settings {
 		return narrow;
 	}
 
+	/**
+	 * Can have a performance impact, as the properties from the subtype will be
+	 * navigated. This typically can end up loading a larger object graph.
+	 * Also is used when working with native queries.
+	 * @param narrow false if going just by model type and not actual object class
+	 *               as this can be different due to polymorphism
+	 */
 	public void setNarrow(boolean narrow) {
 		this.narrow = narrow;
 	}
@@ -725,6 +735,16 @@ public class Settings {
 	public boolean isGenerateVisual ()
 	{
 		return this.graphFileName != null && !"".equals(this.graphFileName.trim());
+	}
+
+	public Detector getDetector ()
+	{
+		return detector;
+	}
+
+	public void setDetector (Detector detector)
+	{
+		this.detector = detector;
 	}
 
 	/**

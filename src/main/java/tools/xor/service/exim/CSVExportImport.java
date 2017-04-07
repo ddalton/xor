@@ -64,7 +64,13 @@ public class CSVExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void setupEntity (String name) {
+    protected boolean setupEntity (String name) {
+        boolean result = true;
+
+        if(csvPrinter != null) {
+            return false;
+        }
+
         try {
             name += Constants.XOR.CSV_FILE_SUFFIX;
 
@@ -76,6 +82,8 @@ public class CSVExportImport extends AbstractExportImport
         } catch(IOException ioe) {
             throw ClassUtil.wrapRun(ioe);
         }
+
+        return result;
     }
 
     @Override

@@ -81,9 +81,13 @@ public abstract class CollectionUpdateAction implements Executable {
 		BusinessObject output = ((BusinessObject)callInfo.getOutput());
 
 		Map outputMap = new HashMap<Object, BusinessObject>();
-		for(BusinessObject element: output.getList())
-			if(element.getCollectionElementKey(callInfo.getOutputProperty()) != null)
-				outputMap.put(element.getCollectionElementKey(callInfo.getOutputProperty()), element);		
+		for(BusinessObject element: output.getList()) {
+			if (element.getCollectionElementKey(callInfo.getOutputProperty()) != null) {
+				outputMap.put(
+					element.getCollectionElementKey(callInfo.getOutputProperty()),
+					element);
+			}
+		}
 
 		if(input != null) {
 			// Create the data objects and load them into the ObjectCreator cache
@@ -141,8 +145,9 @@ public abstract class CollectionUpdateAction implements Executable {
 		BusinessObject output = ((BusinessObject)callInfo.getOutput());
 
 		Map targetKeys = new HashMap<Object, Object>();
-		for(BusinessObject element: output.getList())
-			targetKeys.put(element.getCollectionElementKey(callInfo.getOutputProperty()), element);		
+		for(BusinessObject element: output.getList()) {
+			targetKeys.put(element.getCollectionElementKey(callInfo.getOutputProperty()), element);
+		}
 
 		Map sourceKeys = new HashMap<Object, Object>();		
 		if(callInfo.getInput() != null) 

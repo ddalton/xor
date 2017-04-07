@@ -30,7 +30,6 @@ import org.json.JSONObject;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
-import tools.xor.util.SurrogateKeyStrategy;
 
 public class DataObjectList {
 
@@ -152,9 +151,9 @@ public class DataObjectList {
 				// the ids for performance reasons
 
 				if(type instanceof EntityType && collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
-					String entityTypeName = AbstractTypeMapper.getEntityKeyTypeName(type);
+					String entityTypeName = AbstractTypeMapper.getSurrogateKeyTypeName(type);
 					EntityKey entityKey = new SurrogateEntityKey(element, entityTypeName);
-					BusinessObject bo = objectCreator.getByEntityKey(entityKey);
+					BusinessObject bo = objectCreator.getByEntityKey(entityKey, type);
 					if(bo != null) {
 						result.add(bo);
 						continue;
@@ -193,7 +192,7 @@ public class DataObjectList {
 						EntityKey surrogateKey = objectCreator.getTypeMapper().getSurrogateKey(
 							element,
 							type);
-						result.add(objectCreator.getByEntityKey(surrogateKey));
+						result.add(objectCreator.getByEntityKey(surrogateKey, type));
 					}  else {
 						try {
 							BusinessObject collectionElement = dataObject.createDataObject(

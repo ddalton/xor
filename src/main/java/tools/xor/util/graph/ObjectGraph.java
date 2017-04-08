@@ -140,6 +140,16 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph(entityType);
 		persistRoots(objectCreator, sg);
 
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.ACTIVATE_DETECTORS)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.ACTIVATE_DETECTORS)) {
+
+			// If this is an ObjectCreator detector then execute it
+			if(settings.getDetector() != null && settings.getDetector().getClass().getEnclosingClass() != null &&
+				settings.getDetector().getClass().getEnclosingClass() == ObjectCreator.class) {
+				settings.getDetector().investigate(objectCreator);
+			}
+		}
+
 		if(settings.isGenerateVisual()) {
 			this.generateVisual(settings);
 		}
@@ -158,34 +168,6 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
 		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph(entityType);
 		deleteRoots(objectCreator, sg);
-	}
-	
-	private void addTopologicalOrderedEdge(Property p, V source, V target ) {
-		
-		// Do not consider self loops
-		if( source == target) {
-			return;
-		}
-		
-		// Do not consider nullable non-cascaded relationships
-		if(!p.isContainment() && p.isNullable()) {
-			return;
-		}
-		
-		Property property = p;
-		if(p.isMany()) {
-			property = null;
-		}
-		
-		// containment relationships are reversed from
-		// a topological ordering perspective		
-		if(p.isContainment()) {
-			BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(target, source, property);
-			addEdge((E) edge, target, source);
-		} else {
-			BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(source, target, property);
-			addEdge((E) edge, source, target);
-		}
 	}
 
 	/**

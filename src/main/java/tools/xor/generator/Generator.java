@@ -29,6 +29,7 @@
 package tools.xor.generator;
 
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.util.State;
 
 import java.math.BigDecimal;
@@ -111,4 +112,12 @@ public interface Generator
      * @return the desired descendant state based on generator logic
      */
     EntityType getSubType (EntityType entityType);
+
+    /**
+     * Validate this generator against the property for which it is going to
+     * generate the values.
+     *
+     * @param property for which this generator is being configured
+     */
+    void validate(ExtendedProperty property);
 }

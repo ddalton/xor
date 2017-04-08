@@ -344,15 +344,20 @@ public class ExcelExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void setupEntity(String sheetName) {
+    protected boolean setupEntity(String sheetName) {
+        boolean result = false;
+
         entitySheetRowNo = 1;
         sh = (XSSFSheet)wb.getSheet(sheetName);
         if (sh == null) {
             sh = (XSSFSheet)wb.createSheet(sheetName);
+            result = true;
         }
         else {
             entitySheetRowNo = sh.getLastRowNum() + 1;
         }
+
+        return result;
     }
 
     @Override

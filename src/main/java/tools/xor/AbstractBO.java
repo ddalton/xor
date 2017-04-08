@@ -62,6 +62,8 @@ public abstract class AbstractBO implements BusinessObject {
 
 	protected Object               instance;            // The object containing the actual data. This can be a JPA/Hibernate/Javabean object.
 	protected Type                 type;                // Represents the type of the entity, that holds the properties that make up this entity
+	protected Type                 propertyType;        // If the instance is an object of a subtype, then type will hold the actual subtype and propertyType will hold
+														// the type of the property referencing this object
 	protected boolean              persistent;          // This flag is set to true, if the object was created from the persistence store
 	protected boolean              modified;            // This flag is set to true, if any fields or collections have been modified
 	protected ObjectCreator        objectCreator;       // Cache to hold objects. Useful to set multiple references to an object and providing repeatable read capability. object.
@@ -88,7 +90,12 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public boolean isDependent() {
 		return getContainmentProperty() != null && getContainmentProperty().isContainment();
-	}	
+	}
+
+	@Override
+	public Type getPropertyType() {
+		return this.propertyType;
+	}
 
 	@Override
 	public ObjectPersister getObjectPersister() {
@@ -100,6 +107,7 @@ public abstract class AbstractBO implements BusinessObject {
 		this.container           = container;
 		this.containmentProperty = containmentProperty;
 		this.objectCreator       = objectCreator;
+		this.propertyType = type;
 	}
 
 	@Override
@@ -137,26 +145,48 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public EntityKey getNaturalKey() {
-		return getObjectCreator().getTypeMapper().getNaturalKey(getIdentifierValue(), this);
+	public List<EntityKey> getNaturalKey() {
+		return getObjectCreator().getTypeMapper().getNaturalKey(this);
 	}
 
 	@Override
-	public void addEntity(BusinessObject entity) {
+	public void register () {
 		/*Object id = entity.getIdentifierValue();
 		if (id != null) {
 			EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, entity);
 			getObjectCreator().addByEntityKey(entityKey, entity);
 		}*/
 
+		/*
+		 * The complexity here is if the type participates in an inheritance hierarchy
+		 * and if multiple relationships refer to this object.
+		 * The different relationships could refer by different types, due to polymorphism.
+		 * This can cause this mechanism to fail, unless we register this object by
+		 * all the super types.
+		 */
+		/*
+		Type entityType = getType();
+		do {
+			EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(
+				getIdentifierValue(),
+				entityType);
+			getObjectCreator().addByEntityKey(surrogateKey, this);
 
-		// add entity by its surrogate and natural keys
-		EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(entity.getIdentifierValue(), entity.getType());
-		EntityKey naturalKey = getObjectCreator().getTypeMapper().getNaturalKey(entity.getIdentifierValue(), entity);
+			if (entityType instanceof EntityType) {
+				entityType = ((EntityType)entityType).getSuperType();
+			}
+			else {
+				entityType = null;
+			}
+			// If this is a subtype try to locate it using it's parent type if possible
+		} while (entityType != null);
+		*/
 
-		getObjectCreator().addByEntityKey(surrogateKey, entity);
-		getObjectCreator().addByEntityKey(naturalKey, entity);
+		// add Surrogate key
+		getObjectCreator().addBySurrogateKey(this);
 
+		// Add natural keys
+		getObjectCreator().addByNaturalKey(this);
 	}
 
 	@Override
@@ -169,70 +199,91 @@ public abstract class AbstractBO implements BusinessObject {
 		*/
 
 		EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(entity.getIdentifierValue(), entity.getType());
-		EntityKey naturalKey = getObjectCreator().getTypeMapper().getNaturalKey(entity.getIdentifierValue(), entity);
 		getObjectCreator().removeByEntityKey(surrogateKey);
-		getObjectCreator().removeByEntityKey(naturalKey);
+
+		List<EntityKey> naturalKeys = getObjectCreator().getTypeMapper().getNaturalKey(entity);
+		for(EntityKey naturalKey: naturalKeys) {
+			getObjectCreator().removeByEntityKey(naturalKey);
+		}
 	}
 
 	/**
-	 * Get the derived data object based off a reference data object
-	 * <tt>EntityKey</tt>
+	 * Check if the existingEntity is a valid for the given naturalKey
+	 * @param naturalKey derived from newEntity
+	 * @param newEntity used to check the existence of an entity based on its natural keys
+	 * @param existingEntity if any already registered
+	 * @return true if an existingEntity is found with the same natural key
 	 */
-	@Override
-	public BusinessObject getEntity(BusinessObject entity) {
+	private boolean isValidEntity(EntityKey naturalKey, BusinessObject newEntity, BusinessObject existingEntity) {
+		boolean result = true;
 
-/*
-		EntityKey entityKey =  getEntityKey(entity);
-		return getObjectCreator().getByEntityKey(entityKey);
-*/
-
-		BusinessObject existingEntity = null;
-
-		// First try by natural key
-		EntityKey entityKey = entity.getNaturalKey();
-		if (entityKey != null) {
-			existingEntity = getObjectCreator().getByEntityKey(entityKey);
-
+		if (existingEntity != newEntity) {
 			// The natural field values could have changed during the creation/clone/update
-			// operations. So check it again.
-			EntityKey existingEK = (existingEntity == null) ? null : existingEntity.getNaturalKey();
-			if (existingEK == null || !existingEK.equals(entityKey)) {
-
+			// operations for the existingEntity. So check its Natural Key.
+			List<EntityKey> existingNK = existingEntity.getNaturalKey();
+			if (existingNK == null || !existingNK.contains(naturalKey)) {
 				// Remove the incorrect natural key mapping to the existing BO
-				getObjectCreator().removeByEntityKey(entityKey);
+				getObjectCreator().removeByEntityKey(naturalKey);
 
 				// Update the existing BO with the correct natural key mapping
-				if (existingEK != null && existingEntity != null) {
-					getObjectCreator().addByEntityKey(
-						existingEK,
-						existingEntity);
+				if (existingNK != null && existingEntity != null) {
+					getObjectCreator().addByNaturalKey(existingEntity);
 				}
 
-				// The existing BO is mapped to the incorrect natural key
-				existingEntity = null;
+				result = false;
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	public BusinessObject getEntity (BusinessObject entity)
+	{
+		BusinessObject existingEntity = null;
+
+		// First retrieve by Natural Key
+		List<EntityKey> naturalKeys = entity.getNaturalKey();
+		for (EntityKey naturalKey: naturalKeys) {
+			existingEntity = getObjectCreator().getByEntityKey(naturalKey, entity.getType());
+			if(existingEntity != null && isValidEntity(naturalKey, entity, existingEntity)) {
+				break;
 			}
 		}
 
 		// try using the surrogate key
-		if(existingEntity == null) {
-			entityKey = entity.getSurrogateKey();
-			if(entityKey != null) {
-				existingEntity = getObjectCreator().getByEntityKey(entityKey);
+		if (existingEntity == null) {
+			EntityKey entityKey = entity.getSurrogateKey();
+			if (entityKey != null) {
+				existingEntity = getObjectCreator().getByEntityKey(entityKey, entity.getType());
+				if(existingEntity != null) {
+					EntityKey existingSK = existingEntity.getSurrogateKey();
+
+					// If for some reason the id has changed
+					if (existingSK == null || !existingSK.equals(entityKey)) {
+						getObjectCreator().addBySurrogateKey(existingEntity);
+
+						// The existing BO is mapped to the incorrect surrogate key
+						existingEntity = null;
+					}
+				}
 			}
 		}
 
 		return existingEntity;
-
 	}
 	
 	@Override
-	public BusinessObject getBySurrogateKey(Object id, Type type) {	
-		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName()));
+	public BusinessObject getBySurrogateKey(Object id, Type type) {
+		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName()), type);
 	}	
 	
 	@Override
 	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type) {
-		return getObjectCreator().getByEntityKey(new NaturalEntityKey(naturalKeyValues, type.getName()));
+		return getObjectCreator().getByEntityKey(
+			new NaturalEntityKey(
+				naturalKeyValues,
+				type.getName()), type);
 	}		
 	
 	private Map<String, Object> getKeyValue(Set<String> keys) {
@@ -268,7 +319,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 		if (instance.getClass() != JSONObject.class || !((JSONObject)instance).has(Constants.XOR.TYPE)) {
 			if (instance.getClass() != JSONObject.class) {
-				return instance.getClass().getName();
+				return ClassUtil.getUnEnhanced(instance.getClass()).getName();
 			}
 			else {
 				// Cannot get the specific type, so return the interface type
@@ -338,8 +389,22 @@ public abstract class AbstractBO implements BusinessObject {
 		Object oldInstance = this.instance;
 		this.instance = instance;
 		
-		if(oldInstance != null) {
+		//if(oldInstance != null) {
 			objectCreator.updateInstance(this, oldInstance);
+		//}
+
+		// Narrow the type if the instance is an instance of a subtype
+		if(type instanceof EntityType) {
+			if(getSettings().doNarrow()) {
+				if (getInstanceClassName() != null) {
+					Type narrowedType = ((EntityType)type).isDomainType() ?
+						getObjectCreator().getDAS().getType(getInstanceClassName()) :
+						getObjectCreator().getDAS().getExternalType(getInstanceClassName());
+					if (narrowedType != null) {
+						type = narrowedType;
+					}
+				}
+			}
 		}
 	}
 

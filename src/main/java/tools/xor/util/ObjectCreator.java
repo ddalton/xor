@@ -19,9 +19,12 @@
 
 package tools.xor.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,21 +41,18 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableBO;
 import tools.xor.ListType;
 import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
+import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.graph.ObjectGraph;
-
-import javax.swing.text.html.parser.Entity;
 
 /**
  * This class is used to create the appropriate instances of the copy, given the
@@ -68,6 +68,15 @@ public class ObjectCreator {
 	// This map also records the target instance and the target DataObject
 	private Map<Object, BusinessObject>    instanceDataObjectMap = new Reference2ReferenceOpenHashMap<Object, BusinessObject>();
 	private Map<EntityKey, BusinessObject> entitiesByKey = new Object2ReferenceOpenHashMap<EntityKey, BusinessObject>();
+
+	// For those business objects that have a natural key, keep track of it
+	// The natural key can change during XOR operation for a Business Object as the state changes
+	// when moving data between the two models (External <-> Domain).
+	// and this data structure is used to keep the entitiesByKey data structure
+	// in sync.
+	private Map<BusinessObject, List<EntityKey>> naturalKeyRegistrations = new Reference2ReferenceOpenHashMap<BusinessObject, List<EntityKey>>();
+
+
 	private DataAccessService              das;
 	private PersistenceOrchestrator        persistenceOrchestrator;
 	private TypeMapper                     typeMapper;
@@ -140,27 +149,70 @@ public class ObjectCreator {
 		if(typeMapper.isDomain(inputClass)) {
 			return das.getType(inputClass);
 		} else { 
-			if(domainType != null) {
+			if(domainType != null && domainType instanceof EntityType) {
 				return das.getExternalType(typeMapper.getExternalTypeName(inputClass, domainType));
 			} else {
 				return das.getExternalType(inputClass);
 			}
 		}
-	}	
+	}
 
-	public void addByEntityKey(EntityKey key, BusinessObject entity) {
-		if(key == null) {
-			return;
+	public void addByNaturalKey(BusinessObject entity) {
+		if(naturalKeyRegistrations.containsKey(entity)) {
+			for(EntityKey ek: naturalKeyRegistrations.get(entity)) {
+				entitiesByKey.remove(ek);
+			}
 		}
-		entitiesByKey.put(key, entity);
+
+		List<EntityKey> naturalKeys = entity.getNaturalKey();
+		for(EntityKey naturalKey: naturalKeys) {
+			entitiesByKey.put(naturalKey, entity);
+		}
+		naturalKeyRegistrations.put(entity, naturalKeys);
+	}
+
+	public void addBySurrogateKey(BusinessObject entity) {
+		EntityKey entityKey = entity.getSurrogateKey();
+		entitiesByKey.put(entityKey, entity);
 	}
 
 	public void removeByEntityKey(EntityKey key) {
-		entitiesByKey.remove(key);
-	}	
 
-	public BusinessObject getByEntityKey(EntityKey key) {
-		return entitiesByKey.get(key);		
+		if(key instanceof NaturalEntityKey) {
+			naturalKeyRegistrations.remove(key);
+		}
+
+		entitiesByKey.remove(key);
+	}
+
+	/**
+	 * Retrieve the entity given an entity key
+	 * @param key entity key
+	 * @param entityType additional information to retrieve an entity successfully if it is
+	 *                   part of an inheritance hierarchy
+	 * @return BusinessObject indexed by the key
+	 */
+	public BusinessObject getByEntityKey(EntityKey key, Type entityType) {
+
+		/* Currently this is not needed
+		if(key instanceof SurrogateEntityKey) {
+			BusinessObject result = null;
+			do {
+				result = entitiesByKey.get(key);
+				if(entityType instanceof EntityType) {
+					entityType = ((EntityType) entityType).getSuperType();
+				} else {
+					entityType = null;
+				}
+				// If this is a subtype try to locate it using it's parent type if possible
+			} while (result == null && entityType != null);
+			return result;
+		} else {
+			return entitiesByKey.get(key);
+		}
+		*/
+
+		return entitiesByKey.get(key);
 	}	
 
 	public Set<BusinessObject> 	getDataObjects() {
@@ -210,6 +262,11 @@ public class ObjectCreator {
 	}
 
 	public Object createDataType(Object instance, Property property) throws Exception {
+
+		if(property == null) {
+			throw new RuntimeException("property is null, probably the object is a subtype instance and if so, the narrow flag needs to be set in settings");
+		}
+
 		Class<?> toClass = null;
 		if(!property.isMany()) {
 			toClass = (instance == null) ? null : instance.getClass();
@@ -328,11 +385,15 @@ public class ObjectCreator {
 	}
 	
 	public void updateInstance(BusinessObject existingBO, Object oldInstance) {
-		instanceDataObjectMap.remove(oldInstance);
-		instanceDataObjectMap.put(existingBO.getInstance(), existingBO);
+		if(oldInstance != null) {
+			instanceDataObjectMap.remove(oldInstance);
+		}
+		if(existingBO.getInstance() != null) {
+			instanceDataObjectMap.put(existingBO.getInstance(), existingBO);
+		}
 		
-		if(MutableBO.class.isAssignableFrom(existingBO.getClass())) {
-			objectGraph.replaceInstance((MutableBO) existingBO, existingBO.getInstance());
+		if(MutableBO.class.isAssignableFrom(existingBO.getClass()) && objectGraph != null) {
+			objectGraph.replaceInstance(existingBO, existingBO.getInstance());
 		}
 	}
 
@@ -421,7 +482,7 @@ public class ObjectCreator {
 				}
 			} else {
 				// Register if it is a persistent instance
-				newDataObject.addEntity(newDataObject);
+				newDataObject.register();
 			}
 
 			// Do the actual registration
@@ -524,7 +585,8 @@ public class ObjectCreator {
 			} else {
 				try {
 					targetType = getType(targetInstanceClass, domainEntityType);
-				} catch(NullPointerException e) {
+				}
+				catch (NullPointerException e) {
 					System.out.println("NullPointerException: " + targetInstanceClass);
 				}
 			}
@@ -663,5 +725,51 @@ public class ObjectCreator {
 
 	public void deleteGraph(Settings settings) {
 		objectGraph.deleteGraph(this, settings);
+	}
+
+	public static class DuplicateUniqueKey implements Detector {
+
+		private Class clazz;
+		private String propertyName;
+		private Map<Object, EntityKey> examined;
+		private Map<Object, List<EntityKey>> duplicateKeys;
+		private Map<Object, Set<BusinessObject>> duplicateObjects;
+
+		public DuplicateUniqueKey(Class clazz, String propertyName) {
+			this.clazz = clazz;
+			this.propertyName = propertyName;
+			this.examined = new HashMap<>();
+			this.duplicateKeys = new HashMap<>();
+			this.duplicateObjects = new HashMap<>();
+		}
+
+		@Override public void investigate (Object object)
+		{
+			ObjectCreator oc = (ObjectCreator) object;
+			for(Map.Entry<EntityKey, BusinessObject> entry: oc.entitiesByKey.entrySet()) {
+				if(clazz.isAssignableFrom(entry.getValue().getInstance().getClass()) ) {
+					Object obj = entry.getValue().get(propertyName);
+					if(examined.containsKey(obj)) {
+						duplicateKeys.get(obj).add(entry.getKey());
+						duplicateObjects.get(obj).add(entry.getValue());
+					} else {
+						examined.put(obj, entry.getKey());
+						List<EntityKey> values = new ArrayList<EntityKey>();
+						values.add(entry.getKey());
+						duplicateKeys.put(obj, values);
+						Set<BusinessObject> distinctObjects = new HashSet<>();
+						distinctObjects.add(entry.getValue());
+						duplicateObjects.put(obj, distinctObjects);
+					}
+				}
+			}
+
+			// Retain only those keys which has different objects for the same key
+			for(Object key: duplicateKeys.keySet()) {
+				if(duplicateObjects.containsKey(key) && duplicateObjects.get(key).size() == 1) {
+					duplicateObjects.remove(key);
+				}
+			}
+		}
 	}
 }

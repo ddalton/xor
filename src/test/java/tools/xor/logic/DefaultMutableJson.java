@@ -1392,4 +1392,57 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setPostFlush(true);
 		aggregateManager.update(dept, settings);
 	}
+
+	public void readNarrowedCollectionObjectGraph() throws FileNotFoundException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+
+		EntityType deptType = (EntityType)das.getType(Department.class);
+		AggregateView view = das.getView(deptType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.addAssociation(new AssociationSetting(Employee.class));
+		settings.setEntityType(deptType);
+		settings.setEntitySize(EntitySize.MEDIUM);
+
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(deptType);
+
+		settings.setSparseness(0.1f);
+		JSONObject dept = (JSONObject)sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setGraphFileName("DeptUpdateCollectionGraph.png");
+		settings.setPostFlush(true);
+		Department d = (Department)aggregateManager.update(dept, settings);
+
+		settings.setGraphFileName("DeptReadCollectionGraph.png");
+		Object extDept = aggregateManager.read(d, settings);
+		assert(extDept != null);
+	}
+
+	public void generateBoundedPersonObjectGraph() throws FileNotFoundException
+	{
+		DataAccessService das = aggregateManager.getDAS();
+		InputStream inputStream = new FileInputStream("BoundedPerson.xlsx");
+		das.initGenerators(inputStream);
+
+		EntityType taskType = (EntityType)das.getType(Task.class);
+		AggregateView view = das.getView(taskType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.setEntityType(taskType);
+		settings.setEntitySize(EntitySize.MEDIUM);
+
+		settings.init(das.getShape());
+		StateGraph sg = settings.getView().getStateGraph(taskType);
+		settings.setSparseness(0.01f);
+		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setGraphFileName("TaskBoundedPersonGraph.png");
+		settings.setPostFlush(true);
+		aggregateManager.update(task, settings);
+	}
 }

@@ -73,10 +73,12 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		// Overridden by subclasses
 	}	
 
-	private Object getByUserKey(CallInfo callInfo, EntityType type) {
+	private Object getByUserKey(CallInfo callInfo) {
+		EntityType entityType = (EntityType)((BusinessObject) callInfo.getInput()).getPropertyType();
 		BusinessObject from = (BusinessObject) callInfo.getInput();
 
-		if(type.getNaturalKey() != null) {
+		EntityType type = entityType;
+		do {
 			Map<String, Object> param = new HashMap<String, Object>();
 			for(String key: type.getExpandedNaturalKey()) {
 				if(from.get(key) == null)
@@ -84,13 +86,20 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 				
 				param.put(key, from.get(key) );
 			}
+
+			type = type.getSuperType();
 			if(param.size() == 0) {
-				return null;
+				continue;
 			}
 
-			return findByProperty(from.getDomainType(), param);
-		} else
-			return null;
+			Object result = findByProperty(from.getDomainType(), param);
+			if(result != null) {
+				return result;
+			}
+		} // don't go above entityType
+		while(type != null && !type.getName().equals(entityType.getName()));
+
+		return null;
 	}
 
 	/**
@@ -127,7 +136,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		}
 
 		if(!(callInfo.getSettings().getAction() == AggregateAction.CLONE) )
-			persistentObject = getByUserKey(callInfo, type);
+			persistentObject = getByUserKey(callInfo);
 
 		if(persistentObject == null) {
 			ExtendedProperty identifierProperty = (ExtendedProperty) type.getIdentifierProperty();

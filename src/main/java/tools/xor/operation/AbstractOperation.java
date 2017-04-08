@@ -30,19 +30,15 @@ import tools.xor.AggregateAction;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
-import tools.xor.ListType;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-
-import javax.swing.text.html.parser.Entity;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
@@ -151,7 +147,7 @@ public abstract class AbstractOperation implements Operation {
 				
 				// Get the property list for the current API version
 				if(callInfo.isBulkInput()) {
-					processBulk(callInfo);
+					createElements(callInfo);
 				} else {
 					List<Property> properties = callInfo.getProperties(source.getType());
 					CallInfo next = new CallInfo();
@@ -173,7 +169,10 @@ public abstract class AbstractOperation implements Operation {
 						EntityType entityType = (EntityType)target.getType();
 						if (!entityType.isEmbedded() && target.getInstance() != null &&
 							callInfo.getStage() == ProcessingStage.UPDATE) {
-							target.addEntity(target);
+							if(target.getObjectCreator().register(target) != target) {
+								// another object was already registered
+								return;
+							}
 						}
 					}
 
@@ -465,43 +464,33 @@ public abstract class AbstractOperation implements Operation {
 	 * So use the source collection, retrieve the data objects and populate the
 	 * target collection
 	 * @param callInfo object
+	 * @param elements the elements dataobjects that need to be added to the collection
 	 */
-	public void cloneToMany(CallInfo callInfo) {
-		if(callInfo.getStage() != ProcessingStage.UPDATE)
+	private void addElements (CallInfo callInfo, List<CallInfo> elements) {
+		if(callInfo.getStage() != ProcessingStage.UPDATE) {
 			return;
+		}
 
-		Object object = ((BusinessObject) callInfo.getInput()).getInstance();
-		java.util.Collection sourceCollection = null;
-		Map sourceMap = null;
-
-		if(callInfo.getInputProperty().isSet() || callInfo.getInputProperty().isList()) {
-			sourceCollection = (java.util.Collection) object;
-
-			for(Object source: sourceCollection) {
-				BusinessObject target = null;
-				if(callInfo.getInputProperty().isCollectionOfReferences()) {
-					EntityKey surrogateKey = callInfo.getOutputObjectCreator().getTypeMapper().getSurrogateKey(
-						source,
-						callInfo.getOutputProperty().getElementType());
-					target = callInfo.getOutputObjectCreator().getByEntityKey(surrogateKey);
-				} else {
-					target = (BusinessObject) callInfo.getOutputObjectCreator().getExistingDataObject(source);
-				}
-				callInfo.getOutputProperty().addElement(((BusinessObject) callInfo.getOutput()), target.getInstance());
-			}			
+		if (callInfo.getInputProperty().isSet() || callInfo.getInputProperty().isList()) {
+			for (CallInfo ci : elements) {
+				Object element = ClassUtil.getInstance(ci.getOutput());
+				callInfo.getOutputProperty().addElement(
+					((BusinessObject)callInfo.getOutput()),
+					element);
+			}
 		} else if(callInfo.getInputProperty().isMap()) {
-			sourceMap = (java.util.Map) object;
+			Map sourceMap = (java.util.Map)((BusinessObject)callInfo.getInput()).getInstance();
 
 			for(Object source: sourceMap.entrySet()) {
 				Object targetKey = ((Map.Entry)source).getKey();
-				BusinessObject targetValue = (BusinessObject) callInfo.getOutputObjectCreator().getExistingDataObject(((Map.Entry)source).getValue());
-				callInfo.getOutputProperty().addMapEntry(((BusinessObject) callInfo.getOutput()), 
+				BusinessObject targetValue = callInfo.getOutputObjectCreator().getExistingDataObject(((Map.Entry)source).getValue());
+				callInfo.getOutputProperty().addMapEntry(callInfo.getOutput(),
 						targetKey, targetValue.getInstance());
 			}				
 		}
 	}
 
-	protected void processBulk(CallInfo callInfo) throws Exception
+	protected List<CallInfo> createElements (CallInfo callInfo) throws Exception
 	{
 		List boList = null;
 		if(callInfo.getParent() == null) {
@@ -510,8 +499,9 @@ public abstract class AbstractOperation implements Operation {
 			boList = ((BusinessObject)callInfo.getInput()).getList(callInfo.getInputProperty());
 		}
 
-		CallInfo next = new CallInfo();
+		List<CallInfo> collectionCallFrames = new ArrayList<>();
 		for (Object nextSource : boList) {
+			CallInfo next = new CallInfo();
 			next.init(nextSource, null, callInfo, null);
 			if(next.isCascadable()) {
 				next.setOutput(getExistingTarget(next));
@@ -522,11 +512,18 @@ public abstract class AbstractOperation implements Operation {
 				next.setOutput(createTarget(next, ClassUtil.getInstance(nextSource), null));
 			}
 
-			if(callInfo.isBulkInput() && callInfo.getStage() == ProcessingStage.UPDATE) {
-				Object outputInstance = ((BusinessObject)next.getOutput()).getInstance();
-				((List)((BusinessObject)callInfo.getOutput()).getInstance()).add(outputInstance);
+			if( callInfo.getStage() == ProcessingStage.UPDATE) {
+				if (callInfo.isBulkInput()) {
+					Object outputInstance = ((BusinessObject)next.getOutput()).getInstance();
+					((List)((BusinessObject)callInfo.getOutput()).getInstance()).add(outputInstance);
+				}
+				else {
+					collectionCallFrames.add(next);
+				}
 			}
 		}
+
+		return collectionCallFrames;
 	}
 
 	protected void processCollection(CallInfo callInfo) throws Exception {
@@ -534,8 +531,7 @@ public abstract class AbstractOperation implements Operation {
 		if(callInfo.isDataType())
 			return;
 
-		processBulk(callInfo);
-		cloneToMany(callInfo);
+		addElements(callInfo, createElements(callInfo));
 	}
 	
 }

@@ -178,9 +178,8 @@ public interface BusinessObject extends DataObject {
 
 	/**
 	 * Records this entity in the ObjectCreator of this BusinessObject using the id and entity type
-	 * @param entity BusinessObject to be added
 	 */
-	public void addEntity(BusinessObject entity);
+	public void register ();
 
 	/**
 	 * Returns the SurrogateEntityKey instance for this entity
@@ -192,7 +191,7 @@ public interface BusinessObject extends DataObject {
 	 * Returns the NaturalEntityKey instance for this entity
 	 * @return the natural entity key
 	 */
-	public EntityKey getNaturalKey ();
+	public List<EntityKey> getNaturalKey ();
 
 	/**
 	 * Retrieves an entity by its id and entity type. This can be useful to find if there is a different
@@ -402,4 +401,10 @@ public interface BusinessObject extends DataObject {
 	 * @return settings instance
 	 */
 	public Settings getSettings();
+
+	/**
+	 * Represents the type of the property referencing this object
+	 * @return type
+	 */
+	public Type getPropertyType();
 }

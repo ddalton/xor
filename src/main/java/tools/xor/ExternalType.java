@@ -156,7 +156,7 @@ public class ExternalType extends AbstractType {
 			baseTypes.add(externalType);
 		}
 	}
-
+/*
 	@Override
 	public void initRootEntityType(DataAccessService das, Shape shape) {
 		if(domainType.getRootEntityType() != null) {
@@ -165,7 +165,7 @@ public class ExternalType extends AbstractType {
 			rootEntityType = (EntityType) shape.getExternalType(externalTypeName);
 		}
 	}	
-
+*/
 	@Override
 	public List<Property> getDeclaredProperties() {
 		List<Property> result = new ArrayList<Property>();

@@ -68,6 +68,19 @@ public final class NaturalEntityKey implements EntityKey, Serializable {
 			return false;
 		}
 
+		// don't consider equality of an empty key
+		boolean hasValue = false;
+		for(Object keypart: key.values()) {
+			if(keypart == null || "".equals(keypart.toString())) {
+				continue;
+			}
+			hasValue = true;
+			break;
+		}
+		if(!hasValue) {
+			return false;
+		}
+
 		NaturalEntityKey otherKey = (NaturalEntityKey) other;
 		return otherKey.entityTypeName.equals(this.entityTypeName) &&
 				otherKey.key.equals(this.key);

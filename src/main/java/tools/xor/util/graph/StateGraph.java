@@ -198,6 +198,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 		
 		V vertex = getVertex(type);
+
+		// check supertype
+		Type walkType = type;
+		while(vertex == null && walkType instanceof EntityType && ((EntityType)walkType).getSuperType() != null) {
+			walkType = ((EntityType)walkType).getSuperType();
+			vertex = getVertex(walkType);
+		}
 		if(vertex == null) {
 			for(Map.Entry<Type, V> entry: states.entrySet()) {
 				System.out.println("The type " + entry.getKey() + " has vertex " + entry.getValue() + " with name " + entry.getKey().getName());
@@ -782,7 +789,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 	
 	private void addObject(
-			Map<State, List<JSONObject>> stateObjectMap,
+			Map<Type, List<JSONObject>> typeObjectMap,
 			Map<JSONObject, State> objectStateMap,
 			Map<JSONObject, State> embeddedObjectStateMap,
 			State state,
@@ -791,10 +798,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		// Embedded objects are not considered in the object graph limit
 		EntityType type = (EntityType)state.getType();
 		if(!type.isEmbedded()) {
-			List<JSONObject> list = stateObjectMap.get(state);
+			List<JSONObject> list = typeObjectMap.get(type);
 			if (list == null) {
 				list = new ArrayList<JSONObject>();
-				stateObjectMap.put(state, list);
+				typeObjectMap.put(type, list);
 			}
 			list.add(object);
 			objectStateMap.put(object, state);
@@ -851,7 +858,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		//Set all nodes to "not visited". This is by having the visited set as empty
 		Set<JSONObject> visited = new HashSet<JSONObject>();
-		Map<State, List<JSONObject>> stateObjectMap = new HashMap<State, List<JSONObject>>();
+		Map<Type, List<JSONObject>> typeObjectMap = new HashMap<Type, List<JSONObject>>();
 		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
 		Map<JSONObject, State> embeddedObjectStateMap = new HashMap<JSONObject, State>();
 
@@ -863,7 +870,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			null,
 			null);
 		addObject(
-			stateObjectMap,
+			typeObjectMap,
 			objectStateMap,
 			embeddedObjectStateMap,
 			getRootState(),
@@ -933,45 +940,74 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					Type targetEntityType = childState.getType();
 					Type targetType = (extendedProperty.isMany()) ? GraphUtil.getPropertyType(extendedProperty, shape) : targetEntityType;
 
-					/*
-					State state = states.get(targetEntityType);
-
-					// Check if the state is out of scope
-					if (state == null) {
-						continue;
-					}
-					*/
-
 					String objectPath = Constants.XOR.walkDown(path, property);
+
 					//target = ((BasicType)targetType).generate(settings, extendedProperty, path);
 					Object target = ((BasicType)targetType).generate(
 						settings,
 						extendedProperty,
 						entity,
-						stateObjectMap.get(targetEntityType));
+						typeObjectMap.get(targetType));
 					// Add this object only if it is a required relationship
 					if (target instanceof JSONObject && (!flush || !extendedProperty.isNullable())) {
 						addObject(
-							stateObjectMap,
+							typeObjectMap,
 							objectStateMap,
 							embeddedObjectStateMap,
 							childState,
 							(JSONObject)target);
 						q.add((JSONObject)target);
+
+						if(targetType instanceof EntityType && !((JSONObject)target).get(Constants.XOR.TYPE).equals("test.ariba.base.core.Laboratory") && targetType.getName().equals("test.ariba.base.core.Laboratory")) {
+							System.out.println("2-Laboratory type has a different class: " + targetType.getInstanceClass().getName() );
+						}
+
 						((JSONObject)target).put(Constants.XOR.GEN_PATH, objectPath);
 						entity.put(property.getName(), target);
 					}
 					else if (target instanceof JSONArray && !flush) {
 						for (int i = 0; i < ((JSONArray)target).length(); i++) {
 							JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
+
+							// Add it to the right state
+							State collectionElementState = getVertex(
+								shape.getType(
+									jsonObject.getString(
+										Constants.XOR.TYPE)));
 							addObject(
-								stateObjectMap,
+								typeObjectMap,
 								objectStateMap,
 								embeddedObjectStateMap,
-								childState,
+								collectionElementState,
 								jsonObject);
 							q.add(jsonObject);
 							jsonObject.put(Constants.XOR.GEN_PATH, objectPath);
+
+							/*
+							if(property.getContainingType().getName().equals("test.ariba.base.core.Laboratory") && property.getName().equals("Instructors")) {
+								if(entity.get(Constants.XOR.TYPE).equals("test.ariba.base.core.Laboratory")) {
+									System.out.println(
+										"Course type [" + entityType.getName() + "]: " + entity.get(Constants.XOR.TYPE)
+											+ ", Number: " + entity.get("Number")
+											+ ", LaboratoryNumber: "
+											+ entity.get("LaboratoryNumber"));
+								} else {
+									System.out.println(
+										"NOT LABORATORY!!! - Course type [" + entityType.getName() + "]: " + entity.get(Constants.XOR.TYPE)
+											+ ", Number: " + entity.get("Number"));
+								}
+								System.out.println("Object path" + objectPath + ", entityType: " + entityType.getName());
+								System.out.print(
+									"Instructor type: " + jsonObject.get(Constants.XOR.TYPE)
+										+ ", SSN: " + jsonObject.get("SSN") + ", IDNumber: "
+										+ jsonObject.get("IDNumber"));
+								if("test.ariba.base.core.TA".equals(jsonObject.get(Constants.XOR.TYPE))) {
+									System.out.println(", TANumber: " + jsonObject.get("TANumber"));
+								} else{
+									System.out.println("");
+								}
+							}
+							*/
 						}
 						if(((JSONArray)target).length() > 0) {
 							entity.put(property.getName(), target);

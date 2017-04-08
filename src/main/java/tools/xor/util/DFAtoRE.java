@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.service.Shape;
@@ -767,6 +768,13 @@ public class DFAtoRE {
 	}	
 	
 	protected void execute(StackFrame sf, Shape shape) {
+
+		boolean includeEmbedded = false;
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.INCLUDE_EMBEDDED)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.INCLUDE_EMBEDDED)) {
+			includeEmbedded = true;
+		}
+
 		State state = sf.navigationPath.peek();
 		Type type = state.getType();
 		for(Property childProperty: type.getProperties()) {
@@ -781,6 +789,10 @@ public class DFAtoRE {
 					if(childProperty.getContainingType() != null) 
 						logger.debug("Required association: " + childProperty.getName() + ", containing Type: " + ((childProperty.getContainingType() != null) ? childProperty.getContainingType().getName() : ""));
 				}
+			}
+
+			if(!includeEmbedded && (propertyType instanceof EntityType) && ((EntityType)propertyType).isEmbedded()) {
+				continue;
 			}
 			
 			// check if it has been processed

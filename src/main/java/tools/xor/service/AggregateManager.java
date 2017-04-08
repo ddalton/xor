@@ -61,6 +61,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
+import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Filter;
@@ -643,6 +644,12 @@ public class AggregateManager implements Xor
 	public Object read (Object entity, Settings settings)
 	{
 		BusinessObject to = readBO(entity, settings);
+
+		if(settings.isGenerateVisual()) {
+			ObjectGraph og = to.getObjectCreator().getObjectGraph();
+			og.generateVisual(settings);
+		}
+
 		return (to != null) ? to.getNormalizedInstance(settings) : null;
 	}
 
@@ -1195,7 +1202,7 @@ public class AggregateManager implements Xor
 				// TODO: Get by user key
 				//EntityKey ek = oc.getTypeMapper().getEntityKey(idValue, settings.getEntityType());
 				EntityKey ek = oc.getTypeMapper().getSurrogateKey(idValue, settings.getEntityType());
-				BusinessObject bo = oc.getByEntityKey(ek);
+				BusinessObject bo = oc.getByEntityKey(ek, settings.getEntityType());
 				if (bo == null) {
 					
 					bo = oc.createDataObject(

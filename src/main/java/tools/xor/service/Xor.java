@@ -23,7 +23,7 @@ public interface Xor {
 	 * 
 	 * @param inputObject   This can either be the primary key or the managed object
 	 * @param settings      User specified settings
-	 * @return object
+	 * @return External model object
 	 */
 	public Object read(Object inputObject, Settings settings);
 

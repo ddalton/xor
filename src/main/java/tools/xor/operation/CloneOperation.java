@@ -24,6 +24,9 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.util.ClassUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CloneOperation extends AbstractOperation {
 	
 	private Object result;
@@ -34,22 +37,23 @@ public class CloneOperation extends AbstractOperation {
 	}	
 	
 	@Override
-	protected void processCollection(CallInfo callInfo) throws Exception {
+	protected List<CallInfo> createElements (CallInfo callInfo) throws Exception {
 
-		if(callInfo.isDataType())
-			return;
-
-		CallInfo next = new CallInfo();
+		List<CallInfo> collectionCallFrames = new ArrayList<>();
 		for (Object nextSource : ((BusinessObject)callInfo.getInput()).getList()) {
+			CallInfo next = new CallInfo();
 			next.init(nextSource, null, callInfo, null);
 			if(next.isCascadable()) {
 				next.setOutput(getExistingTarget(next));
 				next.setOutput(createTarget(next, null));
 				processAttribute(next);				
-			} else
+			} else {
 				next.setOutput(createTarget(next, ClassUtil.getInstance(nextSource), null));
+			}
+			collectionCallFrames.add(next);
 		}
-		cloneToMany(callInfo);
+
+		return collectionCallFrames;
 	}
 
 	@Override

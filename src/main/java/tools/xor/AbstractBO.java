@@ -62,6 +62,8 @@ public abstract class AbstractBO implements BusinessObject {
 
 	protected Object               instance;            // The object containing the actual data. This can be a JPA/Hibernate/Javabean object.
 	protected Type                 type;                // Represents the type of the entity, that holds the properties that make up this entity
+	protected Type                 propertyType;        // If the instance is an object of a subtype, then type will hold the actual subtype and propertyType will hold
+														// the type of the property referencing this object
 	protected boolean              persistent;          // This flag is set to true, if the object was created from the persistence store
 	protected boolean              modified;            // This flag is set to true, if any fields or collections have been modified
 	protected ObjectCreator        objectCreator;       // Cache to hold objects. Useful to set multiple references to an object and providing repeatable read capability. object.
@@ -88,7 +90,12 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public boolean isDependent() {
 		return getContainmentProperty() != null && getContainmentProperty().isContainment();
-	}	
+	}
+
+	@Override
+	public Type getPropertyType() {
+		return this.propertyType;
+	}
 
 	@Override
 	public ObjectPersister getObjectPersister() {
@@ -100,6 +107,7 @@ public abstract class AbstractBO implements BusinessObject {
 		this.container           = container;
 		this.containmentProperty = containmentProperty;
 		this.objectCreator       = objectCreator;
+		this.propertyType = type;
 	}
 
 	@Override

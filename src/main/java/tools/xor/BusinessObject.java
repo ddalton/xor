@@ -401,4 +401,10 @@ public interface BusinessObject extends DataObject {
 	 * @return settings instance
 	 */
 	public Settings getSettings();
+
+	/**
+	 * Represents the type of the property referencing this object
+	 * @return type
+	 */
+	public Type getPropertyType();
 }

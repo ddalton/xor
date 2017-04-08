@@ -262,6 +262,11 @@ public class ObjectCreator {
 	}
 
 	public Object createDataType(Object instance, Property property) throws Exception {
+
+		if(property == null) {
+			throw new RuntimeException("property is null, probably the object is a subtype instance and if so, the narrow flag needs to be set in settings");
+		}
+
 		Class<?> toClass = null;
 		if(!property.isMany()) {
 			toClass = (instance == null) ? null : instance.getClass();

@@ -192,7 +192,8 @@ public class DataObjectList {
 						EntityKey surrogateKey = objectCreator.getTypeMapper().getSurrogateKey(
 							element,
 							type);
-						result.add(objectCreator.getByEntityKey(surrogateKey, type));
+						BusinessObject collectionElement = objectCreator.getByEntityKey(surrogateKey, type);
+						result.add(collectionElement);
 					}  else {
 						try {
 							BusinessObject collectionElement = dataObject.createDataObject(

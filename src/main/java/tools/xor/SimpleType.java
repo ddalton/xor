@@ -22,6 +22,7 @@ package tools.xor;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -221,12 +222,14 @@ public class SimpleType implements BasicType {
 			((ExtendedProperty)property).setGenerator(gen);
 		}
 
+		BasicType collectionElementType = elementType;
 		for (int i = 0; i < fanOut; i++) {
 			// Handle inheritance (dynamic subType selection)
 			if (elementType instanceof EntityType) {
-				elementType = gen.getSubType((EntityType)elementType);
+				collectionElementType = gen.getSubType((EntityType)elementType);
 			}
-			result.put(elementType.generate(settings, property, rootedAt, entitiesToChooseFrom));
+			Object collectionElement = collectionElementType.generate(settings, property, rootedAt, entitiesToChooseFrom);
+			result.put(collectionElement);
 		}
 
 		return result;

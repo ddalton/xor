@@ -57,11 +57,12 @@ public interface Operation {
 	public Object getResult();
 
 	/**
-	 * Indicates if the specific association is not part of this aggregate
+	 * Indicates if the specific association is not part of this aggregate and is not an
+	 * ownership association within the aggregate
 	 * @param ci CallInfo object
 	 * @return true if external association
 	 */
-	boolean isExternalAssociationLink(CallInfo ci);
+	boolean isNonContainmentRelationship (CallInfo ci);
 	
 	/**
 	 * Get the domain object in this operation for the current call stack

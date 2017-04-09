@@ -90,8 +90,8 @@ public abstract class CollectionUpdateAction implements Executable {
 		}
 
 		if(input != null) {
-			// Create the data objects and load them into the ObjectCreator cache
-			List<BusinessObject> boList = input.getList();
+			// Create the data objects and load them into the input ObjectCreator cache
+			input.getList();
 			processLinks(outputMap, input, callInfo, new CallInfo());
 		}
 	}

@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import tools.xor.generator.DateRange;
 import tools.xor.generator.Range;
 import tools.xor.util.Constants;
+import tools.xor.util.graph.StateGraph;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -58,7 +59,8 @@ public class BigDecimalType extends SimpleType {
 	}	
 
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
 		BigDecimal minimum = this.min;
 		BigDecimal maximum = this.max;
 

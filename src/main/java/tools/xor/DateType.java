@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import tools.xor.generator.DateRange;
 import tools.xor.generator.Generator;
 import tools.xor.generator.Range;
+import tools.xor.util.graph.StateGraph;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -79,7 +80,8 @@ public class DateType extends SimpleType {
 	}
 
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
 
 		ExtendedProperty ep = (ExtendedProperty) property;
 		if(ep.getGenerator() != null) {

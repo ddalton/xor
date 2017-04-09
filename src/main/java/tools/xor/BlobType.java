@@ -23,6 +23,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.graph.StateGraph;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
@@ -44,7 +45,8 @@ public class BlobType extends SimpleType {
     }
 
     @Override
-    public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+    public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+                           StateGraph.ObjectGenerationVisitor visitor) {
 
         if(generatedPicture == null) {
             generatedPicture = Base64.getEncoder().encodeToString(generateImage(640, 640));

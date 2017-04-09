@@ -20,6 +20,7 @@
 package tools.xor;
 
 import org.json.JSONObject;
+import tools.xor.util.graph.StateGraph;
 
 import java.lang.reflect.Array;
 import java.util.List;
@@ -45,7 +46,8 @@ public class ArrayType extends SimpleType {
 	}
 
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
-		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
+		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 	}	
 }

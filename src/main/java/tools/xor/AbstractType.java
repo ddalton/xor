@@ -59,6 +59,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 
 public abstract class AbstractType implements EntityType {
@@ -1042,7 +1043,8 @@ public abstract class AbstractType implements EntityType {
 	}	
 	
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
 		JSONObject result = new JSONObject();
 
 		// For containment or entities with natural keys use the generator to populate the values
@@ -1069,7 +1071,8 @@ public abstract class AbstractType implements EntityType {
 						settings,
 						p,
 						rootedAt,
-						entitiesToChooseFrom));
+						entitiesToChooseFrom,
+						visitor));
 			}
 		}
 		result.put(Constants.XOR.TYPE, getInstanceClass().getName());

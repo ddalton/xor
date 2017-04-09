@@ -21,6 +21,7 @@ package tools.xor;
 
 import org.json.JSONObject;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 
 import java.util.List;
 import java.util.Map;
@@ -52,10 +53,12 @@ public interface BasicType extends Type {
 	 * @param property controlling the generation such as Uniqueness etc
 	 * @param rootedAt the object where this property is rooted at, i.e., owner
 	 * @param entitiesToChooseFrom list of entities already created for this type
+	 * @param visitor used to find limits
 	 * @return the generated object
 	 */
 	public Object generate (Settings settings,
 							Property property,
 							JSONObject rootedAt,
-							List<JSONObject> entitiesToChooseFrom);
+							List<JSONObject> entitiesToChooseFrom,
+							StateGraph.ObjectGenerationVisitor visitor);
 }

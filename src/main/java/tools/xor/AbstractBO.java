@@ -266,6 +266,9 @@ public abstract class AbstractBO implements BusinessObject {
 						// The existing BO is mapped to the incorrect surrogate key
 						existingEntity = null;
 					}
+
+					// make sure it is found by its natural key
+					getObjectCreator().addByNaturalKey(existingEntity);
 				}
 			}
 		}

@@ -22,6 +22,7 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.util.graph.StateGraph;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -53,7 +54,8 @@ public class BigIntegerType extends SimpleType {
 	}	
 
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
 		BigInteger minimum = this.min;
 		BigInteger maximum = this.max;
 

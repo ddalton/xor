@@ -31,6 +31,7 @@ import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.graph.StateGraph;
 
 /**
  * SimpleType have no properties
@@ -199,12 +200,14 @@ public class SimpleType implements BasicType {
 	}
 
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
 		// generate method not supported for unknown type
 		return null;
 	}
 
-	protected JSONArray generateArray(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom)
+	protected JSONArray generateArray(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+									  StateGraph.ObjectGenerationVisitor visitor)
 	{
 		JSONArray result = new JSONArray();
 
@@ -224,12 +227,18 @@ public class SimpleType implements BasicType {
 
 		BasicType collectionElementType = elementType;
 		for (int i = 0; i < fanOut; i++) {
+
 			// Handle inheritance (dynamic subType selection)
 			if (elementType instanceof EntityType) {
 				collectionElementType = gen.getSubType((EntityType)elementType);
 			}
-			Object collectionElement = collectionElementType.generate(settings, property, rootedAt, entitiesToChooseFrom);
+			Object collectionElement = collectionElementType.generate(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 			result.put(collectionElement);
+
+			// check limits
+			if(visitor != null && visitor.hasReachedLimit()) {
+				break;
+			}
 		}
 
 		return result;

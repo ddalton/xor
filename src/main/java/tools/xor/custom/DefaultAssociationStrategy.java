@@ -33,7 +33,7 @@ public class DefaultAssociationStrategy implements AssociationStrategy {
 
 	@Override
 	public boolean doProcess(CallInfo callInfo) {
-		if(callInfo.getOperation().isExternalAssociationLink(callInfo))
+		if(callInfo.getOperation().isNonContainmentRelationship(callInfo))
 			return false;
 		
 		return true;

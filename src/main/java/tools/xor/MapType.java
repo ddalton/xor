@@ -21,6 +21,7 @@ package tools.xor;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import tools.xor.util.graph.StateGraph;
 
 import java.util.HashMap;
 import java.util.List;
@@ -45,10 +46,11 @@ public class MapType extends SimpleType {
 	}
 
 	@Override
-	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom) {
+	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
+						   StateGraph.ObjectGenerationVisitor visitor) {
 		JSONObject result = new JSONObject();
 
-		JSONArray jsonArray = super.generateArray(settings, property, rootedAt, entitiesToChooseFrom);
+		JSONArray jsonArray = super.generateArray(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 		for(int i = 0; i < jsonArray.length(); i++) {
 			result.put(KEY_PREFIX+i, jsonArray.get(i));
 		}

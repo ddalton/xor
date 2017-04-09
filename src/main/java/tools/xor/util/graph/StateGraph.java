@@ -3,7 +3,6 @@ package tools.xor.util.graph;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.Queue;
 import java.util.Set;
 
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.SparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import org.apache.log4j.LogManager;
@@ -22,7 +20,6 @@ import org.json.JSONObject;
 
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
-import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.MatchType;
@@ -31,7 +28,6 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
-import tools.xor.service.AggregateManager;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
@@ -838,6 +834,45 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		return result;
 	}
+
+	public boolean hasReachedLimit(Map<JSONObject, State> objectStateMap, Settings settings) {
+		boolean result = false;
+
+		// Check limits
+		// NOTE: if using a generator to share objects, then
+		// the resulting object graph will be smaller in the number of vertices since
+		// the objects get shared.
+		if (objectStateMap.size() > settings.getEntitySize().size()) {
+			result = true;
+		}
+
+		return result;
+	}
+
+	public static class ObjectGenerationVisitor
+	{
+		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
+		Settings settings;
+
+		ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings) {
+			this.objectStateMap = objectStateMap;
+			this.settings = settings;
+		}
+
+		public boolean hasReachedLimit() {
+			boolean result = false;
+
+			// Check limits
+			// NOTE: if using a generator to share objects, then
+			// the resulting object graph will be smaller in the number of vertices since
+			// the objects get shared.
+			if (objectStateMap.size() > settings.getEntitySize().size()) {
+				result = true;
+			}
+
+			return result;
+		}
+	}
 	
 	/**
 	 * Generates a random object graph using JSON objects.
@@ -861,11 +896,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		Map<Type, List<JSONObject>> typeObjectMap = new HashMap<Type, List<JSONObject>>();
 		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
 		Map<JSONObject, State> embeddedObjectStateMap = new HashMap<JSONObject, State>();
+		ObjectGenerationVisitor visitor = new ObjectGenerationVisitor(objectStateMap, settings);
 
 		Queue<JSONObject> q = new LinkedList();
 
 		JSONObject result = (JSONObject)((EntityType)getRootState().getType()).generate(
 			settings,
+			null,
 			null,
 			null,
 			null);
@@ -881,13 +918,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		boolean flush = false;
 
 		while (!q.isEmpty()) {
-			// Check limits
-			// NOTE: if using a generator to share objects, then
-			// the resulting object graph will be smaller in the number of vertices since
-			// the objects get shared.
-			if (objectStateMap.size() > settings.getEntitySize().size()) {
-				flush = true;
-			}
+			flush = visitor.hasReachedLimit();
 
 			JSONObject entity = q.remove();
 			if (!visited.contains(entity)) {
@@ -947,7 +978,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						settings,
 						extendedProperty,
 						entity,
-						typeObjectMap.get(targetType));
+						typeObjectMap.get(targetType),
+						visitor);
 					// Add this object only if it is a required relationship
 					if (target instanceof JSONObject && (!flush || !extendedProperty.isNullable())) {
 						addObject(

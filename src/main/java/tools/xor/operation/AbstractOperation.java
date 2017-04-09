@@ -168,11 +168,16 @@ public abstract class AbstractOperation implements Operation {
 					if (target.getType() instanceof EntityType) {
 						EntityType entityType = (EntityType)target.getType();
 						if (!entityType.isEmbedded() && target.getInstance() != null &&
-							callInfo.getStage() == ProcessingStage.UPDATE) {
-							if(target.getObjectCreator().register(target) != target) {
-								// another object was already registered
-								return;
-							}
+							callInfo.getStage() == ProcessingStage.CREATE) {
+
+							// Register the object
+							// If there are multiple input objects with the same key,
+							// then this step does the de-duplication
+							target.getObjectCreator().register(target);
+
+							// We don't return at this point since this object may have
+							// reference to other new objects, that also need to be
+							// registered.
 						}
 					}
 
@@ -347,8 +352,9 @@ public abstract class AbstractOperation implements Operation {
 		if(!((BusinessObject)ci.getOutput()).isVisited()) {
 			setVisited(ci, true);
 			postVisited(ci);
-		} else
+		} else {
 			return;
+		}
 
 		if(ci.getInputProperty() != null && ci.getInputProperty().isMany()) { // Process the collection/map
 			processToMany(ci);		
@@ -369,7 +375,7 @@ public abstract class AbstractOperation implements Operation {
 	}
 
 	@Override
-	public boolean isExternalAssociationLink(CallInfo ci) {
+	public boolean isNonContainmentRelationship (CallInfo ci) {
 		boolean result = ci.isExternal();
 
 		return result;

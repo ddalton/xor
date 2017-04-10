@@ -21,8 +21,10 @@ package tools.xor;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 
@@ -174,10 +176,20 @@ public class DataObjectList {
 				List persistedInstances = po.findByIds((EntityType)type, toBeLoaded);
 				if(persistedInstances != null) {
 
+					Set persistedObjectIds = new HashSet();
 					for (Object persisted : persistedInstances) {
 						// cache the persisted instance in the ObjectCreator
-						result.add(objectCreator.createDataObject(persisted, type, collectionDataObject, null));
+						BusinessObject persistedBO = objectCreator.createDataObject(
+							persisted,
+							type,
+							collectionDataObject,
+							null);
+						result.add(persistedBO);
+						persistedObjectIds.add(persistedBO.getIdentifierValue());
 					}
+					Set nonPersistedObjectIds = new HashSet(toBeLoaded);
+					nonPersistedObjectIds.removeAll(persistedObjectIds);
+					toBeLoaded = new ArrayList(nonPersistedObjectIds);
 				}
 			}
 

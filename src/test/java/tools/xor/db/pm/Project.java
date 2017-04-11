@@ -19,6 +19,7 @@
 
 package tools.xor.db.pm;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,7 +50,7 @@ public class Project extends Identity {
 
 	private Task rootTask;
 
-	@OneToOne(cascade = CascadeType.ALL)
+	@OneToOne(cascade = CascadeType.ALL, mappedBy="project")
 	public Task getRootTask() {
 		return this.rootTask;
 	}
@@ -67,6 +68,16 @@ public class Project extends Identity {
 
 	public void setManagers(Set<Manager> managers) {
 		this.managers = managers;
+	}
+
+	private List<Task> tasks;
+
+	@OneToMany(cascade = CascadeType.ALL )
+	public List<Task> getTasks() {
+		return this.tasks;
+	}
+	public void setTasks(List<Task> tasks) {
+		this.tasks = tasks;
 	}
 	
 	private Map<String, Project> subProjects;

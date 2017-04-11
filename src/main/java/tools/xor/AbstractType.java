@@ -897,6 +897,14 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
+	public void removeProperty(Property property) {
+		properties.remove(property.getName());
+
+		// Clear the property version map so it gets rebuilt
+		propertiesByVersion.clear();
+	}
+
+	@Override
 	public boolean isNullable(String path) {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
 
@@ -1024,12 +1032,19 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public void setNaturalKey(String[] keys) {
-		this.naturalKey = Arrays.asList(keys);
+		if(keys != null) {
+			this.naturalKey = Arrays.asList(keys);
+		} else {
+			this.naturalKey = null;
+		}
 
 		// validation
-		if(new HashSet<String>(this.naturalKey).size() != this.naturalKey.size()) {
+		if(this.naturalKey != null && new HashSet<String>(this.naturalKey).size() != this.naturalKey.size()) {
 			throw new RuntimeException("Duplicate natural key components not allowed: " + keys);
 		}
+
+		// reset expandedNaturalKey
+		this.expandedNaturalKey = null;
 	}
 	
 	@Override

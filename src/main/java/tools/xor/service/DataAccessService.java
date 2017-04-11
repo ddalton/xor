@@ -221,6 +221,13 @@ public interface DataAccessService {
 	public void addProperty (EntityType taskType, Property openProperty);
 
 	/**
+	 * Mainly used to remove open properties. Useful from a JUnit test perspective.
+	 * @param taskType entity type
+	 * @param openProperty an open property
+	 */
+	public void removeProperty (EntityType taskType, Property openProperty);
+
+	/**
 	 * Can be used to add all open types. For e.g., types specific to a view, such as a cross join
 	 * @param type the provided meta type
 	 */

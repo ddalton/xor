@@ -62,7 +62,7 @@ public abstract class AbstractExportImport implements ExportImport
         for(Map.Entry<String, Integer> entry : headerMap.entrySet()) {
             String propertyName = entry.getKey();
             //Property property = entityType.getProperty(entry.getKey());
-            if(!propertyName.startsWith(Constants.XOR.XOR_PATH_PREFIX) && !propertyName.startsWith(Constants.XOR.OBJECTREF)) {
+            if(!propertyName.startsWith(Constants.XOR.XOR_PATH_PREFIX) && !propertyName.startsWith(Constants.XOR.IDREF)) {
                 attrPath.add(prefix + entry.getKey());
             }
         }
@@ -365,8 +365,8 @@ public abstract class AbstractExportImport implements ExportImport
                 else if (Constants.XOR.TYPE.equals(propertyPath)) {
                     value = bo.getInstanceClassName();
                 }
-                else if (propertyPath.startsWith(Constants.XOR.OBJECTREF)) {
-                    String path = propertyPath.substring(Constants.XOR.OBJECTREF.length());
+                else if (propertyPath.startsWith(Constants.XOR.IDREF)) {
+                    String path = propertyPath.substring(Constants.XOR.IDREF.length());
                     value = bo.getExistingDataObject(Settings.convertToBOPath(path));
                     if (value != null && value instanceof BusinessObject) {
                         value = ((BusinessObject)value).getOpenProperty(Constants.XOR.ID);
@@ -499,14 +499,14 @@ public abstract class AbstractExportImport implements ExportImport
             JSONArray fields = entity.names();
             for (int i = 0; i < fields.length(); i++) {
                 String property = fields.getString(i);
-                if (property.startsWith(Constants.XOR.OBJECTREF)) {
+                if (property.startsWith(Constants.XOR.IDREF)) {
                     JSONObject toOne = idMap.get(entity.getString(property));
                     if (toOne == null) {
                         logger.info(
                             "Unable to find object reference: " + entity.getString(property));
                         continue;
                     }
-                    String reference = property.substring(Constants.XOR.OBJECTREF.length());
+                    String reference = property.substring(Constants.XOR.IDREF.length());
 
                     // replace the object reference with actual reference
                     am.setEmbeddableValue(entity, reference, toOne, property);

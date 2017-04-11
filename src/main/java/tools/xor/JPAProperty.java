@@ -93,8 +93,18 @@ public class JPAProperty extends AbstractProperty {
 		super(name, type, parentType);
 	}
 
+	@Override public boolean isIdentifier ()
+	{
+		return super.isIdentifier();
+	}
+
 	public JPAProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
 		super(name, type, parentType, relType, elementType);
+	}
+
+	@Override public boolean isOpenContent ()
+	{
+		return super.isOpenContent();
 	}
 
 	public boolean isPropertyMapped() {
@@ -365,7 +375,7 @@ public class JPAProperty extends AbstractProperty {
 
 	@Override
 	public boolean isList() {
-		if(isMany() && isAnnotationPresent(OrderColumn.class)) {
+		if(isMany()) {
 			return checkCollection(CollectionType.LIST);
 		}
 

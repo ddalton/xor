@@ -191,6 +191,14 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public void addProperty(Property property);
 
 	/**
+	 * Remove property from this type
+	 * This method is not synchronized as we do not remove elements from a Map
+	 *
+	 * @param property that is removed
+	 */
+	public void removeProperty(Property property);
+
+	/**
 	 * Retrieve a property by its alias name
 	 * @param name alternative name
 	 * @return Property object

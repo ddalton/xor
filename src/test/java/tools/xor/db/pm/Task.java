@@ -48,7 +48,22 @@ import tools.xor.db.base.Person;
 import tools.xor.service.PersistenceOrchestrator;
 
 @Entity
-public class Task extends Identity {	
+public class Task extends Identity {
+
+	@ManyToOne
+	public Project getProject ()
+	{
+		return project;
+	}
+
+	public void setProject (Project project)
+	{
+		this.project = project;
+	}
+
+	private Project project;
+
+
 		
 	private Set<Task> taskChildren;
 

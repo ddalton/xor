@@ -165,7 +165,15 @@ public abstract class AbstractType implements EntityType {
 		sb.append(AggregateView.BASE);
 		
 		return sb.toString();
-	}	
+	}
+
+	public static String getRefViewName(Type type) {
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		sb.append(Settings.URI_PATH_DELIMITER);
+		sb.append(AggregateView.REF);
+
+		return sb.toString();
+	}
 	
 	@Override
 	public void defineSubtypes(List<Type> types) {

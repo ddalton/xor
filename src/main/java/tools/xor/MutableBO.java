@@ -86,8 +86,7 @@ public class MutableBO extends AbstractBO {
 		Date s = new Date();
 		// clone the task object using a DataObject
 		CallInfo callInfo = new CallInfo(this, null, null, null);
-		callInfo.setSettings(settings);	
-		callInfo.getSettings().setAction(AggregateAction.CREATE);
+		callInfo.setSettings(settings);
 		this.getObjectCreator().setShare(true);
 		this.createAggregate(settings);
 		Date a = new Date();

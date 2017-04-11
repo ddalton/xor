@@ -72,9 +72,16 @@ public interface BusinessObject extends DataObject {
 	/**
 	 * Return a DataObject initialized according to the level specified in the parameters
 	 * @param settings The user entered settings
-	 * @return a non-persistence managed DataObject
+	 * @return an external model (non-persistence managed) DataObject
 	 */
 	public DataObject read(Settings settings);
+
+	/**
+	 * Convert from Domain model to External model without involving the database
+	 * @param settings The user entered settings
+	 * @return an external model (non-persistence managed) DataObject
+	 */
+	public DataObject toExternal(Settings settings);
 	
 	/**
 	 * Perform an efficient read using a query. This requires the use of a view
@@ -98,6 +105,13 @@ public interface BusinessObject extends DataObject {
 	 * @return persistence managed DataObject
 	 */
 	public DataObject create(Settings settings);
+
+	/**
+	 * Convert from external model to domain model without involving the database
+	 * @param settings The user entered Settings
+	 * @return persistence managed DataObject
+	 */
+	public DataObject toDomain(Settings settings);
 
 	/**
 	 * Delete the object and any associated objects based on the view scope

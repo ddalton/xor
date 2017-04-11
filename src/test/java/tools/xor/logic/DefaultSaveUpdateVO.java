@@ -30,7 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
 import tools.xor.Settings;
 import tools.xor.db.base.MetaEntity;
+import tools.xor.db.base.MetaEntityState;
 import tools.xor.db.base.Person;
+import tools.xor.db.common.ValueType;
 import tools.xor.db.enums.base.MetaEntityStateEnum;
 import tools.xor.db.enums.base.MetaEntityTypeEnum;
 import tools.xor.db.enums.common.ValueTypeEnum;
@@ -52,9 +54,9 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 	protected AggregateManager aggregateService;
 
 	private MetaEntityStateVO getState(String artifactState) {
-		MetaEntityStateVO artifactStateVO = new MetaEntityStateVO();
-		artifactStateVO.setName(artifactState); // ArtifactStateEnum.ACTIVE.name()
-		artifactStateVO = (MetaEntityStateVO) aggregateService.read(artifactStateVO, new Settings());
+		MetaEntityState metaEntityState = new MetaEntityState();
+		metaEntityState.setName(artifactState); // ArtifactStateEnum.ACTIVE.name()
+		MetaEntityStateVO artifactStateVO = (MetaEntityStateVO) aggregateService.read(metaEntityState, new Settings());
 		return artifactStateVO;
 	}
 
@@ -97,9 +99,9 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		Task managedTask = (Task) aggregateService.create(task, new Settings());		
 
-		TaskVO taskVO = new TaskVO();
-		taskVO.setId(managedTask.getId());
-		taskVO = (TaskVO) aggregateService.read(taskVO, new Settings());
+		TaskVO t = new TaskVO();
+		t.setId(managedTask.getId());
+		TaskVO taskVO = (TaskVO) aggregateService.read(t, new Settings());
 
 		assert(taskVO.getId() != null);
 		assert(taskVO.getName().equals(TASK_NAME));
@@ -115,9 +117,9 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 		setupMetaEntityStateVO(aggregateService);
 		setupMetaEntityTypeVO(aggregateService);
 
-		ValueTypeVO valueTypeVO = new ValueTypeVO();
-		valueTypeVO.setName(ValueTypeEnum.STRING.name());
-		valueTypeVO = (ValueTypeVO) aggregateService.read(valueTypeVO, new Settings());	
+		ValueType valueType = new ValueType();
+		valueType.setName(ValueTypeEnum.STRING.name());
+		ValueTypeVO valueTypeVO = (ValueTypeVO) aggregateService.read(valueType, new Settings());
 
 		assert(valueTypeVO != null);
 		assert(valueTypeVO.getName().equals("STRING"));

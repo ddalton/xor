@@ -9,6 +9,37 @@ XOR simplifies the access to the data using the concept of a view.
 ## Built-in views
 XOR generates views for the Basic and Aggregate scopes of all entities.
 
+<div class="mobile-side-scroller">
+<table>
+  <thead>
+    <tr>
+      <th>API name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><p><code>getBaseView</code></p></td>
+      <td><p>
+
+          Returns all the simple attribute values for the entity, i.e., the association relationships are not traversed.
+
+      </p></td>
+    </tr>
+    <tr>
+      <td><p><code>getView</code></p></td>
+      <td><p>
+
+          Returns all the values in the aggregate. The composition relationships are traversed with this API.
+          The association relationships are not traversed. These relationships have to be explicitly requested using the
+          AssociationSetting API.
+
+      </p></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 The code to retrieve the built-in view for the Basic scope is:
 
 ```

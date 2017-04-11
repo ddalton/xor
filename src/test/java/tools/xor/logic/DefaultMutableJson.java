@@ -19,51 +19,22 @@
 
 package tools.xor.logic;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Blob;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import edu.uci.ics.jung.graph.Graph;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import tools.xor.AbstractDBTest;
 import tools.xor.AssociationSetting;
 import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.ImmutableJsonProperty;
 import tools.xor.OpenType;
-import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.Type;
 import tools.xor.db.base.Department;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.LocationDetails;
-import tools.xor.db.base.ParkingSpot;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
@@ -75,6 +46,25 @@ import tools.xor.util.Edge;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Blob;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public abstract class DefaultMutableJson extends AbstractDBTest {
 	@Autowired

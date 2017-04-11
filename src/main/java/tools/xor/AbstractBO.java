@@ -1297,7 +1297,6 @@ public abstract class AbstractBO implements BusinessObject {
 			throw new RuntimeException("Read needs to be invoked on the root data object");
 
 		CallInfo callInfo = new CallInfo(this, null, null, null);
-		settings.setAction(AggregateAction.READ);
 		callInfo.setSettings(settings);		
 
 		// Create an object creator for the target root
@@ -1323,6 +1322,19 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 
 		return (BusinessObject) callInfo.getOutput();
+	}
+
+	@Override
+	public DataObject toDomain(Settings settings) {
+
+		settings.setAction(AggregateAction.TO_DOMAIN);
+		return create(settings);
+	}
+
+	@Override
+	public DataObject toExternal(Settings settings) {
+		settings.setAction(AggregateAction.TO_EXTERNAL);
+		return read(settings);
 	}
 
 	@Override

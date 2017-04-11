@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
@@ -98,6 +99,20 @@ public class AggregatePropertyPaths {
 			basePaths.put(aggregateType, paths);
 		}
 		
+		return Collections.unmodifiableSet(paths);
+	}
+
+	public static Set<String> enumerateRef(Type aggregateType) {
+		Set<String> paths = new HashSet<>();
+
+		if(aggregateType instanceof EntityType) {
+			EntityType entityType = (EntityType) aggregateType;
+			paths.add(entityType.getIdentifierProperty().getName());
+			if(entityType.getNaturalKey() != null) {
+				paths.addAll(entityType.getExpandedNaturalKey());
+			}
+		}
+
 		return Collections.unmodifiableSet(paths);
 	}
 

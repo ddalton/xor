@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
@@ -94,6 +95,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		settings.setAssociationStrategy(new TestAssociationStrategy()); // Explicitly set the association strategy if not going through the AggregateManager
+		settings.setAction(AggregateAction.READ);
 		BusinessObject to = (BusinessObject) from.read(settings);
 
 		BusinessObject technician = (BusinessObject) to.getExistingDataObject("/assignedTo");

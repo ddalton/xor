@@ -24,6 +24,7 @@ import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -46,6 +47,10 @@ public class ModifyOperation extends AbstractOperation {
 	
 	@Override
 	protected void persist(CallInfo callInfo) {
+		// We do not update the database for just a model conversion
+		if(callInfo.getSettings().getAction() == AggregateAction.TO_DOMAIN) {
+			return;
+		}
 		callInfo.getOutputObjectCreator().persistGraph(callInfo.getSettings());
 	}		
 
@@ -213,6 +218,16 @@ public class ModifyOperation extends AbstractOperation {
 			linkToOne(ci, propertyTarget);
 
 		return propertyTarget;
+	}
+
+	@Override
+	protected boolean isIdentifier(CallInfo ci)
+	{
+		if (ci.getSettings().getAction() == AggregateAction.TO_DOMAIN) {
+			return false;
+		}
+
+		return super.isIdentifier(ci);
 	}
 
 	@Override

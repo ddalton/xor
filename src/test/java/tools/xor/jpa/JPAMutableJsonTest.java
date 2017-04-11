@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -42,14 +44,18 @@ import tools.xor.ExtendedProperty;
 import tools.xor.JPAProperty;
 import tools.xor.Property;
 import tools.xor.RelationshipType;
+import tools.xor.Settings;
 import tools.xor.db.pm.Project;
+import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
 import tools.xor.db.sp.P;
 import tools.xor.db.sp.S;
 import tools.xor.db.sp.SP;
 import tools.xor.logic.DefaultMutableJson;
 import tools.xor.service.DataAccessService;
+import tools.xor.util.Constants;
 import tools.xor.util.graph.ObjectGraph;
+import tools.xor.view.AggregateView;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })
@@ -356,5 +362,69 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		}
 
 		super.checkReferenceSemantics();
+	}
+
+	@Test
+	public void checkBasicView() {
+		// Create a task with both OneToOne and OneToMany composition association.
+		// The basic view should only retrieve the root entity with the OneToOne reference
+		// association values
+
+		// Create the aggregate root entity
+		Task task = new Task();
+		task.setName("ROOT");
+		task.setDisplayName("Setup DSL");
+		task.setDescription("Setup high-speed broadband internet using DSL technology");
+
+		// Create the OneToOne composition association
+		Quote quote = new Quote();
+		quote.setPrice(new BigDecimal("99.99"));
+		quote.setTask(task);
+		task.setQuote(quote);
+
+		// Create the OneToMany composition association
+		Task child1 = new Task();
+		child1.setName("CHILD1");
+		child1.setDisplayName("First child");
+		child1.setDescription("This is the first child of the task");
+		Task child2 = new Task();
+		child2.setName("CHILD2");
+		child2.setDisplayName("Second child");
+		child2.setDescription("This is the second child of the task");
+		Set children = new HashSet();
+		children.add(child1);
+		children.add(child2);
+		task.setTaskChildren(children);
+
+		// save the task
+		entityManager.persist(task);
+
+		// Read the task object using the built-in basic view
+		DataAccessService das = aggregateService.getDAS();
+		EntityType taskType = (EntityType)das.getType(Task.class);
+		Settings settings = new Settings();
+		settings.setView(das.getBaseView(taskType));
+
+		JSONObject json = new JSONObject();
+		json.put("id", task.getId());
+		json.put(Constants.XOR.TYPE, Task.class.getName());
+		json = (JSONObject) aggregateManager.read(json, settings);
+
+		assert(json != null);
+		assert(!json.has("quote"));
+
+		// Now let us get the aggregate view
+		//settings.setView(das.getView(taskType));
+
+		AggregateView view = das.getView(taskType);
+		settings.setView(view);
+		System.out.println("********Entity view******");
+		for(String path: view.getAttributeList()) {
+			System.out.println(path);
+		}
+
+		json = (JSONObject) aggregateManager.read(json, settings);
+		assert(json != null);
+		assert(json.has("quote"));
 	}
 }

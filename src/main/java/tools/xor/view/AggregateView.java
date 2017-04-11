@@ -40,6 +40,7 @@ import org.apache.log4j.Logger;
 
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
@@ -102,8 +103,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 	public static final Pattern REGEX_STRING_MATCHER = Pattern.compile(REGEX_STRING);
 	
 	public static final String BASE = "BASE_";
-	public static final String RECURSIVE = "RECURSIVE_";
 	public static final String DOMAIN = "DOMAIN:";
+	public static final String REF = "REF_";
+	public static final String RECURSIVE = "RECURSIVE_"; // TODO: is this needed?
 
 	// The user can specify child branches if necessary directly. 
 	// NOTE: If one or more child branch are specified, then only the child branches are executed.
@@ -389,6 +391,30 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		if(parameter != null)
 			for(Parameter param: parameter)
 				result.add(param.name);
+
+		return result;
+	}
+
+
+	public Class inferDomainClass() {
+		String suffix = null;
+		Class result = null;
+
+		if(name.endsWith(BASE)) {
+			suffix = Settings.URI_PATH_DELIMITER + BASE;
+		} else if(name.endsWith(DOMAIN)) {
+			suffix = Settings.URI_PATH_DELIMITER + DOMAIN;
+		}
+		if(suffix != null) {
+			String encodedName = name.substring(0, name.indexOf(suffix));
+			String className = Settings.decodeParam(encodedName);
+			try {
+				result = Class.forName(className);
+			}
+			catch (ClassNotFoundException e) {
+				result = null;
+			}
+		}
 
 		return result;
 	}

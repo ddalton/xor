@@ -375,6 +375,14 @@ public class AggregateManager implements Xor
 					domainClass = null;
 				}
 			}
+
+			// check if the view is a built-in view. The domain class can be inferred from
+			// the view name
+			if(domainClass == null) {
+				domainClass = settings.getView().inferDomainClass();
+				settings.setEntityClass(domainClass);
+			}
+
 			if (domainClass == null) {
 				throw new RuntimeException(
 					"Unable to identify the type on which to perform the operation. Need to explicitly specify the domain type.");
@@ -566,6 +574,7 @@ public class AggregateManager implements Xor
 				null,
 				null);
 			oc.setRoot(from);
+			settings.setAction(AggregateAction.CREATE);
 			flushHandler.register((BusinessObject)from.create(settings));
 
 		} finally {
@@ -573,6 +582,29 @@ public class AggregateManager implements Xor
 		}
 
 		return flushHandler.instance();
+	}
+
+	@Override
+	public Object toDomain (Object entity, Settings settings)
+	{
+		owLogger.debug("Performing object conversion from External to Domain");
+		checkAndSet(settings, entity);
+
+		ObjectCreator oc = new ObjectCreator(
+			settings,
+			getDAS(),
+			getPersistenceOrchestrator(),
+			MapperDirection.EXTERNALTODOMAIN);
+
+		BusinessObject from = oc.createDataObject(
+			entity,
+			getEntityType(entity, oc, settings),
+			null,
+			null);
+		oc.setRoot(from);
+		BusinessObject to = (BusinessObject)from.toDomain(settings);
+
+		return to.getInstance();
 	}
 
 	protected Type getEntityType(Object entity, ObjectCreator oc, Settings settings) {
@@ -623,18 +655,42 @@ public class AggregateManager implements Xor
 			getPersistenceOrchestrator(),
 			MapperDirection.DOMAINTOEXTERNAL);
 		oc.setReadOnly(true);
+
 		BusinessObject from = oc.createDataObject(
 			entity,
 			oc.getType(entity.getClass()),
 			null,
 			null);
+
+		// Convert to domain model instance first
+		if(oc.getTypeMapper().isExternal(entity.getClass())) {
+			ObjectCreator domainOC = new ObjectCreator(
+				settings,
+				getDAS(),
+				getPersistenceOrchestrator(),
+				MapperDirection.DOMAINTOEXTERNAL);
+
+			Type type = getEntityType(entity, oc, settings);
+			BusinessObject fromExternal = domainOC.createDataObject(
+				entity,
+				type,
+				null,
+				null);
+
+			// convert to a Domain model instance
+			settings.setAction(AggregateAction.TO_DOMAIN);
+			from = (BusinessObject)fromExternal.toDomain(settings);
+		}
+
 		if (isWrapper) {
 			ExtendedProperty property = (ExtendedProperty)((EntityType)from.getType()).getIdentifierProperty();
 			property.setValue(from, wrapper);
 		}
+
 		from = from.load(settings);  // Get the persistent object
 
 		//  perform read on it
+		settings.setAction(AggregateAction.READ);
 		BusinessObject to = (from != null) ? (BusinessObject)from.read(settings) : null;
 
 		return to;
@@ -644,6 +700,35 @@ public class AggregateManager implements Xor
 	public Object read (Object entity, Settings settings)
 	{
 		BusinessObject to = readBO(entity, settings);
+
+		if(settings.isGenerateVisual()) {
+			ObjectGraph og = to.getObjectCreator().getObjectGraph();
+			og.generateVisual(settings);
+		}
+
+		return (to != null) ? to.getNormalizedInstance(settings) : null;
+	}
+
+	@Override
+	public Object toExternal (Object entity, Settings settings)
+	{
+		owLogger.debug("Performing object conversion from Domain to External");
+		checkAndSet(settings, entity);
+
+		ObjectCreator oc = new ObjectCreator(
+			settings,
+			getDAS(),
+			getPersistenceOrchestrator(),
+			MapperDirection.DOMAINTOEXTERNAL);
+		oc.setReadOnly(true);
+
+		BusinessObject from = oc.createDataObject(
+			entity,
+			oc.getType(entity.getClass()),
+			null,
+			null);
+
+		BusinessObject to = (BusinessObject)from.toExternal(settings);
 
 		if(settings.isGenerateVisual()) {
 			ObjectGraph og = to.getObjectCreator().getObjectGraph();

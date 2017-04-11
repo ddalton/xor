@@ -287,8 +287,14 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		shape.deriveExternal();
 	}
 
+	@Override
 	public void addProperty (EntityType type, Property openProperty) {
 		getShape().addProperty(type, openProperty);
+	}
+
+	@Override
+	public void removeProperty (EntityType type, Property openProperty) {
+		getShape().removeProperty(type, openProperty);
 	}
 
 	public QueryBuilder getQueryBuilder() {

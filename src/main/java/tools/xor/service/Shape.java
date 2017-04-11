@@ -236,6 +236,20 @@ public class Shape
         }
     }
 
+    public void removeProperty (EntityType type, Property openProperty) {
+        type.removeProperty(openProperty);
+
+        if(externalTypes.containsKey(type.getName())) {
+            ExternalType externalType = (ExternalType) externalTypes.get(type.getName());
+            if(externalType == null) {
+                throw new RuntimeException("Cannot find the external type for: " + type.getName());
+            }
+
+            Property externalProperty = externalType.getProperty(openProperty.getName());
+            externalType.removeProperty(externalProperty);
+        }
+    }
+
     protected void deriveExternal () {
         for(Type type: getUniqueTypes()) {
             if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {

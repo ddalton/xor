@@ -173,7 +173,7 @@ public abstract class AbstractOperation implements Operation {
 							// Register the object
 							// If there are multiple input objects with the same key,
 							// then this step does the de-duplication
-							target.getObjectCreator().register(target);
+							target.getObjectCreator().register(target, callInfo.getInput());
 
 							// We don't return at this point since this object may have
 							// reference to other new objects, that also need to be
@@ -350,8 +350,12 @@ public abstract class AbstractOperation implements Operation {
 		executeDataUpdate(ci, Phase.POST);
 
 		if(!((BusinessObject)ci.getOutput()).isVisited()) {
-			setVisited(ci, true);
-			postVisited(ci);
+			// If this a reference association object, then we don't want to mark it as
+			// processed in case the real object has not yet been processed
+			if( !((BusinessObject)ci.getInput()).isReferenceAssociation() ) {
+				setVisited(ci, true);
+				postVisited(ci);
+			}
 		} else {
 			return;
 		}

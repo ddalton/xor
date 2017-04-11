@@ -4,6 +4,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
+import org.antlr.stringtemplate.language.ArrayWrappedInList;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.AbstractType;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -483,10 +485,21 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 		Integer j = 0;
 		Iterator edgeIter = getEdges().iterator();
+		List verticesToRemove = new ArrayList<>();
 		while(edgeIter.hasNext()) {
 			E edge = (E)edgeIter.next();
 
 			Property p = edge.getProperty();
+
+			// If the object is an empty collection then we don't have to graph it
+			if(p != null && p.isMany()) {
+				BusinessObject collectionBO = edge.getEnd();
+				if(getOutEdges((V)collectionBO).size() == 0) {
+					verticesToRemove.add(collectionBO);
+					continue;
+				}
+			}
+
 			String edgeName = (p == null) ? (j++).toString() : (p.getName()+j++);
 
 			if (g.containsEdge(edgeName)) {
@@ -494,6 +507,10 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			} else{
 				g.addEdge(edgeName, (V) edge.getStart(), (V) edge.getEnd(), EdgeType.DIRECTED);
 			}
+		}
+
+		for(Object bo: verticesToRemove) {
+			g.removeVertex((V)bo);
 		}
 
 		return g;

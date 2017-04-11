@@ -77,7 +77,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		EntityType entityType = (EntityType)((BusinessObject) callInfo.getInput()).getPropertyType();
 		BusinessObject from = (BusinessObject) callInfo.getInput();
 
-		EntityType type = entityType;
+		EntityType type = (EntityType)((BusinessObject) callInfo.getInput()).getType();
 		do {
 			Map<String, Object> param = new HashMap<String, Object>();
 			for(String key: type.getExpandedNaturalKey()) {

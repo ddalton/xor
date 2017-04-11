@@ -101,7 +101,7 @@ public class JSONTransformer {
 									// We have seen this object before and it is being processed,
 									// so replace this reference with the id
 									int id = child.getInt(Constants.XOR.ID);
-									jsonObject.put(Constants.XOR.OBJECTREF+key, id);
+									jsonObject.put(Constants.XOR.IDREF +key, id);
 									// Now remove the object link as we have recorded it
 									jsonObject.remove(key);
 								}
@@ -143,7 +143,7 @@ public class JSONTransformer {
 	
 	/**
 	 * Do a BFS traversal, and do the reverse of pack,
-	 * we replace the keys with prefix Constants.XOR.OBJECTREF with the actual object
+	 * we replace the keys with prefix Constants.XOR.IDREF with the actual object
 	 * 
 	 * We do 2 passes, first populate the id, object map.
 	 * then replace the object ids with the actual object reference
@@ -235,10 +235,10 @@ public class JSONTransformer {
 						JSONObject jsonObject = (JSONObject) element;
 						for(String key: JSONObject.getNames(jsonObject)) 
 						{
-							if(key.startsWith(Constants.XOR.OBJECTREF)) {
+							if(key.startsWith(Constants.XOR.IDREF)) {
 								// replace the id ref with the actual object
 								Object ref = idMap.get(jsonObject.get(key));
-								String newKey = key.substring(Constants.XOR.OBJECTREF.length());
+								String newKey = key.substring(Constants.XOR.IDREF.length());
 								jsonObject.put(newKey, ref);
 								jsonObject.remove(key);
 							} else {

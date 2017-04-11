@@ -36,7 +36,9 @@ import tools.xor.view.QueryViewProperty;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1571,9 +1573,57 @@ public abstract class AbstractBO implements BusinessObject {
 		createWrapper(settings, this, null, rootState, sg);
 
 		objectCreator.clearVisited();
-	}	
+	}
+
+	public void examine() {
+		if (this.instance != null && this.instance instanceof JSONObject
+			&& getType() instanceof EntityType && ((EntityType)getType()).getNaturalKey() != null) {
+
+			if(((JSONObject)this.instance).has(Constants.XOR.KEYREF)) {
+				return;
+			}
+
+			Iterator iter = ((JSONObject)instance).keys();
+
+			Set<String> potentialKey = new HashSet<>();
+			Set<String> naturalKey = new HashSet<>(((EntityType)getType()).getExpandedNaturalKey());
+
+			// skip internal fields
+			while(iter.hasNext()) {
+				String key = (String)iter.next();
+				if (key.startsWith(Constants.XOR.XOR_PREFIX)
+					|| key.startsWith(Constants.XOR.IDREF)) {
+					continue;
+				}
+
+				// We allow identifier property to be part of the reference object
+				if (key.equals( ((EntityType)getType()).getIdentifierProperty().getName() )) {
+					continue;
+				}
+
+				potentialKey.add(key);
+			}
+			if(potentialKey.size() > 0) {
+				potentialKey.removeAll(naturalKey);
+				// This is a reference association object, now mark it as such
+				if(potentialKey.size() == 0) {
+					((JSONObject)this.instance).put(Constants.XOR.KEYREF, true);
+				}
+			}
+		}
+	}
+
+	public boolean isReferenceAssociation() {
+		if (this.instance != null && this.instance instanceof JSONObject && ((JSONObject)this.instance).has(Constants.XOR.KEYREF)) {
+			return (((JSONObject)this.instance).getBoolean(Constants.XOR.KEYREF));
+		}
+
+		return false;
+	}
 	
 	protected void createWrapper(Settings settings, BusinessObject parent, Property support, State state, StateGraph sg) {
+
+		parent.examine();
 		
 		for(BusinessObject child: parent.getBulkList(settings)) {
 			if(parent.getContainmentProperty() != null && parent.getContainmentProperty().isContainment()) {
@@ -1587,7 +1637,7 @@ public abstract class AbstractBO implements BusinessObject {
 					createWrapper(
 						settings,
 						child, support,
-						(State)sg.getOutEdge(state, support.getName()).getEnd(), sg);
+						(State)sg.getOutEdge(state, support.getName()).getStart(), sg);
 				} else {
 					return;
 				}
@@ -1641,7 +1691,7 @@ public abstract class AbstractBO implements BusinessObject {
 						createWrapper(
 							settings,
 							child, property,
-							(State)sg.getOutEdge(state, property.getName()).getEnd(), sg);
+							(State)sg.getOutEdge(state, property.getName()).getStart(), sg);
 					} else {
 						continue;
 					}

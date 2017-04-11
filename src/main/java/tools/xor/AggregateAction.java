@@ -28,4 +28,7 @@ public enum AggregateAction {
     DELETE,
     LOAD;
 
+    public static boolean isModificationAction(AggregateAction action) {
+        return action == CREATE || action == UPDATE || action == MERGE;
+    }
 }

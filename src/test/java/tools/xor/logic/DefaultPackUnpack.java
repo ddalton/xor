@@ -39,7 +39,7 @@ public class DefaultPackUnpack extends AbstractDBTest {
 		json.put("self", json);
 
 		JSONTransformer.pack(json);
-		assert((json.get(Constants.XOR.OBJECTREF+"self")).toString().equals("10000"));
+		assert((json.get(Constants.XOR.IDREF +"self")).toString().equals("10000"));
 		System.out.println("JSON string: " + json.toString());	
 	}
 
@@ -75,7 +75,7 @@ public class DefaultPackUnpack extends AbstractDBTest {
 		json.put("taskChildren", jsonArray);
 
 		JSONTransformer.pack(json);
-		assert((child1.get(Constants.XOR.OBJECTREF+"parent")).toString().equals("10000"));
+		assert((child1.get(Constants.XOR.IDREF +"parent")).toString().equals("10000"));
 		System.out.println("JSON string: " + json.toString());	
 	}
 

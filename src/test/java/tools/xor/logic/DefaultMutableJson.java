@@ -65,6 +65,7 @@ import tools.xor.db.base.Employee;
 import tools.xor.db.base.LocationDetails;
 import tools.xor.db.base.ParkingSpot;
 import tools.xor.db.base.Person;
+import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
@@ -221,7 +222,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	}
 
 	protected void checkBigDecimalField() throws JSONException {
-		final BigDecimal largeDecimal = new BigDecimal("12345678998765432100000.123456789987654321");
+		final BigDecimal largeDecimal = new BigDecimal("1234567890000.1987654321");
 		
 		// create person
 		JSONObject json = new JSONObject();
@@ -246,8 +247,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	}
 	
 	protected void checkBigIntegerField() throws JSONException {
-		final BigInteger largeInteger = new BigInteger("12345678998765432100000123456789987654321");
-		
+		final BigInteger largeInteger = new BigInteger("12001239987654321");
+
 		// create person
 		JSONObject json = new JSONObject();
 		json.put("name", "DILIP_DALTON");
@@ -1444,5 +1445,75 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setGraphFileName("TaskBoundedPersonGraph.png");
 		settings.setPostFlush(true);
 		aggregateManager.update(task, settings);
+	}
+
+	protected void checkReferenceSemantics() throws JSONException {
+		final String DESC = "This is dependent task that has many duplicates";
+
+		// First create a natural key for Task based on name
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType externalTask = (EntityType)das.getExternalType(Task.class);
+		EntityType domainTask = (EntityType)das.getType(Task.class);
+		String[] key = { "name" };
+		externalTask.setNaturalKey(key);
+		domainTask.setNaturalKey(key);
+
+		try {
+			// Create task
+			JSONObject json = new JSONObject();
+			json.put("name", "ROOT");
+			json.put("displayName", "Setup DSL");
+			json.put("description", "Setup high-speed broadband internet using DSL technology");
+
+			// Create and add 1 master dependency to the list
+			JSONObject dep = new JSONObject();
+			dep.put("name", "DEPDUP");
+			dep.put("displayName", "Dependency Duplicates");
+			dep.put("description", DESC);
+
+			JSONArray jsonArray = new JSONArray();
+			for (int i = 1; i < 5; i++) {
+				JSONObject duplicate = new JSONObject();
+				duplicate.put("name", "DEPDUP");
+				jsonArray.put(duplicate);
+			}
+			// Add the main object in the middle of the list surrounded by references
+			jsonArray.put(dep);
+			for (int i = 1; i < 5; i++) {
+				JSONObject duplicate = new JSONObject();
+				duplicate.put("name", "DEPDUP");
+				jsonArray.put(duplicate);
+			}
+			json.put("tasks", jsonArray);
+
+			Settings settings = getSettings();
+			settings.setPostFlush(true);
+			settings.setEntityClass(Project.class);
+			Project p = (Project)aggregateService.create(json, settings);
+			assert (p.getId() != null);
+			assert (p.getTasks() != null);
+			System.out.println("Dependant size: " + p.getTasks().size());
+			assert (p.getTasks().size() == 9);
+
+			// Check all the data is present in all the objects.
+			// i.e., the objects that had only the natural key populated should be
+			// treated as references to the main object
+			for (Task d : p.getTasks()) {
+				assert (d.getDescription() != null);
+				assert (d.getDescription().equals(DESC));
+			}
+
+			Object jsonObject = aggregateService.read(p, settings);
+			JSONObject jsonTask = (JSONObject)jsonObject;
+			JSONArray jsonDependants = jsonTask.getJSONArray("tasks");
+			assert (((JSONArray)jsonDependants).length() == 9);
+
+
+		} finally {
+
+			// reset
+			externalTask.setNaturalKey(null);
+			domainTask.setNaturalKey(null);
+		}
 	}
 }

@@ -1265,7 +1265,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					result.add(getName() + Settings.PATH_DELIMITER + ((EntityType)getType()).getUserKey().getName());
 				}
 				*/
-				result.add(Constants.XOR.OBJECTREF + getName());
+				result.add(Constants.XOR.IDREF + getName());
 			}
 		} else {
 			result.add(getName());

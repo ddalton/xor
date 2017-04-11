@@ -22,6 +22,8 @@ package tools.xor.jpa;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -40,6 +42,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.JPAProperty;
 import tools.xor.Property;
 import tools.xor.RelationshipType;
+import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.db.sp.P;
 import tools.xor.db.sp.S;
@@ -340,5 +343,18 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void generateBoundedPersonObjectGraph() throws FileNotFoundException
 	{
 		super.generateBoundedPersonObjectGraph();
+	}
+
+	@Test(expected = javax.persistence.PersistenceException.class)
+	public void checkReferenceSemantics () throws JSONException
+	{
+		DataAccessService das = aggregateService.getDAS();
+		EntityType taskType = (EntityType) das.getType(Task.class);
+		Property openProperty = taskType.getProperty("ItemList");
+		if(openProperty != null) {
+			das.removeProperty(taskType, openProperty);
+		}
+
+		super.checkReferenceSemantics();
 	}
 }

@@ -407,4 +407,16 @@ public interface BusinessObject extends DataObject {
 	 * @return type
 	 */
 	public Type getPropertyType();
+
+	/**
+	 * Check if the object is a reference association object and set the
+	 * XOR.keyref flag accordingly
+	 */
+	public void examine();
+
+	/**
+	 * Checks if the instance is a reference association object
+	 * @return true if this is a reference association object
+	 */
+	public boolean isReferenceAssociation();
 }

@@ -255,9 +255,13 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		EntityType entityType = (EntityType) bo.getType();
 		while(entityType != null && entityType.getNaturalKey() != null && bo != null) {
 			try {
-				result.add(NaturalKeyStrategy.getInstance().execute(bo, getNaturalKeyTypeName(
+				EntityKey naturalEntityKey = NaturalKeyStrategy.getInstance().execute(
+					bo, getNaturalKeyTypeName(
 						entityType
-					)));
+					));
+				if(naturalEntityKey != null) {
+					result.add(naturalEntityKey);
+				}
 			} catch (IllegalStateException ise) {
 				//the natural key values are not populated.
 			}

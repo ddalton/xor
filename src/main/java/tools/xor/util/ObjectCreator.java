@@ -173,7 +173,9 @@ public class ObjectCreator {
 
 	public void addBySurrogateKey(BusinessObject entity) {
 		EntityKey entityKey = entity.getSurrogateKey();
-		entitiesByKey.put(entityKey, entity);
+		if(entityKey != null) {
+			entitiesByKey.put(entityKey, entity);
+		}
 	}
 
 	public void removeByEntityKey(EntityKey key) {
@@ -320,15 +322,16 @@ public class ObjectCreator {
 
 	/**
 	 * This method ensures that all derived and reference persistence instance point to the same reference data object 
-	 * @param sourceInstance the provided source instance
+	 * @param sourceBO the provided source BusinessObject
 	 * @param targetInstance the provided target instance or a persistence managed instance
 	 * @param targetType the type of the instance
 	 * @param container the parent BusinessObject
 	 * @param containmentProperty the property referring to the target instance
 	 * @return the new BusinessObject
 	 */
-	private BusinessObject createDataObject(Object sourceInstance, Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty) {
+	private BusinessObject createDataObject(Object sourceBO, Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty) {
 
+		Object sourceInstance = ClassUtil.getInstance(sourceBO);
 		BusinessObject dataObject = instanceDataObjectMap.get(targetInstance);
 		if(dataObject != null) {
 			if(sourceInstance != null) {
@@ -370,7 +373,7 @@ public class ObjectCreator {
 				}
 			}
 
-			dataObject = register(dataObject);
+			dataObject = register(dataObject, sourceBO);
 		}
 
 		if(sourceInstance != null)
@@ -413,25 +416,53 @@ public class ObjectCreator {
 		return new StringBuilder().append(entityType.getName()).append(naturaKeyString).toString();
 	}
 
+	private void evictTemporaryDomainObject(BusinessObject temporaryDomainObject) {
+		if(temporaryDomainObject == null || temporaryDomainObject.getInstance() == null) {
+			return;
+		}
+
+		// Make sure to evict the domain object from the persistence
+		// layer as it is going to be swizzled
+		// We don't want this swizzled out object to be saved for any reason
+		Set objectsToClear = new HashSet();
+		objectsToClear.add(temporaryDomainObject);
+		getPersistenceOrchestrator().clear(objectsToClear);
+	}
+
 	/**
-	 * Register the user provided object in the object creator cache.
+	 * Register the user provided object in the object creator cache. Used if the object is deemed shareable.
 	 * During registration the following issues are handled
 	 * 1. Multiple objects with the same id (controlled by the share flag)
 	 * 2. Multiple objects with the same id but of different types due to polymorphism. The
 	 *    more specific instance is honored
 	 *    
 	 * @param newDataObject to register
+	 * @param sourceBO source BusinessObject
 	 * @return resolved BusinessObject
 	 */
-	public BusinessObject register(BusinessObject newDataObject) {
+	public BusinessObject register(BusinessObject newDataObject, Object sourceBO) {
 		BusinessObject result = newDataObject;
 
 		Object instance = newDataObject.getInstance();
 		if(instance == null) 
 			throw new IllegalStateException("No persistent state found - possible data corruption");
 
-		if( !newDataObject.getType().isDataType() && ((EntityType)newDataObject.getType()).isEmbedded()) {
-			// Embedded instances are not shareable, so we don't register them
+		// External model objects, may create multiple copies of the same object for serialization purposes
+		// So they should be de-duplicated and point to a single domain model object.
+		boolean swizzle = false;
+		if (sourceBO != null &&
+			newDataObject.getType() instanceof EntityType &&
+			sourceBO instanceof BusinessObject &&
+			AggregateAction.isModificationAction(settings.getAction())) {
+			if(!((BusinessObject)sourceBO).isReferenceAssociation()) {
+				swizzle = true;
+			}
+		}
+
+		// Embedded instances are not shareable, so we don't register them and
+		// External model objects in a modification operation should not lose information by de-duplicating in the external model itself
+		if (!newDataObject.getType().isDataType() && (((EntityType)newDataObject.getType()).isEmbedded() ||
+			(!((EntityType)newDataObject.getType()).isDomainType() && AggregateAction.isModificationAction(settings.getAction()))) )  {
 			recordIO(result.getInstance(), result);
 			return result;
 		}
@@ -443,42 +474,68 @@ public class ObjectCreator {
 			if(existing != null) {
 				EntityType existingRootType = ((EntityType)existing.getType()).getRootEntityType();
 				EntityType newRootType = ((EntityType)newDataObject.getType()).getRootEntityType();
-				if(existingRootType == newRootType) {
-					// Embedded data objects without natural keys are not shareable
-					if(share && !(existingRootType.isEmbedded() && ((EntityType)newDataObject.getType()).getNaturalKey() == null)) {
-						// Make sure we can re-fetch the BO by the other instance also
-						recordIO(newDataObject.getInstance(), existing);
-						if(newDataObject.getIdentifierValue() != null && !newDataObject.getIdentifierValue().equals(existing.getIdentifierValue())) {
-							// Make sure to evict the temporarily created object by the persistence
-							// layer so it does not save it during flush
-							Set objectsToClear = new HashSet();
-							objectsToClear.add(newDataObject);
-							getPersistenceOrchestrator().clear(objectsToClear);
+				if(!swizzle) {
+					if (existingRootType == newRootType) {
+						// Embedded data objects without natural keys are not shareable
+						if (share && !(existingRootType.isEmbedded()
+							&& ((EntityType)newDataObject.getType()).getNaturalKey() == null)) {
+							// Make sure we can re-fetch the BO by the other instance also
+							recordIO(newDataObject.getInstance(), existing);
+							if (newDataObject.isDomainType()) {
+								evictTemporaryDomainObject(newDataObject);
+							}
+							result = existing;
 						}
-						return existing;
-					} else {
-						if(((EntityType)newDataObject.getType()).getNaturalKey() != null) {
-							throw new IllegalStateException("NaturalKey field(s) " + getNaturalKeyString((EntityType)newDataObject.getType()) + " is either not populated or has duplicate values. Please check.");
-						} else {
-							throw new IllegalStateException(
-								"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated. [type: "
-									+ existingRootType.getDomainType().getName() + ", id: "
-									+ newDataObject.getIdentifierValue() + "]" + (existingRootType.isEmbedded() ? ". Check your data as sharing of embedded objects is not allowed." : ""));
+						else {
+							if (((EntityType)newDataObject.getType()).getNaturalKey() != null) {
+								throw new IllegalStateException(
+									"NaturalKey field(s) "
+										+ getNaturalKeyString((EntityType)newDataObject.getType())
+										+ " is either not populated or has duplicate values. Please check.");
+							}
+							else {
+								throw new IllegalStateException(
+									"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated. [type: "
+										+ existingRootType.getDomainType().getName() + ", id: "
+										+ newDataObject.getIdentifierValue() + "]" + (
+										existingRootType.isEmbedded() ?
+											". Check your data as sharing of embedded objects is not allowed." :
+											""));
+							}
 						}
 					}
-				} else if(existingRootType.getInstanceClass().isAssignableFrom(newRootType.getInstanceClass())) {
+					else if (existingRootType.getInstanceClass().isAssignableFrom(newRootType.getInstanceClass())) {
+						swizzle = true;
+					}
+					else {
+						result = existing; // new data object is of a more general type, so we use the existing data object
+					}
+				}
+
+				// We swizzle-out the exiting  instance
+				// and swizzle-in the newDataObject instance
+				if(swizzle) {
+
+					// Evict the old instance from the persistence layer first
+					// as it is going to be swizzled with the instance from the newDataObject
+					evictTemporaryDomainObject(existing);
+
 					// New data object is of a more specific type (This could be a proxy created by the persistent mechanism)
+					// or the old object was just a reference association and the new data object is the real object
 					Object oldInstance = existing.getInstance();
 					existing.setInstance(instance);
+					// preserve the link from the old instance as it refers to the same object,
+					// the only difference being it now points to a more specific subtype, or the real object instead of a reference
+					recordIO(oldInstance, existing);
+					result = existing;
 
-					// Clear up references to the more general proxy instance
-					instanceDataObjectMap.remove(oldInstance);
-					if(objectGraph != null) {
-						objectGraph.replaceInstance(existing, instance);
-					}
-					result = existing; // we have replace the instance with the new instance
-				} else {
-					result = existing; // new data object is of a more general type, so we use the existing data object				
+					// re-register
+					result.register();
+				}
+
+				// Fix the source instance to the existing BO
+				if(ClassUtil.getInstance(sourceBO) != null) {
+					recordIO(ClassUtil.getInstance(sourceBO), result);
 				}
 			} else {
 				// Register if it is a persistent instance
@@ -511,6 +568,7 @@ public class ObjectCreator {
 
 		targetInstance = ClassUtil.getInstance(targetInstance);
 		Object sourceInstance = ClassUtil.getInstance(ci.getInput());
+		Object sourceBO = ci.getInput();
 		Property sourceContainmentProperty = ci.getInputProperty();
 		BusinessObject container = null;
 		if(ci.getParent() != null && !ci.getParent().isBulkInput()) {
@@ -543,22 +601,7 @@ public class ObjectCreator {
 				//targetInstanceClass = sourceInstance != null ? ClassUtil.getUnEnhanced(sourceInstance.getClass()) : null;
 
 				if(domainEntityType == null) {
-
-					if(sourceInstance instanceof BusinessObject) {
-						EntityType type = (EntityType) ((BusinessObject)sourceInstance).getType();
-						targetInstanceClass = typeMapper.getTargetClass(type.getInstanceClass(), ci);
-					} else {
-
-							targetInstanceClass = typeMapper.getTargetClass(sourceInstance.getClass(), ci);
-							/*
-							// Unable to resolve the domain type
-							// So we explicitly try and get it
-							// TODO: narrowing
-							Type type = ci.getInputProperty().getDomainProperty().getType();
-							instanceClass = typeMapper.getSourceClass(type.getInstanceClass());
-							*/
-					}
-					
+					targetInstanceClass = typeMapper.getTargetClass(sourceInstance.getClass(), ci);
 				} else {
 					if(typeMapper.isToExternal()) {
 						
@@ -617,7 +660,7 @@ public class ObjectCreator {
 					}
 					
 					if(targetInstance != null) {
-						result = createDataObject(sourceInstance, targetInstance, targetType, container, containmentProperty);
+						result = createDataObject(sourceBO, targetInstance, targetType, container, containmentProperty);
 						result.setPersistent(true);
 					}
 				}
@@ -651,7 +694,7 @@ public class ObjectCreator {
 
 				if(targetInstance != null) {
 					result = createDataObject(
-						sourceInstance,
+						sourceBO,
 						targetInstance,
 						targetType,
 						container,

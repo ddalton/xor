@@ -60,9 +60,15 @@ public class Constants {
 	  public static final String XOR_PREFIX = "XOR";
 	  public static final String SEP = ":";
 	  public static final String XOR_PATH_PREFIX = XOR_PREFIX + Settings.PATH_DELIMITER;
-	  
+
+	  // boolean field used to represent if the object is a reference association
+	  // i.e., if a dynamic external model object has only the natural key values and/or the id
+	  // property it is considered to a reference association object. This flag will be set to
+	  // true for such an object.
+	  public static final String KEYREF = XOR_PATH_PREFIX + "keyref";
+
 	  // Additional references to an object are represented using the following attribute prefix
-	  public static final String OBJECTREF = "|" + XOR_PREFIX + "|";
+	  public static final String IDREF = "|" + XOR_PREFIX + "|";
 
 	  // Synthetic identifier added to each object instance to help identify each object in an object graph
 	  public static final String ID = XOR_PATH_PREFIX + "id";

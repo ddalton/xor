@@ -18,6 +18,24 @@ public interface Xor {
 	public Object create(Object inputObject, Settings settings);
 
 	/**
+	 * Performs object conversion by taking an object based on the External model
+	 * and converting it to an object based on the Domain model.
+	 * @param entity object based on the external model
+	 * @param settings The user provided settings
+	 * @return Domain model object
+	 */
+	public Object toDomain(Object entity, Settings settings);
+
+	/**
+	 * Performs object conversion by taking an object based on the Domain model
+	 * and converting it to an object based on the External model.
+	 * @param entity object based on the domain model
+	 * @param settings The user provided settings
+	 * @return External model object
+	 */
+	public Object toExternal (Object entity, Settings settings);
+
+	/**
 	 * This method returns the object in external form such as JSONObject
 	 * If the object is desired as a persistence managed object, this can be specified in the settings (TODO)
 	 * 

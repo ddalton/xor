@@ -449,7 +449,7 @@ public class Settings {
 
 	public static String encodeParam(String param) {
 		return param.replace(PATH_DELIMITER, URI_PATH_DELIMITER);
-	}			
+	}
 
 	public AggregateView getView() {
 		return view;
@@ -469,8 +469,9 @@ public class Settings {
 
 	public void setAction(AggregateAction mutableAction) {
 		// this.mutableAction can never by null
-		if(mutableAction != null)
+		if(mutableAction != null) {
 			this.action = mutableAction;
+		}
 	}
 
 	public Map<String, Object> getFilters() {

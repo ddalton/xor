@@ -395,6 +395,25 @@ public class Shape
         return result;
     }
 
+    public AggregateView getRefView(EntityType type) {
+
+        String viewName = AbstractType.getRefViewName(type);
+        AggregateView result = views.get(viewName);
+
+        if(result == null) {
+            result = new AggregateView();
+            result.setShape(this);
+            Set<String> paths = AggregatePropertyPaths.enumerateRef(type);
+
+            result.setAttributeList(new ArrayList<String>(paths));
+            result.setName(viewName);
+
+            views.put(viewName, result);
+        }
+
+        return result;
+    }
+
     /**
      * Expand view references
      */

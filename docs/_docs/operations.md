@@ -82,3 +82,38 @@ The supported operations are:
   </tbody>
 </table>
 </div>
+
+Additionally the following two operations are provided that allows object conversion between the External and Domain models.
+There is no database access during these operations.
+
+
+<div class="mobile-side-scroller">
+<table>
+  <thead>
+    <tr>
+      <th>Operation</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><p><code>toDomain</code></p></td>
+      <td><p>
+
+          Takes an object from the External model and converts it to a corresponding object in the Domain model.
+          The values based on the desired view scope are populated in the domain model object. 
+
+      </p></td>
+    </tr>
+    <tr>
+      <td><p><code>toExternal</code></p></td>
+      <td><p>
+
+          Takes an object from the Domain model and converts it to a corresponding object in the External model.
+          The values based on the desired view scope are populated in the External model object. 
+
+
+      </p></td>
+    </tr>
+  </tbody>
+</table>

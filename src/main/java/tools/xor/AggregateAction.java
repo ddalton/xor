@@ -21,14 +21,16 @@ package tools.xor;
 
 public enum AggregateAction {
     CREATE,
+    TO_DOMAIN,
     UPDATE,
     MERGE,
     CLONE,
     READ,
+    TO_EXTERNAL,
     DELETE,
     LOAD;
 
     public static boolean isModificationAction(AggregateAction action) {
-        return action == CREATE || action == UPDATE || action == MERGE;
+        return action == CREATE || action == UPDATE || action == MERGE || action == TO_DOMAIN;
     }
 }

@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -44,7 +43,6 @@ import org.apache.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.json.JSONObject;
-import sun.awt.image.ImageWatched;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
@@ -56,6 +54,7 @@ import tools.xor.generator.Generator;
 import tools.xor.generator.LinkedChoices;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
@@ -1072,10 +1071,13 @@ public abstract class AbstractType implements EntityType {
 
 		// For containment or entities with natural keys use the generator to populate the values
 		// otherwise we link with an existing object
-		if (property != null && !property.isContainment() && getNaturalKey() == null
-			&& entitiesToChooseFrom != null && entitiesToChooseFrom.size() > 0) {
-			result = entitiesToChooseFrom.get(
-				(int)(Math.random() * (entitiesToChooseFrom.size() - 1)));
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.GENERATOR_LINK_EXISTING)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.GENERATOR_LINK_EXISTING)) {
+			if (property != null && !property.isContainment() && getNaturalKey() == null
+				&& entitiesToChooseFrom != null && entitiesToChooseFrom.size() > 0) {
+				result = entitiesToChooseFrom.get(
+					(int)(Math.random() * (entitiesToChooseFrom.size() - 1)));
+			}
 		}
 
 		boolean castLot = false;

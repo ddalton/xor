@@ -52,6 +52,7 @@ public class Constants {
 		public static final String TOPO_SKIP = "toposort.skip";
 		public static final String INCLUDE_EMBEDDED = "include.embedded";
 		public static final String ACTIVATE_DETECTORS = "detectors.activate";
+		public static final String GENERATOR_LINK_EXISTING = "generator.link.existing";
 	}
   
   

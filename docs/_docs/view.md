@@ -42,7 +42,7 @@ XOR generates views for the Basic and Aggregate scopes of all entities.
 
 The code to retrieve the built-in view for the Basic scope is:
 
-```
+```java
 DataAccessService das = aggregateService.getDAS();
 EntityType personType = (EntityType) das.getType(Person.class);
 AggregateView view = das.getBaseView(personType).copy();
@@ -50,7 +50,7 @@ AggregateView view = das.getBaseView(personType).copy();
 
 The code to retrieve the built-in view for the Aggregate scope is:
 
-```
+```java
 DataAccessService das = aggregateService.getDAS();
 EntityType personType = (EntityType) das.getType(Person.class);
 AggregateView view = das.getView(personType).copy();
@@ -86,7 +86,7 @@ By default XOR custom views are defined in a file called `AggregateViews.xml` lo
 Views can also be defined programmatically.
 Below is a definition of the view we had just seen earlier.
 
-```
+```xml
 <AggregateViews>
     <aggregateView>
         <name>TASKDETAILSID</name>
@@ -109,7 +109,7 @@ In this view we want to retrieve some information about the task and its first l
 
 Expressed using object notation
 
-```
+```xml
 <AggregateViews>
     <aggregateView>
         <name>TASKANDCHILDREN</name>
@@ -137,7 +137,7 @@ Expressed using object notation
 
 The same example, but the object notation is represented concisely using RegEx
 
-```
+```xml
 <AggregateViews>
     <aggregateView>
         <name>TASKANDCHILDREN</name>
@@ -160,7 +160,7 @@ In the example below the Task aggregate is extended to also include the Person a
 Note, the extension only occurs if there is atleast one relationship in the Task aggregate that refers to a Person type, otherwise there is no change in scope.
 All relationships are automatically added.
 
-```
+```java
 Settings settings = new Settings();
 DataAccessService das = aggregateManager.getDAS();
 EntityType taskType = (EntityType)das.getType(Task.class);
@@ -173,7 +173,7 @@ settings.addAssociation(new AssociationSetting(Person.class));
 
 Alternatively, a scope can be extended in a more fine-grained way by specifying the desired relationships that need to be included in the view.
 
-```
+```java
 settings.addAssociation( new AssociationSetting("assignedTo"));	
 ```
 

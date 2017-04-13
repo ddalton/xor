@@ -18,7 +18,7 @@ This information is useful in understanding all the types involved in an aggrega
 
 The code needed to produce the above graph is:
 
-```
+```java
 Settings settings = new Settings();
 DataAccessService das = aggregateManager.getDAS();
 EntityType taskType = (EntityType)das.getType(Task.class);
@@ -38,7 +38,7 @@ Below is an example object graph of a Task object generated using XOR's data gen
 
 The code used to generate the graph is the following:
 
-```
+```java
 DataAccessService das = aggregateManager.getDAS();
 
 EntityType taskType = (EntityType)das.getType(Task.class);

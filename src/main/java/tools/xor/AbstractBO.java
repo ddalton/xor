@@ -924,7 +924,18 @@ public abstract class AbstractBO implements BusinessObject {
 					// Currently Immutable JSON is treated as a set, so we should check for this
 					if(current.getInstance() instanceof JSONArray) {
 						JSONArray jsonArray = (JSONArray) current.getInstance();
-						jsonArray.put(elementInstance);
+
+						// check if element is not present before adding it.
+						boolean alreadyInSet = false;
+						for(int i = 0; i < jsonArray.length(); i++) {
+							if(jsonArray.get(i) == elementInstance) {
+								alreadyInSet = true;
+							}
+						}
+
+						if(!alreadyInSet) {
+							jsonArray.put(elementInstance);
+						}
 					} else {
 						Set set = (Set) current.getInstance();
 						set.add(elementInstance);

@@ -14,7 +14,7 @@ Using the same example as before we will assume that the view loading through th
 
 Below is an example of using a native query:
 
-```
+```xml
 <AggregateViews>
     <aggregateView>
         <name>TASKDETAILSID</name>

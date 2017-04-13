@@ -648,6 +648,10 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	 */
 	protected void renumber(List<V> sorted) {
 		this.nextId = START;
+
+		// Clear the vertices
+		this.vertices.clear();
+		this.id.clear();
 		
 		for(V vertex: sorted) {
 			addVertex(vertex);

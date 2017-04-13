@@ -145,7 +145,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 
 	@XmlTransient
 	private boolean union;
-	
+
 	@XmlTransient
 	private Set<String> exactAttributes; // These do not have the recursive operand (*) and
 	                                     // and exact match can be performed
@@ -455,8 +455,11 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		result.setJoin(join);
 		result.setUnion(union);
 
+		if(regexAttributes != null) {
+			result.regexAttributes = new HashMap(regexAttributes);
+		}
 		if(exactAttributes != null) {
-			result.exactAttributes = new HashSet<String>(exactAttributes);
+			result.exactAttributes = new HashSet(exactAttributes);
 		}
 		
 		if(stateGraph != null) {
@@ -531,13 +534,19 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 
 		// Get the RegEx attributes
 		Map<String, Pattern> regexMap = new HashMap<>();
+		Set<String> exactSet = new HashSet<>();
 		for(String attrPath: this.attributeList) {
 			if(DFAtoRE.isRegex(attrPath)) {
 				regexMap.put(attrPath, Pattern.compile(attrPath));
+			} else {
+				exactSet.add(attrPath);
 			}
 		}
 		if(regexMap.size() > 0) {
 			this.setRegexAttributes(regexMap);
+		}
+		if(exactSet.size() > 0) {
+			this.setExactAttributes(exactSet);
 		}
 
 		setExpanded(true);
@@ -580,6 +589,17 @@ public class AggregateView implements Comparable<AggregateView>, Vertex {
 		}
 		
 		return expandedAttributes;
+	}
+
+	@XmlTransient
+	public Set<String> getExactAttributes ()
+	{
+		return exactAttributes;
+	}
+
+	public void setExactAttributes (Set<String> exactAttributes)
+	{
+		this.exactAttributes = exactAttributes;
 	}
 
 	@XmlTransient

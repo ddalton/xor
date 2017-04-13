@@ -29,6 +29,7 @@ import tools.xor.Type;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
 import tools.xor.service.Shape;
+import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoNFA;
@@ -40,17 +41,20 @@ import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
 import tools.xor.view.QueryView;
+import tools.xor.view.QueryViewProperty;
 
 public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSparseGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger sgLogger = LogManager.getLogger(Constants.Log.STATE_GRAPH);
 
 	private static final String EMPTY_EDGE = "";
+	private static final String ALL = "_all_";
 
 	private Type root; // aggregate rooted at this type
 	private Map<Type, V> states = new HashMap<Type, V>();
 	private Map<V, Map<String, E>> outTransitions = new HashMap<V, Map<String, E>>(); 
-	private Map<Type, List<Property>> attrByType = new HashMap<Type, List<Property>>();
+	//private Map<Type, List<Property>> attrByType = new HashMap<Type, List<Property>>();
+	private Map<Type, Map<String, List<Property>>> attrByType = new HashMap<Type, Map<String, List<Property>>>();
 	private Shape shape; // The shape of type system on which this state graph is based
 	
 	public StateGraph(Type aggregateRoot, Shape shape) {
@@ -111,6 +115,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 	@Override
 	public void addVertex(V vertex) {
+		if(containsVertex(vertex)) {
+			return;
+		}
+
 		super.addVertex(vertex);
 		this.states.put(vertex.getType(), vertex);
 	}
@@ -182,15 +190,21 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * @param type of the vertex
 	 * @return list of properties
 	 */
-	public List<Property> next(Type type) {
+	public List<Property> next(Type type, String propertyPath, Set<String> exactSet) {
 
 		// Ensure the type is coerced to the correct shape
 		if(shape != null) {
 			type = shape.getType(type.getName());
 		}
 
+		String key = propertyPath;
+		if(key == null || "".equals(key)) {
+			key = ALL;
+		}
 		if(attrByType.containsKey(type)) {
-			return attrByType.get(type);
+			if(attrByType.get(type).containsKey(key)) {
+				return attrByType.get(type).get(key);
+			}
 		}
 		
 		V vertex = getVertex(type);
@@ -208,23 +222,49 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			System.out.println("Type: " + type + ", Cannot find the vertex of type " + type.getName() + " in the state graph of entity " + getRootState().getName());
 			
 			throw new IllegalArgumentException("Type: " + type + ", Cannot find the vertex of type " + type.getName() + " in the state graph of entity " + getRootState().getName());
-		} 
-		
-		List<Property> result = new ArrayList<Property>();
-		
-		// Add simple attributes
-		for(String simpleAttribute: vertex.getAttributes()) {
-			result.add(vertex.getType().getProperty(simpleAttribute));
 		}
 
-		// Add entity attributes
-		for(Edge e: getOutEdges(vertex)) {
-			if(EMPTY_EDGE.equals(e.getName())) {
+		Map<String, List<Property>> propertyMap = attrByType.get(type);
+		if(propertyMap == null) {
+			propertyMap = new HashMap();
+		}
+		
+		List<Property> result = new ArrayList<Property>();
+
+		if(exactSet != null && exactSet.size() > 0) {
+			// filter the exactSet by propertyPath
+			for(String path: exactSet) {
+				if(path.startsWith(propertyPath)) {
+					if(path.equals(propertyPath)) {
+						// If it equals it, it is a reference association
+						for(String propertyName: AggregatePropertyPaths.enumerateRef(type)) {
+							result.add(type.getProperty(propertyName));
+						}
+					} else {
+						int delimLen = propertyPath.length() > 0 ? Settings.PATH_DELIMITER.length() : 0;
+						String remaining = path.substring(propertyPath.length()+delimLen);
+						result.add(type.getProperty(QueryViewProperty.getRootName(remaining)));
+					}
+				}
+			}
+ 		}
+
+		// Previous call was using MatchType.TYPE so add the attributes from the vertex
+		if(result.size() == 0 || exactSet == null || exactSet.size() == 0) {
+			// Addresses scope extension using AssociationSetting with MatchType.PATH
+			for (String simpleAttribute : vertex.getAttributes()) {
+				result.add(vertex.getType().getProperty(simpleAttribute));
+			}
+		}
+
+		// Addresses scope extension using AssociationSetting with MatchType.TYPE
+		for (Edge e : getOutEdges(vertex)) {
+			if (EMPTY_EDGE.equals(e.getName())) {
 				continue;
 			}
 			result.add(vertex.getType().getProperty(e.getName()));
 		}
-		attrByType.put(type, result);
+		propertyMap.put(key, result);
 		
 		return result;
 	}

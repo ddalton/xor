@@ -427,4 +427,124 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		assert(json != null);
 		assert(json.has("quote"));
 	}
+
+	@Test
+	public void checkReference()
+	{
+
+		// First create a natural key for Task based on name
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType externalTask = (EntityType)das.getExternalType(Task.class);
+		EntityType domainTask = (EntityType)das.getType(Task.class);
+		String[] key = { "name" };
+		externalTask.setNaturalKey(key);
+		domainTask.setNaturalKey(key);
+
+		try {
+			// Create the aggregate root entity
+			Task task = new Task();
+			task.setName("ROOT");
+			task.setDisplayName("Setup DSL");
+			task.setDescription("Setup high-speed broadband internet using DSL technology");
+
+			// Create the OneToOne composition association
+			Task audit = new Task();
+			audit.setName("AUDIT");
+			audit.setDisplayName("Audit Task");
+			audit.setDescription("Audit of the DSL installation");
+			task.setAuditTask(audit);
+
+			// save the task
+			entityManager.persist(task);
+
+			// check reference
+			List<String> paths = new ArrayList<>();
+			paths.add("name");
+			paths.add("auditTask");
+			AggregateView refView = new AggregateView("REFERENCE");
+			refView.setAttributeList(paths);
+			Settings settings = new Settings();
+			settings.setView(refView);
+
+			Task queryTask = new Task();
+			queryTask.setId(task.getId());
+			JSONObject json = (JSONObject) aggregateManager.read(queryTask, settings);
+
+			assert(json != null);
+			assert(json.get("auditTask") != null);
+		} finally {
+
+			// reset
+			externalTask.setNaturalKey(null);
+			domainTask.setNaturalKey(null);
+		}
+	}
+
+	/**
+	 * Change the audit task value
+	 */
+	@Test
+	public void checkReferenceUpdate()
+	{
+
+		// First create a natural key for Task based on name
+		DataAccessService das = aggregateManager.getDAS();
+		EntityType externalTask = (EntityType)das.getExternalType(Task.class);
+		EntityType domainTask = (EntityType)das.getType(Task.class);
+		String[] key = { "name" };
+		externalTask.setNaturalKey(key);
+		domainTask.setNaturalKey(key);
+
+		try {
+			// Create the aggregate root entity
+			Task task = new Task();
+			task.setName("ROOT");
+			task.setDisplayName("Setup DSL");
+			task.setDescription("Setup high-speed broadband internet using DSL technology");
+
+			// Create the OneToOne composition association
+			Task audit = new Task();
+			audit.setName("AUDIT");
+			audit.setDisplayName("Audit Task");
+			audit.setDescription("Audit of the DSL installation");
+			task.setAuditTask(audit);
+
+			// save the task
+			entityManager.persist(task);
+
+			Task auditNew = new Task();
+			auditNew.setName("AUDITNEW");
+			auditNew.setDisplayName("New Audit Task");
+			auditNew.setDescription("New Audit of the DSL installation");
+			entityManager.persist(auditNew);
+			entityManager.flush();
+
+			// check reference
+			List<String> paths = new ArrayList<>();
+			paths.add("auditTask");
+			AggregateView refView = new AggregateView("REFERENCE_UPDATE");
+			refView.setAttributeList(paths);
+			Settings settings = new Settings();
+			settings.setView(refView);
+
+			JSONObject json = new JSONObject();
+			json.put("id", task.getId());
+			JSONObject auditJson = new JSONObject();
+			auditJson.put("name", "AUDITNEW");
+			json.put("auditTask", auditJson);
+			settings.setEntityClass(Task.class);
+
+			assert(task.getAuditTask().getId().equals(audit.getId()));
+			Task updatedTask = (Task) aggregateManager.update(json, settings);
+
+			assert(updatedTask != null);
+			assert(updatedTask.getAuditTask() != null);
+			assert(updatedTask.getAuditTask().getId().equals(auditNew.getId()));
+		} finally {
+
+			// reset
+			externalTask.setNaturalKey(null);
+			domainTask.setNaturalKey(null);
+		}
+	}
 }

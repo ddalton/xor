@@ -156,7 +156,7 @@ For example, if a large graph is being generated, then for a sparseness value of
 
 Using the above model, the following code has the global value is configured as 0.2f and the dependants collection relationship set to 0.1f.
 
-```
+```java
 Settings settings = new Settings();
 settings.setSparseness(0.2f);
 settings.getCollectionSparseness().put("dependants", 0.1f);

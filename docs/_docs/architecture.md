@@ -199,7 +199,7 @@ Consider the example below depicting the relationship between two aggregates. Th
 
 In JPA the following code is necessary to save the Department object sucessfully without throwing an exception:
 
-```
+```java
 @PersistenceContext
 EntityManager entityManager;
 
@@ -217,7 +217,7 @@ If there are large number of such relationships, then this order of persist oper
 
 Using XOR, this can be simplified with just one operation:
 
-```
+```java
 Head h = new Head();
 h.setName("Isaac Newton");
 

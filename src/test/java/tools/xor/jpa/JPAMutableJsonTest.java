@@ -547,4 +547,57 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			domainTask.setNaturalKey(null);
 		}
 	}
+
+	@Test
+	public void queryEntity() throws Exception
+	{
+		Settings settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+
+		aggregateService.importCSV("bulk/", settings);
+
+		// query the task object
+		settings = new Settings();
+		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setView(aggregateService.getView("TASKCHILDREN"));
+		List<?> result = aggregateService.query(null, settings);
+
+		// Contained objects are not included
+		assert(result.size() == 1);
+	}
+
+	@Test public void updateSingleField() {
+
+		final String NEW_DESC = "New description";
+
+		// Create the aggregate root entity
+		Task task = new Task();
+		task.setName("ROOT");
+		task.setDisplayName("Setup DSL");
+		task.setDescription("Setup high-speed broadband internet using DSL technology");
+		entityManager.persist(task);
+		entityManager.flush();
+
+		Settings settings = new Settings();
+		List<String> attributes = new ArrayList();
+		attributes.add("description");
+		AggregateView view = new AggregateView("DESC");
+		view.setAttributeList(attributes);
+		settings.setView(view);
+		settings.setEntityClass(Task.class);
+
+		JSONObject json = new JSONObject();
+		json.put("id", task.getId());
+		json.put("description", NEW_DESC);
+
+		aggregateService.update(json, settings);
+
+		// Now read it
+		json = new JSONObject();
+		json.put("id", task.getId());
+		json = (JSONObject)aggregateService.read(json, settings);
+
+		assert(json != null);
+		assert(json.getString("description").equals(NEW_DESC));
+	}
 }

@@ -77,9 +77,11 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class AggregateManager implements Xor
@@ -664,6 +666,10 @@ public class AggregateManager implements Xor
 
 		// Convert to domain model instance first
 		if(oc.getTypeMapper().isExternal(entity.getClass())) {
+			Settings s = new Settings();
+			s.setEntityClass(settings.getEntityClass());
+			s.setEntityType(settings.getEntityType());
+			s.setView(settings.getView().copy());
 			ObjectCreator domainOC = new ObjectCreator(
 				settings,
 				getDAS(),
@@ -671,6 +677,22 @@ public class AggregateManager implements Xor
 				MapperDirection.DOMAINTOEXTERNAL);
 
 			Type type = getEntityType(entity, oc, settings);
+
+			// Make sure to add id and key
+			Set<String> attrs = new HashSet<>(s.getView().getAttributeList());
+			if(type instanceof EntityType) {
+				EntityType entityType = (EntityType) type;
+				if(entityType.getIdentifierProperty() != null) {
+					attrs.add(entityType.getIdentifierProperty().getName());
+				}
+				if(entityType.getNaturalKey() != null) {
+					for(String keyName: entityType.getExpandedNaturalKey()) {
+						attrs.add(keyName);
+					}
+				}
+				s.getView().setAttributeList(new ArrayList(attrs));
+			}
+
 			BusinessObject fromExternal = domainOC.createDataObject(
 				entity,
 				type,
@@ -679,7 +701,7 @@ public class AggregateManager implements Xor
 
 			// convert to a Domain model instance
 			settings.setAction(AggregateAction.TO_DOMAIN);
-			from = (BusinessObject)fromExternal.toDomain(settings);
+			from = (BusinessObject)fromExternal.toDomain(s);
 		}
 
 		if (isWrapper) {
@@ -1240,7 +1262,8 @@ public class AggregateManager implements Xor
 	public void importCSV (String filePath, Settings settings) throws Exception
 	{
 		ExportImport exim = new CSVExportImport(this);
-		exim.importAggregate(filePath, settings);
+		Object obj = exim.importAggregate(filePath, settings);
+		assert(obj != null);
 	}
 
 	@Override

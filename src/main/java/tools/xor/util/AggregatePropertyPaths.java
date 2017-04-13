@@ -19,8 +19,10 @@
 
 package tools.xor.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +31,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
@@ -88,12 +91,28 @@ public class AggregatePropertyPaths {
 	
 	public static Set<String> enumerateBase(Type aggregateType) {
 		Set<String> paths = basePaths.get(aggregateType);
+
+		boolean includeEmbedded = false;
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.INCLUDE_EMBEDDED)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.INCLUDE_EMBEDDED)) {
+			includeEmbedded = true;
+		}
 		
 		if(!basePaths.containsKey(aggregateType)) {
 			paths  = new HashSet<String>();
 			for(Property property: aggregateType.getProperties()) {
 				if(isSimpleProperty(property)) {
 					paths.add(property.getName());
+				} else if ( property.getType() instanceof EntityType && ((EntityType)property.getType()).isEmbedded()) {
+					if(includeEmbedded) {
+						List embeddedPaths = new ArrayList();
+						for (String embeddedPath : property.expand(new HashSet<Type>())) {
+							if (!embeddedPath.startsWith(Constants.XOR.IDREF)) {
+								embeddedPaths.add(embeddedPath);
+							}
+						}
+						paths.addAll(embeddedPaths);
+					}
 				}
 			}
 			basePaths.put(aggregateType, paths);

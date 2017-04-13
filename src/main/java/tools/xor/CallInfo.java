@@ -280,8 +280,16 @@ public class CallInfo {
 					+ " domain type: " + ((EntityType)type).getDomainType().getName());
 			logger.debug("State graph is " + ( (sg==null) ? "NOT":"") + " present");
 		}
-		
-		List<Property> exactProperties = ((AbstractType)type).getProperties(sg.next( ((EntityType)type).getDomainType() ), settings.getApiVersion());
+
+		if(!settings.getView().isExpanded()) {
+			settings.getView().expand();
+		}
+
+		// The state graph has full blown attributes for the type
+		// We need to get only the exact properties
+		List<Property> exactProperties = ((AbstractType)type).getProperties(
+			sg.next(((EntityType)type).getDomainType(), getInputPropertyPath(), settings.getView().getExactAttributes()),
+			settings.getApiVersion());
 
 		if(settings.getView().getRegexAttributes() != null) {
 			// Get the RegEx properties

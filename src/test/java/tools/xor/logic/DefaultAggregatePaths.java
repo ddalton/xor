@@ -126,7 +126,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		Type task = das.getType(Task.class);
 		AggregateView view = aggregateManager.getDAS().getView((EntityType) task);
-		List<Property> properties = view.getStateGraph((EntityType) task).next(task);
+		List<Property> properties = view.getStateGraph((EntityType) task).next(task, null, null);
 		
 		List<String> propertyNames = new ArrayList<String>();
 		for(Property p: properties) {

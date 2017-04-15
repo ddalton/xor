@@ -137,14 +137,14 @@ public class AbstractDBTest {
 	protected Settings getSettings() {
 	  // Be default we treat technician to be part of the aggregate
 		Settings settings = new Settings();
-		settings.addAssociation( new AssociationSetting(Technician.class));
-		settings.addAssociation( new AssociationSetting("auditTask"));
-		settings.addAssociation( new AssociationSetting("auditedTask"));	
-		settings.addAssociation( new AssociationSetting("alternateTask"));
-		settings.addAssociation( new AssociationSetting("taskParent"));
-		settings.addAssociation( new AssociationSetting("assignedTo"));	
-		settings.addAssociation( new AssociationSetting("auditTask.name"));
-		settings.addAssociation( new AssociationSetting("auditedTask.name"));	
+		settings.expand(new AssociationSetting(Technician.class));
+		settings.expand(new AssociationSetting("auditTask"));
+		settings.expand(new AssociationSetting("auditedTask"));
+		settings.expand(new AssociationSetting("alternateTask"));
+		settings.expand(new AssociationSetting("taskParent"));
+		settings.expand(new AssociationSetting("assignedTo"));
+		settings.expand(new AssociationSetting("auditTask.name"));
+		settings.expand(new AssociationSetting("auditedTask.name"));
 	  
 	  return settings;
 	}	

@@ -31,7 +31,6 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Department;
 import tools.xor.db.common.Head;
-import tools.xor.db.pm.Task;
 import tools.xor.logic.DefaultMappedBy;
 import tools.xor.service.DataAccessService;
 
@@ -92,7 +91,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 		Type deptType = das.getType(Department.class);
 		Settings settings = new Settings();
 		settings.setEntityType(deptType);
-		settings.addAssociation(new AssociationSetting(Head.class));
+		settings.expand(new AssociationSetting(Head.class));
 		settings.init(das.getShape());
 
 		aggregateManager.create(d, settings);
@@ -112,7 +111,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 		Settings settings = new Settings();
 		settings.setPostFlush(true);
 		settings.setEntityType(deptType);
-		settings.addAssociation(new AssociationSetting(Head.class));
+		settings.expand(new AssociationSetting(Head.class));
 		settings.init(das.getShape());
 
 		d = (Department)aggregateManager.create(d, settings);

@@ -938,7 +938,7 @@ public class AggregateManager implements Xor
 	@Override
 	public Object update (Object inputObject, Class<?> entityClass)
 	{
-		return update(inputObject, new Settings.SettingsBuilder().entityClass(entityClass).build());
+		return update(inputObject, getDAS().settings().aggregate(entityClass).build());
 	}
 
 	@Override

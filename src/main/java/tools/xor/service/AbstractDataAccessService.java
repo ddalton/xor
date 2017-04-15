@@ -377,4 +377,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			property.setGenerator(gen);
 		}
 	}
+
+	public Settings.SettingsBuilder settings() {
+		Settings.SettingsBuilder result = new Settings.SettingsBuilder(getShape());
+		return result;
+	}
 }

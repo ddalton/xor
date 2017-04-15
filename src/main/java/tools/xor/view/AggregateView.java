@@ -60,10 +60,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public static final String VIEW_REFERENCE_PREFIX_REGEX = "^(.*)\\[\\s*\\w+\\s*\\].*";
 	public static final String REGEX_STRING = "[\\*\\?\\+\\[\\{\\|\\(\\)\\^\\$]";
 	public static final Pattern REGEX_STRING_MATCHER = Pattern.compile(REGEX_STRING);
-	
-	public static final String BASE = "BASE_";
+
 	public static final String DOMAIN = "DOMAIN:";
-	public static final String REF = "REF_";
 	public static final String RECURSIVE = "RECURSIVE_"; // TODO: is this needed?
 
 	// The user can specify child branches if necessary directly. 
@@ -352,16 +350,28 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return result;
 	}
 
+	public static boolean isBuiltInView(String viewName) {
+		for(ViewType viewType: ViewType.values()) {
+			if(viewName.endsWith(viewType.toString())) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	public Class inferDomainClass() {
 		String suffix = null;
 		Class result = null;
 
-		if(name.endsWith(BASE)) {
-			suffix = Settings.URI_PATH_DELIMITER + BASE;
-		} else if(name.endsWith(DOMAIN)) {
-			suffix = Settings.URI_PATH_DELIMITER + DOMAIN;
+		for(ViewType viewType: ViewType.values()) {
+			if(name.endsWith(viewType.toString())) {
+				suffix = Settings.URI_PATH_DELIMITER + viewType.toString();
+				break;
+			}
 		}
+
 		if(suffix != null) {
 			String encodedName = name.substring(0, name.indexOf(suffix));
 			String className = Settings.decodeParam(encodedName);

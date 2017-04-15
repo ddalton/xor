@@ -71,7 +71,7 @@ public class DefaultReadOperation extends AbstractDBTest {
 		assert(task.getAssignedTo().getId() != null);
 
 		Settings settings = getSettings();
-		settings.addAssociation( new AssociationSetting("assignedTo.name"));
+		settings.expand(new AssociationSetting("assignedTo.name"));
 		task = (Task) aggregateService.read(task, settings);  // treat Technician association as "part of"	
 
 		assert(task.getId() != null);

@@ -114,7 +114,7 @@ public class AggregateViewFactory {
 		return result;
 	}	
 	
-	private void groupByPackage(Type type, AggregateView av, Map<String, AggregateViews> viewsByPackage) {
+	private void groupByPackage(Type type, View av, Map<String, AggregateViews> viewsByPackage) {
 		String packageName = type.getInstanceClass().getPackage().getName();
 		
 		AggregateViews views = viewsByPackage.get(packageName);
@@ -126,7 +126,7 @@ public class AggregateViewFactory {
 		if(views.getAggregateView() == null) {
 			views.setAggregateView(new HashSet<AggregateView>());
 		}
-		views.getAggregateView().add(av);
+		views.getAggregateView().add((AggregateView)av);
 	}
 	
 	private void writeToFile(AggregateManager am, Map<String, AggregateViews> viewsByPackage) {
@@ -148,31 +148,31 @@ public class AggregateViewFactory {
 	public void generateQueries(AggregateManager am) {
 		
 		// The views have the paths populated
-		List<AggregateView> views = am.getDAS().getViews();
+		List<View> views = am.getDAS().getViews();
 		
 		// Categorize the views by package
 		Map<String, AggregateViews> viewsByPackage = new HashMap<String, AggregateViews>();		
 		
 		// Now generate the query for each views
-		for(AggregateView av: views) {
+		for(View av: views) {
 			// Before creating the QueryView, save away all the loop based attributes 
 			// and put them in a new view called AggregateView.RECURSIVE 
-			List<String> recursiveAttributes = extractRecursiveAttributes(av);
+			List<String> recursiveAttributes = extractRecursiveAttributes((AggregateView)av);
 			
 			// skip views not related to a type
-			if(av.typeName == null) {
+			if(av.getTypeName() == null) {
 				continue;
 			}
-			System.out.println("**** AggregateTye: " + av.typeName + ", attribute size: " + av.getAttributeList().size());
-			Type type = am.getDAS().getType(av.typeName);
+			System.out.println("**** AggregateTye: " + av.getTypeName() + ", attribute size: " + av.getAttributeList().size());
+			Type type = am.getDAS().getType(av.getTypeName());
 			groupByPackage(type, av, viewsByPackage);
 			
 			ViewKey viewKey = new ViewKey(type, av.getName(), false);
-			QueryView queryView = new QueryView(viewKey, av);
+			QueryView queryView = new QueryView(viewKey, (AggregateView)av);
 			
 			// Extract system generated OQL query 
 			List<AggregateView> parallelViews = queryView.extractViews(am);
-			av.setSystemOQLQuery( (new OQLQuery()).generateQuery(am, queryView) );
+			((AggregateView)av).setSystemOQLQuery( (new OQLQuery()).generateQuery(am, queryView) );
 
 			// Create a new Aggregate view based on the recursive attributes
 			AggregateView recursiveView = new AggregateView();
@@ -186,7 +186,7 @@ public class AggregateViewFactory {
 			}
 			
 			// Add the children views to the aggregate view
-			av.setChildren(parallelViews);
+			((AggregateView)av).setChildren(parallelViews);
 		}
 		
 		writeToFile(am, viewsByPackage);

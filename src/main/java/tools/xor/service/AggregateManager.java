@@ -62,10 +62,10 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
 import tools.xor.util.graph.ObjectGraph;
-import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Filter;
 import tools.xor.view.TypeVersion;
+import tools.xor.view.View;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -397,14 +397,14 @@ public class AggregateManager implements Xor
 			}
 
 			if (sgLogger.isDebugEnabled()) {
-				if (settings.getView().getStateGraph() != null) {
+				if (settings.getView().getTypeGraph((EntityType)settings.getEntityType()) != null) {
 					if (sgLogger.isTraceEnabled()) {
 						sgLogger.trace(getStackTrace(10));
 					}
 					sgLogger.debug(
 						"State graph of Entity: " + settings.getEntityType().getName()
 							+ " for view: " + settings.getView().getName());
-					sgLogger.debug(settings.getView().getStateGraph((EntityType)settings.getEntityType()).dumpState());
+					sgLogger.debug(settings.getView().getTypeGraph((EntityType)settings.getEntityType()).dumpState());
 				}
 			}
 		}
@@ -549,7 +549,7 @@ public class AggregateManager implements Xor
 	 * @param viewName name of view
 	 * @return AggregateView
 	 */
-	public AggregateView getView (String viewName)
+	public View getView (String viewName)
 	{
 		return getDAS().getView(viewName);
 	}

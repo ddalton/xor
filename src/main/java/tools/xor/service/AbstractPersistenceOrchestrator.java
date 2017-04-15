@@ -20,7 +20,6 @@
 package tools.xor.service;
 
 import java.io.Serializable;
-import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +27,6 @@ import java.util.Set;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import org.hibernate.LockOptions;
 import tools.xor.AbstractBO;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
@@ -40,8 +38,8 @@ import tools.xor.Settings;
 import tools.xor.TypeMapper;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
-import tools.xor.view.AggregateView;
 import tools.xor.view.StoredProcedure;
+import tools.xor.view.View;
 
 public abstract class AbstractPersistenceOrchestrator implements PersistenceOrchestrator {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -200,9 +198,9 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	{
 		Object instance = null;
 
-		AggregateView view = settings.getView();
+		View view = settings.getView();
 		EntityType type = (EntityType)settings.getEntityType();
-		if (view.getStateGraph(type).supportsDynamicUpdate()) {
+		if (view.getTypeGraph(type).supportsDynamicUpdate()) {
 
 			EntityType entityType = (EntityType)settings.getEntityType();
 			ObjectCreator oc = input.getObjectCreator();

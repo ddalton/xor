@@ -1,13 +1,10 @@
 package tools.xor.util.graph;
 
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.SparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
-import org.antlr.stringtemplate.language.ArrayWrappedInList;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import tools.xor.AbstractType;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
@@ -26,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -139,7 +135,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	public void persistGraph(ObjectCreator objectCreator, Settings settings) {
 
 		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
-		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph(entityType);
+		TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
 		persistRoots(objectCreator, sg);
 
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.ACTIVATE_DETECTORS)
@@ -168,7 +164,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	public void deleteGraph(ObjectCreator objectCreator, Settings settings) {
 
 		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
-		StateGraph<State, Edge<State>> sg = settings.getView().getStateGraph(entityType);
+		TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
 		deleteRoots(objectCreator, sg);
 	}
 
@@ -344,10 +340,10 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	}
 	
 	class StateComparator implements Comparator<V> {
-		StateGraph<State, Edge<State>> sg;
+		TypeGraph<State, Edge<State>> sg;
 		private boolean areTypesOrdered;
 		
-		public StateComparator(StateGraph<State, Edge<State>> sg) {
+		public StateComparator(TypeGraph<State, Edge<State>> sg) {
 			this.sg = sg;
 
 			areTypesOrdered = (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
@@ -421,7 +417,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	    }
 	}	
 	
-	private void persistRoots(ObjectCreator objectCreator, StateGraph<State, Edge<State>> sg) {
+	private void persistRoots(ObjectCreator objectCreator, TypeGraph<State, Edge<State>> sg) {
 	
 		Date start = new Date();
 		List<V> aggregateRoots = new ArrayList<V>(discoverAggregateRoots(objectCreator));
@@ -435,7 +431,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		}
 	}
 
-	private void deleteRoots(ObjectCreator objectCreator, StateGraph<State, Edge<State>> sg) {
+	private void deleteRoots(ObjectCreator objectCreator, TypeGraph<State, Edge<State>> sg) {
 
 		Date start = new Date();
 		List<V> aggregateRoots = new ArrayList<V>(discoverAggregateRoots(objectCreator));

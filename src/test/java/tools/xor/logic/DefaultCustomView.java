@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
 import tools.xor.service.AggregateManager;
 import tools.xor.view.AggregateView;
+import tools.xor.view.View;
 
 public class DefaultCustomView extends AbstractDBTest {
 	@Autowired
@@ -32,7 +33,7 @@ public class DefaultCustomView extends AbstractDBTest {
 
 	public void checkCustomView() {
 
-		AggregateView customView = aggregateService.getView("CUSTOMVIEW");	
+		View customView = aggregateService.getView("CUSTOMVIEW");
 		
         assert(customView != null);		
 	}

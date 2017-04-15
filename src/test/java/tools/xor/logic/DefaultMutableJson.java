@@ -19,7 +19,6 @@
 
 package tools.xor.logic;
 
-import edu.uci.ics.jung.graph.Graph;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,10 +41,10 @@ import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
-import tools.xor.util.Edge;
-import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;
+import tools.xor.view.View;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -1080,7 +1079,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setEntityType(taskType);
 		settings.addAssociation(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 
 		settings.setSparseness(1.0f);
 		JSONObject task = (JSONObject) sg.generateObjectGraph(settings);
@@ -1112,7 +1111,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setEntityType(taskType);
 		settings.addAssociation(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 
 		JSONObject task = (JSONObject) sg.generateObjectGraph(new Settings());
 		System.out.println("Task name: " + task.get("name"));
@@ -1189,13 +1188,13 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	protected void generatePicture() {
 		DataAccessService das = aggregateService.getDAS();
 		EntityType personType = (EntityType) das.getType(Person.class);
-		AggregateView view = das.getBaseView(personType).copy();
+		View view = das.getBaseView(personType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.setEntityType(personType);
 
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(personType);
+		TypeGraph sg = settings.getView().getTypeGraph(personType);
 		JSONObject jsonObject = sg.generateObjectGraph(settings);
 
 		System.out.println("Generated jsonObject");
@@ -1256,7 +1255,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 			DataAccessService das = aggregateService.getDAS();
 
 			EntityType employeeType = (EntityType)das.getType(Employee.class);
-			AggregateView view = das.getBaseView(employeeType).copy();
+			View view = das.getBaseView(employeeType).copy();
 			Settings settings = new Settings();
 			settings.setView(view);
 			settings.setEntityType(employeeType);
@@ -1266,16 +1265,9 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 			settings.setEntitySize(EntitySize.LARGE);
 
 			settings.init(das.getShape());
-			StateGraph sg = settings.getView().getStateGraph(employeeType);
+			TypeGraph sg = settings.getView().getTypeGraph(employeeType);
 			settings.setGraphFileName("EmployeeStateGraph.png");
 			sg.generateVisual(settings);
-			System.out.println("!!!!!!!OUT EDGES: " + sg.getEdges().size());
-			for (Object edge : sg.getEdges()) {
-				Edge e = (Edge)edge;
-				System.out.println("Edge: " + e.toString());
-			}
-			Graph g = sg.getStateGraph(settings);
-			System.out.println("Total edges: " + g.getEdges().size());
 
 			settings.setSparseness(0.01f);
 			JSONObject employee = (JSONObject)sg.generateObjectGraph(settings);
@@ -1316,14 +1308,14 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		//das.initGenerators(inputStream);
 
 		EntityType taskType = (EntityType)das.getType(Task.class);
-		AggregateView view = das.getView(taskType).copy();
+		View view = das.getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.setEntityType(taskType);
 		settings.setEntitySize(EntitySize.LARGE);
 
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 		settings.setSparseness(0.01f);
 		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
 
@@ -1340,7 +1332,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		//das.initGenerators(inputStream);
 
 		EntityType taskType = (EntityType)das.getType(Task.class);
-		AggregateView view = das.getView(taskType).copy();
+		View view = das.getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.addAssociation(new AssociationSetting(Person.class));
@@ -1348,7 +1340,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setEntitySize(EntitySize.MEDIUM);
 
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 		settings.setSparseness(0.01f);
 		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
 
@@ -1363,7 +1355,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 
 		EntityType deptType = (EntityType)das.getType(Department.class);
-		AggregateView view = das.getView(deptType).copy();
+		View view = das.getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.addAssociation(new AssociationSetting(Employee.class));
@@ -1371,7 +1363,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setEntitySize(EntitySize.MEDIUM);
 
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(deptType);
+		TypeGraph sg = settings.getView().getTypeGraph(deptType);
 		settings.setGraphFileName("DeptStateGraph.png");
 		sg.generateVisual(settings);
 
@@ -1389,7 +1381,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 
 		EntityType deptType = (EntityType)das.getType(Department.class);
-		AggregateView view = das.getView(deptType).copy();
+		View view = das.getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.addAssociation(new AssociationSetting(Employee.class));
@@ -1397,7 +1389,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setEntitySize(EntitySize.MEDIUM);
 
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(deptType);
+		TypeGraph sg = settings.getView().getTypeGraph(deptType);
 
 		settings.setSparseness(0.1f);
 		JSONObject dept = (JSONObject)sg.generateObjectGraph(settings);
@@ -1419,7 +1411,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		das.initGenerators(inputStream);
 
 		EntityType taskType = (EntityType)das.getType(Task.class);
-		AggregateView view = das.getView(taskType).copy();
+		View view = das.getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.addAssociation(new AssociationSetting(Person.class));
@@ -1427,7 +1419,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.setEntitySize(EntitySize.MEDIUM);
 
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 		settings.setSparseness(0.01f);
 		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
 

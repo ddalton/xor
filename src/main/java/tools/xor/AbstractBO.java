@@ -31,7 +31,7 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
-import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.QueryViewProperty;
 
 import java.util.Collection;
@@ -1587,10 +1587,10 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 
 		State rootState = null;
-		StateGraph sg = null;
+		TypeGraph sg = null;
 		if(settings != null && settings.getView() != null) {
 			// Need to get the StateGraph from the domain type
-			sg = settings.getView().getStateGraph( ((EntityType)entityType).getDomainType() );
+			sg = settings.getView().getTypeGraph(((EntityType)entityType).getDomainType());
 			rootState = sg.getRootState();
 		}
 		createWrapper(settings, this, null, rootState, sg);
@@ -1644,7 +1644,7 @@ public abstract class AbstractBO implements BusinessObject {
 		return false;
 	}
 	
-	protected void createWrapper(Settings settings, BusinessObject parent, Property support, State state, StateGraph sg) {
+	protected void createWrapper(Settings settings, BusinessObject parent, Property support, State state, TypeGraph sg) {
 
 		parent.examine();
 		

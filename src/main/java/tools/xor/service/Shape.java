@@ -40,6 +40,8 @@ import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryViewProperty;
+import tools.xor.view.UnmodifiableView;
+import tools.xor.view.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,7 +64,7 @@ public class Shape
     protected DataAccessService das;
     protected String name;
     protected Shape parent;
-    protected Map<String, AggregateView> views = new ConcurrentHashMap<String, AggregateView>();
+    protected Map<String, View> views = new ConcurrentHashMap<String, View>();
 
     // This functionality helps to get the correct narrowed class (subtype) based on the properties
     // defined by the view
@@ -332,86 +334,89 @@ public class Shape
     public List<String> getViewNames() {
         List<String> result = new ArrayList<String>();
 
-        for(AggregateView view: views.values()) {
+        for(View view: views.values()) {
             result.add(view.getName());
         }
 
         return result;
     }
 
-    public AggregateView getView(String viewName) {
-        return views.get(viewName);
+    public View getView(String viewName) {
+        View existing = views.get(viewName);
+        return existing == null ? null : new UnmodifiableView(views.get(viewName));
     }
 
-    public List<AggregateView> getViews() {
-        return new ArrayList<AggregateView>(views.values());
+    public List<View> getViews() {
+        return new ArrayList<View>(views.values());
     }
 
-    public AggregateView getView(EntityType type) {
+    public View getView(EntityType type) {
 
         String viewName = AbstractType.getViewName(type);
-        AggregateView result = views.get(viewName);
+        View result = getView(viewName);
 
         if(result == null) {
             result = new AggregateView(type, viewName);
-            result.setShape(this);
             Set<String> paths = AggregatePropertyPaths.enumerate(type, this);
 
-            result.setAttributeList(new ArrayList<String>(paths));
-
             DFAtoRE dfaRE = new DFAtoRE(type, this);
-            result.addStateGraph(type, dfaRE.getFullStateGraph());
+            result.addTypeGraph(type, dfaRE.getFullStateGraph());
 
-            views.put(viewName, result);
+            updateView(result, viewName, paths);
         }
 
-        return result;
+        return getView(viewName);
     }
 
     public void addView(AggregateView view) {
         if(views.containsKey(view.getName())) {
             throw new RuntimeException("There is an existing view with this name: " + view.getName());
         }
+        if(!view.isExpanded()) {
+            view.expand();
+        }
 
         views.put(view.getName(), view);
     }
 
-    public AggregateView getBaseView(EntityType type) {
+    public View getBaseView(EntityType type) {
 
         String viewName = AbstractType.getBaseViewName(type);
-        AggregateView result = views.get(viewName);
+        View result = getView(viewName);
 
         if(result == null) {
-            result = new AggregateView();
-            result.setShape(this);
+            result = new AggregateView(type, viewName);
             Set<String> paths = AggregatePropertyPaths.enumerateBase(type);
 
-            result.setAttributeList(new ArrayList<String>(paths));
-            result.setName(viewName);
-
-            views.put(viewName, result);
+            updateView(result, viewName, paths);
         }
 
-        return result;
+        return getView(viewName);
     }
 
-    public AggregateView getRefView(EntityType type) {
+    public View getRefView(EntityType type) {
 
         String viewName = AbstractType.getRefViewName(type);
-        AggregateView result = views.get(viewName);
+        View result = getView(viewName);
 
         if(result == null) {
-            result = new AggregateView();
-            result.setShape(this);
+            result = new AggregateView(type, viewName);
             Set<String> paths = AggregatePropertyPaths.enumerateRef(type);
 
-            result.setAttributeList(new ArrayList<String>(paths));
-            result.setName(viewName);
-
-            views.put(viewName, result);
+            updateView(result, viewName, paths);
         }
 
-        return result;
+        return getView(viewName);
+    }
+
+    private void updateView(View view, String viewName, Set<String> paths) {
+        view.setAttributeList(new ArrayList<String>(paths));
+        view.setShape(this);
+
+        // built-in views are always expanded
+        ((AggregateView)view).setExpanded(true);
+
+        views.put(viewName, view);
     }
 
     /**
@@ -420,7 +425,7 @@ public class Shape
     private void denormalize() {
         checkViewCycles();
 
-        for(AggregateView view: views.values()) {
+        for(View view: views.values()) {
             if(view.hasViewReference()) {
                 view.expand();
             }
@@ -464,11 +469,11 @@ public class Shape
         DirectedGraph<AggregateView, Edge> dg = new DirectedSparseGraph<AggregateView, Edge>();
 
         // Add the views as state objects
-        for(AggregateView view: views.values()) {
+        for(View view: views.values()) {
             Set<String> viewReferences = view.getViewReferences();
             for(String edge: viewReferences) {
-                AggregateView start = view;
-                AggregateView end = views.get(edge);
+                AggregateView start = (AggregateView)view;
+                AggregateView end = (AggregateView)views.get(edge);
 
                 // self loop
                 if(start == end) {
@@ -524,7 +529,7 @@ public class Shape
 
         // do the population for all views
         Map<String, Class<?>> byViews = narrowedClassByView.get(superClass);
-        nextView: for(AggregateView view: views.values()) {
+        nextView: for(View view: views.values()) {
 
             Class<?> narrowedClass = null;
             Set multipleNarrowedClass = new HashSet();

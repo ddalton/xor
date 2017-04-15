@@ -19,25 +19,19 @@
 
 package tools.xor.logic;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.uci.ics.jung.graph.Graph;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.AssociationSetting;
-import tools.xor.EntitySize;
 import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -51,14 +45,12 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.MetaModel;
 import tools.xor.util.AggregatePropertyPaths;
-import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
-import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AggregateView;
-
+import tools.xor.util.graph.TypeGraph;
+import tools.xor.view.View;
 
 public class DefaultAggregatePaths extends AbstractDBTest {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -71,7 +63,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 
 		Type dir = das.getType(Directory.class);
-		AggregateView view = aggregateManager.getDAS().getView((EntityType) dir);
+		View view = aggregateManager.getDAS().getView((EntityType) dir);
 
 		Set<String> paths = AggregatePropertyPaths.enumerate(dir, das.getShape());
 		System.out.println("********* Directory model paths **********");
@@ -79,19 +71,9 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 			System.out.println(path);
 		}
 
-		Map<String, StateGraph<State, Edge<State>>> sgAll = view.getStateGraph();
-		System.out.println("********* Key **********");
-		for(Map.Entry<String, StateGraph<State, Edge<State>>> entry: sgAll.entrySet()) {
-			System.out.println(entry.getKey());
-			printGraph(entry.getValue());
-		}
-	}
-
-	private void printGraph(StateGraph<State, Edge<State>> sg) {
-
-		Map<Type, State> v = sg.getStates();
-		for(State s: v.values()) {
-			System.out.println("   " + s.getName());
+		TypeGraph<State, Edge<State>> sg = view.getTypeGraph((EntityType)dir);
+		if(sg != null) {
+			System.out.println(sg.toString());
 		}
 	}
 
@@ -125,8 +107,8 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type task = das.getType(Task.class);
-		AggregateView view = aggregateManager.getDAS().getView((EntityType) task);
-		List<Property> properties = view.getStateGraph((EntityType) task).next(task, null, null);
+		View view = aggregateManager.getDAS().getView((EntityType) task);
+		List<Property> properties = view.getTypeGraph((EntityType)task).next(task, null, null);
 		
 		List<String> propertyNames = new ArrayList<String>();
 		for(Property p: properties) {
@@ -622,7 +604,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		settings.setEntityType(taskType);
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 		settings.setGraphFileName("TaskStateGraph.png");
 		sg.generateVisual(settings);
 	}
@@ -635,7 +617,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		settings.setEntityType(taskType);
 		settings.addAssociation(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(taskType);
+		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 		settings.setGraphFileName("TaskInheritanceStateGraph.png");
 		sg.generateVisual(settings);
 	}
@@ -647,7 +629,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		settings.setEntityType(personType);
 		settings.init(das.getShape());
-		StateGraph sg = settings.getView().getStateGraph(personType);
+		TypeGraph sg = settings.getView().getTypeGraph(personType);
 		settings.setGraphFileName("PersonInheritanceStateGraph.png");
 		sg.generateVisual(settings);
 	}

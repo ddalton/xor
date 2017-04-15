@@ -4,7 +4,7 @@ import tools.xor.util.ClassUtil;
 
 import javax.persistence.ParameterMode;
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlTransient;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Blob;
@@ -45,8 +45,8 @@ public class ParameterMapping {
 	@XmlAttribute
 	int position;
 
-	static Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<Class, JavaConverter>();
-	static Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<Integer, SQLConverter>();
+	static final Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<>();
+	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
 /*
 
 	byte[]	VARBINARY or LONGVARBINARY
@@ -564,7 +564,21 @@ public class ParameterMapping {
 	}
 
 	public void setValue(CallableStatement cs, Object value) {
-		SQLConverter converter = convertersBySQLType.get(type);
+		int typeValue = 0;
+		try {
+			typeValue = Integer.parseInt(type);
+		}
+		catch (NumberFormatException e) {
+			// It is probably using the type name, so let us try to get it using reflection
+			try {
+				Field f = Types.class.getField(type);
+				typeValue = f.getInt(null);
+			}
+			catch (Exception e1) {
+				throw ClassUtil.wrapRun(e1);
+			}
+		}
+		SQLConverter converter = convertersBySQLType.get(typeValue);
 		try {
 			converter.javaToSQL(cs, position, value);
 		}

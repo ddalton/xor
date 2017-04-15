@@ -49,6 +49,7 @@ import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
 import tools.xor.view.AggregateView;
+import tools.xor.view.View;
 
 @Component
 public class ClassUtil {
@@ -379,7 +380,7 @@ public class ClassUtil {
 			return;
 		}
 
-		AggregateView view = settings.getView();
+		View view = settings.getView();
 		for(String propertyName: view.getAttributeList()) {
 			ExtendedProperty property = (ExtendedProperty) bo.getType().getProperty(propertyName);
 			if(property.isIdentifier()) {

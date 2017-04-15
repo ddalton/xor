@@ -54,8 +54,11 @@ import tools.xor.db.sp.SP;
 import tools.xor.logic.DefaultMutableJson;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.Constants;
+import tools.xor.util.Edge;
+import tools.xor.util.State;
 import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.AggregateView;
+import tools.xor.view.View;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })
@@ -416,7 +419,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// Now let us get the aggregate view
 		//settings.setView(das.getView(taskType));
 
-		AggregateView view = das.getView(taskType);
+		View view = das.getView(taskType);
 		settings.setView(view);
 		System.out.println("********Entity view******");
 		for(String path: view.getAttributeList()) {

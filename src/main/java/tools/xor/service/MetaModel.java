@@ -29,6 +29,7 @@ import tools.xor.Type;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryView;
+import tools.xor.view.View;
 
 public class MetaModel {
 
@@ -64,7 +65,7 @@ public class MetaModel {
 	}
 
 	public List<String> getViewAttributes(String viewName) {
-		AggregateView view = getDAS().getView(viewName);
+		View view = getDAS().getView(viewName);
 		return view.getAttributeList();
 	}
 

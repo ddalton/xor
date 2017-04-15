@@ -1,0 +1,66 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class UnmodifiableJoin extends Join
+{
+    private Join join;
+
+    public UnmodifiableJoin(Join join) {
+        this.join = join;
+    }
+
+    private void raiseException ()
+    {
+        throw new UnsupportedOperationException(
+            "Changes are not allowed on the join, make a copy of the view to make necessary changes.");
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        List result = new ArrayList(join.getParameter().size());
+        for(Parameter p: join.getParameter()) {
+            result.add(new UnmodifiableParam(p));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void setParameter (List<Parameter> parameter)
+    {
+        raiseException();
+    }
+
+    @Override
+    public String getEntity() {
+        return join.getEntity();
+    }
+
+    @Override
+    public void setEntity (String entity)
+    {
+        raiseException();
+    }
+
+}

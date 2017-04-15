@@ -47,10 +47,10 @@ import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
-import tools.xor.util.ClassUtil;
 import tools.xor.util.Detector;
-import tools.xor.view.AggregateView;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.Filter;
+import tools.xor.view.View;
 
 import javax.imageio.ImageIO;
 
@@ -105,7 +105,7 @@ public class Settings {
 	protected Type entityType;
 
 	// If the scope is ContentScope.VIEW then the actual view is referenced in this property
-	protected AggregateView view;
+	protected View view;
 
 	private AggregateAction action = AggregateAction.UPDATE; // specifies the type of action being performed that involves data change in the database
 
@@ -318,7 +318,11 @@ public class Settings {
 		init(this.view, null, shape);
 	}
 
-	public void init(AggregateView aView, Map<String, String> queryParams, Shape shape) {
+	private boolean hasAssociationSettings() {
+		return (associationSettings != null && associationSettings.size() > 0);
+	}
+
+	public void init(View aView, Map<String, String> queryParams, Shape shape) {
 
 		this.view = aView;
 		if(this.view == null) {
@@ -327,14 +331,19 @@ public class Settings {
 			}
 			//this.view = am.getDAS().getView( AbstractType.getViewName(entityType) );
 			this.view = shape.getView((EntityType)entityType);
+
+			// If the view is going to be modified make a copy of the built-in view
+			// We don't need to make a copy of a user provided view
+			if(hasAssociationSettings()) {
+				// Make a copy of the view and enhance it with the associations needed to be traversed
+				view = view.copy();
+			}
 		} else if(view.getName() == null || "".equals(view.getName().trim())) {
 			throw new IllegalStateException("A name for the AggregateView is required");
 		}
 
-		if(associationSettings != null && associationSettings.size() > 0) {
-			// Make a copy of the view and enhance it with the associations needed to be traversed
-			view = view.copy();
-			view.getStateGraph((EntityType) entityType).enhance(associationSettings, shape);
+		if(hasAssociationSettings()) {
+			((StateGraph)view.getTypeGraph((EntityType)entityType)).enhance(associationSettings, shape);
 		}
 
 		this.filters = populateFilters(queryParams);
@@ -451,7 +460,7 @@ public class Settings {
 		return param.replace(PATH_DELIMITER, URI_PATH_DELIMITER);
 	}
 
-	public AggregateView getView() {
+	public View getView () {
 		return view;
 	}
 
@@ -459,7 +468,7 @@ public class Settings {
 	 * Set a simple view, i.e., one that does not need a StateGraph @see init
 	 * @param view in effect
 	 */
-	public void setView(AggregateView view) {
+	public void setView(View view) {
 		this.view = view;
 	}
 

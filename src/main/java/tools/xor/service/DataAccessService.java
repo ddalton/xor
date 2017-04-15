@@ -32,6 +32,7 @@ import tools.xor.TypeNarrower;
 import tools.xor.util.PersistenceType;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryBuilder;
+import tools.xor.view.View;
 
 /**
  * 
@@ -164,7 +165,7 @@ public interface DataAccessService {
 	 * @param viewName view name
 	 * @return AggregateView object
 	 */
-	public AggregateView getView(String viewName);
+	public View getView(String viewName);
 
 	/**
 	 * Get the default view for the aggregate rooted at entityType
@@ -172,7 +173,7 @@ public interface DataAccessService {
 	 * @param entityType type
 	 * @return AggregateView object
 	 */
-	public AggregateView getView(EntityType entityType);
+	public View getView(EntityType entityType);
 
 	/**
 	 * Add a view programmatically.
@@ -185,7 +186,7 @@ public interface DataAccessService {
 	 * Get a list of all the default generated views
 	 * @return list of views
 	 */
-	public List<AggregateView> getViews();	
+	public List<View> getViews();
 	
 	/**
 	 * Get the default view of just the base properties of the 
@@ -195,7 +196,7 @@ public interface DataAccessService {
 	 * @param entityType type
 	 * @return AggregateView object
 	 */
-	public AggregateView getBaseView(EntityType entityType);	
+	public View getBaseView(EntityType entityType);
 
 	/**
 	 * Get a list of all the views in the system

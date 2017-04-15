@@ -60,6 +60,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
+import tools.xor.view.ViewType;
 
 public abstract class AbstractType implements EntityType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -155,13 +156,17 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	public static String getViewName(Type type) {
-		return ClassUtil.getBucketName(type.getInstanceClass());
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		sb.append(Settings.URI_PATH_DELIMITER);
+		sb.append(ViewType.AGGREGATE);
+
+		return sb.toString();
 	}
 	
 	public static String getBaseViewName(Type type) {
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
-		sb.append(AggregateView.BASE);
+		sb.append(ViewType.BASE);
 		
 		return sb.toString();
 	}
@@ -169,7 +174,7 @@ public abstract class AbstractType implements EntityType {
 	public static String getRefViewName(Type type) {
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
-		sb.append(AggregateView.REF);
+		sb.append(ViewType.REF);
 
 		return sb.toString();
 	}

@@ -49,8 +49,10 @@ import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.Detector;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
 import tools.xor.view.View;
+import tools.xor.view.ViewType;
 
 import javax.imageio.ImageIO;
 
@@ -306,7 +308,7 @@ public class Settings {
 		this.detailStrategy = detailStrategy;
 	}
 
-	public void addAssociation(AssociationSetting associationSetting) {
+	public void expand (AssociationSetting associationSetting) {
 		this.associationSettings.add(associationSetting);
 	}
 
@@ -332,17 +334,16 @@ public class Settings {
 			//this.view = am.getDAS().getView( AbstractType.getViewName(entityType) );
 			this.view = shape.getView((EntityType)entityType);
 
-			// If the view is going to be modified make a copy of the built-in view
-			// We don't need to make a copy of a user provided view
-			if(hasAssociationSettings()) {
-				// Make a copy of the view and enhance it with the associations needed to be traversed
-				view = view.copy();
-			}
 		} else if(view.getName() == null || "".equals(view.getName().trim())) {
 			throw new IllegalStateException("A name for the AggregateView is required");
 		}
 
 		if(hasAssociationSettings()) {
+			// If the view is going to be modified make a copy of the built-in view
+			// We don't need to make a copy of a user provided view
+			if(AggregateView.isBuiltInView(view.getName())) {
+				view = view.copy();
+			}
 			((StateGraph)view.getTypeGraph((EntityType)entityType)).enhance(associationSettings, shape);
 		}
 
@@ -688,10 +689,6 @@ public class Settings {
 		this.baseline = domain;
 	}
 	
-	private Settings(SettingsBuilder builder) {
-		this.entityClass = builder.entityClass;
-	}
-	
 	public boolean isAutoWire() {
 		return autoWire;
 	}
@@ -701,15 +698,60 @@ public class Settings {
 	}
 
 	public static class SettingsBuilder {
-		private Class<?> entityClass;
+		private Shape shape;
+		Settings settings;
+
+		public SettingsBuilder(Shape shape) {
+			this.shape = shape;
+			this.settings = new Settings();
+		}
+
+		private void createView(Class clazz, ViewType builtInType) {
+			Type type = (EntityType)shape.getType(clazz);
+			EntityType entityType;
+			if(type instanceof EntityType) {
+				entityType = (EntityType) type;
+			} else {
+				throw new RuntimeException("Class is not an entity: " + clazz.getName());
+			}
+
+			settings.setEntityType(type);
+
+			switch(builtInType) {
+			case BASE:
+				settings.setView(shape.getBaseView(entityType));
+				break;
+			case AGGREGATE:
+				settings.setView(shape.getView(entityType));
+				break;
+			case REF:
+				settings.setView(shape.getRefView(entityType));
+				break;
+			default:
+				throw new RuntimeException("Unknown built-in view type: " + builtInType);
+			}
+		}
 		
-		public SettingsBuilder entityClass(Class<?> clazz) {
-			this.entityClass = clazz;
+		public SettingsBuilder base(Class<?> clazz) {
+			createView(clazz, ViewType.BASE);
+
+			return this;
+		}
+
+		public SettingsBuilder aggregate(Class<?> clazz) {
+			createView(clazz, ViewType.AGGREGATE);
+
+			return this;
+		}
+
+		public SettingsBuilder expand(AssociationSetting setting) {
+			this.settings.expand(setting);
 			return this;
 		}
 		
 		public Settings build() {
-			return new Settings(this);
+			settings.init(shape);
+			return this.settings;
 		}
 	}
 	
@@ -833,6 +875,5 @@ public class Settings {
 			// Exception handling
 		}
 	}
-
 
 }

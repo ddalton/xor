@@ -411,7 +411,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		child1.put("taskDetails", childDetails);
 		
 		Settings settings = getSettings();
-		settings.addAssociation( new AssociationSetting(TaskDetails.class));
+		settings.expand(new AssociationSetting(TaskDetails.class));
 		settings.setEntityClass(Task.class);
 		Task task = (Task) aggregateService.create(json, settings);	
 		assert(task.getId() != null);
@@ -459,7 +459,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		child1.put("taskDetails", childDetails);
 
 		Settings settings = getSettings();
-		settings.addAssociation( new AssociationSetting(TaskDetails.class));
+		settings.expand(new AssociationSetting(TaskDetails.class));
 		settings.setEntityClass(Task.class);
 		Task task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -521,7 +521,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.addFunctionFilter("ASC(name)", 1);
 		settings.setView(view);		
-		settings.addAssociation( new AssociationSetting(TaskDetails.class));
+		settings.expand(new AssociationSetting(TaskDetails.class));
 		settings.setEntityClass(Task.class);
 		
 		Task task = (Task) aggregateService.create(json, settings);	
@@ -549,7 +549,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		final String CHILD_TASK_NAME = "TASK_1";		
 		
 		Settings settings = getSettings();
-		settings.addAssociation( new AssociationSetting(TaskDetails.class));		
+		settings.expand(new AssociationSetting(TaskDetails.class));
 		//Task task = (Task) aggregateService.importAggregate(in, settings);
 		List result = (List)aggregateService.importAggregate("taskOneChild.xlsx", settings);
 		Task task = (Task) result.get(0);
@@ -572,7 +572,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		final String TASK_NAME = "SETUP_DSL";
 		
 		Settings settings = getSettings();
-		settings.addAssociation( new AssociationSetting(TaskDetails.class));		
+		settings.expand(new AssociationSetting(TaskDetails.class));
 		//Task task = (Task) aggregateService.importAggregate(in, settings);
 		List result = (List) aggregateService.importAggregate("task100Child.xlsx", settings);
 		Task task = (Task) result.get(0);
@@ -631,7 +631,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = getSettings();
 		settings.setSupportsPostLogic(true);
 		settings.setPostFlush(true);
-		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.expand(new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		Task task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -674,7 +674,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		
 		Settings settings = getSettings();
 		settings.setSupportsPostLogic(true);
-		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.expand(new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		Task task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -719,7 +719,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		
 		Settings settings = getSettings();
 		settings.setSupportsPostLogic(true);
-		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.expand(new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		Task task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -804,7 +804,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		Settings settings = getSettings();
 		settings.setSupportsPostLogic(true);
-		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.expand(new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		Task task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -833,7 +833,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		settings = getSettings();
 		settings.setSupportsPostLogic(true);
-		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.expand(new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -862,7 +862,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		settings = getSettings();
 		settings.setSupportsPostLogic(true);
-		settings.addAssociation( new AssociationSetting("subTaskObj"));
+		settings.expand(new AssociationSetting("subTaskObj"));
 		settings.setEntityClass(Task.class);	
 		task = (Task) aggregateService.create(json, settings);
 		assert(task.getId() != null);
@@ -967,7 +967,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
         Settings settings = new Settings();
         settings.setEntityClass(P.class);
         settings.setView(view);
-		settings.addAssociation( new AssociationSetting("supplierParts"));
+		settings.expand(new AssociationSetting("supplierParts"));
 		settings.setEntityClass(P.class);	
 
 		
@@ -1003,7 +1003,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
         Settings settings = new Settings();
         settings.setEntityClass(P.class);
         settings.setView(view);
-		settings.addAssociation( new AssociationSetting("supplierParts"));
+		settings.expand(new AssociationSetting("supplierParts"));
 		settings.setEntityClass(P.class);	
 
 		
@@ -1077,7 +1077,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
-		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.expand(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
 		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 
@@ -1109,7 +1109,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
-		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.expand(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
 		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 
@@ -1158,7 +1158,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = new Settings();
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		settings.setEntityType(taskType);
-		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.expand(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
 		//settings.setPostFlush(true);
 
@@ -1259,8 +1259,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 			Settings settings = new Settings();
 			settings.setView(view);
 			settings.setEntityType(employeeType);
-			settings.addAssociation(new AssociationSetting(LocationDetails.class));
-			//settings.addAssociation(new AssociationSetting(ParkingSpot.class));
+			settings.expand(new AssociationSetting(LocationDetails.class));
+			//settings.expand(new AssociationSetting(ParkingSpot.class));
 
 			settings.setEntitySize(EntitySize.LARGE);
 
@@ -1335,7 +1335,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		View view = das.getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
-		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.expand(new AssociationSetting(Person.class));
 		settings.setEntityType(taskType);
 		settings.setEntitySize(EntitySize.MEDIUM);
 
@@ -1358,7 +1358,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		View view = das.getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
-		settings.addAssociation(new AssociationSetting(Employee.class));
+		settings.expand(new AssociationSetting(Employee.class));
 		settings.setEntityType(deptType);
 		settings.setEntitySize(EntitySize.MEDIUM);
 
@@ -1384,7 +1384,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		View view = das.getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
-		settings.addAssociation(new AssociationSetting(Employee.class));
+		settings.expand(new AssociationSetting(Employee.class));
 		settings.setEntityType(deptType);
 		settings.setEntitySize(EntitySize.MEDIUM);
 
@@ -1414,7 +1414,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		View view = das.getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
-		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.expand(new AssociationSetting(Person.class));
 		settings.setEntityType(taskType);
 		settings.setEntitySize(EntitySize.MEDIUM);
 

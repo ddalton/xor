@@ -21,7 +21,6 @@ package tools.xor.logic;
 
 import java.util.Date;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -44,8 +43,6 @@ import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ObjectCreator;
-import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AggregateView;
 
 public class DefaultCheckType extends AbstractDBTest {
 	
@@ -76,7 +73,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		
 		Settings settings = new Settings();
 		// Need to enhance the default aggregate view with this association to persist the technician relationship
-		settings.addAssociation(new AssociationSetting("assignedTo"));
+		settings.expand(new AssociationSetting("assignedTo"));
 		
 		task = (Task) aggregateManager.create(task, settings);
 		task = (Task) aggregateManager.read(task, getSettings());
@@ -88,7 +85,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		// read the person object using a DataObject
 		settings = getSettings();
 		ObjectCreator oc = new ObjectCreator(settings, das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
-		settings.addAssociation(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
+		settings.expand(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		settings.setEntityType(taskType);
 		settings.init(das.getShape());

@@ -93,9 +93,9 @@ public class DefaultUpdate2OneToOne extends AbstractDBTest {
 		Settings settings = new Settings();
 		
 		// TaskDetails is a reference association and we need to explicitly mention it 
-		settings.addAssociation( new AssociationSetting(TaskDetails.class));
+		settings.expand(new AssociationSetting(TaskDetails.class));
 		
-		settings.addAssociation( new AssociationSetting(Task.class));
+		settings.expand(new AssociationSetting(Task.class));
 
 		return settings;
 	}	

@@ -26,6 +26,7 @@ import java.util.Map;
 import tools.xor.EntityType;
 import tools.xor.OpenType;
 import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
@@ -239,4 +240,9 @@ public interface DataAccessService {
 	 * @param is InputStream of the Excel domain values file
 	 */
 	public void initGenerators(InputStream is);
+
+	/**
+	 * Returns the SettingsBuilder object
+	 */
+	public Settings.SettingsBuilder settings();
 }

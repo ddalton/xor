@@ -598,13 +598,16 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	}
 
 	public void generateStateGraph() {
-		Settings settings = new Settings();
+		//Settings settings = new Settings();
 		DataAccessService das = aggregateManager.getDAS();
+		/*
 		EntityType taskType = (EntityType)das.getType(Task.class);
 
 		settings.setEntityType(taskType);
 		settings.init(das.getShape());
-		TypeGraph sg = settings.getView().getTypeGraph(taskType);
+		*/
+		Settings settings = das.settings().aggregate(Task.class).build();
+		TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
 		settings.setGraphFileName("TaskStateGraph.png");
 		sg.generateVisual(settings);
 	}
@@ -615,7 +618,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		EntityType taskType = (EntityType)das.getType(Task.class);
 
 		settings.setEntityType(taskType);
-		settings.addAssociation(new AssociationSetting(Person.class));
+		settings.expand(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
 		TypeGraph sg = settings.getView().getTypeGraph(taskType);
 		settings.setGraphFileName("TaskInheritanceStateGraph.png");

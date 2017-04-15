@@ -21,7 +21,6 @@ package tools.xor;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
@@ -32,7 +31,7 @@ import tools.xor.event.PropertyElement;
 import tools.xor.operation.Operation;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
-import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.TypeGraph;
 
 public class CallInfo {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -272,7 +271,7 @@ public class CallInfo {
 		}
 
 		EntityType entityType = (EntityType)settings.getEntityType();
-		StateGraph sg = settings.getView().getStateGraph( entityType.getDomainType() );
+		TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
 		if(logger.isDebugEnabled()) {
 			logger.debug("Type: " + getOutputRoot().getType().getName() + ", view: " 
 					+ settings.getView().getName() 

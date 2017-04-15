@@ -51,7 +51,7 @@ public class Filter implements Comparable<Filter> {
 		this.position = position;
 	}	
 	
-	public void init(String expression) {
+	private void init(String expression) {
 		this.expression = expression;
 		if(expression != null) {
 			this.functionExpression = ExpressionFactory.getExpression(expression);

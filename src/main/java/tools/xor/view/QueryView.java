@@ -46,10 +46,15 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.Edge;
+import tools.xor.util.State;
 
 /**
- * Similar to EntityType but is specific to the AggregateView and is scoped around
- * SQL query that avoids a cross join within the AggregateView to which it belongs
+ * Alternative representation of an AggregateView, that helps with constructing OQL queries.
+ *
+ * A single AggregateView might end up having multiple QueryView instances. For example, if
+ * the view needs to fetch two collections on the same entity, then a cartesian/cross product might
+ * occur if doing it in a single query. So it needs to be split as two queries.
  * 
  * @author Dilip Dalton
  *
@@ -58,24 +63,24 @@ public class QueryView {
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 
-	private static final String ENTITY_ALIAS_PREFIX = "_abc_";
+	private static final String ENTITY_ALIAS_PREFIX = "_XOR_";
 	private static final String PROPERTY_ALIAS_PREFIX = "PROP";
 
-	private        Type                      aggregateType;
+	private        Type                           aggregateType;
 	private        Map<String, QueryViewProperty> viewPropertyByPath = new LinkedHashMap<String, QueryViewProperty>();
-	private        Map<String, ColumnMeta>   augmentedAttributes;
-	private        Map<String, String>       attributes = new HashMap<String, String>();	
-	private        String                    name;
-	private        AggregateView             aggregateSlice;
-	private        boolean                   narrow;
-	private        List<Filter>              filters = new ArrayList<Filter>();
-	private        boolean                   crossAggregate;
+	private        Map<String, ColumnMeta>        augmentedAttributes;
+	private        Map<String, String>            attributes = new HashMap<String, String>();
+	private        String                         name;
+	private        AggregateView                  aggregateSlice;
+	private        boolean                        narrow;
+	private        List<Filter>                   filters = new ArrayList<Filter>();
+	private        boolean                        crossAggregate;
 
 	// Related to constructing child View Branches
-	private        List<QueryView>          subBranches;  // split according to parallel collections.
-	private        QueryView                parent; // branch containing the parent step
-	private        QueryView                twig;         // attributes of simple type
-	private        boolean                   collection;   // How many collections are under this branch
+	private        List<QueryView>                subBranches;  // split according to parallel collections.
+	private        QueryView                      parent; // branch containing the parent step
+	private        QueryView                      twig;         // attributes of simple type
+	private        boolean                        collection;   // How many collections are under this branch
 
 	/**
 	 * Used for manually creating the child query views
@@ -99,7 +104,7 @@ public class QueryView {
 		init();
 	}
 	
-	public AggregateView view() {
+	public View view() {
 		return aggregateSlice;
 	}
 
@@ -147,7 +152,7 @@ public class QueryView {
 	}
 
 	public Set<Parameter> getParameter() {
-		AggregateView cView = this.aggregateSlice;
+		View cView = this.aggregateSlice;
 		if(cView == null && parent != null)
 			cView = parent.getContentView();
 
@@ -155,7 +160,7 @@ public class QueryView {
 	}
 
 	private void setFilters() {
-		AggregateView cView = this.aggregateSlice;
+		View cView = this.aggregateSlice;
 		if(cView == null && parent != null)
 			cView = parent.getContentView();
 
@@ -194,7 +199,7 @@ public class QueryView {
 		this.filters = filters;
 	}	
 
-	public AggregateView getContentView() {
+	public View getContentView() {
 		return aggregateSlice;
 	}
 
@@ -784,7 +789,7 @@ public class QueryView {
 	public List<Type> getAttributeTypes() {
 		List<Type> result = new ArrayList<Type>();
 		
-		for(String attr: aggregateSlice.attributeList) {
+		for(String attr: aggregateSlice.getAttributeList()) {
 			result.add(aggregateType.getProperty(attr).getType());
 		}
 		

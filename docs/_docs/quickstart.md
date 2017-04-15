@@ -11,7 +11,7 @@ Add the following dependency to your Maven pom.xml file.
 <dependency>
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
-    <version>1.2.11</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 

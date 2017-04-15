@@ -45,7 +45,7 @@ The code to retrieve the built-in view for the Basic scope is:
 ```java
 DataAccessService das = aggregateService.getDAS();
 EntityType personType = (EntityType) das.getType(Person.class);
-AggregateView view = das.getBaseView(personType).copy();
+AggregateView view = das.getBaseView(personType);
 ```
 
 The code to retrieve the built-in view for the Aggregate scope is:
@@ -53,7 +53,7 @@ The code to retrieve the built-in view for the Aggregate scope is:
 ```java
 DataAccessService das = aggregateService.getDAS();
 EntityType personType = (EntityType) das.getType(Person.class);
-AggregateView view = das.getView(personType).copy();
+AggregateView view = das.getView(personType);
 ```
 
 ## Custom views

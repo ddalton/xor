@@ -25,7 +25,7 @@ EntityType taskType = (EntityType)das.getType(Task.class);
 
 settings.setEntityType(taskType);
 settings.init(das.getShape());
-StateGraph sg = settings.getView().getStateGraph(taskType);
+TypeGraph sg = settings.getView().getTypeGraph(taskType);
 settings.setGraphFileName("TaskStateGraph.png");
 sg.generateVisual(settings);
 ```
@@ -42,14 +42,14 @@ The code used to generate the graph is the following:
 DataAccessService das = aggregateManager.getDAS();
 
 EntityType taskType = (EntityType)das.getType(Task.class);
-AggregateView view = das.getView(taskType).copy();
+AggregateView view = das.getView(taskType);
 Settings settings = new Settings();
 settings.setView(view);
 settings.setEntityType(taskType);
 settings.setEntitySize(EntitySize.LARGE);
 
 settings.init(das.getShape());
-StateGraph sg = settings.getView().getStateGraph(taskType);
+TypeGraph sg = settings.getView().getTypeGraph(taskType);
 settings.setSparseness(0.01f);
 JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
 

@@ -43,7 +43,7 @@ import tools.xor.util.State;
 import tools.xor.view.QueryView;
 import tools.xor.view.QueryViewProperty;
 
-public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSparseGraph<V, E> {
+public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSparseGraph<V, E> implements TypeGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger sgLogger = LogManager.getLogger(Constants.Log.STATE_GRAPH);
 
@@ -144,7 +144,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return copy(null);
 	}
 	
-	public Map<Type, V> getStates() {
+	private Map<Type, V> getStates() {
 		return this.states;
 	}
 	
@@ -378,9 +378,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		if(additionalType.isDataType()) {
 			throw new RuntimeException("Type " + additionalType.getName() + " has to be an entity type");
 		}
-		StateGraph<State, Edge<State>> addendum = shape.getView((EntityType)additionalType)
-				.getStateGraph((EntityType) additionalType)
-				.copy((Map<Type, State>) this.states);
+		StateGraph<State, Edge<State>> addendum = shape.getView(additionalType)
+			.getTypeGraph(additionalType)
+			.copy((Map<Type, State>)this.states);
 
 		merge(addendum);
 	}
@@ -1121,5 +1121,16 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		return g;
+	}
+
+	@Override
+	public String toString() {
+
+		StringBuilder result = new StringBuilder("****** States in the StateGraph *******\n");
+		for(State s: this.states.values()) {
+			result.append("   " + s.getName() + "\n");
+		}
+
+		return result.toString();
 	}
 }

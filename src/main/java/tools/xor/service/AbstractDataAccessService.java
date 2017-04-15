@@ -55,6 +55,7 @@ import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryBuilder;
+import tools.xor.view.View;
 
 public abstract class AbstractDataAccessService implements DataAccessService {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -217,17 +218,17 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}	
 	
 	@Override
-	public AggregateView getView(String viewName) {
+	public View getView(String viewName) {
 		return getShape().getView(viewName);
 	}	
 	
 	@Override
-	public List<AggregateView> getViews() {
+	public List<View> getViews() {
 		return getShape().getViews();
 	}
 	
 	@Override
-	public AggregateView getView(EntityType type) {
+	public View getView(EntityType type) {
 		return getShape().getView(type);
 	}
 
@@ -237,7 +238,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 	
 	@Override
-	public AggregateView getBaseView(EntityType type) {
+	public View getBaseView(EntityType type) {
 		return getShape().getBaseView(type);
 	}
 	

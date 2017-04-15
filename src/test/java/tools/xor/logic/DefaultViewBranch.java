@@ -30,9 +30,8 @@ import tools.xor.Type;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
-import tools.xor.view.AggregateView;
 import tools.xor.view.QueryView;
-
+import tools.xor.view.View;
 
 public class DefaultViewBranch extends AbstractDBTest {
 	@Autowired
@@ -46,7 +45,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type taskType = das.getType(Task.class);		
-		AggregateView view = aggregateManager.getView("TASKCHILDREN");
+		View view = aggregateManager.getView("TASKCHILDREN");
 		
 		// change to accept entity type
 		QueryView viewBranch = view.getEntityView(taskType, false); 
@@ -63,7 +62,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type taskType = das.getType(Task.class);		
-		AggregateView view = aggregateManager.getView("TASKSET");
+		View view = aggregateManager.getView("TASKSET");
 		
 		// change to accept entity type
 		QueryView viewBranch = view.getEntityView(taskType, false); 
@@ -76,7 +75,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type taskType = das.getType(Task.class);	
-		AggregateView view = das.getView((EntityType) taskType);
+		View view = das.getView((EntityType) taskType);
 		
 		QueryView viewBranch = view.getEntityView(taskType, false); 
 		assert(viewBranch != null);
@@ -88,9 +87,9 @@ public class DefaultViewBranch extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type taskType = das.getType(Task.class);	
-		AggregateView view = das.getView((EntityType) taskType);
+		View view = das.getView((EntityType) taskType);
 		
-		List<QueryView> regions = view.getStateGraph((EntityType) taskType).getQueryableRegions();
+		List<QueryView> regions = view.getTypeGraph((EntityType)taskType).getQueryableRegions();
 		System.out.println("Regions: " + regions.size());
 	}
 	

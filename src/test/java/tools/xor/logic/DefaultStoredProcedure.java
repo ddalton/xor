@@ -38,6 +38,7 @@ import tools.xor.service.AggregateManager;
 import tools.xor.view.AggregateView;
 import tools.xor.view.ParameterMapping;
 import tools.xor.view.StoredProcedure;
+import tools.xor.view.View;
 
 public class DefaultStoredProcedure extends AbstractDBTest {
 	
@@ -50,8 +51,8 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 	final String USER_NAME = "georgewashington";
 
 	protected void singleReadSP() throws UnsupportedEncodingException, JAXBException {
-		AggregateView view = aggregateService.getView("BASICINFO_SP");
-		outputSP(view);
+		View view = aggregateService.getView("BASICINFO_SP");
+		//outputSP(view);
 
 		Person person = new Person();
 		person.setName(NAME);
@@ -157,7 +158,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		return sp;
 	}
 	
-	private void outputSP(AggregateView view) throws JAXBException, UnsupportedEncodingException {
+	private void outputSP(View view) throws JAXBException, UnsupportedEncodingException {
 		javax.xml.bind.JAXBContext jaxbCtx = javax.xml.bind.JAXBContext.newInstance(AggregateView.class);
 		javax.xml.bind.Marshaller marshaller = jaxbCtx.createMarshaller();
 		marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_ENCODING, "UTF-8"); //NOI18N

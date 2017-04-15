@@ -280,7 +280,7 @@
 		<join>
 			<entity>CatalogItem ci</entity>
 			<parameter name="catalogId">
-				<expression>_abc_1.id = ci.context.id and ci.catalog.id= :catalogId</expression>
+				<expression>_XOR_1.id = ci.context.id and ci.catalog.id= :catalogId</expression>
 			</parameter>
 		</join>
 	</aggregateView>	

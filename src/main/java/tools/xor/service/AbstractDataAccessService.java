@@ -177,6 +177,12 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 //		initViews(shape);
 
 		initOrder(shape);
+
+		initEnd(shape);
+	}
+
+	protected void initEnd(Shape shape) {
+		shape.initEnd();
 	}
 	
 	protected void initOrder(Shape shape) {

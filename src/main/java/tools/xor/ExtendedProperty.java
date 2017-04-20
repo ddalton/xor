@@ -30,7 +30,6 @@ import tools.xor.event.PropertyEvent;
 import tools.xor.generator.Generator;
 
 public interface ExtendedProperty extends Property {
-	
 
 	public enum Phase {
 		/**
@@ -362,4 +361,10 @@ public interface ExtendedProperty extends Property {
 	 * @return true if the property returns a collection of ids
 	 */
 	public boolean isCollectionOfReferences();
+
+	/**
+	 * Helps to identify if this property is part of the natural key of its containing type
+	 * @return true if it forms part of the natural key
+	 */
+	boolean isPartOfNaturalKey ();
 }

@@ -1307,6 +1307,11 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		//InputStream inputStream = new FileInputStream("CoursesValues.xlsx");
 		//das.initGenerators(inputStream);
 
+		Settings settings = das.settings().aggregate(Task.class).build();
+		settings.setEntitySize(EntitySize.LARGE);
+		TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
+
+		/*
 		EntityType taskType = (EntityType)das.getType(Task.class);
 		View view = das.getView(taskType).copy();
 		Settings settings = new Settings();
@@ -1316,6 +1321,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		settings.init(das.getShape());
 		TypeGraph sg = settings.getView().getTypeGraph(taskType);
+		*/
 		settings.setSparseness(0.01f);
 		JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
 

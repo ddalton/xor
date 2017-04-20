@@ -101,7 +101,7 @@ public class AggregatePropertyPaths {
 		if(!basePaths.containsKey(aggregateType)) {
 			paths  = new HashSet<String>();
 			for(Property property: aggregateType.getProperties()) {
-				if(isSimpleProperty(property)) {
+				if(isSimpleProperty(property) || !property.isNullable()) {
 					paths.add(property.getName());
 				} else if ( property.getType() instanceof EntityType && ((EntityType)property.getType()).isEmbedded()) {
 					if(includeEmbedded) {

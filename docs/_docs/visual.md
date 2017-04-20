@@ -19,13 +19,9 @@ This information is useful in understanding all the types involved in an aggrega
 The code needed to produce the above graph is:
 
 ```java
-Settings settings = new Settings();
 DataAccessService das = aggregateManager.getDAS();
-EntityType taskType = (EntityType)das.getType(Task.class);
-
-settings.setEntityType(taskType);
-settings.init(das.getShape());
-TypeGraph sg = settings.getView().getTypeGraph(taskType);
+Settings settings = das.settings().aggregate(Task.class).build();
+TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
 settings.setGraphFileName("TaskStateGraph.png");
 sg.generateVisual(settings);
 ```
@@ -40,16 +36,9 @@ The code used to generate the graph is the following:
 
 ```java
 DataAccessService das = aggregateManager.getDAS();
-
-EntityType taskType = (EntityType)das.getType(Task.class);
-AggregateView view = das.getView(taskType);
-Settings settings = new Settings();
-settings.setView(view);
-settings.setEntityType(taskType);
+Settings settings = das.settings().aggregate(Task.class).build();
 settings.setEntitySize(EntitySize.LARGE);
-
-settings.init(das.getShape());
-TypeGraph sg = settings.getView().getTypeGraph(taskType);
+TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
 settings.setSparseness(0.01f);
 JSONObject task = (JSONObject)sg.generateObjectGraph(settings);
 

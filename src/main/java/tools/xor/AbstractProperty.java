@@ -403,7 +403,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}
 
-	protected void init ()
+	/**
+	 * This method is public because some providers might have to call this again after all properties are initialized
+	 */
+	public void init ()
 	{
 		Class<?> instanceClass = getContainingType().getInstanceClass();
 
@@ -1333,5 +1336,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	@Override
 	public boolean isManaged() {
 		return false;
+	}
+
+
+	public boolean isPartOfNaturalKey() {
+		if(getContainingType().getNaturalKey() == null) {
+			return false;
+		}
+
+		return getContainingType().getNaturalKey().contains(getName());
 	}
 }

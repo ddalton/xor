@@ -161,12 +161,10 @@ Note, the extension only occurs if there is atleast one relationship in the Task
 All relationships are automatically added.
 
 ```java
-Settings settings = new Settings();
 DataAccessService das = aggregateManager.getDAS();
-EntityType taskType = (EntityType)das.getType(Task.class);
-
-settings.setEntityType(taskType);
-settings.addAssociation(new AssociationSetting(Person.class));
+Settings settings = das.settings().base(Task.class)
+	.expand(new AssociationSetting(Person.class))
+	.build();
 ```
 
 #### Extending using relationship name
@@ -174,7 +172,7 @@ settings.addAssociation(new AssociationSetting(Person.class));
 Alternatively, a scope can be extended in a more fine-grained way by specifying the desired relationships that need to be included in the view.
 
 ```java
-settings.addAssociation( new AssociationSetting("assignedTo"));	
+settings.expand( new AssociationSetting("assignedTo"));	
 ```
 
 In this example if assignedTo refers to a Person type, then we say here that we only want the assignedTo relationship and not any other relationships that refer to the Person type.

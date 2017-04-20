@@ -207,12 +207,18 @@ public class ModifyOperation extends AbstractOperation {
 
 	@Override
 	protected Object setPropertyTarget(CallInfo ci, Object propertyTarget) {
+		/*
 		if(ci.getStage() != ProcessingStage.UPDATE)
 			return propertyTarget;
+			*/
+		if(!shouldUpdate(ci)) {
+			return propertyTarget;
+		}
 
 		// TODO: If the property is a mapKey or an indexKey then the toMany side needs to know about the reposition action 
 
-		if(ci.getOutputProperty().isMany())
+		// Immediately make the change if in the CREATE stage and not in a delayed manner
+		if(ci.getOutputProperty().isMany() || ci.getStage() == ProcessingStage.CREATE)
 			super.setPropertyTarget(ci, propertyTarget);
 		else 
 			linkToOne(ci, propertyTarget);

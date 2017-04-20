@@ -25,7 +25,9 @@ public class ApplicationConfiguration
             getInstance().setConfiguration(new PropertiesConfiguration(propertiesFile));
         }
         catch (Exception e) {
-            throw ClassUtil.wrapRun(e);
+            //throw ClassUtil.wrapRun(e);
+            // Empty
+            getInstance().setConfiguration(new PropertiesConfiguration());
         }
     }
 

@@ -226,11 +226,9 @@ d.setName("Mathematics");
 d.setHead(h);
 
 DataAccessService das = aggregateManager.getDAS();
-Type deptType = das.getType(Department.class);
-Settings settings = new Settings();
-settings.setEntityType(deptType);
-settings.addAssociation(new AssociationSetting(Head.class));
-settings.init(das.getShape());
+Settings settings = das.settings().base(Department.class)
+	.expand(new AssociationSetting(Head.class))
+	.build();
 
 aggregateManager.create(d, settings);
 ```

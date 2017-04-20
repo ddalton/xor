@@ -316,6 +316,14 @@ public class Shape
         }
     }
 
+    public void initEnd() {
+        for (Type type : getUniqueTypes()) {
+            if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
+                ((AbstractType)type).initEnd(this);
+            }
+        }
+    }
+
     public void initPositionProperty() {
         for (Type type : getUniqueTypes()) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {

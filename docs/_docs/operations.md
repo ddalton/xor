@@ -189,7 +189,7 @@ The following example shows how to retrieve a single entity of a particular type
 DataAccessService das = aggregateService.getDAS();
 EntityType taskType = (EntityType)das.getType(Task.class);
 Settings settings = new Settings();
-settings.setView(das.getBaseView(taskType));
+settings.setView(aggregateService.getView("TASKCHILDREN"));
 
 // Set the id on the query object
 Task queryTask = new Task();

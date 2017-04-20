@@ -163,12 +163,15 @@ public class CallInfo {
 		this.inputProperty = property;
 	}
 
-	public BusinessObject getParentOutputEntity() {
+	public BusinessObject getParentOutputEntity ()
+	{
 		CallInfo parent = getParent();
-		BusinessObject result = (BusinessObject) parent.getOutput();
-		while( ((EntityType)result.getType()).isEmbedded() ) {
+		BusinessObject result = (BusinessObject)parent.getOutput();
+
+		while (result.getType() instanceof EntityType
+			&& ((EntityType)result.getType()).isEmbedded()) {
 			parent = parent.getParent();
-			result = (BusinessObject) parent.getOutput();
+			result = (BusinessObject)parent.getOutput();
 		}
 
 		return result;
@@ -177,7 +180,9 @@ public class CallInfo {
 	public BusinessObject getParentInputEntity() {
 		CallInfo parent = getParent();
 		BusinessObject result = (BusinessObject) parent.getInput();
-		while( ((EntityType)result.getType()).isEmbedded() ) {
+
+		while (result.getType() instanceof EntityType
+			&& ((EntityType)result.getType()).isEmbedded()) {
 			parent = parent.getParent();
 			result = (BusinessObject) parent.getInput();
 		}

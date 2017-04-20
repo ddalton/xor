@@ -243,6 +243,7 @@ public interface DataAccessService {
 
 	/**
 	 * Returns the SettingsBuilder object
+	 * @return SettingsBuilder object
 	 */
 	public Settings.SettingsBuilder settings();
 }

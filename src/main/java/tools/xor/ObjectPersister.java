@@ -105,14 +105,17 @@ public class ObjectPersister {
 		SetterAction actionToExecute = null;
 		for(Executable action: actions) {
 			SetterAction setterAction = (SetterAction) action;
-			if(actionToExecute == null)
+			if(actionToExecute == null) {
 				actionToExecute = setterAction;
+			}
 			if( ClassUtil.getInstance(setterAction.getValue()) != null) {
-				if(ClassUtil.getInstance(actionToExecute.getValue()) != null && ClassUtil.getInstance(actionToExecute.getValue()) != ClassUtil.getInstance(setterAction.getValue()) )
-					throw new IllegalArgumentException("Two different objects cannot share a reference to the same object in a ToOne bi-directional relationship.");
-				else
+				if(ClassUtil.getInstance(actionToExecute.getValue()) != null && ClassUtil.getInstance(actionToExecute.getValue()) != ClassUtil.getInstance(setterAction.getValue()) ) {
+					throw new IllegalArgumentException(
+						"Two different objects cannot share a reference to the same object in a ToOne bi-directional relationship. PropertyKey details: "
+							+ actionToExecute.toString() + ", previous PropertyKey details: " + setterAction.toString());
+				} else {
 					actionToExecute = setterAction;
-
+				}
 			}
 		}
 		actionToExecute.execute();		

@@ -117,10 +117,10 @@ public final class SetterAction implements Executable {
 		BusinessObject invokeOn = key.getDataObject();
 		ExtendedProperty prop = ((ExtendedProperty)key.getProperty());
 		
-		String result = value == null ? "null" : ((BusinessObject)value).getInstance().toString();
+		String result = value == null ? "null" : value.toString();
 		
 		StringBuilder str = new StringBuilder("SetterAction -> setting value [");
-		str.append(invokeOn.getInstance().toString());
+		str.append(invokeOn.toString());
 		str.append("] on object with type [");
 		str.append(invokeOn.getType().getName());
 		str.append(", " + result);

@@ -152,15 +152,15 @@ public abstract class AbstractOperation implements Operation {
 					List<Property> properties = callInfo.getProperties(source.getType());
 					CallInfo next = new CallInfo();
 
-					List<Property> propertyReferences = new ArrayList<Property>();
+					List<Property> nonKeyProperties = new ArrayList<Property>();
 					for (Property sourceProperty : properties) {
-						// Simple properties are processed first as we need this information
-						// to form EntityKey using userKey
+						// Properties comprising the natural key are processed first
+						// as we need this information to form EntityKey using userKey
 						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
-						if(next.isDataType()) {
+						if( ((ExtendedProperty)sourceProperty).isPartOfNaturalKey() ) {
 							processAttribute(next);
 						} else {
-							propertyReferences.add(sourceProperty);
+							nonKeyProperties.add(sourceProperty);
 						}
 					}
 
@@ -182,7 +182,7 @@ public abstract class AbstractOperation implements Operation {
 					}
 
 					// Process the property references
-					for (Property sourceProperty : propertyReferences) {
+					for (Property sourceProperty : nonKeyProperties) {
 						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
 						processAttribute(next);
 					}
@@ -424,12 +424,28 @@ public abstract class AbstractOperation implements Operation {
 		BusinessObject target = ci.getOutputObjectCreator().createTarget(ci, targetInstance, domainType);
 
 		return target;
-	}	
+	}
+
+	protected boolean shouldUpdate (CallInfo ci)
+	{
+		/*
+		 * We update only during two times
+		 * 1. During CREATE stage, we update only the natural keys
+		 * 2. During UPDATE stage
+		 */
+		return ci.getStage() == ProcessingStage.UPDATE || (ci.getStage() == ProcessingStage.CREATE
+			&& ci.getInputProperty() != null && ci.getInputProperty().isPartOfNaturalKey());
+	}
 
 	protected Object setPropertyTarget(CallInfo ci, Object propertyTarget) {
+		/*
 		// Set only if updating
 		if(ci.getStage() != ProcessingStage.UPDATE)
 			return propertyTarget;
+			*/
+		if(!shouldUpdate(ci)) {
+			return propertyTarget;
+		}
 
 		// Set the target property value
 		ci.linkOutputToParent(propertyTarget);			
@@ -461,8 +477,10 @@ public abstract class AbstractOperation implements Operation {
 	}
 
 	protected void processNullValue(CallInfo ci) throws Exception {
-		if(ci.getStage() != ProcessingStage.UPDATE) // Do not modify if not updating it
+		// Do not modify if not updating it
+		if(ci.getStage() != ProcessingStage.UPDATE) {
 			return;
+		}
 
 		// Set the null value - unlink the relationship from this side	
 		ci.linkOutputToParent(null);				

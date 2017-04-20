@@ -160,7 +160,7 @@ public class JPAProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected void init() {
+	public void init() {
 		super.init();
 
 		// For more details refer to JPA 2.0 specification at section 2.3

@@ -88,12 +88,17 @@ public class JPAMappedByTest extends DefaultMappedBy {
 		//entityManager.persist(d);
 
 		DataAccessService das = aggregateManager.getDAS();
+		Settings settings = das.settings().base(Department.class)
+			.expand(new AssociationSetting(Head.class))
+			.build();
+
+		/*
 		Type deptType = das.getType(Department.class);
 		Settings settings = new Settings();
 		settings.setEntityType(deptType);
 		settings.expand(new AssociationSetting(Head.class));
 		settings.init(das.getShape());
-
+*/
 		aggregateManager.create(d, settings);
 	}
 

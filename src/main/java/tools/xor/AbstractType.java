@@ -59,7 +59,6 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AggregateView;
 import tools.xor.view.ViewType;
 
 public abstract class AbstractType implements EntityType {
@@ -367,8 +366,8 @@ public abstract class AbstractType implements EntityType {
 				if (Modifier.isStatic(m.getModifiers()))
 					continue;
 
-				final String propertyString = getGetterProperty(m);
-				String propertyName = Introspector.decapitalize(propertyString); 
+				final String propertyString = getGetterPropertyName(m);
+				String propertyName = decapitalize(propertyString);
 				map.put(propertyName, m);
 			}
 			// climb to the super class and repeat
@@ -378,13 +377,16 @@ public abstract class AbstractType implements EntityType {
 	}	
 	
 	/**
-	 * 	If the field a boolean (primitive type), then only "is<propertyName>" is a valid getter method
-	 *  If a "get<propertyName>" method is present for this type then we override it 
+	 * 	If the field a boolean (primitive type), then only "is...()" is a valid getter method
+	 *  If a "get...()" method is present for this type then we override it
+	 *
+	 *  Providers can override the way a getter method is identified.
+	 *
 	 * @param beanClass the java class
 	 * @param m the getter method
 	 * @return true if it is a getter method
 	 */
-	private boolean isGetterMethod(Class<?> beanClass, Method m) {
+	protected boolean isGetterMethod(Class<?> beanClass, Method m) {
 		Class<?> returnType = m.getReturnType();
 		if(returnType == boolean.class) {
 			return m.getName().startsWith("is");
@@ -397,23 +399,36 @@ public abstract class AbstractType implements EntityType {
 		}
 	}
 
-	public String getGetterProperty(Method m) {
+	public String getGetterPropertyName(Method m) {
 		return (m.getName().startsWith("get")) ? m.getName().substring("get".length()) : m.getName().substring("is".length());
-	}	
+	}
+
+	public String getSetterPropertyName(Method m) {
+		return m.getName().substring("set".length());
+	}
 
 	@Override
 	public Method getGetterMethod(String targetProperty){
 		if(readerMethods.isEmpty()) {
 			logger.warn("Getter methods cache is not yet initialized.");
 		}
-		targetProperty = Introspector.decapitalize(targetProperty);
+		targetProperty = decapitalize(targetProperty);
 		return readerMethods.get(targetProperty);
+	}
+
+	protected String decapitalize (String propertyName) {
+		return Introspector.decapitalize(propertyName);
 	}
 
 	@Override
 	public Method getSetterMethod(String targetProperty){
 		targetProperty = Introspector.decapitalize(targetProperty);
 		return updaterMethods.get(targetProperty);
+	}
+
+	protected boolean isSetterMethod(Class<?> beanClass, Method m) {
+
+		return m.getName().startsWith("set");
 	}
 
 	protected void initSetterMethods() {
@@ -432,7 +447,7 @@ public abstract class AbstractType implements EntityType {
 			for (int i=ma.length-1; i > -1; i--) {
 				Method m = ma[i];
 
-				if (!m.getName().startsWith("set"))
+				if (!isSetterMethod(instanceClass, m))
 					continue;
 				if (m.getParameterTypes().length != 1)
 					continue;
@@ -442,8 +457,8 @@ public abstract class AbstractType implements EntityType {
 					continue;
 
 				// Adds the specified element to the set if it is not already present
-				final String propertyString = m.getName().substring("set".length());
-				String propertyName = Introspector.decapitalize(propertyString);
+				final String propertyString = getSetterPropertyName(m);
+				String propertyName = decapitalize(propertyString);
 				map.put(propertyName, m);
 			}
 			// climb to the super class and repeat
@@ -1118,5 +1133,13 @@ public abstract class AbstractType implements EntityType {
 		} else {
 			return className;
 		}
+	}
+
+	/**
+	 * Give a chance for providers to do final initialization
+	 * @param shape type system
+	 */
+	public void initEnd (Shape shape) {
+
 	}
 }

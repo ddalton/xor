@@ -191,11 +191,6 @@ public interface BusinessObject extends DataObject {
 	public String getOpenProperty(String propertyName);
 
 	/**
-	 * Records this entity in the ObjectCreator of this BusinessObject using the id and entity type
-	 */
-	public void register ();
-
-	/**
 	 * Returns the SurrogateEntityKey instance for this entity
 	 * @return the surrogate entity key
 	 */
@@ -432,5 +427,5 @@ public interface BusinessObject extends DataObject {
 	 * Checks if the instance is a reference association object
 	 * @return true if this is a reference association object
 	 */
-	public boolean isReferenceAssociation();
+	public boolean isReference ();
 }

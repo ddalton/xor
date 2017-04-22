@@ -33,9 +33,11 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
@@ -185,7 +187,7 @@ public class ListUpdateAction extends CollectionUpdateAction {
 
 		PropertyKey propertyKey = new PropertyKey((BusinessObject) collection, callInfo.getParent().getOutputProperty());
 		Executable originalAction = new AddElementAction(propertyKey, collectionElement, collectionOwner, null, position, callInfo.getInputObjectCreator());
-		this.addAction(originalAction);		
+		this.addAction(originalAction);
 
 		// Set the backRef of value to point to the parent target (or to the ancester in case of embedded property)
 		// TODO: handle MANY_TO_MANY backRef

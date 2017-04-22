@@ -237,6 +237,9 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	/**
 	 * Return a list of natural keys. There could be more than one if the supertype has
 	 * natural keys.
+	 * The keys being returned has to be kept in sync with the code that populates these
+	 * fields.
+	 * @see tools.xor.operation.AbstractOperation#process
 	 *
 	 * @param bo business object
 	 * @return list of all keys including the natural keys of its super types
@@ -253,6 +256,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		}
 
 		EntityType entityType = (EntityType) bo.getType();
+		/*
 		while(entityType != null && entityType.getNaturalKey() != null && bo != null) {
 			try {
 				EntityKey naturalEntityKey = NaturalKeyStrategy.getInstance().execute(
@@ -266,6 +270,21 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 				//the natural key values are not populated.
 			}
 			entityType = entityType.getSuperType();
+		}
+		*/
+
+		if(entityType != null && entityType.getNaturalKey() != null && bo != null) {
+			try {
+				EntityKey naturalEntityKey = NaturalKeyStrategy.getInstance().execute(
+					bo, getNaturalKeyTypeName(
+						entityType
+					));
+				if(naturalEntityKey != null) {
+					result.add(naturalEntityKey);
+				}
+			} catch (IllegalStateException ise) {
+				//the natural key values are not populated.
+			}
 		}
 
 		return result;

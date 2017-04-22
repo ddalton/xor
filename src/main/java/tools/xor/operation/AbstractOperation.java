@@ -33,6 +33,7 @@ import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
+import tools.xor.MutableBO;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.Type;
@@ -173,7 +174,15 @@ public abstract class AbstractOperation implements Operation {
 							// Register the object
 							// If there are multiple input objects with the same key,
 							// then this step does the de-duplication
-							target.getObjectCreator().register(target, callInfo.getInput());
+							BusinessObject existing = target.getObjectCreator().register(target, callInfo.getInput(), true);
+							if(existing != target && existing instanceof MutableBO) {
+
+								// If the existing object is not a reference then it is the
+								// actual object, so stop processing this object further
+								if( !((MutableBO)existing).isReference()) {
+									return;
+								}
+							}
 
 							// We don't return at this point since this object may have
 							// reference to other new objects, that also need to be
@@ -343,7 +352,7 @@ public abstract class AbstractOperation implements Operation {
 				BusinessObject value = (BusinessObject) ci.getOutput();
 				BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(invokee, value, ci.getOutputProperty());
 				invokee.getObjectCreator().getObjectGraph().addEdge(edge, invokee, value);
-			}		
+			}
 
 			// TODO: Post DataUpdate
 		}
@@ -352,7 +361,7 @@ public abstract class AbstractOperation implements Operation {
 		if(!((BusinessObject)ci.getOutput()).isVisited()) {
 			// If this a reference association object, then we don't want to mark it as
 			// processed in case the real object has not yet been processed
-			if( !((BusinessObject)ci.getInput()).isReferenceAssociation() ) {
+			if( !((BusinessObject)ci.getInput()).isReference() ) {
 				setVisited(ci, true);
 				postVisited(ci);
 			}

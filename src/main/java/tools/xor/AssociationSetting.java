@@ -44,7 +44,19 @@ public final class AssociationSetting {
 
 	public AssociationSetting(String pathSuffix) {
 		this.pathSuffix = pathSuffix;
-		this.matchType = MatchType.PATH;
+		this.matchType = MatchType.ABSOLUTE_PATH;
+		this.entityClass = null;
+		this.createIfMissing = Boolean.TRUE;
+	}
+
+	/**
+	 * Currently used only for prune behavior, e.g., skipping version fields
+	 * @param path of the attribute
+	 * @param matchType either absolute or relative
+	 */
+	public AssociationSetting(String path, MatchType matchType) {
+		this.pathSuffix = path;
+		this.matchType = matchType;
 		this.entityClass = null;
 		this.createIfMissing = Boolean.TRUE;
 	}
@@ -82,7 +94,7 @@ public final class AssociationSetting {
 			return result;
 		}
 
-		if(matchType == MatchType.PATH && ci.isPathSuffix(this.pathSuffix))
+		if(matchType == MatchType.ABSOLUTE_PATH && ci.isPathSuffix(this.pathSuffix))
 			return true;
 
 		return false;

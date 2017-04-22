@@ -150,6 +150,15 @@ public abstract class AbstractOperation implements Operation {
 				if(callInfo.isBulkInput()) {
 					createElements(callInfo);
 				} else {
+
+					// If this is a CREATE action on a persistent instance (loaded from DB),
+					// then we don't modify it.
+					// Only UPDATE action can modify existing persistent instances.
+					if(callInfo.getStage() == ProcessingStage.CREATE &&
+						target.isPersistent()) {
+						return;
+					}
+
 					List<Property> properties = callInfo.getProperties(source.getType());
 					CallInfo next = new CallInfo();
 

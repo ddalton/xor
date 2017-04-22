@@ -20,6 +20,7 @@
 package tools.xor;
 
 public enum MatchType {
-	PATH,
+	ABSOLUTE_PATH, // default
+	RELATIVE_PATH,
 	TYPE
 }

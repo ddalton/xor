@@ -251,7 +251,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		// Previous call was using MatchType.TYPE so add the attributes from the vertex
 		if(result.size() == 0 || exactSet == null || exactSet.size() == 0) {
-			// Addresses scope extension using AssociationSetting with MatchType.PATH
+			// Addresses scope extension using AssociationSetting with MatchType.ABSOLUTE_PATH
 			for (String simpleAttribute : vertex.getAttributes()) {
 				result.add(vertex.getType().getProperty(simpleAttribute));
 			}

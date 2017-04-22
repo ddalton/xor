@@ -166,11 +166,14 @@ public class SetUpdateAction extends CollectionUpdateAction {
 
 	public void linkElement(CallInfo next, String dynamicProperty, boolean isNew) throws Exception {
 		AbstractOperation oper = (AbstractOperation) next.getOperation();
+
+		/*
 		BusinessObject targetElement = (BusinessObject) next.getOutput();
 		if(next.getSettings().getAction() != AggregateAction.CREATE && targetElement != null) // updating an existing object
 			next.setOutput(targetElement);
 		else
 			next.setOutput(oper.createTarget(next, null));
+			*/
 
 		if(owLogger.isDebugEnabled()) {
 			if(isNew && next.getStage() == ProcessingStage.CREATE) {

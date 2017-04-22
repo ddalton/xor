@@ -414,10 +414,10 @@ public class AggregateManager implements Xor
 		}
 
 		if (owLogger.isDebugEnabled()) {
-			if (settings.getAssociationSettings() != null
-				&& settings.getAssociationSettings().size() > 0) {
+			if (settings.getExpandedAssociations() != null
+				&& settings.getExpandedAssociations().size() > 0) {
 				owLogger.debug("List of Association settings for this operation:");
-				for (AssociationSetting assoc : settings.getAssociationSettings()) {
+				for (AssociationSetting assoc : settings.getExpandedAssociations()) {
 					owLogger.debug(Constants.Format.INDENT_STRING + assoc.toString());
 				}
 			}

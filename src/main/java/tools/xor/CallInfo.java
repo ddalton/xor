@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -295,6 +296,17 @@ public class CallInfo {
 			sg.next(((EntityType)type).getDomainType(), getInputPropertyPath(), settings.getView().getExactAttributes()),
 			settings.getApiVersion());
 
+		// Prune attributes
+		if(settings.hasPrunedAssociations()) {
+			List<Property> pruned = new ArrayList<>();
+			for(Property p: exactProperties) {
+				if(!settings.shouldPrune(p.getName())) {
+					pruned.add(p);
+				}
+			}
+			exactProperties = pruned;
+		}
+
 		if(settings.getView().getRegexAttributes() != null) {
 			// Get the RegEx properties
 			Set<String> isIncluded = new HashSet<>();
@@ -303,7 +315,7 @@ public class CallInfo {
 			}
 			for (Property p : ((AbstractType)type).getProperties(settings.getApiVersion())) {
 				// Is the property already included
-				if (isIncluded.contains(p.getName())) {
+				if (isIncluded.contains(p.getName()) || settings.shouldPrune(p.getName())) {
 					continue;
 				}
 
@@ -495,7 +507,7 @@ public class CallInfo {
 		
 		// We can explicitly tag an association as not external
 		if(result) {
-			for(AssociationSetting setting: settings.getAssociationSettings()) {
+			for(AssociationSetting setting: settings.getExpandedAssociations()) {
 				if(setting.isAggregatePart(this)) {
 					result = false;
 					break;

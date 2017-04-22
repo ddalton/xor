@@ -27,9 +27,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.graph.Graph;
@@ -119,7 +121,10 @@ public class Settings {
 
 	private Class<?> entityClass;
 
-	private List<AssociationSetting> associationSettings;
+	private List<AssociationSetting> expandedAssociations;
+
+	private List<AssociationSetting> prunedAssociations;
+	private Set<String> pruneRelative; // optimization field to quickly check attributes to prune
 
 	private Interceptor interceptor = EmptyInterceptor.INSTANCE; // Allow user code to inspect or tweak the processing
 
@@ -210,10 +215,10 @@ public class Settings {
 			return false;
 		}
 		
-		if(shouldCreateIfMissing == null && associationSettings.size() > 0) {
+		if(shouldCreateIfMissing == null && expandedAssociations.size() > 0) {
 			// populate
 			shouldCreateIfMissing = new HashMap<>();
-			for(AssociationSetting setting: associationSettings) {
+			for(AssociationSetting setting: expandedAssociations) {
 				if(setting.getEntityClass() != null) {
 					shouldCreateIfMissing.put(setting.getEntityClass(), setting.getCreateIfMissing());
 				}
@@ -255,7 +260,9 @@ public class Settings {
 		this.filters = new HashMap<String, Object>();
 		this.actionOverrides = new HashMap<String, AggregateAction>();
 		this.userkeyOverrides = new HashMap<String, String>();	
-		this.associationSettings = new ArrayList<AssociationSetting>();
+		this.expandedAssociations = new ArrayList<AssociationSetting>();
+		this.prunedAssociations = new ArrayList<>();
+		this.pruneRelative = new HashSet<>();
 		this.tags.add(AbstractProperty.EMPTY_TAG);
 	}
 	
@@ -309,19 +316,27 @@ public class Settings {
 	}
 
 	public void expand (AssociationSetting associationSetting) {
-		this.associationSettings.add(associationSetting);
+		this.expandedAssociations.add(associationSetting);
 	}
 
-	public List<AssociationSetting> getAssociationSettings() {
-		return this.associationSettings;
+	public void prune(AssociationSetting associationSetting) {
+		this.prunedAssociations.add(associationSetting);
+	}
+
+	public List<AssociationSetting> getExpandedAssociations () {
+		return this.expandedAssociations;
 	}
 	
 	public void init(Shape shape) {
 		init(this.view, null, shape);
 	}
 
-	private boolean hasAssociationSettings() {
-		return (associationSettings != null && associationSettings.size() > 0);
+	private boolean hasExpandedAssociations () {
+		return (expandedAssociations != null && expandedAssociations.size() > 0);
+	}
+
+	public boolean hasPrunedAssociations() {
+		return (prunedAssociations != null && prunedAssociations.size() > 0);
 	}
 
 	public void init(View aView, Map<String, String> queryParams, Shape shape) {
@@ -338,13 +353,20 @@ public class Settings {
 			throw new IllegalStateException("A name for the AggregateView is required");
 		}
 
-		if(hasAssociationSettings()) {
+		if(hasExpandedAssociations()) {
 			// If the view is going to be modified make a copy of the built-in view
 			// We don't need to make a copy of a user provided view
 			if(AggregateView.isBuiltInView(view.getName())) {
 				view = view.copy();
 			}
-			((StateGraph)view.getTypeGraph((EntityType)entityType)).enhance(associationSettings, shape);
+			((StateGraph)view.getTypeGraph((EntityType)entityType)).enhance(expandedAssociations, shape);
+		}
+		if(hasPrunedAssociations()) {
+			for(AssociationSetting as: prunedAssociations) {
+				if(as.getMatchType() == MatchType.RELATIVE_PATH) {
+					pruneRelative.add(as.getPathSuffix());
+				}
+			}
 		}
 
 		this.filters = populateFilters(queryParams);
@@ -352,6 +374,10 @@ public class Settings {
 		this.userkeyOverrides = getUserkeyOverrides(queryParams);
 
 		initMutableAction(queryParams);
+	}
+
+	public boolean shouldPrune(String path) {
+		return hasPrunedAssociations() && pruneRelative.contains(path);
 	}
 
 	public Map<String, Object> populateFilters(Map<String, String> queryParams) {
@@ -746,6 +772,11 @@ public class Settings {
 
 		public SettingsBuilder expand(AssociationSetting setting) {
 			this.settings.expand(setting);
+			return this;
+		}
+
+		public SettingsBuilder prune(AssociationSetting setting) {
+			this.settings.prune(setting);
 			return this;
 		}
 		

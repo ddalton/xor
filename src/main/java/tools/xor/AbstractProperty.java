@@ -112,7 +112,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	
 	/**
 	 * The set of fields comprising the relationship for TO_ONE and TO_MANY types
-	 * Modeled as a map since the value might be referred by different names on the two sides fo the relationship
+	 * Modeled as a map since the value might be referred by different names on the two sides of the relationship
 	 */
 	protected Map<String, String> keyFields; 
 	  
@@ -943,7 +943,16 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 	}
 
-	private Object invokeGetter(Object instance) throws
+	/**
+	 * We make it protected to give a chance for Persistence providers to have customer
+	 * behavior based on any exceptions thrown by the Persistence Layer.
+	 *
+	 * @param instance on which the getter needs to be invoked
+	 * @return the value of the getter
+	 * @throws InvocationTargetException exception during invocation of the getter method
+	 * @throws IllegalAccessException exception
+	 */
+	protected Object invokeGetter(Object instance) throws
 		InvocationTargetException,
 		IllegalAccessException
 	{

@@ -152,46 +152,6 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public void register () {
-		/*Object id = entity.getIdentifierValue();
-		if (id != null) {
-			EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(id, entity);
-			getObjectCreator().addByEntityKey(entityKey, entity);
-		}*/
-
-		/*
-		 * The complexity here is if the type participates in an inheritance hierarchy
-		 * and if multiple relationships refer to this object.
-		 * The different relationships could refer by different types, due to polymorphism.
-		 * This can cause this mechanism to fail, unless we register this object by
-		 * all the super types.
-		 */
-		/*
-		Type entityType = getType();
-		do {
-			EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(
-				getIdentifierValue(),
-				entityType);
-			getObjectCreator().addByEntityKey(surrogateKey, this);
-
-			if (entityType instanceof EntityType) {
-				entityType = ((EntityType)entityType).getSuperType();
-			}
-			else {
-				entityType = null;
-			}
-			// If this is a subtype try to locate it using it's parent type if possible
-		} while (entityType != null);
-		*/
-
-		// add Surrogate key
-		getObjectCreator().addBySurrogateKey(this);
-
-		// Add natural keys
-		getObjectCreator().addByNaturalKey(this);
-	}
-
-	@Override
 	public void removeEntity(BusinessObject entity) {
 		/*
 		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(
@@ -1326,7 +1286,8 @@ public abstract class AbstractBO implements BusinessObject {
 			if(oc.getCreationStrategy().needsObjectGraph()) {
 				oc.setObjectGraph((BusinessObject) target);
 			}
-			
+
+			oc.setShare(true);
 			operation.execute(callInfo);
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
@@ -1636,7 +1597,7 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 	}
 
-	public boolean isReferenceAssociation() {
+	public boolean isReference () {
 		if (this.instance != null && this.instance instanceof JSONObject && ((JSONObject)this.instance).has(Constants.XOR.KEYREF)) {
 			return (((JSONObject)this.instance).getBoolean(Constants.XOR.KEYREF));
 		}
@@ -1747,6 +1708,23 @@ public abstract class AbstractBO implements BusinessObject {
 		// NOTE: For a dynamic type (JSON) getInstanceClassName() could return null.
 		String className = (getInstance() != null) ? AbstractType.getBaseName(getInstanceClassName()) : null;
 
-		return (className != null) ? className : AbstractType.getBaseName(getType().getName());
+		String result = (className != null) ? className : AbstractType.getBaseName(getType().getName());
+
+		if(getType() instanceof EntityType && ((EntityType)getType()).getNaturalKey() != null) {
+			StringBuilder keyStr = new StringBuilder("[");
+
+			for(String propertyName: ((EntityType)getType()).getExpandedNaturalKey()) {
+				if(keyStr.length() > 1) {
+					keyStr.append(", ");
+				}
+				keyStr.append(propertyName + ": " + get(propertyName));
+			}
+
+			keyStr.append("]");
+
+			result += keyStr.toString();
+		}
+
+		return result;
 	}
 }

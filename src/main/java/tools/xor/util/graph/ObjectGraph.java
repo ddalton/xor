@@ -58,6 +58,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	
 	@Override
 	public void addEdge(E edge, V start, V end) {
+
 		if(edge.getStart() != start) {
 			throw new IllegalStateException("Transition object start is not the same as given start");
 		}

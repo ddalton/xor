@@ -1030,10 +1030,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							(JSONObject)target);
 						q.add((JSONObject)target);
 
-						if(targetType instanceof EntityType && !((JSONObject)target).get(Constants.XOR.TYPE).equals("test.ariba.base.core.Laboratory") && targetType.getName().equals("test.ariba.base.core.Laboratory")) {
-							System.out.println("2-Laboratory type has a different class: " + targetType.getInstanceClass().getName() );
-						}
-
 						((JSONObject)target).put(Constants.XOR.GEN_PATH, objectPath);
 						entity.put(property.getName(), target);
 					}

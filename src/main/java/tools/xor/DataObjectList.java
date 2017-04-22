@@ -219,12 +219,13 @@ public class DataObjectList {
 						}
 					}
 				} else {
-					result.add(
+					BusinessObject collectionElement =
 						objectCreator.createDataObject(
 							element,
 							getNarrowedElementType(element, type),
 							collectionDataObject,
-							null));
+							null);
+					result.add(collectionElement);
 				}
 			}
 		}

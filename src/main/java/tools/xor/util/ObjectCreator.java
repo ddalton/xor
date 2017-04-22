@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
 
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import tools.xor.AbstractProperty;
+import tools.xor.AbstractBO;
 import tools.xor.AggregateAction;
 import tools.xor.BasicType;
 import tools.xor.BusinessEdge;
@@ -361,6 +361,7 @@ public class ObjectCreator {
 		// been populated. See AbstractOperation#process
 		if(targetInstance != null) {
 			// Handle the case where the natural key points to entities
+			/*
 			if(targetType instanceof EntityType && ((EntityType)targetType).getNaturalKey() != null) {
 				for(String key: ((EntityType)targetType).getNaturalKey()) {
 					Property pKey = targetType.getProperty(key);
@@ -371,13 +372,14 @@ public class ObjectCreator {
 						}
 					}
 				}
-			}
+			}*/
 
 			dataObject = register(dataObject, sourceBO);
 		}
 
-		if(sourceInstance != null)
+		if(sourceInstance != null) {
 			recordIO(sourceInstance, dataObject);
+		}
 
 		return dataObject;
 	}
@@ -421,6 +423,10 @@ public class ObjectCreator {
 			return;
 		}
 
+		if(temporaryDomainObject instanceof MutableBO) {
+			((MutableBO)temporaryDomainObject).setEvicted(true);
+		}
+
 		// Make sure to evict the domain object from the persistence
 		// layer as it is going to be swizzled
 		// We don't want this swizzled out object to be saved for any reason
@@ -429,60 +435,73 @@ public class ObjectCreator {
 		getPersistenceOrchestrator().clear(objectsToClear);
 	}
 
+	public BusinessObject register (BusinessObject newDataObject, Object sourceBO) {
+		return register(newDataObject, sourceBO, false);
+	}
+
 	/**
 	 * Register the user provided object in the object creator cache. Used if the object is deemed shareable.
 	 * During registration the following issues are handled
 	 * 1. Multiple objects with the same id (controlled by the share flag)
 	 * 2. Multiple objects with the same id but of different types due to polymorphism. The
 	 *    more specific instance is honored
-	 *    
+	 *
 	 * @param newDataObject to register
 	 * @param sourceBO source BusinessObject
+	 * @param naturalKeysPopulated flag to indicate if the natural key fields have already been populated in the newDataObject
 	 * @return resolved BusinessObject
 	 */
-	public BusinessObject register(BusinessObject newDataObject, Object sourceBO) {
-		BusinessObject result = newDataObject;
-
+	public BusinessObject register (BusinessObject newDataObject, Object sourceBO, boolean naturalKeysPopulated) {
 		Object instance = newDataObject.getInstance();
-		if(instance == null) 
+		if (instance == null)
 			throw new IllegalStateException("No persistent state found - possible data corruption");
 
 		// External model objects, may create multiple copies of the same object for serialization purposes
 		// So they should be de-duplicated and point to a single domain model object.
 		boolean swizzle = false;
-		if (sourceBO != null &&
+		if (naturalKeysPopulated &&
+			sourceBO != null &&
 			newDataObject.getType() instanceof EntityType &&
 			sourceBO instanceof BusinessObject &&
 			AggregateAction.isModificationAction(settings.getAction())) {
-			if(!((BusinessObject)sourceBO).isReferenceAssociation()) {
+			if (!((BusinessObject)sourceBO).isReference()) {
+
+				// Note: Swizzling should be done only after the natural keys have
+				// been populated.
+				// Also swizzling should occur only during the CREATE stage
 				swizzle = true;
 			}
 		}
 
 		// Embedded instances are not shareable, so we don't register them and
 		// External model objects in a modification operation should not lose information by de-duplicating in the external model itself
-		if (!newDataObject.getType().isDataType() && (((EntityType)newDataObject.getType()).isEmbedded() ||
-			(!((EntityType)newDataObject.getType()).isDomainType() && AggregateAction.isModificationAction(settings.getAction()))) )  {
-			recordIO(result.getInstance(), result);
-			return result;
+		if (!newDataObject.getType().isDataType() && (
+			((EntityType)newDataObject.getType()).isEmbedded() ||
+				(!((EntityType)newDataObject.getType()).isDomainType()
+					&& AggregateAction.isModificationAction(settings.getAction())))) {
+			recordIO(newDataObject.getInstance(), newDataObject);
+			return newDataObject;
 		}
 
 		// If an existing persistent object is already present, check if it is of a more general type, if so it has to be replaced
 		// with the current object
 		BusinessObject existing = newDataObject.getEntity(newDataObject);
-		if(existing != newDataObject) {
-			if(existing != null) {
+		BusinessObject result = newDataObject;
+		if (existing != newDataObject) {
+			if (existing != null) {
 				EntityType existingRootType = ((EntityType)existing.getType()).getRootEntityType();
 				EntityType newRootType = ((EntityType)newDataObject.getType()).getRootEntityType();
-				if(!swizzle) {
+				if (!swizzle) {
 					if (existingRootType == newRootType) {
 						// Embedded data objects without natural keys are not shareable
 						if (share && !(existingRootType.isEmbedded()
 							&& ((EntityType)newDataObject.getType()).getNaturalKey() == null)) {
-							// Make sure we can re-fetch the BO by the other instance also
-							recordIO(newDataObject.getInstance(), existing);
-							if (newDataObject.isDomainType()) {
-								evictTemporaryDomainObject(newDataObject);
+							if (newDataObject.getInstance() != existing.getInstance()) {
+								// Make sure we can re-fetch the BO by the other instance also
+								recordIO(newDataObject.getInstance(), existing);
+								if (newDataObject.isDomainType()) {
+									evictTemporaryDomainObject(newDataObject);
+								}
 							}
 							result = existing;
 						}
@@ -514,7 +533,7 @@ public class ObjectCreator {
 
 				// We swizzle-out the exiting  instance
 				// and swizzle-in the newDataObject instance
-				if(swizzle) {
+				if (swizzle) {
 
 					// Evict the old instance from the persistence layer first
 					// as it is going to be swizzled with the instance from the newDataObject
@@ -524,29 +543,41 @@ public class ObjectCreator {
 					// or the old object was just a reference association and the new data object is the real object
 					Object oldInstance = existing.getInstance();
 					existing.setInstance(instance);
+
 					// preserve the link from the old instance as it refers to the same object,
 					// the only difference being it now points to a more specific subtype, or the real object instead of a reference
 					recordIO(oldInstance, existing);
-					result = existing;
 
-					// re-register
-					result.register();
+					result = existing;
 				}
 
 				// Fix the source instance to the existing BO
-				if(ClassUtil.getInstance(sourceBO) != null) {
+				if (ClassUtil.getInstance(sourceBO) != null) {
 					recordIO(ClassUtil.getInstance(sourceBO), result);
 				}
-			} else {
-				// Register if it is a persistent instance
-				newDataObject.register();
 			}
 
 			// Do the actual registration
 			recordIO(result.getInstance(), result);
-		} else {
-			// This is ok. The object might have already been registered using a Bi-dir association.
-			//throw new IllegalStateException("New data object was registered by a different means!");
+		}
+
+		addBySurrogateKey(result);
+
+		// We delay natural key registration until they are assigned
+		if(naturalKeysPopulated) {
+			//result.register();
+			addByNaturalKey(result);
+		}
+
+		// Mark the BusinessObject as reference or actual object
+		if(result instanceof MutableBO && sourceBO != null) {
+			if (swizzle) {
+				((MutableBO)result).setReference(false);
+			} else if(((AbstractBO)sourceBO).isReference()) {
+				((MutableBO)result).setReference(true);
+			} else {
+				((MutableBO)result).setReference(false);
+			}
 		}
 
 		return result;
@@ -792,16 +823,23 @@ public class ObjectCreator {
 			for(Map.Entry<EntityKey, BusinessObject> entry: oc.entitiesByKey.entrySet()) {
 				if(clazz.isAssignableFrom(entry.getValue().getInstance().getClass()) ) {
 					Object obj = entry.getValue().get(propertyName);
+					EntityKey entityKey = entry.getKey();
+					BusinessObject entity = entry.getValue();
+
+					if(entity instanceof MutableBO && ((MutableBO)entity).isEvicted()) {
+						continue;
+					}
+
 					if(examined.containsKey(obj)) {
-						duplicateKeys.get(obj).add(entry.getKey());
-						duplicateObjects.get(obj).add(entry.getValue());
+						duplicateKeys.get(obj).add(entityKey);
+						duplicateObjects.get(obj).add(entity);
 					} else {
 						examined.put(obj, entry.getKey());
 						List<EntityKey> values = new ArrayList<EntityKey>();
-						values.add(entry.getKey());
+						values.add(entityKey);
 						duplicateKeys.put(obj, values);
 						Set<BusinessObject> distinctObjects = new HashSet<>();
-						distinctObjects.add(entry.getValue());
+						distinctObjects.add(entity);
 						duplicateObjects.put(obj, distinctObjects);
 					}
 				}

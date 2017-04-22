@@ -34,6 +34,29 @@ import tools.xor.util.ObjectCreator;
 public class MutableBO extends AbstractBO {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final long serialVersionUID = 1L;
+
+	// temporary - used for debugging
+	private boolean evicted;
+	private boolean reference;
+
+	public boolean isEvicted ()
+	{
+		return evicted;
+	}
+
+	public void setEvicted (boolean evicted)
+	{
+		this.evicted = evicted;
+	}
+
+	@Override
+	public boolean isReference() {
+		return this.reference;
+	}
+
+	public void setReference(boolean reference) {
+		this.reference = reference;
+	}
 	
 	public MutableBO(Type type, DataObject container,
 			Property containmentProperty, ObjectCreator objectCreator) {

@@ -485,7 +485,9 @@ public abstract class AbstractBO implements BusinessObject {
 					if(anchorBO != null) {
 						return anchorBO.get(remainingPath);
 					} else {
-						throw new RuntimeException("Cannot find BusinessObject in object creator");
+						// This can happen when the object has just been created
+						// and the natural keys are not yet processed.
+						return null;
 					}
 				} else {
 					return null;

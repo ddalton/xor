@@ -160,35 +160,13 @@ public class CallInfo {
 		return inputProperty;
 	}
 
-	public void setInputProperty(ExtendedProperty property) {
-		this.inputProperty = property;
-	}
-
 	public BusinessObject getParentOutputEntity ()
 	{
-		CallInfo parent = getParent();
-		BusinessObject result = (BusinessObject)parent.getOutput();
-
-		while (result.getType() instanceof EntityType
-			&& ((EntityType)result.getType()).isEmbedded()) {
-			parent = parent.getParent();
-			result = (BusinessObject)parent.getOutput();
-		}
-
-		return result;
+		return parent == null ? null : (BusinessObject)parent.getOutput();
 	}
 	
 	public BusinessObject getParentInputEntity() {
-		CallInfo parent = getParent();
-		BusinessObject result = (BusinessObject) parent.getInput();
-
-		while (result.getType() instanceof EntityType
-			&& ((EntityType)result.getType()).isEmbedded()) {
-			parent = parent.getParent();
-			result = (BusinessObject) parent.getInput();
-		}
-
-		return result;
+		return parent == null ? null : (BusinessObject)parent.getInput();
 	}
 
 	public boolean isBulkInput ()

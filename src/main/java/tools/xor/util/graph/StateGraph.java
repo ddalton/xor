@@ -20,9 +20,11 @@ import org.json.JSONObject;
 
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
+import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.MatchType;
+import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
@@ -824,28 +826,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return true;
 	}
 	
-	private void addObject(
-			Map<Type, List<JSONObject>> typeObjectMap,
-			Map<JSONObject, State> objectStateMap,
-			Map<JSONObject, State> embeddedObjectStateMap,
-			State state,
-			JSONObject object) {
-
-		// Embedded objects are not considered in the object graph limit
-		EntityType type = (EntityType)state.getType();
-		if(!type.isEmbedded()) {
-			List<JSONObject> list = typeObjectMap.get(type);
-			if (list == null) {
-				list = new ArrayList<JSONObject>();
-				typeObjectMap.put(type, list);
-			}
-			list.add(object);
-			objectStateMap.put(object, state);
-		} else {
-			embeddedObjectStateMap.put(object, state);
-		}
-	}
-
 	protected boolean hasSubStates(V vertex) {
 		for(E edge: getOutEdges(vertex)) {
 			if(DFAtoNFA.UNLABELLED.equals(edge.getName()) ) {
@@ -875,20 +855,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return result;
 	}
 
-	public boolean hasReachedLimit(Map<JSONObject, State> objectStateMap, Settings settings) {
-		boolean result = false;
-
-		// Check limits
-		// NOTE: if using a generator to share objects, then
-		// the resulting object graph will be smaller in the number of vertices since
-		// the objects get shared.
-		if (objectStateMap.size() > settings.getEntitySize().size()) {
-			result = true;
-		}
-
-		return result;
-	}
-
 	public static class ObjectGenerationVisitor
 	{
 		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
@@ -913,179 +879,261 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			return result;
 		}
 	}
-	
+
+	/**
+	 * Creates a random object graph instance based on the given state graph.
+	 * Useful for populating data.
+	 */
+	public static class RandomInstance {
+		private StateGraph stateGraph;
+		private Settings settings;
+		private Set<JSONObject> visited;
+		private Map<Type, List<JSONObject>> typeObjectMap;
+		private Map<JSONObject, State> objectStateMap;
+		private Map<JSONObject, State> embeddedObjectStateMap;
+		private Map<EntityKey, JSONObject> entityKeyMap;
+		private ObjectGenerationVisitor visitor;
+		private Queue<JSONObject> q;
+
+		public RandomInstance(Settings settings, StateGraph stateGraph) {
+			this.settings = settings;
+			this.stateGraph = stateGraph;
+		}
+
+		private Object getKeyValue(JSONObject object, String keyPath) {
+			Object result = null;
+
+			do {
+				String root = QueryViewProperty.getRootName(keyPath);
+				keyPath = QueryViewProperty.getNext(keyPath);
+
+				if(object.has(root) && object.get(root) != null) {
+					if(keyPath != null) {
+						if(object.get(root) instanceof JSONObject) {
+							object = (JSONObject)object.get(root);
+						} else {
+							object = null;
+						}
+					} else {
+						result = object.get(root);
+					}
+				} else {
+					object = null;
+				}
+			} while (keyPath != null && object != null);
+
+			return result;
+		}
+
+		private JSONObject addObject(State state, JSONObject object, String objectPath) {
+
+			// We use the Natural key to link to existing objects and hence form a graph
+			// We cannot depend on the surrogate key as that is not user entered
+			Map<String, Object> naturalKey = new HashMap<String, Object>();
+			EntityType type = (EntityType)state.getType();
+			if(type.getNaturalKey() != null) {
+				for(String key: type.getExpandedNaturalKey()) {
+					Object keyValue = getKeyValue(object, key);
+					if(keyValue == null) {
+						// We do not support partial natural keys
+						naturalKey = new HashMap();
+						break;
+					}
+					naturalKey.put(key, keyValue);
+				}
+			}
+
+			boolean exists = false;
+			if(naturalKey.size() > 0) {
+				EntityKey entityKey = new NaturalEntityKey(naturalKey, type.getName());
+				if(!entityKeyMap.containsKey(entityKey)) {
+					entityKeyMap.put(entityKey, object);
+				} else {
+					exists = true;
+					// Get the existing object
+					object = entityKeyMap.get(entityKey);
+				}
+			}
+
+			// For keys that are based off other entities, we may not populate it due to BFS.
+			// But this is ok, as the XOR engine can properly figure them out.
+			if(!exists) {
+				// Embedded objects are not considered in the object graph limit
+				if(!type.isEmbedded()) {
+					List<JSONObject> list = typeObjectMap.get(type);
+					if (list == null) {
+						list = new ArrayList<JSONObject>();
+						typeObjectMap.put(type, list);
+					}
+					list.add(object);
+					objectStateMap.put(object, state);
+				} else {
+					embeddedObjectStateMap.put(object, state);
+				}
+				q.add(object);
+
+				if (objectPath != null) {
+					object.put(Constants.XOR.GEN_PATH, objectPath);
+				}
+			}
+
+			return object;
+		}
+
+		private EntityType getEntityType(JSONObject jsonObject) {
+			if(!jsonObject.has(Constants.XOR.TYPE)) {
+				throw new IllegalStateException("Generator entity should have the type information");
+			}
+
+			return (EntityType)stateGraph.shape.getType(
+				jsonObject.getString(
+					Constants.XOR.TYPE));
+		}
+
+		private void init() {
+			//Set all nodes to "not visited". This is by having the visited set as empty
+			visited = new HashSet<JSONObject>();
+			typeObjectMap = new HashMap<Type, List<JSONObject>>();
+			objectStateMap = new HashMap<JSONObject, State>();
+			embeddedObjectStateMap = new HashMap<JSONObject, State>();
+			entityKeyMap = new HashMap<>();
+			visitor = new ObjectGenerationVisitor(objectStateMap, settings);
+			q = new LinkedList();
+		}
+
+		/**
+		 * Generates a random object graph using JSON objects.
+		 *
+		 * @return the generated object graph
+		 */
+		public JSONObject generateObjectGraph ()
+		{
+		/*
+		 * Use BFS to traverse the graph since we want to give all states an opportunity to participate in the object graph.
+		 * Keep a map between the state and the list of JSONObjects
+		 * When traversing an ASSOCIATION, randomly choose a JSONObject based on the target state.
+		 * If the ASSOCIATION is a COMPOSITION, then create a new JSONObject.
+		 *
+		 * Assume no other behavior on a relationship.
+		 */
+
+			init();
+
+			JSONObject result = (JSONObject)((EntityType)stateGraph.getRootState().getType()).generate(
+				settings,
+				null,
+				null,
+				null,
+				null);
+
+			// Add the root entity first
+			addObject(stateGraph.getRootState(), result, null);
+
+			// Needed to flush the remaining objects in the queue
+			boolean flush = false;
+
+			while (!q.isEmpty()) {
+				flush = visitor.hasReachedLimit();
+
+				JSONObject entity = q.remove();
+				if (!visited.contains(entity)) {
+					// Mark as visited
+					visited.add(entity);
+					String path = entity.has(Constants.XOR.GEN_PATH) ?
+						entity.getString(Constants.XOR.GEN_PATH) : null;
+
+					Type entityType;
+					State parentState;
+					if(objectStateMap.containsKey(entity)) {
+						parentState = objectStateMap.get(entity);
+					} else if(embeddedObjectStateMap.containsKey(entity)) {
+						parentState = embeddedObjectStateMap.get(entity);
+					} else {
+						throw new RuntimeException("Unable to find entity - check if it was added using addObject() method");
+					}
+					entityType = parentState.getType();
+
+					for (Property property : entityType.getProperties()) {
+
+						// target type
+						ExtendedProperty extendedProperty = (ExtendedProperty)property;
+						if (extendedProperty.isDataType()) {
+							continue;
+						}
+
+						Edge edge = stateGraph.getOutEdge(
+							parentState,
+							extendedProperty.getName());
+						State childState = null;
+						if(edge != null) {
+							childState = (State)edge.getEnd();
+							if(stateGraph.hasSubStates(childState)) {
+								Generator gen = extendedProperty.getGenerator();
+								if(gen == null) {
+									// Needed for inheritance handling
+									gen = new DefaultGenerator(null);
+									extendedProperty.setGenerator(gen);
+								}
+								EntityType childType = (EntityType)GraphUtil.getPropertyEntityType(extendedProperty, stateGraph.shape);
+								childType = gen.getSubType(childType);
+								childState = stateGraph.getVertex(childType);
+							}
+						}
+
+						// Is the state out of scope
+						if (childState == null) {
+							continue;
+						}
+
+						Type targetEntityType = childState.getType();
+						Type targetType = (extendedProperty.isMany()) ? GraphUtil.getPropertyType(extendedProperty, stateGraph.shape) : targetEntityType;
+
+						String objectPath = Constants.XOR.walkDown(path, property);
+
+						Object target = ((BasicType)targetType).generate(
+							settings,
+							extendedProperty,
+							entity,
+							typeObjectMap.get(targetType),
+							visitor);
+						// Add this object only if it is a required relationship
+						if (target instanceof JSONObject && (!flush || !extendedProperty.isNullable())) {
+							target = addObject(childState, (JSONObject)target, objectPath);
+							entity.put(property.getName(), target);
+						}
+						else if (target instanceof JSONArray && !flush) {
+							JSONArray jsonArray = new JSONArray();
+							for (int i = 0; i < ((JSONArray)target).length(); i++) {
+								JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
+
+								// Add it to the right state
+								State collectionElementState = stateGraph.getVertex(
+									getEntityType(jsonObject));
+								jsonArray.put(
+									i,
+									addObject(collectionElementState, jsonObject, objectPath));
+							}
+							if(jsonArray.length() > 0) {
+								entity.put(property.getName(), jsonArray);
+							}
+						}
+					}
+				}
+			}
+
+			return result;
+		}
+	}
+
 	/**
 	 * Generates a random object graph using JSON objects.
 	 *
 	 * @param settings used to control the size of the generated object graph
 	 * @return the generated object graph
 	 */
-	public JSONObject generateObjectGraph (Settings settings)
-	{
-		/*
-		 * Use BFS to traverse the graph since we want to give all states an opportunity to participate in the object graph.
-		 * Keep a map between the state and the list of JSONObjects
-		 * When traversing an ASSOCIATION, randomly choose a JSONObject based on the target state.
-		 * If the ASSOCIATION is a COMPOSITION, then create a new JSONObject.
-		 * 
-		 * Assume no other behavior on a relationship.
-		 */
-
-		//Set all nodes to "not visited". This is by having the visited set as empty
-		Set<JSONObject> visited = new HashSet<JSONObject>();
-		Map<Type, List<JSONObject>> typeObjectMap = new HashMap<Type, List<JSONObject>>();
-		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
-		Map<JSONObject, State> embeddedObjectStateMap = new HashMap<JSONObject, State>();
-		ObjectGenerationVisitor visitor = new ObjectGenerationVisitor(objectStateMap, settings);
-
-		Queue<JSONObject> q = new LinkedList();
-
-		JSONObject result = (JSONObject)((EntityType)getRootState().getType()).generate(
-			settings,
-			null,
-			null,
-			null,
-			null);
-		addObject(
-			typeObjectMap,
-			objectStateMap,
-			embeddedObjectStateMap,
-			getRootState(),
-			result);
-		q.add(result);
-
-		// Needed to flush the remaining objects in the queue
-		boolean flush = false;
-
-		while (!q.isEmpty()) {
-			flush = visitor.hasReachedLimit();
-
-			JSONObject entity = q.remove();
-			if (!visited.contains(entity)) {
-				// Mark as visited
-				visited.add(entity);
-				String path = entity.has(Constants.XOR.GEN_PATH) ?
-					entity.getString(Constants.XOR.GEN_PATH) : null;
-
-				Type entityType;
-				State parentState;
-				if(objectStateMap.containsKey(entity)) {
-					parentState = objectStateMap.get(entity);
-				} else if(embeddedObjectStateMap.containsKey(entity)) {
-					parentState = embeddedObjectStateMap.get(entity);
-				} else {
-					throw new RuntimeException("Unable to find entity - check if it was added using addObject() method");
-				}
-				entityType = parentState.getType();
-
-				for (Property property : entityType.getProperties()) {
-
-					// target type
-					ExtendedProperty extendedProperty = (ExtendedProperty)property;
-					if (extendedProperty.isDataType()) {
-						continue;
-					}
-
-					Edge edge = getOutEdge((V)parentState, extendedProperty.getName());
-					State childState = null;
-					if(edge != null) {
-						childState = (State)edge.getEnd();
-						if(hasSubStates((V)childState)) {
-							Generator gen = extendedProperty.getGenerator();
-							if(gen == null) {
-								// Needed for inheritance handling
-								gen = new DefaultGenerator(null);
-								extendedProperty.setGenerator(gen);
-							}
-							EntityType childType = (EntityType)GraphUtil.getPropertyEntityType(extendedProperty, shape);
-							childType = gen.getSubType(childType);
-							childState = getVertex(childType);
-						}
-					}
-
-					// Is the state out of scope
-					if (childState == null) {
-					  continue;
-					}
-
-					Type targetEntityType = childState.getType();
-					Type targetType = (extendedProperty.isMany()) ? GraphUtil.getPropertyType(extendedProperty, shape) : targetEntityType;
-
-					String objectPath = Constants.XOR.walkDown(path, property);
-
-					//target = ((BasicType)targetType).generate(settings, extendedProperty, path);
-					Object target = ((BasicType)targetType).generate(
-						settings,
-						extendedProperty,
-						entity,
-						typeObjectMap.get(targetType),
-						visitor);
-					// Add this object only if it is a required relationship
-					if (target instanceof JSONObject && (!flush || !extendedProperty.isNullable())) {
-						addObject(
-							typeObjectMap,
-							objectStateMap,
-							embeddedObjectStateMap,
-							childState,
-							(JSONObject)target);
-						q.add((JSONObject)target);
-
-						((JSONObject)target).put(Constants.XOR.GEN_PATH, objectPath);
-						entity.put(property.getName(), target);
-					}
-					else if (target instanceof JSONArray && !flush) {
-						for (int i = 0; i < ((JSONArray)target).length(); i++) {
-							JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
-
-							// Add it to the right state
-							State collectionElementState = getVertex(
-								shape.getType(
-									jsonObject.getString(
-										Constants.XOR.TYPE)));
-							addObject(
-								typeObjectMap,
-								objectStateMap,
-								embeddedObjectStateMap,
-								collectionElementState,
-								jsonObject);
-							q.add(jsonObject);
-							jsonObject.put(Constants.XOR.GEN_PATH, objectPath);
-
-							/*
-							if(property.getContainingType().getName().equals("test.ariba.base.core.Laboratory") && property.getName().equals("Instructors")) {
-								if(entity.get(Constants.XOR.TYPE).equals("test.ariba.base.core.Laboratory")) {
-									System.out.println(
-										"Course type [" + entityType.getName() + "]: " + entity.get(Constants.XOR.TYPE)
-											+ ", Number: " + entity.get("Number")
-											+ ", LaboratoryNumber: "
-											+ entity.get("LaboratoryNumber"));
-								} else {
-									System.out.println(
-										"NOT LABORATORY!!! - Course type [" + entityType.getName() + "]: " + entity.get(Constants.XOR.TYPE)
-											+ ", Number: " + entity.get("Number"));
-								}
-								System.out.println("Object path" + objectPath + ", entityType: " + entityType.getName());
-								System.out.print(
-									"Instructor type: " + jsonObject.get(Constants.XOR.TYPE)
-										+ ", SSN: " + jsonObject.get("SSN") + ", IDNumber: "
-										+ jsonObject.get("IDNumber"));
-								if("test.ariba.base.core.TA".equals(jsonObject.get(Constants.XOR.TYPE))) {
-									System.out.println(", TANumber: " + jsonObject.get("TANumber"));
-								} else{
-									System.out.println("");
-								}
-							}
-							*/
-						}
-						if(((JSONArray)target).length() > 0) {
-							entity.put(property.getName(), target);
-						}
-					}
-				}
-			}
-		}
-
-		return result;
+	public JSONObject generateObjectGraph (Settings settings) {
+		RandomInstance ri = new RandomInstance(settings, this);
+		return ri.generateObjectGraph();
 	}
 
 	public void generateVisual (Settings settings) {

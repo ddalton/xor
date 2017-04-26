@@ -62,7 +62,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public static final Pattern REGEX_STRING_MATCHER = Pattern.compile(REGEX_STRING);
 
 	public static final String DOMAIN = "DOMAIN:";
-	public static final String RECURSIVE = "RECURSIVE_"; // TODO: is this needed?
+	public static final String REGEX = "_REGEX_";
 
 	// The user can specify child branches if necessary directly. 
 	// NOTE: If one or more child branch are specified, then only the child branches are executed.

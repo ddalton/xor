@@ -22,12 +22,14 @@ package tools.xor.view;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -155,34 +157,45 @@ public class AggregateViewFactory {
 		
 		// Now generate the query for each views
 		for(View av: views) {
+			av = av.copy();
+
 			// Before creating the QueryView, save away all the loop based attributes 
-			// and put them in a new view called AggregateView.RECURSIVE 
-			List<String> recursiveAttributes = extractRecursiveAttributes((AggregateView)av);
+			// and put them in a new view called AggregateView.REGEX
+			av.expand();
+			Map<String, Pattern> regexAttributes = av.getRegexAttributes();
 			
 			// skip views not related to a type
 			if(av.getTypeName() == null) {
 				continue;
 			}
-			System.out.println("**** AggregateTye: " + av.getTypeName() + ", attribute size: " + av.getAttributeList().size());
+			System.out.println(
+				"**** AggregateTye: " + av.getTypeName() + ", attribute size: "
+					+ av.getAttributeList().size());
 			Type type = am.getDAS().getType(av.getTypeName());
 			groupByPackage(type, av, viewsByPackage);
 			
 			ViewKey viewKey = new ViewKey(type, av.getName(), false);
 			QueryView queryView = new QueryView(viewKey, (AggregateView)av);
 			
-			// Extract system generated OQL query 
-			List<AggregateView> parallelViews = queryView.extractViews(am);
-			((AggregateView)av).setSystemOQLQuery( (new OQLQuery()).generateQuery(am, queryView) );
-
-			// Create a new Aggregate view based on the recursive attributes
-			AggregateView recursiveView = new AggregateView();
-			recursiveView.setName(AggregateView.RECURSIVE);
-			recursiveView.setAttributeList(recursiveAttributes);
+			// Extract system generated OQL query
+			List<AggregateView> parallelViews = new ArrayList<>();
+			if(av.getExactAttributes() != null) {
+				av.setAttributeList(new ArrayList<String>(av.getExactAttributes()));
+				parallelViews = queryView.extractViews(am);
+				((AggregateView)av).setSystemOQLQuery(
+					(new OQLQuery()).generateQuery(
+						am,
+						queryView));
+			}
 			
 			// Get a list of all the AggregateViews from the QueryView instance
 			// and append the recursive vew to this list
-			if(recursiveAttributes.size() > 0) {
-				parallelViews.add(recursiveView);
+			if(regexAttributes.size() > 0) {
+				// Create a new Aggregate view based on the recursive attributes
+				AggregateView regexView = new AggregateView();
+				regexView.setName(type.getName() + AggregateView.REGEX);
+				regexView.setAttributeList(new ArrayList<String>(regexAttributes.keySet()));
+				parallelViews.add(regexView);
 			}
 			
 			// Add the children views to the aggregate view

@@ -32,7 +32,7 @@
 		class="tools.xor.service.AggregateManager">
 		<property name="associationStrategy" ref="associationStrategy" />	
 		<property name="dasFactory" ref="jpadas" />	
-		<property name="viewsDirectory" value="C:\projects\xor\views" />
+		<property name="viewsDirectory" value="views" />
 	</bean>		
 	
 	<bean id="jpadas"

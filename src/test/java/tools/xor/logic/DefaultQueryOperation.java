@@ -202,8 +202,8 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		settings.setPreFlush(true);
 		List<?> toList = aggregateService.query(new Person(), settings);
 
-		// For some reason an additional instance of George user is present
-		// Probably an issue with a previous test not cleaning up properly. Check this.
+		// This can be 3 depending on test order since the test
+		// DefaultStoredProcedure#singleReadSP commits a Person with the same name "George Washington"
 		assert(toList.size() >= 2);
 	}
 

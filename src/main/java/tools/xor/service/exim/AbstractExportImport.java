@@ -28,6 +28,8 @@ public abstract class AbstractExportImport implements ExportImport
 {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
+    public static final String PROPERTY_TYPE_DELIM = ":";
+
     protected AggregateManager am;
     protected Map<String, Integer> propertyColIndex;
 
@@ -71,10 +73,11 @@ public abstract class AbstractExportImport implements ExportImport
     protected Type getType (String entityInfo)
     {
         // Parse the entity classname from this
-        String[] tokens = entityInfo.split(":");
+        String[] tokens = entityInfo.split(PROPERTY_TYPE_DELIM);
         if (tokens.length != 2) {
             throw new RuntimeException(
-                "The entity info column in sheet map is not in <classname>:<property> format: "
+                "The entity info column in sheet map is not in <classname>" + PROPERTY_TYPE_DELIM +
+                    "<property> format: "
                     + entityInfo);
         }
         return am.getDAS().getType(tokens[0]);
@@ -84,7 +87,7 @@ public abstract class AbstractExportImport implements ExportImport
     {
         Type type = getType(entityInfo);
 
-        String[] tokens = entityInfo.split(":");
+        String[] tokens = entityInfo.split(PROPERTY_TYPE_DELIM);
         return type.getProperty(tokens[1]);
     }
 
@@ -129,7 +132,7 @@ public abstract class AbstractExportImport implements ExportImport
         Map<String, List<BusinessObject>> sheetBO = new HashMap<String, List<BusinessObject>>();
         for (BusinessObject bo : dataObject) {
             if (bo.getContainer() != null && bo.getContainmentProperty() != null) {
-                String key = Constants.XOR.getExcelSheetFullName(
+                String key = Constants.XOR.getRelationshipName(
                     bo.getContainer().getType(),
                     bo.getContainmentProperty());
                 if (!sheetBO.containsKey(key)) {

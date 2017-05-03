@@ -445,15 +445,5 @@ public class ImmutableJsonProperty extends ExternalProperty {
 		
 		JsonObject jsonObject = (JsonObject) ((BusinessObject) dataObject).getInstance();
 		jsonObject.put(key.toString(), (JsonValue) value);
-	}	
-	
-	@Override
-	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
-		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
-	}	
-	
-	@Override
-	protected Type getExternalElementType(DataAccessService das, Shape shape) {
-		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
-	}	
+	}
 }

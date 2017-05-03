@@ -44,35 +44,40 @@ public class ExternalType extends AbstractType {
 		
 		initMeta();
 	}
-	
-	public void setProperty(DataAccessService dataAccessService, Shape shape) {
-		if(properties == null) {
-			// populate the properties for this type
-			properties = new HashMap<String, Property>();	
-			for(Property domainProperty: domainType.getProperties()) {
-				ExternalProperty externalProperty = (ExternalProperty) defineProperty(dataAccessService, domainProperty, shape);
-				if(externalProperty.getGetterMethod() == null ) {
-					logger.warn("Out-of-sync between external and domain types. The following property is not present in the external type: " + domainProperty.getName());
-					continue;
-				}
-				
-				externalProperty.init(dataAccessService, shape);
-				logger.debug("[" + getName() + "] Domain property name: " + domainProperty.getName() + ", type name: " + externalProperty.getJavaType());
-				properties.put(externalProperty.getName(), externalProperty);
-			}			
-		} 		
+
+	public void setProperty (Shape shape)
+	{
+		// populate the properties for this type
+
+		for (Property domainProperty : shape.getProperties(domainType).values()) {
+			ExternalProperty externalProperty = (ExternalProperty)defineProperty(
+				domainProperty,
+				shape);
+
+			if (externalProperty.getGetterMethod() == null) {
+				logger.warn(
+					"Out-of-sync between external and domain types. The following property is not present in the external type: "
+						+ domainProperty.getName());
+				continue;
+			}
+
+			externalProperty.init(shape);
+			logger.debug(
+				"[" + getName() + "] Domain property name: " + domainProperty.getName()
+					+ ", type name: " + externalProperty.getJavaType());
+			shape.addProperty(externalProperty);
+		}
 	}
 
 	/**
 	 * Create and add a new property to this type.
 	 *
-	 * @param dataAccessService dataAccessService instance
 	 * @param domainProperty domain Property object
 	 * @param shape of the type
 	 * @return Property object
 	 */
-	public Property defineProperty(DataAccessService dataAccessService, Property domainProperty, Shape shape) {
-		Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+	public Property defineProperty(Property domainProperty, Shape shape) {
+		Class<?> externalClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 		if(externalClass == null)
 			throw new RuntimeException("The external type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 
@@ -92,7 +97,7 @@ public class ExternalType extends AbstractType {
 	}
 
 	public void setOpposite(DataAccessService das) {
-		for(Property property: properties.values())
+		for(Property property: getProperties())
 			((AbstractProperty)property).initMappedBy(das);
 	}
 
@@ -234,12 +239,7 @@ public class ExternalType extends AbstractType {
 	@Override
 	public boolean isImmutable() {
 		return domainType.isImmutable();
-	}	
-	
-	@Override
-	public boolean isAggregate() {
-		return domainType.isAggregate();
-	}		
+	}
 
 	@Override
 	public Property getVersionProperty() {

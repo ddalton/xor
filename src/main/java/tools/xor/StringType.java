@@ -23,6 +23,7 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.generator.Generator;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
@@ -42,13 +43,13 @@ public class StringType extends SimpleType {
 	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
 						   StateGraph.ObjectGenerationVisitor visitor) {
 
-		ExtendedProperty ep = (ExtendedProperty) property;
-		if(ep.getGenerator() != null) {
-			return ep.getGenerator().getStringValue();
+		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
+		if(gen != null) {
+			return gen.getStringValue(visitor);
 		} else {
 			int length = DEFAULT_LENGTH;
-			if(ep.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
-				length = (int)ep.getConstraints().get(Constants.XOR.CONS_LENGTH);
+			if(property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
+				length = (int)property.getConstraints().get(Constants.XOR.CONS_LENGTH);
 			}
 			int stringLen = (int)(Math.random() * length);
 			if (stringLen < MIN_LENGTH) {

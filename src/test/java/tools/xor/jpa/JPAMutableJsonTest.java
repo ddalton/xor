@@ -126,7 +126,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		DataAccessService das = aggregateService.getDAS();
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		Property openProperty = new JPAProperty("ItemList", das.getType(Object.class), taskType);
-		das.addProperty(taskType, openProperty);
+		das.addOpenProperty(openProperty);
 
 		super.checkOpenField();
 	}
@@ -156,7 +156,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		if(taskType.getProperty("subTaskObj") == null) {
 			ExtendedProperty openProperty = new JPAProperty("subTaskObj", das.getType(Task.class), taskType, RelationshipType.TO_ONE, null);
 			openProperty.addKeyMapping(new String[]{"subTask"}, new String[]{"id"});
-			das.addProperty(taskType, openProperty);
+			das.addOpenProperty(openProperty);
 		}
 	}
 	
@@ -263,7 +263,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
         if(partType.getProperty("supplierParts") == null) {
             ExtendedProperty openProperty = new JPAProperty("supplierParts", das.getType(Set.class), partType, RelationshipType.TO_MANY, (EntityType) das.getType(SP.class));
             openProperty.addKeyMapping(new String[]{"partNo"}, new String[]{"partNo"});
-            das.addProperty(partType, openProperty);
+            das.addOpenProperty(openProperty);
         }		
 	}
 	
@@ -361,7 +361,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		EntityType taskType = (EntityType) das.getType(Task.class);
 		Property openProperty = taskType.getProperty("ItemList");
 		if(openProperty != null) {
-			das.removeProperty(taskType, openProperty);
+			das.removeOpenProperty(openProperty);
 		}
 
 		super.checkReferenceSemantics();

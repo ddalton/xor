@@ -1327,6 +1327,7 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);
+		oc.setShare(true);
 		
 		callInfo.setOutputObjectCreator(oc);
 		if(settings.isDenormalized()) {
@@ -1632,7 +1633,7 @@ public abstract class AbstractBO implements BusinessObject {
 			}
 		}
 
-		for(Property property: parent.getType().getProperties()) {	
+		for(Property property: parent.getType().getProperties()) {
 			if(!((ExtendedProperty) property).isDataType()) {
 
 				// Is this property in view? yes, process it else skip it

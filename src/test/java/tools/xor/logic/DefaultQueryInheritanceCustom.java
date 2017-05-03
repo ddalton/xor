@@ -83,7 +83,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		citations.add(citation);
 		patent.setCitations(citations);
 
-		patent = (Patent) aggregateService.create(patent, new Settings());
+		patent = (Patent) aggregateService.update(patent, new Settings());
 		
 		PatentVO patentVO = new PatentVO();
 		MetaEntityTypeVO typeVO = new MetaEntityTypeVO();

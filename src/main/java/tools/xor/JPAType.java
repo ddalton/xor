@@ -30,6 +30,7 @@ import javax.persistence.metamodel.EmbeddableType;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type.PersistenceType;
+import javax.swing.text.html.parser.Entity;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -108,35 +109,43 @@ public class JPAType extends AbstractType {
 		return getInstanceClass().isAssignableFrom(object.getClass());
 	}
 
-	public void setProperty(JPADAS dataAccessService, Shape shape) {
-		if(properties == null) {
-			// populate the properties for this type
-			properties = new HashMap<String, Property>();	
-			Iterator<?> attribIter = getPropertyIterator();
-			while(attribIter.hasNext()) {
-				Attribute<?, ?> attribute = (Attribute<?, ?>) attribIter.next();
-				logger.debug("[" + getName() + "] JPA Property name: " + attribute.getName() + ", type name: " + attribute.getJavaType());
+	public void defineProperties (Shape shape)
+	{
+		// If the properties are already defined then return
+		if (shape.getProperties(this) != null) {
+			return;
+		}
 
-				Type propertyType = dataAccessService.getType(attribute.getJavaType());
-				JPAProperty property = new JPAProperty(attribute, propertyType, this);
-				if(property.isIdentifier()) {
-					identifierProperty = property;
-					logger.debug("JPA Identifier attribute name: " + identifierProperty.getName());
-				}
-				if(property.isVersion()) {
-					versionProperty = property;
-					logger.debug("JPA version attribute name: " + versionProperty.getName());
-				}
-				property.init(dataAccessService, shape);
-				properties.put(property.getName(), property);
-			}		
-		} 		
+		JPADAS dataAccessService = (JPADAS)getDAS();
+		Iterator<?> attribIter = getPropertyIterator();
+		while (attribIter.hasNext()) {
+
+			Attribute<?, ?> attribute = (Attribute<?, ?>)attribIter.next();
+			logger.debug(
+				"[" + getName() + "] JPA Property name: " + attribute.getName() + ", type name: "
+					+ attribute.getJavaType());
+
+			Type propertyType = dataAccessService.getType(attribute.getJavaType());
+			JPAProperty property = new JPAProperty(attribute, propertyType, this);
+			if (property.isIdentifier()) {
+				identifierProperty = property;
+				logger.debug("JPA Identifier attribute name: " + identifierProperty.getName());
+			}
+			if (property.isVersion()) {
+				versionProperty = property;
+				logger.debug("JPA version attribute name: " + versionProperty.getName());
+			}
+			property.init(shape);
+
+			shape.addProperty(property);
+		}
 
 		initAccessType();
 	}
 
-	public void setOpposite(JPADAS dataAccessService) {
-		for(Property property: properties.values()) {
+	public void setOpposite() {
+		JPADAS dataAccessService = (JPADAS)getDAS();
+		for(Property property: getProperties()) {
 			((JPAProperty)property).initMappedBy(dataAccessService);
 		}
 	}
@@ -175,7 +184,7 @@ public class JPAType extends AbstractType {
 			while(attribIter.hasNext()) {
 				Attribute<?, ?> attribute = (Attribute<?, ?>) attribIter.next();
 				logger.debug("[" + getName() + "] JPA declared property name: " + attribute.getName());
-				result.add(properties.get(attribute.getName()));
+				result.add(getDAS().getShape().getProperties(this).get(attribute.getName()));
 			}
 		}
 
@@ -220,7 +229,7 @@ public class JPAType extends AbstractType {
 		boolean hasAccessAnnotation = false;
 
 		// first check if any of its properties have the Access annotation
-		for(Property property: properties.values()) {
+		for(Property property: getProperties()) {
 			if( ((AbstractProperty)property).getAccessType() != null) {
 				hasAccessAnnotation = true;
 				break;
@@ -228,7 +237,7 @@ public class JPAType extends AbstractType {
 		}
 
 		if(!hasAccessAnnotation) {
-			for(Property property: properties.values()) {
+			for(Property property: getProperties()) {
 				if(((JPAProperty)property).isFieldMapped())
 					return AccessType.FIELD;
 				else if(((JPAProperty)property).isPropertyMapped())

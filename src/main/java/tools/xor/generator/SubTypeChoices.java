@@ -73,4 +73,9 @@ public class SubTypeChoices extends DefaultGenerator
 
         return subTypeList.get(index);
     }
+
+    @Override public boolean isApplicableToCollectionElement ()
+    {
+        return true;
+    }
 }

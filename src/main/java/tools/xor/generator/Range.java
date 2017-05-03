@@ -19,10 +19,21 @@
 
 package tools.xor.generator;
 
+import tools.xor.Settings;
+
 public class Range extends DefaultGenerator
 {
     public Range (String[] arguments)
     {
         super(arguments);
+    }
+
+    @Override public int getFanout (Settings settings, String path)
+    {
+        if(settings.hasCollectionSparseness(path)) {
+            return super.getFanout(settings, path);
+        }
+
+        return getIntValue();
     }
 }

@@ -214,14 +214,18 @@ public class SimpleType implements BasicType {
 		String path = (rootedAt == null) ? null : (rootedAt.has(Constants.XOR.GEN_PATH) ?
 			rootedAt.getString(Constants.XOR.GEN_PATH) : null);
 		path = Constants.XOR.walkDown(path, property);
-		float sparseness = settings.getSparseness(path);
 
-		int fanOut = (int)(Math.random() * settings.getEntitySize().size() * sparseness);
 		BasicType elementType = (BasicType)((ExtendedProperty)property).getElementType();
 
-		Generator gen = ((ExtendedProperty)property).getGenerator();
-		if (gen == null && elementType instanceof EntityType) {
+		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
+		if(gen == null) {
 			gen = new DefaultGenerator(null);
+		}
+		int fanOut = gen.getFanout(settings, path);
+
+		// If this is not a containment property, then link to an existing
+
+		if(elementType instanceof EntityType && gen.isApplicableToCollectionElement()) {
 			((ExtendedProperty)property).setGenerator(gen);
 		}
 
@@ -239,6 +243,8 @@ public class SimpleType implements BasicType {
 			if(visitor != null && visitor.hasReachedLimit()) {
 				break;
 			}
+
+			visitor.setSequenceNo(i);
 		}
 
 		return result;

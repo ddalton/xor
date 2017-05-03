@@ -48,4 +48,9 @@ public class BoundedSubType extends DefaultGenerator
 
         return boundedSubTypes.get(index);
     }
+
+    @Override public boolean isApplicableToCollectionElement ()
+    {
+        return true;
+    }
 }

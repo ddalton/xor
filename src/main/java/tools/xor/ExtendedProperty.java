@@ -282,14 +282,6 @@ public interface ExtendedProperty extends Property {
 	 * @return list of lambda objects
 	 */
 	public List<MethodInfo> getLambdas(Settings settings, String[] tags, Phase phase, ProcessingStage stage);
-
-	/**
-	 * Checks if the property is appliacable for the given api version
-	 * 
-	 * @param apiVersion api version
-	 * @return boolean value
-	 */
-	public boolean isApplicable(int apiVersion);
 	
 	/**
 	 * Returns true if this property represents the identifier property
@@ -350,10 +342,26 @@ public interface ExtendedProperty extends Property {
 	public void setGenerator(Generator generator);
 
 	/**
+	 * Set the Generator specific to populating data when coming from incomingProperty
+	 * @param incomingProperty of the form sourceType:property
+	 * @param generator instance
+	 */
+	public void setGenerator(String incomingProperty, Generator generator);
+
+	/**
 	 * Get the Generator instance configured on this property
 	 * @return generator instance
 	 */
 	public Generator getGenerator();
+
+	/**
+	 * Get the Generator instance configured on this property, depending upon the incoming path
+	 * by which this entity is being created.
+	 *
+	 * @param incomingProperty through which this instance is being generated
+	 * @return generator instance
+	 */
+	public Generator getGenerator(String incomingProperty);
 
 	/**
 	 * This is applicable only if the property references a collection and

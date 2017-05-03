@@ -208,10 +208,14 @@ public class CallInfo {
 			if(this.output != null && !(this.output instanceof BusinessObject))
 				throw new IllegalStateException("Target should be a data object but is not treated as one");
 		} else {
-			if(this.input != null && (this.input instanceof BusinessObject))
-				throw new IllegalStateException("Source should NOT be a data object but is treated as one");
-			if(this.output != null && (this.output instanceof BusinessObject))
-				throw new IllegalStateException("Target should NOT be a data object but is treated as one");				
+			if(getInputProperty() == null || !getInputProperty().isMany()) {
+				if (this.input != null && (this.input instanceof BusinessObject))
+					throw new IllegalStateException(
+						"Source should NOT be a data object but is treated as one");
+				if (this.output != null && (this.output instanceof BusinessObject))
+					throw new IllegalStateException(
+						"Target should NOT be a data object but is treated as one");
+			}
 		}		
 	}
 
@@ -271,8 +275,10 @@ public class CallInfo {
 		// The state graph has full blown attributes for the type
 		// We need to get only the exact properties
 		List<Property> exactProperties = ((AbstractType)type).getProperties(
-			sg.next(((EntityType)type).getDomainType(), getInputPropertyPath(), settings.getView().getExactAttributes()),
-			settings.getApiVersion());
+			sg.next(
+				((EntityType)type).getDomainType(),
+				getInputPropertyPath(),
+				settings.getView().getExactAttributes()));
 
 		// Prune attributes
 		if(settings.hasPrunedAssociations()) {
@@ -291,7 +297,7 @@ public class CallInfo {
 			for (Property p : exactProperties) {
 				isIncluded.add(p.getName());
 			}
-			for (Property p : ((AbstractType)type).getProperties(settings.getApiVersion())) {
+			for (Property p : ((AbstractType)type).getProperties()) {
 				// Is the property already included
 				if (isIncluded.contains(p.getName()) || settings.shouldPrune(p.getName())) {
 					continue;
@@ -336,20 +342,6 @@ public class CallInfo {
 		BusinessObject targetDO = (BusinessObject) getTarget();
 		return targetDO.getObjectPath();
 		 */
-	}
-
-	protected boolean isContainedAggregate() {
-		if(isDataType())
-			return false;
-
-		ExtendedProperty inputProperty = (getInputProperty() == null) ? (parent != null) ? parent.getInputProperty() : null : getInputProperty();
-		if(inputProperty == null) // root entity of the aggregate
-			return true;
-
-		if(inputProperty.isMany())
-			return ((EntityType) inputProperty.getElementType()).isAggregate();
-		else
-			return ((EntityType) inputProperty.getType()).isAggregate();
 	}
 
 	public Operation getOperation() {

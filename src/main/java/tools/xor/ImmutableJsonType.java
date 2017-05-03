@@ -20,12 +20,10 @@
 package tools.xor;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 
 /**
@@ -56,35 +54,44 @@ public class ImmutableJsonType extends ExternalType {
 	@Override
 	public boolean isOpen() {
 		return true;
-	}	
+	}
 
 	@Override
-	public void setProperty(DataAccessService dataAccessService, Shape shape) {
-		if(properties == null) {
-			// populate the properties for this type
-			properties = new HashMap<String, Property>();	
-			for(Property domainProperty: domainType.getProperties()) {
-				AbstractProperty abstractProperty = (AbstractProperty) domainProperty;
-				Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-				if(externalClass == null)
-					throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
+	public void setProperty (Shape shape)
+	{
+		// populate the properties for this type
+		for (Property domainProperty : shape.getProperties(domainType).values()) {
+			AbstractProperty abstractProperty = (AbstractProperty)domainProperty;
+			Class<?> externalClass = getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+			if (externalClass == null)
+				throw new RuntimeException(
+					"The dynamic type is missing for the following domain class: "
+						+ domainProperty.getType().getInstanceClass().getName());
 
-				Type propertyType = shape.getExternalType(domainProperty.getType().getName());
-				Type elementType = null;
-				if(((ExtendedProperty)domainProperty).getElementType() != null) {
-					elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
-				}
-				if(propertyType == null) {
-					Class<?> propertyClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-					logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
-					propertyType = shape.getType(propertyClass);
-				}
-				ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this, elementType);
-				
-				dynamicProperty.init(dataAccessService, shape);
-				logger.debug("[" + getName() + "] Domain property name: " + abstractProperty.getName() + ", type name: " + dynamicProperty.getJavaType());
-				properties.put(dynamicProperty.getName(), dynamicProperty);
-			}			
-		} 		
+			Type propertyType = shape.getExternalType(domainProperty.getType().getName());
+			Type elementType = null;
+			if (((ExtendedProperty)domainProperty).getElementType() != null) {
+				elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
+			}
+			if (propertyType == null) {
+				Class<?> propertyClass = getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+				logger.debug(
+					"Name: " + domainProperty.getName() + ", Domain class: "
+						+ domainProperty.getType().getInstanceClass().getName()
+						+ ", property class: " + propertyClass.getName());
+				propertyType = shape.getType(propertyClass);
+			}
+			ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty(
+				(ExtendedProperty)domainProperty,
+				propertyType,
+				this,
+				elementType);
+
+			dynamicProperty.init(shape);
+			logger.debug(
+				"[" + getName() + "] Domain property name: " + abstractProperty.getName()
+					+ ", type name: " + dynamicProperty.getJavaType());
+			shape.addProperty(dynamicProperty);
+		}
 	}	
 }

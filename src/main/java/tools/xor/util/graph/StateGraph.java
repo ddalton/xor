@@ -1,6 +1,9 @@
 package tools.xor.util.graph;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -9,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
@@ -18,6 +22,7 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import tools.xor.AbstractProperty;
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
 import tools.xor.EntityKey;
@@ -362,7 +367,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		// operations to work correctly across aggregates
 		if(ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
 			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
-			toposort();
+			toposort(shape);
 		}
 	}
 	
@@ -726,14 +731,19 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * required relationships models IS_DEPENDED_ON
 	 */
 	@Override
-	public List<V> toposort() {
+	public List<V> toposort(Shape shape) {
 
 		List<E> edgesToReverse = new ArrayList<E>();
 
 		// Go through all the types and reverse the cascaded relationships
 		for(V state: getVertices()) {
-			if(state.getType().getProperties() != null) {
-				for(Property p: state.getType().getProperties()) {
+			Collection<Property> properties = (shape == null) ?
+				state.getType().getProperties() :
+				((shape.getProperties((EntityType)state.getType()) != null) ?
+					shape.getProperties((EntityType)state.getType()).values() : null);
+
+			if( properties != null) {
+				for(Property p: properties) {
 					if(outTransitions.get(state) != null && outTransitions.get(state).containsKey(p.getName())) {
 						if(p.isContainment()) {
 							// We process them later as we don't want to be thrashing the edge
@@ -755,7 +765,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		// Remove all self loops
 		unlinkSelfLoops();
 		
-		List<V> sorted = super.toposort();
+		List<V> sorted = super.toposort(shape);
 		if(sgLogger.isDebugEnabled()) {
 			StringBuilder sb = new StringBuilder();
 			for(int i = START; i < getVertices().size()+START; i++) {
@@ -789,12 +799,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 	}
 	
-	public void populateEdges() {
+	public void populateEdges(Shape shape) {
 		// Go through every state and add the edges
 		try {
 			for (V state : getVertices()) {
 				if (!state.getType().isDataType()) {
-					for (Property p : state.getType().getProperties()) {
+					for (Property p : shape.getProperties((EntityType)state.getType()).values()) {
 						Type propertyType = GraphUtil.getPropertyType(p, shape);
 						//sgLogger.debug("checking edge " + p.getName() + " of type " + propertyType.getName() );
 						if (states.containsKey(propertyType)) {
@@ -857,10 +867,14 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 	public static class ObjectGenerationVisitor
 	{
-		Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
-		Settings settings;
+		private Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
+		private Settings settings;
+		private Property property;
+		private EntityType sourceEntityType;
+		private JSONObject rootedAt;
+		private int sequenceNo;
 
-		ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings) {
+		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings) {
 			this.objectStateMap = objectStateMap;
 			this.settings = settings;
 		}
@@ -877,6 +891,60 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 
 			return result;
+		}
+
+		public int getSize() {
+			return objectStateMap.size();
+		}
+
+		public void setProperty (Property property)
+		{
+			this.property = property;
+		}
+
+		public Property getProperty() {
+			return this.property;
+		}
+
+		public void setSourceEntityType (EntityType entityType)
+		{
+			this.sourceEntityType = entityType;
+		}
+
+		public EntityType getSourceEntityType () {
+			return this.sourceEntityType;
+		}
+
+		public String getRelationshipName ()
+		{
+			if (this.sourceEntityType == null || this.getProperty() == null) {
+				return AbstractProperty.TYPE_GENERATOR;
+			}
+
+			return
+				Constants.XOR.getRelationshipName(
+					getSourceEntityType(),
+					getProperty());
+		}
+
+		public int getSequenceNo ()
+		{
+			return sequenceNo;
+		}
+
+		public void setSequenceNo (int sequenceNo)
+		{
+			this.sequenceNo = sequenceNo;
+		}
+
+		public JSONObject getRootedAt ()
+		{
+			return rootedAt;
+		}
+
+		public void setRootedAt (JSONObject rootedAt)
+		{
+			this.rootedAt = rootedAt;
 		}
 	}
 
@@ -994,7 +1062,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			//Set all nodes to "not visited". This is by having the visited set as empty
 			visited = new HashSet<JSONObject>();
 			typeObjectMap = new HashMap<Type, List<JSONObject>>();
-			objectStateMap = new HashMap<JSONObject, State>();
+			objectStateMap = new ConcurrentHashMap<JSONObject, State>();
 			embeddedObjectStateMap = new HashMap<JSONObject, State>();
 			entityKeyMap = new HashMap<>();
 			visitor = new ObjectGenerationVisitor(objectStateMap, settings);
@@ -1024,7 +1092,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				null,
 				null,
 				null,
-				null);
+				this.visitor);
 
 			// Add the root entity first
 			addObject(stateGraph.getRootState(), result, null);
@@ -1088,7 +1156,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						Type targetEntityType = childState.getType();
 						Type targetType = (extendedProperty.isMany()) ? GraphUtil.getPropertyType(extendedProperty, stateGraph.shape) : targetEntityType;
 
+						// Update visitor with current path
 						String objectPath = Constants.XOR.walkDown(path, property);
+						visitor.setProperty(property);
+						visitor.setSourceEntityType((EntityType)entityType);
+						visitor.setRootedAt(entity);
 
 						Object target = ((BasicType)targetType).generate(
 							settings,
@@ -1096,6 +1168,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							entity,
 							typeObjectMap.get(targetType),
 							visitor);
+
 						// Add this object only if it is a required relationship
 						if (target instanceof JSONObject && (!flush || !extendedProperty.isNullable())) {
 							target = addObject(childState, (JSONObject)target, objectPath);
@@ -1156,6 +1229,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			E edge = (E)edgeIter.next();
 			String edgeName = edge.getName();
 			edgeName = (edgeName == null) ? (unknown++).toString() : edgeName;
+			edgeName += (edge.getEndCardinality() == null) ? "" : " [" + edge.getEndCardinality() + "]";
 
 			if (g.containsEdge(edgeName)) {
 				edgeName += "." + (dup++).toString();

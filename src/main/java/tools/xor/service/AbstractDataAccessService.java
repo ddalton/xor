@@ -35,6 +35,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import tools.xor.AbstractProperty;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.OpenType;
@@ -65,7 +66,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	protected static final String DEFAULT_SHAPE = "_DEFAULT_";
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
-	
+	private ThreadLocal<Shape> overriddenShape = new ThreadLocal<Shape>(); // temporarily overridden by user
+
 	public AbstractDataAccessService(DASFactory factory) {
 		this.dasFactory = factory;
 		this.shapes = new HashMap<>();
@@ -74,10 +76,24 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	@Override
 	public Shape getShape() {
+		// Needs to be always present to allow user overrides
+		if(hasOverriddenShape()) {
+			return getOverriddenShape();
+		}
+
 		return shapes.get(DEFAULT_SHAPE);
 	}
 
-	protected Shape getOrCreateShape(String name) {
+	protected boolean hasOverriddenShape() {
+		return overriddenShape.get() != null;
+	}
+
+	protected Shape getOverriddenShape() {
+		return overriddenShape.get();
+	}
+
+	@Override
+	public Shape getOrCreateShape (String name, Shape parent) {
 		Shape shape = shapes.get(name);
 		if(shape == null) {
 			shape = new Shape(name, shapes.get(DEFAULT_SHAPE), this);
@@ -85,6 +101,10 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		return shape;
+	}
+
+	protected Shape getOrCreateShape (String name) {
+		return getOrCreateShape(name, shapes.get(DEFAULT_SHAPE));
 	}
 
 	@Override
@@ -170,7 +190,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 		initPositionProperty(shape);
 		
-		initDerived(shape);
+		initExternal(shape);
 
 		initRootType(shape);
 		
@@ -189,18 +209,18 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		// State graph of all the entity types in topological order
 		// Entity state graph is most likely a forest, so there is no root state
 		StateGraph<State, Edge<State>> stateGraph = new StateGraph<State, Edge<State>>(null, shape);
-		for(Type type: getTypes()) {
+		for(Type type: shape.getUniqueTypes()) {
 			if(EntityType.class.isAssignableFrom(type.getClass())) {
 				stateGraph.addVertex(new State(type, false));
 			}
 		}
 
-		stateGraph.populateEdges();
+		stateGraph.populateEdges(shape);
 
 		if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
 			|| !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
 			try {
-				stateGraph.toposort();
+				stateGraph.toposort(shape);
 			}
 			catch (RuntimeException re) {
 				throw re;
@@ -290,18 +310,28 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		shape.initPositionProperty();
 	}
 
-	protected void initDerived(Shape shape) {
+	protected void initExternal (Shape shape) {
 		shape.deriveExternal();
 	}
 
 	@Override
-	public void addProperty (EntityType type, Property openProperty) {
-		getShape().addProperty(type, openProperty);
+	public void addProperty (Property openProperty) {
+		getShape().addProperty(openProperty);
 	}
 
 	@Override
-	public void removeProperty (EntityType type, Property openProperty) {
-		getShape().removeProperty(type, openProperty);
+	public void removeProperty (Property openProperty) {
+		getShape().removeProperty(openProperty);
+	}
+
+	@Override
+	public void addOpenProperty (Property openProperty) {
+		getShape().addOpenProperty(openProperty);
+	}
+
+	@Override
+	public void removeOpenProperty (Property openProperty) {
+		getShape().removeOpenProperty(openProperty);
 	}
 
 	public QueryBuilder getQueryBuilder() {
@@ -321,10 +351,12 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				Row row = domainSheet.getRow(i);
 				String entityTypeName = row.getCell(1).getStringCellValue();
 				String sheetName = row.getCell(0).getStringCellValue();
+				String incomingProperty = row.getCell(2) == null ? null :
+					row.getCell(2).getStringCellValue();
 
 				EntityType entityType = (EntityType)getType(entityTypeName);
 				Sheet entitySheet = wb.getSheet(sheetName);
-				processDomainValues(entityType, entitySheet);
+				processDomainValues(entityType, entitySheet, incomingProperty);
 			}
 
 		} catch (Exception e) {
@@ -332,7 +364,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
-	private void processDomainValues(EntityType entityType, Sheet entitySheet) throws
+	private void processDomainValues(EntityType entityType, Sheet entitySheet, String incomingProperty) throws
 		ClassNotFoundException,
 		NoSuchMethodException,
 		IllegalAccessException,
@@ -380,7 +412,17 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			}
 
 			ExtendedProperty property = (ExtendedProperty)entityType.getProperty(entry.getKey());
-			property.setGenerator(gen);
+
+			if(incomingProperty == null || "".equals(incomingProperty.trim())) {
+				incomingProperty = AbstractProperty.TYPE_GENERATOR;
+			}
+			property.setGenerator(incomingProperty, gen);
+
+			// Have it apply to all subtypes also
+			for(EntityType subType: entityType.getSubtypes()) {
+				property = (ExtendedProperty)entityType.getProperty(entry.getKey());
+				property.setGenerator(incomingProperty, gen);
+			}
 		}
 	}
 

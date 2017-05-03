@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import tools.xor.AbstractBO;
+import tools.xor.AbstractProperty;
 import tools.xor.AggregateAction;
 import tools.xor.BasicType;
 import tools.xor.BusinessEdge;
@@ -277,7 +278,8 @@ public class ObjectCreator {
 		Object result = creationStrategy.newInstance(instance, (BasicType) property.getType(), toClass);
 
 		if(logger.isDebugEnabled()) {
-			logger.debug("ObjectCreator#createDataType instance: " + (instance==null?"null":instance.toString())
+			//logger.debug("ObjectCreator#createDataType instance: " + (instance==null?"null":instance.toString())
+			logger.debug("ObjectCreator#createDataType instance: " + (instance==null?"null":instance.getClass().getName())
 					+ ", property: " + property.getType().getInstanceClass().getName()
 					+ ", propertyName: " + property.getName() 
 					+ ", result: " + (result==null?"null":result.toString()));
@@ -361,7 +363,7 @@ public class ObjectCreator {
 		// been populated. See AbstractOperation#process
 		if(targetInstance != null) {
 			// Handle the case where the natural key points to entities
-			/*
+			// Needed for createWrapper to work properly
 			if(targetType instanceof EntityType && ((EntityType)targetType).getNaturalKey() != null) {
 				for(String key: ((EntityType)targetType).getNaturalKey()) {
 					Property pKey = targetType.getProperty(key);
@@ -372,7 +374,7 @@ public class ObjectCreator {
 						}
 					}
 				}
-			}*/
+			}
 
 			dataObject = register(dataObject, sourceBO);
 		}

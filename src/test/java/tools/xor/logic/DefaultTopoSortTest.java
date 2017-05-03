@@ -42,9 +42,9 @@ public class DefaultTopoSortTest {
 		dg.addVertex(category);
 		dg.addVertex(task);
 		dg.addVertex(facet);
-		dg.populateEdges();
+		dg.populateEdges(das.getShape());
 		
-		List<State> states = dg.toposort();
+		List<State> states = dg.toposort(das.getShape());
 		
 		Assert.assertTrue(states.size() == 3);
 		Assert.assertTrue(states.get(0).getType() == chapterType);

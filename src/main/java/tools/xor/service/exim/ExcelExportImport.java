@@ -188,7 +188,7 @@ public class ExcelExportImport extends AbstractExportImport
                 entityBatch.add(root);
             }
 
-            return am.create(entityBatch, settings);
+            return am.update(entityBatch, settings);
         }
         catch (EncryptedDocumentException e) {
             throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");

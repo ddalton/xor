@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.json.JSONObject;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
@@ -154,7 +155,7 @@ public abstract class AbstractOperation implements Operation {
 					// If this is a CREATE action on a persistent instance (loaded from DB),
 					// then we don't modify it.
 					// Only UPDATE action can modify existing persistent instances.
-					if(callInfo.getStage() == ProcessingStage.CREATE &&
+					if(callInfo.getSettings().getAction() == AggregateAction.CREATE &&
 						target.isPersistent()) {
 						return;
 					}
@@ -271,10 +272,13 @@ public abstract class AbstractOperation implements Operation {
 	}	
 
 	public String getDebugInput(Object inputValue) {
-		if(inputValue.toString().length() > Constants.Log.DEBUG_DATA_SIZE) {
-			return inputValue.toString().substring(0, Constants.Log.DEBUG_DATA_SIZE) + "...";
-		} 
-		return inputValue.toString();
+		/* This can throw a StackOverflowError
+		 *if(inputValue.toString().length() > Constants.Log.DEBUG_DATA_SIZE) {
+		 *	return inputValue.toString().substring(0, Constants.Log.DEBUG_DATA_SIZE) + "...";
+		 *}
+		 * return inputValue.toString();
+		 */
+		 return inputValue.getClass().getName();
 	}
 	
 	private void rebuildImmutable(CallInfo ci) {
@@ -323,8 +327,24 @@ public abstract class AbstractOperation implements Operation {
 
 		// Skip populating the identifier for JPA object copy, as we want this to be null
 		// Subclass can override this behavior
-		if(isIdentifier(ci)) 
-			return;		
+		if(isIdentifier(ci)) {
+			return;
+		}
+
+		/*
+		if(ci.getInput() instanceof BusinessObject) {
+			BusinessObject bo = (BusinessObject)ci.getInput();
+			if (bo.getType().getName().equals("test.ariba.base.core.DegreeProgram")) {
+				if (bo.getInstance() instanceof JSONObject) {
+					JSONObject json = (JSONObject)bo.getInstance();
+					System.out.println(
+						"Degree.Major: " + bo.get("Degree.Major") + ", Degree.Type: " + bo.get(
+							"Degree.Type") + ", Dept.Number: " + bo.get("Department.Number")
+							+ ", AdapterSrc: " + json.get("AdapterSource") + ", DeftSetBits: "
+							+ json.get("DefaultingSetBits"));
+				}
+			}
+		}*/
 
 		// If the property to be copied is specified then we perform the copy only for that property
 		if(ci.getInputProperty() != null) { // Owner is not a collection

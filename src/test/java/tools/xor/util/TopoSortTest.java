@@ -37,7 +37,7 @@ public class TopoSortTest {
 		Assert.assertTrue(dg.getVertex(3).getName().equals("C"));
 		
 		// Do topological sorting and the order should be C, B, A
-		dg.toposort();
+		dg.toposort(null);
 
 		Assert.assertTrue(dg.getVertex(1).getName().equals("C"));
 		Assert.assertTrue(dg.getVertex(2).getName().equals("B"));

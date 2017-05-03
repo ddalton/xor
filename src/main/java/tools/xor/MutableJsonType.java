@@ -59,9 +59,8 @@ public class MutableJsonType extends ExternalType {
 	}
 
 	@Override
-	public Property defineProperty(DataAccessService dataAccessService, Property domainProperty, Shape shape) {
-		AbstractProperty abstractProperty = (AbstractProperty) domainProperty;
-		Class<?> externalClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+	public Property defineProperty(Property domainProperty, Shape shape) {
+		Class<?> externalClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 		if(externalClass == null)
 			throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 
@@ -71,7 +70,7 @@ public class MutableJsonType extends ExternalType {
 			elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
 		}		
 		if(propertyType == null) {
-			Class<?> propertyClass = dataAccessService.getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+			Class<?> propertyClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 			logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
 			propertyType = shape.getType(propertyClass);
 		}
@@ -85,17 +84,19 @@ public class MutableJsonType extends ExternalType {
 	}
 
 	@Override
-	public void setProperty(DataAccessService dataAccessService, Shape shape) {
-		if(properties == null) {
-			// populate the properties for this type
-			properties = new HashMap<String, Property>();	
-			for(Property domainProperty: domainType.getProperties()) {
-				MutableJsonProperty dynamicProperty = (MutableJsonProperty) defineProperty(dataAccessService, domainProperty, shape);
+	public void setProperty (Shape shape)
+	{
+		// populate the properties for this type
+		for (Property domainProperty : shape.getProperties(domainType).values()) {
+			MutableJsonProperty dynamicProperty = (MutableJsonProperty)defineProperty(
+				domainProperty,
+				shape);
 
-				dynamicProperty.init(dataAccessService, shape);
-				logger.debug("[" + getName() + "] Domain property name: " + domainProperty.getName() + ", type name: " + dynamicProperty.getJavaType());
-				properties.put(dynamicProperty.getName(), dynamicProperty);
-			}			
-		} 		
+			dynamicProperty.init(shape);
+			logger.debug(
+				"[" + getName() + "] Domain property name: " + domainProperty.getName()
+					+ ", type name: " + dynamicProperty.getJavaType());
+			shape.addProperty(dynamicProperty);
+		}
 	}	
 }

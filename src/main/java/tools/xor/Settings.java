@@ -200,6 +200,10 @@ public class Settings {
 		return getSparseness();
 	}
 
+	public boolean hasCollectionSparseness(String rootedAt) {
+		return collectionSparseness.containsKey(rootedAt);
+	}
+
 	public PersistenceOrchestrator getPersistenceOrchestrator ()
 	{
 		return this.persistenceOrchestrator;
@@ -681,15 +685,6 @@ public class Settings {
 	public void setLimit(Integer limit) {
 		this.limit = limit;
 	}
-
-	public int getApiVersion() {
-		return apiVersion;
-	}
-
-	public void setApiVersion(int apiVersion) {
-		this.apiVersion = apiVersion;
-	}
-	
 
 	public Type getEntityType() {
 		return entityType;

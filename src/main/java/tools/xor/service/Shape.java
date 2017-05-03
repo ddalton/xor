@@ -23,6 +23,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.AbstractType;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.ExternalType;
 import tools.xor.OpenType;
 import tools.xor.Property;
@@ -65,6 +66,8 @@ public class Shape
     protected String name;
     protected Shape parent;
     protected Map<String, View> views = new ConcurrentHashMap<String, View>();
+    protected Map<String, Map<String, Property>> domainProperties = new ConcurrentHashMap<>();
+    protected Map<String, Map<String, Property>> externalProperties = new ConcurrentHashMap<>();
 
     // This functionality helps to get the correct narrowed class (subtype) based on the properties
     // defined by the view
@@ -85,6 +88,10 @@ public class Shape
         this.parent = parent;
     }
 
+    public DataAccessService getDAS() {
+        return das;
+    }
+
     public ShapeStrategy getShapeStrategy() {
         return this.shapeStrategy;
     }
@@ -93,19 +100,26 @@ public class Shape
         return this.name;
     }
 
+    /**
+     * Add a type to the shape system. Will just add it without checking parent type.
+     * It is the client's responsibility to decide whether to add it to the shape.
+     *
+     * @param className by which the type is referenced by
+     * @param type to be added
+     */
     public void addType(String className, Type type) {
         addType(className, type, types);
     }
 
-    protected void addType(String className, Type type, Map<String, Type> typeMap) {
-        if(typeMap.containsKey(className)) {
-            return;
-        }
+    protected void addExternalType (String className, Type type) {
+        addType(className, type, externalTypes);
+    }
 
+    private void addType(String className, Type type, Map<String, Type> typeMap) {
         typeMap.put(className, type);
 
         if(EntityType.class.isAssignableFrom(type.getClass())) {
-            ((EntityType)type).setDAS(das);
+            ((EntityType)type).setDAS(getDAS());
             String entityName = ((EntityType)type).getEntityName();
             if(entityName != null && !className.equals(entityName)) {
                 if(typeMap.containsKey(entityName)) {
@@ -117,13 +131,9 @@ public class Shape
         }
     }
 
-    protected void addExternalType (String className, Type type) {
-        addType(className, type, externalTypes);
-    }
-
     /**
-     * We do not look to the parent shape, since a Shape should be self sufficient
-     * in all the types it is responsible for.
+     * Depending on the type sharing strategy, the type might either be completely managed by
+     * this Shape instance or could be shared with a parent Shape instance.
      *
      * @param name of the type
      * @return type instance
@@ -171,7 +181,7 @@ public class Shape
         // create a Type object for this class
         if(result == null) {
             //result = new SimpleType(clazz);
-            result = SimpleTypeFactory.getType(clazz, das);
+            result = SimpleTypeFactory.getType(clazz, getDAS());
 
             addType(clazz.getName(), result);
         }
@@ -185,7 +195,7 @@ public class Shape
         // create a Type object for this class
         if (result == null) {
             //result = new SimpleType(clazz);
-            result = SimpleTypeFactory.getType(clazz, das);
+            result = SimpleTypeFactory.getType(clazz, getDAS());
             addExternalType(clazz.getName(), result);
         }
 
@@ -196,22 +206,24 @@ public class Shape
         if(types.containsKey(type.getName())) {
             throw new RuntimeException("A type with the same name exists, please choose a different name for the open type: " + type.getName());
         }
-        type.setProperty(das);
+
+        type.setDAS(getDAS());
+        type.setProperty();
         addType(type.getName(), type);
 
-        Class<?> externalClass = das.getTypeMapper().toExternal(type.getInstanceClass());
+        Class<?> externalClass = getDAS().getTypeMapper().toExternal(type.getInstanceClass());
         if(externalClass != null) {
-            ExternalType externalType = das.getTypeMapper().createExternalType(
-                (EntityType)type,
+            ExternalType externalType = getDAS().getTypeMapper().createExternalType(
+                type,
                 externalClass);
-            externalTypes.put(externalType.getName(), externalType);
-            externalType.setProperty(das, this);
+            addExternalType(externalType.getName(), externalType);
+            externalType.setProperty(this);
             setBiDirectionOnExternalType(externalType);
         }
     }
 
     protected void setBiDirectionOnExternalType (ExternalType externalType) {
-        externalType.setOpposite(das);
+        externalType.setOpposite(getDAS());
     }
 
     protected void setSuperTypeOnExternalType (ExternalType externalType) {
@@ -225,30 +237,103 @@ public class Shape
         }
     }
 
-    public void addProperty (EntityType type, Property openProperty) {
-        type.addProperty(openProperty);
+    public Map<String, Property> getProperties(EntityType type) {
+        Map<String, Property> result;
 
-        if(externalTypes.containsKey(type.getName())) {
-            ExternalType externalType = (ExternalType) externalTypes.get(type.getName());
-            if(externalType == null) {
-                throw new RuntimeException("Cannot find the external type for: " + type.getName());
-            }
-            Property externalProperty = externalType.defineProperty(das, openProperty, this);
-            externalType.addProperty(externalProperty);
+        result = getDirectProperties(type);
+
+        if(result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+            result = parent.getProperties(type);
+        }
+
+        return result;
+    }
+
+    public Map<String, Property> getDirectProperties(EntityType type) {
+        if(type.isDomainType()) {
+            return domainProperties.get(type.getName());
+        } else {
+            return externalProperties.get(type.getName());
         }
     }
 
-    public void removeProperty (EntityType type, Property openProperty) {
-        type.removeProperty(openProperty);
+    public void addDirectProperty(EntityType type, Property property) {
+        addProperty(type, property);
+    }
 
-        if(externalTypes.containsKey(type.getName())) {
-            ExternalType externalType = (ExternalType) externalTypes.get(type.getName());
-            if(externalType == null) {
-                throw new RuntimeException("Cannot find the external type for: " + type.getName());
+    public void addProperty (Property property) {
+        EntityType type = (EntityType)property.getContainingType();
+        addProperty(type, property);
+    }
+
+    /**
+     * Irrespective of the ShapeStrategy, a property can be overridden by a child Shape.
+     * i.e., a type does not have to be defined in this Shape in order to define a property.
+     *
+     * @param type to which this property belongs
+     * @param property that is to be added
+     */
+    public void addProperty (EntityType type, Property property)
+    {
+        if(type.isDomainType()) {
+            Map<String, Property> properties = domainProperties.get(type.getName());
+            if (properties == null) {
+                properties = new HashMap<>();
+                domainProperties.put(type.getName(), properties);
             }
+            properties.put(property.getName(), property);
+        } else {
+            Map<String, Property> properties = externalProperties.get(type.getName());
+            if (properties == null) {
+                properties = new HashMap<>();
+                externalProperties.put(type.getName(), properties);
+            }
+            properties.put(property.getName(), property);
+        }
+    }
 
-            Property externalProperty = externalType.getProperty(openProperty.getName());
-            externalType.removeProperty(externalProperty);
+    public void removeProperty (Property openProperty) {
+        EntityType type = (EntityType)openProperty.getContainingType();
+        removeProperty(type, openProperty);
+    }
+
+    public void removeProperty (EntityType type, Property openProperty) {
+        if(type.isDomainType()) {
+            if (domainProperties.containsKey(type.getName())) {
+                domainProperties.get(type.getName()).remove(openProperty.getName());
+            }
+        } else {
+            if (externalProperties.containsKey(type.getName())) {
+                externalProperties.get(type.getName()).remove(openProperty.getName());
+            }
+        }
+    }
+
+    public void addOpenProperty(Property property) {
+        EntityType type = (EntityType)property.getContainingType();
+
+        Property domainProperty = type.isDomainType() ? property : ((ExtendedProperty)property).getDomainProperty();
+        Property externalProperty = !type.isDomainType() ? property : null;
+        if(externalProperty == null && type.isDomainType()) {
+            ExternalType externalType = (ExternalType)getExternalType(type.getName());
+            if(externalType != null) {
+                externalProperty = externalType.defineProperty(domainProperty, this);
+            }
+        }
+
+        addProperty(domainProperty);
+        addProperty(externalProperty);
+    }
+
+    public void removeOpenProperty(Property property) {
+        EntityType type = (EntityType)property.getContainingType();
+
+        Property domainProperty = type.isDomainType() ? property : ((ExtendedProperty)property).getDomainProperty();
+        Property externalProperty = !type.isDomainType() ? property : null;
+
+        removeProperty(domainProperty);
+        if(externalProperty != null) {
+            removeProperty(externalProperty);
         }
     }
 
@@ -257,12 +342,12 @@ public class Shape
             if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
                 continue;
             }
-            Class<?> externalClass = das.getTypeMapper().toExternal(type.getInstanceClass());
+            Class<?> externalClass = getDAS().getTypeMapper().toExternal(type.getInstanceClass());
             if(externalClass != null) {
-                Type externalType = das.getTypeMapper().createExternalType(
+                Type externalType = getDAS().getTypeMapper().createExternalType(
                     (EntityType)type,
                     externalClass);
-                externalTypes.put(externalType.getName(), externalType);
+                addExternalType(externalType.getName(), externalType);
             }
         }
 
@@ -274,7 +359,7 @@ public class Shape
                 if(isOpenDomainType(externalType)) {
                     continue;
                 }
-                externalType.setProperty(das, this);
+                externalType.setProperty(this);
             }
         }
 
@@ -306,17 +391,28 @@ public class Shape
     public void initRootType() {
         for (Type type : getUniqueTypes()) {
             if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
-                ((AbstractType)type).initRootEntityType(das, this);
+                ((AbstractType)type).initRootEntityType();
             }
         }
         for (Type type : getUniqueExternalTypes()) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {
-                ((AbstractType)type).initRootEntityType(das, this);
+                ((AbstractType)type).initRootEntityType();
             }
         }
     }
 
     public void initEnd() {
+        for (Type type : getUniqueTypes()) {
+            if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
+                ((AbstractType)type).unfoldProperties(this);
+            }
+        }
+        for (Type type : getUniqueExternalTypes()) {
+            if (AbstractType.class.isAssignableFrom(type.getClass())) {
+                ((AbstractType)type).unfoldProperties(this);
+            }
+        }
+
         for (Type type : getUniqueTypes()) {
             if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
                 ((AbstractType)type).initEnd(this);
@@ -327,7 +423,7 @@ public class Shape
     public void initPositionProperty() {
         for (Type type : getUniqueTypes()) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {
-                ((AbstractType)type).initPositionProperty();
+                ((AbstractType)type).initPositionProperty(this);
             }
         }
     }

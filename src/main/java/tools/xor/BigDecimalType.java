@@ -23,6 +23,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.generator.DateRange;
+import tools.xor.generator.Generator;
 import tools.xor.generator.Range;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
@@ -66,8 +67,10 @@ public class BigDecimalType extends SimpleType {
 
 		int scale = 0;
 		ExtendedProperty ep = (ExtendedProperty) property;
-		if(ep.getGenerator() != null) {
-			return ep.getGenerator().getBigDecimal();
+
+		Generator gen = ep.getGenerator(visitor.getRelationshipName());
+		if(gen != null) {
+			return gen.getBigDecimal();
 		} else {
 			if (ep.getConstraints().containsKey(Constants.XOR.CONS_SCALE)) {
 				scale = (int)ep.getConstraints().get(Constants.XOR.CONS_SCALE);

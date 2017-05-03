@@ -123,8 +123,8 @@ public class HibernateProperty extends AbstractProperty {
 	}		
 
 	@Override
-	public void init(DataAccessService das, Shape shape) {
-		HibernateDAS hibernateDAS = (HibernateDAS) das;
+	public void init(Shape shape) {
+		HibernateDAS hibernateDAS = (HibernateDAS) shape.getDAS();
 
 		if(isMany()) {
 			if(hibernateProperty.getType().isCollectionType()) {

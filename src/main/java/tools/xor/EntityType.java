@@ -19,8 +19,8 @@
 
 package tools.xor;
 
-import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -111,13 +111,6 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public boolean isImmutable();
 	
 	/**
-	 * Return true if the type is marked as an aggregate using the Aggregate annotation
-	 * This is used to control the amount of data using the ContentScope control
-	 * @return true if aggregate
-	 */
-	public boolean isAggregate();	
-	
-	/**
 	 * Returns true if this type is an embedded type
 	 * @return true if embedded type
 	 */
@@ -151,6 +144,13 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public boolean isEntity();
 
 	/**
+	 * This is an optimization step to bring in the properties
+	 * from the ancestors into the current type.
+	 * @param shape of the type
+	 */
+	public void unfoldProperties(Shape shape);
+
+	/**
 	 * Find all the types of the subclasses of the instance class of this type 
 	 * 
 	 * @param types of all types   
@@ -173,26 +173,16 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @return subtypes
 	 */
 	public Set<EntityType> getChildSubtypes();
-	
-	/**
-	 * Get a list of all properties for a given apiVersion
-	 * 
-	 * @param apiVersion apiVersion number
-	 * @return list of properties
-	 */
-	public List <Property> getProperties(int apiVersion);
 
 	/**
-	 * Add property to this type
-	 * This method is not synchronized as we do not remove elements from a Map
+	 * Add property to this type and its external type
 	 * 
 	 * @param property that is added
 	 */
 	public void addProperty(Property property);
 
 	/**
-	 * Remove property from this type
-	 * This method is not synchronized as we do not remove elements from a Map
+	 * Remove property from this type and its corresponding external type
 	 *
 	 * @param property that is removed
 	 */
@@ -208,8 +198,9 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	
 	/** 
 	 * Initialize the position property for list and map types
+	 * @param shape of this type
 	 */
-	public void initPositionProperty();
+	public void initPositionProperty(Shape shape);
 
 	/**
 	 * Find the annotation object from the instance class
@@ -290,6 +281,12 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param das DataAccessService for this type
 	 */
 	public void setDAS(DataAccessService das);
+
+	/**
+	 * Return the DAS object responsible for creating this type.
+	 * @return DataAccessService instance
+	 */
+	public DataAccessService getDAS();
 
 	/**
 	 * Returns whether or not all a property represented by

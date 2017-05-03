@@ -44,6 +44,7 @@ import javax.persistence.Id;
 import javax.persistence.MapKey;
 import javax.persistence.OrderBy;
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
+import javax.swing.text.html.parser.Entity;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -70,7 +71,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	
 	public static final String EMPTY_TAG = "_EMPTY_";
 	public static final String GETTER_TAG = "_GETTER_";	
-	public static final String SETTER_TAG = "_SETTER_";	
+	public static final String SETTER_TAG = "_SETTER_";
+	public static final String TYPE_GENERATOR = "_TYPE_";
 
 	protected AccessType accessType;
 	protected boolean    alwaysInitialized;
@@ -127,7 +129,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	private Boolean      unique; 
 	private Type         type;
 	private EntityType   parentType;
-	private Generator generator;
+	private Generator generator; // TODO: Map of incoming properties, as the generator value for key fields can vary based on how the object is accessed
+	// The default generator is used as the fallback
+	private Map<String, Generator> generators = new HashMap<>();
 
 	// Collection related
 	protected Type       keyType;
@@ -188,6 +192,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	@Override
 	public Type getType() {
+		/*
+		if(type != null && type instanceof EntityType && ((EntityType)type).getDAS() != null) {
+			Type result = ((EntityType)type).getDAS().getType(type.getName());
+
+			if(result != null) {
+				return result;
+			}
+		}*/
+
 		return type;
 	}
 
@@ -207,6 +220,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	@Override
 	public Type getElementType() {
+		/*
+		if(elementType != null && elementType instanceof EntityType && ((EntityType)elementType).getDAS() != null) {
+			Type result = ((EntityType)elementType).getDAS().getType(elementType.getName());
+
+			if(result != null) {
+				return result;
+			}
+		}
+*/
 		return elementType;
 	}	
 
@@ -341,14 +363,16 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			}
 		}
 	}
-	
-	private void initApiVersion() {
+
+	private void initApiVersion ()
+	{
 		field = getContainingType().getField(getName());
-		if(field == null && getterMethod != null) // try the method name
+		if (field == null && getterMethod != null) { // try the method name
 			field = getContainingType().getField(getterMethod.getName());
-		if(field != null) {
+		}
+		if (field != null) {
 			XorVersion version = field.getAnnotation(XorVersion.class);
-			if(version != null) {
+			if (version != null) {
 				versionInfo = (new VersionInfo(version.fromVersion(), version.untilVersion()));
 			}
 		}
@@ -563,7 +587,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return result;
 	}	
 
-	public abstract void init(DataAccessService das, Shape shape);
+	public abstract void init(Shape shape);
 
 	protected void executePrePropertyLogic(CallInfo ci, Method prePropertyLogic) 
 	{
@@ -1244,15 +1268,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public abstract void initMappedBy(DataAccessService das);
 
 	@Override
-	public boolean isApplicable(int apiVersion) {
-		if(versionInfo == null || (apiVersion >= versionInfo.getFromVersion() && apiVersion <= versionInfo.getUntilVersion()) ) {
-			return true;
-		}
-		
-		return false;
-	}
-
-	@Override
 	public Property getDomainProperty() {
 		return this;
 	}
@@ -1305,14 +1320,27 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	public void setGenerator(Generator generator) {
-		this.generator = generator;
-		this.generator.validate(this);
+		this.setGenerator(TYPE_GENERATOR, generator);
 	}
 
 	public Generator getGenerator() {
-		return this.generator;
+		return getGenerator(TYPE_GENERATOR);
 	}
 
+	public void setGenerator(String incomingProperty, Generator generator) {
+		generator.validate(this);
+		this.generators.put(incomingProperty, generator);
+	}
+
+	public Generator getGenerator(String incomingProperty) {
+		if(!this.generators.containsKey(incomingProperty)) {
+			// fallback to default
+			if(!TYPE_GENERATOR.equals(incomingProperty)) {
+				return getGenerator();
+			}
+		}
+		return this.generators.get(incomingProperty);
+	}
 
 	@Override
 	public boolean isContainment() {

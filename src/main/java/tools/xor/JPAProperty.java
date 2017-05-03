@@ -250,7 +250,7 @@ public class JPAProperty extends AbstractProperty {
 
 	
 	@Override
-	public void init(DataAccessService das, Shape shape) {
+	public void init(Shape shape) {
 		if(isOpenContent() && attribute != null) {
 			throw new IllegalStateException("Cannot define an open property with the same name as a persistence managed property");
 		}

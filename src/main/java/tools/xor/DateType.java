@@ -83,9 +83,9 @@ public class DateType extends SimpleType {
 	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
 						   StateGraph.ObjectGenerationVisitor visitor) {
 
-		ExtendedProperty ep = (ExtendedProperty) property;
-		if(ep.getGenerator() != null) {
-			return ep.getGenerator().getDateValue();
+		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
+		if(gen != null) {
+			return gen.getDateValue();
 		}
 
 		long  range = getMax() - getMin();

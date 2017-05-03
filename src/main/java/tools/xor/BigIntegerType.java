@@ -22,6 +22,7 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.generator.Generator;
 import tools.xor.util.graph.StateGraph;
 
 import java.math.BigInteger;
@@ -59,9 +60,9 @@ public class BigIntegerType extends SimpleType {
 		BigInteger minimum = this.min;
 		BigInteger maximum = this.max;
 
-		ExtendedProperty ep = (ExtendedProperty) property;
-		if(ep.getGenerator() != null) {
-			return ep.getGenerator().getBigInteger();
+		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
+		if(gen != null) {
+			return gen.getBigInteger();
 		}
 
 		long range = maximum.longValue() - minimum.longValue();

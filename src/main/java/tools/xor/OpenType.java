@@ -103,22 +103,22 @@ public class OpenType extends AbstractType {
 
 	@Override
 	public Property getProperty(String path) {
-		return properties.get(path);
+		return getDAS().getShape().getProperties(this).get(path);
 	}
 
-	public void setProperty(DataAccessService dataAccessService) {
-		if(properties == null) {
-			properties = new HashMap<String, Property>();
-		}
+	public void setProperty() {
 
-		for(String p: openProperties) {
-			String[] tokens = p.split(DELIM);
-			if(tokens.length != 2) {
-				throw new RuntimeException("The open property should be of the form <Class name>#<property name>");
+		if(getDAS().getShape().getProperties(this) == null) {
+			for (String p : openProperties) {
+				String[] tokens = p.split(DELIM);
+				if (tokens.length != 2) {
+					throw new RuntimeException(
+						"The open property should be of the form <Class name>#<property name>");
+				}
+				Type t = getDAS().getType(tokens[0]);
+				Property property = t.getProperty(tokens[1]);
+				getDAS().getShape().addProperty(this, property);
 			}
-			Type t = dataAccessService.getType(tokens[0]);
-			Property property = t.getProperty(tokens[1]);
-			properties.put(p, property);
 		}
 	}
 
@@ -148,7 +148,7 @@ public class OpenType extends AbstractType {
 
 	@Override
 	public List<Property> getDeclaredProperties() {
-		return new ArrayList<Property>(properties.values());
+		return getProperties();
 	}
 
 	@Override

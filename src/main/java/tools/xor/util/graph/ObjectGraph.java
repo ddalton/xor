@@ -251,7 +251,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 		source.setVisited(true);
 		
-		for(Property property: ((EntityType)source.getType()).getProperties(settings.getApiVersion())) {
+		for(Property property: ((EntityType)source.getType()).getProperties()) {
 			if( ((ExtendedProperty)property).isDataType() && !property.isMany() ) {
 				continue;
 			}

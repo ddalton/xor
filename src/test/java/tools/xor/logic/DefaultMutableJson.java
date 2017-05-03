@@ -25,6 +25,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
+import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.EntitySize;
 import tools.xor.EntityType;
@@ -1286,6 +1287,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 			settings.setPreClear(true);
 
 			// Import the employee
+			settings.setAction(AggregateAction.UPDATE);
 			Object obj = aggregateService.importAggregate("EmployeeRandomMedium.xlsx", settings);
 			assert(obj != null);
 

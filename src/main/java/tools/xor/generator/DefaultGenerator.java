@@ -21,15 +21,19 @@ package tools.xor.generator;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.Settings;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 public class DefaultGenerator implements Generator
 {
@@ -230,7 +234,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public String getStringValue ()
+    public String getStringValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         int pos = getPosition();
         return getValues()[pos];
@@ -252,5 +256,31 @@ public class DefaultGenerator implements Generator
     @Override public void validate (ExtendedProperty property)
     {
 
+    }
+
+    @Override public int getFanout (Settings settings, String path)
+    {
+        float sparseness = settings.getSparseness(path);
+        return (int)(Math.random() * settings.getEntitySize().size() * sparseness);
+    }
+
+    public List<JSONObject> getExisting (Settings settings, String path, List<JSONObject> entitiesToChooseFrom)
+    {
+        assert(entitiesToChooseFrom != null && entitiesToChooseFrom.size() > 0);
+
+        int fanOut = getFanout(settings, path);
+        final int[] ints = new Random().ints(1, entitiesToChooseFrom.size()).distinct().limit(fanOut).toArray();
+
+        List<JSONObject> result = new ArrayList<>();
+        for(int i = 0; i < ints.length; i++) {
+            result.add(entitiesToChooseFrom.get(ints[i]));
+        }
+
+        return result;
+    }
+
+    @Override public boolean isApplicableToCollectionElement ()
+    {
+        return false;
     }
 }

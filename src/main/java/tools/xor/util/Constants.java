@@ -22,6 +22,7 @@ package tools.xor.util;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.service.exim.AbstractExportImport;
 
 public class Constants {
 
@@ -99,6 +100,7 @@ public class Constants {
 	  
 	  public static final String CALLBACK = "_CALLBACK_";
 	  public static final String GEN_PATH = "_PATH_";
+	  public static final String GEN_PARENT = "_PARENT_";
 
 	  // Property constraints
 	  public static final String CONS_LENGTH = "_LENGTH_";
@@ -108,8 +110,8 @@ public class Constants {
 	  // Graph related
 	  public static final int TOPO_ORDERING_START = 1;
 	  
-	  public static String getExcelSheetFullName(Type type, Property property) {
-		  return type.getName() + ":" + property.getName();
+	  public static String getRelationshipName (Type type, Property property) {
+		  return type.getName() + AbstractExportImport.PROPERTY_TYPE_DELIM + property.getName();
 	  }
 
 	  public static String walkDown(String path, Property property) {

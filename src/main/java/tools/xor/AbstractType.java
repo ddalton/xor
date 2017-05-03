@@ -41,7 +41,6 @@ import javax.persistence.UniqueConstraint;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.json.JSONObject;
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorDataService;
@@ -69,12 +68,16 @@ public abstract class AbstractType implements EntityType {
 	private TypeMapper              typeMapper;   // Used to get the derivedClass from the referenceClass and vice versa
 	private ClassResolver           classResolver;
 	private boolean                 immutable;
-	private boolean                 aggregate;    // Does this type represent an aggregate according to the model - marked by the Aggregate annotation
-	protected Map<String, Property> properties;   // TODO: synchronize if properties are removed in future
+
+	// TODO: Ideally should be managed by shape
+	// TODO: synchronize if properties are removed in future
+	//protected Map<String, Property> properties;
+	//private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
+
+
 	protected EntityType            rootEntityType;
 	private   Set<EntityType>       subTypes;
 	private Set<EntityType>         childSubTypes;
-	private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
 	private int                     order; //represents the topological sort order of the entity type
 	private EntityType              superType;
 	private List<String>             naturalKey;
@@ -120,6 +123,11 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public void setDAS(DataAccessService das) {
 		this.das = das;
+	}
+
+	@Override
+	public DataAccessService getDAS() {
+		return this.das;
 	}
 	
 	@Override
@@ -504,35 +512,28 @@ public abstract class AbstractType implements EntityType {
 
 	/**
 	 * Initialize the root superType
-	 * @param das to get the Type
-	 * @param shape of the type
 	 */
-	public void initRootEntityType(DataAccessService das, Shape shape) {
+	public void initRootEntityType() {
 
 		this.rootEntityType = this;
 
 		while(rootEntityType.getSuperType() != null) {
 			this.rootEntityType = rootEntityType.getSuperType();
 		}
-		/*
-		Class<?> rootEntityClass = getInstanceClass();
+	}
 
-		Class<?> parentClass = rootEntityClass.getSuperclass();		
-		while(parentClass != null) {
-			Annotation annotation = getClassAnnotation(das, parentClass, Entity.class);
+	public void unfoldProperties (Shape shape)
+	{
+		initRequiredProperties(shape);
+	}
 
-			if(annotation != null && annotation.annotationType() == Entity.class) {
-				Entity entity = (Entity) annotation;
-				if(entity.name() != null && !"".equals(entity.name()))
-					rootEntityClass = parentClass;
-			}
-
-			parentClass = parentClass.getSuperclass();
-		}
-
-		rootEntityType = (EntityType) shape.getType(rootEntityClass);
-		*/
-	}	
+	/**
+	 * Overridden by providers that needs required properties such as id and version fields
+	 * to be initialized after the unfolding process.
+	 *
+	 * @param shape of the type
+	 */
+	protected void initRequiredProperties(Shape shape) {}
 	
 	@Override
 	public List<Set<String>> getCandidateKeys() {
@@ -805,11 +806,6 @@ public abstract class AbstractType implements EntityType {
 	public boolean isImmutable() {
 		return immutable;
 	}
-	
-	@Override
-	public boolean isAggregate() {
-		return aggregate;
-	}	
 
 	public static boolean isBasicType(Class<?> clazz) {
 		return clazz.isPrimitive() || isWrapperType(clazz) || BASIC_TYPES.contains(clazz);
@@ -841,10 +837,9 @@ public abstract class AbstractType implements EntityType {
 
 
 	@Override
-	public boolean isDataType() {
-		// Depending on provider implementations, open types might not have their properties populated
-		// and if that is the case, they will not be treated as a BusinessObject
-		return properties == null || properties.size() == 0;
+	public boolean isDataType ()
+	{
+		return false;
 	}
 
 	@Override
@@ -858,55 +853,27 @@ public abstract class AbstractType implements EntityType {
 
 	@Override
 	public List<Property> getProperties() {
-		return getProperties(ALL);
-	}
-	
-	/**
-	 * Filter the properties by the API version
-	 *
-	 * @param input  the given properties
-	 * @param apiVersion the version to filter by
-	 * @return the list of properties valid for the given apiVersion
-	 */
-	List<Property> getProperties(Collection<Property> input, int apiVersion) {
-		List<Property> result = new ArrayList<Property>(input.size());
-		for(Property p: input) {
-			ExtendedProperty property = (ExtendedProperty) p;
-			if(property.isApplicable(apiVersion)) {
-				Property resolvedProperty = getProperty(property.getName());
-				if(resolvedProperty == null) { 
-					logger.warn("Could not find property: " + p.getName() + " in type " + getName());
-					continue;
-				}
-				result.add(resolvedProperty);
-			}
-		}
-		
-		return result;
-	}
-	
-	@Override
-	/**
-	 * We will not automatically sort as this involves additional resources that the 
-	 * user should not pay if not needed.
-	 * So the user will take of invoking the business logic in the correct order.
-	 */
-	public List<Property> getProperties(int apiVersion) {
-		if(propertiesByVersion.containsKey(apiVersion) ) {
-			return propertiesByVersion.get(apiVersion);
-		}
-
-		if(properties == null) {
+		if(getDAS().getShape().getProperties(this) == null) {
 			return null;
 		}
+		return new ArrayList<>(getDAS().getShape().getProperties(this).values());
+	}
 
-		List<Property> result = null;
-		if(apiVersion != ALL) {
-			result = getProperties(properties.values(), apiVersion);
-			propertiesByVersion.put(apiVersion, result);
-		} else {
-			result = new ArrayList<Property>(properties.values());
-			propertiesByVersion.put(ALL, result);
+	List<Property> getProperties (Collection<Property> input)
+	{
+		List<Property> result = new ArrayList<>(input.size());
+		for (Property p : input) {
+			ExtendedProperty property = (ExtendedProperty)p;
+
+			//Get the property for this type, helps to resolve to the correct model whether
+			// external or domain
+			Property resolvedProperty = getProperty(property.getName());
+			if (resolvedProperty == null) {
+				logger.warn(
+					"Could not find property: " + p.getName() + " in type " + getName());
+				continue;
+			}
+			result.add(resolvedProperty);
 		}
 
 		return result;
@@ -917,18 +884,12 @@ public abstract class AbstractType implements EntityType {
 	 */
 	@Override
 	public void addProperty(Property property) {
-		properties.put(property.getName(), property);
-
-		// Clear the property version map so it gets rebuilt
-		propertiesByVersion.clear();
+		getDAS().getShape().addProperty(property);
 	}
 
 	@Override
 	public void removeProperty(Property property) {
-		properties.remove(property.getName());
-
-		// Clear the property version map so it gets rebuilt
-		propertiesByVersion.clear();
+		getDAS().getShape().removeProperty(property);
 	}
 
 	@Override
@@ -936,10 +897,10 @@ public abstract class AbstractType implements EntityType {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
 
 		if(delim == -1) {
-			if(properties == null) {
+			if(getDAS().getShape().getProperties(this) == null) {
 				throw new IllegalStateException("Properties not found for type: " + getName() + " with class: " + getInstanceClass().getName());
 			}
-			Property p = properties.get(path);
+			Property p = getDAS().getShape().getProperties(this).get(path);
 			return p == null || p.isNullable();
 		} else {
 			Property property = getProperty(path.substring(0, delim));
@@ -961,10 +922,10 @@ public abstract class AbstractType implements EntityType {
 
 		Property result = null;
 		if(delim == -1) {
-			if(properties == null) {
+			if(getDAS().getShape().getProperties(this) == null) {
 				throw new IllegalStateException("Properties not set for type: " + getName() + " with class: " + getInstanceClass().getName());
 			}
-			result = properties.get(path);
+			result = getDAS().getShape().getProperties(this).get(path);
 		} else {
 			Property property = getProperty(path.substring(0, delim));
 			if(property == null) {
@@ -990,7 +951,7 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public Property getPropertyByAlias(String name) {
-		for(Property property: properties.values()) {
+		for(Property property: getDAS().getShape().getProperties(this).values()) {
 			if(property.getAliasNames().contains(name))
 				return property;
 		}
@@ -999,12 +960,12 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	@Override
-	public void initPositionProperty() {
+	public void initPositionProperty(Shape shape) {
 		if(isOpen()) {
 			return;
 		}
 
-		for(Property property: properties.values()) {
+		for(Property property: shape.getProperties(this).values()) {
 			((ExtendedProperty)property).initPositionProperty();
 		}
 	}	
@@ -1087,6 +1048,8 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
 						   StateGraph.ObjectGenerationVisitor visitor) {
+		assert(visitor != null);
+
 		JSONObject result = new JSONObject();
 
 		// For containment or entities with natural keys use the generator to populate the values
@@ -1106,10 +1069,16 @@ public abstract class AbstractType implements EntityType {
 
 				// Get a new lot value and link all the LinkedChoices fields together
 				// for this entity
-				Generator gen = ((ExtendedProperty)p).getGenerator();
+				Generator gen = ((ExtendedProperty)p).getGenerator(visitor.getRelationshipName());
 				if(p != null && gen instanceof LinkedChoices && !castLot) {
 					((LinkedChoices)gen).castLot();
 					castLot = true;
+				}
+
+				// For now we skip data type associations, we might change this in the
+				// future
+				if(p.isMany()) {
+					continue;
 				}
 
 				result.put(p.getName(), ((BasicType)p.getType()).generate(
@@ -1121,6 +1090,7 @@ public abstract class AbstractType implements EntityType {
 			}
 		}
 		result.put(Constants.XOR.TYPE, getInstanceClass().getName());
+		result.put(Constants.XOR.GEN_PARENT, rootedAt);
 		
 		return result;
 	}

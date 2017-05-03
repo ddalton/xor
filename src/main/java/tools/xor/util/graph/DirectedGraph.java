@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+import tools.xor.service.Shape;
 import tools.xor.util.Vertex;
 
 public interface DirectedGraph<V, E> extends Graph<V, E> {
@@ -110,9 +111,10 @@ public interface DirectedGraph<V, E> extends Graph<V, E> {
 	/**
 	 * Get a topoologically sorted list of the DAG
 	 * A RuntimeException will be thrown if the graph is not a DAG
+	 * @param shape of the type
 	 * @return list of vertices in topological order
 	 */
-	public List<V> toposort();
+	public List<V> toposort(Shape shape);
 
 	/**
 	 * Remove all self loops

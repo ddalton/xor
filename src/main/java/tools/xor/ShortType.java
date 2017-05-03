@@ -22,6 +22,7 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.generator.Generator;
 import tools.xor.util.graph.StateGraph;
 
 import java.util.List;
@@ -56,9 +57,9 @@ public class ShortType extends SimpleType {
 	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
 						   StateGraph.ObjectGenerationVisitor visitor) {
 
-		ExtendedProperty ep = (ExtendedProperty) property;
-		if(ep.getGenerator() != null) {
-			return ep.getGenerator().getShortValue();
+		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
+		if(gen != null) {
+			return gen.getShortValue();
 		}
 
 		short range = (short) (getMax() - getMin());

@@ -46,7 +46,7 @@ public class XSDEntityGenerator extends AbstractGenerator {
 
 		if(EntityType.class.isAssignableFrom(getType().getClass())) {
 			EntityType entityType = (EntityType) getType();
-			for(Property property: entityType.getProperties(coordinator.getApiVersion())) {
+			for(Property property: entityType.getProperties()) {
 
 				Element element = coordinator.getDocument().createElement(XSDVisitor.XSD_PREFIX + "element");
 				coordinator.push(element);

@@ -19,95 +19,133 @@
 
 package tools.xor.util;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
+import tools.xor.EntityType;
+import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.Type;
 
-public final class Edge<V extends Vertex> {
+public final class Edge<V extends Vertex>
+{
 
-	private final String name;
-	private final V start;
-	private final V end;
-	private final boolean qualified;
-	private final boolean reversed; // Denotes that the edge is the reverse of the actual relationship.
-	                                // This is utilized for Topological sorting.
+    public static String NONE_OR_ONE = "0..1";
+    public static String EXACTLY_ONE = "1..1";
+    public static String ZERO_OR_MORE = "0..*";
 
-	public String getName() {
-		return name;
-	}
-	
-	public boolean isQualified() {
-		return qualified;
-	}
+    private final String name;
+    private final V start;
+    private final V end;
+    private final boolean qualified;
+    private final boolean reversed; // Denotes that the edge is the reverse of the actual relationship.
+    // This is utilized for Topological sorting.
 
-	public V getStart() {
-		return start;
-	}
+    public String getName ()
+    {
+        return name;
+    }
 
-	public V getEnd() {
-		return end;
-	}
+    public boolean isQualified ()
+    {
+        return qualified;
+    }
 
-	public Edge(String name, V start, V end) {
-		this(name, start, end, false);
-	}
+    public V getStart ()
+    {
+        return start;
+    }
 
-	public Edge(String name, V start, V end, boolean qualify) {
-		this(name, start, end, qualify, false);
-	}
+    public V getEnd ()
+    {
+        return end;
+    }
 
-	public Edge(String name, V start, V end, boolean qualify, boolean reversed) {
-		this.name = name;
-		this.start = start;
-		this.end = end;
-		this.qualified = qualify;
-		this.reversed = reversed;
-	}
+    public Edge (String name, V start, V end)
+    {
+        this(name, start, end, false);
+    }
 
-	@Override
-	/**
-	 * Have to use a different prime number when incorporating boolean fields in hashCode
-	 */
-	public int hashCode() {
-		int result = 17;
-		result = 37 * result + name.hashCode();
-		result = 37 * result + start.hashCode();
-		result = 37 * result + end.hashCode();
-		result = 41 * result + (qualified ? 1 : 0);
-		result = 43 * result + (reversed ? 1 : 0);
-		return result;
-	}
+    public Edge (String name, V start, V end, boolean qualify)
+    {
+        this(name, start, end, qualify, false);
+    }
 
-	@Override
-	public boolean equals(Object other) {
-		if (other == null) { return false; }
-		if (other == this) { return true; }
-		if (other.getClass() != getClass()) {
-			return false;
-		}
+    public Edge (String name, V start, V end, boolean qualify, boolean reversed)
+    {
+        this.name = name;
+        this.start = start;
+        this.end = end;
+        this.qualified = qualify;
+        this.reversed = reversed;
+    }
 
-		Edge otherEdge = (Edge) other;
+    @Override
+    /**
+     * Have to use a different prime number when incorporating boolean fields in hashCode
+     */
+    public int hashCode ()
+    {
+        int result = 17;
+        result = 37 * result + name.hashCode();
+        result = 37 * result + start.hashCode();
+        result = 37 * result + end.hashCode();
+        result = 41 * result + (qualified ? 1 : 0);
+        result = 43 * result + (reversed ? 1 : 0);
+        return result;
+    }
 
-		return name.equals(otherEdge.name) &&
-			start.equals(otherEdge.start) &&
-			end.equals(otherEdge.end) &&
-			qualified == otherEdge.qualified &&
-			reversed == otherEdge.reversed;
-	}
+    @Override
+    public boolean equals (Object other)
+    {
+        if (other == null) { return false; }
+        if (other == this) { return true; }
+        if (other.getClass() != getClass()) {
+            return false;
+        }
 
-	public String getQualifiedName() {
-		if(qualified) {
-			return name + Settings.PATH_DELIMITER;
-		} else {
-			return name;
-		}
-	}
+        Edge otherEdge = (Edge)other;
 
-	public Edge reverse() {
-		return new Edge(name, end, start, this.qualified, this.reversed ^ true);
-	}
-	
-	@Override
-	public String toString() {
-		return start.getName() + "--" + getName() + "-->" + end.getName();
-	}
+        return name.equals(otherEdge.name) &&
+            start.equals(otherEdge.start) &&
+            end.equals(otherEdge.end) &&
+            qualified == otherEdge.qualified &&
+            reversed == otherEdge.reversed;
+    }
+
+    public String getQualifiedName ()
+    {
+        if (qualified) {
+            return name + Settings.PATH_DELIMITER;
+        }
+        else {
+            return name;
+        }
+    }
+
+    public Edge reverse ()
+    {
+        return new Edge(name, end, start, this.qualified, this.reversed ^ true);
+    }
+
+    public String getEndCardinality() {
+        if(start instanceof State) {
+            Type type = ((State)start).getType();
+            if(type instanceof EntityType && name != null && !"".equals(name)) {
+                Property property = ((EntityType) type).getProperty(name);
+                if(property.isMany()) {
+                    return ZERO_OR_MORE;
+                } else if(property.isNullable()) {
+                    return NONE_OR_ONE;
+                } else {
+                    return EXACTLY_ONE;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public String toString ()
+    {
+        return start.getName() + "--" + getName() + "-->" + end.getName();
+    }
 }

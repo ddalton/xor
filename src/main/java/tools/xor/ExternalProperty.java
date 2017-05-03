@@ -35,6 +35,7 @@ public class ExternalProperty extends AbstractProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
 	private ExtendedProperty domainProperty;
+	private Boolean containment; // Note: this should be an instance to allow 3VL.
 	
 	public ExternalProperty(ExtendedProperty domainProperty, Type type, ExternalType parentType, Type elementType) {
 		super(type, parentType);
@@ -83,7 +84,26 @@ public class ExternalProperty extends AbstractProperty {
 
 	@Override
 	public boolean isContainment() {
+		// First check if the field has been initialized,
+		// if not, fallback to the domain value
+		if(containment != null) {
+			return containment;
+		}
 		return domainProperty.isContainment();
+	}
+
+	/**
+	 * It is possible to mark an external property as a containment property for
+	 * data generation reasons.
+	 * This allows us to enhance the model without touching
+	 * the domain model. By setting it as containment, these fields will be given
+	 * priority for data generation, and hence make them available for linking with
+	 * non-containment relationships.
+	 *
+	 * @param containment value to set
+	 */
+	public void setContainment(boolean containment) {
+		this.containment = containment;
 	}
 
 	@Override
@@ -110,21 +130,31 @@ public class ExternalProperty extends AbstractProperty {
 	public Object get(Property property) {
 		return null;
 	}
-	
+
+	/*
 	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
-		return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getKeyType().getInstanceClass()));
+		//return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getKeyType().getInstanceClass()));
+		return
 	}	
 	
 	protected Type getExternalElementType(DataAccessService das, Shape shape) {
 		return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getElementType().getInstanceClass()));
+	}*/
+
+	protected Type getExternalKeyType(Shape shape) {
+		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
+	}
+
+	protected Type getExternalElementType(Shape shape) {
+		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
 	}
 
 	@Override
-	public void init(DataAccessService das, Shape shape) {
+	public void init(Shape shape) {
 		if(domainProperty.getKeyType() != null)
-			keyType = getExternalKeyType(das, shape);
+			keyType = getExternalKeyType(shape);
 		if(domainProperty.getElementType() != null) 
-			elementType = getExternalElementType(das, shape);
+			elementType = getExternalElementType(shape);
 		
 		if( (field != null && AbstractType.isWrapperType(field.getType())) || 
 				(getterMethod != null && AbstractType.isWrapperType(getterMethod.getReturnType()))

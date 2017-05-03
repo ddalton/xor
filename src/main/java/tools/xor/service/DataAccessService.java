@@ -45,6 +45,8 @@ public interface DataAccessService {
 	/**
 	 * Returns the shape in the current session/thread. So it needs to be overridden by
 	 * subclasses.
+	 * NOTE: This method should not be called during the bootstrap process as that will
+	 * interfere in the order of Shape creation.
 	 *
 	 * @return Shape of types
 	 */
@@ -56,6 +58,14 @@ public interface DataAccessService {
 	 * @param name of the Shape represting the type system
 	 */
 	public void addShape(String name);
+
+	/**
+	 * Return an existing shape with the provided name or create one if not present.
+	 * @param name of the shape
+	 * @param parent of the shape
+	 * @return the newly created shape
+	 */
+	public Shape getOrCreateShape (String name, Shape parent);
 	
 	/**
 	 * Return the type associated with a particular DataObject
@@ -66,7 +76,6 @@ public interface DataAccessService {
 	
 	/**
 	 * Returns the External type for this class.
-	 * TODO: Needs to support dynamic types, i.e., extract schema from a JSONObject etc...
 	 * 
 	 * @param clazz java class
 	 * @return external type
@@ -217,17 +226,31 @@ public interface DataAccessService {
 
 	/**
 	 * Used to extend the property for a type. e.g., add a new open property
-	 * @param taskType entity type
-	 * @param openProperty an open property
+	 * @param property an open property
 	 */
-	public void addProperty (EntityType taskType, Property openProperty);
+	public void addProperty (Property property);
 
 	/**
 	 * Mainly used to remove open properties. Useful from a JUnit test perspective.
-	 * @param taskType entity type
-	 * @param openProperty an open property
+	 * @param property an open property
 	 */
-	public void removeProperty (EntityType taskType, Property openProperty);
+	public void removeProperty (Property property);
+
+	/**
+	 * Similar to addProperty, but property adds the properly to both domain and
+	 * external models
+	 *
+	 * @param openProperty to be added
+	 */
+	public void addOpenProperty (Property openProperty);
+
+	/**
+	 * Similar to removeProperty but properly removes from both domain and
+	 * external models.
+	 *
+	 * @param openProperty to be removed
+	 */
+	public void removeOpenProperty (Property openProperty);
 
 	/**
 	 * Can be used to add all open types. For e.g., types specific to a view, such as a cross join

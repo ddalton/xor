@@ -555,14 +555,4 @@ public class MutableJsonProperty extends ExternalProperty {
 			throw ClassUtil.wrapRun(e);
 		}
 	}
-	
-	@Override
-	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
-		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
-	}	
-	
-	@Override
-	protected Type getExternalElementType(DataAccessService das, Shape shape) {
-		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
-	}	
 }

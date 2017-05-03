@@ -30,7 +30,9 @@ package tools.xor.generator;
 
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.Settings;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -102,9 +104,10 @@ public interface Generator
 
     /**
      * Return a string value
+     * @param visitor containing call stack specific information
      * @return string value
      */
-    String getStringValue();
+    String getStringValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Returns the desired descendant State
@@ -120,4 +123,20 @@ public interface Generator
      * @param property for which this generator is being configured
      */
     void validate(ExtendedProperty property);
+
+    /**
+     * Get the collection size for a toMany association.
+     * @see Generator#isApplicableToCollectionElement
+     * @param settings collection sparseness
+     * @param path collection sparseness value for this association
+     * @return collection size
+     */
+    int getFanout(Settings settings, String path);
+
+    /**
+     * The generator is only applicable to the collection element and not to the collection
+     * itself. The collection element type should be EntityType.
+     * @return true if the generator is only applicable to the collection element
+     */
+    boolean isApplicableToCollectionElement();
 }

@@ -16,6 +16,7 @@ import java.util.Stack;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.Vertex;
 
@@ -659,7 +660,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	}
 
 	@Override
-	public List<V> toposort() {
+	public List<V> toposort(Shape shape) {
 		TopoSort<V, E> ts = new TopoSort<V, E>(this);
 		return ts.execute();
 	}

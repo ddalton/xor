@@ -59,7 +59,7 @@ public class IntType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getIntValue();
+			return gen.getIntValue(visitor);
 		}
 
 		int range = getMax() - getMin();

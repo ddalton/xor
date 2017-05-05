@@ -30,6 +30,7 @@ package tools.xor.generator;
 
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
@@ -52,7 +53,7 @@ public interface Generator
      * Return a char value
      * @return char value
      */
-    char getCharValue ();
+    char getCharValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a short value
@@ -64,7 +65,7 @@ public interface Generator
      * Returns an int value.
      * @return int value.
      */
-    int getIntValue();
+    int getIntValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Returns a long value
@@ -104,10 +105,11 @@ public interface Generator
 
     /**
      * Return a string value
+     * @param property whose value needs to be generated
      * @param visitor containing call stack specific information
      * @return string value
      */
-    String getStringValue(StateGraph.ObjectGenerationVisitor visitor);
+    String getStringValue(Property property, StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Returns the desired descendant State

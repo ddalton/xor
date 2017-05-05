@@ -24,9 +24,11 @@ import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.util.State;
+import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.view.QueryView;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -37,6 +39,9 @@ import java.util.Random;
 
 public class DefaultGenerator implements Generator
 {
+    public static final String PARENT_LINK = "[PARENT]";
+    public static final String ROOT_LINK = "[ROOT]";
+
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     private String[] values;
 
@@ -85,7 +90,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public char getCharValue ()
+    public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         char minimum = Character.MIN_VALUE;
         char maximum = Character.MAX_VALUE;
@@ -102,7 +107,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public int getIntValue ()
+    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         int minimum = Integer.MIN_VALUE;
         int maximum = Integer.MAX_VALUE;
@@ -234,7 +239,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public String getStringValue (StateGraph.ObjectGenerationVisitor visitor)
+    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
         int pos = getPosition();
         return getValues()[pos];
@@ -282,5 +287,71 @@ public class DefaultGenerator implements Generator
     @Override public boolean isApplicableToCollectionElement ()
     {
         return false;
+    }
+
+    protected JSONObject getComponent(StateGraph.ObjectGenerationVisitor visitor, JSONObject current, String tokenName) {
+        if(current == null) {
+            return null;
+        }
+
+        if(tokenName.equals(PARENT_LINK)) {
+            return current.getJSONObject(Constants.XOR.GEN_PARENT);
+        } else if(tokenName.equals(ROOT_LINK)) {
+            return visitor.getRoot();
+        } else if(current.has(tokenName) && current.get(tokenName) instanceof JSONObject) {
+            return current.getJSONObject(tokenName);
+        }
+
+        return null;
+    }
+
+    protected int getMaxCollectionElements() {
+        return new Integer(new Double(getValues()[1]).intValue());
+    }
+
+    protected String getDependencyValue(StateGraph.ObjectGenerationVisitor visitor) {
+
+        JSONObject parent = visitor.getParent();
+        if(parent == null) {
+            return null;
+        }
+
+        String path = getValues()[0];
+
+        // For each path, loop through each component and see if the value is available
+        while (path != null) {
+            // Extract the next attribute in the path
+            String component = QueryView.getTopAttribute(path);
+
+            // Get the path ready for the next round if applicable
+            path = QueryView.getNext(path);
+
+            JSONObject current = parent;
+            parent = getComponent(visitor, current, component);
+            if (parent == null) {
+                // Maybe we are at the last component
+                if (path == null) {
+
+                    // Unable to find the dependency, probably accessed through another path
+                    if(!current.has(component)) {
+                        return null;
+                    }
+
+                    //perform conversion if necessary
+                    Object value = current.get(component);
+                    if (value != null && value instanceof Number) {
+                        return ((Number)value).toString();
+                    }
+
+                    return current.getString(component);
+                }
+                else {
+                    // If the object has not yet been created, then try the next path
+                    continue;
+                }
+            }
+        }
+
+        return null;
     }
 }

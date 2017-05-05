@@ -19,6 +19,8 @@
 
 package tools.xor.generator;
 
+import tools.xor.util.graph.StateGraph;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
@@ -47,13 +49,13 @@ public class Choices extends DefaultGenerator
     }
 
     @Override
-    public char getCharValue ()
+    public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getIntValue();
+        return (char) getIntValue(visitor);
     }
 
     @Override
-    public int getIntValue ()
+    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[getPosition()]).intValue();
     }

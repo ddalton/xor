@@ -19,7 +19,23 @@
 
 package tools.xor.util;
 
+import tools.xor.BusinessObject;
+import tools.xor.CallInfo;
+
 public interface Detector {
+
+	/**
+	 * Notify the detector that a new domain instance has been created.
+	 * @param createdBO can be a newly createdBO or an existingBO for an instance with the same key.
+	 * @param createdInstance domain instance created by the creation strategy
+	 */
+	public void notifyCreate(BusinessObject createdBO, Object createdInstance);
+
+	/**
+	 * Invoked as soon as a data value is set from the XOR operation
+	 * @param ci details of the call
+	 */
+	public void performCall(CallInfo ci);
 
 	/**
 	 * Perform detection on the given object.

@@ -47,6 +47,7 @@ import tools.xor.ListType;
 import tools.xor.MapperDirection;
 import tools.xor.MutableBO;
 import tools.xor.NaturalEntityKey;
+import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
@@ -313,6 +314,10 @@ public class ObjectCreator {
 
 		if(result == null) {
 			result = this.createDataObject(null, targetInstance, targetType, container, containmentProperty);
+		}
+
+		if(getSettings().getDetector() != null) {
+			getSettings().getDetector().notifyCreate(result, targetInstance);
 		}
 
 		return result;
@@ -628,6 +633,7 @@ public class ObjectCreator {
 			}
 		}
 
+		boolean createdInstance = false;
 		try {
 			Class<?> targetInstanceClass = null;
 			if(targetInstance == null) {
@@ -697,9 +703,10 @@ public class ObjectCreator {
 						result.setPersistent(true);
 					}
 				}
-			} 
+			}
 
 			if(result == null) {
+
 				if(targetInstance == null) {
 					// Exception for Bulk processing
 					if(targetType == null && domainEntityType instanceof ListType) {
@@ -713,6 +720,9 @@ public class ObjectCreator {
 							targetType,
 							container,
 							containmentProperty);
+
+						createdInstance = true;
+
 						if (targetInstance == null) {
 							logger.error(
 								"ObjectCreator#createTarget Unable to create targetInstance of class: "
@@ -741,7 +751,11 @@ public class ObjectCreator {
 			}
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
-		}	
+		}
+
+		if(createdInstance && settings.getDetector() != null) {
+			settings.getDetector().notifyCreate(result, targetInstance);
+		}
 
 		return result;
 	}	
@@ -750,12 +764,20 @@ public class ObjectCreator {
 		Object instance = creationStrategy.newInstance(source, (BasicType) targetType, targetClass, container, containmentProperty);
 		//setEmbeddedInstance(instance, targetType);
 
+		if(settings.getDetector() != null) {
+			settings.getDetector().notifyCreate(null, instance);
+		}
+
 		return instance;
 	}
 
 	public Object createInstance(Type targetType) throws Exception {
 		Object instance = creationStrategy.newInstance(null, (BasicType) targetType, null);
 		//setEmbeddedInstance(instance, targetType);
+
+		if(settings.getDetector() != null) {
+			settings.getDetector().notifyCreate(null, instance);
+		}
 
 		return instance;
 	}
@@ -803,6 +825,167 @@ public class ObjectCreator {
 		objectGraph.deleteGraph(this, settings);
 	}
 
+	public static class CreateInstanceTracker implements Detector
+	{
+		private Class clazz;
+		private String propertyName;
+		private List<Object> skippedInstances;
+		private List<BusinessObject> bos;
+		private Map<Object, Object> allInstances;
+
+		public CreateInstanceTracker(Class clazz, String propertyName) {
+			this.clazz = clazz;
+			this.propertyName = propertyName;
+			this.skippedInstances = new ArrayList<>();
+			this.bos = new ArrayList<>();
+			this.allInstances = new IdentityHashMap<>();
+		}
+
+		@Override public void notifyCreate (BusinessObject createdBO, Object createdInstance)
+		{
+			if( createdInstance != null && clazz.isAssignableFrom(createdInstance.getClass())  ) {
+				allInstances.put(createdInstance, null);
+			}
+
+			if(createdBO == null) {
+				return;
+			}
+
+			if(clazz.isAssignableFrom(createdBO.getInstance().getClass())  ) {
+				bos.add(createdBO);
+				if(createdBO.getInstance() != createdInstance) {
+					skippedInstances.add(createdInstance);
+				}
+			}
+		}
+
+		@Override public void performCall (CallInfo ci)
+		{
+
+		}
+
+		@Override public void investigate (Object object)
+		{
+
+			List<String> keys = new ArrayList<>();
+			System.out.println("No of skipped instances: " + skippedInstances.size());
+			for(BusinessObject bo: bos) {
+				keys.add(bo.get(propertyName).toString());
+				if(allInstances.containsKey(bo.getInstance())) {
+					allInstances.remove(bo.getInstance());
+				}
+			}
+			System.out.println("No of extra instances: " + allInstances.size());
+
+			Collections.sort(keys);
+
+			for(String key: keys) {
+				System.out.println("Key: " + key);
+			}
+		}
+	}
+
+	public static class DuplicateUniqueKeyByCall implements Detector {
+		private Class clazz;
+		private String propertyName;
+
+		private Map<Object, List<Object>> duplicateInstances;
+		private Map<Object, List<BusinessObject>> duplicateBusinessObjects;
+
+		public DuplicateUniqueKeyByCall(Class clazz, String propertyName) {
+			this.clazz = clazz;
+			this.propertyName = propertyName;
+			this.duplicateInstances = new HashMap<>();
+			this.duplicateBusinessObjects = new HashMap<>();
+		}
+
+		@Override public void notifyCreate (BusinessObject createdBO, Object instance)
+		{
+
+		}
+
+		/**
+		 * Method should be invoked after the property has been set.
+		 * @param ci details about the call
+		 */
+		@Override
+		public void performCall(CallInfo ci) {
+
+			if(ci.getStage() != ProcessingStage.UPDATE) {
+				return;
+			}
+
+			if(ci.getParent() != null && ci.getParent().getOutput() instanceof BusinessObject) {
+				if(ci.getInputProperty() != null && ci.getInputProperty().getName().equals(propertyName)) {
+					BusinessObject outputBO = (BusinessObject)ci.getParent().getOutput();
+					if(clazz.isAssignableFrom(outputBO.getType().getInstanceClass()) ) {
+						Object keyValue = outputBO.get(propertyName);
+						List<BusinessObject> bos = duplicateBusinessObjects.get(keyValue);
+						if(bos == null) {
+							bos = new ArrayList<>();
+						}
+
+						// Add only if the object is different from the others
+						boolean existing = false;
+						for(BusinessObject bo: bos) {
+							if(bo == outputBO) {
+								existing = true;
+								break;
+							}
+						}
+						if(!existing) {
+							bos.add(outputBO);
+						}
+
+						// Check the actual instances to see if there are duplicates
+						List<Object> instances = duplicateInstances.get(keyValue);
+						if(instances == null) {
+							instances = new ArrayList<>();
+						}
+						existing = false;
+						for(Object instance: instances) {
+							if(instance == outputBO.getInstance()) {
+								existing = true;
+								break;
+							}
+						}
+						if(!existing) {
+							instances.add(outputBO.getInstance());
+						}
+					}
+				}
+			}
+		}
+
+		@Override public void investigate (Object object)
+		{
+			Set<Object> dupInstanceKeys = new HashSet<>();
+			Set<Object> dupBOKeys = new HashSet<>();
+
+			// check for duplicate instances
+			for(Map.Entry<Object, List<Object>> entry: duplicateInstances.entrySet()) {
+				if(entry.getValue().size() > 1) {
+					dupInstanceKeys.add(entry.getKey());
+				}
+			}
+
+			for(Map.Entry<Object, List<BusinessObject>> entry: duplicateBusinessObjects.entrySet()) {
+				if(entry.getValue().size() > 1) {
+					dupBOKeys.add(entry.getKey());
+				}
+			}
+
+			System.out.println("Keys of duplicate instances:");
+			for(Object key: dupInstanceKeys) {
+				System.out.println(key);
+			}
+			System.out.println("Keys of duplicate BusinessObjects:");
+			for(Object key: dupBOKeys) {
+				System.out.println(key);
+			}
+		}
+	}
+
 	public static class DuplicateUniqueKey implements Detector {
 
 		private Class clazz;
@@ -817,6 +1000,16 @@ public class ObjectCreator {
 			this.examined = new HashMap<>();
 			this.duplicateKeys = new HashMap<>();
 			this.duplicateObjects = new HashMap<>();
+		}
+
+		@Override public void notifyCreate (BusinessObject createdBO, Object instance)
+		{
+
+		}
+
+		@Override public void performCall (CallInfo ci)
+		{
+			// no functionality in this detector
 		}
 
 		@Override public void investigate (Object object)
@@ -852,6 +1045,10 @@ public class ObjectCreator {
 				if(duplicateObjects.containsKey(key) && duplicateObjects.get(key).size() == 1) {
 					duplicateObjects.remove(key);
 				}
+			}
+
+			if(duplicateObjects.size() > 0) {
+				System.out.println("Duplicate objects found");
 			}
 		}
 	}

@@ -19,21 +19,25 @@
 
 package tools.xor.generator;
 
-import tools.xor.Settings;
+import tools.xor.Property;
+import tools.xor.util.graph.StateGraph;
 
-public class Range extends DefaultGenerator
+public class DependencyReference extends DefaultGenerator
 {
-    public Range (String[] arguments)
+    public DependencyReference (String[] arguments)
     {
         super(arguments);
     }
 
-    @Override public int getFanout (Settings settings, String path)
+    @Override
+    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        if(settings.hasCollectionSparseness(path)) {
-            return super.getFanout(settings, path);
-        }
+        return getDependencyValue(visitor);
+    }
 
-        return getIntValue(null);
+    @Override
+    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Integer.parseInt(getDependencyValue(visitor));
     }
 }

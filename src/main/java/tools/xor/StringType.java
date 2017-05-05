@@ -33,7 +33,7 @@ public class StringType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	public static final int DEFAULT_LENGTH = 255;
-	public static final int MIN_LENGTH = 4; // to avoid empty strings in natural keys
+	public static final int MIN_LENGTH = 7; // to avoid empty strings in natural keys and reduce the occurrence of unique constraint violations
 
 	public StringType(Class<?> clazz) {
 		super(clazz);
@@ -45,7 +45,7 @@ public class StringType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getStringValue(visitor);
+			return gen.getStringValue(property, visitor);
 		} else {
 			int length = DEFAULT_LENGTH;
 			if(property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {

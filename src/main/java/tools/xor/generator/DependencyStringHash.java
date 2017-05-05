@@ -19,10 +19,9 @@
 
 package tools.xor.generator;
 
-import tools.xor.Property;
-import tools.xor.StringType;
-import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
+
+import java.util.Random;
 
 /**
  * This class takes a field of the form
@@ -37,33 +36,27 @@ import tools.xor.util.graph.StateGraph;
  * non determinism.
  *
  */
-public class DependencySequence extends DefaultGenerator
+public class DependencyStringHash extends DefaultGenerator
 {
-    public DependencySequence (String[] arguments)
+    public DependencyStringHash (String[] arguments)
     {
         super(arguments);
     }
 
     @Override
-    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
+    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
+        // Currently support only upto MAX_COLLECTION_ELEMENTS unique ids
         String value = getDependencyValue(visitor);
 
-        int length = StringType.MIN_LENGTH;
-        if(property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
-            length = (int)property.getConstraints().get(Constants.XOR.CONS_LENGTH);
+        if(value == null) {
+            return (new Random()).nextInt();
         }
 
-        // adjust the length to take in the sequence
-        length -= new Integer(getMaxCollectionElements()).toString().length();
+        int intValue = value.hashCode();
+        int maxCollectionElements = getMaxCollectionElements();
 
-        // trim the value to length
-        if(value != null && value.length() > length && length > 0) {
-            value = value.substring(0, length);
-        }
-
-        return value == null ?
-            "ID" + visitor.getSequenceNo() :
-            value + visitor.getSequenceNo();
+        int base = intValue - intValue%maxCollectionElements;
+        return base + visitor.getSequenceNo()%maxCollectionElements;
     }
 }

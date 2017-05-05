@@ -719,7 +719,13 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public BusinessObject createDataObject(Object id, Type instanceType) throws Exception {
 		Object propertyInstance = createInstance(objectCreator, id, instanceType);
-		return objectCreator.createDataObject(propertyInstance, instanceType, null, null);
+		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, null, null);
+
+		if(getSettings().getDetector() != null) {
+			getSettings().getDetector().notifyCreate(result, propertyInstance);
+		}
+
+		return result;
 	}	
 
 	@Override

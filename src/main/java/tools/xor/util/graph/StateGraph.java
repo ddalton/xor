@@ -2,8 +2,6 @@ package tools.xor.util.graph;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -871,8 +869,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		private Settings settings;
 		private Property property;
 		private EntityType sourceEntityType;
-		private JSONObject rootedAt;
+		private JSONObject parent;
 		private int sequenceNo;
+		private JSONObject root;
 
 		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings) {
 			this.objectStateMap = objectStateMap;
@@ -891,6 +890,16 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 
 			return result;
+		}
+
+		public JSONObject getRoot ()
+		{
+			return root;
+		}
+
+		public void setRoot (JSONObject root)
+		{
+			this.root = root;
 		}
 
 		public int getSize() {
@@ -937,14 +946,14 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			this.sequenceNo = sequenceNo;
 		}
 
-		public JSONObject getRootedAt ()
+		public JSONObject getParent ()
 		{
-			return rootedAt;
+			return parent;
 		}
 
-		public void setRootedAt (JSONObject rootedAt)
+		public void setParent (JSONObject parent)
 		{
-			this.rootedAt = rootedAt;
+			this.parent = parent;
 		}
 	}
 
@@ -1096,6 +1105,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 			// Add the root entity first
 			addObject(stateGraph.getRootState(), result, null);
+			visitor.setRoot(result);
 
 			// Needed to flush the remaining objects in the queue
 			boolean flush = false;
@@ -1160,7 +1170,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						String objectPath = Constants.XOR.walkDown(path, property);
 						visitor.setProperty(property);
 						visitor.setSourceEntityType((EntityType)entityType);
-						visitor.setRootedAt(entity);
+						visitor.setParent(entity);
 
 						Object target = ((BasicType)targetType).generate(
 							settings,

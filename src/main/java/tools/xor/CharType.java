@@ -59,7 +59,7 @@ public class CharType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getCharValue();
+			return gen.getCharValue(visitor);
 		}
 
 		char range = (char) (getMax() - getMin());

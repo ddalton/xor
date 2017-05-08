@@ -164,6 +164,8 @@ public class Settings {
 	private boolean autoWire;
 	
 	private Object sessionContext;
+
+	private int globalSeq;
 	
 	// User provided data that is made available to callbacks
 	private Object externalData;
@@ -257,6 +259,16 @@ public class Settings {
 
 	public void setSessionContext(Object sessionContext) {
 		this.sessionContext = sessionContext;
+	}
+
+	public int getGlobalSeq ()
+	{
+		return globalSeq;
+	}
+
+	public void setGlobalSeq (int globalSeq)
+	{
+		this.globalSeq = globalSeq;
 	}
 
 	public Settings() {
@@ -772,6 +784,11 @@ public class Settings {
 
 		public SettingsBuilder prune(AssociationSetting setting) {
 			this.settings.prune(setting);
+			return this;
+		}
+
+		public SettingsBuilder setGlobalSeq(int globalSeq) {
+			this.settings.setGlobalSeq(globalSeq);
 			return this;
 		}
 		

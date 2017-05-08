@@ -51,6 +51,7 @@ public interface Generator
 
     /**
      * Return a char value
+     * @param visitor object
      * @return char value
      */
     char getCharValue (StateGraph.ObjectGenerationVisitor visitor);
@@ -63,6 +64,7 @@ public interface Generator
 
     /**
      * Returns an int value.
+     * @param visitor object
      * @return int value.
      */
     int getIntValue(StateGraph.ObjectGenerationVisitor visitor);

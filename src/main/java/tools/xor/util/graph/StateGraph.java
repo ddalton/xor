@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
@@ -954,6 +955,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		public void setParent (JSONObject parent)
 		{
 			this.parent = parent;
+		}
+
+		public Settings getSettings() {
+			return this.settings;
 		}
 	}
 

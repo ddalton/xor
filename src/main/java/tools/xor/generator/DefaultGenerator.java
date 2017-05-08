@@ -41,6 +41,9 @@ public class DefaultGenerator implements Generator
 {
     public static final String PARENT_LINK = "[PARENT]";
     public static final String ROOT_LINK = "[ROOT]";
+    public static final String GLOBAL_SEQ = "[GLOBAL_SEQ]";
+    public static final String THREAD_NO = "[THREAD_NO]";
+    public static final String ENTITY_SIZE = "[ENTITY_SIZE]";
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     private String[] values;

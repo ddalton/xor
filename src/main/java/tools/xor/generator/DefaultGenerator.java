@@ -250,8 +250,17 @@ public class DefaultGenerator implements Generator
 
     @Override public EntityType getSubType (EntityType entityType)
     {
-        List<EntityType> subTypes = new ArrayList<EntityType>(entityType.getSubtypes());
-        subTypes.add(entityType);
+        List<EntityType> subTypes = new ArrayList<EntityType>();
+        for(EntityType et: entityType.getSubtypes()) {
+            if(et.isAbstract()) {
+                continue;
+            } else {
+                subTypes.add(et);
+            }
+        }
+        if(!entityType.isAbstract()) {
+            subTypes.add(entityType);
+        }
 
         int index =  (int) (Math.random() * (subTypes.size()+1));
         if(index == subTypes.size()) {

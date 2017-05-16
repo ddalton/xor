@@ -45,12 +45,20 @@ public interface DataAccessService {
 	/**
 	 * Returns the shape in the current session/thread. So it needs to be overridden by
 	 * subclasses.
-	 * NOTE: This method should not be called during the bootstrap process as that will
-	 * interfere in the order of Shape creation.
+	 * NOTE: Take particular care if this should be called during the bootstrap process as that will
+	 * interfere in the order of Shape creation. Any overriding code should check if
+	 * the default shape is being constructed and if so, return the default shape.
 	 *
 	 * @return Shape of types
 	 */
 	public Shape getShape();
+
+	/**
+	 * Gets the Shape that created the type present in the argument
+	 * @param entityType entity Type
+	 * @return Shape responsible for creating the entity type
+	 */
+	public Shape getOwner(EntityType entityType);
 
 	/**
 	 * Build the Type and Property objects for the static API

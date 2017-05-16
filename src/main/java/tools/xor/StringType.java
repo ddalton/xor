@@ -55,7 +55,8 @@ public class StringType extends SimpleType {
 			if (stringLen < MIN_LENGTH) {
 				stringLen = (MIN_LENGTH > length) ? length : MIN_LENGTH;
 			}
-			return RandomStringUtils.randomAscii(stringLen);
+			//return RandomStringUtils.randomAscii(stringLen);
+			return RandomStringUtils.randomAlphanumeric(stringLen);
 		}
 	}	
 }

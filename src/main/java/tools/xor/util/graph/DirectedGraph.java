@@ -127,4 +127,13 @@ public interface DirectedGraph<V, E> extends Graph<V, E> {
 	 */
 	public boolean isCyclic();
 
+	/**
+	 * Exports the graph to a file in GML format
+	 */
+	public void exportToGML();
+
+	/**
+	 * Exports the graph in DOT format
+	 */
+	public void exportToDOT();
 }

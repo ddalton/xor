@@ -2,11 +2,18 @@ package tools.xor.util.graph;
 
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +25,8 @@ import org.apache.log4j.Logger;
 
 import tools.xor.service.Shape;
 import tools.xor.util.Constants;
+import tools.xor.util.DFAtoNFA;
+import tools.xor.util.Edge;
 import tools.xor.util.Vertex;
 
 /**
@@ -599,6 +608,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	static class TopoSort<V, E> {
 
 		Set<V> temporary = new HashSet<V>();
+		LinkedList<E> breakCrumbs = new LinkedList<E>();
 		Set<V> unmarked = new HashSet<V>();
 		LinkedList<V> sorted = new LinkedList<V>();
 		private DirectedGraph<V, E> dg;
@@ -621,19 +631,35 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 		}
 		
 		private void visit(V vertex) {
-			if(temporary.contains(vertex)) {
+			if (temporary.contains(vertex)) {
 				StringBuilder cycle = new StringBuilder();
-				for(V v: temporary) {
-					cycle.append( cycle.length() > 0 ? ","+v.toString() : v.toString());
+				for (V v : temporary) {
+					cycle.append(cycle.length() > 0 ? "," + v.toString() : v.toString());
 				}
-				throw new RuntimeException("The graph is not a DAG, found vertex " + vertex.toString() + " in the set of " + cycle.toString());
+				StringBuilder breadCrumbStr = new StringBuilder();
+				for (E e : breakCrumbs) {
+					Edge edge = (Edge)e;
+					String edgeName = DFAtoNFA.UNLABELLED.equals(edge.getName()) ? "UNLABELLED" : edge.getName();
+					breadCrumbStr.append(
+						breadCrumbStr.length() > 0 ? "->" + edgeName : edgeName);
+				}
+				throw new RuntimeException(
+					"The graph is not a DAG, found vertex " + vertex.toString() + " in the set of "
+						+ cycle.toString() + ", breadcrumbs: " + breadCrumbStr);
 			}
 			
 			if(unmarked.contains(vertex)) {
 				temporary.add(vertex);
 				
-				for(E edge: dg.getOutEdges(vertex)) {
-					visit(dg.getEnd(edge));
+				for(E e: dg.getOutEdges(vertex)) {
+					breakCrumbs.addLast(e);
+
+					// Not necessary to visit the parent, as every vertex is anyhow
+					// going to be visited, and this avoids loops
+					if(!DFAtoNFA.UNLABELLED.equals(((Edge)e).getName())) {
+						visit(dg.getEnd(e));
+					}
+					breakCrumbs.removeLast();
 				}
 				
 				unmarked.remove(vertex);
@@ -663,5 +689,102 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	public List<V> toposort(Shape shape) {
 		TopoSort<V, E> ts = new TopoSort<V, E>(this);
 		return ts.execute();
+	}
+
+	/**
+	 * Get a list of all the vertices that are connected to another vertex
+	 * @return list of vertices having an outbound edge
+	 */
+	protected Collection<V> getConnectedVertices() {
+		return getVertices();
+	}
+
+	protected void writeGMLVertices(BufferedWriter writer) throws IOException
+	{
+		Iterator vertexIter = getConnectedVertices().iterator();
+		while(vertexIter.hasNext()) {
+			V vertex = (V)vertexIter.next();
+
+			writer.write("\tnode\n\t[\n");
+			writer.write("\t\tid " + getId(vertex) + "\n");
+			writer.write("\t\tlabel \"" + vertex.toString() + "\"\n");
+			writer.write("\t]\n");
+		}
+	}
+
+	/**
+	 * This is overridden by subclasses
+	 * @param writer to write to a .gml file
+	 * @throws IOException exception
+	 */
+	protected void writeGMLEdges(BufferedWriter writer) throws IOException
+	{
+
+	}
+
+	protected void writeDOTEdges(BufferedWriter writer) throws IOException
+	{
+
+	}
+
+	/**
+	 * Returns the name for the graph. Essentially helps to provide more information on what
+	 * this graph contains. Usually overridden by subclasses.
+	 * @return graph description
+	 */
+	protected String getGraphName() {
+		return this.getClass().getName();
+	}
+
+	@Override
+	public void exportToGML() {
+		try {
+			//create a temporary file
+			String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
+				Calendar.getInstance().getTime());
+			File logFile=new File(timeLog + ".gml");
+
+			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
+
+			writer.write("graph\n[\n");
+			writer.write("\tlabel \"" + getGraphName() + "\"\n");
+			writer.write("\tdirected 1\n");
+
+			writeGMLVertices(writer);
+			writeGMLEdges(writer);
+
+			writer.write("]");
+
+			//Close writer
+			writer.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void exportToDOT() {
+		try {
+			//create a temporary file
+			String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
+				Calendar.getInstance().getTime());
+			File logFile=new File(timeLog + ".dot");
+
+			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
+
+			writer.write("digraph " + getGraphName() + "{\n");
+
+			// Not necessary to list the vertices as the
+			// are inferred from the edges
+			//writeDOTVertices(writer);
+			writeDOTEdges(writer);
+
+			writer.write("}");
+
+			//Close writer
+			writer.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

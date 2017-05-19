@@ -62,7 +62,7 @@ public class DFAtoNFA {
 		}
 
 		Collection<EntityType> entities = new HashSet(entityTypeMap.keySet());
-		for(EntityType entity:  entities) {
+		for(EntityType entityType:  entities) {
 /*
 			State superTypeState = entityTypeMap.get(entry.getKey());
 			for(EntityType subType: entry.getKey().getSubtypes()) {
@@ -81,7 +81,7 @@ public class DFAtoNFA {
 					subTypeState);
 			}
 			*/
-			addChildTypes(entity, stateGraph, entityTypeMap);
+			addChildTypes(entityType, stateGraph, entityTypeMap);
 		}
 	}
 

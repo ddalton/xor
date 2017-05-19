@@ -77,6 +77,19 @@ public class Shape
 
     protected ShapeStrategy shapeStrategy = ShapeStrategy.SHARED;
 
+    // Used to signal if the shape has finished being being
+    private volatile boolean buildFinished;
+
+    public boolean isBuildFinished ()
+    {
+        return buildFinished;
+    }
+
+    public void setBuildFinished (boolean value)
+    {
+        this.buildFinished = value;
+    }
+
     public enum ShapeStrategy {
         SHARED,
         COPY
@@ -98,6 +111,10 @@ public class Shape
 
     public String getName() {
         return this.name;
+    }
+
+    public Shape getParent() {
+        return this.parent;
     }
 
     /**
@@ -129,6 +146,23 @@ public class Shape
                     typeMap.put(entityName, type);
             }
         }
+    }
+
+    /**
+     * Returns true if this Shape is the owner of the type whether domain or external
+     * @param entityType entityType
+     * @return true if this Shape created this type
+     */
+    public boolean hasType(EntityType entityType) {
+        if(entityType.isDomainType() && types.containsKey(entityType.getName())) {
+            return true;
+        }
+
+        if(!entityType.isDomainType() && externalTypes.containsKey(entityType.getName())) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

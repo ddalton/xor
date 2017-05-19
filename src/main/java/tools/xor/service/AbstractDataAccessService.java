@@ -51,6 +51,7 @@ import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
@@ -82,6 +83,22 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		return shapes.get(DEFAULT_SHAPE);
+	}
+
+	@Override
+	public Shape getOwner(EntityType entityType) {
+		Shape result = getShape();
+
+		Shape parent = null;
+		do {
+			parent = result.getParent();
+			if(result.hasType(entityType)) {
+				return result;
+			}
+			result = parent;
+		}while (result.getShapeStrategy() == Shape.ShapeStrategy.SHARED && parent != null);
+
+		return null;
 	}
 
 	protected boolean hasOverriddenShape() {
@@ -140,7 +157,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			// Initialize supertype if applicable
 			Class<?> clazz = type.getInstanceClass();
 			while(clazz != Object.class) {
-				Type superType = getType(clazz.getSuperclass().getName());
+				Type superType = shape.getType(clazz.getSuperclass().getName());
 				if(superType != null) {
 					type.setSuperType((EntityType) superType);
 					break;
@@ -201,8 +218,14 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		initEnd(shape);
 	}
 
+	/**
+	 * Should be invoked as the final step of the Shape object construction.
+	 * @param shape object being constructed
+	 */
 	protected void initEnd(Shape shape) {
 		shape.initEnd();
+
+		shape.setBuildFinished(true);
 	}
 	
 	protected void initOrder(Shape shape) {
@@ -216,6 +239,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		stateGraph.populateEdges(shape);
+		DFAtoNFA.processInheritance(stateGraph);
 
 		if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
 			|| !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
@@ -234,6 +258,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				Settings settings = new Settings();
 				settings.setGraphFileName("ApplicationStateGraph_" + shape.getName() + ".png");
 				stateGraph.generateVisual(settings);
+
+				stateGraph.printEntityOrder();
 			}
 		}
 	}

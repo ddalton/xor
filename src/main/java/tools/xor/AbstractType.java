@@ -69,19 +69,15 @@ public abstract class AbstractType implements EntityType {
 	private ClassResolver           classResolver;
 	private boolean                 immutable;
 
-	// TODO: Ideally should be managed by shape
-	// TODO: synchronize if properties are removed in future
-	//protected Map<String, Property> properties;
-	//private Map<Integer, List<Property>> propertiesByVersion = new Int2ObjectOpenHashMap<List<Property>>(); // properties by version
+	// Need to only contain type name, as the actual type should be resolved dynamically
+	protected String            rootEntityType;
+	private   Set<String>       subTypes;
+	private   Set<String>       childSubTypes;
+	private   String            superType;
 
-
-	protected EntityType            rootEntityType;
-	private   Set<EntityType>       subTypes;
-	private Set<EntityType>         childSubTypes;
 	private int                     order; //represents the topological sort order of the entity type
-	private EntityType              superType;
-	private List<String>             naturalKey;
-	private List<String>             expandedNaturalKey;
+	private List<String>            naturalKey;
+	private List<String>            expandedNaturalKey;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -159,7 +155,10 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	public EntityType getRootEntityType() {
-		return rootEntityType;
+		if(rootEntityType == null) {
+			return null;
+		}
+		return (EntityType)das.getType(this.rootEntityType);
 	}
 	
 	public static String getViewName(Type type) {
@@ -188,7 +187,7 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public void defineSubtypes(List<Type> types) {
-		subTypes = new HashSet<EntityType>();
+		subTypes = new HashSet<String>();
 
 		if(this.getInstanceClass() == null) {
 			return;
@@ -201,7 +200,7 @@ public abstract class AbstractType implements EntityType {
 				}
 				if (this.getInstanceClass().isAssignableFrom(type.getInstanceClass()) &&
 					this.getInstanceClass() != type.getInstanceClass()) {
-					subTypes.add((EntityType) type);
+					subTypes.add(((EntityType)type).getEntityName());
 				}
 			}
 		}
@@ -210,13 +209,13 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public void defineChildSubtypes() {
 		Map<Class, EntityType> subTypeMap = new HashMap<>();
-		for(EntityType entityType: subTypes) {
+		for(EntityType entityType: getSubtypes()) {
 			subTypeMap.put(entityType.getInstanceClass(), entityType);
 		}
 
 		// Check child/immediate subTypes
-		childSubTypes = new HashSet<EntityType>();
-		next: for(EntityType subType: subTypes) {
+		childSubTypes = new HashSet<String>();
+		next: for(EntityType subType: getSubtypes()) {
 			Class subTypeInstanceClass = subType.getInstanceClass().getSuperclass();
 			while(getInstanceClass() != subTypeInstanceClass) {
 				// If this is not an immediate subType then skip
@@ -228,28 +227,46 @@ public abstract class AbstractType implements EntityType {
 			}
 			// We should be at the root of the inheritance hierarchy. Just confirm to be safe.
 			if(getInstanceClass() == subTypeInstanceClass) {
-				childSubTypes.add(subType);
+				childSubTypes.add(subType.getEntityName());
 			}
 		}
 	}
 	
 	@Override
 	public EntityType getSuperType() {
-		return this.superType;
+
+		if(this.superType == null) {
+			return null;
+		}
+
+		if(isDomainType()) {
+			return (EntityType)das.getType(superType);
+		} else {
+			return (EntityType)das.getExternalType(superType);
+		}
 	}
 	
 	@Override
 	public void setSuperType(EntityType value) {
-		this.superType = value;
+		this.superType = value.getEntityName();
 	}	
 	
 	@Override
 	public Set<EntityType> getSubtypes() {
 		if(subTypes == null) {
-			defineSubtypes(das.getTypes());
+			List allTypes = das.getTypes();
+			if(das.getShape().getShapeStrategy() == Shape.ShapeStrategy.SHARED && das.getShape().getParent() != null) {
+				allTypes.addAll(das.getShape().getParent().getUniqueTypes());
+			}
+			defineSubtypes(allTypes);
 		}
 
-		return subTypes;
+		Set<EntityType> result = new HashSet<>();
+		for(String entityName: subTypes) {
+			result.add((EntityType)das.getType(entityName));
+		}
+
+		return result;
 	}
 
 	@Override
@@ -260,7 +277,11 @@ public abstract class AbstractType implements EntityType {
 			defineChildSubtypes();
 		}
 
-		return childSubTypes;
+		Set<EntityType> result = new HashSet<>();
+		for(String entityName: childSubTypes) {
+			result.add((EntityType)das.getType(entityName));
+		}
+		return result;
 	}
 
 	protected Method getPolymorphicGetterMethod (String property)
@@ -515,11 +536,13 @@ public abstract class AbstractType implements EntityType {
 	 */
 	public void initRootEntityType() {
 
-		this.rootEntityType = this;
+		EntityType potentialRootEntityType = this;
 
-		while(rootEntityType.getSuperType() != null) {
-			this.rootEntityType = rootEntityType.getSuperType();
+		while(potentialRootEntityType.getSuperType() != null) {
+			potentialRootEntityType = potentialRootEntityType.getSuperType();
 		}
+
+		this.rootEntityType = potentialRootEntityType.getEntityName();
 	}
 
 	public void unfoldProperties (Shape shape)

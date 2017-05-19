@@ -1,5 +1,7 @@
 package tools.xor.util.graph;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,6 +27,7 @@ import org.json.JSONObject;
 import tools.xor.AbstractProperty;
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
+import tools.xor.BusinessObject;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -754,6 +758,16 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					}
 				}
 			}
+
+			// Handle inheritance edges, these need to be reversed
+			if(getOutEdges(state) != null) {
+				for(E edge: getOutEdges(state)) {
+					// Is this an inheritance edge
+					if(DFAtoNFA.UNLABELLED.equals(edge.getName())) {
+						edgesToReverse.add(edge);
+					}
+				}
+			}
 		}
 
 		// perform the reverse
@@ -796,6 +810,29 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 			((EntityType)type).setOrder(order);
 		}
+	}
+
+	public void printEntityOrder () {
+		Map<Integer, String> map = new TreeMap<Integer, String>();
+
+		for(V state: getVertices()) {
+			int order = getId(state);
+			Type type = state.getType();
+
+			if(type instanceof EntityType && !((EntityType)type).isEmbedded()) {
+				map.put(order, type.getName());
+			}
+		}
+
+		// Print in sorted order
+		System.out.println("******* TOPOLOGICAL ORDER *******");
+		Set<Map.Entry<Integer, String>> entrySet = map.entrySet();
+		Iterator<Map.Entry<Integer, String>> iter = entrySet.iterator();
+		while(iter.hasNext()) {
+			Map.Entry<Integer, String> entry = iter.next();
+			System.out.println(entry.getKey() + ": " + entry.getValue());
+		}
+		System.out.println("******* END [TOPOLOGICAL ORDER] *******");
 	}
 	
 	public void populateEdges(Shape shape) {
@@ -1197,6 +1234,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 								// Add it to the right state
 								State collectionElementState = stateGraph.getVertex(
 									getEntityType(jsonObject));
+
+								// Is the state out of scope
+								if (collectionElementState == null) {
+									continue;
+								}
+
 								jsonArray.put(
 									i,
 									addObject(collectionElementState, jsonObject, objectPath));
@@ -1228,15 +1271,31 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		settings.generateVisual(getStateGraph(settings));
 	}
 
-	public Graph getStateGraph(Settings settings) {
+	@Override
+	protected void writeGMLEdges(BufferedWriter writer) throws IOException
+	{
+		for(Map.Entry<String, E> entry: getEdgeMap().entrySet()) {
+			E edge = entry.getValue();
 
-		Iterator vertexIter = getVertices().iterator();
-		Graph<V, String> g = new SparseMultigraph<V, String>();
-		while(vertexIter.hasNext()) {
-			V vertex = (V)vertexIter.next();
-			g.addVertex(vertex);
+			writer.write("\tedge\n\t[\n");
+			writer.write("\t\tsource " + getId((V)edge.getStart()) + "\n");
+			writer.write("\t\ttarget " + getId((V)edge.getEnd()) + "\n");
+			writer.write("\t\tlabel \"" + entry.getKey() + "\"\n");
+			writer.write("\t]\n");
 		}
+	}
 
+	@Override
+	protected void writeDOTEdges(BufferedWriter writer) throws IOException
+	{
+		for(Map.Entry<String, E> entry: getEdgeMap().entrySet()) {
+			E edge = entry.getValue();
+			writer.write(getId((V)edge.getStart()) + " -> " + getId((V)edge.getEnd()) + ";\n");
+		}
+	}
+
+	protected Map<String, E> getEdgeMap() {
+		Map<String, E> result = new HashMap<>();
 		Integer dup = 0;
 		Integer unknown = 0;
 		Iterator edgeIter = getEdges().iterator();
@@ -1246,9 +1305,28 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			edgeName = (edgeName == null) ? (unknown++).toString() : edgeName;
 			edgeName += (edge.getEndCardinality() == null) ? "" : " [" + edge.getEndCardinality() + "]";
 
-			if (g.containsEdge(edgeName)) {
+			if (result.containsKey(edgeName)) {
 				edgeName += "." + (dup++).toString();
 			}
+
+			result.put(edgeName, edge);
+		}
+
+		return result;
+	}
+
+	public Graph getStateGraph(Settings settings) {
+
+		Iterator vertexIter = getVertices().iterator();
+		Graph<V, String> g = new SparseMultigraph<V, String>();
+		while(vertexIter.hasNext()) {
+			V vertex = (V)vertexIter.next();
+			g.addVertex(vertex);
+		}
+
+		for(Map.Entry<String, E> entry: getEdgeMap().entrySet()) {
+			E edge = entry.getValue();
+			String edgeName = entry.getKey();
 
 			g.addEdge(edgeName, edge.getStart(), edge.getEnd(), EdgeType.DIRECTED);
 		}

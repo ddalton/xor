@@ -18,11 +18,16 @@ import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -460,6 +465,89 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 	public void generateVisual (Settings settings) {
 		settings.generateVisual(getObjectGraph(settings));
+		exportToGML();
+	}
+
+	@Override
+	protected Collection<V> getConnectedVertices() {
+		List unconnected = new ArrayList();
+		getEdgeMap(unconnected);
+
+		Map<Object, String> verticesToRemove = new IdentityHashMap();
+		for(Object vertex: unconnected) {
+			verticesToRemove.put(vertex, null);
+		}
+
+		List result = new ArrayList();
+		for(V vertex: getVertices()) {
+			if(!verticesToRemove.containsKey(vertex)) {
+				result.add(vertex);
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	protected void writeGMLEdges(BufferedWriter writer) throws IOException
+	{
+		for(Map.Entry<String, E> entry: getEdgeMap(new ArrayList()).entrySet()) {
+			E edge = entry.getValue();
+
+			writer.write("\tedge\n\t[\n");
+			writer.write("\t\tsource " + getId((V)edge.getStart()) + "\n");
+			writer.write("\t\ttarget " + getId((V)edge.getEnd()) + "\n");
+			writer.write("\t\tlabel \"" + entry.getKey() + "\"\n");
+
+			// Give more weights to edges coming from the root, as this helps to identify
+			// the root
+			if(edge.getStart() == getRoot()) {
+				writer.write("\t\tvalue 3\n");
+			} else {
+				writer.write("\t\tvalue 1\n");
+			}
+			writer.write("\t]\n");
+		}
+	}
+
+	@Override
+	protected void writeDOTEdges(BufferedWriter writer) throws IOException
+	{
+		for(Map.Entry<String, E> entry: getEdgeMap(new ArrayList()).entrySet()) {
+			E edge = entry.getValue();
+			writer.write(getId((V)edge.getStart()) + " -> " + getId((V)edge.getEnd()) + ";\n");
+		}
+	}
+
+	protected Map<String, E> getEdgeMap(List verticesToRemove) {
+		Integer j = 0;
+		Iterator edgeIter = getEdges().iterator();
+
+		Map<String, E> result = new HashMap<>();
+		while(edgeIter.hasNext()) {
+			E edge = (E)edgeIter.next();
+
+			Property p = edge.getProperty();
+
+			// If the object is an empty collection then we don't have to graph it
+			if(p != null && p.isMany()) {
+				BusinessObject collectionBO = edge.getEnd();
+				if(getOutEdges((V)collectionBO).size() == 0) {
+					verticesToRemove.add(collectionBO);
+					continue;
+				}
+			}
+
+			String edgeName = (p == null) ? (j++).toString() : (p.getName()+j++);
+
+			if (result.containsKey(edgeName)) {
+				System.out.println("Contains edge: " + edgeName);
+			} else{
+				result.put(edgeName, edge);
+			}
+		}
+
+		return result;
 	}
 
 	public Graph getObjectGraph(Settings settings) {
@@ -512,4 +600,35 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 		return g;
 	}
+
+	/*
+	public Graph getObjectGraph(Settings settings) {
+
+		if(this.root.getType() instanceof ListType) {
+			for(BusinessObject bo: this.root.getList()) {
+				build(bo, settings);
+			}
+		} else {
+			build(this.root, settings);
+		}
+
+		Iterator vertexIter = getVertices().iterator();
+		Graph<V, String> g = new SparseMultigraph<V, String>();
+		while(vertexIter.hasNext()) {
+			V vertex = (V)vertexIter.next();
+			g.addVertex(vertex);
+		}
+
+		List verticesToRemove = new ArrayList<>();
+		for(Map.Entry<String, E> entry: getEdgeMap(verticesToRemove).entrySet()) {
+			E edge = entry.getValue();
+			g.addEdge(entry.getKey(), (V) edge.getStart(), (V) edge.getEnd(), EdgeType.DIRECTED);
+		}
+
+		for(Object bo: verticesToRemove) {
+			g.removeVertex((V)bo);
+		}
+
+		return g;
+	}*/
 }

@@ -1590,7 +1590,8 @@ public abstract class AbstractBO implements BusinessObject {
 				}
 
 				// We allow identifier property to be part of the reference object
-				if (key.equals( ((EntityType)getType()).getIdentifierProperty().getName() )) {
+				if (((EntityType)getType()).getIdentifierProperty() != null
+					&& key.equals(((EntityType)getType()).getIdentifierProperty().getName())) {
 					continue;
 				}
 

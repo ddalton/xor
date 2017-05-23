@@ -1,5 +1,7 @@
 package tools.xor.util.graph;
 
+import edu.uci.ics.jung.graph.*;
+import edu.uci.ics.jung.graph.util.EdgeType;
 import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 
 import java.io.BufferedWriter;
@@ -736,9 +738,18 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 		return this.getClass().getName();
 	}
 
+	/**
+	 * Ensure any missing edges are added
+	 */
+	protected void buildGraph() {
+
+	}
+
 	@Override
 	public void exportToGML() {
 		try {
+			buildGraph();
+
 			//create a temporary file
 			String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
 				Calendar.getInstance().getTime());
@@ -765,6 +776,8 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	@Override
 	public void exportToDOT() {
 		try {
+			buildGraph();
+
 			//create a temporary file
 			String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
 				Calendar.getInstance().getTime());
@@ -786,5 +799,28 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+
+	@Override
+	public edu.uci.ics.jung.graph.Graph getGraph() {
+
+		Iterator vertexIter = getVertices().iterator();
+		edu.uci.ics.jung.graph.Graph<V, String> g = new SparseMultigraph<V, String>();
+		while(vertexIter.hasNext()) {
+			V vertex = (V)vertexIter.next();
+			g.addVertex(vertex);
+		}
+
+		Iterator edgeIter = getEdges().iterator();
+		while(edgeIter.hasNext()) {
+			E e = (E)edgeIter.next();
+			if(e instanceof Edge) {
+				Edge edge = (Edge) e;
+				g.addEdge(edge.getName(), (V) edge.getStart(), (V) edge.getEnd(), EdgeType.DIRECTED);
+			}
+		}
+
+		return g;
 	}
 }

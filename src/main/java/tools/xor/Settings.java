@@ -50,6 +50,7 @@ import tools.xor.custom.DetailStrategy;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.Detector;
+import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
@@ -77,6 +78,12 @@ public class Settings {
 	public enum DateForm {
 		FORMATTED,
 		NUMBER
+	};
+
+	public enum GraphFormat {
+		PNG,
+		DOT,
+		GML
 	};
 
 	protected DateForm dateForm = DateForm.FORMATTED;
@@ -844,9 +851,12 @@ public class Settings {
 
 	/**
 	 * Set the file name used for graph visuals of the state and object graphs.
-	 * Generation in the PNG format is the only one supported.
+	 * Currently supports 3 formats.
+	 * 1. PNG format
+	 * 2. DOT format
+	 * 3. GML format
 	 *
-	 * @param graphFileName with the png extension.
+	 * @param graphFileName with the appropriate extension (.png, .dot, .gml)
 	 */
 	public void setGraphFileName (String graphFileName)
 	{
@@ -867,6 +877,40 @@ public class Settings {
 		this.collectionSparseness = collectionSparseness;
 	}
 
+	/**
+	 * Generates a PNG file or an export in some populate graph formats (.dot and .gml)
+	 * @param dg DirectedGraph instance that needs to be exported
+	 */
+	public void exportGraph (DirectedGraph dg) {
+		String extension = null;
+
+		if (getGraphFileName() != null) {
+			if (getGraphFileName().lastIndexOf(PATH_DELIMITER) == -1) {
+				throw new RuntimeException(
+					"The filename should have the extension specified.");
+			}
+
+			extension = getGraphFileName().substring(
+				getGraphFileName().lastIndexOf(PATH_DELIMITER) + 1);
+			extension = extension.toUpperCase();
+		}
+
+		if(extension.equals(GraphFormat.PNG.name())) {
+			generateVisual(dg.getGraph());
+		} else if(extension.equals(GraphFormat.GML.name())) {
+			dg.exportToGML();
+		} else if(extension.equals(GraphFormat.DOT.name())) {
+			dg.exportToDOT();
+		} else {
+			throw new RuntimeException(
+				"One of the supported extensions need to be supported in the filename (.png, .dot or .gml)");
+		}
+	}
+
+	/**
+	 * Generates a PNG visual of the graph
+	 * @param graph data structure
+	 */
 	public void generateVisual (Graph graph) {
 		final Dimension SMALL = new Dimension(1280, 1024);
 		final Dimension MEDIUM = new Dimension(3840, 2160);

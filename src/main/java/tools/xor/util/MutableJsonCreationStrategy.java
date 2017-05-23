@@ -125,7 +125,7 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 			bo.getObjectCreator().setObjectGraph(bo);
 			og = bo.getObjectCreator().getObjectGraph();
 		}
-		og.spanningTreeWithEdgeSwizzling(bo, settings);
+		og.spanningTreeWithEdgeSwizzling(bo);
 
 		return super.getNormalizedInstance(bo, settings);
 	}	

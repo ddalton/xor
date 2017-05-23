@@ -136,4 +136,10 @@ public interface DirectedGraph<V, E> extends Graph<V, E> {
 	 * Exports the graph in DOT format
 	 */
 	public void exportToDOT();
+
+	/**
+	 * Gets a graph data structure to be used in rendering a PNG image.
+	 * @return graph data structure
+	 */
+	public edu.uci.ics.jung.graph.Graph getGraph();
 }

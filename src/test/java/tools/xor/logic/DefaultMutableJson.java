@@ -1095,7 +1095,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		*/
 
 		// Try and persist this now
-		settings.setGraphFileName("Graph_1.0sparseness.png");
+		settings.setGraphFileName("Graph_1.0sparseness.dot");
 		Task persistedTask = (Task) aggregateManager.create(task, settings);
 
 		aggregateService.exportAggregate("taskRandomMedium.xlsx", persistedTask, settings);

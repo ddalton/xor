@@ -14,7 +14,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
@@ -27,7 +26,6 @@ import org.json.JSONObject;
 import tools.xor.AbstractProperty;
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
-import tools.xor.BusinessObject;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -1268,7 +1266,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	public void generateVisual (Settings settings) {
-		settings.generateVisual(getStateGraph(settings));
+		settings.exportGraph(this);
 	}
 
 	@Override
@@ -1315,7 +1313,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return result;
 	}
 
-	public Graph getStateGraph(Settings settings) {
+	@Override
+	public Graph getGraph() {
 
 		Iterator vertexIter = getVertices().iterator();
 		Graph<V, String> g = new SparseMultigraph<V, String>();

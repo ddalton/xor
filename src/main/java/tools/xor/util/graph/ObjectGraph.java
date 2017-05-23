@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -183,9 +182,8 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 * NOTE: This can be an expensive method since the enumeration of all the loops in a graph
 	 * is expensive. Call only when needed.
 	 * @param source root
-	 * @param settings user specified settings
 	 */
-	public void spanningTreeWithEdgeSwizzling(BusinessObject source, Settings settings) {
+	public void spanningTreeWithEdgeSwizzling(BusinessObject source) {
 
 		/*
 		 * The algorithm is the following:
@@ -198,7 +196,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		 */
 		
 		// First create the graph
-		build(source, settings);
+		build(source);
 		
 		// 1. Get a stack of all the loops
 		ArrayDeque<List<E>> stack = new ArrayDeque<List<E>>(this.getLoops());
@@ -247,16 +245,15 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 * 
 	 * See {@link ObjectGraph#addEdge(E, V, V)}
 	 * @param source
-	 * @param settings
 	 */
-	private void build(BusinessObject source, Settings settings) {
+	private void build(BusinessObject source) {
 		
 		if(source.isVisited())
 			return;
 
 		source.setVisited(true);
 		
-		for(Property property: ((EntityType)source.getType()).getProperties()) {
+		for(Property property: source.getType().getProperties()) {
 			if( ((ExtendedProperty)property).isDataType() && !property.isMany() ) {
 				continue;
 			}
@@ -274,10 +271,10 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 					edge = new BusinessEdge<BusinessObject>(target, (BusinessObject) element, null);
 					addEdge((E) edge, (V) target, (V) element);
 
-					build((BusinessObject) element, settings);
+					build((BusinessObject) element);
 				}
 			} else {
-				build(target, settings);
+				build(target);
 			}
 		}
 	}
@@ -464,8 +461,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	}
 
 	public void generateVisual (Settings settings) {
-		settings.generateVisual(getObjectGraph(settings));
-		exportToGML();
+		settings.exportGraph(this);
 	}
 
 	@Override
@@ -550,19 +546,24 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		return result;
 	}
 
-	public Graph getObjectGraph(Settings settings) {
-
+	@Override
+	public void buildGraph() {
 		if(this.root.getType() instanceof ListType) {
 			for(BusinessObject bo: this.root.getList()) {
-				build(bo, settings);
+				build(bo);
 			}
 		} else {
-			build(this.root, settings);
+			build(this.root);
 		}
+	}
+
+	@Override
+	public Graph getGraph() {
+
+		buildGraph();
 
 		Iterator vertexIter = getVertices().iterator();
 		Graph<V, String> g = new SparseMultigraph<V, String>();
-		Map<V, String> vertices = new IdentityHashMap<V, String>();
 		while(vertexIter.hasNext()) {
 			V vertex = (V)vertexIter.next();
 			g.addVertex(vertex);

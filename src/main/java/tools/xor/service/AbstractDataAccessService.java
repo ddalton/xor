@@ -442,12 +442,17 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			if(incomingProperty == null || "".equals(incomingProperty.trim())) {
 				incomingProperty = AbstractProperty.TYPE_GENERATOR;
 			}
-			property.setGenerator(incomingProperty, gen);
 
-			// Have it apply to all subtypes also
-			for(EntityType subType: entityType.getSubtypes()) {
-				property = (ExtendedProperty)entityType.getProperty(entry.getKey());
+			// It can happen that that particular property is not present in
+			// the entity type's shape
+			if(property != null) {
 				property.setGenerator(incomingProperty, gen);
+
+				// Have it apply to all subtypes also
+				for (EntityType subType : entityType.getSubtypes()) {
+					property = (ExtendedProperty)entityType.getProperty(entry.getKey());
+					property.setGenerator(incomingProperty, gen);
+				}
 			}
 		}
 	}

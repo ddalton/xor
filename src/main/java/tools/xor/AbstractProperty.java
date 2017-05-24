@@ -932,6 +932,18 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return new LambdaResult(result, resultPreviousCallback);
 	}
 
+	private String getAttributeDetails(String attributeName, Object instance) {
+		StringBuilder result = new StringBuilder();
+		result.append(getContainingType().getName())
+			.append("#")
+			.append(attributeName)
+			.append("[object class: ")
+			.append(instance.getClass().getName())
+			.append("]");
+
+		return result.toString();
+	}
+
 	/**
 	 * This method is public since not all use cases pass in a DataObject instance
 	 * @param dataObject instance
@@ -941,25 +953,34 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	{
 		Object instance = ClassUtil.getInstance(dataObject);
 
+		// Used to keep track of the original exception if any
+		Exception originalAccessException = null;
+
 		// Set the value in the field  
 		try {
 			if(AccessType.PROPERTY.equals(getAccessType())) {
 				try {
 					return invokeGetter(instance);
 				} catch (Exception e) { // fallback to field access
-					logger.warn("Falling back to field access for method : " + getterMethod.getName());
+					originalAccessException = e;
+					logger.warn("Falling back to field access for method : " + getAttributeDetails(getterMethod.getName(), instance));
 					return ClassUtil.invokeFieldAsPrivileged(instance, field, null, true);
 				}
 			} else {
 				try {
 					return ClassUtil.invokeFieldAsPrivileged(instance, field, null, true);
 				} catch (Exception e) { // fallback to method access
-					logger.warn("Falling back to method access for field : " + field.getName());
+					originalAccessException = e;
+					logger.warn("Falling back to method access for field : " + getAttributeDetails(field.getName(), instance));
 					return invokeGetter(instance);
 				}
 
 			} 
 		} catch (Exception e) {
+			// log the original exception if any
+			if(originalAccessException != null) {
+				logger.error("AbstractProperty#query original exception", originalAccessException);
+			}
 			throw ClassUtil.wrapRun(e);
 		}
 	}
@@ -992,15 +1013,19 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		Object instance = ClassUtil.getInstance(dataObject);
 		propertyValue = ClassUtil.getInstance(propertyValue);
 
+		// Used to keep track of the original exception if any
+		Exception originalAccessException = null;
+
 		// Set the value in the field  
 		try {
 			if(AccessType.PROPERTY.equals(getAccessType())) {
 				try {
 					invokeSetter(instance, propertyValue);
 				} catch (Exception e) { // fallback to field access
+					originalAccessException = e;
 					if(setterMethod != null) {
 						logger.warn(
-							"Falling back to field access for method : " + setterMethod.getName());
+							"Falling back to field access for method : " + getAttributeDetails(setterMethod.getName(), instance));
 					}
 					ClassUtil.invokeFieldAsPrivileged(instance, field, propertyValue, false);
 				}
@@ -1008,13 +1033,18 @@ public abstract class AbstractProperty implements ExtendedProperty {
 				try {
 					ClassUtil.invokeFieldAsPrivileged(instance, field, propertyValue, false);
 				} catch (Exception e) { // fallback to method access
+					originalAccessException = e;
 					if(field != null) {
-						logger.warn("Falling back to method access for field : " + field.getName());
+						logger.warn("Falling back to method access for field : " + getAttributeDetails(field.getName(), instance));
 					}
 					invokeSetter(instance, propertyValue);
 				}
 			} 
 		} catch (Exception e) {
+			// log the original exception if any
+			if(originalAccessException != null) {
+				logger.error("AbstractProperty#executeUpdate original exception", originalAccessException);
+			}
 			throw ClassUtil.wrapRun(e);
 		}
 	}

@@ -179,7 +179,7 @@ public class HibernateType extends AbstractType {
 			while(declaredPropertyIterator.hasNext()) {
 				org.hibernate.mapping.Property declaredProperty = (org.hibernate.mapping.Property) declaredPropertyIterator.next();
 				logger.debug("[" + getName() + "] Hibernate declared property name: " + declaredProperty.getName());
-				result.add(getDAS().getShape().getProperties(this).get(declaredProperty.getName()));
+				result.add(getDAS().getShape().getProperty(this, declaredProperty.getName()));
 			}
 		}
 

@@ -140,16 +140,16 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 			ExtendedProperty identifierProperty = (ExtendedProperty) type.getIdentifierProperty();
 			if(identifierProperty == null) {
 				logger.error("Type without identifier: " + type.getName());
+			} else {
+				Serializable id = (Serializable)identifierProperty.getValue(from);
+				if (id != null && !"".equals(id)) {
+					Class<?> desiredClass = typeMapper.toDomain(
+						type.isDomainType() ?
+							type.getInstanceClass() :
+							type.getDomainType().getInstanceClass(), from);
+					persistentObject = findById(desiredClass, id);
+				}
 			}
-
-			Serializable id = (Serializable) identifierProperty.getValue(from);
-			if(id != null && !"".equals(id)) {
-				Class<?> desiredClass = typeMapper.toDomain(
-					type.isDomainType() ?
-						type.getInstanceClass() :
-						type.getDomainType().getInstanceClass(), from);
-				persistentObject = findById(desiredClass, id);
-			} 
 		}
 
 		return persistentObject;

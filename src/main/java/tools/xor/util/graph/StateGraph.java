@@ -1200,6 +1200,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 						// Is the state out of scope
 						if (childState == null) {
+							if (!property.isNullable()) {
+								throw new RuntimeException(
+									"Skipped type is a required property: "
+										+ property.getContainingType().getName() + "#"
+										+ property.getName() + ", type: "
+										+ property.getType().getName());
+							}
 							continue;
 						}
 
@@ -1226,7 +1233,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						}
 						else if (target instanceof JSONArray && !flush) {
 							JSONArray jsonArray = new JSONArray();
-							for (int i = 0; i < ((JSONArray)target).length(); i++) {
+							for (int i = 0, j = 0; i < ((JSONArray)target).length(); i++) {
 								JSONObject jsonObject = (JSONObject)((JSONArray)target).get(i);
 
 								// Add it to the right state
@@ -1239,7 +1246,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 								}
 
 								jsonArray.put(
-									i,
+									j++,
 									addObject(collectionElementState, jsonObject, objectPath));
 							}
 							if(jsonArray.length() > 0) {

@@ -923,7 +923,7 @@ public abstract class AbstractType implements EntityType {
 			if(getDAS().getShape().getProperties(this) == null) {
 				throw new IllegalStateException("Properties not found for type: " + getName() + " with class: " + getInstanceClass().getName());
 			}
-			Property p = getDAS().getShape().getProperties(this).get(path);
+			Property p = getDAS().getShape().getProperty(this, path);
 			return p == null || p.isNullable();
 		} else {
 			Property property = getProperty(path.substring(0, delim));
@@ -948,7 +948,7 @@ public abstract class AbstractType implements EntityType {
 			if(getDAS().getShape().getProperties(this) == null) {
 				throw new IllegalStateException("Properties not set for type: " + getName() + " with class: " + getInstanceClass().getName());
 			}
-			result = getDAS().getShape().getProperties(this).get(path);
+			result = getDAS().getShape().getProperty(this, path);
 		} else {
 			Property property = getProperty(path.substring(0, delim));
 			if(property == null) {

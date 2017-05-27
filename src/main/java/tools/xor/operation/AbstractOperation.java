@@ -297,7 +297,6 @@ public abstract class AbstractOperation implements Operation {
 	
 	public void processAttribute(CallInfo ci) throws Exception {
 
-	
 		if(executeDataUpdate(ci, Phase.PRE)) {
 			return;
 		}
@@ -354,8 +353,6 @@ public abstract class AbstractOperation implements Operation {
 				processDataType(ci);
 				return;
 			}
-			
-			// TODO: Pre DataUpdate
 
 			// if a reference was returned then we need to not process it anymore
 			 // TODO: check if processed flag is necessary - What about temp objects with reference relationship?
@@ -382,10 +379,7 @@ public abstract class AbstractOperation implements Operation {
 				BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(invokee, value, ci.getOutputProperty());
 				invokee.getObjectCreator().getObjectGraph().addEdge(edge, invokee, value);
 			}
-
-			// TODO: Post DataUpdate
 		}
-		executeDataUpdate(ci, Phase.POST);
 
 		if(!((BusinessObject)ci.getOutput()).isVisited()) {
 			// If this a reference association object, then we don't want to mark it as
@@ -406,6 +400,8 @@ public abstract class AbstractOperation implements Operation {
 		
 		// Rebuild an immutable object that is now fully populated by the builder
 		//rebuildImmutable(ci);
+
+		executeDataUpdate(ci, Phase.POST);
 	}	
 	
 	protected void postVisited(CallInfo ci) {

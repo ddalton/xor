@@ -743,7 +743,11 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 					// Return a collection of elements. Right now we support only Set. 
 					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
-					value = po.getCollection(this.getElementType(), getForeignKeyFromSource(bo));
+					if(this.keyFields != null && this.keyFields.size() > 0) {
+						value = po.getCollection(
+							this.getElementType(),
+							getForeignKeyFromSource(bo));
+					}
 				}
 				
 				return value;
@@ -793,7 +797,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					BusinessObject boValue = (BusinessObject) propertyValue;
 					setForeignKey((BusinessObject) dataObject, getForeignKeyFromTarget((BusinessObject) boValue));
 				} else if(getRelationshipType() == RelationshipType.TO_MANY) {
-					Set<BusinessObject> elementSet = (Set) propertyValue;
+					Set<BusinessObject> elementSet = (Set) ClassUtil.getInstance(propertyValue);
 					for(BusinessObject element: elementSet) {
 						setForeignKey((BusinessObject) element, getForeignKeyFromSource((BusinessObject) element));
 					}
@@ -917,7 +921,24 @@ public abstract class AbstractProperty implements ExtendedProperty {
 				if(Modifier.isStatic(du.getMethod().getModifiers())) {
 					invokee = null;
 				}
-				resultPreviousCallback = ClassUtil.invokeMethodAsPrivileged(invokee, du.getMethod(), args);
+				try {
+					resultPreviousCallback = ClassUtil.invokeMethodAsPrivileged(
+						invokee,
+						du.getMethod(),
+						args);
+				} catch (IllegalArgumentException iae) {
+					StringBuilder sb = new StringBuilder("Args: ");
+					if(args == null) {
+						sb = new StringBuilder("No args provided");
+					} else {
+						boolean first = true;
+						for(Object obj: args) {
+							sb.append((first ? "" : ", ") + obj.getClass().getName());
+							first = false;
+						}
+					}
+					throw new RuntimeException(sb.toString(), iae);
+				}
 			} catch (Exception e) {
 				throw ClassUtil.wrapRun(e);
 			}

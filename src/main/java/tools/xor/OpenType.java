@@ -103,7 +103,7 @@ public class OpenType extends AbstractType {
 
 	@Override
 	public Property getProperty(String path) {
-		return getDAS().getShape().getProperties(this).get(path);
+		return getDAS().getShape().getProperty(this, path);
 	}
 
 	public void setProperty() {

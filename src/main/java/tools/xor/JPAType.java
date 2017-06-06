@@ -184,7 +184,7 @@ public class JPAType extends AbstractType {
 			while(attribIter.hasNext()) {
 				Attribute<?, ?> attribute = (Attribute<?, ?>) attribIter.next();
 				logger.debug("[" + getName() + "] JPA declared property name: " + attribute.getName());
-				result.add(getDAS().getShape().getProperties(this).get(attribute.getName()));
+				result.add(getDAS().getShape().getProperty(this, attribute.getName()));
 			}
 		}
 

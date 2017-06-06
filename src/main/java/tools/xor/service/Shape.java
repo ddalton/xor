@@ -271,13 +271,51 @@ public class Shape
         }
     }
 
+    /**
+     * Get a full map of all the properites by the propety name.
+     * @param type entity type
+     * @return a map of all the properties.
+     */
     public Map<String, Property> getProperties(EntityType type) {
-        Map<String, Property> result;
+        Map<String, Property> result = null;
 
-        result = getDirectProperties(type);
+        /*if(result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+            result = parent.getProperties(type);
+        }*/
+        if(this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+            Map<String, Property> parentPropeties = parent.getProperties(type);
+            if(parentPropeties != null) {
+                result = new HashMap<>(parentPropeties);
+            }
+        }
+
+        Map<String, Property> directProperties = getDirectProperties(type);
+        if(directProperties != null) {
+            if(result != null) {
+                result.putAll(directProperties);
+            } else {
+                result = new HashMap<>(directProperties);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Method to optimially retrieve a single property
+     * @param type entit type
+     * @param name of the property
+     * @return property meta object
+     */
+    public Property getProperty(EntityType type, String name) {
+        Property result = null;
+
+        if(getDirectProperties(type) != null && getDirectProperties(type).containsKey(name)) {
+            result = getDirectProperties(type).get(name);
+        }
 
         if(result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
-            result = parent.getProperties(type);
+            result = parent.getProperty(type, name);
         }
 
         return result;

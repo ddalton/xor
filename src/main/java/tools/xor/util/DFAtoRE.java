@@ -693,11 +693,15 @@ public class DFAtoRE {
 			state.setFinishState(true);
 			createEquations();
 			Expression result = processEquations();
-			regEx.put(state, result);
-			logger.debug("State: " + state.getType().getName() + ", Expression : " + result.toString());
+
+			if(result != null) {
+				regEx.put(state, result);
+				logger.debug(
+					"State: " + state.getType().getName() + ", Expression : " + result.toString());
+			}
 
 			state.setFinishState(false);
-		}		
+		}
 	}
 	
 	public Map<State, Expression> getRegEx() {
@@ -899,12 +903,16 @@ public class DFAtoRE {
 			typeToRemove = getTypeToRemove();
 		}
 
-		assert(equations.size() == 1);
-		assert(equations.containsKey(aggregateType));
+		// For a parent type, it may not be reachable from the start state
+		// So in this situation, there might not be any equations to process
 
-		Expression result = equations.get(aggregateType);
-		result = result.reduce(aggregateType);
+		if(equations.size() == 1 && equations.containsKey(aggregateType)) {
+			Expression result = equations.get(aggregateType);
+			result = result.reduce(aggregateType);
 
-		return result;
+			return result;
+		}
+
+		return null;
 	}	
 }

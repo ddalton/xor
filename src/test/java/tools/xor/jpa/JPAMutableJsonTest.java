@@ -319,6 +319,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	}
 
 	@Test
+	public void testEmployeeType() {
+		super.testEmployeeType();
+	}
+
+	@Test
 	public void exportEmployee() throws IOException
 	{
 		super.exportEmployee();

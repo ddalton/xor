@@ -19,28 +19,16 @@
 
 package tools.xor.util;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.EntityType;
-import tools.xor.Property;
-import tools.xor.Type;
-import tools.xor.service.DataAccessService;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AggregateView;
-
-import javax.swing.text.html.parser.Entity;
 
 /**
  * Include inheritance in the State Graph navigation. This causes the DFA to become a NFA. 
@@ -61,31 +49,21 @@ public class DFAtoNFA {
 			}
 		}
 
+		// Add subtypes
 		Collection<EntityType> entities = new HashSet(entityTypeMap.keySet());
 		for(EntityType entityType:  entities) {
-/*
-			State superTypeState = entityTypeMap.get(entry.getKey());
-			for(EntityType subType: entry.getKey().getSubtypes()) {
+			addSubTypes(entityType, stateGraph, entityTypeMap);
+		}
 
-				State subTypeState = entityTypeMap.get(subType);
-				// extend the state set to include this new state
-				if(subTypeState == null) {
-					subTypeState = new State(subType, false);
-				}
-
-				// Add an empty edge from the supertype to the subtype
-				// This makes it a NFA, since only NFA allows empty edges
-				stateGraph.addEdge(
-					new Edge(UNLABELLED, superTypeState, subTypeState),
-					superTypeState,
-					subTypeState);
-			}
-			*/
-			addChildTypes(entityType, stateGraph, entityTypeMap);
+		// Add supertypes
+		for(EntityType entityType:  entities) {
+			addSuperTypes(entityType, stateGraph, entityTypeMap);
 		}
 	}
 
-	private static void addChildTypes(EntityType entityType, StateGraph<State, Edge<State>> stateGraph, Map<EntityType, State> entityTypeMap) {
+	private static void addSubTypes (EntityType entityType,
+									 StateGraph<State, Edge<State>> stateGraph,
+									 Map<EntityType, State> entityTypeMap) {
 
 		State entityState = entityTypeMap.get(entityType);
 		for(EntityType subType: entityType.getChildSubtypes()) {
@@ -104,7 +82,33 @@ public class DFAtoNFA {
 				subTypeState);
 			entityTypeMap.put(subType, subTypeState);
 
-			addChildTypes(subType, stateGraph, entityTypeMap);
+			addSubTypes(subType, stateGraph, entityTypeMap);
+		}
+	}
+
+	private static void addSuperTypes(EntityType entityType, StateGraph<State, Edge<State>> stateGraph, Map<EntityType, State> entityTypeMap) {
+
+		State entityState = entityTypeMap.get(entityType);
+		EntityType superType = entityType.getSuperType();
+
+		if(superType != null) {
+
+			State superTypeState = entityTypeMap.get(superType);
+
+			// extend the state set to include this new state
+			if(superTypeState == null) {
+				superTypeState = new State(superType, false);
+			}
+
+			// Add an empty edge from the supertype to the subtype
+			// This makes it a NFA, since only NFA allows empty edges
+			stateGraph.addEdge(
+				new Edge(UNLABELLED, superTypeState, entityState),
+				superTypeState,
+				entityState);
+			entityTypeMap.put(superType, superTypeState);
+
+			addSuperTypes(superType, stateGraph, entityTypeMap);
 		}
 	}
 }

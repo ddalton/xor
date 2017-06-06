@@ -1249,6 +1249,20 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		assert( (jsonTask.get("name")).toString().equals(TASK_NAME));
 	}
 
+	public void testEmployeeType() {
+		DataAccessService das = aggregateService.getDAS();
+		EntityType employeeType = (EntityType)das.getType(Employee.class);
+		View view = das.getView(employeeType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.setEntityType(employeeType);
+
+		settings.init(das.getShape());
+		TypeGraph sg = settings.getView().getTypeGraph(employeeType);
+		settings.setGraphFileName("EmployeeAggregateStateGraph.png");
+		sg.generateVisual(settings);
+	}
+
 	public void exportEmployee () throws IOException
 	{
 

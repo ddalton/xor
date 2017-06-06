@@ -41,6 +41,7 @@ import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoNFA;
+import tools.xor.util.DFAtoRE;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
 import tools.xor.util.DFAtoRE.TypedExpression;
@@ -112,13 +113,37 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		super.removeEdge(edge);
 	}
-	
+
+	@Override
 	public E getOutEdge(V vertex, String name) {
 		if(!outTransitions.containsKey(vertex)) {
+			// vertex is not in scope
 			return null;
 		}
-		
-		return outTransitions.get(vertex).get(name);
+
+		if(outTransitions.get(vertex).containsKey(name)) {
+			return outTransitions.get(vertex).get(name);
+		} else {
+			// The graph only has unlabelled edges from parent to child
+			// and not vice-versa so we have to explicitly get the parent
+			// vertex and check it
+
+			// check parent if there is an inheritance relationship
+			V parentVertex = getParentVertex(vertex);
+			return parentVertex == null ? null : getOutEdge(parentVertex, name);
+		}
+	}
+
+	private V getParentVertex(V vertex) {
+
+		if(vertex.getType() != null && vertex.getType() instanceof EntityType) {
+			EntityType entityType = (EntityType)vertex.getType();
+			if(entityType.getSuperType() != null) {
+				return getVertex(entityType.getSuperType());
+			}
+		}
+
+		return null;
 	}
 
 	@Override
@@ -510,12 +535,14 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	public void scopeStart(State state) {
+
 		if(state.isInScope())
 			return;
 
 		state.setInScope(true);
-		for(E transition: getInEdges((V) state))
+		for(E transition: getInEdges((V) state)) {
 			scopeStart(transition.getStart());
+		}
 	}
 	
 	public Expression getExpression(State state) {
@@ -1201,11 +1228,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						// Is the state out of scope
 						if (childState == null) {
 							if (!property.isNullable()) {
-								throw new RuntimeException(
-									"Skipped type is a required property: "
+								(new RuntimeException(
+									"Skipped type is a required property and needs to be part of the view: "
 										+ property.getContainingType().getName() + "#"
 										+ property.getName() + ", type: "
-										+ property.getType().getName());
+										+ property.getType().getName())).printStackTrace();
 							}
 							continue;
 						}

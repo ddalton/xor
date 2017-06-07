@@ -26,7 +26,6 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import org.json.JSONObject;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
@@ -68,8 +67,6 @@ public abstract class AbstractOperation implements Operation {
 			callInfo.clearVisitedOutputs();			
 		}
 
-		// TODO: get list of revisions for this aggregate and iterate this process for each revision
-		// The upgrade and downgrade methods will be called for revision processing instead of the process method
 		// Step 1: Create the update actions
 		if(supportsUpdate(callInfo)) {
 			setVisited(callInfo, true);
@@ -330,21 +327,6 @@ public abstract class AbstractOperation implements Operation {
 			return;
 		}
 
-		/*
-		if(ci.getInput() instanceof BusinessObject) {
-			BusinessObject bo = (BusinessObject)ci.getInput();
-			if (bo.getType().getName().equals("test.ariba.base.core.DegreeProgram")) {
-				if (bo.getInstance() instanceof JSONObject) {
-					JSONObject json = (JSONObject)bo.getInstance();
-					System.out.println(
-						"Degree.Major: " + bo.get("Degree.Major") + ", Degree.Type: " + bo.get(
-							"Degree.Type") + ", Dept.Number: " + bo.get("Department.Number")
-							+ ", AdapterSrc: " + json.get("AdapterSource") + ", DeftSetBits: "
-							+ json.get("DefaultingSetBits"));
-				}
-			}
-		}*/
-
 		// If the property to be copied is specified then we perform the copy only for that property
 		if(ci.getInputProperty() != null) { // Owner is not a collection
 
@@ -354,8 +336,7 @@ public abstract class AbstractOperation implements Operation {
 				return;
 			}
 
-			// if a reference was returned then we need to not process it anymore
-			 // TODO: check if processed flag is necessary - What about temp objects with reference relationship?
+			// Set the output value if one already exists for that input
 			ci.setOutput(ci.getOutputObjectCreator().getExistingDataObject(ci.getInput()));
 
 			if(ci.getOutput() != null) {

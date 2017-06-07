@@ -260,6 +260,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		Map<String, List<Property>> propertyMap = attrByType.get(type);
 		if(propertyMap == null) {
 			propertyMap = new HashMap();
+			attrByType.put(type, propertyMap);
 		}
 		
 		List<Property> result = new ArrayList<Property>();

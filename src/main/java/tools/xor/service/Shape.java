@@ -45,6 +45,7 @@ import tools.xor.view.UnmodifiableView;
 import tools.xor.view.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -272,33 +273,30 @@ public class Shape
     }
 
     /**
-     * Get a full map of all the properites by the propety name.
+     * Get a full map of all the properties by the property name.
+     *
      * @param type entity type
      * @return a map of all the properties.
      */
     public Map<String, Property> getProperties(EntityType type) {
         Map<String, Property> result = null;
 
-        /*if(result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
-            result = parent.getProperties(type);
-        }*/
         if(this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
-            Map<String, Property> parentPropeties = parent.getProperties(type);
-            if(parentPropeties != null) {
-                result = new HashMap<>(parentPropeties);
-            }
+            result = parent.getProperties(type);
         }
 
         Map<String, Property> directProperties = getDirectProperties(type);
         if(directProperties != null) {
             if(result != null) {
+                // We are modifying the result so make a copy
+                result = new HashMap<>(result);
                 result.putAll(directProperties);
             } else {
-                result = new HashMap<>(directProperties);
+                result = directProperties;
             }
         }
 
-        return result;
+        return result == null ? null : Collections.unmodifiableMap(result);
     }
 
     /**

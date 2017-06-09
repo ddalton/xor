@@ -274,11 +274,16 @@ public class CallInfo {
 
 		// The state graph has full blown attributes for the type
 		// We need to get only the exact properties
-		List<Property> exactProperties = ((AbstractType)type).getProperties(
-			sg.next(
-				((EntityType)type).getDomainType(),
-				getInputPropertyPath(),
-				settings.getView().getExactAttributes()));
+		
+		List<Property> exactProperties = sg.next(
+					((EntityType)type).getDomainType(),
+					getInputPropertyPath(),
+					settings.getView().getExactAttributes());
+		
+		// Get the external property instances, if type is in external form
+		if(!((AbstractType)type).isDomainType()) {
+			exactProperties = ((AbstractType)type).getProperties(exactProperties);
+		}
 
 		// Prune attributes
 		if(settings.hasPrunedAssociations()) {

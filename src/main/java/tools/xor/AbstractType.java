@@ -876,10 +876,11 @@ public abstract class AbstractType implements EntityType {
 
 	@Override
 	public List<Property> getProperties() {
-		if(getDAS().getShape().getProperties(this) == null) {
+		Map<String, Property> propertyMap = getDAS().getShape().getProperties(this);
+		if(propertyMap == null) {
 			return null;
 		}
-		return new ArrayList<>(getDAS().getShape().getProperties(this).values());
+		return new ArrayList<>(propertyMap.values());
 	}
 
 	List<Property> getProperties (Collection<Property> input)
@@ -944,11 +945,12 @@ public abstract class AbstractType implements EntityType {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
 
 		Property result = null;
-		if(delim == -1) {
-			if(getDAS().getShape().getProperties(this) == null) {
-				throw new IllegalStateException("Properties not set for type: " + getName() + " with class: " + getInstanceClass().getName());
-			}
+		if(delim == -1) {				
 			result = getDAS().getShape().getProperty(this, path);
+			
+			if(result == null && getDAS().getShape().getProperties(this) == null) {
+				throw new IllegalStateException("Properties not set for type: " + getName() + " with class: " + getInstanceClass().getName());
+			}				
 		} else {
 			Property property = getProperty(path.substring(0, delim));
 			if(property == null) {

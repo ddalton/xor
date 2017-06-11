@@ -67,7 +67,24 @@
 			</queryString>
 			<identifierClause>WHERE UUID</identifierClause>			
 		</nativeQuery>
-	</aggregateView>	
+	</aggregateView>
+	<aggregateView>
+		<name>BASICINFO_OQL</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<userOQLQuery>
+			<resultList>[BASICINFO]</resultList>
+			<queryString>
+				<![CDATA[SELECT id,
+				                name,
+								displayName,
+								description,
+								iconUrl,
+								detailedDescription
+							FROM tools.xor.db.base.Person]]>
+			</queryString>
+			<identifierClause>WHERE id</identifierClause>
+		</userOQLQuery>
+	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_SP</name>
 		<attributeList>[BASICINFO]</attributeList>			

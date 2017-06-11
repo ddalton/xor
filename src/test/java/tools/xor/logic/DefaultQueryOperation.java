@@ -144,7 +144,36 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(result.getName().equals(NAME));
 		assert(result.getDisplayName().equals(DISPLAY_NAME));
 		assert(result.getDescription().equals(DESCRIPTION));
-	}	
+	}
+
+	public void queryPersonOQL() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// read the person object using a DataObject
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_OQL"));
+		settings.setPreFlush(true);
+		List<?> toList = aggregateService.query(person, settings);
+
+		assert(toList.size() == 1);
+
+		Person result = null;
+		if(Person.class.isAssignableFrom(toList.get(0).getClass()))
+			result = (Person) toList.get(0);
+
+		assert(result != null);
+		assert(result.getName().equals(NAME));
+		assert(result.getDisplayName().equals(DISPLAY_NAME));
+		assert(result.getDescription().equals(DESCRIPTION));
+	}
 	
 	public void queryPersonStoredProcedure() {
 

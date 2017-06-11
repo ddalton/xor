@@ -28,6 +28,7 @@ import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.NativeQuery;
+import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryView;
@@ -65,9 +66,12 @@ public class DenormalizedQueryOperation extends QueryOperation {
 			checkSecurity(branch, callInfo);
 
 			NativeQuery nativeQuery = branch.view().getNativeQuery();
+			OQLQuery userOQLQuery = branch.view().getUserOQLQuery();
 			List<String> selectedColumns;
 			if(nativeQuery != null) {
 				selectedColumns = nativeQuery.getResultList();
+			} else if(userOQLQuery != null) {
+				selectedColumns = branch.getContentView().getAttributeList();
 			} else {
 				if(query instanceof StoredProcedureQuery) {
 					selectedColumns = ((StoredProcedureQuery) query).getStoredProcedure().getResultList();

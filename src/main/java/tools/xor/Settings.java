@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationImageServer;
@@ -43,12 +44,15 @@ import edu.uci.ics.jung.visualization.renderers.Renderer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Detector;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
@@ -794,8 +798,82 @@ public class Settings {
 			return this;
 		}
 
-		public SettingsBuilder setGlobalSeq(int globalSeq) {
+		public SettingsBuilder globalSeq(int globalSeq) {
 			this.settings.setGlobalSeq(globalSeq);
+			return this;
+		}
+
+		// Extract many of the input fields from the json object
+		public SettingsBuilder json(String jsonString) {
+
+			JSONObject json = new JSONObject(jsonString);
+			try {
+				for (String key : JSONObject.getNames(json)) {
+					String keyName = key.toUpperCase();
+					switch (keyName) {
+					case "BASE":
+						String className = json.getString(key);
+						Class clazz = Class.forName(className);
+						base(clazz);
+						break;
+					case "AGGREGATE":
+						className = json.getString(key);
+						clazz = Class.forName(className);
+						aggregate(clazz);
+						break;
+					case "EXTENDBYCLASS":
+						JSONArray extensions = json.getJSONArray(key);
+						for(int i = 0; i < extensions.length(); i++) {
+							clazz = Class.forName(extensions.getString(i));
+							AssociationSetting extension = new AssociationSetting(clazz);
+							expand(extension);
+						}
+						break;
+					case "PRUNE":
+						JSONArray prunes = json.getJSONArray(key);
+						for(int i = 0; i < prunes.length(); i++) {
+							String path = prunes.getString(i);
+							AssociationSetting prune = new AssociationSetting(path, MatchType.RELATIVE_PATH);
+							prune(prune);
+						}
+						break;
+					case "GLOBALSEQ":
+						globalSeq(json.getInt(key));
+						break;
+					case "ENTITYSIZE":
+						String entitySize = json.getString(key);
+						this.settings.setEntitySize(EntitySize.valueOf(entitySize));
+						break;
+					case "ENTITYCLASS":
+						String entityClassName = json.getString(key);
+						clazz = Class.forName(entityClassName);
+						this.settings.setEntityClass(clazz);
+						break;
+					case "NORMALIZED":
+						boolean isNormalized = json.getBoolean(key);
+						this.settings.setDenormalized(!isNormalized);
+						break;
+					case "VIEW":
+						ObjectMapper mapper = new ObjectMapper();
+						JSONObject jsonView = json.getJSONObject(key);
+						boolean useExistingView = !json.has("useExistingView") || json.getBoolean("useExistingView");
+						View view = mapper.readValue(jsonView.toString(), AggregateView.class);
+
+						if(view.getName() != null) {
+							// check for existing view with same name
+							View existing = shape.getView(view.getName());
+							if(existing != null && useExistingView) {
+								view = existing;
+							}
+						}
+
+						this.settings.setView(view);
+					}
+				}
+			} catch (Exception e) {
+				throw ClassUtil.wrapRun(e);
+			}
+
 			return this;
 		}
 		

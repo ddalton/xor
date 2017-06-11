@@ -316,8 +316,11 @@ public class QueryView {
 
 		for(String attribute: attributes.keySet()) {
 			String rootAnchorName = getRootAnchorName(attribute);
-			if(rootAnchorName == null)
-				throw new RuntimeException("The attribute should refer to a data type and not a data object");
+			if(rootAnchorName == null) {
+				throw new RuntimeException(
+					"The query attribute " + attribute + " of type " + aggregateType.getName()
+						+ " should specifically refer to a data type and not a data object");
+			}
 
 			Property rootProperty = aggregateType.getProperty(rootAnchorName);
 			if(rootProperty == null) {

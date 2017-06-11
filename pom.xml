@@ -1,9 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
     <packaging>jar</packaging>
-    <version>1.7.8</version>
+    <version>1.7.9</version>
     <name>xor</name>
     <description>Empowering Model Driven Architecture in J2EE applications</description>
     <url>https://github.com/ddalton/xor</url>
@@ -169,6 +171,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.6.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
             <version>7.0.6</version>
@@ -231,11 +239,11 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.6.4</version>
         </dependency-->
-<dependency>
-    <groupId>log4j</groupId>
-    <artifactId>log4j</artifactId>
-    <version>1.2.17</version>
-</dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
 
         <!-- needed for running standalone java apps -->
         <dependency>
@@ -250,11 +258,11 @@
             <version>2.4</version>
         </dependency>
 
-	<dependency>
-	    <groupId>commons-configuration</groupId>
-	    <artifactId>commons-configuration</artifactId>
-	    <version>1.10</version>
-	</dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.10</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-dbcp</groupId>
@@ -349,51 +357,51 @@
             <scope>compile</scope>
         </dependency>
 
-<!-- https://mvnrepository.com/artifact/net.sf.jung/jung-algorithms -->
-<dependency>
-    <groupId>net.sf.jung</groupId>
-    <artifactId>jung-algorithms</artifactId>
-    <version>2.0.1</version>
-</dependency>
-
-<!-- https://mvnrepository.com/artifact/net.sf.jung/jung-graph-impl -->
-<dependency>
-    <groupId>net.sf.jung</groupId>
-    <artifactId>jung-graph-impl</artifactId>
-    <version>2.0.1</version>
-</dependency>
-
-<!-- https://mvnrepository.com/artifact/net.sf.jung/jung-visualization -->
-<dependency>
-    <groupId>net.sf.jung</groupId>
-    <artifactId>jung-visualization</artifactId>
-    <version>2.0.1</version>
-</dependency>
-
-<!-- https://mvnrepository.com/artifact/net.sf.jung/jung-api -->
-<dependency>
-    <groupId>net.sf.jung</groupId>
-    <artifactId>jung-api</artifactId>
-    <version>2.0.1</version>
-</dependency>
-
-
-    <!--dependency>
-      <groupId>com.oracle</groupId>
-      <artifactId>ojdbc6</artifactId>
-      <version>11.2.0.4</version>
-    </dependency>
-    <dependency>
-      <groupId>com.oracle</groupId>
-      <artifactId>ojdbc7</artifactId>
-      <version>12.1.0.1</version>
-    </dependency>
-
+        <!-- https://mvnrepository.com/artifact/net.sf.jung/jung-algorithms -->
         <dependency>
-            <groupId>com.sap.db</groupId>
-            <artifactId>ngdbc</artifactId>
-            <version>1.1</version>
-        </dependency-->
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-algorithms</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/net.sf.jung/jung-graph-impl -->
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-graph-impl</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/net.sf.jung/jung-visualization -->
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-visualization</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/net.sf.jung/jung-api -->
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-api</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+
+        <!--dependency>
+          <groupId>com.oracle</groupId>
+          <artifactId>ojdbc6</artifactId>
+          <version>11.2.0.4</version>
+        </dependency>
+        <dependency>
+          <groupId>com.oracle</groupId>
+          <artifactId>ojdbc7</artifactId>
+          <version>12.1.0.1</version>
+        </dependency>
+
+            <dependency>
+                <groupId>com.sap.db</groupId>
+                <artifactId>ngdbc</artifactId>
+                <version>1.1</version>
+            </dependency-->
 
     </dependencies>
 

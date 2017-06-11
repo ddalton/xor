@@ -42,8 +42,13 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	@Test
 	public void queryPersonNative() {
 		super.queryPersonNative();
-	}	
-	
+	}
+
+	@Test
+	public void queryPersonOQL() {
+		super.queryPersonOQL();
+	}
+
 	//@Test
 	public void queryPersonStoredProcedure() {
 		super.queryPersonStoredProcedure();

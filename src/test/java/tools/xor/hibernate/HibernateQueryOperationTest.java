@@ -42,7 +42,12 @@ public class HibernateQueryOperationTest extends DefaultQueryOperation {
 	@Test
 	public void queryPersonNative() {
 		super.queryPersonNative();
-	}	
+	}
+
+	@Test
+	public void queryPersonOQL() {
+		super.queryPersonOQL();
+	}
 	
 	@Test
 	public void queryPersonType() {

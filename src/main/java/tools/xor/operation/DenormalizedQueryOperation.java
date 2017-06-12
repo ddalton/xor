@@ -59,7 +59,10 @@ public class DenormalizedQueryOperation extends QueryOperation {
 	}
 
 	private void execute(QueryView branch, QueryBuilder qb, CallInfo callInfo) {
-		qb.init((BusinessObject) callInfo.getInput(), branch, callInfo.getSettings().getAdditionalFilters());	
+		qb.init(
+			(BusinessObject)callInfo.getInput(),
+			branch,
+			callInfo.getSettings().getAdditionalFilters());
 		Query query = createQuery(branch, callInfo, qb);
 
 		try {
@@ -68,35 +71,63 @@ public class DenormalizedQueryOperation extends QueryOperation {
 			NativeQuery nativeQuery = branch.view().getNativeQuery();
 			OQLQuery userOQLQuery = branch.view().getUserOQLQuery();
 			List<String> selectedColumns;
-			if(nativeQuery != null) {
+
+			if (nativeQuery != null) {
 				selectedColumns = nativeQuery.getResultList();
-			} else if(userOQLQuery != null) {
+			}
+			else if (userOQLQuery != null) {
 				selectedColumns = branch.getContentView().getAttributeList();
-			} else {
-				if(query instanceof StoredProcedureQuery) {
-					selectedColumns = ((StoredProcedureQuery) query).getStoredProcedure().getResultList();
-				} else {
+			}
+			else {
+				if (query instanceof StoredProcedureQuery) {
+					selectedColumns = ((StoredProcedureQuery)query).getStoredProcedure().getResultList();
+				}
+				else {
 					selectedColumns = query.getColumns();
 				}
 			}
-			result.add(selectedColumns.toArray());
+			if (selectedColumns != null && selectedColumns.size() > 0) {
+				result.add(selectedColumns.toArray());
+			}
 
-			for(Object obj: query.getResultList(branch)) {
+			boolean processingFirstRow = true;
+			for (Object obj : query.getResultList(branch)) {
 
-				if(ClassUtil.getDimensionCount(obj) == 1) {
-					Object[] objArray = (Object[]) obj;
-					if(selectedColumns.size() != objArray.length) {
-						throw new RuntimeException("The view column count is not the same as the query column count");
+				if (ClassUtil.getDimensionCount(obj) == 1) {
+					Object[] objArray = (Object[])obj;
+
+					// If selectedColumns is not initialized then we initialize it
+					if (processingFirstRow) {
+						if (selectedColumns == null || selectedColumns.size() == 0) {
+							if (query.getColumns() != null) {
+								result.add(query.getColumns().toArray());
+							}
+							else {
+								selectedColumns = new ArrayList<>(objArray.length);
+								for (int i = 0; i < objArray.length; i++) {
+									selectedColumns.add(i, "Col " + (i + 1));
+								}
+								result.add(selectedColumns.toArray());
+							}
+						}
+						else if (selectedColumns.size() != objArray.length) {
+							throw new RuntimeException(
+								"The view column count is not the same as the query column count");
+						}
+						processingFirstRow = false;
 					}
 					result.add(objArray);
-				} else {
-					if(selectedColumns.size() != 1) {
-						throw new RuntimeException("The view has does not have a single column specified, but the result has only one column");
+				}
+				else {
+					if (selectedColumns.size() != 1) {
+						throw new RuntimeException(
+							"The view has does not have a single column specified, but the result has only one column");
 					}
 					result.add(new Object[] { obj });
 				}
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}		
 	}

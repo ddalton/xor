@@ -159,13 +159,13 @@ public class QueryBuilder {
 			}
 
 			queryString.replaceAll("[\n\r]", "");
-			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, null);
+			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getContentView().getNativeQuery());
 		}
 
 		// User OQL
 		if(view.getContentView() != null && view.getContentView().getUserOQLQuery() != null) {
 			String oqlString = view.getContentView().getUserOQLQuery().getQueryString();
-			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, null);
+			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getContentView().getUserOQLQuery());
 		}
 
 		// System OQL

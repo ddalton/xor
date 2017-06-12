@@ -837,6 +837,13 @@ public class Settings {
 							prune(prune);
 						}
 						break;
+					case "FILTERS":
+						JSONObject filters = json.getJSONObject(key);
+						for(String filterName: JSONObject.getNames(filters)) {
+							Object filterValue = filters.get(filterName);
+							this.settings.addFilter(filterName, filterValue);
+						}
+						break;
 					case "GLOBALSEQ":
 						globalSeq(json.getInt(key));
 						break;

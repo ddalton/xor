@@ -527,11 +527,15 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public List<String> getExpandedList(List<String> input) {
 		// Find and substitute the view references
 		List<String> newList = new ArrayList<>();
-		for(String attribute: input) {
-			if(getViewReference(attribute) != null) {
-				newList.addAll(expand(attribute));
-			} else {
-				newList.add(attribute);
+
+		if(input != null) {
+			for (String attribute : input) {
+				if (getViewReference(attribute) != null) {
+					newList.addAll(expand(attribute));
+				}
+				else {
+					newList.add(attribute);
+				}
 			}
 		}
 		

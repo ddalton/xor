@@ -166,7 +166,7 @@ public class DatastorePersistenceOrchestrator extends AbstractPersistenceOrchest
 	// TODO: Replace this method with one that works on the QueryBuilder. This effectively means
 	// we can support persistence mechanisms that don't support String based Query construction
 	// e.g., getQuery(QueryBuilder)
-	public Query getQuery(String queryString, QueryType queryType, StoredProcedure sp) {		
+	public Query getQuery(String queryString, QueryType queryType, Object queryInput) {
 
 		Query result = null;
 		switch(queryType) {

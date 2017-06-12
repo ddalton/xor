@@ -27,6 +27,7 @@ public class NativeQuery {
 	protected List<String>      resultList;
 	protected String            queryString;
 	protected String            identifierClause;
+	protected List<ParameterMapping> parameterList;
 	protected boolean           usable;
 	
 	public String getIdentifierClause() {
@@ -56,12 +57,17 @@ public class NativeQuery {
 	}
 	public void setQueryString(String queryString) {
 		this.queryString = queryString;
-	} 
+	}
+
+	public List<ParameterMapping> getParameterList() {
+		return parameterList;
+	}
+
+	public void setParameterList(List<ParameterMapping> parameterList) {
+		this.parameterList = parameterList;
+	}
 	
 	public void expand(AggregateView view) {
-		if(getResultList() == null) {
-			throw new IllegalStateException("ResultList need to be provided for the native query. TODO: make the view attributeList the same as resultList as default");
-		}
 		this.resultList = view.getExpandedList(getResultList());
 	}
 	

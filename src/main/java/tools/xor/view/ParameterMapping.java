@@ -1,5 +1,6 @@
 package tools.xor.view;
 
+import jdk.nashorn.internal.codegen.CompilerConstants;
 import tools.xor.util.ClassUtil;
 
 import javax.persistence.ParameterMode;
@@ -11,6 +12,7 @@ import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.NClob;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
@@ -23,10 +25,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ParameterMapping {
 
 	@XmlAttribute
-	String name;         // Optional if attribute is specified, required for non-view parameters
+	public String name;         // Optional if attribute is specified, required for non-view parameters
 	
 	@XmlAttribute
-	String attribute;    // view parameter
+	public String attribute;    // view parameter
 	
 	@XmlAttribute
 	String type;         // java.sql.Types constant name, mandatory
@@ -43,7 +45,7 @@ public class ParameterMapping {
 	boolean returnType;
 	
 	@XmlAttribute
-	int position;
+	public int position;
 
 	static final Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<>();
 	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
@@ -185,8 +187,8 @@ public class ParameterMapping {
 
 	public interface SQLConverter {
 
-		// Sets the value on a CallableStatement
-		public void javaToSQL(CallableStatement cs, int parameterIndex, Object value) throws
+		// Sets the value on a PreparedStatement
+		public void javaToSQL(PreparedStatement ps, int parameterIndex, Object value) throws
 			SQLException;
 
 
@@ -200,11 +202,11 @@ public class ParameterMapping {
 
 				new SQLConverter() {
 
-					@Override public void javaToSQL (CallableStatement cs,
+					@Override public void javaToSQL (PreparedStatement ps,
 													 int parameterIndex,
 													 Object value) throws SQLException
 					{
-						cs.setArray(parameterIndex, (Array)value);
+						ps.setArray(parameterIndex, (Array)value);
 					}
 
 					@Override public Object sQLToJava (CallableStatement cs,
@@ -220,11 +222,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setLong(parameterIndex, (Long)value);
+					ps.setLong(parameterIndex, (Long)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -238,11 +240,11 @@ public class ParameterMapping {
 		SQLConverter binaryConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setBytes(parameterIndex, (byte[])value);
+					ps.setBytes(parameterIndex, (byte[])value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -258,11 +260,11 @@ public class ParameterMapping {
 		SQLConverter booleanConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setBoolean(parameterIndex, (Boolean)value);
+					ps.setBoolean(parameterIndex, (Boolean)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -280,11 +282,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setBlob(parameterIndex, (Blob)value);
+					ps.setBlob(parameterIndex, (Blob)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -298,11 +300,11 @@ public class ParameterMapping {
 		SQLConverter stringConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setString(parameterIndex, (String)value);
+					ps.setString(parameterIndex, (String)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -318,11 +320,11 @@ public class ParameterMapping {
 		SQLConverter nstringConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setNString(parameterIndex, (String)value);
+					ps.setNString(parameterIndex, (String)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -340,11 +342,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setClob(parameterIndex, (Clob)value);
+					ps.setClob(parameterIndex, (Clob)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -360,11 +362,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setDate(parameterIndex, (Date)value);
+					ps.setDate(parameterIndex, (Date)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -378,11 +380,11 @@ public class ParameterMapping {
 		SQLConverter bigdecimalConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setBigDecimal(parameterIndex, (BigDecimal)value);
+					ps.setBigDecimal(parameterIndex, (BigDecimal)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -399,11 +401,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setDouble(parameterIndex, (Double)value);
+					ps.setDouble(parameterIndex, (Double)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -417,11 +419,11 @@ public class ParameterMapping {
 		SQLConverter floatConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setFloat(parameterIndex, (Float)value);
+					ps.setFloat(parameterIndex, (Float)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -436,11 +438,11 @@ public class ParameterMapping {
 		SQLConverter integerConverter =
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setInt(parameterIndex, (Integer)value);
+					ps.setInt(parameterIndex, (Integer)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -457,11 +459,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setNClob(parameterIndex, (NClob)value);
+					ps.setNClob(parameterIndex, (NClob)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -477,11 +479,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setTime(parameterIndex, (Time)value);
+					ps.setTime(parameterIndex, (Time)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -497,11 +499,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setTimestamp(parameterIndex, (Timestamp)value);
+					ps.setTimestamp(parameterIndex, (Timestamp)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -517,11 +519,11 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
-				@Override public void javaToSQL (CallableStatement cs,
+				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					cs.setByte(parameterIndex, (Byte)value);
+					ps.setByte(parameterIndex, (Byte)value);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -563,7 +565,7 @@ public class ParameterMapping {
 		this.returnType = value;
 	}
 
-	public void setValue(CallableStatement cs, Object value) {
+	public void setValue(PreparedStatement ps, Object value) {
 		int typeValue = 0;
 		try {
 			typeValue = Integer.parseInt(type);
@@ -580,7 +582,7 @@ public class ParameterMapping {
 		}
 		SQLConverter converter = convertersBySQLType.get(typeValue);
 		try {
-			converter.javaToSQL(cs, position, value);
+			converter.javaToSQL(ps, position, value);
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

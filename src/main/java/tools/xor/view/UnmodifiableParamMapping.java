@@ -1,7 +1,7 @@
 package tools.xor.view;
 
 import javax.persistence.ParameterMode;
-import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 
 public class UnmodifiableParamMapping extends ParameterMapping
 {
@@ -54,7 +54,7 @@ public class UnmodifiableParamMapping extends ParameterMapping
         raiseException();
     }
 
-    @Override public void setValue (CallableStatement cs, Object value)
+    @Override public void setValue (PreparedStatement cs, Object value)
     {
         raiseException();
     }

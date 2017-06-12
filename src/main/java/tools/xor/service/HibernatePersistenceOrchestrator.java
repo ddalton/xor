@@ -237,7 +237,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	}
 
 	@Override
-	public Query getQuery(String queryString, QueryType queryType, StoredProcedure sp) {		
+	public Query getQuery(String queryString, QueryType queryType, Object queryInput) {
 
 		Query result = null;
 		switch(queryType) {
@@ -250,8 +250,8 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 			break;
 			
 		case SP:
-			createStatement(sp);
-			result = new StoredProcedureQuery(sp);
+			createStatement((StoredProcedure) queryInput);
+			result = new StoredProcedureQuery((StoredProcedure) queryInput);
 			break;			
 
 		default:

@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +47,16 @@ public class JPAQuery extends AbstractQuery {
 
 	@Override
 	public void setParameter(String name, Object value) {
-		jpaQuery.setParameter(name, value);
+		// check if this is a positional parameter
+		if(!hasParameter(name)) {
+			if(StringUtils.isNumeric(name)) {
+				jpaQuery.setParameter(Integer.parseInt(name), value);
+			} else {
+				throw new RuntimeException("Unable to set parameter: " + name + ", check if the parameter name is correct");
+			}
+		} else {
+			jpaQuery.setParameter(name, value);
+		}
 	}
 
 	@Override

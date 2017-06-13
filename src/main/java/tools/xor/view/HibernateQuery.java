@@ -35,12 +35,12 @@ public class HibernateQuery extends AbstractQuery {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getResultList(QueryView queryView) {
+	public List getResultList(View view) {
 		return hibQuery.list();
 	}
 
 	@Override
-	public Object getSingleResult(QueryView queryView) {
+	public Object getSingleResult(View view) {
 		return hibQuery.uniqueResult();
 	}
 

@@ -36,8 +36,10 @@ import tools.xor.ExtendedProperty.Phase;
 import tools.xor.MutableBO;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.event.PropertyElement;
+import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.view.QueryView;
@@ -59,6 +61,12 @@ public abstract class AbstractOperation implements Operation {
 		return callInfo.getSettings().isSupportsPostLogic();
 	}
 
+	@Override
+	public void execute(Settings settings, DataAccessService das) {
+		throw new UnsupportedOperationException("This method is not supported for this operation. Use the execute method that takes a CallInfo object as input.");
+	}
+
+	@Override
 	public void execute(CallInfo callInfo) {
 		
 		// Create new objects

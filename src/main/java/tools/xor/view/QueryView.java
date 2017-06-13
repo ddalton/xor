@@ -103,10 +103,6 @@ public class QueryView {
 
 		init();
 	}
-	
-	public View view() {
-		return aggregateSlice;
-	}
 
 	private void initAttributes(List<String> attributeList) {
 		if(attributes != null)

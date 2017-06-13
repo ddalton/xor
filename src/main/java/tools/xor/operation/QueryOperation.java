@@ -61,7 +61,7 @@ public class QueryOperation extends AbstractOperation {
 
 		// Put in loop if there are sub-branches
 		if(aggregateView.getSubBranches().size() > 1) {
-			StoredProcedure sp = aggregateView.view().getStoredProcedure(AggregateAction.READ);
+			StoredProcedure sp = aggregateView.getContentView().getStoredProcedure(AggregateAction.READ);
 			if(sp != null && sp.isMultiple()) {
 				executeBranch(aggregateView, uniqueList, qb, callInfo);
 			} else {
@@ -81,7 +81,7 @@ public class QueryOperation extends AbstractOperation {
 	
 	protected Query createQuery(QueryView queryView, CallInfo callInfo, QueryBuilder qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
-		Query query = qb.constructQuery(callInfo, mutableFilters);
+		Query query = qb.constructQuery(callInfo.getSettings(), mutableFilters);
 
 		qb.postProcess(queryView, callInfo, query, mutableFilters);
 		
@@ -110,7 +110,7 @@ public class QueryOperation extends AbstractOperation {
 			// club all the results relevant to the same entity
 			// add an id attribute for the mail entity. Add an owner attribute for each collection property referenced.
 			// adjust the properties and for every new attribute added (id or owner) create a filler/dummy property column in the view
-			List tempResult = query.getResultList(branch);
+			List tempResult = query.getResultList(branch.getContentView());
 			for(Object obj: tempResult) {
 				BusinessObject newRootObject = branch.getQueryRoot(obj, (BusinessObject) callInfo.getOutput());
 

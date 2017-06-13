@@ -53,6 +53,9 @@ import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DefaultAssociationStrategy;
 import tools.xor.custom.DefaultDetailStrategy;
 import tools.xor.custom.DetailStrategy;
+import tools.xor.operation.AbstractOperation;
+import tools.xor.operation.DenormalizedModifyOperation;
+import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.service.exim.CSVExportImport;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.service.exim.ExportImport;
@@ -350,14 +353,19 @@ public class AggregateManager implements Xor
 		}
 	}
 
-	private void checkAndSet (Settings settings, Object inputObject)
-	{
-		Class<?> inputObjectClass = getEntityClass(inputObject, settings);
+	private void checkPO(Settings settings) {
 
 		if (getPersistenceOrchestrator() == null) {
 			setPersistenceOrchestrator(dasFactory.getPersistenceOrchestrator(settings.getSessionContext()));
 		}
 		settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
+	}
+
+	private void checkAndSet (Settings settings, Object inputObject)
+	{
+		Class<?> inputObjectClass = getEntityClass(inputObject, settings);
+
+		checkPO(settings);
 
 		if (settings.getAssociationStrategy() == null) {
 			settings.setAssociationStrategy(associationStrategy);
@@ -495,6 +503,21 @@ public class AggregateManager implements Xor
 		} else {
 			return inputObject.getClass();
 		}
+	}
+
+	@Override
+	public Object dml(Settings settings) {
+		checkPO(settings);
+
+		AbstractOperation operation = null;
+		if(settings.getAction() == AggregateAction.READ) {
+			operation = new DenormalizedQueryOperation();
+		} else {
+			operation = new DenormalizedModifyOperation();
+		}
+
+		operation.execute(settings, getDAS());
+		return operation.getResult();
 	}
 
 	private List<?> queryInternal (Object entity, Settings settings)

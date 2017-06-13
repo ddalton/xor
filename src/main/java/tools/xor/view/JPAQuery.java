@@ -38,12 +38,12 @@ public class JPAQuery extends AbstractQuery {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getResultList(QueryView queryView) {
+	public List getResultList(View view) {
 		return jpaQuery.getResultList();
 	}
 
 	@Override
-	public Object getSingleResult(QueryView queryView) {
+	public Object getSingleResult(View view) {
 		return jpaQuery.getSingleResult();
 	}
 

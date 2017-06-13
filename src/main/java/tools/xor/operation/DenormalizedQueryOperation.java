@@ -19,11 +19,9 @@
 
 package tools.xor.operation;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
@@ -32,51 +30,78 @@ import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryView;
-import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
+import tools.xor.view.View;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DenormalizedQueryOperation extends QueryOperation {
-	
+
 	// Represents a list of map objects
 	private List<Object[]> result = new ArrayList<Object[]>();
 
 	@Override
-	public void execute(CallInfo callInfo) {
-		BusinessObject sourceEntity = (BusinessObject) callInfo.getInput();
+	public void execute (CallInfo callInfo)
+	{
+		BusinessObject sourceEntity = (BusinessObject)callInfo.getInput();
 		DataAccessService das = sourceEntity.getObjectCreator().getDAS();
 		QueryBuilder qb = das.getQueryBuilder();
-		
+
 		// Always use the REFERENCE type
-		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
-		QueryView aggregateView = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
-		
+		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ?
+			((BusinessObject)callInfo.getInput()).getDomainType() :
+			getNarrowedClass(das, callInfo.getSettings());
+		QueryView aggregateView = callInfo.getSettings().getView().getEntityView(
+			referenceType,
+			callInfo.getSettings().doNarrow());
+
 		// We do not support Native SQL queries with sub-branches
-		if(aggregateView.getSubBranches().size() > 1) {
+		if (aggregateView.getSubBranches().size() > 1) {
 			throw new RuntimeException("Denormalized queries not supported with sub-branch views");
 		}
-		
-		execute(aggregateView, qb, callInfo);
-	}
 
-	private void execute(QueryView branch, QueryBuilder qb, CallInfo callInfo) {
 		qb.init(
 			(BusinessObject)callInfo.getInput(),
-			branch,
+			aggregateView,
 			callInfo.getSettings().getAdditionalFilters());
-		Query query = createQuery(branch, callInfo, qb);
+		Query query = createQuery(aggregateView, callInfo, qb);
+		execute(query, callInfo.getSettings());
+	}
+
+	@Override
+	public void execute(Settings settings, DataAccessService das) {
+		QueryBuilder qb = das.getQueryBuilder();
+		Query query = createQuery(settings, qb);
+		execute(query, settings);
+	}
+
+	protected Query createQuery(Settings settings, QueryBuilder qb) {
+		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getFilters());
+		Query query = qb.constructDML(settings.getView(), settings, mutableFilters);
+
+		for(Map.Entry<String, Object> entry: mutableFilters.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+
+		return query;
+	}
+
+	private void execute(Query query, Settings settings) {
 
 		try {
-			checkSecurity(branch, callInfo);
-
-			NativeQuery nativeQuery = branch.view().getNativeQuery();
-			OQLQuery userOQLQuery = branch.view().getUserOQLQuery();
+			View view = settings.getView();
+			NativeQuery nativeQuery = view.getNativeQuery();
+			OQLQuery userOQLQuery = view.getUserOQLQuery();
 			List<String> selectedColumns;
 
 			if (nativeQuery != null) {
 				selectedColumns = nativeQuery.getResultList();
 			}
 			else if (userOQLQuery != null) {
-				selectedColumns = branch.getContentView().getAttributeList();
+				selectedColumns = view.getAttributeList();
 			}
 			else {
 				if (query instanceof StoredProcedureQuery) {
@@ -91,7 +116,7 @@ public class DenormalizedQueryOperation extends QueryOperation {
 			}
 
 			boolean processingFirstRow = true;
-			for (Object obj : query.getResultList(branch)) {
+			for (Object obj : query.getResultList(view)) {
 
 				if (ClassUtil.getDimensionCount(obj) == 1) {
 					Object[] objArray = (Object[])obj;
@@ -129,11 +154,12 @@ public class DenormalizedQueryOperation extends QueryOperation {
 		}
 		catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
-		}		
+		}
 	}
 
 	@Override
 	public Object getResult() {
 		return result;
-	}		
+	}
 }
+

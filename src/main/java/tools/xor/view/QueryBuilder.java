@@ -133,11 +133,12 @@ public class QueryBuilder {
 		return po.getQueryCapability();
 	}
 
-	public Query constructQuery(CallInfo callInfo, Map<String, Object> filters) {
-		return constructDML(view.getContentView(), callInfo, filters);
+	public Query constructQuery(Settings settings, Map<String, Object> filters) {
+		return constructDML(view.getContentView(), settings, filters);
 	}
 
-	public Query constructDML(View view, CallInfo callInfo, Map<String, Object> filters) {
+	//public Query constructDML(View view, CallInfo callInfo, Map<String, Object> filters) {
+	public Query constructDML(View view, Settings settings, Map<String, Object> filters) {
 		//		First check for a StoredProcedure query, then a SQL query 
 		//		When retrieving the QueryBuilder instance, registered SQL queries are given preference over HQL/JPQL queries.
 		//
@@ -145,10 +146,13 @@ public class QueryBuilder {
 		//		and can work with all the databases that the user uses.
 		
 		if(view != null && view.getStoredProcedure() != null) {
-			StoredProcedure querySP = view.getStoredProcedure(callInfo.getSettings().getAction());
+			StoredProcedure querySP = view.getStoredProcedure(settings.getAction());
 
 			if(querySP != null) {
-				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(querySP.getName(), QueryType.SP, querySP);
+				return settings.getPersistenceOrchestrator().getQuery(
+					querySP.getName(),
+					QueryType.SP,
+					querySP);
 			}
 		}
 
@@ -163,30 +167,30 @@ public class QueryBuilder {
 			}
 
 			queryString.replaceAll("[\n\r]", "");
-			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getNativeQuery());
+			return settings.getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getNativeQuery());
 		}
 
 		// User OQL
 		if(view != null && view.getUserOQLQuery() != null) {
 			String oqlString = view.getUserOQLQuery().getQueryString();
-			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getUserOQLQuery());
+			return settings.getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getUserOQLQuery());
 		}
 
 		// System OQL
-		StringBuilder HQL = generateOQLQuery(callInfo, callInfo.getInputObjectCreator().getPersistenceOrchestrator(), filters);
+		StringBuilder HQL = generateOQLQuery(settings, settings.getPersistenceOrchestrator(), filters);
 		
 		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 		if(vb.isDebugEnabled()) {
 			vb.debug("HQL of view [" + view.getName() + "] => " + HQL.toString());
 		}
 
-		return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(HQL.toString(), QueryType.OQL, null);
+		return settings.getPersistenceOrchestrator().getQuery(HQL.toString(), QueryType.OQL, null);
 	}
 	
-	public StringBuilder generateOQLQuery(CallInfo callInfo, PersistenceOrchestrator po, Map<String, Object> filters) {
-		
-		StringBuilder HQL = new StringBuilder(constructOQL(callInfo, po));
-		HQL.append(buildWhereClause(callInfo, filters));
+	public StringBuilder generateOQLQuery(Settings settings, PersistenceOrchestrator po, Map<String, Object> filters) {
+
+		StringBuilder HQL = new StringBuilder(constructOQL(settings, po));
+		HQL.append(buildWhereClause(settings, filters));
 		HQL.append(buildOrderClause(po));
 		
 		return HQL;
@@ -203,7 +207,7 @@ public class QueryBuilder {
 		}		
 	}
 
-	protected String constructOQL(CallInfo callInfo, PersistenceOrchestrator po) {		
+	protected String constructOQL(Settings settings, PersistenceOrchestrator po) {
 		Map<String, ColumnMeta> meta = view.getAugmentedAttributes();
 
 		StringBuilder OQL = new StringBuilder(SELECT_CLAUSE);
@@ -224,7 +228,7 @@ public class QueryBuilder {
 		}
 		debugSelectColumns(meta);
 
-		Class<?> entityClass = (callInfo == null) ? type.getInstanceClass() : callInfo.getSettings().getNarrowedClass();
+		Class<?> entityClass = (settings == null) ? type.getInstanceClass() : settings.getNarrowedClass();
 		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias());
 		
 		// Join explicitly against all open property types as the persistence layer does not know about these relationships
@@ -395,12 +399,12 @@ public class QueryBuilder {
 	 * @param callInfo current call stack frame
 	 * @param query the current query string that has been built so far 
 	 */
-	protected void checkAndAddChunkStart(CallInfo callInfo, StringBuilder queryString) {
-		if(callInfo == null) {
+	protected void checkAndAddChunkStart(Settings settings, StringBuilder queryString) {
+		if(settings == null) {
 			return;
 		}
 		
-		Map<String, Object> nextToken = callInfo.getSettings().getNextToken();
+		Map<String, Object> nextToken = settings.getNextToken();
 		if(nextToken == null || nextToken.isEmpty()) {
 			return;
 		}
@@ -432,12 +436,12 @@ public class QueryBuilder {
 		queryString.append( " ) ");
 	}
 
-	protected String buildWhereClause(CallInfo callInfo, Map<String, Object> filters) {
+	protected String buildWhereClause(Settings settings, Map<String, Object> filters) {
 		StringBuilder result = new StringBuilder();
 		
 		checkAndAddFilters(result, filters);
 		checkAndAddId(result);
-		checkAndAddChunkStart(callInfo, result);	
+		checkAndAddChunkStart(settings, result);
 		checkAndAddOpenPropertyJoins(result);
 
 		return result.toString();

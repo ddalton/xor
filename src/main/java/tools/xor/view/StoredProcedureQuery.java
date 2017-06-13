@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import java.sql.CallableStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -101,29 +102,21 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 * This allows helps to support multiple viewBranch, with each viewBranch
 	 * mapping to a different resultSet.
 	 */
-	public List getResultList(QueryView viewBranch)
+	public List getResultList(View viewBranch)
 	{
 		return (List)execute(viewBranch, AggregateAction.READ);
 	}
 
-	public Object execute(QueryView viewBranch, AggregateAction action) {
+	public Object execute(View viewBranch, AggregateAction action) {
 		boolean isMultiple = sp.isMultiple();
-		Map<Integer, QueryView> branchPosition = new HashMap<Integer, QueryView>();
+		Map<Integer, View> branchPosition = new HashMap<Integer, View>();
 
 		if(isMultiple) {
-			if(viewBranch.getSubBranches().size() > 0) {
-				for (QueryView subBranch : viewBranch.getSubBranches()) {
-					if (subBranch.view() != null) {
-						StoredProcedure branchSP = subBranch.view().getStoredProcedure(
-							action);
-						OutputLocation ol = branchSP.getOutputLocation();
-						branchPosition.put(ol.getPosition(), subBranch);
-					}
-					else {
-						throw new RuntimeException(
-							"Auto-branch is not supported with Stored-Procedures as the fields are not known beforehand."
-								+ "Explicitly create the child branches to take advantage of the Stored-Procedure's multiple result sets");
-					}
+			if(viewBranch.getChildren().size() > 0) {
+				for (View subBranch : viewBranch.getChildren()) {
+					StoredProcedure branchSP = subBranch.getStoredProcedure(action);
+					OutputLocation ol = branchSP.getOutputLocation();
+					branchPosition.put(ol.getPosition(), subBranch);
 				}
 			} else {
 				OutputLocation ol = sp.getOutputLocation();
@@ -156,7 +149,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 					if(hasResults) {
 						rs = sp.getStatement().getResultSet();
 						if (branchPosition.containsKey(resultCount)) {
-							result.addAll(extractResults(rs, branchPosition.get(resultCount), action));
+							result.addAll(extractResults(rs));
 						}
 					}
 				}
@@ -167,8 +160,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 							// get cursor and cast it to ResultSet
 							rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(param.position);
-							QueryView subBranch = branchPosition.get(param.position);
-							result.addAll(extractResults(rs, subBranch, action));
+							View subBranch = branchPosition.get(param.position);
+							result.addAll(extractResults(rs));
 						}
 					}
 				}
@@ -188,29 +181,23 @@ public class StoredProcedureQuery extends AbstractQuery {
 		return result;
 	}
 
-	private List extractResults(ResultSet rs, QueryView subBranch, AggregateAction action) throws SQLException
+	private List extractResults(ResultSet rs) throws SQLException
 	{
 		List result = new ArrayList();
 
-		// If the resultlist is empty from the StoredProcedure then
-		// get the types from the AggregateView
-		List<Type> attributeTypes = getAttributeTypes(subBranch, action);
-		if (attributeTypes.isEmpty()) {
-			attributeTypes = subBranch.getAttributeTypes();
-		}
-
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int columnCount = rsmd.getColumnCount();
 		while (rs.next()) {
-			// The size should match with the max columns in the result set
-			Object[] row = new Object[attributeTypes.size()];
+
+			Object[] row = new Object[columnCount];
 			result.add(row);
 
-			int columnIndex = 0;
-			for (Type type : attributeTypes) {
+			for(int i = 0; i < columnCount; i++) {
 				// Get the value from the ResultSet, JDBC columnIndex starts from 1
-				row[columnIndex++] = ParameterMapping.getValue(
-					type.getInstanceClass(),
+				row[i] = ParameterMapping.getValue(
+					rsmd.getColumnType(i+1),
 					rs,
-					columnIndex);
+					i+1);
 			}
 		}
 
@@ -222,8 +209,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 * @throws javax.persistence.NoResultException if there is no result
 	 * @throws javax.persistence.NonUniqueResultException if more than one result
 	 */
-	public Object getSingleResult(QueryView queryView) {
-		List result = getResultList(queryView);
+	public Object getSingleResult(View view) {
+		List result = getResultList(view);
 		if(result.size() == 0) {
 			throw new NoResultException();
 		}
@@ -317,27 +304,5 @@ public class StoredProcedureQuery extends AbstractQuery {
 		catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}
-	}
-	
-	private List<Type> getAttributeTypes(QueryView viewBranch, AggregateAction action) {
-		int initialCapacity = 0;
-
-		List<String> resultFields = new ArrayList<>();
-		StoredProcedure branchSP = viewBranch.view().getStoredProcedure(action);
-		if(branchSP.getResultList() != null) {
-			resultFields = branchSP.getResultList();
-		}
-		initialCapacity = resultFields.size();
-		
-		List<Type> result = new ArrayList<>(initialCapacity);
-		for(String attr: resultFields) {
-			ExtendedProperty p = (ExtendedProperty) viewBranch.getAggregateType().getProperty(attr);
-			if(!p.getType().isDataType()) {
-				throw new RuntimeException("The attribute should refer to a simple type");
-			}
-			result.add(p.getType());
-		}
-		
-		return result;
 	}
 }

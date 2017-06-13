@@ -295,4 +295,9 @@ public interface View {
 	 */
 	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType);
 
+	/**
+	 * Return the list of child aggregate view instances
+	 * @return list of children views
+	 */
+	public  List<? extends View> getChildren();
 }

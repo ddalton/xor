@@ -27,18 +27,18 @@ public interface Query extends DML {
 
 	/**
 	 * Get the result from the query
-	 * @param queryView to identify the attribute types to hydrate
+	 * @param view contains information about child views
 	 * @return query result
 	 */
 	@SuppressWarnings("rawtypes")
-	public List getResultList(QueryView queryView); 
+	public List getResultList(View view);
 
 	/**
 	 * Get single result from the query
-	 * @param queryView to identify the attribute types to hydrate
+	 * @param view for this operation
 	 * @return single result object
 	 */
-	public Object getSingleResult(QueryView queryView);
+	public Object getSingleResult(View view);
 	
 	/**
 	 * set the limit for the number of returned results

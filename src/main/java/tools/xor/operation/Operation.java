@@ -22,15 +22,26 @@ package tools.xor.operation;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.Type;
-
+import tools.xor.service.DataAccessService;
 
 public interface Operation {
 	/**
 	 * The logic in the copying of data from the input to the output objects
+	 * Use QueryView to power the queries
+	 *
 	 * @param callInfo object
 	 */
 	public void execute(CallInfo callInfo);
+
+	/**
+	 * Use this form of execute when data does not need to be transformed between
+	 * external and domain models. Used when executing DML queries.
+	 * @param settings object
+	 * @param das provider specific DataAccessService
+	 */
+	public void execute(Settings settings, DataAccessService das);
 
 	/**
 	 * Allows operation specific behavior in the creation of DataObjects

@@ -195,8 +195,10 @@ public class ParameterMapping {
 		public void javaToSQL(PreparedStatement ps, int parameterIndex, Object value) throws
 			SQLException;
 
-
 		public Object sQLToJava(CallableStatement cs, int parameterIndex) throws
+			SQLException;
+
+		public Object sQLToJava(ResultSet rs, int parameterIndex) throws
 			SQLException;
 	}
 
@@ -221,6 +223,12 @@ public class ParameterMapping {
 													   int parameterIndex) throws SQLException
 					{
 						return cs.getArray(parameterIndex);
+					}
+
+					@Override public Object sQLToJava (ResultSet rs,
+													   int parameterIndex) throws SQLException
+					{
+						return rs.getArray(parameterIndex);
 					}
 				}
 			);
@@ -252,6 +260,12 @@ public class ParameterMapping {
 				{
 					return cs.getLong(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getLong(parameterIndex);
+				}
 			}
 		);
 
@@ -277,6 +291,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getBytes(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getBytes(parameterIndex);
 				}
 			};
 		convertersBySQLType.put(Types.BINARY, binaryConverter);
@@ -306,6 +326,12 @@ public class ParameterMapping {
 				{
 					return cs.getBoolean(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getBoolean(parameterIndex);
+				}
 			};
 
 		convertersBySQLType.put(Types.BIT, booleanConverter);
@@ -328,6 +354,12 @@ public class ParameterMapping {
 				{
 					return cs.getBlob(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getBlob(parameterIndex);
+				}
 			}
 		);
 
@@ -345,6 +377,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getString(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getString(parameterIndex);
 				}
 			};
 		convertersBySQLType.put(Types.CHAR, stringConverter);
@@ -365,6 +403,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getNString(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getNString(parameterIndex);
 				}
 			};
 		convertersBySQLType.put(Types.NCHAR, nstringConverter);
@@ -387,6 +431,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getClob(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getClob(parameterIndex);
 				}
 			}
 		);
@@ -422,6 +472,12 @@ public class ParameterMapping {
 				{
 					return cs.getDate(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getDate(parameterIndex);
+				}
 			}
 		);
 
@@ -447,6 +503,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getBigDecimal(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getBigDecimal(parameterIndex);
 				}
 			};
 		convertersBySQLType.put(Types.DECIMAL, bigdecimalConverter);
@@ -479,6 +541,12 @@ public class ParameterMapping {
 				{
 					return cs.getDouble(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getDouble(parameterIndex);
+				}
 			}
 		);
 
@@ -506,6 +574,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getFloat(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getFloat(parameterIndex);
 				}
 			};
 		convertersBySQLType.put(Types.FLOAT, floatConverter);
@@ -536,6 +610,12 @@ public class ParameterMapping {
 				{
 					return cs.getInt(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getInt(parameterIndex);
+				}
 			};
 		convertersBySQLType.put(Types.INTEGER, integerConverter);
 		convertersBySQLType.put(Types.SMALLINT, integerConverter);
@@ -556,6 +636,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getNClob(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getNClob(parameterIndex);
 				}
 			}
 		);
@@ -584,6 +670,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getTime(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getTime(parameterIndex);
 				}
 			}
 		);
@@ -619,6 +711,12 @@ public class ParameterMapping {
 				{
 					return cs.getTimestamp(parameterIndex);
 				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getTimestamp(parameterIndex);
+				}
 			}
 		);
 
@@ -648,6 +746,12 @@ public class ParameterMapping {
 												   int parameterIndex) throws SQLException
 				{
 					return cs.getByte(parameterIndex);
+				}
+
+				@Override public Object sQLToJava (ResultSet rs,
+												   int parameterIndex) throws SQLException
+				{
+					return rs.getByte(parameterIndex);
 				}
 			}
 		);
@@ -710,6 +814,15 @@ public class ParameterMapping {
 	static public Object getValue(Class clazz, ResultSet rs, int parameterIndex) {
 		try {
 			return convertersByJavaType.get(clazz).byJavaType(rs, parameterIndex);
+		}
+		catch (SQLException e) {
+			throw ClassUtil.wrapRun(e);
+		}
+	}
+
+	static public Object getValue(int type, ResultSet rs, int parameterIndex) {
+		try {
+			return convertersBySQLType.get(type).sQLToJava(rs, parameterIndex);
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

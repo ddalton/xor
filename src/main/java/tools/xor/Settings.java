@@ -23,16 +23,24 @@ import java.awt.Dimension;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.graph.Graph;
@@ -45,11 +53,13 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
+import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
@@ -741,6 +751,189 @@ public class Settings {
 		this.autoWire = autoWire;
 	}
 
+	public static class SettingsIterator implements Iterator<Settings>
+	{
+		private InputStream jsonStream;
+		private SettingsBuilder builder;
+		private JsonParser cursor;
+		private Settings current;
+
+		public SettingsIterator(InputStream jsonStream, SettingsBuilder builder) {
+			this.jsonStream = jsonStream;
+			this.builder = builder;
+
+			try {
+				initCursor();
+			} catch (IOException e) {
+				throw new RuntimeException("Unable to create JSON from inputstream", e);
+			} catch (JSONException e) {
+				throw new RuntimeException("Unable to create JSON from inputstream", e);
+			}
+		}
+
+		private void initCursor() throws IOException, JSONException
+		{
+			cursor = getJsonParser();
+			if (cursor == null) {
+				current = null;
+				return;
+			}
+
+			// First token should be an array
+			if(cursor.nextToken() != JsonToken.START_ARRAY) {
+				throw new RuntimeException("Input should be an array of JSON objects");
+			}
+
+			// Avoid the start object token
+			if(cursor.nextToken() == JsonToken.START_OBJECT) {
+				current = extractSettings();
+			}
+		}
+
+		private void advance() {
+			try {
+				if(cursor.nextToken() == JsonToken.START_OBJECT) {
+                    current = extractSettings();
+                } else {
+                    // end of input
+                    current = null;
+                }
+			}
+			catch (IOException e) {
+				throw new RuntimeException("Unable to create get next json value from input", e);
+			}
+		}
+
+		private Settings extractSettings() {
+			JSONObject json = (JSONObject)extractJson(null, null, null, false);
+
+			return builder.json(json).build();
+		}
+
+		/**
+		 * 	A value is referenced either using a jsonobject and its key or is part of an array
+		 * @param ownerObject JSONObject that holds a reference to this object
+		 * @param ownerKey
+		 * @param ownerArray
+		 * @return
+		 */
+		private Object extractJson (JSONObject ownerObject,
+									String ownerKey,
+									JSONArray ownerArray,
+									boolean isArray)
+		{
+
+			Object result = isArray ? new JSONArray() : new JSONObject();
+			try {
+				String key = null; // populated only if isArray is false
+				while ((isArray && cursor.nextToken() != JsonToken.END_ARRAY) || (!isArray
+					&& cursor.nextToken() != JsonToken.END_OBJECT)) {
+					switch (cursor.getCurrentToken()) {
+					case START_OBJECT:
+						JSONObject jsonObject = (JSONObject)extractJson(
+							isArray ? null : (JSONObject)result,
+							isArray ? null : key,
+							isArray ? (JSONArray)result : null,
+							false);
+						setValue(ownerObject, ownerKey, ownerArray, jsonObject);
+
+						break;
+					case START_ARRAY:
+						JSONArray jsonArray = (JSONArray)extractJson(
+							isArray ? null : (JSONObject)result,
+							isArray ? null : key,
+							isArray ? (JSONArray)result : null,
+							false);
+						setValue(ownerObject, ownerKey, ownerArray, jsonArray);
+						break;
+					case FIELD_NAME:
+						key = cursor.getCurrentName();
+						break;
+					case VALUE_STRING:
+						if (isArray) {
+							ownerArray.put(cursor.getText());
+						}
+						else {
+							ownerObject.put(key, cursor.getValueAsString());
+						}
+						break;
+					case VALUE_NUMBER_INT:
+						if (isArray) {
+							ownerArray.put(cursor.getIntValue());
+						}
+						else {
+							ownerObject.put(key, cursor.getIntValue());
+						}
+						break;
+					case VALUE_NUMBER_FLOAT:
+						if (isArray) {
+							ownerArray.put(cursor.getFloatValue());
+						}
+						else {
+							ownerObject.put(key, cursor.getFloatValue());
+						}
+						break;
+					case VALUE_TRUE:
+					case VALUE_FALSE:
+						if (isArray) {
+							ownerArray.put(cursor.getBooleanValue());
+						}
+						else {
+							ownerObject.put(key, cursor.getBooleanValue());
+						}
+						break;
+					case VALUE_NULL:
+						if (!isArray) {
+							ownerObject.put(key, JSONObject.NULL);
+						}
+						break;
+					}
+				}
+			}
+			catch (IOException e) {
+				throw new RuntimeException("Unable to create get next json value from input", e);
+			}
+
+			return result;
+		}
+
+		private void setValue(JSONObject current, String key, JSONArray array, Object value) {
+			if(current != null) {
+				current.put(key, value);
+			} else {
+				array.put(value);
+			}
+		}
+
+		private JsonParser getJsonParser ()
+		{
+			JsonFactory jsonfactory = new JsonFactory();
+			JsonParser jsonParser = null;
+
+			try {
+				jsonParser = jsonfactory.createParser(this.jsonStream);
+			} catch (IOException e) {
+				throw new RuntimeException("Unable to create JSON from blob", e);
+			}
+
+			return jsonParser;
+		}
+
+		@Override public boolean hasNext ()
+		{
+			return current != null;
+		}
+
+		@Override public Settings next ()
+		{
+			Settings result = current;
+			// advance to the next item
+			this.advance();
+
+			return result;
+		}
+	}
+
 	public static class SettingsBuilder {
 		private Shape shape;
 		Settings settings;
@@ -748,6 +941,10 @@ public class Settings {
 		public SettingsBuilder(Shape shape) {
 			this.shape = shape;
 			this.settings = new Settings();
+		}
+
+		public SettingsIterator iterator(InputStream jsonStream) {
+			return new SettingsIterator(jsonStream, this);
 		}
 
 		private void createView(Class clazz, ViewType builtInType) {
@@ -803,10 +1000,15 @@ public class Settings {
 			return this;
 		}
 
-		// Extract many of the input fields from the json object
 		public SettingsBuilder json(String jsonString) {
-
 			JSONObject json = new JSONObject(jsonString);
+			this.json(json);
+			return this;
+		}
+
+		// Extract many of the input fields from the json object
+		private SettingsBuilder json(JSONObject json) {
+
 			try {
 				for (String key : JSONObject.getNames(json)) {
 					String keyName = key.toUpperCase();

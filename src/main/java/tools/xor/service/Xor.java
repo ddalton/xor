@@ -110,6 +110,13 @@ public interface Xor {
 	public List<?> query(Object inputObject, Settings settings);
 
 	/**
+	 * Executes DML (INSERT, UPDATE, SELECT and DELETE) queries against the DB
+	 * @param settings object
+	 * @return list for query and int for the rest
+	 */
+	public Object dml(Settings settings);
+
+	/**
 	 * @param   entity       The input object from the user in managed form
 	 * @param   settings     User specified settings
 	 * @return A persistence managed object that is a copy of the input entity

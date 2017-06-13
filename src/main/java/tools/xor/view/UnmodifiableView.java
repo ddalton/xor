@@ -214,4 +214,23 @@ public class UnmodifiableView implements View
     {
         return new UnmodifiableTypeGraph<>(view.getTypeGraph(entityType));
     }
+
+    @Override public List<UnmodifiableView> getChildren ()
+    {
+        if(view.getChildren() == null) {
+            return null;
+        }
+
+        List<UnmodifiableView> result = new ArrayList<>();
+        for(View v: view.getChildren()) {
+            if( !(view instanceof UnmodifiableView) ) {
+                result.add(new UnmodifiableView(v));
+            } else {
+                result.add((UnmodifiableView)v);
+            }
+        }
+
+        return result;
+    }
+
 }

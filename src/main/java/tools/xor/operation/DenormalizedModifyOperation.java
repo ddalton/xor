@@ -26,6 +26,7 @@ import java.util.Map;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
@@ -43,19 +44,17 @@ import tools.xor.view.View;
 public class DenormalizedModifyOperation extends AbstractOperation {
 	
 	// Represents a list of map objects
-	private List<Object[]> result = new ArrayList<Object[]>();
+	private Object result;
 
 	@Override
-	public void execute(CallInfo callInfo) {
-		BusinessObject sourceEntity = (BusinessObject) callInfo.getInput();
-		DataAccessService das = sourceEntity.getObjectCreator().getDAS();
+	public void execute(Settings settings, DataAccessService das) {
 		QueryBuilder qb = das.getQueryBuilder();
-		execute(qb, callInfo);
+		execute(qb, settings);
 	}
 
-	protected DML createDML(CallInfo callInfo, QueryBuilder qb) {
-		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
-		DML dml = qb.constructDML(callInfo.getSettings().getView(), callInfo, mutableFilters);
+	protected DML createDML(Settings settings, QueryBuilder qb) {
+		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getFilters());
+		DML dml = qb.constructDML(settings.getView(), settings, mutableFilters);
 
 		for(Map.Entry<String, Object> entry: mutableFilters.entrySet()) {
 			dml.setParameter(entry.getKey(), entry.getValue());
@@ -64,11 +63,11 @@ public class DenormalizedModifyOperation extends AbstractOperation {
 		return dml;
 	}
 
-	private void execute(QueryBuilder qb, CallInfo callInfo) {
-		DML dml = createDML(callInfo, qb);
+	private void execute(QueryBuilder qb, Settings settings) {
+		DML dml = createDML(settings, qb);
 
 		try {
-			dml.execute(callInfo.getSettings().getAction());
+			result = dml.execute(settings.getAction());
 		}
 		catch (Exception e) {
 			throw ClassUtil.wrapRun(e);

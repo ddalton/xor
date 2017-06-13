@@ -101,7 +101,12 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 * This allows helps to support multiple viewBranch, with each viewBranch
 	 * mapping to a different resultSet.
 	 */
-	public List getResultList(QueryView viewBranch) {
+	public List getResultList(QueryView viewBranch)
+	{
+		return (List)execute(viewBranch, AggregateAction.READ);
+	}
+
+	public Object execute(QueryView viewBranch, AggregateAction action) {
 		boolean isMultiple = sp.isMultiple();
 		Map<Integer, QueryView> branchPosition = new HashMap<Integer, QueryView>();
 
@@ -110,7 +115,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 				for (QueryView subBranch : viewBranch.getSubBranches()) {
 					if (subBranch.view() != null) {
 						StoredProcedure branchSP = subBranch.view().getStoredProcedure(
-							AggregateAction.READ);
+							action);
 						OutputLocation ol = branchSP.getOutputLocation();
 						branchPosition.put(ol.getPosition(), subBranch);
 					}
@@ -151,7 +156,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 					if(hasResults) {
 						rs = sp.getStatement().getResultSet();
 						if (branchPosition.containsKey(resultCount)) {
-							result.addAll(extractResults(rs, branchPosition.get(resultCount)));
+							result.addAll(extractResults(rs, branchPosition.get(resultCount), action));
 						}
 					}
 				}
@@ -163,7 +168,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 							// get cursor and cast it to ResultSet
 							rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(param.position);
 							QueryView subBranch = branchPosition.get(param.position);
-							result.addAll(extractResults(rs, subBranch));
+							result.addAll(extractResults(rs, subBranch, action));
 						}
 					}
 				}
@@ -183,13 +188,13 @@ public class StoredProcedureQuery extends AbstractQuery {
 		return result;
 	}
 
-	private List extractResults(ResultSet rs, QueryView subBranch) throws SQLException
+	private List extractResults(ResultSet rs, QueryView subBranch, AggregateAction action) throws SQLException
 	{
 		List result = new ArrayList();
 
 		// If the resultlist is empty from the StoredProcedure then
 		// get the types from the AggregateView
-		List<Type> attributeTypes = getAttributeTypes(subBranch);
+		List<Type> attributeTypes = getAttributeTypes(subBranch, action);
 		if (attributeTypes.isEmpty()) {
 			attributeTypes = subBranch.getAttributeTypes();
 		}
@@ -282,6 +287,11 @@ public class StoredProcedureQuery extends AbstractQuery {
 		}
 	}
 
+	@Override public Object execute (AggregateAction action)
+	{
+		return null;
+	}
+
 	private void registerOutParameter (int position, ParameterMapping param)
 	{
 		try {
@@ -309,11 +319,11 @@ public class StoredProcedureQuery extends AbstractQuery {
 		}
 	}
 	
-	private List<Type> getAttributeTypes(QueryView viewBranch) {
+	private List<Type> getAttributeTypes(QueryView viewBranch, AggregateAction action) {
 		int initialCapacity = 0;
 
 		List<String> resultFields = new ArrayList<>();
-		StoredProcedure branchSP = viewBranch.view().getStoredProcedure(AggregateAction.READ);
+		StoredProcedure branchSP = viewBranch.view().getStoredProcedure(action);
 		if(branchSP.getResultList() != null) {
 			resultFields = branchSP.getResultList();
 		}

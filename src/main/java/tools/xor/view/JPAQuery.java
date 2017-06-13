@@ -20,7 +20,9 @@
 package tools.xor.view;
 
 import org.apache.commons.lang.StringUtils;
+import tools.xor.AggregateAction;
 
+import java.lang.annotation.Native;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -68,6 +70,15 @@ public class JPAQuery extends AbstractQuery {
 			paramNames.add(iter.next().getName());
 		
 		return paramNames.contains(name);
+	}
+
+	@Override public Object execute (AggregateAction action)
+	{
+		if(action != AggregateAction.READ) {
+			return jpaQuery.executeUpdate();
+		} else {
+			return getResultList(null);
+		}
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package tools.xor.view;
 
 import jdk.nashorn.internal.codegen.CompilerConstants;
+import tools.xor.MutableJsonProperty;
 import tools.xor.util.ClassUtil;
 
 import javax.persistence.ParameterMode;
@@ -19,6 +20,9 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.sql.Date;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -206,7 +210,11 @@ public class ParameterMapping {
 													 int parameterIndex,
 													 Object value) throws SQLException
 					{
-						ps.setArray(parameterIndex, (Array)value);
+						if(value instanceof Array) {
+							ps.setArray(parameterIndex, (Array)value);
+						} else {
+							ps.setObject(parameterIndex, value);
+						}
 					}
 
 					@Override public Object sQLToJava (CallableStatement cs,
@@ -226,7 +234,17 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setLong(parameterIndex, (Long)value);
+					Long bigInt = null;
+					if(value instanceof String) {
+						bigInt = Long.valueOf(value.toString());
+					} else if (value instanceof Long) {
+						bigInt = (Long)value;
+					} else if(value instanceof Number) {
+						bigInt = ((Number)value).longValue();
+					} else {
+						throw new RuntimeException("Unsupported value type for BIGINT converter");
+					}
+					ps.setLong(parameterIndex, bigInt);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -244,7 +262,15 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setBytes(parameterIndex, (byte[])value);
+					byte[] bytes = null;
+					if(value instanceof String) {
+						bytes = value.toString().getBytes();
+					} else if(value instanceof byte[]) {
+						bytes = (byte[]) value;
+					} else {
+						throw new RuntimeException("Unsupported value type for binary converter");
+					}
+					ps.setBytes(parameterIndex, bytes);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -264,7 +290,15 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setBoolean(parameterIndex, (Boolean)value);
+					Boolean bool = null;
+					if(value instanceof String) {
+						bool = Boolean.valueOf(value.toString());
+					} else if(value instanceof Boolean) {
+						bool = (Boolean) value;
+					} else {
+						throw new RuntimeException("Unsupported value type for boolean converter");
+					}
+					ps.setBoolean(parameterIndex, bool);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -366,7 +400,21 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setDate(parameterIndex, (Date)value);
+					Date date = null;
+					if(value instanceof String) {
+						DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT_DATE);
+						try {
+							date = new Date(df.parse(value.toString()).getTime());
+						}
+						catch (ParseException e) {
+							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + MutableJsonProperty.ISO8601_FORMAT_DATE);
+						}
+					} else if(value instanceof Date) {
+						date = (Date) value;
+					} else {
+						throw new RuntimeException("Unsupported value type for Date converter");
+					}
+					ps.setDate(parameterIndex, date);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -384,7 +432,15 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setBigDecimal(parameterIndex, (BigDecimal)value);
+					BigDecimal result = null;
+					if(value instanceof String) {
+						result = new BigDecimal(value.toString());
+					} else if(value instanceof BigDecimal) {
+						result = (BigDecimal)value;
+					} else {
+						throw new RuntimeException("Unsupported value type for BigDecimal converter");
+					}
+					ps.setBigDecimal(parameterIndex, result);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -405,7 +461,17 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setDouble(parameterIndex, (Double)value);
+					Double result = null;
+					if(value instanceof String) {
+						result = Double.valueOf(value.toString());
+					} else if(value instanceof Double) {
+						result = (Double)value;
+					} else if(value instanceof Number) {
+						result = ((Number)value).doubleValue();
+					} else {
+						throw new RuntimeException("Unsupported value type for Double converter");
+					}
+					ps.setDouble(parameterIndex, result);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -423,7 +489,17 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setFloat(parameterIndex, (Float)value);
+					Float result = null;
+					if(value instanceof String) {
+						result = Float.valueOf(value.toString());
+					} else if(value instanceof Float) {
+						result = (Float)value;
+					} else if(value instanceof Number) {
+						result = ((Number)value).floatValue();
+					} else {
+						throw new RuntimeException("Unsupported value type for Float converter");
+					}
+					ps.setFloat(parameterIndex, result);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -442,7 +518,17 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setInt(parameterIndex, (Integer)value);
+					Integer result = null;
+					if(value instanceof String) {
+						result = Integer.valueOf(value.toString());
+					} else if(value instanceof Integer) {
+						result = (Integer)value;
+					} else if(value instanceof Number) {
+						result = ((Number)value).intValue();
+					} else {
+						throw new RuntimeException("Unsupported value type for Integer converter");
+					}
+					ps.setInt(parameterIndex, result);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -483,7 +569,15 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setTime(parameterIndex, (Time)value);
+					Time time = null;
+					if(value instanceof String) {
+						time = Time.valueOf(value.toString());
+					} else if(value instanceof Time) {
+						time = (Time) value;
+					} else {
+						throw new RuntimeException("Unsupported value type for Time converter");
+					}
+					ps.setTime(parameterIndex, time);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -503,7 +597,21 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setTimestamp(parameterIndex, (Timestamp)value);
+					Timestamp timestamp = null;
+					if(value instanceof String) {
+						DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT);
+						try {
+							timestamp = new Timestamp(df.parse(value.toString()).getTime());
+						}
+						catch (ParseException e) {
+							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + MutableJsonProperty.ISO8601_FORMAT);
+						}
+					} else if(value instanceof Timestamp) {
+						timestamp = (Timestamp) value;
+					} else {
+						throw new RuntimeException("Unsupported value type for Timestamp converter");
+					}
+					ps.setTimestamp(parameterIndex, timestamp);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,
@@ -523,7 +631,17 @@ public class ParameterMapping {
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
-					ps.setByte(parameterIndex, (Byte)value);
+					Byte result = null;
+					if(value instanceof String) {
+						result = Byte.valueOf(value.toString());
+					} else if(value instanceof Byte) {
+						result = (Byte) value;
+					} else if(value instanceof Number) {
+						result = ((Number)value).byteValue();
+					} else {
+						throw new RuntimeException("Unsupported value type for TINYINT converter");
+					}
+					ps.setByte(parameterIndex, result);
 				}
 
 				@Override public Object sQLToJava (CallableStatement cs,

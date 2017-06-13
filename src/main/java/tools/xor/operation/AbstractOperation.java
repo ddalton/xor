@@ -40,6 +40,7 @@ import tools.xor.Type;
 import tools.xor.event.PropertyElement;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.view.QueryView;
 
 public abstract class AbstractOperation implements Operation {
 	private static final Logger owLogger = LogManager.getLogger(Constants.Log.OBJECT_WALKER);
@@ -576,5 +577,4 @@ public abstract class AbstractOperation implements Operation {
 
 		addElements(callInfo, createElements(callInfo));
 	}
-	
 }

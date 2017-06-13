@@ -94,7 +94,7 @@ public class QueryOperation extends AbstractOperation {
 
 		return query;
 	}
-	
+
 	protected void checkSecurity(QueryView branch, CallInfo callInfo) {
 		if(branch.isCrossAggregate() && !callInfo.getSettings().permitCrossAggregate())
 			throw new RuntimeException("The view crosses aggregate boundary, this could be a security risk. If this is intentional then permit this by modifying the settings");

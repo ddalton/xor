@@ -23,7 +23,7 @@ import java.util.List;
 
 import tools.xor.EntityType;
 
-public interface Query {
+public interface Query extends DML {
 
 	/**
 	 * Get the result from the query
@@ -39,20 +39,6 @@ public interface Query {
 	 * @return single result object
 	 */
 	public Object getSingleResult(QueryView queryView);
-	
-	/**
-	 * set the value for a parameter
-	 * @param name of parameter
-	 * @param value of parameter
-	 */
-	public void setParameter(String name, Object value);
-	
-	/**
-	 * Indicates if the parameter with the specified name is defined in the query
-	 * @param name of parameter
-	 * @return true if parameter is present
-	 */
-	public boolean hasParameter(String name);
 	
 	/**
 	 * set the limit for the number of returned results
@@ -77,11 +63,4 @@ public interface Query {
 	 * @param columns to set
 	 */
 	public void setColumns(List<String> columns);
-
-	/**
-	 * Give a chance to initialize the query provider
-	 * @param entityType of entity
-	 * @param queryView view
-	 */
-	public void prepare(EntityType entityType, QueryView queryView);
 }

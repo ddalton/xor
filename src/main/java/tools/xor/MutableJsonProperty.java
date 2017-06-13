@@ -51,8 +51,10 @@ public class MutableJsonProperty extends ExternalProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private static Map<Class, Converter> convertersByClass = new ConcurrentHashMap<Class, Converter>();
-	private static Map<String, Converter> convertersByProperty = new ConcurrentHashMap<String, Converter>();	
-	public static final String ISO8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+	private static Map<String, Converter> convertersByProperty = new ConcurrentHashMap<String, Converter>();
+	public static final String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
+	public static final String ISO8601_FORMAT_TIME = "HH:mm:ss";
+	public static final String ISO8601_FORMAT = ISO8601_FORMAT_DATE + "'T'" + ISO8601_FORMAT_TIME + ".SSSZ";
 	
 	private volatile Converter converter;
 	

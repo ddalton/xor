@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import tools.xor.AggregateAction;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +52,15 @@ public class HibernateQuery extends AbstractQuery {
 	@Override
 	public boolean hasParameter(String name) {
 		return (new HashSet<String>(Arrays.asList(hibQuery.getNamedParameters()))).contains(name);
+	}
+
+	@Override public Object execute (AggregateAction action)
+	{
+		if(action != AggregateAction.READ) {
+			return hibQuery.executeUpdate();
+		} else {
+			return getResultList(null);
+		}
 	}
 
 	@Override

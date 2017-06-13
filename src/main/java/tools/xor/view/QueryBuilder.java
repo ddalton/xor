@@ -134,24 +134,28 @@ public class QueryBuilder {
 	}
 
 	public Query constructQuery(CallInfo callInfo, Map<String, Object> filters) {
+		return constructDML(view.getContentView(), callInfo, filters);
+	}
+
+	public Query constructDML(View view, CallInfo callInfo, Map<String, Object> filters) {
 		//		First check for a StoredProcedure query, then a SQL query 
 		//		When retrieving the QueryBuilder instance, registered SQL queries are given preference over HQL/JPQL queries.
 		//
 		//		It is the responsibility of the user to ensure that the registered SQL is ANSI compliant 
 		//		and can work with all the databases that the user uses.
 		
-		if(view.getContentView() != null && view.getContentView().getStoredProcedure() != null) {
-			StoredProcedure querySP = view.getContentView().getStoredProcedure(AggregateAction.READ);
+		if(view != null && view.getStoredProcedure() != null) {
+			StoredProcedure querySP = view.getStoredProcedure(callInfo.getSettings().getAction());
 
 			if(querySP != null) {
 				return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(querySP.getName(), QueryType.SP, querySP);
 			}
 		}
 
-		if(view.getContentView() != null && view.getContentView().getNativeQuery() != null) {
-			String queryString = view.getContentView().getNativeQuery().getQueryString();
+		if(view != null && view.getNativeQuery() != null) {
+			String queryString = view.getNativeQuery().getQueryString();
 			if(doAddIdentifier()) {
-				String idClause = view.getContentView().getNativeQuery().getIdentifierClause();
+				String idClause = view.getNativeQuery().getIdentifierClause();
 				if((idClause == null || idClause.trim().equals("")))
 					throw new RuntimeException("Identifier clause expected in native query");
 
@@ -159,13 +163,13 @@ public class QueryBuilder {
 			}
 
 			queryString.replaceAll("[\n\r]", "");
-			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getContentView().getNativeQuery());
+			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getNativeQuery());
 		}
 
 		// User OQL
-		if(view.getContentView() != null && view.getContentView().getUserOQLQuery() != null) {
-			String oqlString = view.getContentView().getUserOQLQuery().getQueryString();
-			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getContentView().getUserOQLQuery());
+		if(view != null && view.getUserOQLQuery() != null) {
+			String oqlString = view.getUserOQLQuery().getQueryString();
+			return callInfo.getInputObjectCreator().getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getUserOQLQuery());
 		}
 
 		// System OQL

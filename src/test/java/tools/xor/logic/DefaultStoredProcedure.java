@@ -22,7 +22,6 @@ package tools.xor.logic;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.ParameterMode;
@@ -36,7 +35,7 @@ import tools.xor.Settings;
 import tools.xor.db.base.Person;
 import tools.xor.service.AggregateManager;
 import tools.xor.view.AggregateView;
-import tools.xor.view.ParameterMapping;
+import tools.xor.view.BindParameter;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.View;
 
@@ -82,11 +81,11 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		sp.setName("basicInfoRead");
 		sp.setAction(AggregateAction.READ);
 
-		ParameterMapping pm = new ParameterMapping();
+		BindParameter pm = new BindParameter();
 		pm.setAttribute("id");
 		pm.setMode(ParameterMode.IN);
 
-		List<ParameterMapping> pmList = new ArrayList<ParameterMapping>();
+		List<BindParameter> pmList = new ArrayList<BindParameter>();
 		pmList.add(pm);
 		sp.setParameterList(pmList);
 		
@@ -99,41 +98,41 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		sp.setAction(AggregateAction.CREATE);
 
 		// id
-		ParameterMapping pm = new ParameterMapping();
+		BindParameter pm = new BindParameter();
 		pm.setAttribute("id");
 		pm.setMode(ParameterMode.OUT);
 
-		List<ParameterMapping> pmList = new ArrayList<ParameterMapping>();
+		List<BindParameter> pmList = new ArrayList<BindParameter>();
 		pmList.add(pm);
 		sp.setParameterList(pmList);
 		
 		// name
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setAttribute("name");
 		pmList.add(pm);
 		
 		// displayName
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setAttribute("displayName");
 		pmList.add(pm);
 		
 		// description
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setAttribute("description");
 		pmList.add(pm);	
 		
 		// iconUrl
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setAttribute("iconUrl");
 		pmList.add(pm);	
 		
 		// detailedDescription
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setAttribute("detailedDescription");
 		pmList.add(pm);		
 		
 		// extra1
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setName("extra1");
 		pm.setType("VARCHAR");
 		pm.setDefaultValue("ABC");
@@ -141,7 +140,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		pmList.add(pm);		
 		
 		// extra2
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setName("extra2");
 		pm.setType("DATE");
 		pm.setDefaultValue("2013-10-21T13:28:06.419Z");
@@ -149,7 +148,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		pmList.add(pm);	
 		
 		// extra2
-		pm = new ParameterMapping();
+		pm = new BindParameter();
 		pm.setName("extra3");
 		pm.setType("DATE");
 		pm.setMode(ParameterMode.OUT);

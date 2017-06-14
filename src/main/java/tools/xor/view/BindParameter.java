@@ -1,6 +1,5 @@
 package tools.xor.view;
 
-import jdk.nashorn.internal.codegen.CompilerConstants;
 import tools.xor.MutableJsonProperty;
 import tools.xor.util.ClassUtil;
 
@@ -26,7 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ParameterMapping {
+public class BindParameter
+{
 
 	@XmlAttribute
 	public String name;         // Optional if attribute is specified, required for non-view parameters

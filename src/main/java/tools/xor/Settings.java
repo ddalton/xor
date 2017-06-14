@@ -49,6 +49,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -67,6 +68,7 @@ import tools.xor.util.Detector;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
+import tools.xor.view.BindParameter;
 import tools.xor.view.Filter;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
@@ -1000,6 +1002,10 @@ public class Settings {
 		// Extract many of the input fields from the json object
 		private SettingsBuilder json(JSONObject json) {
 
+			// Create a fresh settings object
+			this.settings = new Settings();
+
+			List<BindParameter> parameters = null;
 			try {
 				for (String key : JSONObject.getNames(json)) {
 					String keyName = key.toUpperCase();
@@ -1031,12 +1037,27 @@ public class Settings {
 						}
 						break;
 					case "FILTERS":
-						JSONObject filters = json.getJSONObject(key);
-						for(String filterName: JSONObject.getNames(filters)) {
-							Object filterValue = filters.get(filterName);
-							this.settings.addFilter(filterName, filterValue);
+						Object obj = json.get(key);
+						if(obj instanceof JSONObject) {
+							JSONObject filters = (JSONObject) obj;
+							for (String filterName : JSONObject.getNames(filters)) {
+								Object filterValue = filters.get(filterName);
+								this.settings.addFilter(filterName, filterValue);
+							}
+						} else if(obj instanceof JSONArray) {
+							JSONArray array = (JSONArray) obj;
+							for(int i = 0; i < array.length(); i++) {
+								this.settings.addFilter(new Integer(i+1).toString(), array.get(i));
+							}
 						}
 						break;
+					case "BINDPARAMETERS":
+						JSONArray array = json.getJSONArray(key);;
+						for(int i = 0; i < array.length(); i++) {
+							BindParameter bp = new BindParameter();
+							bp.setType(array.getString(i));
+							parameters.add(bp);
+						}
 					case "GLOBALSEQ":
 						globalSeq(json.getInt(key));
 						break;
@@ -1064,13 +1085,19 @@ public class Settings {
 					case "VIEW":
 						ObjectMapper mapper = new ObjectMapper();
 						JSONObject jsonView = json.getJSONObject(key);
-						boolean useExistingView = !json.has("useExistingView") || json.getBoolean("useExistingView");
 						View view = mapper.readValue(jsonView.toString(), AggregateView.class);
+
+						// If this is a native query we generate the view name as MD5 digest
+						// of the SQL query string
+						NativeQuery nq = view.getNativeQuery();
+						if(nq != null) {
+							view.setName(DigestUtils.md5Hex(nq.getQueryString()));
+						}
 
 						if(view.getName() != null) {
 							// check for existing view with same name
 							View existing = shape.getView(view.getName());
-							if(existing != null && useExistingView) {
+							if(existing != null) {
 								view = existing;
 							}
 						}
@@ -1097,6 +1124,10 @@ public class Settings {
 						settings.setAction(AggregateAction.DELETE);
 					}
 				}
+			}
+
+			if(settings.getView() != null && settings.getView().getNativeQuery() != null && parameters != null) {
+				settings.getView().getNativeQuery().setParameterList(parameters);
 			}
 
 			return this;

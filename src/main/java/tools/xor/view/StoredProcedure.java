@@ -35,7 +35,7 @@ public class StoredProcedure {
 
 	protected String                 name;
 	protected AggregateAction        action;
-	protected List<ParameterMapping> parameterList;
+	protected List<BindParameter> parameterList;
 	protected List<String>           resultList;
 	protected OutputLocation         outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
 	protected Statement              statement;
@@ -72,11 +72,11 @@ public class StoredProcedure {
 		this.action = action;
 	}
 
-	public List<ParameterMapping> getParameterList() {
+	public List<BindParameter> getParameterList() {
 		return parameterList;
 	}
 
-	public void setParameterList(List<ParameterMapping> parameterList) {
+	public void setParameterList(List<BindParameter> parameterList) {
 		this.parameterList = parameterList;
 	}
 
@@ -113,7 +113,7 @@ public class StoredProcedure {
 
 	private boolean hasReturnValue() {
 		boolean result = false;
-		for (ParameterMapping pm : parameterList) {
+		for (BindParameter pm : parameterList) {
 			if(pm.isReturnType()) {
 				result = true;
 				break;

@@ -19,8 +19,6 @@
 
 package tools.xor.view;
 
-import javax.xml.bind.annotation.XmlTransient;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +27,7 @@ public class NativeQuery {
 	protected List<String>      resultList;
 	protected String            queryString;
 	protected String            identifierClause;
-	protected List<ParameterMapping> parameterList;
+	protected List<BindParameter> parameterList;
 	protected boolean           usable;
 	
 	public String getIdentifierClause() {
@@ -61,11 +59,11 @@ public class NativeQuery {
 		this.queryString = queryString;
 	}
 
-	public List<ParameterMapping> getParameterList() {
+	public List<BindParameter> getParameterList() {
 		return parameterList;
 	}
 
-	public void setParameterList(List<ParameterMapping> parameterList) {
+	public void setParameterList(List<BindParameter> parameterList) {
 		this.parameterList = parameterList;
 	}
 	

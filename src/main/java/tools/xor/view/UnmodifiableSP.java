@@ -70,12 +70,12 @@ public class UnmodifiableSP extends StoredProcedure
         raiseException();
     }
 
-    @Override public List<ParameterMapping> getParameterList ()
+    @Override public List<BindParameter> getParameterList ()
     {
         return sp.getParameterList();
     }
 
-    @Override public void setParameterList (List<ParameterMapping> parameterList)
+    @Override public void setParameterList (List<BindParameter> parameterList)
     {
         raiseException();
     }

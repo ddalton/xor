@@ -25,11 +25,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.Store;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.ParameterMode;
@@ -41,7 +39,6 @@ import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
-import tools.xor.Type;
 import tools.xor.util.ClassUtil;
 
 /**
@@ -64,7 +61,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private StoredProcedure sp;
-	private Map<String, ParameterMapping> paramMap = new HashMap<String, ParameterMapping>();
+	private Map<String, BindParameter> paramMap = new HashMap<String, BindParameter>();
 	
 	// If a stored procedure is returning multiple results and an error occurs,
 	// this variable helps to debug on which result call the error occurred
@@ -76,7 +73,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		
 		int position = 1;
 		if (sp.parameterList != null) {
-			for (ParameterMapping param : sp.parameterList) {
+			for (BindParameter param : sp.parameterList) {
 				param.position = position;
 				String attrName = param.attribute;
 				if (attrName == null) {
@@ -156,7 +153,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 				}
 				else {
 					// Look for the result from an OUT parameter.
-					for (ParameterMapping param : sp.parameterList) {
+					for (BindParameter param : sp.parameterList) {
 						if (param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
 
 							// get cursor and cast it to ResultSet
@@ -195,10 +192,10 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 			for(int i = 0; i < columnCount; i++) {
 				// Get the value from the ResultSet, JDBC columnIndex starts from 1
-				row[i] = ParameterMapping.getValue(
-					rsmd.getColumnType(i+1),
+				row[i] = BindParameter.getValue(
+					rsmd.getColumnType(i + 1),
 					rs,
-					i+1);
+					i + 1);
 			}
 		}
 
@@ -224,7 +221,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 	@Override
 	public void setParameter(String name, Object value) {
-		ParameterMapping param = paramMap.get(name);
+		BindParameter param = paramMap.get(name);
 		param.setValue((CallableStatement) sp.getStatement(), value);
 	}
 
@@ -255,7 +252,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		// A Java Type can map to multiple SQL types, so it is mandatory for the user
 		// to specify the parameter type
 		if(sp.getParameterList() != null) {
-			for(ParameterMapping param: sp.getParameterList()) {
+			for(BindParameter param: sp.getParameterList()) {
 				
 				if(param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
 					if(param.type == null) {
@@ -280,7 +277,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		return null;
 	}
 
-	private void registerOutParameter (int position, ParameterMapping param)
+	private void registerOutParameter (int position, BindParameter param)
 	{
 		try {
 

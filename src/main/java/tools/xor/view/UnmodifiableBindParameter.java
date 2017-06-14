@@ -3,12 +3,12 @@ package tools.xor.view;
 import javax.persistence.ParameterMode;
 import java.sql.PreparedStatement;
 
-public class UnmodifiableParamMapping extends ParameterMapping
+public class UnmodifiableBindParameter extends BindParameter
 {
 
-    private final ParameterMapping paramMap;
+    private final BindParameter paramMap;
 
-    public UnmodifiableParamMapping (ParameterMapping paramMap)
+    public UnmodifiableBindParameter (BindParameter paramMap)
     {
         this.paramMap = paramMap;
     }

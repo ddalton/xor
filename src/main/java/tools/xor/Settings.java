@@ -68,6 +68,7 @@ import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
+import tools.xor.view.NativeQuery;
 import tools.xor.view.View;
 import tools.xor.view.ViewType;
 
@@ -132,7 +133,7 @@ public class Settings {
 	// If the scope is ContentScope.VIEW then the actual view is referenced in this property
 	protected View view;
 
-	private AggregateAction action = AggregateAction.UPDATE; // specifies the type of action being performed that involves data change in the database
+	private AggregateAction action; // specifies the type of action being performed that involves data change in the database
 
 	private Map<String, Object> filters = new HashMap<String, Object>(); // Used for filtering the result
 
@@ -293,7 +294,6 @@ public class Settings {
 	}
 
 	public Settings() {
-		this.action = AggregateAction.UPDATE;
 		this.filters = new HashMap<String, Object>();
 		this.actionOverrides = new HashMap<String, AggregateAction>();
 		this.userkeyOverrides = new HashMap<String, String>();	
@@ -805,46 +805,35 @@ public class Settings {
 		}
 
 		private Settings extractSettings() {
-			JSONObject json = (JSONObject)extractJson(null, null, null, false);
+			JSONObject json = (JSONObject)extractJson(false);
 
 			return builder.json(json).build();
 		}
 
 		/**
 		 * 	A value is referenced either using a jsonobject and its key or is part of an array
-		 * @param ownerObject JSONObject that holds a reference to this object
-		 * @param ownerKey
-		 * @param ownerArray
+		 * @param isArray true if we are creating an array false if we are creating a JSONObject
+		 *                instance
 		 * @return
 		 */
-		private Object extractJson (JSONObject ownerObject,
-									String ownerKey,
-									JSONArray ownerArray,
-									boolean isArray)
+		private Object extractJson (boolean isArray)
 		{
 
 			Object result = isArray ? new JSONArray() : new JSONObject();
+			JSONObject ownerObject = isArray ? null : (JSONObject)result;
+			JSONArray ownerArray = isArray ? (JSONArray) result : null;
 			try {
 				String key = null; // populated only if isArray is false
 				while ((isArray && cursor.nextToken() != JsonToken.END_ARRAY) || (!isArray
 					&& cursor.nextToken() != JsonToken.END_OBJECT)) {
 					switch (cursor.getCurrentToken()) {
 					case START_OBJECT:
-						JSONObject jsonObject = (JSONObject)extractJson(
-							isArray ? null : (JSONObject)result,
-							isArray ? null : key,
-							isArray ? (JSONArray)result : null,
-							false);
-						setValue(ownerObject, ownerKey, ownerArray, jsonObject);
-
+						JSONObject jsonObject = (JSONObject)extractJson(false);
+						setValue(ownerObject, key, ownerArray, jsonObject);
 						break;
 					case START_ARRAY:
-						JSONArray jsonArray = (JSONArray)extractJson(
-							isArray ? null : (JSONObject)result,
-							isArray ? null : key,
-							isArray ? (JSONArray)result : null,
-							false);
-						setValue(ownerObject, ownerKey, ownerArray, jsonArray);
+						JSONArray jsonArray = (JSONArray)extractJson(true);
+						setValue(ownerObject, key, ownerArray, jsonArray);
 						break;
 					case FIELD_NAME:
 						key = cursor.getCurrentName();
@@ -854,7 +843,7 @@ public class Settings {
 							ownerArray.put(cursor.getText());
 						}
 						else {
-							ownerObject.put(key, cursor.getValueAsString());
+							ownerObject.put(key, cursor.getText());
 						}
 						break;
 					case VALUE_NUMBER_INT:
@@ -1058,6 +1047,10 @@ public class Settings {
 						clazz = Class.forName(entityClassName);
 						this.settings.setEntityClass(clazz);
 						break;
+					case "ACTION":
+						String action = json.getString(key);
+						this.settings.setAction(AggregateAction.valueOf(action));
+						break;
 					case "NORMALIZED":
 						boolean isNormalized = json.getBoolean(key);
 						this.settings.setDenormalized(!isNormalized);
@@ -1081,6 +1074,23 @@ public class Settings {
 				}
 			} catch (Exception e) {
 				throw ClassUtil.wrapRun(e);
+			}
+
+			// If action is not provided, then try to infer the action for
+			if(settings.getAction() == null) {
+				if(settings.getView() != null && settings.getView().getNativeQuery() != null) {
+					NativeQuery nq = settings.getView().getNativeQuery();
+					String qs = nq.getQueryString().trim().toUpperCase();
+					if(qs.startsWith("SELECT")) {
+						settings.setAction(AggregateAction.READ);
+					} else if(qs.startsWith("INSERT")) {
+						settings.setAction(AggregateAction.CREATE);
+					} else if(qs.startsWith("UPDATE")) {
+						settings.setAction(AggregateAction.UPDATE);
+					} else if(qs.startsWith("DELETE")) {
+						settings.setAction(AggregateAction.DELETE);
+					}
+				}
 			}
 
 			return this;

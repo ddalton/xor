@@ -929,9 +929,12 @@ public class AggregateManager implements Xor
 		owLogger.debug("Performing de operation");
 		checkAndSet(settings, entity);
 
-		if (settings.getAction() != AggregateAction.MERGE
-			&& settings.getAction() != AggregateAction.UPDATE)
+		if (settings.getAction() == null) {
+			settings.setAction(AggregateAction.UPDATE);
+		} else if (settings.getAction() != AggregateAction.MERGE
+			&& settings.getAction() != AggregateAction.UPDATE) {
 			throw new IllegalStateException("The default action should either be UPDATE or MERGE");
+		}
 
 		// Not necessary as we manage the back-pointers
 		FlushHandler flushHandler = new FlushHandler(settings);

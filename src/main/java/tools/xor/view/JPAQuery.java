@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import org.apache.commons.lang.StringUtils;
 import tools.xor.AggregateAction;
+import tools.xor.Settings;
 
 import java.lang.annotation.Native;
 import java.util.HashSet;
@@ -38,12 +39,12 @@ public class JPAQuery extends AbstractQuery {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getResultList(View view) {
+	public List getResultList(View view, Settings settings) {
 		return jpaQuery.getResultList();
 	}
 
 	@Override
-	public Object getSingleResult(View view) {
+	public Object getSingleResult(View view, Settings settings) {
 		return jpaQuery.getSingleResult();
 	}
 
@@ -72,12 +73,12 @@ public class JPAQuery extends AbstractQuery {
 		return paramNames.contains(name);
 	}
 
-	@Override public Object execute (AggregateAction action)
+	@Override public Object execute (Settings settings)
 	{
-		if(action != AggregateAction.READ) {
+		if(settings.getAction() != AggregateAction.READ) {
 			return jpaQuery.executeUpdate();
 		} else {
-			return getResultList(null);
+			return getResultList(null, settings);
 		}
 	}
 

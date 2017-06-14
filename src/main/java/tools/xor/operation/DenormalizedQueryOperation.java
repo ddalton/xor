@@ -116,7 +116,7 @@ public class DenormalizedQueryOperation extends QueryOperation {
 			}
 
 			boolean processingFirstRow = true;
-			for (Object obj : query.getResultList(view)) {
+			for (Object obj : query.getResultList(view, settings)) {
 
 				if (ClassUtil.getDimensionCount(obj) == 1) {
 					Object[] objArray = (Object[])obj;

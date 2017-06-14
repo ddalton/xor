@@ -152,7 +152,8 @@ public class QueryBuilder {
 				return settings.getPersistenceOrchestrator().getQuery(
 					querySP.getName(),
 					QueryType.SP,
-					querySP);
+					querySP,
+					settings);
 			}
 		}
 
@@ -167,13 +168,13 @@ public class QueryBuilder {
 			}
 
 			queryString.replaceAll("[\n\r]", "");
-			return settings.getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getNativeQuery());
+			return settings.getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getNativeQuery(), settings);
 		}
 
 		// User OQL
 		if(view != null && view.getUserOQLQuery() != null) {
 			String oqlString = view.getUserOQLQuery().getQueryString();
-			return settings.getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getUserOQLQuery());
+			return settings.getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getUserOQLQuery(), settings);
 		}
 
 		// System OQL
@@ -184,7 +185,7 @@ public class QueryBuilder {
 			vb.debug("HQL of view [" + view.getName() + "] => " + HQL.toString());
 		}
 
-		return settings.getPersistenceOrchestrator().getQuery(HQL.toString(), QueryType.OQL, null);
+		return settings.getPersistenceOrchestrator().getQuery(HQL.toString(), QueryType.OQL, null, settings);
 	}
 	
 	public StringBuilder generateOQLQuery(Settings settings, PersistenceOrchestrator po, Map<String, Object> filters) {

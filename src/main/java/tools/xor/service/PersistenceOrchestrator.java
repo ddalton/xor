@@ -181,9 +181,10 @@ public interface PersistenceOrchestrator {
 	 * @param queryString typically the SQL string
 	 * @param queryType the type of query
 	 * @param queryInput representing the type of Query object
+     * @param settings additional settings
 	 * @return Query object
 	 */
-	public Query getQuery(String queryString, QueryType queryType, Object queryInput);
+	public Query getQuery(String queryString, QueryType queryType, Object queryInput, Settings settings);
 	
 	/**
 	 * If the persistence orchestrator can dynamically track a user object (i.e, track changes),

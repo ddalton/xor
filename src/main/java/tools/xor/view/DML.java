@@ -19,8 +19,8 @@
 
 package tools.xor.view;
 
-import tools.xor.AggregateAction;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 
 public interface DML {
 
@@ -47,8 +47,8 @@ public interface DML {
 
 	/**
 	 * Executes the DML statement
-	 * @param action AggregateAction
+	 * @param settings object containing NativeQuery and AggregateAction values
 	 * @return any results if a query or row count if an update
 	 */
-	public Object execute(AggregateAction action);
+	public Object execute(Settings settings);
 }

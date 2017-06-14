@@ -110,7 +110,7 @@ public class QueryOperation extends AbstractOperation {
 			// club all the results relevant to the same entity
 			// add an id attribute for the mail entity. Add an owner attribute for each collection property referenced.
 			// adjust the properties and for every new attribute added (id or owner) create a filler/dummy property column in the view
-			List tempResult = query.getResultList(branch.getContentView());
+			List tempResult = query.getResultList(branch.getContentView(), callInfo.getSettings());
 			for(Object obj: tempResult) {
 				BusinessObject newRootObject = branch.getQueryRoot(obj, (BusinessObject) callInfo.getOutput());
 

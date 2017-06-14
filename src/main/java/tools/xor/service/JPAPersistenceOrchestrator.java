@@ -184,7 +184,7 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 
 
 	@Override
-	public Query getQuery(String queryString, QueryType queryType, Object queryInput) {
+	public Query getQuery(String queryString, QueryType queryType, Object queryInput, Settings settings) {
 
 		Query result = null;
 		switch(queryType) {

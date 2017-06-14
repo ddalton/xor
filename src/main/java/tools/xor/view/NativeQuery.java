@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import javax.xml.bind.annotation.XmlTransient;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,4 +100,6 @@ public class NativeQuery {
 		
 		return result;
 	}
+
+
 }

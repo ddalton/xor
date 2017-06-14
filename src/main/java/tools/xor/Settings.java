@@ -69,10 +69,12 @@ import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Filter;
 import tools.xor.view.NativeQuery;
+import tools.xor.view.Query;
 import tools.xor.view.View;
 import tools.xor.view.ViewType;
 
 import javax.imageio.ImageIO;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * @author Dilip Dalton
@@ -1051,6 +1053,10 @@ public class Settings {
 						String action = json.getString(key);
 						this.settings.setAction(AggregateAction.valueOf(action));
 						break;
+					case "DATEFORMAT":
+						String dateformat = json.getString(key);
+						this.settings.setDateFormat(dateformat);
+						break;
 					case "NORMALIZED":
 						boolean isNormalized = json.getBoolean(key);
 						this.settings.setDenormalized(!isNormalized);
@@ -1259,5 +1265,4 @@ public class Settings {
 			// Exception handling
 		}
 	}
-
 }

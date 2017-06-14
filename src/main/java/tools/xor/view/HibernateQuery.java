@@ -20,6 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.AggregateAction;
+import tools.xor.Settings;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -35,12 +36,12 @@ public class HibernateQuery extends AbstractQuery {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getResultList(View view) {
+	public List getResultList(View view, Settings settings) {
 		return hibQuery.list();
 	}
 
 	@Override
-	public Object getSingleResult(View view) {
+	public Object getSingleResult(View view, Settings settings) {
 		return hibQuery.uniqueResult();
 	}
 
@@ -54,12 +55,12 @@ public class HibernateQuery extends AbstractQuery {
 		return (new HashSet<String>(Arrays.asList(hibQuery.getNamedParameters()))).contains(name);
 	}
 
-	@Override public Object execute (AggregateAction action)
+	@Override public Object execute (Settings settings)
 	{
-		if(action != AggregateAction.READ) {
+		if(settings.getAction() != AggregateAction.READ) {
 			return hibQuery.executeUpdate();
 		} else {
-			return getResultList(null);
+			return getResultList(null, settings);
 		}
 	}
 

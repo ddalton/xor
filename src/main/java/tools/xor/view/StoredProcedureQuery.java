@@ -40,6 +40,7 @@ import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.ClassUtil;
 
@@ -102,9 +103,9 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 * This allows helps to support multiple viewBranch, with each viewBranch
 	 * mapping to a different resultSet.
 	 */
-	public List getResultList(View viewBranch)
+	public List getResultList(View view, Settings settings)
 	{
-		return (List)execute(viewBranch, AggregateAction.READ);
+		return (List)execute(view, AggregateAction.READ);
 	}
 
 	public Object execute(View viewBranch, AggregateAction action) {
@@ -209,8 +210,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 * @throws javax.persistence.NoResultException if there is no result
 	 * @throws javax.persistence.NonUniqueResultException if more than one result
 	 */
-	public Object getSingleResult(View view) {
-		List result = getResultList(view);
+	public Object getSingleResult(View view, Settings settings) {
+		List result = getResultList(view, settings);
 		if(result.size() == 0) {
 			throw new NoResultException();
 		}
@@ -274,7 +275,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		}
 	}
 
-	@Override public Object execute (AggregateAction action)
+	@Override public Object execute (Settings settings)
 	{
 		return null;
 	}

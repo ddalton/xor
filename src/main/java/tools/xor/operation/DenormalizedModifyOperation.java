@@ -49,29 +49,25 @@ public class DenormalizedModifyOperation extends AbstractOperation {
 	@Override
 	public void execute(Settings settings, DataAccessService das) {
 		QueryBuilder qb = das.getQueryBuilder();
-		execute(qb, settings);
+		DML dml = createDML(settings, qb);
+
+		try {
+			result = dml.execute(settings);
+		}
+		catch (Exception e) {
+			throw ClassUtil.wrapRun(e);
+		}
 	}
 
 	protected DML createDML(Settings settings, QueryBuilder qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getFilters());
-		DML dml = qb.constructDML(settings.getView(), settings, mutableFilters);
 
+		DML dml = qb.constructDML(settings.getView(), settings, mutableFilters);
 		for(Map.Entry<String, Object> entry: mutableFilters.entrySet()) {
 			dml.setParameter(entry.getKey(), entry.getValue());
 		}
 
 		return dml;
-	}
-
-	private void execute(QueryBuilder qb, Settings settings) {
-		DML dml = createDML(settings, qb);
-
-		try {
-			result = dml.execute(settings.getAction());
-		}
-		catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
-		}		
 	}
 
 	@Override

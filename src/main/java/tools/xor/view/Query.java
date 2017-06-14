@@ -22,23 +22,26 @@ package tools.xor.view;
 import java.util.List;
 
 import tools.xor.EntityType;
+import tools.xor.Settings;
 
 public interface Query extends DML {
 
 	/**
 	 * Get the result from the query
-	 * @param view contains information about child views
+	 * @param view of this operation
+	 * @param settings for this operation
 	 * @return query result
 	 */
 	@SuppressWarnings("rawtypes")
-	public List getResultList(View view);
+	public List getResultList(View view, Settings settings);
 
 	/**
 	 * Get single result from the query
-	 * @param view for this operation
+	 * @param view of this operation
+	 * @param settings for this operation
 	 * @return single result object
 	 */
-	public Object getSingleResult(View view);
+	public Object getSingleResult(View view, Settings settings);
 	
 	/**
 	 * set the limit for the number of returned results

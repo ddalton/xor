@@ -35,7 +35,7 @@ public class ParameterMapping {
 	public String attribute;    // view parameter
 	
 	@XmlAttribute
-	String type;         // java.sql.Types constant name, mandatory
+	public String type;         // java.sql.Types constant name, mandatory
 	
 	@XmlAttribute
 	int scale;           // Required for NUMERIC/DECIMAL OUT parameters
@@ -50,6 +50,9 @@ public class ParameterMapping {
 	
 	@XmlAttribute
 	public int position;
+
+	@XmlAttribute
+	public String dateFormat;
 
 	static final Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<>();
 	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
@@ -200,6 +203,10 @@ public class ParameterMapping {
 
 		public Object sQLToJava(ResultSet rs, int parameterIndex) throws
 			SQLException;
+
+		default public void setDataContext(Object value) {
+			// Users can set any custom data needed by the converter
+		}
 	}
 
 	static {
@@ -685,13 +692,19 @@ public class ParameterMapping {
 
 			new SQLConverter() {
 
+				private String dateFormat;
+
+				@Override public void setDataContext(Object value) {
+					this.dateFormat = (String) value;
+				}
+
 				@Override public void javaToSQL (PreparedStatement ps,
 												 int parameterIndex,
 												 Object value) throws SQLException
 				{
 					Timestamp timestamp = null;
 					if(value instanceof String) {
-						DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT);
+						DateFormat df = new SimpleDateFormat(this.dateFormat != null ? this.dateFormat : MutableJsonProperty.ISO8601_FORMAT);
 						try {
 							timestamp = new Timestamp(df.parse(value.toString()).getTime());
 						}
@@ -777,6 +790,10 @@ public class ParameterMapping {
 		this.mode = mode;
 	}
 
+	public void setDateFormat(String format) {
+		this.dateFormat = format;
+	}
+
 	@XmlAttribute
 	public boolean isReturnType() {
 		return this.returnType;
@@ -804,6 +821,9 @@ public class ParameterMapping {
 		}
 		SQLConverter converter = convertersBySQLType.get(typeValue);
 		try {
+			if(this.dateFormat != null) {
+				converter.setDataContext(this.dateFormat);
+			}
 			converter.javaToSQL(ps, position, value);
 		}
 		catch (SQLException e) {

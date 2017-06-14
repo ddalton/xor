@@ -89,7 +89,7 @@
                     <mavenExecutorId>forked-path</mavenExecutorId>
                 </configuration>
             </plugin>
-            <plugin>
+            <!--plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.4</version>
@@ -102,10 +102,10 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin-->
 
             <!-- Needed to compile with JDK 1.8 API -->
-            <!--plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -114,18 +114,7 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
-            </plugin-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <verbose>true</verbose>
-                    <fork>true</fork>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
             </plugin>
-
         </plugins>
     </build>
 

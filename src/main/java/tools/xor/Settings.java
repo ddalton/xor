@@ -1098,7 +1098,7 @@ public class Settings {
 
 						if(view.getName() != null) {
 							// check for existing view with same name
-							View existing = shape.getView(view.getName());
+							View existing = shape != null ? shape.getView(view.getName()) : null;
 							if(existing != null) {
 								view = existing;
 							}

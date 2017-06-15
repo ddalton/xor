@@ -65,11 +65,11 @@ public class JPAQuery extends AbstractQuery {
 	@Override
 	public boolean hasParameter(String name) {
 		Set<String> paramNames = new HashSet<String>();
-		
+
 		Iterator<javax.persistence.Parameter<?>> iter = jpaQuery.getParameters().iterator();
 		while(iter.hasNext())
 			paramNames.add(iter.next().getName());
-		
+
 		return paramNames.contains(name);
 	}
 

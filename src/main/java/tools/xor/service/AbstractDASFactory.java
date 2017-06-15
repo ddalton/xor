@@ -64,7 +64,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 	 * @param name unique to this mapping
 	 * @return DataAccessService object
 	 */
-	protected AbstractDataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
+	protected DataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
 		throw new UnsupportedOperationException("This method is only supported by a user provided custom DAS factory");
 	}
 
@@ -79,7 +79,9 @@ public abstract class AbstractDASFactory implements DASFactory {
 			return das.get(name);
 
 		// Needed for creating the external types
-		TypeMapper typeMapper = aggregateManager.getTypeMapper().newInstance(MapperDirection.DOMAINTOEXTERNAL);
+		TypeMapper typeMapper = (aggregateManager.getTypeMapper() != null) ?
+			aggregateManager.getTypeMapper().newInstance(MapperDirection.DOMAINTOEXTERNAL) :
+			null;
 		PersistenceType persistenceType = aggregateManager.getPersistenceType();
 
 		try { // HibernateDAS
@@ -138,6 +140,11 @@ public abstract class AbstractDASFactory implements DASFactory {
 			das.put(name, createCustomDAS(typeMapper, name));
 			injectDependencies(das.get(name), name);
 			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
+			return das.get(name);
+		}
+
+		if(persistenceType == null || persistenceType == PersistenceType.JDBC) {
+			das.put(name, createCustomDAS(typeMapper, name));
 			return das.get(name);
 		}
 

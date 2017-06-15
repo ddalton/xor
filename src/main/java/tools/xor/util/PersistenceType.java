@@ -26,5 +26,6 @@ public enum PersistenceType
 	JPA,
 	DATASTORE,
 	AML,
-	EOF
+	EOF,
+	JDBC
 }

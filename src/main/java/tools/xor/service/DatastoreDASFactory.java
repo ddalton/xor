@@ -53,7 +53,7 @@ public class DatastoreDASFactory extends AbstractDASFactory {
 	}
 
 	@Override
-	protected AbstractDataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
+	protected DataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
 		DatastoreDAS result = new DatastoreDAS(typeMapper, name, this);
 		result.setConstraints(modelConstraints);
 		

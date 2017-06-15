@@ -127,6 +127,12 @@ public class AggregateManager implements Xor
 		syncViews();
 	}
 
+	public AggregateManager(PersistenceType persistenceType) {
+		this.persistenceType = persistenceType;
+	}
+
+	public AggregateManager() {}
+
 	@PostConstruct
 	protected void init ()
 	{

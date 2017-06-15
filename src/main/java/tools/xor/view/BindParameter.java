@@ -22,6 +22,7 @@ import java.sql.Date;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,6 +57,8 @@ public class BindParameter
 
 	static final Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<>();
 	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
+	static final Map<String, Integer> typeMap = new HashMap<>();
+
 /*
 
 	byte[]	VARBINARY or LONGVARBINARY
@@ -65,6 +68,34 @@ public class BindParameter
 */
 
 	static {
+		typeMap.put("ARRAY",Types.ARRAY);
+		typeMap.put("BIGINT",Types.BIGINT);
+		typeMap.put("BINARY",Types.BINARY);
+		typeMap.put("VARBINARY",Types.VARBINARY);
+		typeMap.put("LONGVARBINARY",Types.LONGVARBINARY);
+		typeMap.put("BIT",Types.BIT);
+		typeMap.put("BOOLEAN",Types.BOOLEAN);
+		typeMap.put("BLOB",Types.BLOB);
+		typeMap.put("CHAR",Types.CHAR);
+		typeMap.put("VARCHAR",Types.VARCHAR);
+		typeMap.put("LONGVARCHAR",Types.LONGVARCHAR);
+		typeMap.put("NCHAR",Types.NCHAR);
+		typeMap.put("NVARCHAR",Types.NVARCHAR);
+		typeMap.put("LONGNVARCHAR",Types.LONGNVARCHAR);
+		typeMap.put("CLOB",Types.CLOB);
+		typeMap.put("DATE",Types.DATE);
+		typeMap.put("DECIMAL",Types.DECIMAL);
+		typeMap.put("NUMERIC",Types.NUMERIC);
+		typeMap.put("DOUBLE",Types.DOUBLE);
+		typeMap.put("FLOAT",Types.FLOAT);
+		typeMap.put("REAL",Types.REAL);
+		typeMap.put("INTEGER",Types.INTEGER);
+		typeMap.put("SMALLINT",Types.SMALLINT);
+		typeMap.put("NCLOB",Types.NCLOB);
+		typeMap.put("TIME",Types.TIME);
+		typeMap.put("TIMESTAMP",Types.TIMESTAMP);
+		typeMap.put("TINYINT",Types.TINYINT);
+
 		convertersByJavaType.put(
 			String.class,
 			new JavaConverter()
@@ -805,6 +836,10 @@ public class BindParameter
 	}
 
 	public static int getType(String type) {
+		if(typeMap.containsKey(type)) {
+			return typeMap.get(type);
+		}
+
 		int typeValue = 0;
 		try {
 			typeValue = Integer.parseInt(type);

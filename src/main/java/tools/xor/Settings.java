@@ -1053,11 +1053,13 @@ public class Settings {
 						break;
 					case "BINDPARAMETERS":
 						JSONArray array = json.getJSONArray(key);;
+						parameters = new ArrayList<>(array.length());
 						for(int i = 0; i < array.length(); i++) {
 							BindParameter bp = new BindParameter();
 							bp.setType(array.getString(i));
 							parameters.add(bp);
 						}
+						break;
 					case "GLOBALSEQ":
 						globalSeq(json.getInt(key));
 						break;

@@ -64,7 +64,7 @@ public abstract class AbstractQuery implements Query {
 				// Note JDBC positional parameters start from 1
 				BindParameter pm = paramMap.get(entry.getKey());
 
-				int timestampType = Integer.parseInt(pm.type);
+				int timestampType = BindParameter.getType(pm.type);
 				if (timestampType == Types.TIMESTAMP
 					|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
 					pm.setDateFormat(settings.getDateFormat());

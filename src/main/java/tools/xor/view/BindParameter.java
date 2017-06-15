@@ -804,7 +804,7 @@ public class BindParameter
 		this.returnType = value;
 	}
 
-	public void setValue(PreparedStatement ps, Object value) {
+	public static int getType(String type) {
 		int typeValue = 0;
 		try {
 			typeValue = Integer.parseInt(type);
@@ -819,6 +819,12 @@ public class BindParameter
 				throw ClassUtil.wrapRun(e1);
 			}
 		}
+
+		return typeValue;
+	}
+
+	public void setValue(PreparedStatement ps, Object value) {
+		int typeValue = getType(type);
 		SQLConverter converter = convertersBySQLType.get(typeValue);
 		try {
 			if(this.dateFormat != null) {

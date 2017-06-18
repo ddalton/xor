@@ -400,7 +400,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			getterFunction =  (Function) factory.invokeExact();
 
 		} catch (Throwable t) {
-			logger.error("Error while creating lambda funcation for getter method: " + getName() + ", Message: " + t.getMessage());
+			// Not a serious issue as the value can be retrieved using field access
+			logger.info(
+				"Error while creating lambda function for getter method: " + getName() + ", Message: "
+					+ t.getMessage());
 			getterFunction = null;
 		}
 	}
@@ -422,7 +425,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			setterFunction = (BiConsumer) factory.invokeExact();
 
 		} catch (Throwable t) {
-			logger.error("Error while creating lambda funcation for setter method: " + getName() + ", Message: " + t.getMessage());
+			// Not a serious issue as the value can be set using field access
+			logger.info(
+				"Error while creating lambda function for setter method: " + getName()
+					+ ", Message: " + t.getMessage());
 			setterFunction = null;
 		}
 	}

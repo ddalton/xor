@@ -180,6 +180,9 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 				if(callInfo.getInputProperty() != null) {
 					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
 				} else {
+					if(callInfo.getParent() == null) {
+						throw new RuntimeException("Unable to infer the entity type, provide this information using XOR:type field");
+					}
 					// Collection, so go to the owner and get the element type
 					ExtendedProperty property = callInfo.getParent().getInputProperty();
 					Type type = null;

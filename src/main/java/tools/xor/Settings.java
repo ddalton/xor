@@ -784,12 +784,13 @@ public class Settings {
 			}
 
 			// First token should be an array
-			if(cursor.nextToken() != JsonToken.START_ARRAY) {
-				throw new RuntimeException("Input should be an array of JSON objects");
+			boolean isArray = false;
+			if(cursor.nextToken() == JsonToken.START_ARRAY) {
+				isArray = true;
 			}
 
 			// Avoid the start object token
-			if(cursor.nextToken() == JsonToken.START_OBJECT) {
+			if(!isArray || cursor.nextToken() == JsonToken.START_OBJECT) {
 				current = extractSettings();
 			}
 		}

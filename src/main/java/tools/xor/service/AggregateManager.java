@@ -65,6 +65,7 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
 import tools.xor.util.graph.ObjectGraph;
+import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Filter;
 import tools.xor.view.TypeVersion;
@@ -689,50 +690,11 @@ public class AggregateManager implements Xor
 
 		BusinessObject from = oc.createDataObject(
 			entity,
-			oc.getType(entity.getClass()),
+			//oc.getType(entity.getClass()),
+			oc.getType(entity.getClass(), settings.getEntityType()),
 			null,
 			null);
-
-		// Convert to domain model instance first
-		if(oc.getTypeMapper().isExternal(entity.getClass())) {
-			Settings s = new Settings();
-			s.setEntityClass(settings.getEntityClass());
-			s.setEntityType(settings.getEntityType());
-			s.setView(settings.getView().copy());
-			ObjectCreator domainOC = new ObjectCreator(
-				settings,
-				getDAS(),
-				getPersistenceOrchestrator(),
-				MapperDirection.DOMAINTOEXTERNAL);
-
-			Type type = getEntityType(entity, oc, settings);
-
-			// Make sure to add id and key
-			Set<String> attrs = new HashSet<>(s.getView().getAttributeList());
-			if(type instanceof EntityType) {
-				EntityType entityType = (EntityType) type;
-				if(entityType.getIdentifierProperty() != null) {
-					attrs.add(entityType.getIdentifierProperty().getName());
-				}
-				if(entityType.getNaturalKey() != null) {
-					for(String keyName: entityType.getExpandedNaturalKey()) {
-						attrs.add(keyName);
-					}
-				}
-				s.getView().setAttributeList(new ArrayList(attrs));
-			}
-
-			BusinessObject fromExternal = domainOC.createDataObject(
-				entity,
-				type,
-				null,
-				null);
-
-			// convert to a Domain model instance
-			settings.setAction(AggregateAction.TO_DOMAIN);
-			from = (BusinessObject)fromExternal.toDomain(s);
-		}
-
+		
 		if (isWrapper) {
 			ExtendedProperty property = (ExtendedProperty)((EntityType)from.getType()).getIdentifierProperty();
 			property.setValue(from, wrapper);
@@ -995,6 +957,10 @@ public class AggregateManager implements Xor
 				null,
 				null);
 			oc.setRoot(from);
+
+			// Get the persistent managed object
+			from = from.load(settings);
+
 			from.delete(settings);
 
 		} finally {

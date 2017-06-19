@@ -603,6 +603,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// Now read it
 		json = new JSONObject();
 		json.put("id", task.getId());
+		json.put(Constants.XOR.TYPE, Task.class.getName());
 		json = (JSONObject)aggregateService.read(json, settings);
 
 		assert(json != null);

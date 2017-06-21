@@ -310,7 +310,9 @@ public abstract class AbstractOperation implements Operation {
 		// Read only properties should not be modified
 		if (ci.getOutputProperty() != null && ci.getOutputProperty().isReadOnly() && !(
 			ci.getSettings().getAction() == AggregateAction.READ ||
-				ci.getSettings().getAction() == AggregateAction.LOAD)) {
+				ci.getSettings().getAction() == AggregateAction.LOAD ||
+				ci.getSettings().getAction() == AggregateAction.TO_EXTERNAL
+		)) {
 			return;
 		}
 

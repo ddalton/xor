@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import tools.xor.EntityType;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.AggregatePropertyPaths;
@@ -33,8 +35,8 @@ import tools.xor.view.View;
 
 public class MetaModel {
 
-	protected DASFactory dasFactory;	
-	
+	protected DASFactory dasFactory;
+
 	public MetaModel(AggregateManager am) {
 		this.dasFactory = am.getDasFactory();
 	}
@@ -62,6 +64,53 @@ public class MetaModel {
 		Collections.sort(result);
 
 		return result;
+	}
+
+	public List<String> getEntityNames() {
+
+		Shape shape = getDAS().getShape();
+		ArrayList<Type> types = new ArrayList<>(shape.getUniqueTypes());
+
+		if(shape.getShapeStrategy() == Shape.ShapeStrategy.SHARED && shape.getParent() != null) {
+			types.addAll(shape.getParent().getUniqueTypes());
+		}
+
+		List<String> result = new ArrayList<String>(types.size());
+		for(Type type: types) {
+			if(type instanceof EntityType) {
+				result.add(type.getName());
+			}
+		}
+		Collections.sort(result);
+
+		return result;
+	}
+
+	public List<String> getEntityProperties(String entityName) {
+		Type type = getDAS().getType(entityName);
+
+		if( type == null || !(type instanceof EntityType)) {
+			throw new RuntimeException("The provided name is not an entity: " + entityName);
+		}
+
+		List<String> result = new ArrayList<>();
+		for(Property property: type.getProperties()) {
+			result.add(property.getName());
+		}
+
+		Collections.sort(result);
+
+		return result;
+	}
+
+	public List<String> getExpandedNaturalKey(String entityName) {
+		Type type = getDAS().getType(entityName);
+
+		if( type == null || !(type instanceof EntityType)) {
+			throw new RuntimeException("The provided name is not an entity: " + entityName);
+		}
+
+		return ((EntityType)type).getExpandedNaturalKey();
 	}
 
 	public List<String> getViewAttributes(String viewName) {

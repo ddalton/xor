@@ -23,8 +23,6 @@ import java.awt.Dimension;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -60,10 +57,11 @@ import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 import tools.xor.util.Detector;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
@@ -71,12 +69,10 @@ import tools.xor.view.AggregateView;
 import tools.xor.view.BindParameter;
 import tools.xor.view.Filter;
 import tools.xor.view.NativeQuery;
-import tools.xor.view.Query;
 import tools.xor.view.View;
 import tools.xor.view.ViewType;
 
 import javax.imageio.ImageIO;
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * @author Dilip Dalton
@@ -755,12 +751,12 @@ public class Settings {
 		this.autoWire = autoWire;
 	}
 
-	public static class SettingsIterator implements Iterator<Settings>
+	public static class SettingsIterator<T> implements Iterator<T>
 	{
 		private InputStream jsonStream;
 		private SettingsBuilder builder;
 		private JsonParser cursor;
-		private Settings current;
+		private T current;
 
 		public SettingsIterator(InputStream jsonStream, SettingsBuilder builder) {
 			this.jsonStream = jsonStream;
@@ -791,14 +787,14 @@ public class Settings {
 
 			// Avoid the start object token
 			if(!isArray || cursor.nextToken() == JsonToken.START_OBJECT) {
-				current = extractSettings();
+				current = extractCurrent();
 			}
 		}
 
 		private void advance() {
 			try {
 				if(cursor.nextToken() == JsonToken.START_OBJECT) {
-                    current = extractSettings();
+                    current = extractCurrent();
                 } else {
                     // end of input
                     current = null;
@@ -809,9 +805,20 @@ public class Settings {
 			}
 		}
 
-		private Settings extractSettings() {
+		private T extractCurrent () {
 			JSONObject json = (JSONObject)extractJson(false);
 
+			if(json.has(Constants.XOR.REST_SETTINGS)) {
+				return (T)json;
+			} else {
+				return (T)builder.json(json).build();
+			}
+		}
+
+		public Settings extractSettings(JSONObject json) {
+			if(json.has(Constants.XOR.REST_SETTINGS)) {
+				json = json.getJSONObject(Constants.XOR.REST_SETTINGS);
+			}
 			return builder.json(json).build();
 		}
 
@@ -918,9 +925,9 @@ public class Settings {
 			return current != null;
 		}
 
-		@Override public Settings next ()
+		@Override public T next ()
 		{
-			Settings result = current;
+			T result = current;
 			// advance to the next item
 			this.advance();
 
@@ -1254,19 +1261,37 @@ public class Settings {
 		final Dimension LARGE = new Dimension(5120, 2880);
 		final Dimension XLARGE = new Dimension(7680, 4320);
 
+		FRLayout layout = new FRLayout(graph);
+
+		int multiplicationFactor = 1;
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.REPULSION_MULTIPLIER)) {
+			double multiplier = ApplicationConfiguration.config().getDouble(Constants.Config.REPULSION_MULTIPLIER);
+			layout.setRepulsionMultiplier(multiplier);
+
+			// Square the increase
+			multiplicationFactor = (int)(multiplier/0.75D);
+			multiplicationFactor *= multiplicationFactor;
+			if(multiplicationFactor < 1) {
+				multiplicationFactor = 1;
+			}
+		}
+
 		Dimension graphSize;
-		if(graph.getVertices().size() < EntitySize.SMALL.size()*2) {
+		int size = graph.getVertices().size();
+		size *= multiplicationFactor;
+
+		if(size < EntitySize.SMALL.size()*2) {
 			graphSize = SMALL;
-		} else if(graph.getVertices().size() < EntitySize.MEDIUM.size()*1.2) {
+		} else if(size < EntitySize.MEDIUM.size()*1.2) {
 			graphSize = MEDIUM;
-		} else if(graph.getVertices().size() < EntitySize.LARGE.size()*1.1) {
+		} else if(size < EntitySize.LARGE.size()*1.1) {
 			graphSize = LARGE;
 		} else {
 			graphSize = XLARGE;
 		}
 
 		VisualizationViewer<Integer,String> vv =
-			new VisualizationViewer<Integer,String>(new FRLayout(graph), graphSize);
+			new VisualizationViewer<Integer,String>(layout, graphSize);
 
 		// Create the VisualizationImageServer
 		// vv is the VisualizationViewer containing my graph

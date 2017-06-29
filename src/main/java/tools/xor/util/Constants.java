@@ -54,6 +54,7 @@ public class Constants {
 		public static final String INCLUDE_EMBEDDED = "include.embedded";
 		public static final String ACTIVATE_DETECTORS = "detectors.activate";
 		public static final String GENERATOR_LINK_EXISTING = "generator.link.existing";
+		public static final String REPULSION_MULTIPLIER = "graph.visual.repulsion";
 	}
   
   
@@ -106,6 +107,10 @@ public class Constants {
 	  public static final String CONS_LENGTH = "_LENGTH_";
 	  public static final String CONS_PRECISION = "_PRECISION_";
 	  public static final String CONS_SCALE = "_SCALE_";
+
+	  // REST related constants
+	  public static final String REST_SETTINGS = "settings";
+	  public static final String REST_ENTITY = "entity";
 
 	  // Graph related
 	  public static final int TOPO_ORDERING_START = 1;

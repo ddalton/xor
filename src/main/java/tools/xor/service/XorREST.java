@@ -1,0 +1,416 @@
+package tools.xor.service;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import tools.xor.AggregateAction;
+import tools.xor.EntityType;
+import tools.xor.Settings;
+import tools.xor.providers.jdbc.JDBCBatchContext;
+import tools.xor.util.Constants;
+import tools.xor.util.graph.TypeGraph;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
+/**
+ * This class represents an implementation of the XOR REST api.
+ * Provider implementations will extend this class with the appropriate Controller class
+ * and provide the necessary transaction scaffolding, path/param mapping etc...
+ */
+public abstract class XorREST
+{
+
+    /**
+     * AggregateManager configured with ORM datasource
+     * @return AggregateManager instance
+     */
+    protected abstract AggregateManager getAM ();
+
+    /**
+     * AggregateManager configured with JDBC datasource
+     * @return AggregateManager instance
+     */
+    protected abstract AggregateManager getJDBCAM ();
+
+    /**
+     * Method used to create an entity.
+     *
+     * @param jsonString JSON string of both the settings and the entity object that needs to be created
+     * @return JSON object of the created entity
+     */
+    protected JSONObject create (String jsonString)
+    {
+        JSONObject json = new JSONObject(jsonString);
+        Object entity = getEntity(json);
+
+        DataAccessService das = getAM().getDAS();
+        String settings = json.getJSONObject("settings").toString();
+        Object persistentObj = getAM().create(entity, das.settings().json(settings).build());
+        Settings readSettings = das.settings().base(persistentObj.getClass()).build();
+        JSONObject readJson = (JSONObject)getAM().toExternal(persistentObj, readSettings);
+
+        return readJson;
+        //readJson.toString(3);
+    }
+
+    /**
+     * Read an entity from the database in JSON format
+     * @param jsonString JSON string containing the user settings and the entity id/key
+     * @return JSON representation of the entity
+     */
+    protected JSONObject read (String jsonString)
+    {
+        JSONObject json = new JSONObject(jsonString);
+        Object entity = getEntity(json);
+
+        DataAccessService das = getAM().getDAS();
+        String settings = json.getJSONObject("settings").toString();
+        JSONObject readJson = (JSONObject)getAM().read(
+            entity,
+            das.settings().json(settings).build());
+        return readJson;
+    }
+
+    /**
+     * Do a partial or a full update of a persistent entity.
+     * @param jsonString JSON string containing the user settings and the entity values that need to be updated.
+     */
+    protected void update (String jsonString)
+    {
+        JSONObject json = new JSONObject(jsonString);
+        Object entity = getEntity(json);
+
+        DataAccessService das = getAM().getDAS();
+        String settings = json.getJSONObject("settings").toString();
+        getAM().update(entity, das.settings().json(settings).build());
+    }
+
+    /**
+     * Delete a persistent entity from the database.
+     * @param jsonString JSON string containing the user settings and the entity id/key to be deleted.
+     */
+    protected void delete (String jsonString)
+    {
+        JSONObject json = new JSONObject(jsonString);
+        Object entity = getEntity(json);
+
+        DataAccessService das = getAM().getDAS();
+        String settings = json.getJSONObject("settings").toString();
+        getAM().delete(entity, das.settings().json(settings).build());
+    }
+
+    /**
+     * Pass in a json string containing an array of file names containing the generator details.
+     * Should only contain the file name and not the full path, since the file is assumed to be part
+     * of the classpath.
+     *
+     * @param jsonString JSON string of the generator excel files
+     */
+    protected void initializeGenerators(String jsonString) {
+        JSONArray array = new JSONArray(jsonString);
+
+        try {
+            // Make sure the files are under src/main/resources
+            for(int i = 0; i < array.length(); i++) {
+                Resource resource = new ClassPathResource(array.getString(i));
+                InputStream inputStream = resource.getInputStream();
+                initializeGenerators(inputStream);
+            }
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Use this method if the user is sending the excel file directly.
+     *
+     * @param inputStream containing the Excel file.
+     */
+    protected void initializeGenerators(InputStream inputStream) {
+        DataAccessService das = getAM().getDAS();
+        das.initGenerators(inputStream);
+    }
+
+    /**
+     * Should be wrapped by the provider implementation in a transaction.
+     * Alternatively, the user can wrap the populate method instead but this can cause issues
+     * if the count is large.
+     *
+     * @param settings user settings
+     * @param userData any user data needed by the provider overridden implementation
+     */
+    protected void populateSingle(Settings settings, Object userData) {
+
+        TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
+        JSONObject school = sg.generateObjectGraph(settings);
+
+        // Try and persist this now
+        settings.setPostFlush(true);
+        settings.setNarrow(true);
+        getAM().update(school, settings);
+    }
+
+    /**
+     * Allows the user to generate and create entities based on random input data. The input data can be configured
+     * using generators specified in an Excel file.
+     *
+     * @param jsonString JSON string containing user settings
+     * @param userData any user data that need to be passed to populateSingle
+     */
+    protected void populate (String jsonString, Object userData)
+    {
+        JSONObject jsonObj = new JSONObject(jsonString);
+        int globalSeq = -1;
+        if(jsonObj.has("globalSeq")) {
+            globalSeq = jsonObj.getInt("globalSeq");
+        }
+        int count = -1;
+        if(jsonObj.has("count")) {
+            count = jsonObj.getInt("count");
+        }
+        if(count == -1) {
+            count = 1;
+        }
+
+        // User should have invoked initializeGenerators, if using custom data patterns
+        // during population
+
+        DataAccessService das = getAM().getDAS();
+        Settings settings = das.settings().json(jsonString).build();
+        for(int i = 0; i < count; i++) {
+            if(globalSeq != -1) {
+                settings.setGlobalSeq(globalSeq++);
+            }
+
+            populateSingle(settings, userData);
+        }
+    }
+
+    /**
+     * Retrieve the results of a denormalized query.
+     * @param json JSON String containing the query details
+     * @return results of the query as JSONArray
+     */
+    public String query (String json)
+    {
+        DataAccessService das = getAM().getDAS();
+        Settings settings = das.settings().json(json).build();
+
+        List list = getAM().query(null, settings);
+        JSONArray result = new JSONArray();
+        for (Object obj : list) {
+            result.put(obj);
+        }
+
+        return result.toString();
+    }
+
+    public String batchCRUD (InputStream jsonStream)
+    {
+        DataAccessService das = getAM().getDAS();
+
+        // Get the iterator from the json stream
+        Settings.SettingsIterator<JSONObject> iter = das.settings().iterator(jsonStream);
+
+        JSONObject current = iter.next();
+        while (current != null) {
+
+            Settings settings = iter.extractSettings(current);
+            switch(settings.getAction()) {
+            case READ:
+                getAM().read(
+                    current.getJSONObject(Constants.XOR.REST_ENTITY),
+                    settings);
+                break;
+            case CREATE:
+                getAM().create(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                break;
+            case UPDATE:
+            case MERGE:
+                getAM().update(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                break;
+            case DELETE:
+                getAM().delete(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                break;
+            case CLONE:
+                getAM().clone(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                break;
+            }
+
+            current = iter.next();
+        }
+
+        return "Success";
+    }
+
+    protected abstract BatchContext createSessionContext();
+
+    /**
+     * Send a mix of DML statements (INSERT, UPDATE, SELECT and DELETE) to be processed by the server.
+     *
+     * @param jsonStream containing the JSON payload
+     * @return results
+     */
+    public String batchDML (InputStream jsonStream)
+    {
+        DataAccessService das = getAM().getDAS();
+
+        // Get the iterator from the json stream
+        Settings.SettingsIterator<Settings> iter = das.settings().iterator(jsonStream);
+
+        Settings current = iter.next();
+        Settings next = iter.next();
+
+        BatchContext bc = createSessionContext();
+        current.setSessionContext(bc);
+        while (current != null) {
+
+            // Check the next settings to see if it is eligible for batching
+            if (next != null) {
+                if (current.getView().getName().equals(next.getView().getName())) {
+                    if (current.getSessionContext() == null) {
+                        current.setSessionContext(bc);
+                        bc.setShouldBatch(true);
+                        next.setSessionContext(bc);
+                    }
+                    else {
+                        // propagate the batch query
+                        bc.setShouldBatch(true);
+                        next.setSessionContext(current.getSessionContext());
+                    }
+                }
+                else {
+                    if (current.getSessionContext() != null) {
+                        ((BatchContext)current.getSessionContext()).setShouldBatch(false);
+                    }
+                }
+            }
+            else {
+                if (current.getSessionContext() != null) {
+                    ((BatchContext)current.getSessionContext()).setShouldBatch(false);
+                }
+            }
+
+            if (current.getAction() == AggregateAction.READ) {
+                List list = (List)getAM().dml(current);
+                //TODO: String output = "Retrieved " + (list.size()-1) + " records.\r\n";
+            }
+            else {
+                Integer count = (Integer)getAM().dml(current);
+                //TODO: String output = (count >= 0) ? "Updated " + count + " records.\r\n" : "Executed " + (-count) + " SQLs";
+            }
+
+            current = next;
+            next = iter.next();
+        }
+
+        return "Success";
+    }
+
+    /**
+     * Execute the ANSI SQL DML statements directly, bypassing the ORM. Needed if the
+     * ORM does not provide JDBC access.
+     *
+     * @param jsonStream JSON stream containg the encoded DML statements
+     * @return status string
+     */
+    public String batchJDBC (InputStream jsonStream)
+    {
+        DataAccessService das = getJDBCAM().getDAS();
+
+        // Get the iterator from the json stream
+        Settings.SettingsIterator<Settings> iter = das.settings().iterator(jsonStream);
+
+        Settings current = iter.next();
+        Settings next = iter.next();
+        while (current != null) {
+
+            // Check the next settings to see if it is eligible for batching
+            if (next != null) {
+                if (current.getView().getName().equals(next.getView().getName())) {
+                    if (current.getSessionContext() == null) {
+                        JDBCBatchContext bc = new JDBCBatchContext();
+                        current.setSessionContext(bc);
+                        bc.setShouldBatch(true);
+                        next.setSessionContext(bc);
+                    }
+                    else {
+                        // propagate the batch query
+                        next.setSessionContext(current.getSessionContext());
+                    }
+                }
+                else {
+                    if (current.getSessionContext() != null) {
+                        ((JDBCBatchContext)current.getSessionContext()).setShouldBatch(false);
+                    }
+                }
+            }
+            else {
+                if (current.getSessionContext() != null) {
+                    ((JDBCBatchContext)current.getSessionContext()).setShouldBatch(false);
+                }
+            }
+
+            if (current.getAction() == AggregateAction.READ) {
+                List list = (List)getJDBCAM().dml(current);
+                //String output = "[JDBC] Retrieved " + (list.size()-1) + " records.\r\n";
+                //responseWriter.write(output);
+                JSONArray result = new JSONArray();
+                for (Object obj : list) {
+                    result.put(obj);
+                }
+            }
+            else {
+                Integer count = (Integer)getJDBCAM().dml(current);
+                // TODO: String output = (count >= 0) ? "[JDBC] Updated " + count + " records.\r\n" : "Executed " + (-count) + " SQLs";
+            }
+
+            current = next;
+            next = iter.next();
+        }
+
+        return "Success";
+    }
+
+    public JSONObject getEntityNames (String json)
+    {
+        JSONObject result = new JSONObject();
+
+        List<String> list = getAM().getMetaModel().getEntityNames();
+        result.put("entityNames", list);
+
+        return result;
+    }
+
+    public JSONObject getEntityProperties (String json)
+    {
+        JSONObject input = new JSONObject(json);
+        String entityName = input.getString("entityName");
+
+        List<String> list = getAM().getMetaModel().getEntityProperties(entityName);
+        JSONObject result = new JSONObject();
+        result.put("properties", list);
+
+        return result;
+    }
+
+    private Object getEntity(JSONObject jsonObject) {
+
+        if(!jsonObject.has(Constants.XOR.REST_SETTINGS)) {
+            throw new RuntimeException("settings property is required");
+        }
+        if(!jsonObject.has("entity")) {
+            throw new RuntimeException("entity information is required");
+        }
+
+        return jsonObject.getJSONObject("entity");
+    }
+}

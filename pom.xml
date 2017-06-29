@@ -339,13 +339,6 @@
             <version>20140107</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.appengine</groupId>
-            <artifactId>appengine-api-1.0-sdk</artifactId>
-            <version>1.9.36</version>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/net.sf.jung/jung-algorithms -->
         <dependency>
             <groupId>net.sf.jung</groupId>
@@ -373,24 +366,6 @@
             <artifactId>jung-api</artifactId>
             <version>2.0.1</version>
         </dependency>
-
-
-        <!--dependency>
-          <groupId>com.oracle</groupId>
-          <artifactId>ojdbc6</artifactId>
-          <version>11.2.0.4</version>
-        </dependency>
-        <dependency>
-          <groupId>com.oracle</groupId>
-          <artifactId>ojdbc7</artifactId>
-          <version>12.1.0.1</version>
-        </dependency>
-
-            <dependency>
-                <groupId>com.sap.db</groupId>
-                <artifactId>ngdbc</artifactId>
-                <version>1.1</version>
-            </dependency-->
 
     </dependencies>
 

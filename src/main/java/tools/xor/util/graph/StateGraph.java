@@ -345,6 +345,15 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		return builder.toString();
 	}
+
+	public void prune(String propertyToPrune) {
+		for(V state: getVertices()) {
+			E e = getOutEdge(state, propertyToPrune);
+			if(e != null) {
+				removeEdge(e);
+			}
+		}
+	}
 	
 	/**
 	 * This method is to enhance the state graph since the states are reused across other state graph entities.
@@ -1226,6 +1235,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 							}
 						}
 
+						// Update visitor with current path
+						String objectPath = Constants.XOR.walkDown(path, property);
+
 						// Is the state out of scope
 						if (childState == null) {
 							if (!property.isNullable()) {
@@ -1233,7 +1245,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 									"Skipped type is a required property and needs to be part of the view: "
 										+ property.getContainingType().getName() + "#"
 										+ property.getName() + ", type: "
-										+ property.getType().getName())).printStackTrace();
+										+ property.getType().getName()
+										+ ", path: " + objectPath)).printStackTrace();
 							}
 							continue;
 						}
@@ -1241,8 +1254,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 						Type targetEntityType = childState.getType();
 						Type targetType = (extendedProperty.isMany()) ? GraphUtil.getPropertyType(extendedProperty, stateGraph.shape) : targetEntityType;
 
-						// Update visitor with current path
-						String objectPath = Constants.XOR.walkDown(path, property);
+						logger.info("Path: " + objectPath + ", type: " + targetType.getName());
+
 						visitor.setProperty(property);
 						visitor.setSourceEntityType((EntityType)entityType);
 						visitor.setParent(entity);

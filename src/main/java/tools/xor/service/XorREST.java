@@ -213,6 +213,13 @@ public abstract class XorREST
         return result.toString();
     }
 
+    private JSONObject toExternal(Object persistentObj) {
+        Settings readSettings = getAM().getDAS().settings().base(persistentObj.getClass()).build();
+        JSONObject readJson = (JSONObject)getAM().toExternal(persistentObj, readSettings);
+
+        return readJson;
+    }
+
     public String batchCRUD (InputStream jsonStream)
     {
         DataAccessService das = getAM().getDAS();
@@ -224,24 +231,32 @@ public abstract class XorREST
         while (current != null) {
 
             Settings settings = iter.extractSettings(current);
+
+            // pipeline the result from the previous call
+            JSONObject result = null;
+            if(!current.has(Constants.XOR.REST_ENTITY) && result != null) {
+                current.put(Constants.XOR.REST_ENTITY, result);
+            }
+
             switch(settings.getAction()) {
             case READ:
-                getAM().read(
+                result = (JSONObject)getAM().read(
                     current.getJSONObject(Constants.XOR.REST_ENTITY),
                     settings);
                 break;
             case CREATE:
-                getAM().create(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                result = toExternal(getAM().create(current.getJSONObject(Constants.XOR.REST_ENTITY), settings));
                 break;
             case UPDATE:
             case MERGE:
-                getAM().update(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                result = toExternal(getAM().update(current.getJSONObject(Constants.XOR.REST_ENTITY), settings));
                 break;
             case DELETE:
                 getAM().delete(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                result = null;
                 break;
             case CLONE:
-                getAM().clone(current.getJSONObject(Constants.XOR.REST_ENTITY), settings);
+                result = toExternal(getAM().clone(current.getJSONObject(Constants.XOR.REST_ENTITY), settings));
                 break;
             }
 

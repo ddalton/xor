@@ -402,6 +402,9 @@ public class Settings {
 			for(AssociationSetting as: prunedAssociations) {
 				if(as.getMatchType() == MatchType.RELATIVE_PATH) {
 					pruneRelative.add(as.getPathSuffix());
+
+					// remove this from the StateGraph
+					((StateGraph)view.getTypeGraph((EntityType)entityType)).prune(as.getPathSuffix());
 				}
 			}
 		}

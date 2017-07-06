@@ -1389,9 +1389,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public Generator getGenerator(String incomingProperty) {
 		if(!this.generators.containsKey(incomingProperty)) {
 			// fallback to default
-			if(!TYPE_GENERATOR.equals(incomingProperty)) {
-				return getGenerator();
-			}
+			return this.generators.get(TYPE_GENERATOR);
 		}
 		return this.generators.get(incomingProperty);
 	}

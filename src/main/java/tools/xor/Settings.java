@@ -40,6 +40,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
+import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
+import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationImageServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -390,23 +392,25 @@ public class Settings {
 			throw new IllegalStateException("A name for the AggregateView is required");
 		}
 
-		if(hasExpandedAssociations()) {
+		if(hasExpandedAssociations() || hasPrunedAssociations()) {
 			// If the view is going to be modified make a copy of the built-in view
 			// We don't need to make a copy of a user provided view
 			if(AggregateView.isBuiltInView(view.getName())) {
 				view = view.copy();
 			}
+		}
+
+		if(hasExpandedAssociations()) {
 			((StateGraph)view.getTypeGraph((EntityType)entityType)).enhance(expandedAssociations, shape);
 		}
 		if(hasPrunedAssociations()) {
 			for(AssociationSetting as: prunedAssociations) {
 				if(as.getMatchType() == MatchType.RELATIVE_PATH) {
 					pruneRelative.add(as.getPathSuffix());
-
-					// remove this from the StateGraph
-					((StateGraph)view.getTypeGraph((EntityType)entityType)).prune(as.getPathSuffix());
 				}
 			}
+			// remove this from the StateGraph
+			((StateGraph)view.getTypeGraph((EntityType)entityType)).prune(prunedAssociations, shape);
 		}
 
 		this.filters = populateFilters(queryParams);
@@ -1265,11 +1269,12 @@ public class Settings {
 		final Dimension XLARGE = new Dimension(7680, 4320);
 
 		FRLayout layout = new FRLayout(graph);
+		//Layout layout = new ISOMLayout<>(graph);
 
 		int multiplicationFactor = 1;
-		if (ApplicationConfiguration.config().containsKey(Constants.Config.REPULSION_MULTIPLIER)) {
+		if (layout instanceof FRLayout && ApplicationConfiguration.config().containsKey(Constants.Config.REPULSION_MULTIPLIER)) {
 			double multiplier = ApplicationConfiguration.config().getDouble(Constants.Config.REPULSION_MULTIPLIER);
-			layout.setRepulsionMultiplier(multiplier);
+			((FRLayout)layout).setRepulsionMultiplier(multiplier);
 
 			// Square the increase
 			multiplicationFactor = (int)(multiplier/0.75D);

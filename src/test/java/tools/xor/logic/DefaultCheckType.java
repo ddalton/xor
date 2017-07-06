@@ -191,7 +191,7 @@ public class DefaultCheckType extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 		EntityType addressType = (EntityType) das.getType(AddressEntity.class);
 		
-		JSONObject address = (JSONObject) addressType.generate(new Settings(), null, null, null, new StateGraph.ObjectGenerationVisitor(new HashMap<JSONObject, State>(), new Settings()));
+		JSONObject address = (JSONObject) addressType.generate(new Settings(), null, null, null, new StateGraph.ObjectGenerationVisitor(new HashMap<JSONObject, State>(), new Settings(), null));
 		System.out.println("Address street: " + address.get("street"));
 		assert(address.get("street").toString().length() > 0);
 	}

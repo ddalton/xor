@@ -234,7 +234,7 @@ public class SimpleType implements BasicType {
 
 			// Handle inheritance (dynamic subType selection)
 			if (elementType instanceof EntityType) {
-				collectionElementType = gen.getSubType((EntityType)elementType);
+				collectionElementType = gen.getSubType((EntityType)elementType, visitor.getStateGraph());
 			}
 			Object collectionElement = collectionElementType.generate(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 			result.put(collectionElement);

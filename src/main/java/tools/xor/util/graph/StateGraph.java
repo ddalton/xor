@@ -155,6 +155,16 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		super.addVertex(vertex);
 		this.states.put(vertex.getType(), vertex);
 	}
+
+	@Override
+	public void removeVertex(V vertex) {
+		if(!containsVertex(vertex)) {
+			return;
+		}
+
+		super.removeVertex(vertex);
+		this.states.remove(vertex.getType());
+	}
 	
 	public void addEdge(E edge) {
 		addEdge(edge, edge.getStart(), edge.getEnd());
@@ -346,11 +356,21 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return builder.toString();
 	}
 
-	public void prune(String propertyToPrune) {
-		for(V state: getVertices()) {
-			E e = getOutEdge(state, propertyToPrune);
-			if(e != null) {
-				removeEdge(e);
+	public void prune(List<AssociationSetting> associations, Shape shape) {
+		for(AssociationSetting assoc: associations) {
+			if (assoc.getMatchType() == MatchType.TYPE) {
+				V state = states.get(shape.getType(assoc.getEntityClass()));
+				removeVertex(state);
+			} else if(assoc.getMatchType() == MatchType.RELATIVE_PATH) {
+				String propertyToPrune = assoc.getPathSuffix();
+				for(V state: getVertices()) {
+					E e = getOutEdge(state, propertyToPrune);
+					if(e != null) {
+						removeEdge(e);
+					}
+				}
+			} else if(assoc.getMatchType() == MatchType.ABSOLUTE_PATH) {
+				throw new UnsupportedOperationException("Prune by absolute path is not yet implemented");
 			}
 		}
 	}
@@ -388,8 +408,27 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					throw new RuntimeException("Can only extend an entity type");
 				}
 				types.add((EntityType)type);
-			} else {
+			} else if(assoc.getMatchType() == MatchType.ABSOLUTE_PATH) {
 				extend(assoc.getPathSuffix(), getRootState(), true);
+			} else if(assoc.getMatchType() == MatchType.RELATIVE_PATH) {
+				String propertyToAdd = assoc.getPathSuffix();
+				for(V state: getVertices()) {
+					E e = getOutEdge(state, propertyToAdd);
+					if(e == null) {
+						Type type = state.getType();
+						if(type instanceof EntityType) {
+							EntityType entityType = (EntityType) type;
+
+							// We add the edge only if the end state is already present
+							// in the state graph
+							if(states.containsKey(entityType)) {
+								State end = states.get(entityType);
+								Edge newEdge = new Edge(propertyToAdd, state, end);
+								addEdge((E)newEdge);
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -945,10 +984,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		private JSONObject parent;
 		private int sequenceNo;
 		private JSONObject root;
+		private StateGraph stateGraph;
 
-		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings) {
+		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings, StateGraph stateGraph) {
 			this.objectStateMap = objectStateMap;
 			this.settings = settings;
+			this.stateGraph = stateGraph;
 		}
 
 		public boolean hasReachedLimit() {
@@ -1031,6 +1072,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		public Settings getSettings() {
 			return this.settings;
+		}
+
+		public StateGraph getStateGraph() {
+			return this.stateGraph;
 		}
 	}
 
@@ -1151,7 +1196,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			objectStateMap = new ConcurrentHashMap<JSONObject, State>();
 			embeddedObjectStateMap = new HashMap<JSONObject, State>();
 			entityKeyMap = new HashMap<>();
-			visitor = new ObjectGenerationVisitor(objectStateMap, settings);
+			visitor = new ObjectGenerationVisitor(objectStateMap, settings, stateGraph);
 			q = new LinkedList();
 		}
 
@@ -1230,7 +1275,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 									extendedProperty.setGenerator(gen);
 								}
 								EntityType childType = (EntityType)GraphUtil.getPropertyEntityType(extendedProperty, stateGraph.shape);
-								childType = gen.getSubType(childType);
+								childType = gen.getSubType(childType, stateGraph);
 								childState = stateGraph.getVertex(childType);
 							}
 						}

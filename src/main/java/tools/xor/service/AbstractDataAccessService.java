@@ -450,7 +450,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 				// Have it apply to all subtypes also
 				for (EntityType subType : entityType.getSubtypes()) {
-					property = (ExtendedProperty)entityType.getProperty(entry.getKey());
+					property = (ExtendedProperty)subType.getProperty(entry.getKey());
 					property.setGenerator(incomingProperty, gen);
 				}
 			}

@@ -3,6 +3,8 @@ package tools.xor.generator;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Type;
+import tools.xor.util.GraphUtil;
+import tools.xor.util.graph.StateGraph;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +22,7 @@ public class SubTypeChoices extends DefaultGenerator
 
     public static void checkValidity(Type root, String[] values) {
         if( !(root instanceof EntityType) ) {
-            throw new IllegalStateException("This generator can only be configured on a property referencing standalone entity or entities");
+            throw new IllegalStateException("This generator can only be configured on a property referencing standalone entity or entities. Type: " + root.getName());
         }
 
         if(values.length < 1) {
@@ -42,13 +44,14 @@ public class SubTypeChoices extends DefaultGenerator
 
     @Override public void validate (ExtendedProperty property)
     {
-        checkValidity(property.getType(), getValues());
+        Type entityType = GraphUtil.getPropertyEntityType(property, null);
+        checkValidity(entityType, getValues());
 
         Map<String, EntityType> subTypes = new HashMap<String, EntityType>();
-        for(EntityType type: ((EntityType)property.getType()).getSubtypes()) {
+        for(EntityType type: ((EntityType)entityType).getSubtypes()) {
             subTypes.put(type.getInstanceClass().getName(), type);
         }
-        subTypes.put(property.getType().getInstanceClass().getName(), (EntityType)property.getType());
+        subTypes.put(entityType.getInstanceClass().getName(), (EntityType)entityType);
 
         for(String value: getValues()) {
             EntityType type = subTypes.get(value);
@@ -60,7 +63,7 @@ public class SubTypeChoices extends DefaultGenerator
         }
     }
 
-    @Override public EntityType getSubType (EntityType entityType)
+    @Override public EntityType getSubType (EntityType entityType, StateGraph stateGraph)
     {
         if(subTypeList.size() == 1) {
             subTypeList.get(0);

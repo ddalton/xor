@@ -33,6 +33,7 @@ import tools.xor.view.QueryView;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -248,26 +249,34 @@ public class DefaultGenerator implements Generator
         return getValues()[pos];
     }
 
-    @Override public EntityType getSubType (EntityType entityType)
-    {
-        List<EntityType> subTypes = new ArrayList<EntityType>();
-        for(EntityType et: entityType.getSubtypes()) {
+    protected EntityType getSubType(List<EntityType> subTypes, StateGraph stateGraph) {
+
+        List<EntityType> types = new ArrayList<EntityType>();
+        for(EntityType et: subTypes) {
             if(et.isAbstract()) {
                 continue;
+            } else if(stateGraph.getVertex(et) == null) {
+                // SubType not in scope
+                continue;
             } else {
-                subTypes.add(et);
+                types.add(et);
             }
         }
-        if(!entityType.isAbstract()) {
-            subTypes.add(entityType);
-        }
 
-        int index =  (int) (Math.random() * (subTypes.size()+1));
-        if(index == subTypes.size()) {
+        int index =  (int) (Math.random() * (types.size()+1));
+        if(index == types.size()) {
             index--;
         }
 
-        return subTypes.get(index);
+        return (index >= 0) ? types.get(index) : null;
+
+    }
+
+    @Override public EntityType getSubType (EntityType entityType, StateGraph stateGraph)
+    {
+        List<EntityType> subTypes = new ArrayList<EntityType>(entityType.getSubtypes());
+        subTypes.add(entityType);
+        return getSubType(subTypes, stateGraph);
     }
 
     @Override public void validate (ExtendedProperty property)

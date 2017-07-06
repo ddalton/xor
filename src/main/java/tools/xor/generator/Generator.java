@@ -116,9 +116,10 @@ public interface Generator
     /**
      * Returns the desired descendant State
      * @param entityType root type of the inheritance hierarchy
+     * @param stateGraph used to filter the list of subtypes
      * @return the desired descendant state based on generator logic
      */
-    EntityType getSubType (EntityType entityType);
+    EntityType getSubType (EntityType entityType, StateGraph stateGraph);
 
     /**
      * Validate this generator against the property for which it is going to

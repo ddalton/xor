@@ -1035,7 +1035,7 @@ public class Settings {
 						clazz = Class.forName(className);
 						aggregate(clazz);
 						break;
-					case "EXTENDBYCLASS":
+					case "EXPANDBYCLASS":
 						JSONArray extensions = json.getJSONArray(key);
 						for(int i = 0; i < extensions.length(); i++) {
 							clazz = Class.forName(extensions.getString(i));
@@ -1043,14 +1043,46 @@ public class Settings {
 							expand(extension);
 						}
 						break;
-					case "PRUNE":
+					case "EXPANDRELATIVE":
+						extensions = json.getJSONArray(key);
+						for(int i = 0; i < extensions.length(); i++) {
+							String path = extensions.getString(i);
+							AssociationSetting prune = new AssociationSetting(path, MatchType.RELATIVE_PATH);
+							expand(prune);
+						}
+						break;
+					case "EXPANDABSOLUTE":
+						extensions = json.getJSONArray(key);
+						for(int i = 0; i < extensions.length(); i++) {
+							String path = extensions.getString(i);
+							AssociationSetting prune = new AssociationSetting(path, MatchType.ABSOLUTE_PATH);
+							expand(prune);
+						}
+						break;							
+					case "PRUNEBYCLASS":
 						JSONArray prunes = json.getJSONArray(key);
+						for(int i = 0; i < prunes.length(); i++) {
+							clazz = Class.forName(prunes.getString(i));
+							AssociationSetting extension = new AssociationSetting(clazz);
+							prune(extension);
+						}
+						break;						
+					case "PRUNERELATIVE":
+						prunes = json.getJSONArray(key);
 						for(int i = 0; i < prunes.length(); i++) {
 							String path = prunes.getString(i);
 							AssociationSetting prune = new AssociationSetting(path, MatchType.RELATIVE_PATH);
 							prune(prune);
 						}
 						break;
+					case "PRUNEABSOLUTE":
+						prunes = json.getJSONArray(key);
+						for(int i = 0; i < prunes.length(); i++) {
+							String path = prunes.getString(i);
+							AssociationSetting prune = new AssociationSetting(path, MatchType.ABSOLUTE_PATH);
+							prune(prune);
+						}
+						break;						
 					case "FILTERS":
 						Object obj = json.get(key);
 						if(obj instanceof JSONObject) {

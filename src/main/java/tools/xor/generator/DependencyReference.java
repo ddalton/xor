@@ -38,6 +38,12 @@ public class DependencyReference extends DefaultGenerator
     @Override
     public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
+        String result = getDependencyValue(visitor);
+
+        if(result == null) {
+            return super.getIntValue(visitor);
+        }
+        
         return Integer.parseInt(getDependencyValue(visitor));
     }
 }

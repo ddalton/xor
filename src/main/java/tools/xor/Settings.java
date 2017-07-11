@@ -1035,6 +1035,9 @@ public class Settings {
 						clazz = Class.forName(className);
 						aggregate(clazz);
 						break;
+					case "GRAPHFILENAME":
+						this.settings.setGraphFileName(json.getString(key));
+						break;
 					case "EXPANDBYCLASS":
 						JSONArray extensions = json.getJSONArray(key);
 						for(int i = 0; i < extensions.length(); i++) {
@@ -1281,9 +1284,9 @@ public class Settings {
 		if(extension.equals(GraphFormat.PNG.name())) {
 			generateVisual(dg.getGraph());
 		} else if(extension.equals(GraphFormat.GML.name())) {
-			dg.exportToGML();
+			dg.exportToGML(getGraphFileName());
 		} else if(extension.equals(GraphFormat.DOT.name())) {
-			dg.exportToDOT();
+			dg.exportToDOT(getGraphFileName());
 		} else {
 			throw new RuntimeException(
 				"One of the supported extensions need to be supported in the filename (.png, .dot or .gml)");

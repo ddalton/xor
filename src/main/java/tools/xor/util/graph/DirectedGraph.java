@@ -129,13 +129,15 @@ public interface DirectedGraph<V, E> extends Graph<V, E> {
 
 	/**
 	 * Exports the graph to a file in GML format
+	 * @param filename containing the graph in .gml format
 	 */
-	public void exportToGML();
+	public void exportToGML(String filename);
 
 	/**
 	 * Exports the graph in DOT format
+	 * @param filename containing the graph in .dot format
 	 */
-	public void exportToDOT();
+	public void exportToDOT(String filename);
 
 	/**
 	 * Gets a graph data structure to be used in rendering a PNG image.

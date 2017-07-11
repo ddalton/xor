@@ -8,9 +8,12 @@ import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.providers.jdbc.JDBCBatchContext;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.TypeGraph;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -137,6 +140,24 @@ public abstract class XorREST
     protected void initializeGenerators(InputStream inputStream) {
         DataAccessService das = getAM().getDAS();
         das.initGenerators(inputStream);
+    }
+
+    /**
+     * Return a Graphviz file in .dot format of the State Graph
+     * @param settings object
+     * @return .dot format
+     */
+    protected File getGraphvizDOT(Settings settings) {
+
+        TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
+        sg.generateVisual(settings);
+
+        File file = new File(settings.getGraphFileName());
+        if(file.exists()) {
+            return file;
+        }
+
+        throw new RuntimeException("File not found: " + settings.getGraphFileName());
     }
 
     /**

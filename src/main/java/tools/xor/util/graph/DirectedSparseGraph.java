@@ -754,15 +754,11 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	}
 
 	@Override
-	public void exportToGML() {
+	public void exportToGML(String filename) {
 		try {
 			buildGraph();
 
-			//create a temporary file
-			String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
-				Calendar.getInstance().getTime());
-			File logFile=new File(timeLog + ".gml");
-
+			File logFile=new File(filename);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
 
 			writer.write("graph\n[\n");
@@ -782,15 +778,11 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	}
 
 	@Override
-	public void exportToDOT() {
+	public void exportToDOT(String filename) {
 		try {
 			buildGraph();
 
-			//create a temporary file
-			String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
-				Calendar.getInstance().getTime());
-			File logFile=new File(timeLog + ".dot");
-
+			File logFile=new File(filename);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
 
 			writer.write("digraph " + getGraphName() + "{\n");

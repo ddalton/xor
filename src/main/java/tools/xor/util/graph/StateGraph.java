@@ -1,8 +1,12 @@
 package tools.xor.util.graph;
 
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1379,9 +1383,90 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	@Override
 	protected void writeDOTEdges(BufferedWriter writer) throws IOException
 	{
+		writeGraphvizDot(writer);
+	}
+
+	private String getLabel(V vertex) {
+		Type type = vertex.getType();
+
+		StringBuilder label = new StringBuilder();
+		label.append(QueryViewProperty.getBaseName(type.getName()))
+		.append("|");
+
+		if(type instanceof EntityType) {
+			EntityType entityType = (EntityType) type;
+			StringBuilder keyString = new StringBuilder();
+			if(entityType.getNaturalKey() != null) {
+				for (String key : entityType.getNaturalKey()) {
+					if (keyString.length() > 0) {
+						keyString.append("\\n");
+					}
+					keyString.append(key);
+				}
+				label.append(keyString);
+			}
+		}
+
+		return label.toString();
+	}
+
+	protected void writeDOTVertices(BufferedWriter writer) throws IOException
+	{
+		Iterator vertexIter = getConnectedVertices().iterator();
+		while(vertexIter.hasNext()) {
+			V vertex = (V)vertexIter.next();
+
+			writer.write("  " + getId(vertex) + "[label = \"{" + getLabel(vertex) + "}\"]\n");
+		}
+	}
+
+	protected String getGraphName() {
+		return QueryViewProperty.getBaseName(this.getClass().getName());
+	}
+
+	protected void writeGraphvizDot(BufferedWriter writer) throws IOException
+	{
+		writer.write("  node[shape=record,style=filled,fillcolor=ivory]\n");
+
+		// write the vertices
+		writeDOTVertices(writer);
+
+		// Write the edges
+		// Do not constrain all the types that have been explicitly expanded
 		for(Map.Entry<String, E> entry: getEdgeMap().entrySet()) {
 			E edge = entry.getValue();
-			writer.write(getId((V)edge.getStart()) + " -> " + getId((V)edge.getEnd()) + ";\n");
+
+			EntityType startType = (EntityType)edge.getStart().getType();
+			EntityType endType = (EntityType)edge.getEnd().getType();
+			Property property = startType.getProperty(edge.getName());
+
+			boolean constrain = true;
+			if(getRootState() == edge.getStart() && !endType.isEmbedded()) {
+				constrain = false;
+			}
+
+			StringBuilder result = new StringBuilder("  " + getId((V)edge.getStart()) + " -> " + getId((V)edge.getEnd()));
+			result.append("[");
+
+			if(!constrain) {
+				result.append("constraint=false, ");
+			}
+
+			// Inheritance edge
+			if(edge.getName() == null || "".equals(edge.getName())) {
+				result.append("dir=back, arrowtail=empty");
+			}
+			// Aggregation edge
+			else if(property.isContainment()) {
+				result.append("dir=back, arrowtail=diamond");
+			}
+			// Association edge
+			else {
+				result.append("arrowhead=open");
+			}
+			result.append("]\n");
+
+			writer.write(result.toString());
 		}
 	}
 

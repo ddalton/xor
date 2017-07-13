@@ -124,23 +124,28 @@ public class SetUpdateAction extends CollectionUpdateAction {
 		}		
 	}
 
-	protected void addToSet(AddElementAction action) {
+	protected void addToSet (AddElementAction action)
+	{
 
-		BusinessObject collectionOwner  = action.getCollectionOwner();
-		Object collection                   = ((ExtendedProperty) action.getKey().getProperty()).getValue(collectionOwner);
-		Object collectionElement            = action.getCollectionElement();
-		ExtendedProperty collectionProperty = (ExtendedProperty) action.getKey().getProperty();
+		BusinessObject collectionOwner = action.getCollectionOwner();
+		Object collection = ((ExtendedProperty)action.getKey().getProperty()).getValue(
+			collectionOwner);
+		Object collectionElement = action.getCollectionElement();
+		ExtendedProperty collectionProperty = (ExtendedProperty)action.getKey().getProperty();
 
 		// It is possible for the collection object to be null, if this is due to the MANY_TO_ONE end only being set
 		try {
-			if(collection == null) {
+			if (collection == null) {
 				collection = createCollection(collectionOwner, collectionProperty);
-			} 
-		} catch(Exception e) {
+			} else {
+				collection = ClassUtil.getInstance(collection);
+			}
+		}
+		catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}
 
-		((java.util.Collection<Object>)collection).add(ClassUtil.getInstance(collectionElement));		
+		((java.util.Collection<Object>)collection).add(ClassUtil.getInstance(collectionElement));
 	}	
 
 	protected void removeFromSet(RemoveElementAction action) {	

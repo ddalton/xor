@@ -402,31 +402,45 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		List<EntityType> types = new ArrayList<EntityType>();
-		for(AssociationSetting assoc: associations) {
-			if(assoc.getMatchType() == MatchType.TYPE) {
+		for (AssociationSetting assoc : associations) {
+			if (assoc.getMatchType() == MatchType.TYPE) {
 				Type type = shape.getType(assoc.getEntityClass());
-				if(type == null) {
-					throw new RuntimeException("Unable to get the type for class: " + assoc.getClass().getName());
+				if (type == null) {
+					throw new RuntimeException(
+						"Unable to get the type for class: " + assoc.getClass().getName());
 				}
-				if(!EntityType.class.isAssignableFrom(type.getClass())) {
+				if (!EntityType.class.isAssignableFrom(type.getClass())) {
 					throw new RuntimeException("Can only extend an entity type");
 				}
 				types.add((EntityType)type);
-			} else if(assoc.getMatchType() == MatchType.ABSOLUTE_PATH) {
-				extend(assoc.getPathSuffix(), getRootState(), true);
-			} else if(assoc.getMatchType() == MatchType.RELATIVE_PATH) {
-				String propertyToAdd = assoc.getPathSuffix();
-				for(V state: getVertices()) {
-					E e = getOutEdge(state, propertyToAdd);
-					if(e == null) {
-						Type type = state.getType();
-						if(type instanceof EntityType) {
-							EntityType entityType = (EntityType) type;
+			}
+		}
 
-							// We add the edge only if the end state is already present
-							// in the state graph
-							if(states.containsKey(entityType)) {
-								State end = states.get(entityType);
+		for(EntityType type: types) {
+			//System.out.println("Type: " + type.getName());
+			extend(type, shape);
+		}
+
+		for (AssociationSetting assoc : associations) {
+			if (assoc.getMatchType() == MatchType.ABSOLUTE_PATH) {
+				extend(assoc.getPathSuffix(), getRootState(), true);
+			}
+			else if (assoc.getMatchType() == MatchType.RELATIVE_PATH) {
+				String propertyToAdd = assoc.getPathSuffix();
+				for (V state : getVertices()) {
+					E e = getOutEdge(state, propertyToAdd);
+					if (e == null) {
+						Type type = state.getType();
+						if (type instanceof EntityType) {
+							EntityType entityType = (EntityType)type;
+							if (entityType.getProperty(propertyToAdd) != null) {
+								Property property = entityType.getProperty(propertyToAdd);
+								Type endType = GraphUtil.getPropertyEntityType(property, shape);
+
+								if (!states.containsKey(endType)) {
+									addVertex((V)new State(endType, false));
+								}
+								State end = states.get(endType);
 								Edge newEdge = new Edge(propertyToAdd, state, end);
 								addEdge((E)newEdge);
 							}
@@ -434,11 +448,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					}
 				}
 			}
-		}
-
-		for(EntityType type: types) {
-			//System.out.println("Type: " + type.getName());
-			extend(type, shape);
 		}
 
 		// If the type system is not topologically ordered then we need to

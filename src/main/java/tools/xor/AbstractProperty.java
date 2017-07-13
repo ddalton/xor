@@ -457,7 +457,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					!MutableJsonProperty.class.isAssignableFrom(this.getClass())
 
 				) {
-				logger.warn("Found null for " + instanceClass.getName() + "#" + getName());
+				logger.warn("Found null for " + getContext());
 			}
 			return;
 		}
@@ -484,6 +484,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			alwaysInitialized = true;
 		}
 
+	}
+
+	private String getContext() {
+		return getContainingType().getName() + "#" + getName();
 	}
 
 	protected void initByAnnotations() {
@@ -1006,7 +1010,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		} catch (Exception e) {
 			// log the original exception if any
 			if(originalAccessException != null) {
-				logger.error("AbstractProperty#query original exception", originalAccessException);
+				logger.error("AbstractProperty#query[" + getContext() + "] original exception", originalAccessException);
 			}
 			throw ClassUtil.wrapRun(e);
 		}
@@ -1070,7 +1074,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		} catch (Exception e) {
 			// log the original exception if any
 			if(originalAccessException != null) {
-				logger.error("AbstractProperty#executeUpdate original exception", originalAccessException);
+				logger.error("AbstractProperty#executeUpdate[" + getContext() + "] original exception", originalAccessException);
 			}
 			throw ClassUtil.wrapRun(e);
 		}

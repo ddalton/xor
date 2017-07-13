@@ -210,7 +210,9 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		try {
 			if(collection == null) {
 				collection = createCollection(collectionOwner, collectionProperty);
-			} 
+			} else {
+				collection = ClassUtil.getInstance(collection);
+			}
 		} catch(Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}

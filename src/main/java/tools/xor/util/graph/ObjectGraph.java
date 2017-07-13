@@ -13,6 +13,7 @@ import tools.xor.ListType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
@@ -152,10 +153,6 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 				settings.getDetector().investigate(objectCreator);
 			}
 		}
-
-		if(settings.isGenerateVisual()) {
-			this.generateVisual(settings);
-		}
 	}
 
 	/**
@@ -266,7 +263,26 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			addEdge((E) edge, (V) source, (V) target);
 			
 			if(property.isMany()) {
-				for(Object element: source.getList(property)) {
+				Collection collection = source.getList(property);
+				if(property.isOpenContent() && collection.size() == 0) {
+					Object obj = ClassUtil.getInstance(source.get(property));
+					if(obj != null) {
+						if (obj instanceof Collection) {
+							collection = (Collection)obj;
+						}
+						else if (obj instanceof Map) {
+							collection = ((Map)obj).entrySet();
+						}
+					}
+				}
+				for(Object element: collection) {
+					if( !(element instanceof BusinessObject) ) {
+						element = source.getObjectCreator().getExistingDataObject(element);
+						if(element == null) {
+							continue;
+						}
+					}
+
 					// No direct property reference for a collection element
 					edge = new BusinessEdge<BusinessObject>(target, (BusinessObject) element, null);
 					addEdge((E) edge, (V) target, (V) element);

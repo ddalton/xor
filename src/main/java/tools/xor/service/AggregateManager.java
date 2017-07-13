@@ -479,11 +479,13 @@ public class AggregateManager implements Xor
 				MapperDirection.DOMAINTODOMAIN);
 			BusinessObject from = oc.createDataObject(
 				entity,
-				(EntityType)das.getType(entity.getClass()),
+				das.getType(entity.getClass()),
 				null,
 				null);
 			oc.setRoot(from);
-			flushHandler.register((BusinessObject)from.clone(settings));
+			BusinessObject bo = (BusinessObject)from.clone(settings);
+			flushHandler.register(bo);
+			generateVisual(bo, settings);
 
 		} finally {
 			flushHandler.done();
@@ -607,7 +609,10 @@ public class AggregateManager implements Xor
 				null);
 			oc.setRoot(from);
 			settings.setAction(AggregateAction.CREATE);
-			flushHandler.register((BusinessObject)from.create(settings));
+
+			BusinessObject bo = (BusinessObject)from.create(settings);
+			flushHandler.register(bo);
+			generateVisual(bo, settings);
 
 		} finally {
 			flushHandler.done();
@@ -709,15 +714,19 @@ public class AggregateManager implements Xor
 		return to;
 	}
 
+	private void generateVisual(BusinessObject bo, Settings settings) {
+		if(settings.isGenerateVisual()) {
+			ObjectGraph og = bo.getObjectCreator().getObjectGraph();
+			og.generateVisual(settings);
+		}
+	}
+
 	@Override
 	public Object read (Object entity, Settings settings)
 	{
 		BusinessObject to = readBO(entity, settings);
 
-		if(settings.isGenerateVisual()) {
-			ObjectGraph og = to.getObjectCreator().getObjectGraph();
-			og.generateVisual(settings);
-		}
+		generateVisual(to, settings);
 
 		return (to != null) ? to.getNormalizedInstance(settings) : null;
 	}
@@ -920,7 +929,10 @@ public class AggregateManager implements Xor
 				null,
 				null);
 			oc.setRoot(from);
-			flushHandler.register((BusinessObject)from.update(settings));
+
+			BusinessObject bo = from.update(settings);
+			flushHandler.register(bo);
+			generateVisual(bo, settings);
 
 		} finally {
 			flushHandler.done();

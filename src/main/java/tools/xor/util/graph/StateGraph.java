@@ -286,12 +286,18 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					if(path.equals(propertyPath)) {
 						// If it equals it, it is a reference association
 						for(String propertyName: AggregatePropertyPaths.enumerateRef(type)) {
-							result.add(type.getProperty(propertyName));
+							Property p = type.getProperty(propertyName);
+							if(p != null) {
+								result.add(p);
+							}
 						}
 					} else {
 						int delimLen = propertyPath.length() > 0 ? Settings.PATH_DELIMITER.length() : 0;
 						String remaining = path.substring(propertyPath.length()+delimLen);
-						result.add(type.getProperty(QueryViewProperty.getRootName(remaining)));
+						Property p = type.getProperty(QueryViewProperty.getRootName(remaining));
+						if(p != null) {
+							result.add(p);
+						}
 					}
 				}
 			}

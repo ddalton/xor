@@ -102,9 +102,9 @@ public class DefaultCheckType extends AbstractDBTest {
 		owner = (Technician) technician.getInstance();
 		assert(owner.getId() != null);
 		
-		// the name is null since we did not retrieve it from the DB but from the previously loaded task that did not
-		// have name populated
-		assert(owner.getName() == null);
+		// When expanding "assignedTo.name", the Technician type was included and hence the
+		// name should not be null
+		assert(owner.getName() != null);
 		
 		// Now let us get the task from DB and check it
 		// NOTE: we use the same settings, but use the read API from the AggregateManager that gets the DB object

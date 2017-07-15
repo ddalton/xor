@@ -282,13 +282,23 @@ public interface View {
 	 * Adds a StateGraph instance for a particular type against this view
 	 * @param type for which the StateGraph is configured based off this view
 	 * @param value StateGraph instance
+	 * @param isExact true if this represents an exact Type Graph or a graph that includes subtypes
 	 */
-	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value);
+	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, boolean isExact);
 
 	/**
 	 * Cache the generated state graph by EntityType.
 	 * Note: We need to make a distinction between Domain and Reference entity types otherwise
 	 * we could end up thrashing between building the graph for these two types.
+	 *
+	 * @param entityType for which the corresponding StateGraph needs to be built
+	 * @param isExact true if this represents an exact Type Graph or a graph that includes subtypes
+	 * @return StateGraph instance for the given type for this view
+	 */
+	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact);
+
+	/**
+	 * By default we return the Type Graph includes all types expanded by subtypes and supertypes.
 	 *
 	 * @param entityType for which the corresponding StateGraph needs to be built
 	 * @return StateGraph instance for the given type for this view

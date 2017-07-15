@@ -40,7 +40,12 @@ public class DFAtoNFA {
 
 	public static final String UNLABELLED = "";
 
-	public static void processInheritance(StateGraph<State, Edge<State>> stateGraph) {
+	/**
+	 * Add subtypes and supertypes to the stategraph
+	 * @param stateGraph to be extended with subtypes and supertypes
+	 * @param excludeSubtypes true if the subtypes do not need to be populated
+	 */
+	public static void processInheritance(StateGraph<State, Edge<State>> stateGraph, boolean excludeSubtypes) {
 		Map<EntityType, State> entityTypeMap = new HashMap<EntityType, State>();
 		// maintain a stack of inheritance states to process
 		for(State state: stateGraph.getVertices()) {
@@ -51,8 +56,10 @@ public class DFAtoNFA {
 
 		// Add subtypes
 		Collection<EntityType> entities = new HashSet(entityTypeMap.keySet());
-		for(EntityType entityType:  entities) {
-			addSubTypes(entityType, stateGraph, entityTypeMap);
+		if(!excludeSubtypes) {
+			for (EntityType entityType : entities) {
+				addSubTypes(entityType, stateGraph, entityTypeMap);
+			}
 		}
 
 		// Add supertypes

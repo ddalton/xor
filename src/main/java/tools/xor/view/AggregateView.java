@@ -54,14 +54,14 @@ import tools.xor.view.QueryView.ViewKey;
 public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public static final String VIEW_REFERENCE_START = "[";
-	public static final String VIEW_REFERENCE_NAME_REGEX = "^.*\\[\\s*(\\w+)\\s*\\].*";
-	public static final String VIEW_REFERENCE_MULTIPLE_REGEX = "^(.*)(\\[\\s*(\\w+)\\s*\\]).*(\\[\\s*\\w+\\s*\\].*)";
-	public static final String VIEW_REFERENCE_PREFIX_REGEX = "^(.*)\\[\\s*\\w+\\s*\\].*";
-	public static final String REGEX_STRING = "[\\*\\?\\+\\[\\{\\|\\(\\)\\^\\$]";
+	public static final String  VIEW_REFERENCE_START = "[";
+	public static final String  VIEW_REFERENCE_NAME_REGEX = "^.*\\[\\s*(\\w+)\\s*\\].*";
+	public static final String  VIEW_REFERENCE_MULTIPLE_REGEX = "^(.*)(\\[\\s*(\\w+)\\s*\\]).*(\\[\\s*\\w+\\s*\\].*)";
+	public static final String  REGEX_STRING = "[\\*\\?\\+\\[\\{\\|\\(\\)\\^\\$]";
 	public static final Pattern REGEX_STRING_MATCHER = Pattern.compile(REGEX_STRING);
 
 	public static final String DOMAIN = "DOMAIN:";
+	public static final String EXACT = "EXACT:";
 	public static final String REGEX = "_REGEX_";
 
 	// The user can specify child branches if necessary directly. 
@@ -608,26 +608,34 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return this.stateGraph;
 	}
 
-	@Override
-	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value) {
+	private String getEntityName(EntityType type, boolean isExact) {
+		String exactPrefix = isExact ? EXACT : "";
 
-		stateGraph.put(getEntityName(type), (StateGraph<State, Edge<State>>)value);
-	}
-
-	private String getEntityName(EntityType type) {
 		if(type.isDomainType()) {
-			return DOMAIN + type.getName();
+			return exactPrefix + DOMAIN + type.getName();
 		} else {
-			return type.getName();
+			return exactPrefix + type.getName();
 		}
 	}
 
 	@Override
-	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType) {
+	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, boolean isExact) {
 
-		String entityName = getEntityName(entityType);
+		stateGraph.put(getEntityName(type, isExact), (StateGraph<State, Edge<State>>)value);
+	}
+
+	@Override
+	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType) {
+		return getTypeGraph(entityType, false);
+	}
+
+	@Override
+	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact) {
+
+		String entityName = getEntityName(entityType, isExact);
 
 		if(!stateGraph.containsKey(entityName) ) {
+			// By default build an exact type graph of types belonging to non-recurse attributes
 			stateGraph.put(entityName, DFAtoRE.build(this, entityType));
 		}
 		

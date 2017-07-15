@@ -407,7 +407,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 		}
 
-		List<EntityType> types = new ArrayList<EntityType>();
+		List<EntityType> exactTypes = new ArrayList<EntityType>();
+		List<EntityType> fullTypes = new ArrayList<EntityType>();
 		for (AssociationSetting assoc : associations) {
 			if (assoc.getMatchType() == MatchType.TYPE) {
 				Type type = shape.getType(assoc.getEntityClass());
@@ -418,13 +419,19 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				if (!EntityType.class.isAssignableFrom(type.getClass())) {
 					throw new RuntimeException("Can only extend an entity type");
 				}
-				types.add((EntityType)type);
+				if(assoc.isExact()) {
+					exactTypes.add((EntityType)type);
+				} else {
+					fullTypes.add((EntityType)type);
+				}
 			}
 		}
 
-		for(EntityType type: types) {
-			//System.out.println("Type: " + type.getName());
-			extend(type, shape);
+		for(EntityType type: fullTypes) {
+			extend(type, shape, false);
+		}
+		for(EntityType type: exactTypes) {
+			extend(type, shape, true);
 		}
 
 		for (AssociationSetting assoc : associations) {
@@ -470,8 +477,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * 
 	 * @param additionalType to extend
 	 * @param shape of the type being extended
+	 * @param isExact true if extending only by an exact type
 	 */
-	public void extend(EntityType additionalType, Shape shape) {
+	public void extend(EntityType additionalType, Shape shape, boolean isExact) {
 		if(this.states.containsKey(additionalType)) {
 			logger.warn("Already includes the type being extended: " + additionalType.getName());
 		}
@@ -480,7 +488,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			throw new RuntimeException("Type " + additionalType.getName() + " has to be an entity type");
 		}
 		StateGraph<State, Edge<State>> addendum = shape.getView(additionalType)
-			.getTypeGraph(additionalType)
+			.getTypeGraph(additionalType, isExact)
 			.copy((Map<Type, State>)this.states);
 
 		merge(addendum);

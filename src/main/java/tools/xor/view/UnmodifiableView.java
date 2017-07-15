@@ -205,9 +205,14 @@ public class UnmodifiableView implements View
         return view.matches(path);
     }
 
-    @Override public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value)
+    @Override public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, boolean isExact)
     {
         raiseException();
+    }
+
+    @Override public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact)
+    {
+        return new UnmodifiableTypeGraph<>(view.getTypeGraph(entityType, isExact));
     }
 
     @Override public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType)

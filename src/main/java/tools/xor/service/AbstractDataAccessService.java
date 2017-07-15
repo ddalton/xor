@@ -239,7 +239,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		stateGraph.populateEdges(shape);
-		DFAtoNFA.processInheritance(stateGraph);
+		DFAtoNFA.processInheritance(stateGraph, false);
 
 		if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
 			|| !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {

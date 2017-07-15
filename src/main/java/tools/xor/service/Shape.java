@@ -534,7 +534,8 @@ public class Shape
             Set<String> paths = AggregatePropertyPaths.enumerate(type, this);
 
             DFAtoRE dfaRE = new DFAtoRE(type, this);
-            result.addTypeGraph(type, dfaRE.getFullStateGraph());
+            result.addTypeGraph(type, dfaRE.getExactStateGraph(), true);
+            result.addTypeGraph(type, dfaRE.getFullStateGraph(), false);
 
             updateView(result, viewName, paths);
         }

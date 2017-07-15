@@ -53,6 +53,7 @@ public class DFAtoRE {
 
 	private Type                  aggregateType;
 	private StateGraph<State, Edge<State>> stateGraph;
+	private StateGraph<State, Edge<State>> stateGraphExact; // No subtype expansion, supertypes ok
 	private Map<Type, Expression> equations = new HashMap<Type, DFAtoRE.Expression>();
 	private Map<State, Expression> regEx = new HashMap<State, DFAtoRE.Expression>();
 	
@@ -64,7 +65,10 @@ public class DFAtoRE {
 		this.aggregateType = aggregateType;
 		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType, shape);
 		buildDFA(shape);
-		DFAtoNFA.processInheritance(this.stateGraph);
+		this.stateGraphExact = this.stateGraph.copy();
+		DFAtoNFA.processInheritance(this.stateGraphExact, true);
+		DFAtoNFA.processInheritance(this.stateGraph, false);
+
 		solve();
 	}
 	
@@ -74,6 +78,10 @@ public class DFAtoRE {
 	
 	public StateGraph<State, Edge<State>> getFullStateGraph() {
 		return stateGraph.getFullStateGraph();
+	}
+
+	public StateGraph<State, Edge<State>> getExactStateGraph() {
+		return stateGraphExact.getFullStateGraph();
 	}
 	
 	private State getConstrained(State state, Map<State, State> existing) {
@@ -742,7 +750,7 @@ public class DFAtoRE {
 	}
 	
 	/**
-	 * Build constrained state graph of only RECURSE attributes
+	 * Build constrained state graph of only non-RECURSE attributes
 	 * 
 	 * @param aggregateView representing the graph
 	 * @param type of entity
@@ -757,7 +765,6 @@ public class DFAtoRE {
 		StateGraph<State, Edge<State>> constrainedGraph = new StateGraph<State, Edge<State>>(type, aggregateView.getShape());
 		constrainedGraph.addVertex(startState);
 
-		Map<String, Pattern> regexMap = new HashMap<>();
 		for(String attrPath: aggregateView.getAttributeList()) {
 			if(!isRegex(attrPath)) {
 				constrainedGraph.extend(attrPath, startState, false);

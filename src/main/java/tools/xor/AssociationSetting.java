@@ -24,6 +24,7 @@ public final class AssociationSetting {
 	private final Class<?> entityClass;
 	private final String pathSuffix;
 	private final Boolean createIfMissing;
+	private final Boolean exact;
 
 	/**
 	 * If including a type to be part of the view, then
@@ -32,14 +33,19 @@ public final class AssociationSetting {
 	 * @param entityClass the class of the Type
 	 */
 	public AssociationSetting(Class<?> entityClass) {
-		this(entityClass, Boolean.TRUE);
+		this(entityClass, Boolean.TRUE, Boolean.FALSE);
 	}
 
-	public AssociationSetting(Class<?> entityClass, Boolean createIfMissing) {
+	public static AssociationSetting getExact(Class<?> entityClass) {
+		return new AssociationSetting(entityClass, Boolean.TRUE, Boolean.TRUE);
+	}
+
+	public AssociationSetting(Class<?> entityClass, Boolean createIfMissing, Boolean exact) {
 		this.entityClass = entityClass;
 		this.matchType = MatchType.TYPE;
 		this.pathSuffix = null;
 		this.createIfMissing = createIfMissing;
+		this.exact = exact;
 	}
 
 	public AssociationSetting(String pathSuffix) {
@@ -47,6 +53,7 @@ public final class AssociationSetting {
 		this.matchType = MatchType.ABSOLUTE_PATH;
 		this.entityClass = null;
 		this.createIfMissing = Boolean.TRUE;
+		this.exact = Boolean.FALSE;
 	}
 
 	/**
@@ -59,6 +66,7 @@ public final class AssociationSetting {
 		this.matchType = matchType;
 		this.entityClass = null;
 		this.createIfMissing = Boolean.TRUE;
+		this.exact = Boolean.FALSE;
 	}
 	
 	public Class<?> getEntityClass() {
@@ -73,10 +81,12 @@ public final class AssociationSetting {
 		return matchType;
 	}
 
-	public Boolean getCreateIfMissing ()
+	public Boolean doCreateIfMissing ()
 	{
 		return createIfMissing;
 	}
+
+	public Boolean isExact() { return this.exact; }
 
 
 	public boolean isAggregatePart(CallInfo ci) {

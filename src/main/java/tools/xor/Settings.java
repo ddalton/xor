@@ -40,8 +40,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
-import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
-import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationImageServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -250,7 +248,7 @@ public class Settings {
 			shouldCreateIfMissing = new HashMap<>();
 			for(AssociationSetting setting: expandedAssociations) {
 				if(setting.getEntityClass() != null) {
-					shouldCreateIfMissing.put(setting.getEntityClass(), setting.getCreateIfMissing());
+					shouldCreateIfMissing.put(setting.getEntityClass(), setting.doCreateIfMissing());
 				}
 			}
 		}
@@ -1043,6 +1041,14 @@ public class Settings {
 						for(int i = 0; i < extensions.length(); i++) {
 							clazz = Class.forName(extensions.getString(i));
 							AssociationSetting extension = new AssociationSetting(clazz);
+							expand(extension);
+						}
+						break;
+					case "EXPANDBYCLASSEXACT":
+						extensions = json.getJSONArray(key);
+						for(int i = 0; i < extensions.length(); i++) {
+							clazz = Class.forName(extensions.getString(i));
+							AssociationSetting extension = AssociationSetting.getExact(clazz);
 							expand(extension);
 						}
 						break;

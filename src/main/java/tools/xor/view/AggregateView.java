@@ -46,9 +46,18 @@ import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
+import tools.xor.util.graph.EdgeStateGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.QueryView.ViewKey;
+
+/**
+ * If the view and its children have types then the children will be considered as being subtypes
+ *
+ * Else, if the children do not have types, it will be considered as query partitions
+ * For query partitions, the user can specify child branches if necessary directly.
+ * NOTE: If one or more child branch are specified, then only the child branches are executed.
+ */
 
 @XmlRootElement(name="AggregateView")
 public class AggregateView implements Comparable<AggregateView>, Vertex, View {
@@ -64,8 +73,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public static final String EXACT = "EXACT:";
 	public static final String REGEX = "_REGEX_";
 
-	// The user can specify child branches if necessary directly. 
-	// NOTE: If one or more child branch are specified, then only the child branches are executed.
 	protected String            name;
 	protected List<String>      attributeList;
 	protected String            typeName; // represents the root entity type
@@ -84,11 +91,13 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	protected NativeQuery       nativeQuery;
 	
 	protected List<StoredProcedure>   storedProcedure;
-	
-	//  validation should be done by the PersistenceOrchestrator
-	// If the children are specified, it is not necessary to split it automatically
-	// and we will trust the user has done a better split
-	// NOTE: Only one level of child Content views are permitted. Nesting is not allowed.
+
+	/** This description only applies to query partitions
+	 * validation should be done by the PersistenceOrchestrator
+	 * If the children are specified, it is not necessary to split it automatically
+	 * and we will trust the user has done a better split
+	 * NOTE: Only one level of child Content views are permitted. Nesting is not allowed.
+	 */
 	protected List<AggregateView> children;
 	
 	// The parameters specified in the filter or in the native query
@@ -104,7 +113,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	private boolean union;
 
 	@XmlTransient
-	private Set<String> exactAttributes; // These do not have the recursive operand (*) and
+	private Set<String> exactAttributes; // These do not have the recursive operand (*)
 	                                     // and exact match can be performed
 
 	@XmlTransient
@@ -454,7 +463,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return result;
 	}
 
-	private String getViewReference(String attribute) {
+	public static String getViewReference(String attribute) {
 		if(attribute.matches(VIEW_REFERENCE_NAME_REGEX)) {
 			Scanner s = new Scanner(attribute);
 			try {
@@ -483,6 +492,16 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	@Override
 	public void expand() {
+
+		if(getChildren() != null) {
+			for(AggregateView child: getChildren()) {
+				// EntityType fragments cannot be expanded
+				if(child.getTypeName() != null) {
+					return;
+				}
+			}
+		}
+
 		// If it is already expanded then return
 		if(isExpanded()) {
 			return;
@@ -629,17 +648,43 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return getTypeGraph(entityType, false);
 	}
 
+	public TypeGraph<State, Edge<State>> getTypeGraph () {
+		if(typeName == null) {
+			throw new RuntimeException("The type for the view needs to be provided");
+		}
+
+		// Return the type graph related to the view EntityType
+		return getTypeGraph(null);
+	}
+
 	@Override
 	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact) {
 
-		String entityName = getEntityName(entityType, isExact);
+		String entityName = this.typeName != null ? this.typeName : getEntityName(entityType, isExact);
 
+		// This is not a default view, then we need to construct the type graph for this view
 		if(!stateGraph.containsKey(entityName) ) {
-			// By default build an exact type graph of types belonging to non-recurse attributes
-			stateGraph.put(entityName, DFAtoRE.build(this, entityType));
+			if(typeName != null) {
+				Type type = shape.getType(typeName);
+				if (!type.getInstanceClass().isAssignableFrom(entityType.getInstanceClass())) {
+					throw new RuntimeException(
+						"The view type " + type.getName()
+							+ " should either be the same or a supertype of the given type: "
+							+ entityType.getName());
+				}
+			}
+			if(isEdgeGraph(this)) {
+				stateGraph.put(entityName, EdgeStateGraph.build(this, entityType));
+			} else {
+				stateGraph.put(entityName, DFAtoRE.build(this, entityType));
+			}
 		}
 		
 		return stateGraph.get(entityName);
+	}
+
+	public static boolean isEdgeGraph(View view) {
+		return !view.isExpanded() && view.getTypeName() != null;
 	}
 
 	@Override

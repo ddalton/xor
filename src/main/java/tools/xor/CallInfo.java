@@ -30,9 +30,14 @@ import org.apache.log4j.Logger;
 import tools.xor.ExtendedProperty.Phase;
 import tools.xor.event.PropertyElement;
 import tools.xor.operation.Operation;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.State;
+import tools.xor.util.graph.EdgeStateGraph;
 import tools.xor.util.graph.TypeGraph;
+import tools.xor.view.AggregateView;
 
 public class CallInfo {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -52,6 +57,7 @@ public class CallInfo {
 
 	// attributes for optimization
 	private String           propertyPath;
+	private State            currentState;
 	
 	public CallInfo() {
 		// Empty constructor, needs to be followed with an init call
@@ -252,6 +258,34 @@ public class CallInfo {
 
 		return true;
 	}
+
+	public State getCurrentState() {
+		if(currentState == null) {
+			EntityType entityType = (EntityType)settings.getEntityType();
+			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
+			if(getParent() == null || getParent().isBulkInput()) {
+				currentState = sg.getRootState();
+			} else {
+				Property property = getInputProperty();
+				if(property != null) {
+					Edge edge = sg.getOutEdge(getParent().getCurrentState(), property.getName());
+					currentState = (State)edge.getEnd();
+				} else if(getParent().getParent() != null) {
+					property = getParent().getInputProperty();
+					if(property != null) {
+						Edge edge = sg.getOutEdge(
+							getParent().getParent().getCurrentState(),
+							property.getName());
+						currentState = (State)edge.getEnd();
+					} else {
+						throw new RuntimeException("Unable to locate property");
+					}
+				}
+			}
+		}
+
+		return currentState;
+	}
 	
 	public List<Property> getProperties(Type type) {
 		if(settings.getView() == null) {
@@ -272,13 +306,31 @@ public class CallInfo {
 			settings.getView().expand();
 		}
 
-		// The state graph has full blown attributes for the type
-		// We need to get only the exact properties
-		
-		List<Property> exactProperties = sg.next(
-					((EntityType)type).getDomainType(),
-					getInputPropertyPath(),
-					settings.getView().getExactAttributes());
+		List<Property> exactProperties = null;
+		// If the view is not expanded, then it represents an EdgeStateGraph
+		if(AggregateView.isEdgeGraph(settings.getView())) {
+			State state = getCurrentState();
+			if (settings.getAction() == AggregateAction.READ) {
+				Object obj = ClassUtil.getInstance(getInput());
+				if (obj != null) {
+					EntityType instanceType = (EntityType)getInputObjectCreator().getDAS().getType(
+						obj.getClass());
+					state = ((EdgeStateGraph.SubtypeState)state).getState(instanceType);
+				}
+			}
+
+			// The state graph has full blown attributes for the type
+			// We need to get only the exact properties
+			exactProperties = sg.next(
+				state,
+				getInputPropertyPath(),
+				settings.getView().getExactAttributes());
+		} else {
+			exactProperties = sg.next(
+				((EntityType)type).getDomainType(),
+				getInputPropertyPath(),
+				settings.getView().getExactAttributes());
+		}
 		
 		// Get the external property instances, if type is in external form
 		if(!((AbstractType)type).isDomainType()) {

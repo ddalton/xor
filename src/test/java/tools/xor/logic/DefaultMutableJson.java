@@ -35,6 +35,7 @@ import tools.xor.Settings;
 import tools.xor.db.base.Department;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.LocationDetails;
+import tools.xor.db.base.Manager;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
@@ -1398,6 +1399,102 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		aggregateManager.update(dept, settings);
 	}
 
+	public void readDifferentPersonViews() {
+		DataAccessService das = aggregateManager.getDAS();
+
+		EntityType deptType = (EntityType)das.getType(Department.class);
+		View view = das.getView(deptType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.expand(new AssociationSetting(Employee.class));
+		settings.setEntityType(deptType);
+		settings.setEntitySize(EntitySize.MEDIUM);
+
+		settings.init(das.getShape());
+		TypeGraph sg = settings.getView().getTypeGraph(deptType);
+
+		settings.setSparseness(0.1f);
+		JSONObject dept = sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setGraphFileName("DeptUpdateCollectionGraph.png");
+		settings.setPostFlush(true);
+		Department d = (Department)aggregateManager.update(dept, settings);
+
+		AggregateView aggrView = new AggregateView("DIFFERENT_PERSON");
+		aggrView.setTypeName(Department.class.getName());
+		List<String> attributeList = new ArrayList<>();
+		attributeList.add("name");
+		attributeList.add("updatedBy.name");
+		attributeList.add("createdBy.name");
+		attributeList.add("createdBy.description");
+		aggrView.setAttributeList(attributeList);
+
+		settings = new Settings();
+		settings.setView(aggrView);
+		aggrView.setShape(das.getShape());
+		Object extDept = aggregateManager.read(d, settings);
+		assert(extDept != null);
+		System.out.println("Dept: " + extDept);
+	}
+
+
+	public void readEmployeeNumber() {
+		DataAccessService das = aggregateManager.getDAS();
+
+		EntityType deptType = (EntityType)das.getType(Department.class);
+		View view = das.getView(deptType).copy();
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.expand(new AssociationSetting(Employee.class));
+		settings.setEntityType(deptType);
+		settings.setEntitySize(EntitySize.MEDIUM);
+
+		settings.init(das.getShape());
+		TypeGraph sg = settings.getView().getTypeGraph(deptType);
+
+		settings.setSparseness(0.1f);
+		JSONObject dept = sg.generateObjectGraph(settings);
+
+		// Try and persist this now
+		settings.setPostFlush(true);
+		Department d = (Department)aggregateManager.update(dept, settings);
+
+		AggregateView employeeView = new AggregateView("EMP");
+		employeeView.setTypeName(Manager.class.getName());
+		List<String> aList = new ArrayList<>();
+		aList.add("description");
+		employeeView.setAttributeList(aList);
+		List<AggregateView> children = new ArrayList<>();
+		children.add(employeeView);
+
+		AggregateView aggrView = new AggregateView("DIFFERENT_PERSON");
+		aggrView.setTypeName(Department.class.getName());
+		List<String> attributeList = new ArrayList<>();
+		attributeList.add("name");
+		attributeList.add("updatedBy.name");
+		attributeList.add("createdBy.name");
+		attributeList.add("createdBy.description");
+		attributeList.add("employees.name");
+		attributeList.add("employees.[EMP]"); // inheritance
+		aggrView.setAttributeList(attributeList);
+		aggrView.setChildren(children);
+
+		settings = new Settings();
+		settings.setView(aggrView);
+		aggrView.setShape(das.getShape());
+
+		sg = settings.getView().getTypeGraph(deptType);
+		settings.setGraphFileName("DifferentInheritance.dot");
+		sg.generateVisual(settings);
+
+		settings.setGraphFileName(null);
+		Object extDept = aggregateManager.read(d, settings);
+		assert(extDept != null);
+		System.out.println("Dept inheritance: " + extDept);
+	}
+
+
 	public void readNarrowedCollectionObjectGraph() throws FileNotFoundException
 	{
 		DataAccessService das = aggregateManager.getDAS();
@@ -1414,7 +1511,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		TypeGraph sg = settings.getView().getTypeGraph(deptType);
 
 		settings.setSparseness(0.1f);
-		JSONObject dept = (JSONObject)sg.generateObjectGraph(settings);
+		JSONObject dept = sg.generateObjectGraph(settings);
 
 		// Try and persist this now
 		settings.setGraphFileName("DeptUpdateCollectionGraph.png");

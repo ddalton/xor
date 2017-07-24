@@ -348,6 +348,18 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	}
 
 	@Test
+	public void readDifferentPersonViews()
+	{
+		super.readDifferentPersonViews();
+	}
+
+	@Test
+	public void readEmployeeNumber()
+	{
+		super.readEmployeeNumber();
+	}
+
+	@Test
 	public void readNarrowedCollectionObjectGraph() throws FileNotFoundException
 	{
 		super.readNarrowedCollectionObjectGraph();

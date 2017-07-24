@@ -86,6 +86,11 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.copy(mergeStates);
 	}
 
+	@Override public List<Property> next (State state, String propertyPath, Set<String> exactSet)
+	{
+		return typeGraph.next(state, propertyPath, exactSet);
+	}
+
 	@Override public List<Property> next (Type type, String propertyPath, Set<String> exactSet)
 	{
 		return typeGraph.next(type, propertyPath, exactSet);

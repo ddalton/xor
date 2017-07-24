@@ -81,23 +81,25 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates);
 
 	/**
-	 * Get the set of child attributes anchored at the state
-	 * referenced by pathAnchor
-	 * @param type of the vertex
-	 * @return list of properties
-	 */
-	/**
-	 * Get the set of child attributes anchored at the state
-	 * referenced by pathAnchor.
-	 * The sum of the exactSet of the property paths and the graph
+	 * This determines the next valid set of properties to process given the current state
+	 * at the location specified by propertyPath.
+	 * Also takes into account the exact set of properties defined on the view.
 	 *
-	 *
-	 * This determines the next valid set of properties to process.
-	 *
-	 * @param type of the current step
+	 * @param state of the current step in the Type graph
 	 * @param propertyPath traversed so far
-	 * @param exactSet of properties to consider, that is in addition to the graph
+	 * @param exactSet of properties defined by the view
 	 * @return the set of properties that need to be processed next
+	 */
+	public List<Property> next(State state, String propertyPath, Set<String> exactSet);
+
+	/**
+	 * Get the set of child attributes anchored at a given type. Not all TypeGraph support
+	 * this operation.
+	 *
+	 * @param type EntityType
+	 * @param propertyPath current location of the program execution
+	 * @param exactSet of properties in the view
+	 * @return
 	 */
 	public List<Property> next(Type type, String propertyPath, Set<String> exactSet);
 

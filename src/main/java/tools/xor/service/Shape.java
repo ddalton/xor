@@ -524,13 +524,22 @@ public class Shape
         return new ArrayList<View>(views.values());
     }
 
+    /**
+     * Returns the default view for the EntityType. This means that the
+     * StateGraph that is generated is also pre-defined and comes in 2 flavors:
+     * 1. StateGraph with subtypes populated
+     * 2. StateGraph with no subtypes
+     * 
+     * @param type representing the EntityType corresponding to the view
+     * @return built-in view
+     */
     public View getView(EntityType type) {
 
         String viewName = AbstractType.getViewName(type);
         View result = getView(viewName);
 
         if(result == null) {
-            result = new AggregateView(type, viewName);
+            result = new AggregateView(viewName);
             Set<String> paths = AggregatePropertyPaths.enumerate(type, this);
 
             DFAtoRE dfaRE = new DFAtoRE(type, this);
@@ -560,7 +569,7 @@ public class Shape
         View result = getView(viewName);
 
         if(result == null) {
-            result = new AggregateView(type, viewName);
+            result = new AggregateView(viewName);
             Set<String> paths = AggregatePropertyPaths.enumerateBase(type);
 
             updateView(result, viewName, paths);
@@ -575,7 +584,7 @@ public class Shape
         View result = getView(viewName);
 
         if(result == null) {
-            result = new AggregateView(type, viewName);
+            result = new AggregateView(viewName);
             Set<String> paths = AggregatePropertyPaths.enumerateRef(type);
 
             updateView(result, viewName, paths);

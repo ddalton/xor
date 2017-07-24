@@ -1,24 +1,5 @@
 package tools.xor.util.graph;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
@@ -26,7 +7,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import tools.xor.AbstractProperty;
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
@@ -45,7 +25,6 @@ import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoNFA;
-import tools.xor.util.DFAtoRE;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
 import tools.xor.util.DFAtoRE.TypedExpression;
@@ -53,14 +32,30 @@ import tools.xor.util.DFAtoRE.UnionExpression;
 import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
+import tools.xor.view.AggregateView;
 import tools.xor.view.QueryView;
 import tools.xor.view.QueryViewProperty;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSparseGraph<V, E> implements TypeGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger sgLogger = LogManager.getLogger(Constants.Log.STATE_GRAPH);
 
-	private static final String EMPTY_EDGE = "";
+	public  static final String EMPTY_EDGE = "";
 	private static final String ALL = "_all_";
 
 	private Type root; // aggregate rooted at this type
@@ -78,6 +73,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	public V getRootState() {
 		return states.get(root);
+	}
+
+	protected Shape getShape () {
+		return this.shape;
 	}
 	
 	@Override
@@ -230,14 +229,15 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		return result;
 	}
-	
-	/**
-	 * Get the set of child attributes anchored at the state
-	 * referenced by pathAnchor
-	 * @param type of the vertex
-	 * @return list of properties
-	 */
+
 	public List<Property> next(Type type, String propertyPath, Set<String> exactSet) {
+		State state = getVertex(type);
+
+		return next(state, propertyPath, exactSet);
+	}
+
+	public List<Property> next(State state, String propertyPath, Set<String> exactSet) {
+		Type type = state.getType();
 
 		// Ensure the type is coerced to the correct shape
 		if(shape != null) {
@@ -253,30 +253,20 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				return attrByType.get(type).get(key);
 			}
 		}
-		
-		V vertex = getVertex(type);
-
-		// check supertype
-		Type walkType = type;
-		while(vertex == null && walkType instanceof EntityType && ((EntityType)walkType).getSuperType() != null) {
-			walkType = ((EntityType)walkType).getSuperType();
-			vertex = getVertex(walkType);
-		}
-		if(vertex == null) {
-			for(Map.Entry<Type, V> entry: states.entrySet()) {
-				System.out.println("The type " + entry.getKey() + " has vertex " + entry.getValue() + " with name " + entry.getKey().getName());
-			}
-			System.out.println("Type: " + type + ", Cannot find the vertex of type " + type.getName() + " in the state graph of entity " + getRootState().getName());
-			
-			throw new IllegalArgumentException("Type: " + type + ", Cannot find the vertex of type " + type.getName() + " in the state graph of entity " + getRootState().getName());
-		}
 
 		Map<String, List<Property>> propertyMap = attrByType.get(type);
 		if(propertyMap == null) {
 			propertyMap = new HashMap();
 			attrByType.put(type, propertyMap);
 		}
+
+		List<Property> result = getPropertiesInScope(state, type, propertyPath, exactSet);
+		propertyMap.put(key, result);
 		
+		return result;
+	}
+
+	protected List<Property> getPropertiesInScope(State vertex, Type type, String propertyPath, Set<String> exactSet) {
 		List<Property> result = new ArrayList<Property>();
 
 		if(exactSet != null && exactSet.size() > 0) {
@@ -301,7 +291,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					}
 				}
 			}
- 		}
+		}
 
 		// Previous call was using MatchType.TYPE so add the attributes from the vertex
 		if(result.size() == 0 || exactSet == null || exactSet.size() == 0) {
@@ -312,14 +302,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		// Addresses scope extension using AssociationSetting with MatchType.TYPE
-		for (Edge e : getOutEdges(vertex)) {
+		for (Edge e : getOutEdges((V)vertex)) {
 			if (EMPTY_EDGE.equals(e.getName())) {
 				continue;
 			}
 			result.add(vertex.getType().getProperty(e.getName()));
 		}
-		propertyMap.put(key, result);
-		
+
 		return result;
 	}
 	

@@ -748,10 +748,11 @@ public class DFAtoRE {
 	public static boolean isRegex(String attrPath) {
 		return AggregateView.REGEX_STRING_MATCHER.matcher(attrPath).find();
 	}
-	
+
 	/**
-	 * Build constrained state graph of only non-RECURSE attributes
-	 * 
+	 * Build constrained state graph of only non-RECURSE attributes.
+	 * RECURSE attributes are checked dynamically.
+	 *
 	 * @param aggregateView representing the graph
 	 * @param type of entity
 	 * @return state graph instance
@@ -770,7 +771,7 @@ public class DFAtoRE {
 				constrainedGraph.extend(attrPath, startState, false);
 			}
 		}
-		
+
 		return constrainedGraph;
 	}
 	

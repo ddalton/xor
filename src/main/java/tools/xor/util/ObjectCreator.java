@@ -317,7 +317,7 @@ public class ObjectCreator {
 		}
 
 		if(getSettings().getDetector() != null) {
-			getSettings().getDetector().notifyCreate(result, targetInstance);
+			getSettings().getDetector().notifyCreate(null, result, targetInstance);
 		}
 
 		return result;
@@ -754,7 +754,7 @@ public class ObjectCreator {
 		}
 
 		if(createdInstance && settings.getDetector() != null) {
-			settings.getDetector().notifyCreate(result, targetInstance);
+			settings.getDetector().notifyCreate(sourceInstance, result, targetInstance);
 		}
 
 		return result;
@@ -765,7 +765,7 @@ public class ObjectCreator {
 		//setEmbeddedInstance(instance, targetType);
 
 		if(settings.getDetector() != null) {
-			settings.getDetector().notifyCreate(null, instance);
+			settings.getDetector().notifyCreate(source, null, instance);
 		}
 
 		return instance;
@@ -776,7 +776,7 @@ public class ObjectCreator {
 		//setEmbeddedInstance(instance, targetType);
 
 		if(settings.getDetector() != null) {
-			settings.getDetector().notifyCreate(null, instance);
+			settings.getDetector().notifyCreate(null, null, instance);
 		}
 
 		return instance;
@@ -841,7 +841,7 @@ public class ObjectCreator {
 			this.allInstances = new IdentityHashMap<>();
 		}
 
-		@Override public void notifyCreate (BusinessObject createdBO, Object createdInstance)
+		@Override public void notifyCreate (Object source, BusinessObject createdBO, Object createdInstance)
 		{
 			if( createdInstance != null && clazz.isAssignableFrom(createdInstance.getClass())  ) {
 				allInstances.put(createdInstance, null);
@@ -899,7 +899,7 @@ public class ObjectCreator {
 			this.duplicateBusinessObjects = new HashMap<>();
 		}
 
-		@Override public void notifyCreate (BusinessObject createdBO, Object instance)
+		@Override public void notifyCreate (Object source, BusinessObject createdBO, Object instance)
 		{
 
 		}
@@ -1002,7 +1002,7 @@ public class ObjectCreator {
 			this.duplicateObjects = new HashMap<>();
 		}
 
-		@Override public void notifyCreate (BusinessObject createdBO, Object instance)
+		@Override public void notifyCreate (Object source, BusinessObject createdBO, Object instance)
 		{
 
 		}
@@ -1014,6 +1014,10 @@ public class ObjectCreator {
 
 		@Override public void investigate (Object object)
 		{
+			if(! (object instanceof ObjectCreator)) {
+				return;
+			}
+
 			ObjectCreator oc = (ObjectCreator) object;
 			for(Map.Entry<EntityKey, BusinessObject> entry: oc.entitiesByKey.entrySet()) {
 				if(clazz.isAssignableFrom(entry.getValue().getInstance().getClass()) ) {

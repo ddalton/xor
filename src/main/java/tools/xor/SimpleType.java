@@ -236,6 +236,9 @@ public class SimpleType implements BasicType {
 			if (elementType instanceof EntityType) {
 				collectionElementType = gen.getSubType((EntityType)elementType, visitor.getStateGraph());
 			}
+			if(collectionElementType == null) {
+				throw new RuntimeException("No valid subtypes were found for " + elementType.getName() + " in the given StateGraph.");
+			}
 			Object collectionElement = collectionElementType.generate(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 			result.put(collectionElement);
 

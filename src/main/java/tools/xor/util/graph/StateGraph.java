@@ -274,8 +274,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			for(String path: exactSet) {
 				if(path.startsWith(propertyPath)) {
 					if(path.equals(propertyPath)) {
-						// If it equals it, it is a reference association
-						for(String propertyName: AggregatePropertyPaths.enumerateRef(type)) {
+						// If it equals it, it is a reference association and we return all simple required properties
+						for(String propertyName: AggregatePropertyPaths.enumerateRequiredSimple(type)) {
 							Property p = type.getProperty(propertyName);
 							if(p != null) {
 								result.add(p);
@@ -954,7 +954,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	public boolean supportsDynamicUpdate() {
 		for(V state: getVertices()) {
-			if(!((EntityType)state.getType()).supportsDynamicUpdate()) {
+			EntityType entityType = (EntityType)state.getType();
+
+			// We are only interested in concrete types
+			if(!entityType.supportsDynamicUpdate()) {
+				if(entityType.isAbstract() || entityType.getSubtypes().size() > 0) {
+					continue;
+				}
 				return false;
 			}
 		}
@@ -1301,7 +1307,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 						// Is the state out of scope
 						if (childState == null) {
-							if (!property.isNullable()) {
+							if (!property.isNullable() && !property.isMany()) {
 								(new RuntimeException(
 									"Skipped type is a required property and needs to be part of the view: "
 										+ property.getContainingType().getName() + "#"
@@ -1476,6 +1482,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			else {
 				result.append("arrowhead=open");
 			}
+
+			// Required edge is marked in a different color
+			if(property != null && !property.isNullable()) {
+				result.append(", color=red");
+			}
+
 			result.append("]\n");
 
 			writer.write(result.toString());

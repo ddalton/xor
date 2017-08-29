@@ -32,6 +32,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorExternalData;
+import tools.xor.annotation.XorLambda;
 import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
@@ -361,6 +363,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 			if(!getterFound || !setterFound) {
 				logger.warn("Custom setter and getters are not present for the open property: " + getName());
 			}
+		}
+	}
+
+	@Override
+	public void initLambdas(Class clazz) {
+
+		Map<String, List<MethodInfo>> allLambdas = AbstractType.initLambdas(clazz);
+		if(allLambdas.containsKey(getName())) {
+			this.lambdas = allLambdas.get(getName());
 		}
 	}
 
@@ -1010,7 +1021,17 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		} catch (Exception e) {
 			// log the original exception if any
 			if(originalAccessException != null) {
-				logger.error("AbstractProperty#query[" + getContext() + "] original exception", originalAccessException);
+				StringBuilder strbuilder = new StringBuilder("AbstractProperty#query[");
+				strbuilder.append(getContext())
+					.append("]");
+
+				if(dataObject instanceof BusinessObject) {
+					BusinessObject bo = (BusinessObject) dataObject;
+					strbuilder.append(" instance class: " + instance.getClass().getName() + ", type: " +  bo.getType().getName());
+				}
+				strbuilder.append(" original exception");
+
+				logger.error(strbuilder.toString(), originalAccessException);
 			}
 			throw ClassUtil.wrapRun(e);
 		}

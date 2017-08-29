@@ -772,6 +772,9 @@ public class DFAtoRE {
 			}
 		}
 
+		// Have the supertypes added by default
+		DFAtoNFA.processInheritance(constrainedGraph, true);
+
 		return constrainedGraph;
 	}
 	

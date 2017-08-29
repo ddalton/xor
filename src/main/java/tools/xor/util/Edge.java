@@ -24,7 +24,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 
-public final class Edge<V extends Vertex>
+public class Edge<V extends Vertex>
 {
 
     public static String NONE_OR_ONE = "0..1";

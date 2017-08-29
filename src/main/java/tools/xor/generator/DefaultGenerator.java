@@ -73,7 +73,8 @@ public class DefaultGenerator implements Generator
         }
 
         byte range = (byte) (maximum - minimum);
-        return (byte) (minimum + ((byte)(Math.random() * range)));
+        // Check if value is not null so as to not unnecessary invoke the Math.random() method
+        return (byte) (minimum + ((byte)(range != 0 ? Math.random() * range : 0)));
     }
 
     @Override
@@ -90,7 +91,7 @@ public class DefaultGenerator implements Generator
         }
 
         short range = (short) (maximum - minimum);
-        return (short) (minimum + ((short)(Math.random() * range)));
+        return (short) (minimum + ((short)(range != 0 ? Math.random() * range : 0)));
     }
 
     @Override
@@ -107,7 +108,7 @@ public class DefaultGenerator implements Generator
         }
 
         char range = (char) (maximum - minimum);
-        return (char) (minimum + ((char)(Math.random() * range)));
+        return (char) (minimum + ((char)(range != 0 ? Math.random() * range : 0)));
     }
 
     @Override
@@ -124,7 +125,7 @@ public class DefaultGenerator implements Generator
         }
 
         int range = maximum - minimum;
-        return minimum + ((int)(Math.random() * range));
+        return minimum + (range != 0 ? ((int)(Math.random() * range)) : 0);
     }
 
     @Override
@@ -141,7 +142,7 @@ public class DefaultGenerator implements Generator
         }
 
         long range = maximum - minimum;
-        return minimum + ((long)(Math.random() * range));
+        return minimum + (range != 0 ? ((long)(Math.random() * range)) : 0);
     }
 
     @Override
@@ -150,7 +151,7 @@ public class DefaultGenerator implements Generator
         long maximum = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years in future
 
         long  range = maximum - minimum;
-        return new Date((long) (minimum + (Math.random() * range)));
+        return new Date((long) (minimum + (range != 0 ? (Math.random() * range) : 0)));
     }
 
     @Override
@@ -167,7 +168,7 @@ public class DefaultGenerator implements Generator
         }
 
         double range = maximum - minimum;
-        return minimum + (Math.random() * range);
+        return minimum + (range != 0 ? (Math.random() * range) : 0);
     }
 
     @Override
@@ -184,7 +185,7 @@ public class DefaultGenerator implements Generator
         }
 
         float range = maximum - minimum;
-        return minimum + ((float)(Math.random() * range));
+        return minimum + ((float)(range != 0 ? Math.random() * range : 0));
     }
 
     @Override
@@ -200,7 +201,12 @@ public class DefaultGenerator implements Generator
             maximum = new BigDecimal(values[1]);
         }
 
-        return maximum.subtract(minimum).multiply( new BigDecimal( (new Double(Math.random())).toString() ) );
+        BigDecimal range = maximum.subtract(minimum);
+        BigDecimal increment = range.equals(BigDecimal.ZERO) ?
+            BigDecimal.ZERO :
+            range.multiply(new BigDecimal((new Double(Math.random())).toString()));
+
+        return minimum.add(increment);
     }
 
     @Override
@@ -217,7 +223,7 @@ public class DefaultGenerator implements Generator
         }
 
         long range = maximum.longValue() - minimum.longValue();
-        return new BigInteger((new Long((long) (minimum.longValue() + (Math.random() * range)))).toString());
+        return new BigInteger((new Long((long) (minimum.longValue() + (range != 0 ? Math.random() * range : 0)))).toString());
     }
 
     /**

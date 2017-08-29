@@ -99,7 +99,7 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * @param type EntityType
 	 * @param propertyPath current location of the program execution
 	 * @param exactSet of properties in the view
-	 * @return
+	 * @return list of child attributes
 	 */
 	public List<Property> next(Type type, String propertyPath, Set<String> exactSet);
 
@@ -218,8 +218,9 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	public List<QueryView> getQueryableRegions();
 
 	/**
-	 * Checks to types to see if all them support dynamic update. Even if a single type
+	 * Checks to types to see if all them support dynamic update. Even if a single concrete type
 	 * in the graph does not support dynamic update, it returns false.
+	 *
 	 * @return true if all types support dynamic update
 	 */
 	public boolean supportsDynamicUpdate();

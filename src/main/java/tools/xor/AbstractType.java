@@ -113,7 +113,7 @@ public abstract class AbstractType implements EntityType {
 		initFields();
 		initClassAnnotations();
 		initPostLogic();
-		initLambdas();
+		this.lambdas = initLambdas(getInstanceClass());
 	}
 
 	@Override
@@ -284,9 +284,8 @@ public abstract class AbstractType implements EntityType {
 		return result;
 	}
 
-	protected Method getPolymorphicGetterMethod (String property)
+	protected static Method getPolymorphicGetterMethod (String property, Class<?> instanceClass)
 	{
-		Class<?> instanceClass = getInstanceClass();
 		if (instanceClass.isInterface())
 			return null;
 		while (instanceClass != Object.class) {
@@ -649,7 +648,7 @@ public abstract class AbstractType implements EntityType {
 			postLogicMethods = Collections.unmodifiableSet(methods);
 	}
 	
-	private List<MethodInfo> getMethods(Map<String, List<MethodInfo>> allMethods, String property) {
+	private static List<MethodInfo> getMethods(Map<String, List<MethodInfo>> allMethods, String property) {
 		List<MethodInfo> methods = allMethods.get(property);
 		if(methods == null) {
 			methods = new LinkedList<MethodInfo>();
@@ -666,7 +665,7 @@ public abstract class AbstractType implements EntityType {
 	 * @param property
 	 * @param methodInfo
 	 */
-	private boolean addUniqueMethod(Map<String, List<MethodInfo>> allMethods, String property, MethodInfo methodInfo) {
+	private static boolean addUniqueMethod(Map<String, List<MethodInfo>> allMethods, String property, MethodInfo methodInfo) {
 		List<MethodInfo> methods = getMethods(allMethods, property);
 		for(MethodInfo mi: methods) {
 			if(methodInfo.doOverlap(mi)) {
@@ -682,7 +681,7 @@ public abstract class AbstractType implements EntityType {
 		return true;
 	}
 
-	private boolean validateParamAnnotations(Method method) {
+	public static boolean validateParamAnnotations(Method method) {
 		Annotation[][] paramAnnotations = method.getParameterAnnotations();
 		boolean foundParamAnnotation = false;
 		boolean foundParamNoAnnotation = false;
@@ -708,7 +707,9 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		if(foundParamAnnotation && foundParamNoAnnotation) {
-			logger.warn("The business logic method " + method.getName() + " should have Input/Output parameter annotations on all its parameters to indicate how the param values need to be populated");
+			logger.warn(
+				"The business logic method " + method.getName()
+					+ " should have Input/Output parameter annotations on all its parameters to indicate how the param values need to be populated");
 		}
 		
 		//if(!Modifier.isStatic(method.getModifiers())) {
@@ -718,10 +719,9 @@ public abstract class AbstractType implements EntityType {
 		return foundParamAnnotation;
 	}
 
-	protected void initLambdas() {	
+	public static Map<String, List<MethodInfo>> initLambdas(Class<?> instanceClass) {
 
-		HashMap<String, List<MethodInfo>> allMethods = new HashMap<String, List<MethodInfo>>();				
-		Class<?> instanceClass = getInstanceClass();
+		HashMap<String, List<MethodInfo>> allMethods = new HashMap<String, List<MethodInfo>>();
 		Set<String> notUnique = new HashSet<String>();
 		for(Method method: instanceClass.getMethods()) {
 			if(method.getAnnotation(XorLambda.class) != null) {
@@ -754,7 +754,7 @@ public abstract class AbstractType implements EntityType {
 		}
 		// Get the polymorphic method
 		for(String property: notUnique) {
-			Method method = getPolymorphicGetterMethod(property);
+			Method method = getPolymorphicGetterMethod(property, instanceClass);
 			XorLambda dataUpdate = method.getAnnotation(XorLambda.class);
 			MethodInfo methodInfo = new MethodInfo(
 				dataUpdate.order(),
@@ -769,7 +769,7 @@ public abstract class AbstractType implements EntityType {
 			addUniqueMethod(allMethods, dataUpdate.property(), methodInfo);
 		}
 
-		lambdas = Collections.unmodifiableMap(allMethods);
+		return Collections.unmodifiableMap(allMethods);
 	}
 
 	@Override

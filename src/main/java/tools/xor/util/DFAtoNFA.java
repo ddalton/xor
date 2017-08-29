@@ -41,7 +41,10 @@ public class DFAtoNFA {
 	public static final String UNLABELLED = "";
 
 	/**
-	 * Add subtypes and supertypes to the stategraph
+	 * Add subtypes and supertypes to the stategraph.
+	 * This method does not add any edges between these subtype and supertype states and
+	 * the existing graph.
+	 *
 	 * @param stateGraph to be extended with subtypes and supertypes
 	 * @param excludeSubtypes true if the subtypes do not need to be populated
 	 */

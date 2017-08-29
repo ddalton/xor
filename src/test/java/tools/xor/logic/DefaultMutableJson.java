@@ -1114,6 +1114,9 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		settings.expand(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
 		TypeGraph sg = settings.getView().getTypeGraph(taskType);
+		settings.setGraphFileName("TaskMediumStateGraph.dot");
+		sg.generateVisual(settings);
+		settings.setGraphFileName(null);
 
 		JSONObject task = (JSONObject) sg.generateObjectGraph(new Settings());
 		System.out.println("Task name: " + task.get("name"));

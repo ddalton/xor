@@ -269,8 +269,13 @@ public abstract class AbstractBO implements BusinessObject {
 		if( collectionKey != null ) {
 			return getKeyValue(collectionKey);
 		} else { // fallback to id
-			Type elementType = ((ExtendedProperty)property).getElementType();
-			Property identifier = ((EntityType)elementType).getIdentifierProperty();
+			/* NOTE: the passed in property may be of a subtype or a sibling type of the
+		     *  actual collection element object, so we cannot use the property type's identifier property
+		     */
+			if(! (getType() instanceof EntityType)) {
+				throw new RuntimeException("Unable to obtain a key for the collection element, please define a collection key for: " + getType().getName());
+			}
+			Property identifier = ((EntityType)getType()).getIdentifierProperty();
 			return (this.get(identifier) == null) ? null : this.get(identifier).toString();
 		}
 	}
@@ -722,7 +727,7 @@ public abstract class AbstractBO implements BusinessObject {
 		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, null, null);
 
 		if(getSettings().getDetector() != null) {
-			getSettings().getDetector().notifyCreate(result, propertyInstance);
+			getSettings().getDetector().notifyCreate(id, result, propertyInstance);
 		}
 
 		return result;

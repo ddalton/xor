@@ -375,4 +375,10 @@ public interface ExtendedProperty extends Property {
 	 * @return true if it forms part of the natural key
 	 */
 	boolean isPartOfNaturalKey ();
+
+	/**
+	 * Init business logic methods from the provided class
+	 * @param clazz the class to scan for business logic methods
+	 */
+	public void initLambdas(Class clazz);
 }

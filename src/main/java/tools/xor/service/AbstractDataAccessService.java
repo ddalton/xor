@@ -109,6 +109,29 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		return overriddenShape.get();
 	}
 
+	/**
+	 * Override the current shape
+	 * @param name for the overridden shape
+	 * @param reuse true if reuse shape with same name
+	 * @return the new shape that overrides the existing shape
+	 */
+	public Shape overrideShape(String name, boolean reuse) {
+		if(shapes.containsKey(name) && !reuse) {
+			throw new RuntimeException("A Shape object already exists with the name: " + name);
+		}
+		Shape result = getOrCreateShape(name, getShape());
+		overriddenShape.set(result);
+
+		return result;
+	}
+
+	protected void removeShapeOverride(boolean delete) {
+		if(delete) {
+			shapes.remove(overriddenShape.get().getName());
+		}
+		overriddenShape.remove();
+	}
+
 	@Override
 	public Shape getOrCreateShape (String name, Shape parent) {
 		Shape shape = shapes.get(name);

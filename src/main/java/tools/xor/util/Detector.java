@@ -26,10 +26,11 @@ public interface Detector {
 
 	/**
 	 * Notify the detector that a new domain instance has been created.
+	 * @param source details on the source instance
 	 * @param createdBO can be a newly createdBO or an existingBO for an instance with the same key.
 	 * @param createdInstance domain instance created by the creation strategy
 	 */
-	public void notifyCreate(BusinessObject createdBO, Object createdInstance);
+	public void notifyCreate(Object source, BusinessObject createdBO, Object createdInstance);
 
 	/**
 	 * Invoked as soon as a data value is set from the XOR operation

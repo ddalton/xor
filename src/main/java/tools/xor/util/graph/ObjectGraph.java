@@ -142,7 +142,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 
 		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
 		TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
-		persistRoots(objectCreator, sg);
+		persistRoots(objectCreator, settings, sg);
 
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.ACTIVATE_DETECTORS)
 			&& ApplicationConfiguration.config().getBoolean(Constants.Config.ACTIVATE_DETECTORS)) {
@@ -436,12 +436,15 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	    }
 	}	
 	
-	private void persistRoots(ObjectCreator objectCreator, TypeGraph<State, Edge<State>> sg) {
+	private void persistRoots(ObjectCreator objectCreator, Settings settings, TypeGraph<State, Edge<State>> sg) {
 	
 		Date start = new Date();
 		List<V> aggregateRoots = new ArrayList<V>(discoverAggregateRoots(objectCreator));
 		Collections.sort(aggregateRoots, new StateComparator(sg));
 		for(V root: aggregateRoots) {
+			if(settings.getDetector() != null) {
+				settings.getDetector().investigate(root.getInstance());
+			}
 			objectCreator.getPersistenceOrchestrator().saveOrUpdate(root.getInstance());
 		}
 

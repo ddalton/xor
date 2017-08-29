@@ -88,7 +88,17 @@ public class AggregatePropertyPaths {
 
 		return Collections.unmodifiableSet(paths);
 	}
-	
+
+	/**
+	 * Are simple properties form the Base view.
+	 * Any EntityType properties including required are not part of the view and needs to be
+	 * explicitly specified. The reason for this restriction is that all the required properties
+	 * are not known before hand due to inheritance of EntityType. This is needed when
+	 * creating an entity based on Base view.
+	 *
+	 * @param aggregateType whose base view we are configuring
+	 * @return set of properties depicting the base view
+	 */
 	public static Set<String> enumerateBase(Type aggregateType) {
 		Set<String> paths = basePaths.get(aggregateType);
 
@@ -101,14 +111,17 @@ public class AggregatePropertyPaths {
 		if(!basePaths.containsKey(aggregateType)) {
 			paths  = new HashSet<String>();
 			for(Property property: aggregateType.getProperties()) {
-				if(isSimpleProperty(property) || !property.isNullable()) {
+				if(isPartofBase(property)) {
 					paths.add(property.getName());
 				} else if ( property.getType() instanceof EntityType && ((EntityType)property.getType()).isEmbedded()) {
 					if(includeEmbedded) {
 						List embeddedPaths = new ArrayList();
 						for (String embeddedPath : property.expand(new HashSet<Type>())) {
 							if (!embeddedPath.startsWith(Constants.XOR.IDREF)) {
-								embeddedPaths.add(embeddedPath);
+								Property embeddedProperty = aggregateType.getProperty(embeddedPath);
+								if(isPartofBase(embeddedProperty)) {
+									embeddedPaths.add(embeddedPath);
+								}
 							}
 						}
 						paths.addAll(embeddedPaths);
@@ -121,14 +134,52 @@ public class AggregatePropertyPaths {
 		return Collections.unmodifiableSet(paths);
 	}
 
+	private static boolean isPartofBase(Property property) {
+		return isSimpleProperty(property) || !property.isNullable();
+	}
+
+	/**
+	 * The fields that are needed to identify an entity.
+	 * There fields might not be sufficient to initialize an entity. For example, required fields.
+	 * @param aggregateType type whose minimum fields needed to identify an entity
+	 * @return minimum fields that constitute a reference
+	 */
 	public static Set<String> enumerateRef(Type aggregateType) {
 		Set<String> paths = new HashSet<>();
 
 		if(aggregateType instanceof EntityType) {
 			EntityType entityType = (EntityType) aggregateType;
 			paths.add(entityType.getIdentifierProperty().getName());
+
 			if(entityType.getNaturalKey() != null) {
 				paths.addAll(entityType.getExpandedNaturalKey());
+			}
+		}
+
+		return Collections.unmodifiableSet(paths);
+	}
+
+	/**
+	 * Lists are the required properties of simple types.
+	 * The user will need to explicitly define the types of EntityType, especially if it contains
+	 * subtypes.
+	 *
+	 * @param aggregateType whose required simple properties are enumerated
+	 * @return the result
+	 */
+	public static Set<String> enumerateRequiredSimple(Type aggregateType) {
+		Set<String> paths = new HashSet<>(enumerateRef(aggregateType));
+
+		if (aggregateType instanceof EntityType) {
+			for (Property property : aggregateType.getProperties()) {
+				if (isSimpleProperty(property) && !property.isNullable()) {
+					paths.add(property.getName());
+				}
+				else if (!property.isNullable()) {
+					logger.warn(
+						"Not adding an required property that refers to an entity type, manually set the scope for: "
+							+ aggregateType.getName() + "#" + property.getName());
+				}
 			}
 		}
 

@@ -4,19 +4,16 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.Property;
-import tools.xor.Settings;
+import tools.xor.Resolver;
 import tools.xor.Type;
 import tools.xor.service.Shape;
-import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.DFAtoNFA;
 import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryViewProperty;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,17 +27,32 @@ import java.util.Set;
  * @param <V> Vertex
  * @param <E> Edge
  */
-public class EdgeStateGraph<V extends State, E extends Edge<V>> extends StateGraph<V, E> {
+public class EdgeStateGraph<V extends EdgeStateGraph.SubtypeState, E extends EdgeStateGraph.AutonomousEdge<V>> extends StateGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	public EdgeStateGraph(Type aggregateRoot, Shape shape) {
 		super(aggregateRoot, shape);
 	}
 
+	/**
+	 * An edge that has logic embedded in it and can independently decide on the outcome of
+	 * processing this edge.
+	 *
+	 * @param <V> between two SubtypeState vertices
+	 */
+	public static class AutonomousEdge<V extends EdgeStateGraph.SubtypeState> extends Edge<V> {
+		private Resolver resolver;
+		public AutonomousEdge (String name, V start, V end, boolean qualify)
+		{
+			super(name, start, end, qualify, false);
+		}
+	}
+
 	public static class SubtypeState extends State {
 		Map<String, SubtypeState> subtypeStates;
 		State parent;
 		boolean needsRebuild; // is rebuilding of inheritance hierarchy necessary?
+		Map<String, Resolver> resolvers;
 
 		public SubtypeState(Type type, boolean startState) {
 			super(type, startState);
@@ -233,8 +245,8 @@ public class EdgeStateGraph<V extends State, E extends Edge<V>> extends StateGra
 		// subtypes
 		if(attribute.startsWith(AggregateView.VIEW_REFERENCE_START)) {
 			V subTypeState = getFragmentState(attribute, viewNameStateMap);
-			((SubtypeState)current).addSubtypeState((SubtypeState)subTypeState);
-			((SubtypeState)current).setNeedsRebuild(true);
+			current.addSubtypeState(subTypeState);
+			current.setNeedsRebuild(true);
 			return;
 		}
 
@@ -243,7 +255,7 @@ public class EdgeStateGraph<V extends State, E extends Edge<V>> extends StateGra
 
 		// Not in the current state graph, let us find and add it
 		if (t == null) {
-			Property childProperty = ((EntityType)current.getType()).getProperty(attribute);
+			Property childProperty = (current.getType()).getProperty(attribute);
 			if (childProperty == null) {
 				logger.error(
 					"Unable to add unknown attribute to state graph: " + attribute + " to state: "
@@ -271,7 +283,7 @@ public class EdgeStateGraph<V extends State, E extends Edge<V>> extends StateGra
 				}
 
 				// add the transition
-				t = (E)new Edge<State>(childProperty.getName(), current, end, true);
+				t = (E)new AutonomousEdge(childProperty.getName(), current, end, true);
 				addEdge(t);
 
 				if(isViewRef) {

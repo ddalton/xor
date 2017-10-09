@@ -26,7 +26,9 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.util.Constants;
+import tools.xor.util.GraphUtil;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.QueryView;
 
@@ -49,6 +51,13 @@ public class DefaultGenerator implements Generator
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     private String[] values;
 
+    // Used to cache the fanout value for a FixedSet generator of domain values
+    // It's value has the following interpretation:
+    // null  Not evaluated
+    // -1    The collection element does not have any FixedSet generator
+    // > 0   Size of the fixed set collection
+    private Integer fixedFanOut;
+
     public DefaultGenerator (String[] arguments)
     {
         this.values = arguments;
@@ -60,7 +69,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public byte getByteValue ()
+    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         byte minimum = Byte.MIN_VALUE;
         byte maximum = Byte.MAX_VALUE;
@@ -78,7 +87,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public short getShortValue ()
+    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         short minimum = Short.MIN_VALUE;
         short maximum = Short.MAX_VALUE;
@@ -118,10 +127,18 @@ public class DefaultGenerator implements Generator
         int maximum = Integer.MAX_VALUE;
 
         if (values.length >= 1) {
-            minimum = Double.valueOf(values[0]).intValue();
+            try {
+                minimum = Double.valueOf(values[0]).intValue();
+            } catch (NumberFormatException nfe) {
+                throw new RuntimeException("getIntValue, parsing error with min input: " + values[0], nfe);
+            }
         }
         if (values.length >= 2) {
-            maximum = Double.valueOf(values[1]).intValue();
+            try {
+                maximum = Double.valueOf(values[1]).intValue();
+            } catch (NumberFormatException nfe) {
+                throw new RuntimeException("getIntValue, parsing error with max input: " + values[1], nfe);
+            }
         }
 
         int range = maximum - minimum;
@@ -129,7 +146,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public long getLongValue ()
+    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         long minimum = Long.MIN_VALUE;
         long maximum = Long.MAX_VALUE;
@@ -146,7 +163,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public Date getDateValue() {
+    public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
         long minimum = 0;
         long maximum = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years in future
 
@@ -155,7 +172,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public Double getDoubleValue ()
+    public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         double minimum = Double.MIN_VALUE;
         double maximum = Double.MAX_VALUE;
@@ -172,7 +189,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public Float getFloatValue ()
+    public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         float minimum = Float.MIN_VALUE;
         float maximum = Float.MAX_VALUE;
@@ -189,7 +206,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public BigDecimal getBigDecimal ()
+    public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
     {
         BigDecimal minimum = BigDecimal.ONE;
         BigDecimal maximum = new BigDecimal((new Long(Long.MAX_VALUE)).toString());
@@ -210,7 +227,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public BigInteger getBigInteger ()
+    public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
     {
         BigInteger minimum = BigInteger.ONE;
         BigInteger maximum = new BigInteger((new Long(Long.MAX_VALUE)).toString());
@@ -290,25 +307,34 @@ public class DefaultGenerator implements Generator
 
     }
 
-    @Override public int getFanout (Settings settings, String path)
+    @Override public int getFanout (Property property, Settings settings, String path)
     {
-        float sparseness = settings.getSparseness(path);
-        return (int)(Math.random() * settings.getEntitySize().size() * sparseness);
-    }
-
-    public List<JSONObject> getExisting (Settings settings, String path, List<JSONObject> entitiesToChooseFrom)
-    {
-        assert(entitiesToChooseFrom != null && entitiesToChooseFrom.size() > 0);
-
-        int fanOut = getFanout(settings, path);
-        final int[] ints = new Random().ints(1, entitiesToChooseFrom.size()).distinct().limit(fanOut).toArray();
-
-        List<JSONObject> result = new ArrayList<>();
-        for(int i = 0; i < ints.length; i++) {
-            result.add(entitiesToChooseFrom.get(ints[i]));
+        // Calculate the fixedFanOut if applicable
+        if(this.fixedFanOut == null) {
+            this.fixedFanOut = -1;
+            if(property.isMany()) {
+                Type type = ((ExtendedProperty)property).getElementType();
+                if(type instanceof EntityType) {
+                    EntityType entityType = (EntityType) type;
+                    for(Property p: entityType.getProperties()) {
+                        Generator generator = ((ExtendedProperty)p).getGenerator(property.getName());
+                        if(generator instanceof FixedSet) {
+                            // Checking the first occurrence is sufficient, as all other
+                            // fixed set should be of same size
+                            fixedFanOut = ((FixedSet)generator).getValues().length;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
-        return result;
+        if(this.fixedFanOut != null && this.fixedFanOut != -1) {
+            return fixedFanOut;
+        }
+
+        float sparseness = settings.getSparseness(path);
+        return (int)(Math.random() * settings.getEntitySize().size() * sparseness);
     }
 
     @Override public boolean isApplicableToCollectionElement ()

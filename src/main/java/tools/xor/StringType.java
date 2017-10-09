@@ -24,6 +24,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.generator.Generator;
+import tools.xor.generator.LocalizedString;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
@@ -44,19 +45,25 @@ public class StringType extends SimpleType {
 						   StateGraph.ObjectGenerationVisitor visitor) {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
-		if(gen != null) {
-			return gen.getStringValue(property, visitor);
-		} else {
+
+		if(gen == null || gen instanceof LocalizedString) {
 			int length = DEFAULT_LENGTH;
-			if(property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
+			if (property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
 				length = (int)property.getConstraints().get(Constants.XOR.CONS_LENGTH);
 			}
 			int stringLen = (int)(Math.random() * length);
 			if (stringLen < MIN_LENGTH) {
 				stringLen = (MIN_LENGTH > length) ? length : MIN_LENGTH;
 			}
+
+			visitor.setContext(stringLen);
+		}
+
+		if(gen != null) {
+			return gen.getStringValue(property, visitor);
+		} else {
 			//return RandomStringUtils.randomAscii(stringLen);
-			return RandomStringUtils.randomAlphanumeric(stringLen);
+			return RandomStringUtils.randomAlphanumeric((Integer) visitor.getContext());
 		}
 	}	
 }

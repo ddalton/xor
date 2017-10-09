@@ -61,7 +61,7 @@ public class LongType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getLongValue();
+			return gen.getLongValue(visitor);
 		}
 
 		long range = maximum - minimum;

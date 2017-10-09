@@ -19,6 +19,7 @@
 
 package tools.xor.generator;
 
+import tools.xor.Property;
 import tools.xor.Settings;
 
 public class Range extends DefaultGenerator
@@ -28,10 +29,10 @@ public class Range extends DefaultGenerator
         super(arguments);
     }
 
-    @Override public int getFanout (Settings settings, String path)
+    @Override public int getFanout (Property property, Settings settings, String path)
     {
         if(settings.hasCollectionSparseness(path)) {
-            return super.getFanout(settings, path);
+            return super.getFanout(property, settings, path);
         }
 
         return getIntValue(null);

@@ -59,7 +59,7 @@ public class ShortType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getShortValue();
+			return gen.getShortValue(visitor);
 		}
 
 		short range = (short) (getMax() - getMin());

@@ -41,6 +41,7 @@ import tools.xor.db.base.Employee;
 import tools.xor.db.base.Patent;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
+import tools.xor.generator.LocalizedString;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.MetaModel;
@@ -88,6 +89,15 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		assert(path.contains("userName"));
 		assert(path.contains("name"));
 		assert(path.contains("version"));
+	}
+
+	@Test
+	public void checkLocale() {
+		LocalizedString obj = new LocalizedString(new String[]{"abc"});
+
+		for(int i=0; i < 10; i++) {
+			System.out.println("Random: " + obj.randomString(10, "ru"));
+		}
 	}
 	
 	@Test

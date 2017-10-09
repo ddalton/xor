@@ -1007,6 +1007,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		private int sequenceNo;
 		private JSONObject root;
 		private StateGraph stateGraph;
+		private Object context; // used for passing data, for example string length
 
 		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings, StateGraph stateGraph) {
 			this.objectStateMap = objectStateMap;
@@ -1098,6 +1099,16 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		public StateGraph getStateGraph() {
 			return this.stateGraph;
+		}
+
+		public Object getContext ()
+		{
+			return context;
+		}
+
+		public void setContext (Object context)
+		{
+			this.context = context;
 		}
 	}
 
@@ -1407,11 +1418,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	private String getLabel(V vertex) {
 		Type type = vertex.getType();
 
+		// Type name
 		StringBuilder label = new StringBuilder();
 		label.append(QueryViewProperty.getBaseName(type.getName()))
 		.append("|");
 
 		if(type instanceof EntityType) {
+			// List the natural key parts
 			EntityType entityType = (EntityType) type;
 			StringBuilder keyString = new StringBuilder();
 			if(entityType.getNaturalKey() != null) {
@@ -1422,6 +1435,25 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					keyString.append(key);
 				}
 				label.append(keyString);
+			}
+
+			// Check for required entity types, as this affects stategraph scope
+			// Simple required types do not have to be listed here
+			StringBuilder requiredEntities = new StringBuilder();
+			for(Property property: entityType.getProperties()) {
+				if(!property.isNullable()) {
+					Type requiredEntityType = GraphUtil.getPropertyEntityType(property, getShape());
+					if(requiredEntityType instanceof EntityType ) {
+						if(requiredEntities.length() > 0) {
+							requiredEntities.append("\\n");
+						}
+						requiredEntities.append(property.getName() + " : " + QueryViewProperty.getBaseName(requiredEntityType.getName()));
+					}
+				}
+			}
+
+			if(requiredEntities.length() > 0) {
+				label.append("|").append(requiredEntities);
 			}
 		}
 
@@ -1472,15 +1504,15 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 			// Inheritance edge
 			if(edge.getName() == null || "".equals(edge.getName())) {
-				result.append("dir=back, arrowtail=empty");
+				result.append("dir=back, arrowtail=empty, weight=2");
 			}
 			// Aggregation edge
 			else if(property.isContainment()) {
-				result.append("dir=back, arrowtail=diamond");
+				result.append("dir=back, arrowtail=diamond, style=dashed");
 			}
 			// Association edge
 			else {
-				result.append("arrowhead=open");
+				result.append("arrowhead=open, style=dashed");
 			}
 
 			// Required edge is marked in a different color

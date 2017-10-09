@@ -59,7 +59,7 @@ public class ByteType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getByteValue();
+			return gen.getByteValue(visitor);
 		}
 
 		byte range = (byte) (getMax() - getMin());

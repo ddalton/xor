@@ -62,7 +62,7 @@ public class BigIntegerType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getBigInteger();
+			return gen.getBigInteger(visitor);
 		}
 
 		long range = maximum.longValue() - minimum.longValue();

@@ -70,7 +70,7 @@ public class BigDecimalType extends SimpleType {
 
 		Generator gen = ep.getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getBigDecimal();
+			return gen.getBigDecimal(visitor);
 		} else {
 			if (ep.getConstraints().containsKey(Constants.XOR.CONS_SCALE)) {
 				scale = (int)ep.getConstraints().get(Constants.XOR.CONS_SCALE);

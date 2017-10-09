@@ -45,65 +45,73 @@ public interface Generator
 
     /**
      * Return a byte value
+     * @param visitor contains data pertaining to the calling context
      * @return byte value
      */
-    byte getByteValue ();
+    byte getByteValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a char value
-     * @param visitor object
+     * @param visitor contains data pertaining to the calling context
      * @return char value
      */
     char getCharValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a short value
+     * @param visitor contains data pertaining to the calling context
      * @return short value
      */
-    short getShortValue ();
+    short getShortValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Returns an int value.
-     * @param visitor object
+     * @param visitor contains data pertaining to the calling context
      * @return int value.
      */
     int getIntValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Returns a long value
+     * @param visitor contains data pertaining to the calling context
      * @return long value
      */
-    long getLongValue();
+    long getLongValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a date value
+     * @param visitor contains data pertaining to the calling context
      * @return date value
      */
-    Date getDateValue();
+    Date getDateValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a double value
+     * @param visitor contains data pertaining to the calling context
      * @return double value
      */
-    Double getDoubleValue();
+    Double getDoubleValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a float value
+     * @param visitor contains data pertaining to the calling context
      * @return float value
      */
-    Float getFloatValue();
+    Float getFloatValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a BigDecimal instance
+     * @param visitor contains data pertaining to the calling context
      * @return BigDecimal value
      */
-    BigDecimal getBigDecimal();
+    BigDecimal getBigDecimal(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a BigInteger instance
+     * @param visitor contains data pertaining to the calling context
      * @return BigInteger value
      */
-    BigInteger getBigInteger();
+    BigInteger getBigInteger(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a string value
@@ -132,11 +140,12 @@ public interface Generator
     /**
      * Get the collection size for a toMany association.
      * @see Generator#isApplicableToCollectionElement
+     * @param property collection property
      * @param settings collection sparseness
      * @param path collection sparseness value for this association
      * @return collection size
      */
-    int getFanout(Settings settings, String path);
+    int getFanout(Property property, Settings settings, String path);
 
     /**
      * The generator is only applicable to the collection element and not to the collection

@@ -205,7 +205,11 @@ public class DataObjectList {
 							element,
 							type);
 						BusinessObject collectionElement = objectCreator.getByEntityKey(surrogateKey, type);
-						result.add(collectionElement);
+						if(collectionElement != null) {
+							result.add(collectionElement);
+						} else {
+							throw new RuntimeException("Unable to find object in ObjectCreator cache: " + surrogateKey.toString() );
+						}
 					}  else {
 						try {
 							BusinessObject collectionElement = dataObject.createDataObject(

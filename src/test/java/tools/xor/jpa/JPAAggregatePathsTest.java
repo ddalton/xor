@@ -42,6 +42,11 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	}
 
 	@Test
+	public void checkLocale() {
+		super.checkLocale();
+	}
+
+	@Test
 	public void checkPaths() {
 		super.checkPaths();		
 	}

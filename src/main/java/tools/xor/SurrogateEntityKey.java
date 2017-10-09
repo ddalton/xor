@@ -69,4 +69,8 @@ public final class SurrogateEntityKey implements EntityKey, Serializable {
 		return hashCode;
 	}
 
+	@Override
+	public String toString() {
+		return "SurrogateEntityKey[" + entityTypeName + "," + key.toString() + "]";
+	}
 }

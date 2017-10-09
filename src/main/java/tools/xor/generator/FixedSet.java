@@ -19,19 +19,16 @@
 
 package tools.xor.generator;
 
+import tools.xor.Property;
 import tools.xor.util.graph.StateGraph;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
-/**
- * We treat the input as a Double to be aligned with POI library numeric value of a cell
- * being returned as a double type.
- */
-public class Choices extends DefaultGenerator
+public class FixedSet extends DefaultGenerator
 {
-    public Choices (String[] arguments)
+    public FixedSet (String[] arguments)
     {
         super(arguments);
     }
@@ -39,13 +36,13 @@ public class Choices extends DefaultGenerator
     @Override
     public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValues()[getPosition()]).byteValue();
+        return Double.valueOf(getValues()[visitor.getSequenceNo()]).byteValue();
     }
 
     @Override
     public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValues()[getPosition()]).shortValue();
+        return Double.valueOf(getValues()[visitor.getSequenceNo()]).shortValue();
     }
 
     @Override
@@ -57,13 +54,13 @@ public class Choices extends DefaultGenerator
     @Override
     public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Integer.valueOf(getValues()[getPosition()]).intValue();
+        return Integer.valueOf(getValues()[visitor.getSequenceNo()]).intValue();
     }
 
     @Override
     public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValues()[getPosition()]).longValue();
+        return Double.valueOf(getValues()[visitor.getSequenceNo()]).longValue();
     }
 
     @Override
@@ -74,13 +71,13 @@ public class Choices extends DefaultGenerator
     @Override
     public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValues()[getPosition()]);
+        return Double.valueOf(getValues()[visitor.getSequenceNo()]);
     }
 
     @Override
     public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValues()[getPosition()]).floatValue();
+        return Double.valueOf(getValues()[visitor.getSequenceNo()]).floatValue();
     }
 
     @Override
@@ -93,5 +90,12 @@ public class Choices extends DefaultGenerator
     public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
     {
         return new BigInteger(new Long(getLongValue(visitor)).toString());
+    }
+
+    @Override
+    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
+    {
+        // Find the locale (e.g., en, ja etc)
+        return getValues()[visitor.getSequenceNo()];
     }
 }

@@ -59,7 +59,7 @@ public class FloatType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			gen.getFloatValue();
+			gen.getFloatValue(visitor);
 		}
 		float range = getMax() - getMin();
 		return getMin() + ((float)(Math.random() * range));

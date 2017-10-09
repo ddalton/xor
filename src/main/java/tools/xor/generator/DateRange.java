@@ -22,6 +22,7 @@ package tools.xor.generator;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.MutableJsonProperty;
+import tools.xor.util.graph.StateGraph;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -38,7 +39,7 @@ public class DateRange extends DefaultGenerator
     }
 
     @Override
-    public Date getDateValue() {
+    public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
 
         long minimum = 0;
         long maximum = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years in future

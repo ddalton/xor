@@ -142,9 +142,18 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		List inputList = extractList(input);
 		List outputList = (List) output.getInstance();
 
+		if(callInfo.getInputProperty() != null && callInfo.getInputProperty().getName().equals("Depts")) {
+			System.out.println("!!!!![BEFORE] Input size: " + inputList.size() + ", Output size: " + outputList.size());
+		}
+
 		// TODO: Need to truncate by natural or surrogate keys
-		if(outputList.size() > inputList.size()) // truncate the remaining portion
+		if(outputList.size() > inputList.size()) { // truncate the remaining portion
 			truncateToSize(outputList, inputList.size());
+		}
+
+		if(callInfo.getInputProperty() != null && callInfo.getInputProperty().getName().equals("Depts")) {
+			System.out.println("!!!!![AFTER] Input size: " + inputList.size() + ", Output size: " + outputList.size());
+		}
 	}
 
 	private void truncateToSize(List outputList, int toSize) {

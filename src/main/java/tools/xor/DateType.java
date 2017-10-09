@@ -85,7 +85,7 @@ public class DateType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getDateValue();
+			return gen.getDateValue(visitor);
 		}
 
 		long  range = getMax() - getMin();

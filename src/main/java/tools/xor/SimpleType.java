@@ -221,7 +221,7 @@ public class SimpleType implements BasicType {
 		if(gen == null) {
 			gen = new DefaultGenerator(null);
 		}
-		int fanOut = gen.getFanout(settings, path);
+		int fanOut = gen.getFanout(property, settings, path);
 
 		// If this is not a containment property, then link to an existing
 
@@ -231,6 +231,9 @@ public class SimpleType implements BasicType {
 
 		BasicType collectionElementType = elementType;
 		for (int i = 0; i < fanOut; i++) {
+
+			// Keep track of the index, as this is needed by some Generator implementations
+			visitor.setSequenceNo(i);
 
 			// Handle inheritance (dynamic subType selection)
 			if (elementType instanceof EntityType) {
@@ -246,8 +249,6 @@ public class SimpleType implements BasicType {
 			if(visitor != null && visitor.hasReachedLimit()) {
 				break;
 			}
-
-			visitor.setSequenceNo(i);
 		}
 
 		return result;

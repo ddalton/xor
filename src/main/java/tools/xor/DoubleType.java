@@ -59,7 +59,7 @@ public class DoubleType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 		if(gen != null) {
-			return gen.getDoubleValue();
+			return gen.getDoubleValue(visitor);
 		}
 
 		double range = getMax() - getMin();

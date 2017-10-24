@@ -1376,11 +1376,20 @@ public abstract class AbstractBO implements BusinessObject {
 		return (new DataObjectList(this)).list(settings);
 	}
 
+	private boolean isMany(Object obj) {
+		return instance instanceof Collection || instance instanceof Map;
+	}
+
 	@Override
 	public int hashCode() {
 		int h = super.hashCode();
 
 		if(getType().isDataType()) {
+			if(isMany(instance))
+			{
+				return  31 * h + System.identityHashCode(instance);
+			}
+
 			h = 31 * h + instance.hashCode(); 
 		}else { 
 			ExtendedProperty identifierProperty = (ExtendedProperty) ((EntityType)type).getIdentifierProperty();
@@ -1412,7 +1421,13 @@ public abstract class AbstractBO implements BusinessObject {
 		if(getType() != other.getType() )
 			return false;
 
-		if(getType().isDataType()) {
+		if(getType().isDataType() ) {
+			if(isMany(instance))
+			{
+				// We don't evaluate the child elements as that could be expensive
+				return instance == other.getInstance();
+			}
+
 			return instance.equals(other.getInstance());
 		}
 

@@ -55,6 +55,7 @@ public class Constants {
 		public static final String ACTIVATE_DETECTORS = "detectors.activate";
 		public static final String GENERATOR_LINK_EXISTING = "generator.link.existing";
 		public static final String REPULSION_MULTIPLIER = "graph.visual.repulsion";
+		public static final String MAX_STRING_LEN = "max.string.length";
 	}
   
   

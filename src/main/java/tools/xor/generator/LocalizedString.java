@@ -20,6 +20,7 @@
 package tools.xor.generator;
 
 import tools.xor.Property;
+import tools.xor.StringType;
 import tools.xor.util.graph.StateGraph;
 
 import java.security.SecureRandom;
@@ -155,6 +156,6 @@ public class LocalizedString extends FixedSet
             language = Locale.getDefault().getLanguage();
         }
 
-        return randomString((Integer) visitor.getContext(), language);
+        return randomString(StringType.getLength((Integer) visitor.getContext()), language);
     }
 }

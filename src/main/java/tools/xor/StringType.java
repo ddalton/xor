@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LocalizedString;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
@@ -35,9 +36,26 @@ public class StringType extends SimpleType {
 
 	public static final int DEFAULT_LENGTH = 255;
 	public static final int MIN_LENGTH = 7; // to avoid empty strings in natural keys and reduce the occurrence of unique constraint violations
+	public static final int MAX_LENGTH;
+	
+	static {
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.MAX_STRING_LEN)) {
+			MAX_LENGTH = ApplicationConfiguration.config().getInt(Constants.Config.MAX_STRING_LEN);
+		} else {
+			MAX_LENGTH = -1;
+		}
+	}
 
 	public StringType(Class<?> clazz) {
 		super(clazz);
+	}
+	
+	static public int getLength(int value) {
+		if(MAX_LENGTH != -1 && value > MAX_LENGTH) {
+			return MAX_LENGTH;
+		}
+		
+		return value;
 	}
 
 	@Override
@@ -63,7 +81,7 @@ public class StringType extends SimpleType {
 			return gen.getStringValue(property, visitor);
 		} else {
 			//return RandomStringUtils.randomAscii(stringLen);
-			return RandomStringUtils.randomAlphanumeric((Integer) visitor.getContext());
+			return RandomStringUtils.randomAlphanumeric(getLength((Integer) visitor.getContext()));
 		}
 	}	
 }

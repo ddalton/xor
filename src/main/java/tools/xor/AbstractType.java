@@ -459,7 +459,12 @@ public abstract class AbstractType implements EntityType {
 		return m.getName().startsWith("set");
 	}
 
+	/**
+	 * This requires the initGetterMethods to be invoked first
+	 */
 	protected void initSetterMethods() {
+
+		assert(readerMethods != null) : "initGetterMethods need to be invoked first";
 
 		// Get all methods declared by the class or interface.
 		// This includes public, protected, default (package) access, 
@@ -484,9 +489,30 @@ public abstract class AbstractType implements EntityType {
 				if (Modifier.isStatic(mod))
 					continue;
 
-				// Adds the specified element to the set if it is not already present
 				final String propertyString = getSetterPropertyName(m);
 				String propertyName = decapitalize(propertyString);
+
+				// Find the return type of the corresponding getter method
+				// Since there can be multiple "setters" with the same name
+				// We need the return type from the getter to resolve this situation
+				Method getterMethod = readerMethods.get(propertyName);
+				if (getterMethod != null) {
+					Method setterMethod;
+					try {
+						setterMethod = instanceClass.getDeclaredMethod(m.getName(), getterMethod.getReturnType());
+					}
+					catch (NoSuchMethodException e) {
+						// Cannot find the corresponding setter so skip this method
+						continue;
+					}
+
+					if (!setterMethod.equals(m)) {
+						// This is not the correct setter for the getter
+						continue;
+					}
+				}
+
+				// Adds the specified element to the set if it is not already present
 				map.put(propertyName, m);
 			}
 			// climb to the super class and repeat

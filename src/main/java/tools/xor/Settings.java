@@ -187,7 +187,10 @@ public class Settings {
 	
 	private Object sessionContext;
 
-	private int globalSeq;
+	// A negative value indicates that the globalSeq has not been initialized
+	private int globalSeq = -1;
+
+	private int batchSize;
 	
 	// User provided data that is made available to callbacks
 	private Object externalData;
@@ -291,6 +294,14 @@ public class Settings {
 	public void setGlobalSeq (int globalSeq)
 	{
 		this.globalSeq = globalSeq;
+	}
+
+	public int getBatchSize() {
+		return this.batchSize;
+	}
+
+	public void setBatchSize(int batchSize) {
+		this.batchSize = batchSize;
 	}
 
 	public Settings() {

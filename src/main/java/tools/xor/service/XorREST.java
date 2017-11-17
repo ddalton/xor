@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -171,15 +172,25 @@ public abstract class XorREST
      * @param settings user settings
      * @param userData any user data needed by the provider overridden implementation
      */
-    protected void populateSingle(Settings settings, Object userData) {
+    private void populateBatch(Settings settings, Object userData) {
 
         TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
-        JSONObject school = sg.generateObjectGraph(settings);
+        List<Object> entityBatch = new LinkedList<>();
+
+        // Generate the batch
+        for(int i = 0; i < settings.getBatchSize(); i++) {
+            entityBatch.add(sg.generateObjectGraph(settings));
+
+            int globalSeq = settings.getGlobalSeq();
+            if(globalSeq != -1) {
+                settings.setGlobalSeq(globalSeq+1);
+            }
+        }
 
         // Try and persist this now
         settings.setPostFlush(true);
         settings.setNarrow(true);
-        getAM().update(school, settings);
+        getAM().update(entityBatch, settings);
     }
 
     /**
@@ -196,12 +207,16 @@ public abstract class XorREST
         if(jsonObj.has("globalSeq")) {
             globalSeq = jsonObj.getInt("globalSeq");
         }
-        int count = -1;
-        if(jsonObj.has("count")) {
-            count = jsonObj.getInt("count");
+        int iterations = -1;
+        if(jsonObj.has("iterations")) {
+            iterations = jsonObj.getInt("iterations");
         }
-        if(count == -1) {
-            count = 1;
+        if(iterations == -1) {
+            iterations = 1;
+        }
+        int batchSize = 1;
+        if(jsonObj.has("batchSize") && jsonObj.getInt("batchSize") > batchSize) {
+            batchSize = jsonObj.getInt("batchSize");
         }
 
         // User should have invoked initializeGenerators, if using custom data patterns
@@ -209,12 +224,13 @@ public abstract class XorREST
 
         DataAccessService das = getAM().getDAS();
         Settings settings = das.settings().json(jsonString).build();
-        for(int i = 0; i < count; i++) {
-            if(globalSeq != -1) {
-                settings.setGlobalSeq(globalSeq++);
-            }
+        settings.setBatchSize(batchSize);
+        if(globalSeq != -1) {
+            settings.setGlobalSeq(globalSeq);
+        }
 
-            populateSingle(settings, userData);
+        for(int i = 0; i < iterations; i++) {
+            populateBatch(settings, userData);
         }
     }
 

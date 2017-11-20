@@ -221,7 +221,7 @@ public class SimpleType implements BasicType {
 		if(gen == null) {
 			gen = new DefaultGenerator(null);
 		}
-		int fanOut = gen.getFanout(property, settings, path);
+		int fanOut = gen.getFanout(property, settings, path, visitor);
 
 		// If this is not a containment property, then link to an existing
 

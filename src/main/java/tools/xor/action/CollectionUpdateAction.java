@@ -92,14 +92,13 @@ public abstract class CollectionUpdateAction implements Executable {
 		if(input != null) {
 			// Create the data objects and load them into the input ObjectCreator cache
 			input.getList();
-			processLinks(outputMap, input, callInfo, new CallInfo());
+			processLinks(outputMap, input, callInfo);
 		}
 	}
 
 	public void processLinks (Map outputMap,
 							  BusinessObject input,
-							  CallInfo callInfo,
-							  CallInfo next) throws
+							  CallInfo callInfo) throws
 		Exception
 	{
 		Collection collection = null;
@@ -111,11 +110,11 @@ public abstract class CollectionUpdateAction implements Executable {
 		}
 
 		for (Object obj : collection) {
-			processLink(null, obj, next, callInfo, outputMap);
+			processLink(null, obj, callInfo, outputMap);
 		}
 	}
 	
-	protected void processLink(String key, Object sourceInstance, CallInfo next, CallInfo callInfo, Map outputMap) throws Exception {
+	protected void processLink(String key, Object sourceInstance, CallInfo callInfo, Map outputMap) throws Exception {
 		BusinessObject input  = ((BusinessObject)callInfo.getInput());
 		BusinessObject sourceElement = input.getObjectCreator().getExistingDataObject(sourceInstance);
 		// element should not be null since it should have been loaded earlier
@@ -123,6 +122,7 @@ public abstract class CollectionUpdateAction implements Executable {
 		Object id = sourceElement.getCollectionElementKey(callInfo.getInputProperty());
 		boolean isNew = id == null || !outputMap.containsKey(id);
 
+		CallInfo next = new CallInfo();
 		next.init(sourceElement, null, callInfo, null);
 		
 		EntityType targetType = ((tools.xor.EntityType)sourceElement.getType()).getDomainType();
@@ -157,13 +157,12 @@ public abstract class CollectionUpdateAction implements Executable {
 					sourceKeys.put(idValue, element);
 			}			
 
-		CallInfo next = new CallInfo();
 		for(Object entry : targetKeys.entrySet()) {
 			Object targetKey = ((Map.Entry) entry).getKey();
 			Object targetElement = ((Map.Entry) entry).getValue();
 
 			if(!sourceKeys.containsKey(targetKey)) { // obsolete element being marked for removal
-				//CallInfo next = new CallInfo(null, targetElement, callInfo, null);
+				CallInfo next = new CallInfo();
 				next.init(null, targetElement, callInfo, null);
 				next.setOutput(callInfo.getOutputObjectCreator().createTarget(next, targetElement, null));
 				unlinkElement(next, (BusinessObject) next.getOutput(), targetKey);

@@ -47,6 +47,7 @@ import tools.xor.TypeNarrower;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LinkedChoices;
 import tools.xor.generator.Lot;
+import tools.xor.generator.RandomSubset;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
@@ -458,6 +459,10 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 					lot = new Lot(((LinkedChoices)gen).getValues().length);
 				}
 				((LinkedChoices)gen).setLot(lot);
+			}
+
+			if(gen instanceof RandomSubset) {
+				gen.init(new StateGraph.ObjectGenerationVisitor(null, null, null));
 			}
 
 			ExtendedProperty property = (ExtendedProperty)entityType.getProperty(entry.getKey());

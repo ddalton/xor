@@ -47,9 +47,10 @@ public class DefaultGenerator implements Generator
     public static final String GLOBAL_SEQ = "[GLOBAL_SEQ]";
     public static final String THREAD_NO = "[THREAD_NO]";
     public static final String ENTITY_SIZE = "[ENTITY_SIZE]";
+    public static final String VISITOR_CONTEXT = "[VISITOR_CONTEXT]";
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
-    private String[] values;
+    protected String[] values;
 
     // Used to cache the fanout value for a FixedSet generator of domain values
     // It's value has the following interpretation:
@@ -307,7 +308,7 @@ public class DefaultGenerator implements Generator
 
     }
 
-    @Override public int getFanout (Property property, Settings settings, String path)
+    @Override public int getFanout (Property property, Settings settings, String path, StateGraph.ObjectGenerationVisitor visitor)
     {
         // Calculate the fixedFanOut if applicable
         if(this.fixedFanOut == null) {
@@ -317,7 +318,7 @@ public class DefaultGenerator implements Generator
                 if(type instanceof EntityType) {
                     EntityType entityType = (EntityType) type;
                     for(Property p: entityType.getProperties()) {
-                        Generator generator = ((ExtendedProperty)p).getGenerator(property.getName());
+                        Generator generator = ((ExtendedProperty)p).getGenerator(visitor.getRelationshipName());
                         if(generator instanceof FixedSet) {
                             // Checking the first occurrence is sufficient, as all other
                             // fixed set should be of same size
@@ -406,5 +407,10 @@ public class DefaultGenerator implements Generator
         }
 
         return null;
+    }
+
+    @Override
+    public void init (StateGraph.ObjectGenerationVisitor visitor) {
+        // overridden by subclasses
     }
 }

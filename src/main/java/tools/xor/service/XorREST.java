@@ -44,6 +44,14 @@ public abstract class XorREST
     protected abstract AggregateManager getJDBCAM ();
 
     /**
+     * Return the settings object
+     * @param jsonString JSON string containing user settings
+     * @param userData any additional data passed by the user
+     * @return Settings instance
+     */
+    protected abstract Settings getSettings (String jsonString, Object userData);
+
+    /**
      * Method used to create an entity.
      *
      * @param jsonString JSON string of both the settings and the entity object that needs to be created
@@ -172,7 +180,7 @@ public abstract class XorREST
      * @param settings user settings
      * @param userData any user data needed by the provider overridden implementation
      */
-    private void populateBatch(Settings settings, Object userData) {
+    protected void populateBatch(Settings settings, Object userData) {
 
         TypeGraph sg = settings.getView().getTypeGraph((EntityType)settings.getEntityType());
         List<Object> entityBatch = new LinkedList<>();
@@ -222,14 +230,15 @@ public abstract class XorREST
         // User should have invoked initializeGenerators, if using custom data patterns
         // during population
 
-        DataAccessService das = getAM().getDAS();
-        Settings settings = das.settings().json(jsonString).build();
+        Settings settings = getSettings(jsonString, userData);
         settings.setBatchSize(batchSize);
         if(globalSeq != -1) {
             settings.setGlobalSeq(globalSeq);
         }
 
         for(int i = 0; i < iterations; i++) {
+            // NOTE: This method needs to be overridden and wrapped in transaction
+            // semantics to commit the changes of the batch and not run out of memory
             populateBatch(settings, userData);
         }
     }

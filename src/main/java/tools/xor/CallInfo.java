@@ -259,7 +259,7 @@ public class CallInfo {
 		return true;
 	}
 
-	public State getCurrentState() {
+	private State getCurrentState() {
 		if(currentState == null) {
 			EntityType entityType = (EntityType)settings.getEntityType();
 			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
@@ -286,11 +286,32 @@ public class CallInfo {
 
 		return currentState;
 	}
-	
-	public List<Property> getProperties(Type type) {
+
+	private void checkView()
+	{
 		if(settings.getView() == null) {
 			throw new RuntimeException("Ensure that settings.init() is called");
 		}
+	}
+
+	public boolean isReference(Type type)
+	{
+		checkView();
+
+		if (AggregateView.isEdgeGraph(settings.getView())) {
+			return getCurrentState().isReference();
+		}
+		else {
+			EntityType entityType = (EntityType)settings.getEntityType();
+			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
+
+			State state = sg.getVertex(((EntityType)type).getDomainType());
+			return state.isReference();
+		}
+	}
+	
+	public List<Property> getProperties(Type type) {
+		checkView();
 
 		EntityType entityType = (EntityType)settings.getEntityType();
 		TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());

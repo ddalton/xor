@@ -143,9 +143,10 @@ public interface Generator
      * @param property collection property
      * @param settings collection sparseness
      * @param path collection sparseness value for this association
+     * @param visitor that contains details on the incomingProperty
      * @return collection size
      */
-    int getFanout(Property property, Settings settings, String path);
+    int getFanout(Property property, Settings settings, String path, StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * The generator is only applicable to the collection element and not to the collection
@@ -153,4 +154,10 @@ public interface Generator
      * @return true if the generator is only applicable to the collection element
      */
     boolean isApplicableToCollectionElement();
+
+    /**
+     * Give a chance for the generator to initialize itself
+     * @param visitor context
+     */
+    void init(StateGraph.ObjectGenerationVisitor visitor);
 }

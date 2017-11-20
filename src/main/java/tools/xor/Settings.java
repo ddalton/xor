@@ -143,8 +143,8 @@ public class Settings {
 
 	private Class<?> entityClass;
 
+	private List<String> references;
 	private List<AssociationSetting> expandedAssociations;
-
 	private List<AssociationSetting> prunedAssociations;
 	private Set<String> pruneRelative; // optimization field to quickly check attributes to prune
 
@@ -311,6 +311,7 @@ public class Settings {
 		this.expandedAssociations = new ArrayList<AssociationSetting>();
 		this.prunedAssociations = new ArrayList<>();
 		this.pruneRelative = new HashSet<>();
+		this.references = new ArrayList<>();
 		this.tags.add(AbstractProperty.EMPTY_TAG);
 	}
 	
@@ -387,6 +388,19 @@ public class Settings {
 		return (prunedAssociations != null && prunedAssociations.size() > 0);
 	}
 
+	public boolean hasReferences() {
+		return (references != null && references.size() > 0);
+	}
+
+	public void addReference(String typeName) {
+		this.references.add(typeName);
+	}
+
+	public List<String> getReferences()
+	{
+		return this.references;
+	}
+
 	public void init(View aView, Map<String, String> queryParams, Shape shape) {
 
 		this.view = aView;
@@ -420,6 +434,12 @@ public class Settings {
 			}
 			// remove this from the StateGraph
 			((StateGraph)view.getTypeGraph((EntityType)entityType)).prune(prunedAssociations, shape);
+		}
+		if(hasReferences()) {
+			// Mark the appropriate states as references
+			((StateGraph)view.getTypeGraph((EntityType)entityType)).markReferences(
+				references,
+				shape);
 		}
 
 		this.filters = populateFilters(queryParams);
@@ -1012,6 +1032,11 @@ public class Settings {
 			return this;
 		}
 
+		public SettingsBuilder reference(String typeName) {
+			this.settings.addReference(typeName);
+			return this;
+		}
+
 		public SettingsBuilder globalSeq(int globalSeq) {
 			this.settings.setGlobalSeq(globalSeq);
 			return this;
@@ -1102,7 +1127,13 @@ public class Settings {
 							AssociationSetting prune = new AssociationSetting(path, MatchType.ABSOLUTE_PATH);
 							prune(prune);
 						}
-						break;						
+						break;
+					case "REFERENCE":
+						JSONArray references = json.getJSONArray(key);
+						for(int i = 0; i < references.length(); i++) {
+							reference(references.getString(i));
+						}
+						break;
 					case "FILTERS":
 						Object obj = json.get(key);
 						if(obj instanceof JSONObject) {

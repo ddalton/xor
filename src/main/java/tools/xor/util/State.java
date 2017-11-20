@@ -39,12 +39,13 @@ import tools.xor.Type;
  */
 public class State implements Vertex {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
-	
-	private Type                    type;
-	private boolean                 startState;
-	private boolean                 finishState;
-	private boolean                 inScope;
-	private Set<String>             attributes;
+
+	private Type        type;
+	private boolean     startState;
+	private boolean     finishState;
+	private boolean     inScope;
+	private Set<String> attributes;
+	private boolean     reference;
 
 	public State(Type type, boolean startState) {
 		this.type = type;
@@ -65,6 +66,10 @@ public class State implements Vertex {
 		if(this.attributes != null) {
 			result.attributes = new HashSet<String>(this.attributes);
 		}
+
+		result.setFinishState(this.finishState);
+		result.setInScope(this.inScope);
+		result.setReference(this.reference);
 		
 		return result;
 	}
@@ -165,5 +170,15 @@ public class State implements Vertex {
 		// Might need to go to FQDN for accuracy reasons
 		//return AbstractType.getBaseName(getType());
 	}
+	public boolean isReference ()
+	{
+		return reference;
+	}
+
+	public void setReference (boolean reference)
+	{
+		this.reference = reference;
+	}
+
 }
 

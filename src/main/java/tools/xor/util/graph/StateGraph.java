@@ -373,6 +373,34 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 		}
 	}
+
+	public void markReferences (List<String> references, Shape shape)
+	{
+		for (String referenceType : references) {
+			V state = states.get(shape.getType(referenceType));
+			if (state == null) {
+				throw new RuntimeException(
+					"The type " + referenceType
+						+ " needs to be part of the states in order to be marked as a reference state");
+			}
+
+			state.setReference(true);
+
+			// Since these states are now references, there is no use in having
+			// out edges from these states as they will not be processed, unless
+			// they are part of the natural key
+			EntityType entityType = (EntityType)state.getType();
+			Set<String> naturalKeyMap = new HashSet<>();
+			if(entityType.getNaturalKey() != null) {
+				naturalKeyMap = new HashSet<>(entityType.getNaturalKey());
+			}
+			for(E edge: new LinkedList<>(getOutEdges(state))) {
+				if(!naturalKeyMap.contains(edge.getName())) {
+					removeEdge(edge);
+				}
+			}
+		}
+	}
 	
 	/**
 	 * This method is to enhance the state graph since the states are reused across other state graph entities.
@@ -997,7 +1025,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return result;
 	}
 
-	public static class ObjectGenerationVisitor
+	public static interface ContextAware {
+		Object getContext();
+
+		void setContext(Object ctx);
+	}
+
+	public static class ObjectGenerationVisitor implements ContextAware
 	{
 		private Map<JSONObject, State> objectStateMap = new HashMap<JSONObject, State>();
 		private Settings settings;
@@ -1420,53 +1454,63 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		// Type name
 		StringBuilder label = new StringBuilder();
-		label.append(QueryViewProperty.getBaseName(type.getName()))
-		.append("|");
+		label.append(QueryViewProperty.getBaseName(type.getName()));
 
-		if(type instanceof EntityType) {
-			// List the natural key parts
-			EntityType entityType = (EntityType) type;
-			StringBuilder keyString = new StringBuilder();
-			if(entityType.getNaturalKey() != null) {
-				for (String key : entityType.getNaturalKey()) {
-					if (keyString.length() > 0) {
-						keyString.append("\\n");
-					}
-					keyString.append(key);
-				}
-				label.append(keyString);
-			}
+		if(!vertex.isReference()) {
+			label.append("|");
 
-			// Check for required entity types, as this affects stategraph scope
-			// Simple required types do not have to be listed here
-			StringBuilder requiredEntities = new StringBuilder();
-			for(Property property: entityType.getProperties()) {
-				if(!property.isNullable()) {
-					Type requiredEntityType = GraphUtil.getPropertyEntityType(property, getShape());
-					if(requiredEntityType instanceof EntityType ) {
-						if(requiredEntities.length() > 0) {
-							requiredEntities.append("\\n");
+			if (type instanceof EntityType) {
+				// List the natural key parts
+				EntityType entityType = (EntityType)type;
+				StringBuilder keyString = new StringBuilder();
+				if (entityType.getNaturalKey() != null) {
+					for (String key : entityType.getNaturalKey()) {
+						if (keyString.length() > 0) {
+							keyString.append("\\n");
 						}
-						requiredEntities.append(property.getName() + " : " + QueryViewProperty.getBaseName(requiredEntityType.getName()));
+						keyString.append(key);
+					}
+					label.append(keyString);
+				}
+
+				// Check for required entity types, as this affects stategraph scope
+				// Simple required types do not have to be listed here
+				StringBuilder requiredEntities = new StringBuilder();
+				for (Property property : entityType.getProperties()) {
+					if (!property.isNullable()) {
+						Type requiredEntityType = GraphUtil.getPropertyEntityType(
+							property,
+							getShape());
+						if (requiredEntityType instanceof EntityType) {
+							if (requiredEntities.length() > 0) {
+								requiredEntities.append("\\n");
+							}
+							requiredEntities.append(
+								property.getName() + " : " + QueryViewProperty.getBaseName(
+									requiredEntityType.getName()));
+						}
 					}
 				}
-			}
 
-			if(requiredEntities.length() > 0) {
-				label.append("|").append(requiredEntities);
+				if (requiredEntities.length() > 0) {
+					label.append("|").append(requiredEntities);
+				}
 			}
 		}
 
-		return label.toString();
+		return vertex.isReference() ? label.toString() : ("{" + label.toString() + "}");
 	}
 
 	protected void writeDOTVertices(BufferedWriter writer) throws IOException
 	{
 		Iterator vertexIter = getConnectedVertices().iterator();
-		while(vertexIter.hasNext()) {
+		while (vertexIter.hasNext()) {
 			V vertex = (V)vertexIter.next();
 
-			writer.write("  " + getId(vertex) + "[label = \"{" + getLabel(vertex) + "}\"]\n");
+			String referenceStyle = vertex.isReference() ? "shape=component, " : "";
+			writer.write(
+				"  " + getId(vertex) + "[" + referenceStyle + "label = \"" + getLabel(vertex)
+					+ "\"]\n");
 		}
 	}
 

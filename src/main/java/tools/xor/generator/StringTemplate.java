@@ -40,7 +40,8 @@ public class StringTemplate extends DefaultGenerator
         return new String[] {
             ENTITY_SIZE,
             THREAD_NO,
-            GLOBAL_SEQ
+            GLOBAL_SEQ,
+            VISITOR_CONTEXT
         };
     }
 
@@ -64,9 +65,9 @@ public class StringTemplate extends DefaultGenerator
                 @Override public String evaluate (String input,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return input.replace(
+                    return visitor.getSettings() != null ? input.replace(
                         ENTITY_SIZE,
-                        visitor.getSettings().getEntitySize().name());
+                        visitor.getSettings().getEntitySize().name()) : input;
                 }
             });
 
@@ -76,22 +77,36 @@ public class StringTemplate extends DefaultGenerator
                 @Override public String evaluate (String input,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return input.replace(
+                    return visitor.getSettings() != null ? input.replace(
                         GLOBAL_SEQ,
-                        new Integer(visitor.getSettings().getGlobalSeq()).toString());
+                        new Integer(visitor.getSettings().getGlobalSeq()).toString()) : input;
                 }
             });
+
+        evaluators.put(
+            VISITOR_CONTEXT, new TokenEvaluator()
+            {
+                @Override public String evaluate (String input,
+                                                  StateGraph.ObjectGenerationVisitor visitor)
+                {
+                    return visitor.getContext() != null ? input.replace(
+                        VISITOR_CONTEXT,
+                        visitor.getContext().toString()) : input;
+                }
+            });
+    }
+
+    public static String resolve(String input, StateGraph.ObjectGenerationVisitor visitor) {
+        for(String tokenName: getTokens()) {
+            input = evaluators.get(tokenName).evaluate(input, visitor);
+        }
+
+        return input;
     }
 
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        String template = getValues()[0];
-
-        for(String tokenName: getTokens()) {
-            template = evaluators.get(tokenName).evaluate(template, visitor);
-        }
-
-        return template;
+        return resolve(getValues()[0], visitor);
     }
 }

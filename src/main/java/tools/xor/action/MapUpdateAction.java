@@ -83,15 +83,14 @@ public class MapUpdateAction extends CollectionUpdateAction {
 	@Override
 	public void processLinks (Map outputMap,
 							  BusinessObject input,
-							  CallInfo callInfo,
-							  CallInfo next) throws
+							  CallInfo callInfo) throws
 		Exception
 	{
 		Map map = (Map) input.getInstance();
 
 		for(Object item: map.entrySet()) {
 			Map.Entry entry = (Map.Entry) item;
-			processLink(entry.getKey().toString(), entry.getValue(), next, callInfo, outputMap);
+			processLink(entry.getKey().toString(), entry.getValue(), callInfo, outputMap);
 		}
 	}
 

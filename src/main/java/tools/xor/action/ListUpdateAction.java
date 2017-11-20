@@ -102,15 +102,14 @@ public class ListUpdateAction extends CollectionUpdateAction {
 	@Override
 	public void processLinks (Map outputMap,
 							  BusinessObject input,
-							  CallInfo callInfo,
-							  CallInfo next) throws
+							  CallInfo callInfo) throws
 		Exception
 	{
 		List list = extractList(input);
 
 		for(int i = 0; i < list.size(); i++) {
 			Object obj = list.get(i);
-			processLink((new Integer(i)).toString(), obj, next, callInfo, outputMap);
+			processLink((new Integer(i)).toString(), obj, callInfo, outputMap);
 		}
 	}
 

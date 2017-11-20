@@ -166,11 +166,17 @@ public abstract class AbstractOperation implements Operation {
 						return;
 					}
 
-					List<Property> properties = callInfo.getProperties(source.getType());
-					CallInfo next = new CallInfo();
+					// Instances of States that are explicitly marked as reference cannot be
+					// updated
+					if (callInfo.getStage() == ProcessingStage.UPDATE
+						&& callInfo.isReference(source.getType())) {
+						return;
+					}
 
+					List<Property> properties = callInfo.getProperties(source.getType());
 					List<Property> nonKeyProperties = new ArrayList<Property>();
 					for (Property sourceProperty : properties) {
+						CallInfo next = new CallInfo();
 						// Properties comprising the natural key are processed first
 						// as we need this information to form EntityKey using userKey
 						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
@@ -208,7 +214,12 @@ public abstract class AbstractOperation implements Operation {
 
 					// Process the property references
 					for (Property sourceProperty : nonKeyProperties) {
-						next.initOperation(this, null, callInfo, (ExtendedProperty)sourceProperty);
+						CallInfo next = new CallInfo();
+						next.initOperation(
+							this,
+							null,
+							callInfo,
+							(ExtendedProperty)sourceProperty);
 						processAttribute(next);
 					}
 				}

@@ -246,6 +246,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	
 	/**
 	 * Returns the topological sort order for the type
+	 * The higher the number, more entities are dependant upon it.
 	 * 
 	 * @return order number
 	 */

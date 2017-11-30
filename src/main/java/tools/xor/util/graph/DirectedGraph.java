@@ -109,7 +109,9 @@ public interface DirectedGraph<V, E> extends Graph<V, E> {
 	public E getReversedEdge(E edge);
 	
 	/**
-	 * Get a topoologically sorted list of the DAG
+	 * Get a topoologically sorted list of the DAG. Reverse sorted by their importance, i.e.,
+	 * nodes with lower number are more dependant on nodes with a higher number.
+	 *
 	 * A RuntimeException will be thrown if the graph is not a DAG
 	 * @param shape of the type
 	 * @return list of vertices in topological order

@@ -126,10 +126,15 @@ public class Edge<V extends Vertex>
     }
 
     public String getEndCardinality() {
-        if(start instanceof State) {
-            Type type = ((State)start).getType();
+        V edgeStart = start;
+        if(reversed) {
+            edgeStart = end;
+        }
+
+        if(edgeStart instanceof State) {
+            Type type = ((State)edgeStart).getType();
             if(type instanceof EntityType && name != null && !"".equals(name)) {
-                Property property = ((EntityType) type).getProperty(name);
+                Property property = type.getProperty(name);
                 if(property.isMany()) {
                     return ZERO_OR_MORE;
                 } else if(property.isNullable()) {

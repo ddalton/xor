@@ -61,6 +61,16 @@ public interface Xor {
 	public Object update(Object inputObject, Class<?> entityClass);
 
 	/**
+	 * Migrates entities from the current database to the target database.
+	 * The entities that need to be migrated are specified in the xor.properties file
+	 * under the key entities_to_migrate as a comma separated list of fully qualified
+	 * entity names.
+	 *
+	 * @param target database
+	 */
+	public void migrate(AggregateManager target);
+
+	/**
 	 * @param inputObject  The persistence managed object that needs to be deleted
 	 * @param settings     User specified settings
 	 */

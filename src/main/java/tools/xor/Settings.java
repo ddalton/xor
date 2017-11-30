@@ -985,7 +985,7 @@ public class Settings {
 		}
 
 		private void createView(Class clazz, ViewType builtInType) {
-			Type type = (EntityType)shape.getType(clazz);
+			Type type = shape.getType(clazz);
 			EntityType entityType;
 			if(type instanceof EntityType) {
 				entityType = (EntityType) type;
@@ -1012,6 +1012,12 @@ public class Settings {
 		
 		public SettingsBuilder base(Class<?> clazz) {
 			createView(clazz, ViewType.BASE);
+
+			return this;
+		}
+
+		public SettingsBuilder migrate(Class<?> clazz) {
+			createView(clazz, ViewType.MIGRATE);
 
 			return this;
 		}
@@ -1068,6 +1074,11 @@ public class Settings {
 						className = json.getString(key);
 						clazz = Class.forName(className);
 						aggregate(clazz);
+						break;
+					case "MIGRATE":
+						className = json.getString(key);
+						clazz = Class.forName(className);
+						migrate(clazz);
 						break;
 					case "GRAPHFILENAME":
 						this.settings.setGraphFileName(json.getString(key));

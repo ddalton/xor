@@ -179,29 +179,6 @@ public class StoredProcedureQuery extends AbstractQuery {
 		return result;
 	}
 
-	private List extractResults(ResultSet rs) throws SQLException
-	{
-		List result = new ArrayList();
-
-		ResultSetMetaData rsmd = rs.getMetaData();
-		int columnCount = rsmd.getColumnCount();
-		while (rs.next()) {
-
-			Object[] row = new Object[columnCount];
-			result.add(row);
-
-			for(int i = 0; i < columnCount; i++) {
-				// Get the value from the ResultSet, JDBC columnIndex starts from 1
-				row[i] = BindParameter.getValue(
-					rsmd.getColumnType(i + 1),
-					rs,
-					i + 1);
-			}
-		}
-
-		return result;
-	}
-
 	@Override
 	/**
 	 * @throws javax.persistence.NoResultException if there is no result

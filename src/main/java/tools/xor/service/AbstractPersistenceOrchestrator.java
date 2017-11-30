@@ -238,4 +238,9 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	public boolean supportsStoredProcedure() {
 		return false;
 	}
+
+	public EntityScroll getEntityScroll(Settings settings)
+	{
+		throw new UnsupportedOperationException("EntityScroll is not supported");
+	}
 }

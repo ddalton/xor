@@ -663,12 +663,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 				
 				for(E e: dg.getOutEdges(vertex)) {
 					breakCrumbs.addLast(e);
-
-					// Not necessary to visit the parent, as every vertex is anyhow
-					// going to be visited, and this avoids loops
-					if(!DFAtoNFA.UNLABELLED.equals(((Edge)e).getName())) {
-						visit(dg.getEnd(e));
-					}
+					visit(dg.getEnd(e));
 					breakCrumbs.removeLast();
 				}
 				

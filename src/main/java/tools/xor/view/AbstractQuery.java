@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -112,5 +113,28 @@ public abstract class AbstractQuery implements Query {
 		}
 
 		return list;
+	}
+
+	public static List extractResults(ResultSet rs) throws SQLException
+	{
+		List result = new ArrayList();
+
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int columnCount = rsmd.getColumnCount();
+		while (rs.next()) {
+
+			Object[] row = new Object[columnCount];
+			result.add(row);
+
+			for(int i = 0; i < columnCount; i++) {
+				// Get the value from the ResultSet, JDBC columnIndex starts from 1
+				row[i] = BindParameter.getValue(
+					rsmd.getColumnType(i + 1),
+					rs,
+					i + 1);
+			}
+		}
+
+		return result;
 	}
 }

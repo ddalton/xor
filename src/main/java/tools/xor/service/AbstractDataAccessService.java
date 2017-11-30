@@ -280,7 +280,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
 				&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
 				Settings settings = new Settings();
-				settings.setGraphFileName("ApplicationStateGraph_" + shape.getName() + ".png");
+				settings.setGraphFileName("ApplicationStateGraph" + shape.getName() + ".dot");
 				stateGraph.generateVisual(settings);
 
 				stateGraph.printEntityOrder();

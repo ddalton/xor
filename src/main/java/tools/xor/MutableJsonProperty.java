@@ -37,12 +37,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import tools.xor.service.DataAccessService;
-import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
 /**
- * This is designed to work with javax.json.JsonObject
+ * This is designed to work with org.json.JSONObject
  * 
  * @author Dilip Dalton
  *

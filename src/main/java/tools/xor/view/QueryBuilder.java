@@ -30,7 +30,6 @@ import java.util.TreeMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -137,7 +136,6 @@ public class QueryBuilder {
 		return constructDML(view.getContentView(), settings, filters);
 	}
 
-	//public Query constructDML(View view, CallInfo callInfo, Map<String, Object> filters) {
 	public Query constructDML(View view, Settings settings, Map<String, Object> filters) {
 		//		First check for a StoredProcedure query, then a SQL query 
 		//		When retrieving the QueryBuilder instance, registered SQL queries are given preference over HQL/JPQL queries.
@@ -178,23 +176,27 @@ public class QueryBuilder {
 		}
 
 		// System OQL
-		StringBuilder HQL = generateOQLQuery(settings, settings.getPersistenceOrchestrator(), filters);
+		StringBuilder oql = generateOQLQuery(settings, settings.getPersistenceOrchestrator(), filters);
 		
 		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 		if(vb.isDebugEnabled()) {
-			vb.debug("HQL of view [" + view.getName() + "] => " + HQL.toString());
+			vb.debug("OQL of view [" + view.getName() + "] => " + oql.toString());
 		}
 
-		return settings.getPersistenceOrchestrator().getQuery(HQL.toString(), QueryType.OQL, null, settings);
+		return settings.getPersistenceOrchestrator().getQuery(
+			oql.toString(),
+			QueryType.OQL,
+			null,
+			settings);
 	}
 	
 	public StringBuilder generateOQLQuery(Settings settings, PersistenceOrchestrator po, Map<String, Object> filters) {
 
-		StringBuilder HQL = new StringBuilder(constructOQL(settings, po));
-		HQL.append(buildWhereClause(settings, filters));
-		HQL.append(buildOrderClause(po));
+		StringBuilder oql = new StringBuilder(constructOQL(settings, po));
+		oql.append(buildWhereClause(settings, filters));
+		oql.append(buildOrderClause(po));
 		
-		return HQL;
+		return oql;
 	}
 	
 	private void debugSelectColumns(Map<String, ColumnMeta> meta) {
@@ -382,7 +384,7 @@ public class QueryBuilder {
 	}
 	
 	/*
-	/* refers to the columns used in the order by clause. 
+	 * refers to the columns used in the order by clause.
 	 * There needs to be atleast one unique column for this to work property.
 	 * If there are multiple columns then the last column should be a unique column
 	 *
@@ -397,8 +399,8 @@ public class QueryBuilder {
 	 *    AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
 	 *    
 	 * 
-	 * @param callInfo current call stack frame
-	 * @param query the current query string that has been built so far 
+	 * @param settings user provided settings
+	 * @param queryString the current query string that has been built so far
 	 */
 	protected void checkAndAddChunkStart(Settings settings, StringBuilder queryString) {
 		if(settings == null) {
@@ -502,7 +504,7 @@ public class QueryBuilder {
 			result.append(" WHERE ");		
 	}
 
-	public void postProcess(QueryView queryView, CallInfo callInfo, Query query, Map<String, Object> filters) {
+	public void postProcess(QueryView queryView, Settings settings, Query query, Map<String, Object> filters) {
 		
 		for(Map.Entry<String, Object> entry: filters.entrySet()) {
 			query.setParameter(entry.getKey(), entry.getValue());
@@ -513,7 +515,7 @@ public class QueryBuilder {
 		}
 
 		// Set the chunk values
-		Map<String, Object> nextToken = callInfo.getSettings().getNextToken();
+		Map<String, Object> nextToken = settings.getNextToken();
 		if(nextToken != null) {
 			for(Map.Entry<String, Object> entry: nextToken.entrySet()) {
 				if(!query.hasParameter(QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
@@ -524,10 +526,10 @@ public class QueryBuilder {
 		}
 
 		// pagination
-		if(callInfo.getSettings().getOffset() != null)
-			query.setFirstResult(callInfo.getSettings().getOffset());
-		if(callInfo.getSettings().getLimit() != null)
-			query.setMaxResults(callInfo.getSettings().getLimit());	
+		if(settings.getOffset() != null)
+			query.setFirstResult(settings.getOffset());
+		if(settings.getLimit() != null)
+			query.setMaxResults(settings.getLimit());
 		
 		// initialize the query with the selected columns
 		query.setColumns(selectedColumns);

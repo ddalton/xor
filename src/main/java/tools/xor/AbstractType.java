@@ -177,6 +177,14 @@ public abstract class AbstractType implements EntityType {
 		return sb.toString();
 	}
 
+	public static String getMigrateViewName(Type type) {
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		sb.append(Settings.URI_PATH_DELIMITER);
+		sb.append(ViewType.MIGRATE);
+
+		return sb.toString();
+	}
+
 	public static String getRefViewName(Type type) {
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);

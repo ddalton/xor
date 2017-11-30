@@ -38,8 +38,6 @@ import javax.json.JsonValue;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.DataAccessService;
-import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
 /**

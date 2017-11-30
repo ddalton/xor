@@ -228,4 +228,11 @@ public interface PersistenceOrchestrator {
      */
     public Blob createBlob();
 
+    /**
+     * Uses a cursor to execute the query
+     *
+     * @param settings containing migrate view details
+     * @return results scroll object
+     */
+    public EntityScroll getEntityScroll(Settings settings);
 }

@@ -83,7 +83,7 @@ public class QueryOperation extends AbstractOperation {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
 		Query query = qb.constructQuery(callInfo.getSettings(), mutableFilters);
 
-		qb.postProcess(queryView, callInfo, query, mutableFilters);
+		qb.postProcess(queryView, callInfo.getSettings(), query, mutableFilters);
 		
 		return query;				
 	}

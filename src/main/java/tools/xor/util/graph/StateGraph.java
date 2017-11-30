@@ -904,6 +904,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 			sgLogger.debug(sb.toString());
 		}
+
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
+			Settings settings = new Settings();
+			settings.setGraphFileName("ApplicationStateGraph_Topological" + (shape != null ? shape.getName() : "") + ".dot");
+			generateVisual(settings);
+		}
 		
 		// renumber the vertices
 		renumber(sorted);
@@ -1146,6 +1153,56 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 	}
 
+	public static Object getKeyValue(JSONObject object, String keyPath) {
+		Object result = null;
+
+		do {
+			String root = QueryViewProperty.getRootName(keyPath);
+			keyPath = QueryViewProperty.getNext(keyPath);
+
+			if(object.has(root) && object.get(root) != null) {
+				if(keyPath != null) {
+					if(object.get(root) instanceof JSONObject) {
+						object = (JSONObject)object.get(root);
+					} else {
+						object = null;
+					}
+				} else {
+					result = object.get(root);
+				}
+			} else {
+				object = null;
+			}
+		} while (keyPath != null && object != null);
+
+		return result;
+	}
+
+
+	public static void setKeyValue(JSONObject object, String keyPath, Object value) {
+		do {
+			String root = QueryViewProperty.getRootName(keyPath);
+			keyPath = QueryViewProperty.getNext(keyPath);
+
+			if(object.has(root) && object.get(root) != null) {
+				if(keyPath != null) {
+					if(object.get(root) instanceof JSONObject) {
+						object = (JSONObject)object.get(root);
+					} else {
+						// We do not support other types e.g., arrays
+						throw new RuntimeException("Expecting a JSONObject instance");
+					}
+				} else {
+					object.put(root, value);
+				}
+			} else {
+				JSONObject embeddedObject = new JSONObject();
+				object.put(root, embeddedObject);
+				object = embeddedObject;
+			}
+		} while (keyPath != null && object != null);
+	}
+
 	/**
 	 * Creates a random object graph instance based on the given state graph.
 	 * Useful for populating data.
@@ -1164,31 +1221,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		public RandomInstance(Settings settings, StateGraph stateGraph) {
 			this.settings = settings;
 			this.stateGraph = stateGraph;
-		}
-
-		private Object getKeyValue(JSONObject object, String keyPath) {
-			Object result = null;
-
-			do {
-				String root = QueryViewProperty.getRootName(keyPath);
-				keyPath = QueryViewProperty.getNext(keyPath);
-
-				if(object.has(root) && object.get(root) != null) {
-					if(keyPath != null) {
-						if(object.get(root) instanceof JSONObject) {
-							object = (JSONObject)object.get(root);
-						} else {
-							object = null;
-						}
-					} else {
-						result = object.get(root);
-					}
-				} else {
-					object = null;
-				}
-			} while (keyPath != null && object != null);
-
-			return result;
 		}
 
 		private JSONObject addObject(State state, JSONObject object, String objectPath) {
@@ -1530,12 +1562,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		for(Map.Entry<String, E> entry: getEdgeMap().entrySet()) {
 			E edge = entry.getValue();
 
-			EntityType startType = (EntityType)edge.getStart().getType();
-			EntityType endType = (EntityType)edge.getEnd().getType();
+			Type startType = edge.getStart().getType();
+			Type endType = edge.getEnd().getType();
 			Property property = startType.getProperty(edge.getName());
 
 			boolean constrain = true;
-			if(getRootState() == edge.getStart() && !endType.isEmbedded()) {
+			if(getRootState() == edge.getStart() && !(endType instanceof EntityType && ((EntityType)endType).isEmbedded())) {
 				constrain = false;
 			}
 
@@ -1551,7 +1583,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				result.append("dir=back, arrowtail=empty, weight=2");
 			}
 			// Aggregation edge
-			else if(property.isContainment()) {
+			else if(property != null && property.isContainment()) {
 				result.append("dir=back, arrowtail=diamond, style=dashed");
 			}
 			// Association edge

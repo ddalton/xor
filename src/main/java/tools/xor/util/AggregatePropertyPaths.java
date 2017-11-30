@@ -43,8 +43,9 @@ import tools.xor.util.DFAtoRE.UnionExpression;
 public class AggregatePropertyPaths {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
-	private static Map<Type, Set<String>> aggregatePaths = new ConcurrentHashMap<Type, Set<String>>();
-	private static Map<Type, Set<String>> basePaths = new ConcurrentHashMap<Type, Set<String>>();   
+	private static Map<Type, Set<String>> aggregatePaths = new ConcurrentHashMap<>();
+	private static Map<Type, Set<String>> basePaths = new ConcurrentHashMap<>();
+	private static Map<Type, Set<String>> migratePaths = new ConcurrentHashMap<>();
 
 	private static boolean isSimpleProperty(Property property) {
 		return  property != null && 
@@ -131,6 +132,69 @@ public class AggregatePropertyPaths {
 			basePaths.put(aggregateType, paths);
 		}
 		
+		return Collections.unmodifiableSet(paths);
+	}
+
+	/**
+	 * Add the path to the attribute list
+	 * if the property is simple, then a single path is added
+	 * if the property is an entity and it has multiple key parts, then multiple parts are added
+	 *
+	 * @param paths set to which the path(s) are being added
+	 * @param property being added
+	 * @param propertyPath null if this is a direct property, else the property path
+	 */
+	public static void addPaths(Set<String> paths, Property property, String propertyPath) {
+		if(isSimpleProperty(property)) {
+			paths.add(propertyPath != null ? propertyPath : property.getName());
+		} else if (!property.isNullable() && !property.isMany()) {
+			// RDBMS cannot enforce non-null and multiple relationship, but we are being
+			// explicit here
+			EntityType entityType = (EntityType) property.getType();
+
+			if(entityType.getNaturalKey() != null) {
+				paths.addAll(entityType.getExpandedNaturalKey());
+			} else {
+				throw new RuntimeException("Cannot create a migrate query for a type without a natural key: " + entityType.getName());
+			}
+		}
+	}
+
+	/**
+	 * The properties needed for migration.
+	 * For migration, we include:
+	 * 1. all simple properties
+	 * 2. single valued embedded relationships.
+	 * 3. Natural key of any required entity relationships
+	 *
+	 * @param aggregateType whose migrate view we are configuring
+	 * @return the set of properties needed for migration for that aggregateType
+	 */
+	public static Set<String> enumerateMigrate (Type aggregateType)
+	{
+		Set<String> paths = migratePaths.get(aggregateType);
+
+		if (!migratePaths.containsKey(aggregateType)) {
+			paths = new HashSet<>();
+			for (Property property : aggregateType.getProperties()) {
+				if (isPartofBase(property)) {
+					addPaths(paths, property, null);
+				}
+				else if (property.getType() instanceof EntityType
+					&& ((EntityType)property.getType()).isEmbedded() && !property.isMany()) {
+					Set<String> embeddedPaths = new HashSet<>();
+					for (String embeddedPath : property.expand(new HashSet<>())) {
+						if (!embeddedPath.startsWith(Constants.XOR.IDREF)) {
+							Property embeddedProperty = aggregateType.getProperty(embeddedPath);
+							addPaths(embeddedPaths, embeddedProperty, embeddedPath);
+						}
+					}
+					paths.addAll(embeddedPaths);
+				}
+			}
+			migratePaths.put(aggregateType, paths);
+		}
+
 		return Collections.unmodifiableSet(paths);
 	}
 

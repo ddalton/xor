@@ -578,6 +578,21 @@ public class Shape
         return getView(viewName);
     }
 
+    public View getMigrateView(EntityType type) {
+
+        String viewName = AbstractType.getMigrateViewName(type);
+        View result = getView(viewName);
+
+        if(result == null) {
+            result = new AggregateView(viewName);
+            Set<String> paths = AggregatePropertyPaths.enumerateMigrate(type);
+
+            updateView(result, viewName, paths);
+        }
+
+        return getView(viewName);
+    }
+
     public View getRefView(EntityType type) {
 
         String viewName = AbstractType.getRefViewName(type);

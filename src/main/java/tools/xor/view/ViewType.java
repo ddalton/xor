@@ -26,6 +26,7 @@ public enum ViewType
 {
     REF("REF_"),
     BASE("BASE_"),
+    MIGRATE("MIGRATE_"),
     AGGREGATE("AGGREGATE_");
 
     private final String name;

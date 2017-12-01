@@ -146,6 +146,14 @@ public interface Property
   List<String> expand(Set<Type> examined);
 
   /**
+   * Returns the expanded property names rooted at this property.
+   * @param examined Avoids processing these types and is useful for avoiding getting stuck in
+   *                 a loop
+   * @return a list of properties
+   */
+  List<String> expandMigrate(Set<Type> examined);
+
+  /**
    * Get the constraints that are on this property such as field length etc...
    * @return map of constraints
    */

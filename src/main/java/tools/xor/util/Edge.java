@@ -148,6 +148,10 @@ public class Edge<V extends Vertex>
         return null;
     }
 
+    public boolean isUnlabelled() {
+        return DFAtoNFA.UNLABELLED.equals(getName());
+    }
+
     @Override
     public String toString ()
     {

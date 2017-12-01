@@ -25,6 +25,8 @@ import javax.enterprise.inject.spi.InjectionTarget;
 import javax.inject.Inject;
 
 import tools.xor.TypeMapper;
+import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCSpringDAS;
 import tools.xor.util.ClassUtil;
 
 @Alternative
@@ -50,5 +52,11 @@ public class CDIDASFactory extends AbstractDASFactory {
 	@Override
 	protected JPADAS createJPADAS(TypeMapper typeMapper, String name) {
 		return new JPASpringDAS(typeMapper, name, this);
+	}
+
+	@Override protected JDBCDAS createJDBCDAS ()
+	{
+		// TODO: JDBCCDIDAS?
+		return new JDBCSpringDAS();
 	}
 }

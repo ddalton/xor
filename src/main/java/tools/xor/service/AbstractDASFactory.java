@@ -28,6 +28,7 @@ import org.springframework.beans.factory.BeanCreationException;
 
 import tools.xor.MapperDirection;
 import tools.xor.TypeMapper;
+import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.util.PersistenceType;
 
 public abstract class AbstractDASFactory implements DASFactory {
@@ -57,6 +58,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 	
 	protected abstract JPADAS createJPADAS(TypeMapper typeMapper, String name);
 
+	protected abstract JDBCDAS createJDBCDAS();
 
 	/**
 	 * This should be overridden by a custom DASFactory
@@ -144,7 +146,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 		}
 
 		if(persistenceType == null || persistenceType == PersistenceType.JDBC) {
-			das.put(name, createCustomDAS(typeMapper, name));
+			das.put(name, createJDBCDAS());
 			return das.get(name);
 		}
 

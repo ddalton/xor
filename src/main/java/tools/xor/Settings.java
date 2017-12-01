@@ -999,6 +999,9 @@ public class Settings {
 			case BASE:
 				settings.setView(shape.getBaseView(entityType));
 				break;
+			case MIGRATE:
+				settings.setView(shape.getMigrateView(entityType));
+				break;
 			case AGGREGATE:
 				settings.setView(shape.getView(entityType));
 				break;

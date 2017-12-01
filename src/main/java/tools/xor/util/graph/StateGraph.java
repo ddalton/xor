@@ -866,11 +866,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			if( properties != null) {
 				for(Property p: properties) {
 					if(outTransitions.get(state) != null && outTransitions.get(state).containsKey(p.getName())) {
-						if(p.isContainment()) {
-							// We process them later as we don't want to be thrashing the edge
-							// reversal depending upon how we traverse the graph
-							edgesToReverse.add(outTransitions.get(state).get(p.getName()));
-						} else if (p.isNullable()) {
+
+						// Foreign keys cannot typically be enforced on a containment
+						// relationship, especially on abstract entity types.
+						// So we will not consider their ordering unless they are required.
+						if(p.isNullable()) {
 							unlinkEdge(outTransitions.get(state).get(p.getName()));
 						}
 					}
@@ -881,7 +881,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			if(getOutEdges(state) != null) {
 				for(E edge: getOutEdges(state)) {
 					// Is this an inheritance edge
-					if(DFAtoNFA.UNLABELLED.equals(edge.getName())) {
+					if(edge.isUnlabelled()) {
 						edgesToReverse.add(edge);
 					}
 				}
@@ -1005,7 +1005,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	protected boolean hasSubStates(V vertex) {
 		for(E edge: getOutEdges(vertex)) {
-			if(DFAtoNFA.UNLABELLED.equals(edge.getName()) ) {
+			if(edge.isUnlabelled() ) {
 				return true;
 			}
 		}

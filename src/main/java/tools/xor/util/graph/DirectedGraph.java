@@ -119,7 +119,7 @@ public interface DirectedGraph<V, E> extends Graph<V, E> {
 	public List<V> toposort(Shape shape);
 
 	/**
-	 * Remove all self loops
+	 * Remove all loops to self and also to super-types
 	 */
 	public void unlinkSelfLoops();
 

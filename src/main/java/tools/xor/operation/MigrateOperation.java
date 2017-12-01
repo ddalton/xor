@@ -20,13 +20,21 @@
 package tools.xor.operation;
 
 import org.json.JSONObject;
+import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.EntityScroll;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -76,12 +84,18 @@ public class MigrateOperation extends AbstractOperation
 
         BlockingQueue queue;
         AggregateManager source;
+        AggregateManager target;
         Settings settings;
 
-        public Producer(BlockingQueue queue, AggregateManager source, Settings settings) {
+        public Producer(BlockingQueue queue, AggregateManager source, AggregateManager target, Settings settings) {
             this.queue = queue;
             this.source = source;
+            this.target = target;
             this.settings = settings;
+        }
+
+        protected Settings getSettings() {
+            return this.settings;
         }
 
         @Override public Object call () throws Exception
@@ -90,7 +104,8 @@ public class MigrateOperation extends AbstractOperation
             // This requires building the appropriate OQL/SQL
             // Build a JSON object out of this result for each row
             // and put it in the queue
-            EntityScroll<JSONObject> entityCursor = source.getPersistenceOrchestrator().getEntityScroll(settings);
+            target.checkPO(settings);
+            EntityScroll<JSONObject> entityCursor = getEntityScroll();
             while(entityCursor.hasNext()) {
                 JSONObject jsonObject = entityCursor.next();
                 queue.put(jsonObject);
@@ -101,18 +116,26 @@ public class MigrateOperation extends AbstractOperation
 
             return null;
         }
+
+        protected EntityScroll<JSONObject> getEntityScroll() {
+            return target.getPersistenceOrchestrator().getEntityScroll(source, target, settings);
+        }
     }
 
     public static class Consumer implements Callable {
 
-        BlockingQueue queue;
-        AggregateManager target;
-        Settings settings;
+        private BlockingQueue queue;
+        private AggregateManager target;
+        private Settings settings;
 
         public Consumer(BlockingQueue queue, AggregateManager target, Settings settings) {
             this.queue = queue;
             this.target = target;
             this.settings = settings;
+        }
+
+        protected Settings getSettings() {
+            return this.settings;
         }
 
         @Override public Object call () throws Exception
@@ -131,16 +154,24 @@ public class MigrateOperation extends AbstractOperation
                     }
                     batch.add((JSONObject)data);
                 }
-                // create the entities in the target database
-                target.create(batch, settings);
+                persistToDB(batch);
 
                 System.out.println("Queue size: " + queue.size());
             }
         }
+
+        /**
+         * Can be overridden by the provider in a TX context
+         * @param batch of entities to be persisted
+         */
+        protected void persistToDB(List<JSONObject> batch) {
+            // create the entities in the target database
+            target.create(batch, settings);
+        }
     }
 
-    protected Producer createProducer(BlockingQueue queue, AggregateManager source, Settings settings) {
-        return new Producer(queue, source, settings);
+    protected Producer createProducer(BlockingQueue queue, AggregateManager source, AggregateManager target, Settings settings) {
+        return new Producer(queue, source, target, settings);
     }
 
     /**
@@ -155,6 +186,61 @@ public class MigrateOperation extends AbstractOperation
      */
     protected Consumer createConsumer(BlockingQueue queue, AggregateManager target, Settings settings) {
         return new Consumer(queue, target, settings);
+    }
+
+    /**
+     * Needs to be overridden by the provider to be wrapped in a TX context
+     * @param entities whose types we need to return
+     * @param settings containing any context needed by the provider
+     * @return topologically ordered list of EntityType(s)
+     */
+    public List<EntityType> getEntitiesInOrder(String[] entities, Settings settings) {
+
+        // include subtypes
+        Set<String> allEntities = new HashSet<>();
+        for(String entityName: entities) {
+            Type type = this.target.getDAS().getType(entityName);
+            if (!(type instanceof EntityType)) {
+                throw new RuntimeException(
+                    "The type " + type.getName() + " needs to represent an entity");
+            }
+
+            EntityType entityType = (EntityType)type;
+            allEntities.add(entityType.getName());
+            for(EntityType subType: entityType.getSubtypes()) {
+                allEntities.add(subType.getName());
+            }
+        }
+
+        // topologically order them. Higher number represents an entity that needs to be
+        // processed first. So we need to process them in reverse order.
+        Map<Integer, EntityType> sorted = new TreeMap<Integer, EntityType>(Collections.reverseOrder());
+        for(String entityName: allEntities) {
+            Type type = this.target.getDAS().getType(entityName);
+
+            // If a subtype is not an EntityType we just skip it
+            if (!(type instanceof EntityType)) {
+                continue;
+            }
+
+            EntityType entityType = (EntityType) type;
+            sorted.put(entityType.getOrder(), entityType);
+        }
+
+        return new ArrayList<>(sorted.values());
+    }
+
+    /**
+     * Build a settings object with the migrate view in the context of a TX for a particular EntityType
+     * @param entityType for which we need to build the settings object
+     * @param settings user provided settings
+     * @return settings object configured with the migrate view
+     */
+    public Settings build(EntityType entityType, Settings settings) {
+        Settings result = target.getDAS().settings().migrate(entityType.getInstanceClass()).build();
+        result.setBatchSize(settings.getBatchSize());
+
+        return result;
     }
 
     /**
@@ -180,7 +266,7 @@ public class MigrateOperation extends AbstractOperation
         List<Callable> futureList = new ArrayList<Callable>();
 
         // Add the single producer task
-        threadPool.submit(createProducer(queue, source, settings));
+        threadPool.submit(createProducer(queue, source, target, settings));
 
         // Add 1 or more consumer tasks
         for(int i = 0; i < CONSUMER_COUNT; i++) {

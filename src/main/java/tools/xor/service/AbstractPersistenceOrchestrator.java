@@ -36,6 +36,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.TypeMapper;
+import tools.xor.operation.MigrateOperation;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.StoredProcedure;
@@ -239,8 +240,15 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		return false;
 	}
 
-	public EntityScroll getEntityScroll(Settings settings)
+	@Override
+	public EntityScroll getEntityScroll(AggregateManager source, AggregateManager target, Settings settings)
 	{
 		throw new UnsupportedOperationException("EntityScroll is not supported");
+	}
+
+	@Override
+	public MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize)
+	{
+		return new MigrateOperation(source, target, queueSize);
 	}
 }

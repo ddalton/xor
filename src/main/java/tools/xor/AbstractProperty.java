@@ -1354,29 +1354,61 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	@Override
 	public List<String> expand(Set<Type> examined) {
 		List<String> result = new LinkedList<String>();
-		
+
 		if(getType() instanceof EntityType) {
 			if(((EntityType)getType()).isEmbedded() && !examined.contains(getType())) {
-				examined.add(getType());
 				for(Property p: getType().getProperties()) {
-					for(String embeddedPropertyName: p.expand(examined)) {
+					Set<Type> loopAvoidance = new HashSet<>(examined);
+					loopAvoidance.add(getType());
+					for(String embeddedPropertyName: p.expand(loopAvoidance)) {
 						result.add(getName() + Settings.PATH_DELIMITER + embeddedPropertyName);
 					}
 				}
 			} else {
-				/*
-				// This can additionally contain the user key
-				result.add(getName() + Settings.PATH_DELIMITER + ((EntityType)getType()).getIdentifierProperty().getName());
-				if(((EntityType)getType()).getUserKey() != null) {
-					result.add(getName() + Settings.PATH_DELIMITER + ((EntityType)getType()).getUserKey().getName());
-				}
-				*/
 				result.add(Constants.XOR.IDREF + getName());
 			}
 		} else {
 			result.add(getName());
 		}
 		
+		return result;
+	}
+
+	@Override
+	public List<String> expandMigrate(Set<Type> examined) {
+		List<String> result = new LinkedList<String>();
+
+		if(getType() instanceof EntityType) {
+			if(((EntityType)getType()).isEmbedded() && !examined.contains(getType())) {
+				for(Property p: getType().getProperties()) {
+					Set<Type> loopAvoidance = new HashSet<>(examined);
+					loopAvoidance.add(getType());
+
+					if(p.isOpenContent() || p.isMany()) {
+						continue;
+					}
+					for(String embeddedPropertyName: p.expandMigrate(loopAvoidance)) {
+						result.add(getName() + Settings.PATH_DELIMITER + embeddedPropertyName);
+					}
+				}
+			} else if (!isNullable() && !isMany() && !isOpenContent()) {
+				// RDBMS cannot enforce non-null and multiple relationship, but we are being
+				// explicit here
+				EntityType entityType = (EntityType)getType();
+
+				if (entityType.getNaturalKey() != null) {
+					result.addAll(entityType.getExpandedNaturalKey());
+				}
+				else {
+					throw new RuntimeException(
+						"Cannot create a migrate query for a type without a natural key: "
+							+ entityType.getName());
+				}
+			}
+		} else {
+			result.add(getName());
+		}
+
 		return result;
 	}
 

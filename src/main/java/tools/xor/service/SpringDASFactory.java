@@ -26,6 +26,8 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
 import tools.xor.TypeMapper;
+import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCSpringDAS;
 
 @Component
 public class SpringDASFactory extends AbstractDASFactory {
@@ -49,5 +51,10 @@ public class SpringDASFactory extends AbstractDASFactory {
 	@Override
 	protected JPADAS createJPADAS(TypeMapper typeMapper, String name) {
 		return new JPASpringDAS(typeMapper, name, this);
+	}
+
+	@Override protected JDBCDAS createJDBCDAS ()
+	{
+		return new JDBCSpringDAS();
 	}
 }

@@ -54,7 +54,6 @@ import tools.xor.custom.DefaultAssociationStrategy;
 import tools.xor.custom.DefaultDetailStrategy;
 import tools.xor.custom.DetailStrategy;
 import tools.xor.operation.AbstractOperation;
-import tools.xor.operation.DeleteOperation;
 import tools.xor.operation.DenormalizedModifyOperation;
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.MigrateOperation;
@@ -68,7 +67,6 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
 import tools.xor.util.graph.ObjectGraph;
-import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Filter;
 import tools.xor.view.TypeVersion;
@@ -367,7 +365,7 @@ public class AggregateManager implements Xor
 		}
 	}
 
-	private void checkPO(Settings settings) {
+	public void checkPO(Settings settings) {
 
 		if (getPersistenceOrchestrator() == null) {
 			setPersistenceOrchestrator(dasFactory.getPersistenceOrchestrator(settings.getSessionContext()));
@@ -955,10 +953,10 @@ public class AggregateManager implements Xor
 	}
 
 	@Override
-	public void migrate(AggregateManager target)
+	public void migrate(AggregateManager source, Settings settings)
 	{
-		if(target == null) {
-			throw new IllegalArgumentException("Target database needs to be provided");
+		if(source == null) {
+			throw new IllegalArgumentException("Source database needs to be provided");
 		}
 
 		// loop through all the entities in topological order that we want migrated
@@ -973,47 +971,24 @@ public class AggregateManager implements Xor
 			String[] input = entitiesToMigrate.split(",");
 			String[] entities = Arrays.stream(input).map(String::trim).toArray(String[]::new);
 
-			// include subtypes
-			Set<String> allEntities = new HashSet<>();
-			for(String entityName: entities) {
-				Type type = getDAS().getType(entityName);
-				if (!(type instanceof EntityType)) {
-					throw new RuntimeException(
-						"The type " + type.getName() + " needs to represent an entity");
-				}
+			checkPO(settings);
+			MigrateOperation operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
+			List<EntityType> orderedTypes = operation.getEntitiesInOrder(entities, settings);
 
-				EntityType entityType = (EntityType)type;
-				allEntities.add(entityType.getName());
-				for(EntityType subType: entityType.getSubtypes()) {
-					allEntities.add(subType.getName());
-				}
-			}
-
-			// topologically order them. Higher number represents an entity that needs to be
-			// processed first. So we need to process them in reverse order.
-			Map<Integer, EntityType> sorted = new TreeMap<Integer, EntityType>(Collections.reverseOrder());
-			for(String entityName: allEntities) {
-				Type type = getDAS().getType(entityName);
-
-				// If a subtype is not an EntityType we just skip it
-				if (!(type instanceof EntityType)) {
-					continue;
-				}
-
-				EntityType entityType = (EntityType) type;
-				sorted.put(entityType.getOrder(), entityType);
-			}
-
-			Iterator iterator = sorted.entrySet().iterator();
+			Iterator<EntityType> iterator = orderedTypes.iterator();
 			while(iterator.hasNext()) {
-				Map.Entry<Integer, EntityType> entityEntry = (Map.Entry)iterator.next();
+				EntityType entityType = iterator.next();
 
 				// Create a new settings based on migrate view
-				Settings settings = getDAS().settings().migrate(entityEntry.getValue().getInstanceClass()).build();
-				MigrateOperation operation = new MigrateOperation(this, target, null);
+				Settings batchSettings = operation.build(entityType, settings);
 
-				settings.setPersist(true);
-				operation.execute(settings, null);
+				batchSettings.setPersist(true);
+				batchSettings.setSessionContext(settings.getSessionContext());
+
+				// Create a new operation for each entity,so we don't mix different entities
+				// in the same queue
+				operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
+				operation.execute(batchSettings, null);
 			}
 		}
 	}

@@ -136,31 +136,6 @@ public class AggregatePropertyPaths {
 	}
 
 	/**
-	 * Add the path to the attribute list
-	 * if the property is simple, then a single path is added
-	 * if the property is an entity and it has multiple key parts, then multiple parts are added
-	 *
-	 * @param paths set to which the path(s) are being added
-	 * @param property being added
-	 * @param propertyPath null if this is a direct property, else the property path
-	 */
-	public static void addPaths(Set<String> paths, Property property, String propertyPath) {
-		if(isSimpleProperty(property)) {
-			paths.add(propertyPath != null ? propertyPath : property.getName());
-		} else if (!property.isNullable() && !property.isMany()) {
-			// RDBMS cannot enforce non-null and multiple relationship, but we are being
-			// explicit here
-			EntityType entityType = (EntityType) property.getType();
-
-			if(entityType.getNaturalKey() != null) {
-				paths.addAll(entityType.getExpandedNaturalKey());
-			} else {
-				throw new RuntimeException("Cannot create a migrate query for a type without a natural key: " + entityType.getName());
-			}
-		}
-	}
-
-	/**
 	 * The properties needed for migration.
 	 * For migration, we include:
 	 * 1. all simple properties
@@ -178,18 +153,11 @@ public class AggregatePropertyPaths {
 			paths = new HashSet<>();
 			for (Property property : aggregateType.getProperties()) {
 				if (isPartofBase(property)) {
-					addPaths(paths, property, null);
+					paths.addAll(property.expandMigrate(new HashSet<>()));
 				}
 				else if (property.getType() instanceof EntityType
 					&& ((EntityType)property.getType()).isEmbedded() && !property.isMany()) {
-					Set<String> embeddedPaths = new HashSet<>();
-					for (String embeddedPath : property.expand(new HashSet<>())) {
-						if (!embeddedPath.startsWith(Constants.XOR.IDREF)) {
-							Property embeddedProperty = aggregateType.getProperty(embeddedPath);
-							addPaths(embeddedPaths, embeddedProperty, embeddedPath);
-						}
-					}
-					paths.addAll(embeddedPaths);
+					paths.addAll(property.expandMigrate(new HashSet<>()));
 				}
 			}
 			migratePaths.put(aggregateType, paths);

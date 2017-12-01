@@ -20,7 +20,8 @@
 package tools.xor.service;
 
 import tools.xor.TypeMapper;
-
+import tools.xor.providers.jdbc.JDBCConfigDAS;
+import tools.xor.providers.jdbc.JDBCDAS;
 
 public class DefaultDASFactory extends AbstractDASFactory {
 	
@@ -42,5 +43,10 @@ public class DefaultDASFactory extends AbstractDASFactory {
 	@Override
 	protected JPADAS createJPADAS(TypeMapper typeMapper, String name) {
 		return new JPAPersistenceXmlDAS(typeMapper, name, this);
-	}	
+	}
+
+	@Override
+	protected JDBCDAS createJDBCDAS() {
+		return new JDBCConfigDAS();
+	}
 }

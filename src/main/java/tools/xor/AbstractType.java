@@ -979,7 +979,10 @@ public abstract class AbstractType implements EntityType {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
 
 		Property result = null;
-		if(delim == -1) {				
+		if(delim == -1) {
+			if(path.startsWith(Constants.XOR.IDREF)) {
+				path = path.substring(Constants.XOR.IDREF.length());
+			}
 			result = getDAS().getShape().getProperty(this, path);
 			
 			if(result == null && getDAS().getShape().getProperties(this) == null) {

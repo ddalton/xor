@@ -28,9 +28,7 @@ public abstract class AbstractEntityScroll implements EntityScroll
         try {
             if (this.statement == null) {
                 this.statement =
-                    getConnection().createStatement(
-                        ResultSet.TYPE_SCROLL_INSENSITIVE,
-                        ResultSet.CONCUR_READ_ONLY);
+                    getConnection().createStatement();
                 this.statement.setFetchSize(getSettings().getBatchSize());
 
                 this.rs = this.statement.executeQuery(getSQLString());

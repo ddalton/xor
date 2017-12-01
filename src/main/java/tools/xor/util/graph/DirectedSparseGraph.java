@@ -29,6 +29,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoNFA;
 import tools.xor.util.Edge;
+import tools.xor.util.State;
 import tools.xor.util.Vertex;
 
 /**
@@ -205,6 +206,21 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			outEdges.put(start, edges);
 		}
 	}
+
+	private void unlinkLoops(V target, V ancestor) {
+		Set<E> edges = new HashSet<E>(getOutEdges(ancestor));
+		for(E e: edges) {
+			if(target == getEnd(e)) {
+				unlinkEdge(e);
+			} else {
+				// if this is an unlabelled edge follow up the chain
+				// At this point, an unlabelled edge is pointing to the superclass
+				if (e instanceof Edge && ((Edge)e).isUnlabelled()) {
+					unlinkLoops(target, getEnd(e));
+				}
+			}
+		}
+	}
 	
 	@Override
 	public void unlinkSelfLoops() {
@@ -218,6 +234,12 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 				// self loop
 				if(getStart(e) == getEnd(e)) {
 					unlinkEdge(e);
+				} else {
+					// check if this is a loop created through an unlabelled edge
+					// At this point, an unlabelled edge is pointing to the superclass
+					if (e instanceof Edge && ((Edge)e).isUnlabelled()) {
+						unlinkLoops(getStart(e), getEnd(e));
+					}
 				}
 			}
 		}
@@ -617,7 +639,8 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	 */
 	static class TopoSort<V, E> {
 
-		Set<V> temporary = new HashSet<V>();
+		Set<V> tempSet = new HashSet<V>();
+		Stack<V> tempstack = new Stack<>();
 		LinkedList<E> breakCrumbs = new LinkedList<E>();
 		Set<V> unmarked = new HashSet<V>();
 		LinkedList<V> sorted = new LinkedList<V>();
@@ -639,17 +662,27 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			
 			return sorted;
 		}
+
+
 		
 		private void visit(V vertex) {
-			if (temporary.contains(vertex)) {
+			if (tempSet.contains(vertex)) {
+
+				// A cycle is honored only for concrete entities
+				if(vertex instanceof State) {
+					if (((State)vertex).getType().isAbstract()) {
+						return;
+					}
+				}
+
 				StringBuilder cycle = new StringBuilder();
-				for (V v : temporary) {
+				for (V v : tempstack) {
 					cycle.append(cycle.length() > 0 ? "," + v.toString() : v.toString());
 				}
 				StringBuilder breadCrumbStr = new StringBuilder();
 				for (E e : breakCrumbs) {
 					Edge edge = (Edge)e;
-					String edgeName = DFAtoNFA.UNLABELLED.equals(edge.getName()) ? "UNLABELLED" : edge.getName();
+					String edgeName = edge.isUnlabelled() ? "UNLABELLED" : edge.getName();
 					breadCrumbStr.append(
 						breadCrumbStr.length() > 0 ? "->" + edgeName : edgeName);
 				}
@@ -659,8 +692,9 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			}
 			
 			if(unmarked.contains(vertex)) {
-				temporary.add(vertex);
-				
+				tempSet.add(vertex);
+				tempstack.push(vertex);
+
 				for(E e: dg.getOutEdges(vertex)) {
 					breakCrumbs.addLast(e);
 					visit(dg.getEnd(e));
@@ -668,12 +702,13 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 				}
 				
 				unmarked.remove(vertex);
-				temporary.remove(vertex);
+				tempstack.pop();
+				tempSet.remove(vertex);
 				sorted.addFirst(vertex);
 			}
 		}
 	}
-	
+
 	/**
 	 * Renumber the id based on sorted list
 	 * @param sorted list of vertices

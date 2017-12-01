@@ -36,6 +36,7 @@ import tools.xor.view.AggregateView;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.View;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -45,10 +46,12 @@ import java.util.Map;
  *
  * @author Dilip Dalton
  */
-public class JDBCDAS implements DataAccessService
+public abstract class JDBCDAS implements DataAccessService
 {
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
+    public abstract DataSource getDataSource();
 
     @Override public Shape getShape ()
     {
@@ -168,7 +171,10 @@ public class JDBCDAS implements DataAccessService
 
     @Override public PersistenceOrchestrator createPO (Object sessionContext, Object data)
     {
-        return new JDBCPersistenceOrchestrator(sessionContext, data);
+        JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator(sessionContext, data);
+        po.setDataSource(getDataSource());
+
+        return po;
     }
 
     @Override public void addProperty (Property property)

@@ -31,6 +31,7 @@ import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
+import tools.xor.operation.MigrateOperation;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Query;
 import tools.xor.view.StoredProcedure;
@@ -231,8 +232,21 @@ public interface PersistenceOrchestrator {
     /**
      * Uses a cursor to execute the query
      *
+     * @param source can be AML or JDBC AggregateManager. Should be able to get a Connection.
+     * @param target AML configured AggregateManager
      * @param settings containing migrate view details
      * @return results scroll object
      */
-    public EntityScroll getEntityScroll(Settings settings);
+    public EntityScroll getEntityScroll(AggregateManager source, AggregateManager target, Settings settings);
+
+    /**
+     * Used to migrate database entities from the source to target database.
+     * The source can be a JDBC provider, but the target needs to be an ORM provider.
+     *
+     * @param source database containing the data to be migrated
+     * @param target database where the data needs to be populated
+     * @param queueSize used to configure the buffering needed for the migration
+     * @return MigrateOperation specific to the target ORM provider
+     */
+    public MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize);
 }

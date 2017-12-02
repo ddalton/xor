@@ -189,4 +189,9 @@ public interface Type
    */
   Object get(Property property);
 
+  /**
+   * Indicates if this is a Large Object
+   * @return true if it is a BLOB or a CLOB
+   */
+  boolean isLOB();
 }

@@ -35,6 +35,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.AbstractBO;
+import tools.xor.AbstractType;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -561,7 +562,15 @@ public class QueryView {
 
 	private QueryViewProperty addViewProperty(String attribute, boolean isDynamic, boolean doFetch, String propertyAlias) {
 
-		QueryViewProperty anchor = getParentViewProperty(attribute, doFetch);
+		QueryViewProperty anchor;
+		String migrateViewName = AbstractType.getMigrateViewName(aggregateType);
+		if(migrateViewName != null && aggregateSlice != null && migrateViewName.equals(aggregateSlice.getName())) {
+			// Only single level for migrate to deal with nested embedded objects and
+			// their non-null references to other entities
+			anchor = viewPropertyByPath.get(QueryViewProperty.ROOT_PROPERTY_NAME);
+		} else {
+			anchor = getParentViewProperty(attribute, doFetch);
+		}
 		QueryViewProperty viewProperty = new QueryViewProperty(attribute, isDynamic, anchor);
 		viewProperty.setPropertyAlias(propertyAlias);
 		viewPropertyByPath.put(QueryViewProperty.qualifyProperty(attribute), viewProperty);

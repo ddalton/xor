@@ -34,6 +34,7 @@ import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Query;
+import tools.xor.view.QueryViewProperty;
 import tools.xor.view.StoredProcedure;
 
 public interface PersistenceOrchestrator {
@@ -249,4 +250,11 @@ public interface PersistenceOrchestrator {
      * @return MigrateOperation specific to the target ORM provider
      */
     public MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize);
+
+    /**
+     * Retrive provider specific OQL join fragment
+     * @param viewProperty representing the associated property being retrieved
+     * @return join fragment
+     */
+    public String getOQLJoinFragment(QueryViewProperty viewProperty);
 }

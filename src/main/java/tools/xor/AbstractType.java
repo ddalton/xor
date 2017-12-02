@@ -160,8 +160,16 @@ public abstract class AbstractType implements EntityType {
 		}
 		return (EntityType)das.getType(this.rootEntityType);
 	}
+
+	private static boolean isInValid(Type type) {
+		return type == null || type.getInstanceClass() == null;
+	}
 	
 	public static String getViewName(Type type) {
+		if(isInValid(type)) {
+			return null;
+		}
+
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.AGGREGATE);
@@ -170,6 +178,10 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	public static String getBaseViewName(Type type) {
+		if(isInValid(type)) {
+			return null;
+		}
+
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.BASE);
@@ -178,6 +190,10 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	public static String getMigrateViewName(Type type) {
+		if(isInValid(type)) {
+			return null;
+		}
+
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.MIGRATE);
@@ -186,6 +202,10 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	public static String getRefViewName(Type type) {
+		if(isInValid(type)) {
+			return null;
+		}
+
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.REF);
@@ -1173,5 +1193,10 @@ public abstract class AbstractType implements EntityType {
 	 */
 	public void initEnd (Shape shape) {
 
+	}
+
+	@Override public boolean isLOB ()
+	{
+		return false;
 	}
 }

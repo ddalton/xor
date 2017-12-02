@@ -223,14 +223,14 @@ public class QueryViewProperty {
 	 * This is needed for HQL to work properly 
 	 * @return normalized name
 	 */
-	protected String getNormalizedName() {
+	public String getNormalizedName() {
 
-		String baseName = getBaseName(propertyPath);
-
-		if(getParent() == null)
-			return baseName;
-		else
-			return getParent().getAlias() + Settings.PATH_DELIMITER + baseName;
+		if(getParent() == null) {
+			return getNext(propertyPath);
+		} else {
+			String remaining = propertyPath.substring(parent.getPropertyPath().length()+Settings.PATH_DELIMITER.length());
+			return getParent().getAlias() + Settings.PATH_DELIMITER + remaining;
+		}
 	}	
 
 	/*

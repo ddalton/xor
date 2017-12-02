@@ -1378,13 +1378,17 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public List<String> expandMigrate(Set<Type> examined) {
 		List<String> result = new LinkedList<String>();
 
+		if(isOpenContent() || getType().isLOB()) {
+			return result;
+		}
+
 		if(getType() instanceof EntityType) {
 			if(((EntityType)getType()).isEmbedded() && !examined.contains(getType())) {
 				for(Property p: getType().getProperties()) {
 					Set<Type> loopAvoidance = new HashSet<>(examined);
 					loopAvoidance.add(getType());
 
-					if(p.isOpenContent() || p.isMany()) {
+					if(p.isOpenContent() || p.isMany() || ((ExtendedProperty)p).isIdentifier() || p.getType().isLOB()) {
 						continue;
 					}
 					for(String embeddedPropertyName: p.expandMigrate(loopAvoidance)) {
@@ -1397,7 +1401,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 				EntityType entityType = (EntityType)getType();
 
 				if (entityType.getNaturalKey() != null) {
-					result.addAll(entityType.getExpandedNaturalKey());
+					for(String keyPart: entityType.getExpandedNaturalKey()) {
+						result.add(getName()  + Settings.PATH_DELIMITER + keyPart);
+					}
 				}
 				else {
 					throw new RuntimeException(

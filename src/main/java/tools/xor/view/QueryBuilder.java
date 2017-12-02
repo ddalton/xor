@@ -231,7 +231,7 @@ public class QueryBuilder {
 		}
 		debugSelectColumns(meta);
 
-		Class<?> entityClass = (settings == null) ? type.getInstanceClass() : settings.getNarrowedClass();
+		Class<?> entityClass = (settings == null || settings.getNarrowedClass() == null) ? type.getInstanceClass() : settings.getNarrowedClass();
 		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias());
 		
 		// Join explicitly against all open property types as the persistence layer does not know about these relationships
@@ -263,7 +263,8 @@ public class QueryBuilder {
 			if(parentView == null || (viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) ) {
 				continue; // the root needs to be skipped
 			}
-			OQL.append(" LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias());		
+
+			OQL.append(po.getOQLJoinFragment(viewProperty));
 		}
 
 		if(view.getContentView() != null && view.getContentView().getJoin() != null && view.getContentView().getJoin().getEntity() != null)
@@ -533,7 +534,8 @@ public class QueryBuilder {
 		
 		// initialize the query with the selected columns
 		query.setColumns(selectedColumns);
-		
-		query.prepare((EntityType)entity.getDomainType(), queryView);
+
+		EntityType entityType = (EntityType)((entity == null) ? type : entity.getDomainType());
+		query.prepare(entityType, queryView);
 	}
 }

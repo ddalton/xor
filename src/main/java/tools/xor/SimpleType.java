@@ -160,6 +160,11 @@ public class SimpleType implements BasicType {
 		return null;
 	}
 
+	@Override public boolean isLOB ()
+	{
+		return false;
+	}
+
 	@Override
 	public ClassResolver getClassResolver() {
 		return classResolver;

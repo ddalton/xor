@@ -39,6 +39,7 @@ import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
+import tools.xor.view.QueryViewProperty;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.View;
 
@@ -250,5 +251,10 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	public MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize)
 	{
 		return new MigrateOperation(source, target, queueSize);
+	}
+
+	@Override
+	public String getOQLJoinFragment(QueryViewProperty viewProperty) {
+		return " LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias();
 	}
 }

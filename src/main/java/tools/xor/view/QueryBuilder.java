@@ -232,7 +232,7 @@ public class QueryBuilder {
 		debugSelectColumns(meta);
 
 		Class<?> entityClass = (settings == null || settings.getNarrowedClass() == null) ? type.getInstanceClass() : settings.getNarrowedClass();
-		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias());
+		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias() + " " + po.getPolymorphicClause(entityClass));
 		
 		// Join explicitly against all open property types as the persistence layer does not know about these relationships
 		for(QueryViewProperty viewProperty: view.getAliasedItems()) {

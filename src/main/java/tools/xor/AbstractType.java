@@ -1199,4 +1199,9 @@ public abstract class AbstractType implements EntityType {
 	{
 		return false;
 	}
+
+	@Override
+	public boolean isQueryable() {
+		return true;
+	}
 }

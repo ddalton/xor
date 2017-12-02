@@ -472,7 +472,34 @@ public class QueryView {
 			return propertyPath.substring(0, propertyPath.lastIndexOf(Settings.PATH_DELIMITER));
 		else
 			return QueryViewProperty.ROOT_PROPERTY_NAME;
-	}	
+	}
+
+	/**
+	 * If any one of the ancestor is not queryable, then that property is not queryable
+	 * using an alias
+	 *
+	 * @param attribute to check if it is queryable using an alias
+	 * @return true if the attribute can be referenced using an alias, false if the full
+	 * attribute needs to be used in the SELECT clause
+	 */
+	private boolean isQueryable(String attribute) {
+		String parentPath = getParentPath(attribute);
+
+		while(parentPath != null) {
+			Property property = aggregateType.getProperty(QueryViewProperty.unqualifyProperty(parentPath));
+			if(property == null) {
+				break;
+			}
+
+			Type type = property.getType();
+			if(EntityType.class.isAssignableFrom(type.getClass()) && !((EntityType)type).isQueryable()) {
+				return false;
+			}
+			parentPath = getParentPath(parentPath);
+		}
+
+		return true;
+	}
 
 	/**
 	 * This method adds the anchor property and any additional properties needed to support the creation of the
@@ -483,54 +510,71 @@ public class QueryView {
 	 * @return the parent QueryViewProperty
 	 */
 	private QueryViewProperty getParentViewProperty(String attribute, boolean doFetch) {
-		String openAttribute = attribute;
+
 		if(this.aggregateType instanceof OpenType && attribute.indexOf(OpenType.DELIM) != -1) {
 			attribute = attribute.substring(attribute.indexOf(OpenType.DELIM)+1);
 		}
-
 		attribute = QueryViewProperty.qualifyProperty(attribute);
+		QueryViewProperty alias = null;
+		Property property;
+		boolean createAlias = false;
 		String parentPath = getParentPath(attribute);
 
-		QueryViewProperty result = null;
-		Property property = null;
+		// Create ancestor aliases first
 		while(parentPath != null) {
 			if(viewPropertyByPath.containsKey(parentPath)) {
-				result = viewPropertyByPath.get(parentPath);
-				property = result.getProperty();
+				alias = viewPropertyByPath.get(parentPath);
+				property = alias.getProperty();
 			} else {
 				property = aggregateType.getProperty(QueryViewProperty.unqualifyProperty(parentPath));
 			}
 
-			if(property == null && parentPath.equals(QueryViewProperty.ROOT_PROPERTY_NAME))
+			// Root alias should always be there so we can break here
+			if(property == null && parentPath.equals(QueryViewProperty.ROOT_PROPERTY_NAME)) {
 				break;
+			}
 
-			if(property == null)
-				logger.error("attribute " + attribute + " is not present in entity: " + aggregateType.getName());
+			if(property == null) {
+				logger.error(
+					"attribute " + attribute + " is not present in entity: "
+						+ aggregateType.getName());
+			}
 
 			// If this is a collection, then if the element is an entity type then break
 			if(property.isMany()) {
 				Type elementType = ((ExtendedProperty)property).getElementType();
 				if(EntityType.class.isAssignableFrom(elementType.getClass())) {
-					if(!((EntityType)elementType).isEmbedded() && !elementType.isDataType())
-						break; // found it
+					if(!((EntityType)elementType).isEmbedded() && !elementType.isDataType()) {
+						createAlias = true; // found it
+					}
 				}
-			} else { // if the entity type is not an embedddable or a simple type then break
+			} else { // if it is an entity type then break (includes creating alias for embedded type)
 				Type type = property.getType();
 				if(EntityType.class.isAssignableFrom(type.getClass())) {
-					if(!((EntityType)type).isEmbedded() && !type.isDataType())
-						break; // found it
+					createAlias = true;
 				}
 			}
+
+			if(createAlias) {
+				// If the anchor is not present, then add it
+				if(alias == null ) {
+					alias = new QueryViewProperty(parentPath, true, getParentViewProperty(parentPath, doFetch));
+					viewPropertyByPath.put(QueryViewProperty.qualifyProperty(parentPath), alias);
+				}
+				alias.setFetch(doFetch);
+				createAlias = false;
+			}
+
 			parentPath = getParentPath(parentPath);
 		}
-		// If the anchor is not present, then add it
-		if(result == null ) {
-			result = new QueryViewProperty(parentPath, true, getParentViewProperty(parentPath, doFetch));
-			viewPropertyByPath.put(QueryViewProperty.qualifyProperty(parentPath), result);
-		} 
-		result.setFetch(doFetch);
 
-		return result;
+		// return the parent alias
+		parentPath = getParentPath(attribute);
+		if(viewPropertyByPath.containsKey(parentPath)) {
+			return viewPropertyByPath.get(parentPath);
+		}
+
+		return null;
 	}
 
 	private void createViewProperties() {
@@ -563,14 +607,13 @@ public class QueryView {
 	private QueryViewProperty addViewProperty(String attribute, boolean isDynamic, boolean doFetch, String propertyAlias) {
 
 		QueryViewProperty anchor;
-		String migrateViewName = AbstractType.getMigrateViewName(aggregateType);
-		if(migrateViewName != null && aggregateSlice != null && migrateViewName.equals(aggregateSlice.getName())) {
-			// Only single level for migrate to deal with nested embedded objects and
-			// their non-null references to other entities
+		if(!isQueryable(attribute)) {
+			// Only single level for migrate to deal with non-queryable types
 			anchor = viewPropertyByPath.get(QueryViewProperty.ROOT_PROPERTY_NAME);
 		} else {
 			anchor = getParentViewProperty(attribute, doFetch);
 		}
+		//QueryViewProperty anchor = getParentViewProperty(attribute, doFetch);
 		QueryViewProperty viewProperty = new QueryViewProperty(attribute, isDynamic, anchor);
 		viewProperty.setPropertyAlias(propertyAlias);
 		viewPropertyByPath.put(QueryViewProperty.qualifyProperty(attribute), viewProperty);

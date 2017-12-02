@@ -301,4 +301,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 */
 	public boolean isNullable(String propertyPath);
 
+	/**
+	 * When building OQL queries, some embedded types are not considered to be directly
+	 * queryable.
+	 * @return true if it can appear in the FROM clause of a query
+	 */
+	public boolean isQueryable();
+
 }

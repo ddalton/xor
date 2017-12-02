@@ -257,4 +257,9 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	public String getOQLJoinFragment(QueryViewProperty viewProperty) {
 		return " LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias();
 	}
+
+	@Override
+	public String getPolymorphicClause(Class<?> entityClass) {
+		return "";
+	}
 }

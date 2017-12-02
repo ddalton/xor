@@ -257,4 +257,11 @@ public interface PersistenceOrchestrator {
      * @return join fragment
      */
     public String getOQLJoinFragment(QueryViewProperty viewProperty);
+
+    /**
+     * Provider specific construct to control polymorphic object retrieval
+     * @param entityClass class whose retrieval of subclasses we would like to control
+     * @return provider specific polymorphic controls for a class
+     */
+    public String getPolymorphicClause(Class<?> entityClass);
 }

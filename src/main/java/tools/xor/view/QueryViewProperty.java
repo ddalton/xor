@@ -254,16 +254,17 @@ public class QueryViewProperty {
 	/**
 	 * This method adds any additional attributes needed for the view to provide correct functionality
 	 * @param narrow true if entity name information needs to be added
+	 * @param augment if additional columns need to be selected to help with object hydration
 	 * @return column information
 	 */
-	public Set<ColumnMeta> getColumnMeta(boolean narrow) {
+	public Set<ColumnMeta> getColumnMeta(boolean narrow, boolean augment) {
 		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 		
 		Set<ColumnMeta> result = new HashSet<ColumnMeta>();
 
 		if(!isEntity()) {
 			result.add(new ColumnMeta(propertyPath, this));
-		} else {
+		} else if(augment) {
 			//System.out.println("Property path: " + propertyPath + ", property: " + ((property!=null)?property.getName():"null"));
 			// Add the entity name
 			if(narrow)

@@ -28,6 +28,7 @@ public enum AggregateAction {
     READ,
     TO_EXTERNAL,
     DELETE,
+    MIGRATE,
     LOAD;
 
     public static boolean isModificationAction(AggregateAction action) {

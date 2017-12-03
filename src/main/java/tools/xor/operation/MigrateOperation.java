@@ -108,6 +108,10 @@ public class MigrateOperation extends AbstractOperation
             EntityScroll<JSONObject> entityCursor = getEntityScroll();
             while(entityCursor.hasNext()) {
                 JSONObject jsonObject = entityCursor.next();
+                if(jsonObject == null) {
+                    // No more result
+                    break;
+                }
                 queue.put(jsonObject);
             }
 
@@ -141,6 +145,8 @@ public class MigrateOperation extends AbstractOperation
         @Override public Object call () throws Exception
         {
             while(true) {
+                boolean finished = false;
+
                 // Create a batch of objects from the queue
                 List<JSONObject> batch = new ArrayList<>(CONSUMER_BATCH_SIZE);
                 for (int i = 0; i < CONSUMER_BATCH_SIZE; i++) {
@@ -150,13 +156,18 @@ public class MigrateOperation extends AbstractOperation
                     if (data == POISON_PILL) {
                         // put it back for other consumers
                         queue.put(data);
-                        return null;
+                        finished = true;
+                        break;
                     }
                     batch.add((JSONObject)data);
                 }
+                System.out.println("batch size: " + batch.size());
                 persistToDB(batch);
 
-                System.out.println("Queue size: " + queue.size());
+                // break out of the loop as we have finished processing all the events
+                if(finished) {
+                    return null;
+                }
             }
         }
 

@@ -354,7 +354,17 @@ public abstract class AbstractOperation implements Operation {
 
 			// Simply copy the value
 			if(ci.isDataType()) {
-				processDataType(ci);
+				try {
+					processDataType(ci);
+				} catch(Exception e) {
+					// For a migrate operation we tolerate errors as we do a best effort migrate
+					// since this can be due to validation checks in the business logic
+					// As the migrate by design is not reliable we have to go with best effort
+					// If an exception is desired then we can control it with a parameter
+					if(ci.getSettings().getMainAction() != AggregateAction.MIGRATE) {
+						throw e;
+					}
+				}
 				return;
 			}
 

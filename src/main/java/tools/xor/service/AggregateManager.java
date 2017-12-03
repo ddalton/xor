@@ -983,6 +983,7 @@ public class AggregateManager implements Xor
 				Settings batchSettings = operation.build(entityType, settings);
 
 				batchSettings.setPersist(true);
+				batchSettings.setMainAction(AggregateAction.MIGRATE);
 				batchSettings.setSessionContext(settings.getSessionContext());
 
 				// Create a new operation for each entity,so we don't mix different entities

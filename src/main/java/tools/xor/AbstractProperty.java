@@ -1374,11 +1374,15 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return result;
 	}
 
+	private boolean isInValidMigrateProperty(Property p) {
+		return p.isOpenContent() || p.isMany() || ((ExtendedProperty)p).isIdentifier() || p.getType().isLOB();
+	}
+
 	@Override
 	public List<String> expandMigrate(Set<Type> examined) {
 		List<String> result = new LinkedList<String>();
 
-		if(isOpenContent() || getType().isLOB()) {
+		if(isInValidMigrateProperty(this)) {
 			return result;
 		}
 
@@ -1388,7 +1392,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					Set<Type> loopAvoidance = new HashSet<>(examined);
 					loopAvoidance.add(getType());
 
-					if(p.isOpenContent() || p.isMany() || ((ExtendedProperty)p).isIdentifier() || p.getType().isLOB()) {
+					if(isInValidMigrateProperty(p)) {
 						continue;
 					}
 					for(String embeddedPropertyName: p.expandMigrate(loopAvoidance)) {

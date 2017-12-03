@@ -37,6 +37,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Settings;
@@ -690,5 +691,10 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	@Override
 	public int compareTo(AggregateView o) {
 		return (name.equals(o.getName())) ? (version - o.getVersion()) : name.compareTo(o.getName());
+	}
+
+	public boolean isMigrateView(Type type) {
+		String migrateViewName = AbstractType.getMigrateViewName(type);
+		return migrateViewName != null && migrateViewName.equals(getName());
 	}
 }

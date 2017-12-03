@@ -34,7 +34,7 @@ public abstract class AbstractEntityScroll implements EntityScroll
                 this.rs = this.statement.executeQuery(getSQLString());
             }
 
-            return this.rs.isAfterLast();
+            return !this.rs.isAfterLast();
         }
         catch (SQLException e) {
             e.printStackTrace();
@@ -81,11 +81,14 @@ public abstract class AbstractEntityScroll implements EntityScroll
         JSONObject result = new JSONObject();
 
         try {
-            List values = AbstractQuery.extractResults(rs);
+            Object[] row = AbstractQuery.extractRow(rs);
 
             // set the values in the JSONObject
-            for(int i = 0; i < values.size(); i++) {
-                StateGraph.setKeyValue(result, getQuery().getColumns().get(i), values.get(i));
+            for(int i = 0; i < row.length; i++) {
+                if(row[i] == null) {
+                    continue;
+                }
+                StateGraph.setKeyValue(result, getQuery().getColumns().get(i), row[i]);
             }
         }
         catch (SQLException e) {

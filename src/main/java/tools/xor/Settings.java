@@ -135,6 +135,8 @@ public class Settings {
 
 	private AggregateAction action; // specifies the type of action being performed that involves data change in the database
 
+	private AggregateAction mainAction; // represents action, unless it is explicitly set. This is needed since the main action can spawn sub actions
+
 	private Map<String, Object> filters = new HashMap<String, Object>(); // Used for filtering the result
 
 	private Map<String, AggregateAction> actionOverrides; // A collection can have a specific action override set
@@ -581,6 +583,16 @@ public class Settings {
 		if(mutableAction != null) {
 			this.action = mutableAction;
 		}
+	}
+
+	public AggregateAction getMainAction ()
+	{
+		return mainAction == null ? action : mainAction;
+	}
+
+	public void setMainAction (AggregateAction mainAction)
+	{
+		this.mainAction = mainAction;
 	}
 
 	public Map<String, Object> getFilters() {

@@ -1196,9 +1196,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					object.put(root, value);
 				}
 			} else {
-				JSONObject embeddedObject = new JSONObject();
-				object.put(root, embeddedObject);
-				object = embeddedObject;
+				if(keyPath != null) {
+					JSONObject embeddedObject = new JSONObject();
+					object.put(root, embeddedObject);
+					object = embeddedObject;
+				} else {
+					object.put(root, value);
+				}
 			}
 		} while (keyPath != null && object != null);
 	}

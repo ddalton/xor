@@ -622,14 +622,28 @@ public class QueryView {
 		return viewProperty;
 	}
 
+	private boolean isMigrateView() {
+		AggregateView av = (AggregateView)getContentView();
+
+		QueryView current = this;
+		while (av == null && current.getParent() != null) {
+			av = (AggregateView)getParent().getContentView();
+			current = current.getParent();
+		}
+
+		return av != null && av.isMigrateView(current.getAggregateType());
+	}
+
 	public void setAugmentedAttributes() {
 		if(narrow && (aggregateSlice == null || aggregateSlice.getNativeQuery() == null))
 			throw new RuntimeException("Narrowing is only supported with native query. The persistence provider requires the whole object to be loaded inorder to infer the type, which we don't do.");
 
 		logger.debug("ViewBranch#setAugmentedAttributes [name: " + name + ", type: " + aggregateType.getName() + "]");
 		Set<ColumnMeta> meta = new HashSet<ColumnMeta>();
-		for(QueryViewProperty viewProperty: viewPropertyByPath.values())
-			meta.addAll(viewProperty.getColumnMeta(narrow));
+		for(QueryViewProperty viewProperty: viewPropertyByPath.values()) {
+			// We do not augment the selected columns for a migrate operation
+			meta.addAll(viewProperty.getColumnMeta(narrow, !isMigrateView()));
+		}
 
 		// Sort the attributes
 		List<String> sortedPath = new ArrayList<String>();

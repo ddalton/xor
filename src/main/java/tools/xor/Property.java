@@ -173,4 +173,10 @@ public interface Property
    * @return true if the ORM manages the property access
    */
   boolean isManaged();
+
+  /**
+   * Indicates if this property is directly declared on the class or is declared on the superclass.
+   * @return true if the property is defined in a superclass
+   */
+  boolean isInherited();
 }

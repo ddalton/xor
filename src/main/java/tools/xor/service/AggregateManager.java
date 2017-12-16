@@ -952,46 +952,102 @@ public class AggregateManager implements Xor
 		return update(inputObject, getDAS().settings().aggregate(entityClass).build());
 	}
 
-	@Override
-	public void migrate(AggregateManager source, Settings settings)
-	{
-		if(source == null) {
-			throw new IllegalArgumentException("Source database needs to be provided");
-		}
+	private String[] getEntitiesArray(String propertyName) {
+		String[] entities = new String[0];
 
-		// loop through all the entities in topological order that we want migrated
-		// So the dependencies are set properly
-		if (ApplicationConfiguration.config().containsKey(Constants.Config.MIGRATE_ENTITIES)) {
-			String entitiesToMigrate = ApplicationConfiguration.config().getString(Constants.Config.MIGRATE_ENTITIES);
-			if(entitiesToMigrate == null || "".equals(entitiesToMigrate.trim())) {
+		if (ApplicationConfiguration.config().containsKey(propertyName)) {
+			String entitiesToMigrate = ApplicationConfiguration.config().getString(propertyName);
+			if (entitiesToMigrate == null || "".equals(entitiesToMigrate.trim())) {
 				// Nothing to migrate
-				return;
+				return entities;
 			}
 
 			String[] input = entitiesToMigrate.split(",");
-			String[] entities = Arrays.stream(input).map(String::trim).toArray(String[]::new);
-
-			checkPO(settings);
-			MigrateOperation operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
-			List<EntityType> orderedTypes = operation.getEntitiesInOrder(entities, settings);
-
-			Iterator<EntityType> iterator = orderedTypes.iterator();
-			while(iterator.hasNext()) {
-				EntityType entityType = iterator.next();
-
-				// Create a new settings based on migrate view
-				Settings batchSettings = operation.build(entityType, settings);
-
-				batchSettings.setPersist(true);
-				batchSettings.setMainAction(AggregateAction.MIGRATE);
-				batchSettings.setSessionContext(settings.getSessionContext());
-
-				// Create a new operation for each entity,so we don't mix different entities
-				// in the same queue
-				operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
-				operation.execute(batchSettings, null);
-			}
+			entities = Arrays.stream(input).map(String::trim).toArray(String[]::new);
 		}
+
+		return entities;
+	}
+
+	private String[] getEntitiesToMigrate()
+	{
+		return getEntitiesArray(Constants.Config.MIGRATE_ENTITIES);
+	}
+
+	private String[] getEntitiesInRelationshipMigration() {
+		return getEntitiesArray(Constants.Config.MIGRATE_RELATIONSHIPS);
+	}
+
+	@Override
+	public void migrate (AggregateManager source, Settings settings)
+	{
+		if (source == null) {
+			throw new IllegalArgumentException("Source database needs to be provided");
+		}
+
+		checkPO(settings);
+		MigrateOperation operation = getPersistenceOrchestrator().getMigrateOperation(
+			source,
+			this,
+			null);
+
+		// Migrate just the entity including embedded objects
+		List<EntityType> orderedTypes = operation.getEntitiesInOrder(
+			getEntitiesToMigrate(),
+			settings);
+		Iterator<EntityType> iterator = orderedTypes.iterator();
+		while (iterator.hasNext()) {
+			EntityType entityType = iterator.next();
+			System.out.println("****** Migrating entity: " + entityType.getName());
+
+			// Create a new settings based on migrate view
+			Settings batchSettings = operation.build(entityType, settings);
+			performMigration(source, batchSettings, operation);
+		}
+
+		//NOTE: Specific consideration for migrating relationships
+		// If entity is not root concrete class then only the relationships in the
+		// entity is migrated
+		// If entity is root concreate class, then all the relationships are migrated
+		// This above rule helps us to avoid migrating duplicate relationships, due to
+		// inheritance.
+
+		// Migrate collection of embedded objects
+		List<Settings> embeddedRelationships = operation.getEmbeddedRelationships(
+			getEntitiesInRelationshipMigration(),
+			settings);
+		Iterator<Settings> relationshipIterator = embeddedRelationships.iterator();
+		while (relationshipIterator.hasNext()) {
+			Settings relSettings = relationshipIterator.next();
+			System.out.println(
+				"****** Migrating embedded relationship: " + relSettings.getView().getName());
+
+			performMigration(source, relSettings, operation);
+		}
+
+		// Migrate collection of entities
+		List<Settings> entityRelationships = operation.getEntityRelationships(
+			getEntitiesInRelationshipMigration(),
+			settings);
+		relationshipIterator = entityRelationships.iterator();
+		while (relationshipIterator.hasNext()) {
+			Settings relSettings = relationshipIterator.next();
+			System.out.println(
+				"****** Migrating entity relationship: " + relSettings.getView().getName());
+
+			performMigration(source, relSettings, operation);
+		}
+	}
+
+	private void performMigration(AggregateManager source, Settings settings, MigrateOperation operation) {
+		settings.setPersist(true);
+		settings.setMainAction(AggregateAction.MIGRATE);
+		settings.setSessionContext(settings.getSessionContext());
+
+		// Create a new operation for each entity,so we don't mix different entities
+		// in the same queue
+		operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
+		operation.execute(settings, null);
 	}
 
 	@Override

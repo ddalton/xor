@@ -214,8 +214,12 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			}
 			
 			if(edge == null) {
-				// Should not happen
-				throw new RuntimeException("Unable to find an edge in the loop to swizzle");
+				StringBuilder loopStr = new StringBuilder();
+				for(E e: circuit) {
+					loopStr.append("--" + e.toString() + "-->(" + e.getEnd().toString() + ")");
+				}
+				logger.warn("Potential loop: " + loopStr.toString());
+				continue;
 			}
 			
 			// 4. Make a reference copy

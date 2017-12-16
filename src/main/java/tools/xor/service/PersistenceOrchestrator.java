@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONObject;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -264,4 +265,34 @@ public interface PersistenceOrchestrator {
      * @return provider specific polymorphic controls for a class
      */
     public String getPolymorphicClause(Class<?> entityClass);
+
+    /**
+     * Invoked as part of the migrate operation, to persist the surrogate key id mapping between
+     * the source and the migrated instance.
+     * This mapping is later used to fix the foreign key relationships between 2 entities, especially
+     * when the target of the foreign key does not have a natural key.
+     *
+     * @param surrogateKeyMap map of the surrogate key values between the source and migrated instances
+     *                        in a migration batch
+     */
+    public void persistSurrogateMap(Map<String, String> surrogateKeyMap);
+
+    /**
+     * Using the migrated Id map information on the target database, the map of the
+     * surrogateKey values is obtained, for the ids scanned from the batch.
+     *
+     * @param batch is scanned for surrogateKey ids and the map resulting from this is used to fix
+     *              the relationships before it is processed and saved in the target database.
+     * @param settings has details on the meta data
+     */
+    public void fixRelationships(List<JSONObject> batch, Settings settings);
+
+    /**
+     * Query the target database in a migration and find the migrated surrogate id values.
+     *
+     * @param sourceSurrogateIds source surrogate ids for which we want to find the
+     *                           corresponding migrated surrogate ids
+     * @return map of source and migrated surrogate ids
+     */
+    public Map<String, String> findMigratedSurrogateIds(Set<String> sourceSurrogateIds);
 }

@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.service.Shape;
@@ -116,15 +117,7 @@ public class AggregatePropertyPaths {
 					paths.add(property.getName());
 				} else if ( property.getType() instanceof EntityType && ((EntityType)property.getType()).isEmbedded()) {
 					if(includeEmbedded) {
-						List embeddedPaths = new ArrayList();
-						for (String embeddedPath : property.expand(new HashSet<Type>())) {
-							if (!embeddedPath.startsWith(Constants.XOR.IDREF)) {
-								Property embeddedProperty = aggregateType.getProperty(embeddedPath);
-								if(isPartofBase(embeddedProperty)) {
-									embeddedPaths.add(embeddedPath);
-								}
-							}
-						}
+						List embeddedPaths = getEmbeddedPaths(aggregateType, property);
 						paths.addAll(embeddedPaths);
 					}
 				}
@@ -133,6 +126,71 @@ public class AggregatePropertyPaths {
 		}
 		
 		return Collections.unmodifiableSet(paths);
+	}
+
+	private static List getEmbeddedPaths(Type aggregateType, Property property) {
+		List embeddedPaths = new ArrayList();
+		for (String embeddedPath : property.expand(new HashSet<Type>())) {
+			if (!embeddedPath.startsWith(Constants.XOR.IDREF)) {
+				Property embeddedProperty = aggregateType.getProperty(embeddedPath);
+				if(isPartofBase(embeddedProperty)) {
+					embeddedPaths.add(embeddedPath);
+				}
+			}
+		}
+
+		return embeddedPaths;
+	}
+
+	public static Set<String> enumerateRelationship(Type aggregateType, Property property) {
+		/*
+		 *  Handle 3 cases
+		 *  1. Simple types
+		 *     e.g., SELECT u.id, u.EmailAddresses FROM User u
+		 *     Here EmailAddresses is a collection of String values
+		  *
+		 *  2. Embedded types
+		 *     e.g., SELECT u.id, u.Address.Street, u.Address.Zipcode FROM User u
+		 *     Here Address is an embedded object
+		 *
+		 *  3. Entity types
+		 *     e.g., SELECT u.id, u.Groups.id FROM User u
+		 */
+		Set<String> paths = new HashSet<>();
+
+		if( !(aggregateType instanceof EntityType) ){
+			throw new RuntimeException("Relationships can only be defined on Entities");
+		}
+
+		EntityType entityType = (EntityType) aggregateType;
+		// If the entityType is an embedded type, that could be problematic
+		// But we don't raise an exception as it depends on the persistence provider
+		// on whether they store certain types of embedded entities in a separate table
+		// In such a case, the persistence provider should provide a way to unique identify
+		// through the identifier property
+
+		// First add the id of the Aggregate
+		paths.add(entityType.getIdentifierProperty().getName());
+
+		// Case 1 - Collection of simple type values
+		Type elementType = ((ExtendedProperty)property).getElementType();
+		if( elementType.isDataType()) {
+			paths.add(property.getName());
+		}
+
+		// Case 2 - Collection of embedded type instances
+		else if ( (elementType instanceof EntityType) && ((EntityType)elementType).isEmbedded() ) {
+			paths.addAll(getEmbeddedPaths(aggregateType, property));
+		}
+
+		// Case 3 - Collection of entities
+		else if (elementType instanceof EntityType) {
+			paths.add(
+				property.getName() + Settings.PATH_DELIMITER
+					+ ((EntityType)elementType).getIdentifierProperty().getName());
+		}
+
+		return paths;
 	}
 
 	/**
@@ -160,6 +218,13 @@ public class AggregatePropertyPaths {
 					paths.addAll(property.expandMigrate(new HashSet<>()));
 				}
 			}
+			// Make sure to retrieve the source surrogate key value, as this will be saved
+			// with the corresponding target surrogate key value to help in building foreign key
+			// relationships
+			if(((EntityType) aggregateType).getIdentifierProperty() != null) {
+				paths.add(((EntityType) aggregateType).getIdentifierProperty().getName());
+			}
+
 			migratePaths.put(aggregateType, paths);
 		}
 

@@ -1409,9 +1409,11 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						result.add(getName()  + Settings.PATH_DELIMITER + keyPart);
 					}
 				}
-				else {
+				else if(entityType.getIdentifierProperty() != null) {
+					result.add(getName() + Settings.PATH_DELIMITER + entityType.getIdentifierProperty().getName());
+				} else {
 					throw new RuntimeException(
-						"Cannot create a migrate query for a type without a natural key: "
+						"Cannot create a migrate query for a type without a natural key or a surrogate key: "
 							+ entityType.getName());
 				}
 			}
@@ -1501,5 +1503,18 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 
 		return getContainingType().getNaturalKey().contains(getName());
+	}
+
+	@Override
+	public boolean isInherited ()
+	{
+		if (getterMethod != null) {
+			return getterMethod.getDeclaringClass().getName().equals(getType().getName());
+		}
+		else if (field != null) {
+			return field.getDeclaringClass().getName().equals(getType().getName());
+		}
+
+		return false;
 	}
 }

@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import tools.xor.util.Edge;
 
 public final class BusinessEdge<V extends BusinessObject> {
 	final V source;         
@@ -69,7 +70,12 @@ public final class BusinessEdge<V extends BusinessObject> {
 	*/
 	public boolean toTransient() {
 		return !getEnd().isPersistent();
-	}	
+	}
+
+	@Override
+	public String toString() {
+		return (property == null) ? Edge.COL_FANOUT : property.getName();
+	}
 
 	@Override
 	public int hashCode() {

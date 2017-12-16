@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -309,13 +310,13 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	@Override
 	public Collection<E> getInEdges(V vertex) {
 		Collection<E> result = inEdges.get(vertex);
-		return result == null ? new HashSet<E>() : result;
+		return result == null ? new HashSet<E>() : new HashSet<>(result);
 	}
 
 	@Override
 	public Collection<E> getOutEdges(V vertex) {
 		Collection<E> result = outEdges.get(vertex);
-		return result == null ? new HashSet<E>() : result;
+		return result == null ? new HashSet<E>() : new HashSet<>(result);
 	}
 
 	@Override

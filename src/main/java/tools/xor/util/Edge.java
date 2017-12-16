@@ -27,9 +27,10 @@ import tools.xor.Type;
 public class Edge<V extends Vertex>
 {
 
-    public static String NONE_OR_ONE = "0..1";
-    public static String EXACTLY_ONE = "1..1";
-    public static String ZERO_OR_MORE = "0..*";
+    public static final String NONE_OR_ONE = "0..1";
+    public static final String EXACTLY_ONE = "1..1";
+    public static final String ZERO_OR_MORE = "0..*";
+    public static final String COL_FANOUT = "Σ";
 
     private final String name;
     private final V start;

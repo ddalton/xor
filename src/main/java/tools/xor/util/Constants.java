@@ -57,6 +57,10 @@ public class Constants {
 		public static final String REPULSION_MULTIPLIER = "graph.visual.repulsion";
 		public static final String MAX_STRING_LEN = "max.string.length";
 		public static final String MIGRATE_ENTITIES = "entities.to.migrate";
+		public static final String MIGRATE_RELATIONSHIPS = "migrate.relationships.entities";
+		public static final String MIGRATE_BATCH_SIZE = "migrate.batch.size";
+		public static final String MIGRATE_FILTER_PARTITION = "migrate.filter.partition";
+		public static final String INCLUDE_SUBCLASS = "include.subclass";
 	}
   
   
@@ -83,6 +87,9 @@ public class Constants {
 	  
 	  // Flag to indicate if that entry should be deleted. Mainly used during aggregate update.
 	  public static final String DELETE = XOR_PATH_PREFIX + "delete";
+
+	  // In migration, this field captures the source object's surrogate key value
+	  public static final String SURROGATEID = XOR_PATH_PREFIX + "surrogateid";
 
 	  // Represents the sheet containing the root object in the aggregate 
 	  public static final String EXCEL_ENTITY_SHEET = "Entity";	  

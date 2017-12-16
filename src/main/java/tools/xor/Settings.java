@@ -997,6 +997,10 @@ public class Settings {
 		}
 
 		private void createView(Class clazz, ViewType builtInType) {
+			createView(clazz, builtInType, null);
+		}
+
+		private void createView(Class clazz, ViewType builtInType, Property property) {
 			Type type = shape.getType(clazz);
 			EntityType entityType;
 			if(type instanceof EntityType) {
@@ -1013,6 +1017,10 @@ public class Settings {
 				break;
 			case MIGRATE:
 				settings.setView(shape.getMigrateView(entityType));
+				break;
+			case RELATIONSHIP:
+				assert(property != null);
+				settings.setView(shape.getRelationshipView(entityType, property));
 				break;
 			case AGGREGATE:
 				settings.setView(shape.getView(entityType));
@@ -1033,6 +1041,12 @@ public class Settings {
 
 		public SettingsBuilder migrate(Class<?> clazz) {
 			createView(clazz, ViewType.MIGRATE);
+
+			return this;
+		}
+
+		public SettingsBuilder migrateRelationship(Class<?> clazz, Property property) {
+			createView(clazz, ViewType.RELATIONSHIP, property);
 
 			return this;
 		}

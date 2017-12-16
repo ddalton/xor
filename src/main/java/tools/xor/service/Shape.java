@@ -593,6 +593,33 @@ public class Shape
         return getView(viewName);
     }
 
+    /**
+     * Create a view that only scopes out the relationship between the given entity type
+     * and the property representing the relationship.
+     * This view is dedicated for a toMany relationship and can handle all types such as:
+     * 1. Simple types
+     * 2. Embedded types
+     * 3. Entity types
+     *
+     * @param type whose relationship we need to scope out
+     * @param property representing the toMany relationship
+     * @return view of the relationship
+     */
+    public View getRelationshipView(EntityType type, Property property) {
+
+        String viewName = AbstractType.getRelationshipViewName(type, property);
+        View result = getView(viewName);
+
+        if(result == null) {
+            result = new AggregateView(viewName);
+            Set<String> paths = AggregatePropertyPaths.enumerateRelationship(type, property);
+
+            updateView(result, viewName, paths);
+        }
+
+        return getView(viewName);
+    }
+
     public View getRefView(EntityType type) {
 
         String viewName = AbstractType.getRefViewName(type);

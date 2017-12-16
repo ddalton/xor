@@ -308,4 +308,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 */
 	public boolean isQueryable();
 
+	/**
+	 * Checks if this is the root concrete type. That is there is no parent type that
+	 * has persisted instances in the database.
+	 *
+	 * @return true if this is the root concrete type.
+	 */
+	public boolean isRootConcreteType();
 }

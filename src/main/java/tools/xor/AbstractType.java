@@ -164,6 +164,10 @@ public abstract class AbstractType implements EntityType {
 	private static boolean isInValid(Type type) {
 		return type == null || type.getInstanceClass() == null;
 	}
+
+	private static boolean isInValid(Type type, Property property) {
+		return type == null || type.getInstanceClass() == null || property == null;
+	}
 	
 	public static String getViewName(Type type) {
 		if(isInValid(type)) {
@@ -197,6 +201,20 @@ public abstract class AbstractType implements EntityType {
 		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.MIGRATE);
+
+		return sb.toString();
+	}
+
+	public static String getRelationshipViewName(Type type, Property property) {
+		if(isInValid(type, property)) {
+			return null;
+		}
+
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		sb.append("#");
+		sb.append(property.getName());
+		sb.append(Settings.URI_PATH_DELIMITER);
+		sb.append(ViewType.RELATIONSHIP);
 
 		return sb.toString();
 	}
@@ -1203,5 +1221,22 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public boolean isQueryable() {
 		return true;
+	}
+
+	@Override
+	public boolean isRootConcreteType() {
+		boolean result = true;
+
+		EntityType superType = getSuperType();
+		while (superType != null) {
+			if(!superType.isAbstract()) {
+				result = false;
+				break;
+			}
+
+			superType = superType.getSuperType();
+		}
+
+		return result;
 	}
 }

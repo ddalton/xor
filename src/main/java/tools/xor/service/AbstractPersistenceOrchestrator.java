@@ -20,13 +20,21 @@
 package tools.xor.service;
 
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.json.JSONObject;
 import tools.xor.AbstractBO;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
@@ -37,14 +45,23 @@ import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
+import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.QueryViewProperty;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.View;
 
 public abstract class AbstractPersistenceOrchestrator implements PersistenceOrchestrator {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
+	// Valid if the surrogate id is a global id
+	// if not, the type also needs to be saved
+	private static final String INSERT_SURROGATE_MAP_SQL = "INSERT INTO XORSURROGATEMAP"
+		+ "(SOURCE_ID, MIGRATED_ID) VALUES (?,?)";
+
+	private static final String QUERY_MIGRATED_IDS = "SELECT SOURCE_ID, MIGRATED_ID FROM XORSURROGATEMAP WHERE SOURCE_ID IN (%s)";
 
 	protected abstract void createStatement (StoredProcedure sp);
 	
@@ -261,5 +278,102 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	@Override
 	public String getPolymorphicClause(Class<?> entityClass) {
 		return "";
+	}
+
+	protected void persistMapToTable(Connection conn, Map<String, String> surrogateKeyMap) throws
+		SQLException
+	{
+		try(PreparedStatement ps = conn.prepareStatement(INSERT_SURROGATE_MAP_SQL)) {
+
+			for (Map.Entry<String, String> entry : surrogateKeyMap.entrySet()) {
+				ps.setString(1, entry.getKey());
+				ps.setString(2, entry.getValue());
+				ps.addBatch();
+			}
+
+			ps.executeBatch();
+			conn.commit();
+		}
+	}
+
+	protected Map<String, String> queryMigratedIds(Connection conn, Set<String> sourceIds) throws SQLException
+	{
+		StringBuilder idStr = new StringBuilder();
+
+		for(String id: sourceIds) {
+			if(idStr.length() > 0) {
+				idStr.append(", ");
+			}
+			idStr.append("'").append(id).append("'");
+		}
+
+		String sql = String.format(QUERY_MIGRATED_IDS, idStr.toString());
+		Map<String, String> result = new HashMap<>();
+
+		if(sourceIds.size() > 0) {
+			try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+				while(rs.next()) {
+					result.put(rs.getString(1), rs.getString(2));
+				}
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	public void persistSurrogateMap(Map<String, String> surrogateKeyMap) {
+		throw new UnsupportedOperationException("Persisting of the surrogate map is not implemented");
+	}
+
+	@Override
+	public Map<String, String> findMigratedSurrogateIds(Set<String> sourceSurrogateIds) {
+		throw new UnsupportedOperationException("findMigratedSurrogateIds needs to have a provider implementation");
+	}
+
+	protected Set<String> getSurrogateKeyPaths(Set<String> migratePropertyPaths, EntityType entityType) {
+		throw new UnsupportedOperationException("Persistence provider needs to implement the method getSurrogateKeyPaths");
+	}
+
+	@Override
+	/*
+	 * This implementation is simple because we currently only handle surrogate ids that are global. i.e., unique
+	 * for the whole schema.
+	 */
+	public void fixRelationships(List<JSONObject> batch, Settings settings) {
+		/*
+	     *  We do this by
+		 *  1. Get the list of properties
+		 *  2. Retrieve the value of these properties and build a map
+		 *  3. Query the database to get the corresponding migrated values
+		 *  4. Using the list of properties in step 1, set the new values to form the correct
+		 *    relationships
+		 */
+
+		// Step 1 - Get the list of surrogateKey properties
+		// This needs to be build using the specific provider
+		Set<String> surrogateKeyPaths = getSurrogateKeyPaths(
+			AggregatePropertyPaths.enumerateMigrate(
+				settings.getEntityType()), (EntityType) settings.getEntityType());
+
+		// Step 2 - Build the map
+		Set<String> sourceSurrogateIds = new HashSet<>();
+		for(JSONObject json: batch) {
+			for (String surrogateKeyPath : surrogateKeyPaths) {
+				Object sourceSurrogateId = StateGraph.getKeyValue(json, surrogateKeyPath);
+				sourceSurrogateIds.add(sourceSurrogateId.toString());
+			}
+		}
+
+		// Step 3 - Query the database and get the migratedIds given the sourceIds
+		Map<String, String> idMap = findMigratedSurrogateIds(sourceSurrogateIds);
+
+		// Step 4 - Fix the relationships using the map
+		for(JSONObject json: batch) {
+			for (String surrogateKeyPath : surrogateKeyPaths) {
+				Object sourceSurrogateId = StateGraph.getKeyValue(json, surrogateKeyPath);
+				StateGraph.setKeyValue(json, surrogateKeyPath, idMap.get(sourceSurrogateId));
+			}
+		}
 	}
 }

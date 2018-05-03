@@ -5,7 +5,7 @@
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
     <packaging>jar</packaging>
-    <version>1.7.24</version>
+    <version>1.7.26</version>
     <name>xor</name>
     <description>Empowering Model Driven Architecture in J2EE applications</description>
     <url>https://github.com/ddalton/xor</url>

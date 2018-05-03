@@ -21,7 +21,7 @@ XOR is build using Maven and can be accessed using the following dependency:
 <dependency>
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
-    <version>1.2.5</version>
+    <version>1.7.25</version>
 </dependency>
 ```
 

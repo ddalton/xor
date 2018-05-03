@@ -131,6 +131,12 @@ public class AbstractDBTest {
 		public Object get(Property property) {
 			return null;
 		}
+
+		@Override
+		public boolean isLOB() {
+			// TODO Auto-generated method stub
+			return false;
+		}
 		
 	}
 	

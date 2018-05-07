@@ -47,10 +47,10 @@ import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
-import tools.xor.util.graph.EdgeStateGraph;
+import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
-import tools.xor.view.QueryView.ViewKey;
+import tools.xor.view.QueryTree.ViewKey;
 
 /**
  * If the view and its children have types then the children will be considered as being subtypes
@@ -124,7 +124,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	private Shape shape; // The Shape with which this view is associated
 	
 	@XmlTransient
-	private final Map<ViewKey, QueryView>  viewCache = new ConcurrentHashMap<>();
+	private final Map<ViewKey, QueryTree>  viewCache = new ConcurrentHashMap<>();
 
 	// A view can be valid for multiple entity types, especially if the view refers
 	// to the attributes in a base class. Then in this case, the view can be 
@@ -132,7 +132,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	@XmlTransient
 	private final Map<String, StateGraph<State, Edge<State>>> stateGraph =  new ConcurrentHashMap<>();
 
-	public AggregateView(QueryView queryView) {
+	public AggregateView(QueryTree queryView) {
 		initQuery(queryView);
 	}
 	
@@ -152,7 +152,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public AggregateView() {
 	}
 	
-	private void initQuery(QueryView queryView) {
+	private void initQuery(QueryTree queryView) {
 		this.name = queryView.getName();
 		this.typeName = queryView.getAggregateType().getInstanceClass().getName();
 		
@@ -328,25 +328,25 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		this.name = name;
 	}
 
-	private QueryView getQueryView(ViewKey viewKey) {
+	private QueryTree getQueryView(ViewKey viewKey) {
 		if(viewCache.containsKey(viewKey))
 			return viewCache.get(viewKey);
 		
-		QueryView result = new QueryView(viewKey, this);
+		QueryTree result = new QueryTree(viewKey, this);
 		viewCache.put(viewKey, result);
 
 		return result;
 	}
 
 	@Override
-	public QueryView getEntityView(Type type, boolean narrow) {
+	public QueryTree getEntityView(Type type, boolean narrow) {
 		if(children != null) {
 			for(View child: children)
 				if( ((AggregateView)child).getChildren() != null && ((AggregateView)child).getChildren().size() > 0)
 					throw new IllegalArgumentException("A content view cannot have more than one level of child content views");
 		}
 		
-		QueryView result = getQueryView(new ViewKey(type, name, narrow));
+		QueryTree result = getQueryView(new ViewKey(type, name, narrow));
 
 		return result;
 	}
@@ -685,7 +685,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 				}
 			}
 			if(isEdgeGraph(this)) {
-				stateGraph.put(entityName, EdgeStateGraph.build(this, entityType));
+				stateGraph.put(entityName, StateTree.build(this, entityType));
 			} else {
 				stateGraph.put(entityName, DFAtoRE.build(this, entityType));
 			}

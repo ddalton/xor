@@ -156,7 +156,7 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public QueryView getEntityView (Type type, boolean narrow)
+    @Override public QueryTree getEntityView (Type type, boolean narrow)
     {
         return view.getEntityView(type, narrow);
     }

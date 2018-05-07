@@ -36,12 +36,12 @@ import tools.xor.view.NativeQuery;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 import tools.xor.view.View;
 
-public class DenormalizedModifyOperation extends AbstractOperation {
+public class DenormalizedModifyOperation extends GraphTraversal {
 	
 	// Represents a list of map objects
 	private Object result;

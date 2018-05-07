@@ -22,7 +22,7 @@ package tools.xor.operation;
 import tools.xor.CallInfo;
 
 
-public class DeleteOperation extends AbstractOperation {
+public class DeleteOperation extends GraphTraversal {
 
 	@Override
 	public Object getResult() {

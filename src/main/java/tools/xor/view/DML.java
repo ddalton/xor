@@ -43,7 +43,7 @@ public interface DML {
 	 * @param entityType of entity
 	 * @param queryView view
 	 */
-	public void prepare(EntityType entityType, QueryView queryView);
+	public void prepare(EntityType entityType, QueryTree queryView);
 
 	/**
 	 * Executes the DML statement

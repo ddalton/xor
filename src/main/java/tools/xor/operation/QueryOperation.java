@@ -28,7 +28,6 @@ import java.util.Map;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
@@ -36,10 +35,10 @@ import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedure;
 
-public class QueryOperation extends AbstractOperation {
+public class QueryOperation extends TreeTraversal {
 
 	private List<Object> result = new ArrayList<Object>();
 	
@@ -56,7 +55,7 @@ public class QueryOperation extends AbstractOperation {
 		
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
-		QueryView aggregateView = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
+		QueryTree aggregateView = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
 		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();
 
 		// Put in loop if there are sub-branches
@@ -65,7 +64,7 @@ public class QueryOperation extends AbstractOperation {
 			if(sp != null && sp.isMultiple()) {
 				executeBranch(aggregateView, uniqueList, qb, callInfo);
 			} else {
-				for (QueryView branch : aggregateView.getSubBranches()) {
+				for (QueryTree branch : aggregateView.getSubBranches()) {
 					executeBranch(branch, uniqueList, qb, callInfo);
 				}
 			}
@@ -79,7 +78,7 @@ public class QueryOperation extends AbstractOperation {
 				result.add(root);
 	}
 	
-	protected Query createQuery(QueryView queryView, CallInfo callInfo, QueryBuilder qb) {
+	protected Query createQuery(QueryTree queryView, CallInfo callInfo, QueryBuilder qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
 		Query query = qb.constructQuery(callInfo.getSettings(), mutableFilters);
 
@@ -88,19 +87,19 @@ public class QueryOperation extends AbstractOperation {
 		return query;				
 	}
 
-	protected Query getQueryInstance(QueryView branch, QueryBuilder qb, CallInfo callInfo) {
+	protected Query getQueryInstance(QueryTree branch, QueryBuilder qb, CallInfo callInfo) {
 		qb.init((BusinessObject) callInfo.getInput(), branch, callInfo.getSettings().getAdditionalFilters());
 		Query query = createQuery(branch, callInfo, qb);
 
 		return query;
 	}
 
-	protected void checkSecurity(QueryView branch, CallInfo callInfo) {
+	protected void checkSecurity(QueryTree branch, CallInfo callInfo) {
 		if(branch.isCrossAggregate() && !callInfo.getSettings().permitCrossAggregate())
 			throw new RuntimeException("The view crosses aggregate boundary, this could be a security risk. If this is intentional then permit this by modifying the settings");
 	}
 	
-	private void executeBranch(QueryView branch, Map<BusinessObject, Object> uniqueList, QueryBuilder qb, CallInfo callInfo) {
+	private void executeBranch(QueryTree branch, Map<BusinessObject, Object> uniqueList, QueryBuilder qb, CallInfo callInfo) {
 
 		Query query = getQueryInstance(branch, qb, callInfo);
 		
@@ -128,22 +127,17 @@ public class QueryOperation extends AbstractOperation {
 	@Override
 	public Object getResult() {
 		return result;
-	}	
-	
+	}
+
 	@Override
-	protected boolean supportsCreate(CallInfo callInfo) {
-		return false;
-	}	
-	
+	public BusinessObject getDomainParent(CallInfo ci) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@Override
-	protected boolean supportsUpdate(CallInfo callInfo) {
-		return false;
+	public BusinessObject getExternalParent(CallInfo ci) {
+		// TODO Auto-generated method stub
+		return null;
 	}		
-	
-	@Override
-	protected void postVisited(CallInfo ci) {
-		if(ci.getStage() == ProcessingStage.CREATE && ci.getSettings().doBaseline() ) {
-			ci.getOutputObjectCreator().getPersistenceOrchestrator().attach((BusinessObject) ci.getOutput(), null, ci.getSettings());
-		}
-	}	
 }

@@ -37,7 +37,7 @@ import tools.xor.CallInfo;
 import tools.xor.ExtendedProperty;
 import tools.xor.ProcessingStage;
 import tools.xor.exception.BidirOutOfSyncException;
-import tools.xor.operation.AbstractOperation;
+import tools.xor.operation.GraphTraversal;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
@@ -170,7 +170,7 @@ public class SetUpdateAction extends CollectionUpdateAction {
 	}
 
 	public void linkElement(CallInfo next, String dynamicProperty, boolean isNew) throws Exception {
-		AbstractOperation oper = (AbstractOperation) next.getOperation();
+		GraphTraversal oper = (GraphTraversal) next.getOperation();
 
 		/*
 		BusinessObject targetElement = (BusinessObject) next.getOutput();

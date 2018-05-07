@@ -40,7 +40,7 @@ import tools.xor.action.RemoveElementAction;
 import tools.xor.action.SetterAction;
 
 
-public class ModifyOperation extends AbstractOperation {
+public class ModifyOperation extends GraphTraversal {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private Object result;

@@ -19,22 +19,9 @@
 
 package tools.xor.operation;
 
-import org.json.JSONObject;
-import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.Property;
-import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
-import tools.xor.service.EntityScroll;
-import tools.xor.util.ApplicationConfiguration;
-import tools.xor.util.Constants;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,13 +31,24 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.json.JSONObject;
+
+import tools.xor.EntityType;
+import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.Type;
+import tools.xor.service.AggregateManager;
+import tools.xor.service.DataAccessService;
+import tools.xor.service.EntityScroll;
+import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.Constants;
 
 /**
  * Migrates data from the source DB to the target DB
  */
-public class MigrateOperation extends AbstractOperation
+public class MigrateOperation extends GraphTraversal
 {
     private final static int QUEUE_SIZE = 10000;
     private final static int CONSUMER_COUNT = 2;

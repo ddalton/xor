@@ -6,7 +6,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 
 import java.util.Collection;
 import java.util.List;
@@ -101,7 +101,7 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.dumpState();
 	}
 
-	@Override public List<QueryView> getQueryableRegions ()
+	@Override public List<QueryTree> getQueryableRegions ()
 	{
 		return typeGraph.getQueryableRegions();
 	}

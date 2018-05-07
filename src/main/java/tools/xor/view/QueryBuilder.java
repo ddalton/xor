@@ -87,7 +87,7 @@ public class QueryBuilder {
 
 	private BusinessObject   entity;
 	private Type             type;	
-	private QueryView        view;
+	private QueryTree        view;
 	private List<Filter>     additionalFilters;
 	private boolean          addIdentifier;
 	private List<String>     selectedColumns;    
@@ -104,7 +104,7 @@ public class QueryBuilder {
 		this.addIdentifier = addIdentifier;
 	}
 	
-	public void init(Type type, QueryView view, List<Filter> additionalFilters) {
+	public void init(Type type, QueryTree view, List<Filter> additionalFilters) {
 		this.type = type;
 		this.view = view;
 
@@ -118,7 +118,7 @@ public class QueryBuilder {
 		Collections.sort(additionalFilters);
 	}	
 
-	public void init(BusinessObject entity, QueryView view, List<Filter> additionalFilters) {
+	public void init(BusinessObject entity, QueryTree view, List<Filter> additionalFilters) {
 		init(entity.getDomainType(), view, additionalFilters);
 		this.entity = entity;
 		view.normalizeFilters(this.additionalFilters, getQueryCapability(entity.getObjectCreator().getPersistenceOrchestrator()));
@@ -505,7 +505,7 @@ public class QueryBuilder {
 			result.append(" WHERE ");		
 	}
 
-	public void postProcess(QueryView queryView, Settings settings, Query query, Map<String, Object> filters) {
+	public void postProcess(QueryTree queryView, Settings settings, Query query, Map<String, Object> filters) {
 		
 		for(Map.Entry<String, Object> entry: filters.entrySet()) {
 			query.setParameter(entry.getKey(), entry.getValue());

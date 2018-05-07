@@ -224,7 +224,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	}	
 	
 	@Override
-	public void prepare(EntityType entityType, QueryView queryView) {
+	public void prepare(EntityType entityType, QueryTree queryView) {
 
 		// A Java Type can map to multiple SQL types, so it is mandatory for the user
 		// to specify the parameter type

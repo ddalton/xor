@@ -33,7 +33,7 @@ import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 import tools.xor.view.QueryViewProperty;
 
 import java.io.BufferedWriter;
@@ -794,20 +794,20 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
    
 	 * @return the root QueryView
 	 */
-	public List<QueryView> getQueryableRegions() {
-		QueryView regionRoot = new QueryView(null, null, root);
-		List<QueryView> result = new LinkedList<QueryView>();
+	public List<QueryTree> getQueryableRegions() {
+		QueryTree regionRoot = new QueryTree(null, null, root);
+		List<QueryTree> result = new LinkedList<QueryTree>();
 		
 		processRegion(regionRoot, regionRoot, result, new HashSet<Type>());
 		
-		for(QueryView view: result) {
+		for(QueryTree view: result) {
 			view.initViewProperties();
 		}
 		
 		return result;
 	}
 	
-	private void processRegion(QueryView regionRoot, QueryView regionNode, List<QueryView> result, Set<Type> processed) {
+	private void processRegion(QueryTree regionRoot, QueryTree regionNode, List<QueryTree> result, Set<Type> processed) {
 		Type type = regionNode.getAggregateType();
 		if(processed.contains(type)) {
 			return;
@@ -829,12 +829,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					// Process a type interior to a region
 					processRegion(
 							regionRoot, 
-							new QueryView(regionNode, p.getName(), propertyType ),
+							new QueryTree(regionNode, p.getName(), propertyType ),
 							result,
 							processed);
 				} else {
 					// process a new region
-					QueryView newRegion = new QueryView(regionNode, p.getName(), ((ExtendedProperty)p).getElementType() );
+					QueryTree newRegion = new QueryTree(regionNode, p.getName(), ((ExtendedProperty)p).getElementType() );
 					result.add(newRegion);
 					processRegion(
 							newRegion,

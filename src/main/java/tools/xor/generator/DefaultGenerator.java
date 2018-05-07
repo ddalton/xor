@@ -30,7 +30,7 @@ import tools.xor.Type;
 import tools.xor.util.Constants;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -375,10 +375,10 @@ public class DefaultGenerator implements Generator
         // For each path, loop through each component and see if the value is available
         while (path != null) {
             // Extract the next attribute in the path
-            String component = QueryView.getTopAttribute(path);
+            String component = QueryTree.getTopAttribute(path);
 
             // Get the path ready for the next round if applicable
-            path = QueryView.getNext(path);
+            path = QueryTree.getNext(path);
 
             JSONObject current = parent;
             parent = getComponent(visitor, current, component);

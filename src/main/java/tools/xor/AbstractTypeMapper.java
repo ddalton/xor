@@ -239,7 +239,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	 * natural keys.
 	 * The keys being returned has to be kept in sync with the code that populates these
 	 * fields.
-	 * @see tools.xor.operation.AbstractOperation#process
+	 * @see tools.xor.operation.GraphTraversal#process
 	 *
 	 * @param bo business object
 	 * @return list of all keys including the natural keys of its super types

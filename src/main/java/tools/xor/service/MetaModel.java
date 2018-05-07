@@ -30,7 +30,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
 public class MetaModel {

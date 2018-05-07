@@ -6,7 +6,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 
 import java.util.List;
 import java.util.Map;
@@ -215,7 +215,7 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
    
 	 * @return the root QueryView
 	 */
-	public List<QueryView> getQueryableRegions();
+	public List<QueryTree> getQueryableRegions();
 
 	/**
 	 * Checks to types to see if all them support dynamic update. Even if a single concrete type

@@ -35,7 +35,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.AbstractBO;
-import tools.xor.AbstractType;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -47,20 +46,24 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.Edge;
-import tools.xor.util.State;
 
 /**
- * Alternative representation of an AggregateView, that helps with constructing OQL queries.
+ * This is an optimization data structure used by queries.
+ * This data structure is used for TreeTraversal operations. Such operations are defined by the StateTree scope.
+ * Not valid in a graph context.
  *
- * A single AggregateView might end up having multiple QueryView instances. For example, if
- * the view needs to fetch two collections on the same entity, then a cartesian/cross product might
- * occur if doing it in a single query. So it needs to be split as two queries.
+ * The mapping is typically:
+ * AggregateView -> StateTree -> QueryTree
+ * 
+ * TODO: A QueryTree is a tree data structure, where the nodes are QueryTree instances. The root of each QueryTree is associated
+ * with a State node of AggregateView's StateTree instance.
+ * The results from the QueryTree are stored in an instance of the StateTree.
+ * A single QueryTree instance can populate one or more states in the StateTree instance, thus optimizing the data retrieval.
  * 
  * @author Dilip Dalton
  *
  */
-public class QueryView {
+public class QueryTree {
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 
@@ -78,9 +81,9 @@ public class QueryView {
 	private        boolean                        crossAggregate;
 
 	// Related to constructing child View Branches
-	private        List<QueryView>                subBranches;  // split according to parallel collections.
-	private        QueryView                      parent; // branch containing the parent step
-	private        QueryView                      twig;         // attributes of simple type
+	private        List<QueryTree>                subBranches;  // split according to parallel collections.
+	private        QueryTree                      parent; // branch containing the parent step
+	private        QueryTree                      twig;         // attributes of simple type
 	private        boolean                        collection;   // How many collections are under this branch
 
 	/**
@@ -89,13 +92,13 @@ public class QueryView {
 	 * @param rootName anchored at a property and is the property name
 	 * @param rootType type
 	 */
-	public QueryView(QueryView parent, String rootName, Type rootType) {
+	public QueryTree(QueryTree parent, String rootName, Type rootType) {
 		this.parent = parent;
 		this.name = rootName;
 		this.aggregateType = rootType;
 	}
 
-	public QueryView(ViewKey viewKey, AggregateView contentView) {
+	public QueryTree(ViewKey viewKey, AggregateView contentView) {
 
 		this.aggregateSlice = contentView;
 		this.aggregateType = viewKey.type;
@@ -130,14 +133,14 @@ public class QueryView {
 			// Perform automatic division into multiple queries if necessary
 			createBranches();
 			consolidateBranches();
-			for(QueryView child: subBranches) {
+			for(QueryTree child: subBranches) {
 				child.setAggregateType(aggregateType);
 				child.initViewProperties();
 			}
 		} else { // User has explicitly specified the queries needed to populate the view
-			this.subBranches = new ArrayList<QueryView>();
+			this.subBranches = new ArrayList<QueryTree>();
 			for(AggregateView child: aggregateSlice.getChildren()) {
-				QueryView childQueryView = new QueryView(this, null, this.aggregateType);
+				QueryTree childQueryView = new QueryTree(this, null, this.aggregateType);
 				childQueryView.setContentView(child);
 				if(aggregateSlice.isUnion())
 					childQueryView.init();
@@ -220,11 +223,11 @@ public class QueryView {
 		this.aggregateType = aggregateType;
 	}	
 
-	public QueryView getParent() {
+	public QueryTree getParent() {
 		return parent;
 	}
 
-	public void setParent(QueryView parentBranch) {
+	public void setParent(QueryTree parentBranch) {
 		this.parent = parentBranch;
 	}	
 
@@ -240,7 +243,7 @@ public class QueryView {
 	 * Use the subBranches if there is more than one
 	 * @return list of subbranch views
 	 */
-	public List<QueryView> getSubBranches() {
+	public List<QueryTree> getSubBranches() {
 		return Collections.unmodifiableList(this.subBranches);
 	}
 
@@ -286,7 +289,7 @@ public class QueryView {
 
 	public String getAnchorPath() {
 		StringBuilder result = new StringBuilder(this.getParent() == null ? "" : (name == null ? "" : name));
-		QueryView parentQueryView = getParent();
+		QueryTree parentQueryView = getParent();
 
 		while(parentQueryView != null) { 
 			if(parentQueryView.getParent() == null)
@@ -309,7 +312,7 @@ public class QueryView {
 	}
 
 	private void createBranches() {
-		Map<String, QueryView> newBranches = new HashMap<String, QueryView>();
+		Map<String, QueryTree> newBranches = new HashMap<String, QueryTree>();
 
 		for(String attribute: attributes.keySet()) {
 			String rootAnchorName = getRootAnchorName(attribute);
@@ -329,15 +332,15 @@ public class QueryView {
 				rootType = ((ExtendedProperty)rootProperty).getElementType();			
 			if(rootType.isDataType()) { // Do not create branches for simple types
 				if(twig == null)
-					twig = new QueryView(this, null, null);
+					twig = new QueryTree(this, null, null);
 				twig.addAttribute(attribute);
 				continue;
 			}
 
-			QueryView branch = newBranches.get(rootAnchorName);
+			QueryTree branch = newBranches.get(rootAnchorName);
 			if(branch == null) {
 				// Create a new branch
-				branch = new QueryView(this, rootAnchorName, rootType);
+				branch = new QueryTree(this, rootAnchorName, rootType);
 				if(rootProperty.isMany())
 					branch.setHasCollection(true); // The number of collections in this branch is atleast 1 due to the root property.
 				// There could be more collections due to the sub branches.
@@ -348,16 +351,16 @@ public class QueryView {
 		}
 
 		// Recursively create branches
-		for(QueryView branch: newBranches.values())
+		for(QueryTree branch: newBranches.values())
 			branch.createBranches();
 
-		this.subBranches = new ArrayList<QueryView>(newBranches.values());
+		this.subBranches = new ArrayList<QueryTree>(newBranches.values());
 	}
 	
-	private List<QueryView> grandChildToChild(QueryView branch, QueryView child) {
-		List<QueryView> newChildren = new ArrayList<QueryView>();
+	private List<QueryTree> grandChildToChild(QueryTree branch, QueryTree child) {
+		List<QueryTree> newChildren = new ArrayList<QueryTree>();
 		
-		for(QueryView grandChild: child.getSubBranches()) {
+		for(QueryTree grandChild: child.getSubBranches()) {
 			// NOTE: Name is irrelevant in merge. So we don't do anything about updating it.
 			grandChild.setAggregateType(child.getAggregateType());
 			grandChild.setParent(branch);
@@ -369,7 +372,7 @@ public class QueryView {
 
 	private void consolidateBranches() {
 		// First go to the leaf
-		for(QueryView subBranch: subBranches) 
+		for(QueryTree subBranch: subBranches) 
 			subBranch.consolidateBranches();
 
 		if(this.subBranches.size() == 0)
@@ -378,7 +381,7 @@ public class QueryView {
 		// If a branch has only one child then consolidate by clearing its child and bringing any parallel branches to the top
 		if(this.subBranches.size() == 1) { // flatten by removing child
 			// Check if the only child has parallel collections. If so, the child has to be replaced with the parallel collections
-			QueryView child = this.subBranches.iterator().next();
+			QueryTree child = this.subBranches.iterator().next();
 
 			this.subBranches.clear();
 			if(child.subBranches != null && child.subBranches.size() > 0) { 
@@ -389,8 +392,8 @@ public class QueryView {
 		}
 		else {
 			// Move up all the parallel grand child branches
-			List<QueryView> flattenList = new ArrayList<QueryView>();
-			nextChild: for(QueryView child: subBranches) {
+			List<QueryTree> flattenList = new ArrayList<QueryTree>();
+			nextChild: for(QueryTree child: subBranches) {
 				if(child.getSubBranches() != null) {
 					if(child.getSubBranches().size() == 1)
 						throw new RuntimeException("A child branch with 1 grandchild should have been consolided");
@@ -405,9 +408,9 @@ public class QueryView {
 			
 			// If a branch has many children
 			// First check if there are parallel collections	
-			Set<QueryView> parallelCollectionBranches = new HashSet<QueryView>();
-			Set<QueryView> nonCollectionBranches = new HashSet<QueryView>(); // branches that need to be merged
-			for(QueryView child: subBranches) {
+			Set<QueryTree> parallelCollectionBranches = new HashSet<QueryTree>();
+			Set<QueryTree> nonCollectionBranches = new HashSet<QueryTree>(); // branches that need to be merged
+			for(QueryTree child: subBranches) {
 				this.setHasCollection(this.collection || child.hasCollection()); // Mark if it has any collection in its child sub-branches
 				if(!child.hasCollection())
 					nonCollectionBranches.add(child);
@@ -416,10 +419,10 @@ public class QueryView {
 			}
 
 			if(parallelCollectionBranches.size() > 1) {
-				Iterator<QueryView> iter = nonCollectionBranches.iterator();
+				Iterator<QueryTree> iter = nonCollectionBranches.iterator();
 				// need to consolidate the parallel branches
 				while(iter.hasNext())
-					for(QueryView parallelBranch: parallelCollectionBranches)
+					for(QueryTree parallelBranch: parallelCollectionBranches)
 						parallelBranch.merge(nonCollectionBranches.iterator().next());		
 
 				subBranches.clear();
@@ -429,11 +432,11 @@ public class QueryView {
 		}
 
 		if(twig != null)
-			for(QueryView child: subBranches)
+			for(QueryTree child: subBranches)
 				child.merge(twig);
 	}
 
-	private void merge(QueryView graftBranch) {
+	private void merge(QueryTree graftBranch) {
 		if(graftBranch == null)
 			return;
 
@@ -625,7 +628,7 @@ public class QueryView {
 	private boolean isMigrateView() {
 		AggregateView av = (AggregateView)getContentView();
 
-		QueryView current = this;
+		QueryTree current = this;
 		while (av == null && current.getParent() != null) {
 			av = (AggregateView)getParent().getContentView();
 			current = current.getParent();
@@ -865,7 +868,7 @@ public class QueryView {
 		List<AggregateView> result = new LinkedList<AggregateView>();
 		
 		if(subBranches != null || subBranches.size() > 0) {
-			for(QueryView qv: subBranches) {
+			for(QueryTree qv: subBranches) {
 				AggregateView av = new AggregateView(qv);
 				av.setSystemOQLQuery( (new OQLQuery()).generateQuery(am, qv) );
 				result.add(new AggregateView(qv));

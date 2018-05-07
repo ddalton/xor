@@ -29,7 +29,7 @@ import tools.xor.view.NativeQuery;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
-import tools.xor.view.QueryView;
+import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedureQuery;
 import tools.xor.view.View;
 
@@ -54,7 +54,7 @@ public class DenormalizedQueryOperation extends QueryOperation {
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ?
 			((BusinessObject)callInfo.getInput()).getDomainType() :
 			getNarrowedClass(das, callInfo.getSettings());
-		QueryView aggregateView = callInfo.getSettings().getView().getEntityView(
+		QueryTree aggregateView = callInfo.getSettings().getView().getEntityView(
 			referenceType,
 			callInfo.getSettings().doNarrow());
 

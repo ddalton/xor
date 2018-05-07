@@ -23,7 +23,7 @@ import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ExtendedProperty;
 
-public class ReadOperation extends AbstractOperation {
+public class ReadOperation extends GraphTraversal {
 	
 	private Object result;
 	

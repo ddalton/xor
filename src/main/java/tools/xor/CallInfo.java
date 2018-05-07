@@ -35,7 +35,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
-import tools.xor.util.graph.EdgeStateGraph;
+import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
 
@@ -336,7 +336,7 @@ public class CallInfo {
 				if (obj != null) {
 					EntityType instanceType = (EntityType)getInputObjectCreator().getDAS().getType(
 						obj.getClass());
-					state = ((EdgeStateGraph.SubtypeState)state).getState(instanceType);
+					state = ((StateTree.SubtypeState)state).getState(instanceType);
 				}
 			}
 

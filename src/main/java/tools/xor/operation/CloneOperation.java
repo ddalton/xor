@@ -27,7 +27,7 @@ import tools.xor.util.ClassUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CloneOperation extends AbstractOperation {
+public class CloneOperation extends GraphTraversal {
 	
 	private Object result;
 	

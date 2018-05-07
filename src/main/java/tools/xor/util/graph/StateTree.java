@@ -27,12 +27,12 @@ import java.util.Set;
  * @param <V> Vertex
  * @param <E> Edge
  */
-public class EdgeStateGraph<V extends EdgeStateGraph.SubtypeState, E extends EdgeStateGraph.AutonomousEdge<V>> extends StateGraph<V, E> {
+public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.AutonomousEdge<V>> extends StateGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private V rootState;
 	
-	public EdgeStateGraph(Type aggregateRoot, Shape shape, State rootState) {
+	public StateTree(Type aggregateRoot, Shape shape, State rootState) {
 		super(aggregateRoot, shape);
 		this.rootState = (V) rootState;
 	}
@@ -48,7 +48,7 @@ public class EdgeStateGraph<V extends EdgeStateGraph.SubtypeState, E extends Edg
 	 *
 	 * @param <V> between two SubtypeState vertices
 	 */
-	public static class AutonomousEdge<V extends EdgeStateGraph.SubtypeState> extends Edge<V> {
+	public static class AutonomousEdge<V extends StateTree.SubtypeState> extends Edge<V> {
 		private Resolver resolver;
 		public AutonomousEdge (String name, V start, V end, boolean qualify)
 		{
@@ -185,7 +185,7 @@ public class EdgeStateGraph<V extends EdgeStateGraph.SubtypeState, E extends Edg
 		buildMaps(stateViewMap, viewNameStateMap, view);
 
 		// Create the graph and add all states to it
-		EdgeStateGraph result = new EdgeStateGraph<>(entityType, view.getShape(), startState);
+		StateTree result = new StateTree<>(entityType, view.getShape(), startState);
 		for(State state: stateViewMap.keySet()) {
 			result.addVertex(state);
 		}

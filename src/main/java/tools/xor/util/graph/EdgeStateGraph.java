@@ -30,9 +30,17 @@ import java.util.Set;
 public class EdgeStateGraph<V extends EdgeStateGraph.SubtypeState, E extends EdgeStateGraph.AutonomousEdge<V>> extends StateGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public EdgeStateGraph(Type aggregateRoot, Shape shape) {
+	private V rootState;
+	
+	public EdgeStateGraph(Type aggregateRoot, Shape shape, State rootState) {
 		super(aggregateRoot, shape);
+		this.rootState = (V) rootState;
 	}
+	
+	@Override
+	public V getRootState() {
+		return rootState;
+	}	
 
 	/**
 	 * An edge that has logic embedded in it and can independently decide on the outcome of
@@ -177,7 +185,7 @@ public class EdgeStateGraph<V extends EdgeStateGraph.SubtypeState, E extends Edg
 		buildMaps(stateViewMap, viewNameStateMap, view);
 
 		// Create the graph and add all states to it
-		EdgeStateGraph result = new EdgeStateGraph<>(entityType, view.getShape());
+		EdgeStateGraph result = new EdgeStateGraph<>(entityType, view.getShape(), startState);
 		for(State state: stateViewMap.keySet()) {
 			result.addVertex(state);
 		}

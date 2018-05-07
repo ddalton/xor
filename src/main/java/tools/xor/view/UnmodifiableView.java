@@ -140,6 +140,11 @@ public class UnmodifiableView implements View
     public String getTypeName() {
         return view.getTypeName();
     }
+    
+	@Override
+	public void setTypeName(String typeName) {
+        raiseException();
+    }    
 
     @Override public String getName ()
     {
@@ -237,5 +242,10 @@ public class UnmodifiableView implements View
 
         return result;
     }
+
+	@Override
+	public boolean isValid() {
+		return view.isValid();
+	}
 
 }

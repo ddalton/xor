@@ -93,12 +93,16 @@ public class DefaultViewBranch extends AbstractDBTest {
 		System.out.println("Regions: " + regions.size());
 	}
 	
-	/*
-	 * TODO tests:
-	 * 1. Parallel collection query using set, list and map 
-	 * 2. Type - check SQL for any performance impact. Check for toOne and toMany relationship
-	 * 3. > 2 levels of retrieval for set, list and map
-	 * 4. Implement cross aggregate functionality
-	 * 5. Complete MetaModel and associated JAXB classes
-	 */
+	@Test
+	public void testValidView() {	
+		View view = aggregateManager.getView("VALIDENTITY");
+		assert(view.isValid());		
+	}	
+
+	@Test
+	public void testInValidView() {	
+		View view = aggregateManager.getView("INVALIDENTITY");
+		assert(!view.isValid());
+	}	
+	
 }

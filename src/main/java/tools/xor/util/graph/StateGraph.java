@@ -312,6 +312,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return result;
 	}
 	
+	@Override
 	public boolean hasPath(String path) {
 		return hasPath(getRootState(), path);
 	}

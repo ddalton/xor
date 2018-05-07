@@ -190,7 +190,7 @@ public class AggregateViewFactory {
 			
 			// Get a list of all the AggregateViews from the QueryView instance
 			// and append the recursive vew to this list
-			if(regexAttributes.size() > 0) {
+			if(regexAttributes != null && regexAttributes.size() > 0) {
 				// Create a new Aggregate view based on the recursive attributes
 				AggregateView regexView = new AggregateView();
 				regexView.setName(type.getName() + AggregateView.REGEX);

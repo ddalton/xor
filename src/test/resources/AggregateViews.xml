@@ -398,5 +398,19 @@
 		<children>		
 			<attributeList>[TASKCHILDREN]</attributeList>	
 		</children>			
-	</aggregateView>			
+	</aggregateView>
+	<aggregateView>	
+		<name>VALIDENTITY</name>
+		<typeName>tools.xor.db.pm.Task</typeName>		
+		<attributeList>id</attributeList>
+		<attributeList>name</attributeList>
+		<attributeList>taskChildren.name</attributeList>			
+	</aggregateView>	
+	<aggregateView>	
+		<name>INVALIDENTITY</name>
+		<typeName>tools.xor.db.pm.Task</typeName>				
+		<attributeList>id</attributeList>
+		<attributeList>name</attributeList>
+		<attributeList>taskChildren.invalidField</attributeList>			
+	</aggregateView>
 </AggregateViews>

@@ -120,4 +120,9 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 	{
 		typeGraph.generateVisual(settings);
 	}
+
+	@Override
+	public boolean hasPath(String path) {
+		return typeGraph.hasPath(path);
+	}
 }

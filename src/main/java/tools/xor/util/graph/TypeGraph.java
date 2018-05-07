@@ -238,4 +238,11 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * @param settings containing the file name
 	 */
 	public void generateVisual (Settings settings);
+
+	/**
+	 * Checks if the path is present in the graph. Useful for validating a view.
+	 * @param path of edges to check in the graph 
+	 * @return true if the path is found in the graph, false otherwise
+	 */
+	public boolean hasPath(String path);
 }

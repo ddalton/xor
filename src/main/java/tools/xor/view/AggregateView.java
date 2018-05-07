@@ -313,6 +313,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return typeName;
 	}
 
+	@Override
 	public void setTypeName(String typeName) {
 		this.typeName = typeName;
 	}
@@ -401,6 +402,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		AggregateView result = new AggregateView();
 
 		result.setName(name);
+		result.setTypeName(typeName);
 		if(attributeList != null) {
 			result.setAttributeList(new ArrayList<>(attributeList));
 		}
@@ -651,7 +653,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	public TypeGraph<State, Edge<State>> getTypeGraph () {
 		if(typeName == null) {
-			throw new RuntimeException("The type for the view needs to be provided");
+			throw new IllegalStateException("The type for the view needs to be provided");
 		}
 
 		// Return the type graph related to the view EntityType
@@ -667,6 +669,14 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		if(!stateGraph.containsKey(entityName) ) {
 			if(typeName != null) {
 				Type type = shape.getType(typeName);
+				
+				// If EntityType is not provided, then use type as the EntityType
+				if(entityType == null && type instanceof EntityType) {
+					entityType = (EntityType) type;
+				}
+				if(entityType == null) {
+					throw new RuntimeException("The given type should be an entityType: " + typeName);
+				}
 				if (!type.getInstanceClass().isAssignableFrom(entityType.getInstanceClass())) {
 					throw new RuntimeException(
 						"The view type " + type.getName()
@@ -696,5 +706,18 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public boolean isMigrateView(Type type) {
 		String migrateViewName = AbstractType.getMigrateViewName(type);
 		return migrateViewName != null && migrateViewName.equals(getName());
+	}
+
+	@Override
+	public boolean isValid() {
+		TypeGraph typeGraph = getTypeGraph();
+
+		for(String path: attributeList) {
+			if(!typeGraph.hasPath(path)) {
+				logger.info("Invalid path: " + path);
+				return false;
+			}
+		}
+		return true;
 	}
 }

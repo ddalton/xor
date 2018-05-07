@@ -188,6 +188,12 @@ public interface View {
 	 * @return entity type name
 	 */
 	public String getTypeName();
+	
+	/**
+	 * Set the type for which the view is based off
+	 * @param typeName name of the type
+	 */
+	public void setTypeName(String typeName);	
 
 	/**
 	 * Retrieve the name of the view.
@@ -310,4 +316,12 @@ public interface View {
 	 * @return list of children views
 	 */
 	public  List<? extends View> getChildren();
+	
+	/**
+	 * Checks if all the paths of the view are valid. This requires a type to be specified in the view.
+	 * This operation can be expensive depending on the size of the view.
+	 * If the type is not present then an IllegalStateException is thrown.
+	 * @return true if the view has all valid paths
+	 */
+	public boolean isValid();
 }

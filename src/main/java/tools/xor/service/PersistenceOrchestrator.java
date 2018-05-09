@@ -35,7 +35,7 @@ import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Query;
-import tools.xor.view.QueryViewProperty;
+import tools.xor.view.QueryProperty;
 import tools.xor.view.StoredProcedure;
 
 public interface PersistenceOrchestrator {
@@ -257,7 +257,7 @@ public interface PersistenceOrchestrator {
      * @param viewProperty representing the associated property being retrieved
      * @return join fragment
      */
-    public String getOQLJoinFragment(QueryViewProperty viewProperty);
+    public String getOQLJoinFragment(QueryProperty viewProperty);
 
     /**
      * Provider specific construct to control polymorphic object retrieval

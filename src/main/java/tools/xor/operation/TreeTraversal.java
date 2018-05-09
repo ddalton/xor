@@ -23,10 +23,24 @@ import tools.xor.Settings;
 import tools.xor.service.DataAccessService;
 
 /**
- * Operations that work on a Tree.
- * Uses BFS (Breadth First Search) to navigate the StateTree.
- * Uses an instance of the StateTree to resolve the object, 
- * where the states also do double duty to cache the intermediate results of traversing the StateTree.
+ * Operations that work on a QueryTree instance.
+ * Uses BFS (Breadth First Search) to navigate and execute the queries from the QueryTree.
+ * 
+ * There are two ways the RequestSlice nodes of a QueryTree are constructed:
+ * 1. LEAF_GROUP partitioning
+ *    We flatten the request by fully qualifying a property starting from the root
+ *    and then we divide the list into multiple RequestSlice instances so that a cartesian product
+ *    is avoided.
+ * 2. STATE_TREE partitioning
+ *    We use the StateTree as a guide to create the RequestSlice
+ *    This typically creates more RequestSlice instances, but is easier to assemble the result. 
+ * 
+ * Takes an AggregateView as input and creates a QueryTree instance from it.
+ * It then proceeds to execute this query and assemble the result.
+ * There are 2 ways the assembly is done:
+ * 1. Flattened result. Currently only LEAF_GROUP supports this.
+ * 2. Nested result shaped in the form of the AggregateView's StateTree
+ *    Both LEAF_GROUP and STATE_TREE support this result structure.
  * 
  * @author Dilip Dalton
  *

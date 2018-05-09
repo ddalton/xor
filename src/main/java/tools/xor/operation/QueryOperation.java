@@ -38,6 +38,14 @@ import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedure;
 
+/**
+ * Needs to handle both the types of QueryTree instances:
+ * 1. Flattened
+ * 2. Nested
+ *  
+ * @author Dilip Dalton
+ *
+ */
 public class QueryOperation extends TreeTraversal {
 
 	private List<Object> result = new ArrayList<Object>();

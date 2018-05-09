@@ -49,33 +49,57 @@ import tools.xor.util.Constants;
 
 /**
  * This is an optimization data structure used by queries.
- * This data structure is used for TreeTraversal operations. Such operations are defined by the StateTree scope.
- * Not valid in a graph context.
+ * This data structure is used for TreeTraversal operations. 
+ * Suitable for simple requests that do not involve hierarchical structures a.k.a recursion.
  *
  * The mapping is typically:
- * AggregateView -> StateTree -> QueryTree
+ * AggregateView -> QueryTree
  * 
- * TODO: A QueryTree is a tree data structure, where the nodes are QueryTree instances. The root of each QueryTree is associated
- * with a State node of AggregateView's StateTree instance.
- * The results from the QueryTree are stored in an instance of the StateTree.
- * A single QueryTree instance can populate one or more states in the StateTree instance, thus optimizing the data retrieval.
+ * A QueryTree is a tree data structure, where the nodes are QueryTree instances.
+ * The TreeTraversal algorithm uses this data structure to execute the queries.
+ * The QueryTree represents two types of partitioning of the queries
+ * 1. Leaf group
+ *    The queries are all in one level, i.e., the first level children
+ *    They are split by the leaf attributes, grouping them by what can efficiently be done in a single query
+ * 2. State Tree
+ *    Queries can be spread through multiple levels and represent the State Tree. 
+ * 
+ * There are 3 ways the nested queries are executed:
+ * 1. Using sub-queries
+ *    In this approach the ancestors of the current node form a nested sub-query.
+ *    The disadvantage of this approach is that if the request is deeply nested, then the query can become complex.
+ *    The advantage is that intermediate results do not have to be materialized on the client.
+ * 2. Using IN clause
+ *    In this approach the parent node has the results materialized and the left query runs this result in an IN clause.
+ *    The disadvantage of this approach is that special care needs to be taken if the list is sufficiently long
+ *    The advantage is that the queries are much simpler and run faster. 
+ * 3. Hybrid approach
+ *    We can allow the user to specify the mechanism to use on each node to tailor the performance.
  * 
  * @author Dilip Dalton
  *
  */
+
+// Nodes are of type RequestSlice
 public class QueryTree {
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
+	
+	public static enum PartitionType {
+		LEAF_GROUP,
+		STATE_TREE
+	};
 
 	private static final String ENTITY_ALIAS_PREFIX = "_XOR_";
 	private static final String PROPERTY_ALIAS_PREFIX = "PROP";
 
+	private PartitionType  partitionType;
 	private        Type                           aggregateType;
-	private        Map<String, QueryViewProperty> viewPropertyByPath = new LinkedHashMap<String, QueryViewProperty>();
+	private        Map<String, QueryProperty> viewPropertyByPath = new LinkedHashMap<String, QueryProperty>();
 	private        Map<String, ColumnMeta>        augmentedAttributes;
 	private        Map<String, String>            attributes = new HashMap<String, String>();
 	private        String                         name;
-	private        AggregateView                  aggregateSlice;
+	private        AggregateView                  aggregateView;
 	private        boolean                        narrow;
 	private        List<Filter>                   filters = new ArrayList<Filter>();
 	private        boolean                        crossAggregate;
@@ -100,12 +124,12 @@ public class QueryTree {
 
 	public QueryTree(ViewKey viewKey, AggregateView contentView) {
 
-		this.aggregateSlice = contentView;
+		this.aggregateView = contentView;
 		this.aggregateType = viewKey.type;
 		this.narrow = viewKey.narrow;
 		setName(viewKey.viewName);
 
-		init();
+		buildFlattened();
 	}
 
 	private void initAttributes(List<String> attributeList) {
@@ -122,14 +146,14 @@ public class QueryTree {
 		setAliases();		
 	}
 
-	private void init() {
+	private void buildFlattened() {
 
 		// save the property alias before losing the order
-		initAttributes(aggregateSlice.getAttributeList());
+		initAttributes(aggregateView.getAttributeList());
 
 		initViewProperties();
 
-		if(aggregateSlice.getChildren() == null || aggregateSlice.getChildren().size() == 0) {
+		if(aggregateView.getChildren() == null || aggregateView.getChildren().size() == 0) {
 			// Perform automatic division into multiple queries if necessary
 			createBranches();
 			consolidateBranches();
@@ -139,11 +163,11 @@ public class QueryTree {
 			}
 		} else { // User has explicitly specified the queries needed to populate the view
 			this.subBranches = new ArrayList<QueryTree>();
-			for(AggregateView child: aggregateSlice.getChildren()) {
+			for(AggregateView child: aggregateView.getChildren()) {
 				QueryTree childQueryView = new QueryTree(this, null, this.aggregateType);
 				childQueryView.setContentView(child);
-				if(aggregateSlice.isUnion())
-					childQueryView.init();
+				if(aggregateView.isUnion())
+					childQueryView.buildFlattened();
 				else
 					childQueryView.initViewProperties();
 				this.subBranches.add(childQueryView);
@@ -152,7 +176,7 @@ public class QueryTree {
 	}
 
 	public Set<Parameter> getParameter() {
-		View cView = this.aggregateSlice;
+		View cView = this.aggregateView;
 		if(cView == null && parent != null)
 			cView = parent.getContentView();
 
@@ -160,7 +184,7 @@ public class QueryTree {
 	}
 
 	private void setFilters() {
-		View cView = this.aggregateSlice;
+		View cView = this.aggregateView;
 		if(cView == null && parent != null)
 			cView = parent.getContentView();
 
@@ -200,11 +224,11 @@ public class QueryTree {
 	}	
 
 	public View getContentView() {
-		return aggregateSlice;
+		return aggregateView;
 	}
 
 	public void setContentView(AggregateView contentView) {
-		this.aggregateSlice = contentView;
+		this.aggregateView = contentView;
 	}	
 
 	public boolean hasCollection() {
@@ -308,7 +332,7 @@ public class QueryTree {
 			return null;
 
 		String relativeName = (anchorPath.length() > 0) ? attribute.substring(anchorPath.length() + Settings.PATH_DELIMITER.length()) : attribute;
-		return QueryViewProperty.getRootName(relativeName);
+		return QueryProperty.getRootName(relativeName);
 	}
 
 	private void createBranches() {
@@ -461,7 +485,7 @@ public class QueryTree {
 
 	private void setAliases() {
 		int entityAliasCount = 1;
-		for(QueryViewProperty eProp: viewPropertyByPath.values()) {
+		for(QueryProperty eProp: viewPropertyByPath.values()) {
 			if(eProp.getAlias() != null)
 				throw new IllegalStateException("Alias has already been set");
 
@@ -474,7 +498,7 @@ public class QueryTree {
 		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
 			return propertyPath.substring(0, propertyPath.lastIndexOf(Settings.PATH_DELIMITER));
 		else
-			return QueryViewProperty.ROOT_PROPERTY_NAME;
+			return QueryProperty.ROOT_PROPERTY_NAME;
 	}
 
 	/**
@@ -489,7 +513,7 @@ public class QueryTree {
 		String parentPath = getParentPath(attribute);
 
 		while(parentPath != null) {
-			Property property = aggregateType.getProperty(QueryViewProperty.unqualifyProperty(parentPath));
+			Property property = aggregateType.getProperty(QueryProperty.unqualifyProperty(parentPath));
 			if(property == null) {
 				break;
 			}
@@ -512,13 +536,13 @@ public class QueryTree {
 	 * @param doFetch decides if the property should be included in the result 
 	 * @return the parent QueryViewProperty
 	 */
-	private QueryViewProperty getParentViewProperty(String attribute, boolean doFetch) {
+	private QueryProperty getParentViewProperty(String attribute, boolean doFetch) {
 
 		if(this.aggregateType instanceof OpenType && attribute.indexOf(OpenType.DELIM) != -1) {
 			attribute = attribute.substring(attribute.indexOf(OpenType.DELIM)+1);
 		}
-		attribute = QueryViewProperty.qualifyProperty(attribute);
-		QueryViewProperty alias = null;
+		attribute = QueryProperty.qualifyProperty(attribute);
+		QueryProperty alias = null;
 		Property property;
 		boolean createAlias = false;
 		String parentPath = getParentPath(attribute);
@@ -529,11 +553,11 @@ public class QueryTree {
 				alias = viewPropertyByPath.get(parentPath);
 				property = alias.getProperty();
 			} else {
-				property = aggregateType.getProperty(QueryViewProperty.unqualifyProperty(parentPath));
+				property = aggregateType.getProperty(QueryProperty.unqualifyProperty(parentPath));
 			}
 
 			// Root alias should always be there so we can break here
-			if(property == null && parentPath.equals(QueryViewProperty.ROOT_PROPERTY_NAME)) {
+			if(property == null && parentPath.equals(QueryProperty.ROOT_PROPERTY_NAME)) {
 				break;
 			}
 
@@ -561,8 +585,8 @@ public class QueryTree {
 			if(createAlias) {
 				// If the anchor is not present, then add it
 				if(alias == null ) {
-					alias = new QueryViewProperty(parentPath, true, getParentViewProperty(parentPath, doFetch));
-					viewPropertyByPath.put(QueryViewProperty.qualifyProperty(parentPath), alias);
+					alias = new QueryProperty(parentPath, true, getParentViewProperty(parentPath, doFetch));
+					viewPropertyByPath.put(QueryProperty.qualifyProperty(parentPath), alias);
 				}
 				alias.setFetch(doFetch);
 				createAlias = false;
@@ -581,8 +605,8 @@ public class QueryTree {
 	}
 
 	private void createViewProperties() {
-		QueryViewProperty viewProperty = new QueryViewProperty(true, aggregateType);
-		viewPropertyByPath.put(QueryViewProperty.ROOT_PROPERTY_NAME, viewProperty);
+		QueryProperty viewProperty = new QueryProperty(true, aggregateType);
+		viewPropertyByPath.put(QueryProperty.ROOT_PROPERTY_NAME, viewProperty);
 
 		for(Map.Entry<String, String> attribute: attributes.entrySet()) {
 			addViewProperty(attribute.getKey(), false, true, attribute.getValue());
@@ -601,25 +625,25 @@ public class QueryTree {
 	}
 
 	private boolean containsViewProperty(String attribute) {
-		if(viewPropertyByPath.containsKey(QueryViewProperty.qualifyProperty(attribute)))
+		if(viewPropertyByPath.containsKey(QueryProperty.qualifyProperty(attribute)))
 			return true;
 
 		return false;
 	}
 
-	private QueryViewProperty addViewProperty(String attribute, boolean isDynamic, boolean doFetch, String propertyAlias) {
+	private QueryProperty addViewProperty(String attribute, boolean isDynamic, boolean doFetch, String propertyAlias) {
 
-		QueryViewProperty anchor;
+		QueryProperty anchor;
 		if(!isQueryable(attribute)) {
 			// Only single level for migrate to deal with non-queryable types
-			anchor = viewPropertyByPath.get(QueryViewProperty.ROOT_PROPERTY_NAME);
+			anchor = viewPropertyByPath.get(QueryProperty.ROOT_PROPERTY_NAME);
 		} else {
 			anchor = getParentViewProperty(attribute, doFetch);
 		}
 		//QueryViewProperty anchor = getParentViewProperty(attribute, doFetch);
-		QueryViewProperty viewProperty = new QueryViewProperty(attribute, isDynamic, anchor);
+		QueryProperty viewProperty = new QueryProperty(attribute, isDynamic, anchor);
 		viewProperty.setPropertyAlias(propertyAlias);
-		viewPropertyByPath.put(QueryViewProperty.qualifyProperty(attribute), viewProperty);
+		viewPropertyByPath.put(QueryProperty.qualifyProperty(attribute), viewProperty);
 		viewProperty.setFetch(doFetch);
 
 		return viewProperty;
@@ -638,12 +662,12 @@ public class QueryTree {
 	}
 
 	public void setAugmentedAttributes() {
-		if(narrow && (aggregateSlice == null || aggregateSlice.getNativeQuery() == null))
+		if(narrow && (aggregateView == null || aggregateView.getNativeQuery() == null))
 			throw new RuntimeException("Narrowing is only supported with native query. The persistence provider requires the whole object to be loaded inorder to infer the type, which we don't do.");
 
 		logger.debug("ViewBranch#setAugmentedAttributes [name: " + name + ", type: " + aggregateType.getName() + "]");
 		Set<ColumnMeta> meta = new HashSet<ColumnMeta>();
-		for(QueryViewProperty viewProperty: viewPropertyByPath.values()) {
+		for(QueryProperty viewProperty: viewPropertyByPath.values()) {
 			// We do not augment the selected columns for a migrate operation
 			meta.addAll(viewProperty.getColumnMeta(narrow, !isMigrateView()));
 		}
@@ -680,8 +704,8 @@ public class QueryTree {
 
 		if(aggregateType instanceof OpenType) {
 			sortedPath = new ArrayList<String>();
-			for(String path: aggregateSlice.getAttributeList()) {
-				sortedPath.add(QueryViewProperty.qualifyProperty(path));
+			for(String path: aggregateView.getAttributeList()) {
+				sortedPath.add(QueryProperty.qualifyProperty(path));
 			}
 		}
 		
@@ -690,17 +714,17 @@ public class QueryTree {
 		for(String path: sortedPath) {
 			ColumnMeta columnMeta = augmentedAttributeMap.get(path);
 			augmentedAttributes.put(path, columnMeta);
-			if(aggregateSlice != null) { // check that the attribute is covered by the native query
-				if(aggregateSlice.getNativeQuery() != null) {
-					position = aggregateSlice.getNativeQuery().getPosition(
-						QueryViewProperty.unqualifyProperty(
+			if(aggregateView != null) { // check that the attribute is covered by the native query
+				if(aggregateView.getNativeQuery() != null) {
+					position = aggregateView.getNativeQuery().getPosition(
+						QueryProperty.unqualifyProperty(
 							path));
 					if (position == -1) {
 						logger.warn(
 							"The native query does not populate the attribute "
-								+ QueryViewProperty.unqualifyProperty(path) + " for view: "
+								+ QueryProperty.unqualifyProperty(path) + " for view: "
 								+ getViewName());
-						aggregateSlice.getNativeQuery().setUsable(false);
+						aggregateView.getNativeQuery().setUsable(false);
 					}
 					else {
 						columnMeta.setPosition(position);
@@ -744,16 +768,16 @@ public class QueryTree {
 		return augmentedAttributes;
 	}
 
-	public QueryViewProperty getViewProperty(String propertyPath) {
+	public QueryProperty getViewProperty(String propertyPath) {
 		return viewPropertyByPath.get(propertyPath);
 	}
 
-	public List<QueryViewProperty> getAliasedItems() {
+	public List<QueryProperty> getAliasedItems() {
 		List<String> aliasedPaths = new ArrayList<String>();
-		List<QueryViewProperty> aliasedItems = new ArrayList<QueryViewProperty>();
+		List<QueryProperty> aliasedItems = new ArrayList<QueryProperty>();
 
-		for(Map.Entry<String, QueryViewProperty> entry: viewPropertyByPath.entrySet()) {
-			QueryViewProperty viewProperty = entry.getValue();
+		for(Map.Entry<String, QueryProperty> entry: viewPropertyByPath.entrySet()) {
+			QueryProperty viewProperty = entry.getValue();
 			if(viewProperty.getAlias() == null)
 				continue;
 			aliasedPaths.add(entry.getKey());
@@ -783,7 +807,7 @@ public class QueryTree {
 	}
 
 	public Object getQueryValue(Object[] queryResultRow, String path) {
-		ColumnMeta columnMeta = augmentedAttributes.get(QueryViewProperty.qualifyProperty(path));
+		ColumnMeta columnMeta = augmentedAttributes.get(QueryProperty.qualifyProperty(path));
 		if(columnMeta != null)
 			return queryResultRow[columnMeta.getPosition()];
 		else
@@ -803,7 +827,7 @@ public class QueryTree {
 				idValue = getQueryValue(queryRow, idPropertyName);
 			}
 
-			String entityName = (String) getQueryValue(queryRow, QueryViewProperty.ENTITYNAME_ATTRIBUTE);
+			String entityName = (String) getQueryValue(queryRow, QueryProperty.ENTITYNAME_ATTRIBUTE);
 			Type type = entity.getType();
 			if(entityName != null) {
 				// This is padded with space based on the largest type name if a CASE statement is used
@@ -844,7 +868,7 @@ public class QueryTree {
 				continue;
 
 			// Set the value and create any intermediate objects if necessary
-			root.set(QueryViewProperty.unqualifyProperty(propertyPath), propertyResult, (EntityType) this.aggregateType);
+			root.set(QueryProperty.unqualifyProperty(propertyPath), propertyResult, (EntityType) this.aggregateType);
 		}
 	}
 	
@@ -857,7 +881,7 @@ public class QueryTree {
 	public List<Type> getAttributeTypes() {
 		List<Type> result = new ArrayList<Type>();
 		
-		for(String attr: aggregateSlice.getAttributeList()) {
+		for(String attr: aggregateView.getAttributeList()) {
 			result.add(aggregateType.getProperty(attr).getType());
 		}
 		

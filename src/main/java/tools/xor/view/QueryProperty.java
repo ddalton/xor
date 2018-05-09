@@ -40,7 +40,7 @@ import tools.xor.util.Constants;
  * @author Dilip Dalton
  *
  */
-public class QueryViewProperty {
+public class QueryProperty {
 	public static final String ROOT_PROPERTY_NAME = "root";	
 
 	// Outputs or addendum are in upper case
@@ -54,7 +54,7 @@ public class QueryViewProperty {
 	public static final String ID_PARAMETER_NAME     = "id_";
 	public static final String NEXTTOKEN_PARAM_PREFIX = "orderBy_";	
 
-	private QueryViewProperty   parent;        // Needed for embedded or element collection attributes
+	private QueryProperty   parent;   // Needed for embedded or element collection attributes
 	private Property       property;      // null for root
 	private Type           type;          // the type of the entity
 	                                      // TODO: Ideally should be the narrowest type for the subset of properties
@@ -78,14 +78,14 @@ public class QueryViewProperty {
 	}
 	
 
-	public QueryViewProperty(boolean isDynamic, Type type) {
+	public QueryProperty(boolean isDynamic, Type type) {
 		this.propertyPath = ROOT_PROPERTY_NAME;
 		this.isDynamic = isDynamic;
 		this.type = type;
 		this.parent = null;
 	}
 
-	public QueryViewProperty(String attribute, boolean isDynamic, QueryViewProperty parent) {
+	public QueryProperty(String attribute, boolean isDynamic, QueryProperty parent) {
 		this.propertyPath = qualifyProperty(attribute);
 		this.isDynamic = isDynamic;
 		this.parent = parent;
@@ -109,7 +109,7 @@ public class QueryViewProperty {
 		this.propertyAlias = propertyAlias;
 	}
 
-	public QueryViewProperty getParent() {
+	public QueryProperty getParent() {
 		return parent;
 	}
 
@@ -268,7 +268,7 @@ public class QueryViewProperty {
 			//System.out.println("Property path: " + propertyPath + ", property: " + ((property!=null)?property.getName():"null"));
 			// Add the entity name
 			if(narrow)
-				result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + QueryViewProperty.ENTITYNAME_ATTRIBUTE, this));
+				result.add(new ColumnMeta(propertyPath + Settings.PATH_DELIMITER + QueryProperty.ENTITYNAME_ATTRIBUTE, this));
 
 			// Always add the identifier for an entity. This will be replaced by the viewProperty which is not dynamic in the QueryBuilder
 			if( ((EntityType)type).getIdentifierProperty() != null )

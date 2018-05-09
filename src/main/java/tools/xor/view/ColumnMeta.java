@@ -28,10 +28,10 @@ import tools.xor.service.QueryCapability;
 public class ColumnMeta {
 
 	protected String attributePath;      // The full name of the property
-	protected QueryViewProperty viewProperty; // A view property can be associated with multiple ColumnMeta
+	protected QueryProperty viewProperty; // A view property can be associated with multiple ColumnMeta
 	protected int position;              // position of this column in the result table
 
-	public ColumnMeta(String attributePath, QueryViewProperty viewProperty) {
+	public ColumnMeta(String attributePath, QueryProperty viewProperty) {
 		this.attributePath = attributePath;
 		this.viewProperty = viewProperty;
 	}
@@ -65,11 +65,11 @@ public class ColumnMeta {
 
 		String result = viewProperty.getAlias();
 
-		if(attributePath.endsWith(QueryViewProperty.ENTITYNAME_ATTRIBUTE))
+		if(attributePath.endsWith(QueryProperty.ENTITYNAME_ATTRIBUTE))
 			throw new RuntimeException("Narrowing of the entity is supported only if the whole entity object is retrieved, which we don't support. Use native query instead.");
-		else if(attributePath.endsWith(QueryViewProperty.LIST_INDEX_ATTRIBUTE))
+		else if(attributePath.endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE))
 			result = queryCapability.getListIndexMechanism(viewProperty.getAlias());
-		else if(attributePath.endsWith(QueryViewProperty.MAP_KEY_ATTRIBUTE))
+		else if(attributePath.endsWith(QueryProperty.MAP_KEY_ATTRIBUTE))
 			result = queryCapability.getMapKeyMechanism(viewProperty.getAlias());		
 		else if(result == null) { // no alias
 			if(viewProperty.getParent() != null) {
@@ -89,7 +89,7 @@ public class ColumnMeta {
 		} else {
 			if(viewProperty.isEntity()) {
 				String idName = ((EntityType)viewProperty.getType()).getIdentifierProperty().getName();
-				if(attributePath.equals(QueryViewProperty.qualifyProperty(idName)) ) {
+				if(attributePath.equals(QueryProperty.qualifyProperty(idName)) ) {
 					result = queryCapability.getSurrogateValueMechanism(result, Settings.PATH_DELIMITER + idName);
 				}
 			}
@@ -110,11 +110,11 @@ public class ColumnMeta {
 		return attributePath;
 	}	
 
-	public QueryViewProperty getViewProperty() {
+	public QueryProperty getViewProperty() {
 		return viewProperty;
 	}
 
-	public void setViewProperty(QueryViewProperty viewProperty) {
+	public void setViewProperty(QueryProperty viewProperty) {
 		this.viewProperty = viewProperty;
 	}	
 

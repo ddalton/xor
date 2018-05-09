@@ -162,7 +162,7 @@ public class QueryBuilder {
 				if((idClause == null || idClause.trim().equals("")))
 					throw new RuntimeException("Identifier clause expected in native query");
 
-				queryString = queryString + " " + idClause + " = :" + QueryViewProperty.ID_PARAMETER_NAME;
+				queryString = queryString + " " + idClause + " = :" + QueryProperty.ID_PARAMETER_NAME;
 			}
 
 			queryString.replaceAll("[\n\r]", "");
@@ -223,7 +223,7 @@ public class QueryBuilder {
 			}
 
 			columnMeta.setPosition(position++);	
-			selectedColumns.add(QueryViewProperty.unqualifyProperty(columnMeta.getAttributePath()) );
+			selectedColumns.add(QueryProperty.unqualifyProperty(columnMeta.getAttributePath()) );
 			if(!SELECT_CLAUSE.equals(OQL.toString()))
 				OQL.append(COMMA_DELIMITER);
 			String columnString = columnMeta.getQueryString(getQueryCapability(po));
@@ -232,10 +232,10 @@ public class QueryBuilder {
 		debugSelectColumns(meta);
 
 		Class<?> entityClass = (settings == null || settings.getNarrowedClass() == null) ? type.getInstanceClass() : settings.getNarrowedClass();
-		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryViewProperty.ROOT_PROPERTY_NAME).getAlias() + " " + po.getPolymorphicClause(entityClass));
+		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryProperty.ROOT_PROPERTY_NAME).getAlias() + " " + po.getPolymorphicClause(entityClass));
 		
 		// Join explicitly against all open property types as the persistence layer does not know about these relationships
-		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
+		for(QueryProperty viewProperty: view.getAliasedItems()) {
 			
 			if(viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) {
 				ExtendedProperty extendedProperty = (ExtendedProperty) viewProperty.getProperty();
@@ -256,8 +256,8 @@ public class QueryBuilder {
 
 		// if more than one collection property is specified then we would get a severe performance hit due to cartesian product
 		// This is solved by breaking the query intelligently. 
-		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
-			QueryViewProperty parentView = viewProperty.getParent();
+		for(QueryProperty viewProperty: view.getAliasedItems()) {
+			QueryProperty parentView = viewProperty.getParent();
 			
 			// Skip joining open content properties as the persistence layer does not know about these relationships
 			if(parentView == null || (viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) ) {
@@ -278,7 +278,7 @@ public class QueryBuilder {
 
 		Map<Integer, String> orderClauses = new TreeMap<Integer, String>();
 		for(ColumnMeta columnMeta: view.getAugmentedAttributes().values()) {
-			if(columnMeta.getAttributePath().endsWith(QueryViewProperty.LIST_INDEX_ATTRIBUTE)) {
+			if(columnMeta.getAttributePath().endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE)) {
 				String columnString = columnMeta.getQueryString(getQueryCapability(po));
 				orderClauses.put(columnMeta.getAttributeLevel(), columnString);
 			}
@@ -309,7 +309,7 @@ public class QueryBuilder {
 	}
 
 	protected String getNormalizedName(String propertyPath) {
-		QueryViewProperty viewProperty = view.getViewProperty(QueryViewProperty.qualifyProperty(propertyPath));
+		QueryProperty viewProperty = view.getViewProperty(QueryProperty.qualifyProperty(propertyPath));
 		return viewProperty.getNormalizedName();
 	}	
 	
@@ -357,7 +357,7 @@ public class QueryBuilder {
 			addWhereStep(result);
 
 			result.append( getNormalizedName(((EntityType)entity.getDomainType()).getIdentifierProperty().getName()) );
-			result.append( " = :" + QueryViewProperty.ID_PARAMETER_NAME);			
+			result.append( " = :" + QueryProperty.ID_PARAMETER_NAME);			
 		}
 	}
 	
@@ -378,7 +378,7 @@ public class QueryBuilder {
 			if(i > 0) {
 				result.append(" AND ");
 			}
-			result.append( f.getNormalizedName() + " = : " + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+			result.append( f.getNormalizedName() + " = : " + QueryProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
 		}
 		
 		return result.toString();
@@ -428,12 +428,12 @@ public class QueryBuilder {
 		
 			if(i == 0) {
 				queryString.append( f.getNormalizedName() );
-				queryString.append( getDirection(f) + ":" + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+				queryString.append( getDirection(f) + ":" + QueryProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
 			}
 			
 			if(i > 0) {
 				queryString.append( " OR ( " + getEqualOrderByExp(i-1, orderBy) );
-				queryString.append( " AND " + f.getNormalizedName() + getDirection(f) + ":" + QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+				queryString.append( " AND " + f.getNormalizedName() + getDirection(f) + ":" + QueryProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
 				queryString.append( " ) ");
 			}
 		}
@@ -453,7 +453,7 @@ public class QueryBuilder {
 	
 	private void checkAndAddOpenPropertyJoins(StringBuilder result) {
 		StringBuilder whereFragment = new StringBuilder("");
-		for(QueryViewProperty viewProperty: view.getAliasedItems()) {
+		for(QueryProperty viewProperty: view.getAliasedItems()) {
 			
 			if(viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) {
 				ExtendedProperty extendedProperty = (ExtendedProperty) viewProperty.getProperty();
@@ -511,18 +511,18 @@ public class QueryBuilder {
 			query.setParameter(entry.getKey(), entry.getValue());
 		}
 
-		if(doAddIdentifier() && query.hasParameter(QueryViewProperty.ID_PARAMETER_NAME)) {
-			query.setParameter(QueryViewProperty.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
+		if(doAddIdentifier() && query.hasParameter(QueryProperty.ID_PARAMETER_NAME)) {
+			query.setParameter(QueryProperty.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
 		}
 
 		// Set the chunk values
 		Map<String, Object> nextToken = settings.getNextToken();
 		if(nextToken != null) {
 			for(Map.Entry<String, Object> entry: nextToken.entrySet()) {
-				if(!query.hasParameter(QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
+				if(!query.hasParameter(QueryProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
 					throw new IllegalStateException("NextToken missing information for orderBy field: " + entry.getKey());
 				}
-				query.setParameter(QueryViewProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
+				query.setParameter(QueryProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
 			}
 		}
 

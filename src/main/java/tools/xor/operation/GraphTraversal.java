@@ -41,9 +41,9 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 
 /**
- * Operations that work on a Graph.
+ * Operations that work on a Graph (Java object).
  * Uses DFS (Depth First Search) to navigate the object.
- * Uses an ObjectGraph instance as the main data structure to resolve the object based on the StateGraph scope.
+ * Uses an ObjectGraph instance as the main data structure to resolve the object based on either the StateGraph or StateTree scope.
  * 
  * @author Dilip Dalton
  *

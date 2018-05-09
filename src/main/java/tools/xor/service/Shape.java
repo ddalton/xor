@@ -40,7 +40,7 @@ import tools.xor.util.Vertex;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryViewProperty;
+import tools.xor.view.QueryProperty;
 import tools.xor.view.UnmodifiableView;
 import tools.xor.view.View;
 
@@ -760,7 +760,7 @@ public class Shape
             Class<?> narrowedClass = null;
             Set multipleNarrowedClass = new HashSet();
             for(String propertyPath: view.getAttributeList()) {
-                String propertyName = QueryViewProperty.getRootName(propertyPath);
+                String propertyName = QueryProperty.getRootName(propertyPath);
                 Class<?> potentialNarrowedClass = null;
                 try {
                     potentialNarrowedClass = typeNarrower.narrow(superClass, propertyName);

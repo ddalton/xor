@@ -29,7 +29,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.util.ClassUtil;
-import tools.xor.view.QueryViewProperty;
+import tools.xor.view.QueryProperty;
 
 public abstract class AbstractFunctionExpression implements Expression {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
@@ -113,7 +113,7 @@ public abstract class AbstractFunctionExpression implements Expression {
 	}
 
 	public void normalize(Map<String, String> normalizedNames) {	
-		normalizedAttributeName = normalizedNames.get( QueryViewProperty.qualifyProperty(attributeName) );
+		normalizedAttributeName = normalizedNames.get( QueryProperty.qualifyProperty(attributeName) );
 	}
 
 	public Object getNormalizedValue(Object object) {

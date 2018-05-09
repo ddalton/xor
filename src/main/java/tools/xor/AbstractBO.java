@@ -32,7 +32,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
-import tools.xor.view.QueryViewProperty;
+import tools.xor.view.QueryProperty;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -741,18 +741,18 @@ public abstract class AbstractBO implements BusinessObject {
 			Property property = getType().getProperty(propertyName);
 			((ExtendedProperty)property).setValue(
 				this,
-				propertyResult.get(QueryViewProperty.qualifyProperty(propertyPath)));
+				propertyResult.get(QueryProperty.qualifyProperty(propertyPath)));
 			return;
 		}
 
 		// If we are setting a null value then nothing needs to be done
-		if( propertyResult.get(QueryViewProperty.qualifyProperty(propertyPath) ) == null)
+		if( propertyResult.get(QueryProperty.qualifyProperty(propertyPath) ) == null)
 			return;
 
 		// Since this builds the path for objects already persisted, the identifier value will not be null
 		String[] pathSteps = propertyPath.split(Settings.PATH_DELIMITER_REGEX);
 		BusinessObject current = this;
-		StringBuilder currentPath = new StringBuilder(QueryViewProperty.ROOT_PROPERTY_NAME);
+		StringBuilder currentPath = new StringBuilder(QueryProperty.ROOT_PROPERTY_NAME);
 		for(String step: pathSteps) {
 			if(currentPath.length() > 0)
 				currentPath.append(Settings.PATH_DELIMITER);
@@ -768,7 +768,7 @@ public abstract class AbstractBO implements BusinessObject {
 			if(!property.isMany()) { 
 				if(property.getType().isDataType() ) {
 					// Populate the field and return the data object
-					((ExtendedProperty)property).setValue(current, propertyResult.get(QueryViewProperty.qualifyProperty(propertyPath) ));
+					((ExtendedProperty)property).setValue(current, propertyResult.get(QueryProperty.qualifyProperty(propertyPath) ));
 					return;
 				}
 
@@ -800,7 +800,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
-						String narrowToType = (String) propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.ENTITYNAME_ATTRIBUTE);
+						String narrowToType = (String) propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryProperty.ENTITYNAME_ATTRIBUTE);
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getType(narrowToType);
@@ -861,7 +861,7 @@ public abstract class AbstractBO implements BusinessObject {
 					Object elementInstance = null;
 
 					if( ((ExtendedProperty)property).isMap() ) {
-						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.MAP_KEY_ATTRIBUTE);
+						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryProperty.MAP_KEY_ATTRIBUTE);
 						Map map = (Map) current.getInstance();
 						elementInstance = map.get(keyValue);
 					} 
@@ -884,11 +884,11 @@ public abstract class AbstractBO implements BusinessObject {
 				Object elementInstance = ((BusinessObject)elementDO).getInstance();				
 				if( ((ExtendedProperty)property).isMap() ) {
 					// If this is a map, get the key
-					Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.MAP_KEY_ATTRIBUTE);
+					Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryProperty.MAP_KEY_ATTRIBUTE);
 					Map map = (Map) current.getInstance();
 					map.put(keyValue, elementInstance);
 				} else if ( ((ExtendedProperty)property).isList() ) {
-					Object indexValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryViewProperty.LIST_INDEX_ATTRIBUTE);					
+					Object indexValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryProperty.LIST_INDEX_ATTRIBUTE);					
 					List list = (List) current.getInstance();
 					int index = Integer.parseInt(indexValue.toString());
 					if(index >= list.size() || list.get(index) != elementInstance)

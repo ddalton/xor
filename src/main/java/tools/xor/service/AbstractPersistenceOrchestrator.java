@@ -49,7 +49,7 @@ import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.QueryViewProperty;
+import tools.xor.view.QueryProperty;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.View;
 
@@ -271,7 +271,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	}
 
 	@Override
-	public String getOQLJoinFragment(QueryViewProperty viewProperty) {
+	public String getOQLJoinFragment(QueryProperty viewProperty) {
 		return " LEFT OUTER JOIN " + viewProperty.getNormalizedName() + " AS " + viewProperty.getAlias();
 	}
 

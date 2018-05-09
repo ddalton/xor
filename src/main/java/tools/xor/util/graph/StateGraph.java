@@ -34,7 +34,7 @@ import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTree;
-import tools.xor.view.QueryViewProperty;
+import tools.xor.view.QueryProperty;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -284,7 +284,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					} else {
 						int delimLen = propertyPath.length() > 0 ? Settings.PATH_DELIMITER.length() : 0;
 						String remaining = path.substring(propertyPath.length()+delimLen);
-						Property p = type.getProperty(QueryViewProperty.getRootName(remaining));
+						Property p = type.getProperty(QueryProperty.getRootName(remaining));
 						if(p != null) {
 							result.add(p);
 						}
@@ -1158,8 +1158,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		Object result = null;
 
 		do {
-			String root = QueryViewProperty.getRootName(keyPath);
-			keyPath = QueryViewProperty.getNext(keyPath);
+			String root = QueryProperty.getRootName(keyPath);
+			keyPath = QueryProperty.getNext(keyPath);
 
 			if(object.has(root) && object.get(root) != null) {
 				if(keyPath != null) {
@@ -1182,8 +1182,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 	public static void setKeyValue(JSONObject object, String keyPath, Object value) {
 		do {
-			String root = QueryViewProperty.getRootName(keyPath);
-			keyPath = QueryViewProperty.getNext(keyPath);
+			String root = QueryProperty.getRootName(keyPath);
+			keyPath = QueryProperty.getNext(keyPath);
 
 			if(object.has(root) && object.get(root) != null) {
 				if(keyPath != null) {
@@ -1491,7 +1491,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		// Type name
 		StringBuilder label = new StringBuilder();
-		label.append(QueryViewProperty.getBaseName(type.getName()));
+		label.append(QueryProperty.getBaseName(type.getName()));
 
 		if(!vertex.isReference()) {
 			label.append("|");
@@ -1523,7 +1523,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 								requiredEntities.append("\\n");
 							}
 							requiredEntities.append(
-								property.getName() + " : " + QueryViewProperty.getBaseName(
+								property.getName() + " : " + QueryProperty.getBaseName(
 									requiredEntityType.getName()));
 						}
 					}
@@ -1552,7 +1552,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	protected String getGraphName() {
-		return QueryViewProperty.getBaseName(this.getClass().getName());
+		return QueryProperty.getBaseName(this.getClass().getName());
 	}
 
 	protected void writeGraphvizDot(BufferedWriter writer) throws IOException

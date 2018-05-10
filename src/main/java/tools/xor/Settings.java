@@ -686,14 +686,6 @@ public class Settings {
 		this.narrow = narrow;
 	}
 
-	public boolean permitCrossAggregate() {
-		return crossAggregate;
-	}
-
-	public void setCrossAggregate(boolean crossAggregate) {
-		this.crossAggregate = crossAggregate;
-	}
-
 	public void addFilter(String name, Object value) {
 		filters.put(name, value);
 	}

@@ -54,20 +54,20 @@ public class DenormalizedQueryOperation extends QueryOperation {
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ?
 			((BusinessObject)callInfo.getInput()).getDomainType() :
 			getNarrowedClass(das, callInfo.getSettings());
-		QueryTree aggregateView = callInfo.getSettings().getView().getEntityView(
+		QueryTree queryTree = callInfo.getSettings().getView().getEntityView(
 			referenceType,
 			callInfo.getSettings().doNarrow());
 
 		// We do not support Native SQL queries with sub-branches
-		if (aggregateView.getSubBranches().size() > 1) {
+		if (queryTree.getOutEdges(queryTree.getRoot()).size() > 1) {
 			throw new RuntimeException("Denormalized queries not supported with sub-branch views");
 		}
 
 		qb.init(
 			(BusinessObject)callInfo.getInput(),
-			aggregateView,
+			queryTree.getRoot(),
 			callInfo.getSettings().getAdditionalFilters());
-		Query query = createQuery(aggregateView, callInfo, qb);
+		Query query = createQuery(queryTree.getRoot(), callInfo, qb);
 		execute(query, callInfo.getSettings());
 	}
 

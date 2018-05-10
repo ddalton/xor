@@ -55,7 +55,7 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
-import tools.xor.view.QueryTree.ViewKey;
+import tools.xor.view.QueryTree.QueryKey;
 
 public class AggregateViewFactory {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -174,18 +174,18 @@ public class AggregateViewFactory {
 			Type type = am.getDAS().getType(av.getTypeName());
 			groupByPackage(type, av, viewsByPackage);
 			
-			ViewKey viewKey = new ViewKey(type, av.getName(), false);
-			QueryTree queryView = new QueryTree(viewKey, (AggregateView)av);
+			QueryKey viewKey = new QueryKey(type, av.getName(), false);
+			QueryTree queryTree = QueryTree.buildFlattened(viewKey, (AggregateView)av);
 			
 			// Extract system generated OQL query
 			List<AggregateView> parallelViews = new ArrayList<>();
 			if(av.getExactAttributes() != null) {
 				av.setAttributeList(new ArrayList<String>(av.getExactAttributes()));
-				parallelViews = queryView.extractViews(am);
+				parallelViews = queryTree.extractViews(am);
 				((AggregateView)av).setSystemOQLQuery(
 					(new OQLQuery()).generateQuery(
 						am,
-						queryView));
+						queryTree.getRoot()));
 			}
 			
 			// Get a list of all the AggregateViews from the QueryView instance

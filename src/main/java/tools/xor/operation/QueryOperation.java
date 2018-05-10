@@ -33,8 +33,10 @@ import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Edge;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
+import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedure;
 
@@ -67,17 +69,18 @@ public class QueryOperation extends TreeTraversal {
 		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();
 
 		// Put in loop if there are sub-branches
-		if(aggregateView.getSubBranches().size() > 1) {
-			StoredProcedure sp = aggregateView.getContentView().getStoredProcedure(AggregateAction.READ);
+		if(aggregateView.getOutEdges(aggregateView.getRoot()).size() > 1) {
+			StoredProcedure sp = aggregateView.getRoot().getContentView().getStoredProcedure(AggregateAction.READ);
 			if(sp != null && sp.isMultiple()) {
-				executeBranch(aggregateView, uniqueList, qb, callInfo);
+				executeBranch(aggregateView.getRoot(), uniqueList, qb, callInfo);
 			} else {
-				for (QueryTree branch : aggregateView.getSubBranches()) {
+				for (Object edge : aggregateView.getOutEdges(aggregateView.getRoot())) {
+					QueryPiece branch = ((Edge<QueryPiece>)edge).getEnd();
 					executeBranch(branch, uniqueList, qb, callInfo);
 				}
 			}
 		} else {
-			executeBranch(aggregateView, uniqueList, qb, callInfo);
+			executeBranch(aggregateView.getRoot(), uniqueList, qb, callInfo);
 		}
 		
 		// Do a second pass
@@ -86,33 +89,27 @@ public class QueryOperation extends TreeTraversal {
 				result.add(root);
 	}
 	
-	protected Query createQuery(QueryTree queryView, CallInfo callInfo, QueryBuilder qb) {
+	protected Query createQuery(QueryPiece queryPiece, CallInfo callInfo, QueryBuilder qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
 		Query query = qb.constructQuery(callInfo.getSettings(), mutableFilters);
 
-		qb.postProcess(queryView, callInfo.getSettings(), query, mutableFilters);
+		qb.postProcess(queryPiece, callInfo.getSettings(), query, mutableFilters);
 		
 		return query;				
 	}
 
-	protected Query getQueryInstance(QueryTree branch, QueryBuilder qb, CallInfo callInfo) {
+	protected Query getQueryInstance(QueryPiece branch, QueryBuilder qb, CallInfo callInfo) {
 		qb.init((BusinessObject) callInfo.getInput(), branch, callInfo.getSettings().getAdditionalFilters());
 		Query query = createQuery(branch, callInfo, qb);
 
 		return query;
 	}
 
-	protected void checkSecurity(QueryTree branch, CallInfo callInfo) {
-		if(branch.isCrossAggregate() && !callInfo.getSettings().permitCrossAggregate())
-			throw new RuntimeException("The view crosses aggregate boundary, this could be a security risk. If this is intentional then permit this by modifying the settings");
-	}
-	
-	private void executeBranch(QueryTree branch, Map<BusinessObject, Object> uniqueList, QueryBuilder qb, CallInfo callInfo) {
+	private void executeBranch(QueryPiece branch, Map<BusinessObject, Object> uniqueList, QueryBuilder qb, CallInfo callInfo) {
 
 		Query query = getQueryInstance(branch, qb, callInfo);
 		
 		try {
-			checkSecurity(branch, callInfo);
 			
 			// club all the results relevant to the same entity
 			// add an id attribute for the mail entity. Add an owner attribute for each collection property referenced.

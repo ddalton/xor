@@ -46,7 +46,7 @@ public class UnmodifiableOQLQuery extends OQLQuery
         raiseException();
     }
 
-    @Override public OQLQuery generateQuery (AggregateManager am, QueryTree queryView)
+    @Override public OQLQuery generateQuery (AggregateManager am, QueryPiece queryView)
     {
         return query.generateQuery(am, queryView);
     }

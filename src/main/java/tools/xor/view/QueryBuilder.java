@@ -87,7 +87,7 @@ public class QueryBuilder {
 
 	private BusinessObject   entity;
 	private Type             type;	
-	private QueryTree        view;
+	private QueryPiece       queryPiece;
 	private List<Filter>     additionalFilters;
 	private boolean          addIdentifier;
 	private List<String>     selectedColumns;    
@@ -104,24 +104,24 @@ public class QueryBuilder {
 		this.addIdentifier = addIdentifier;
 	}
 	
-	public void init(Type type, QueryTree view, List<Filter> additionalFilters) {
+	public void init(Type type, QueryPiece queryPiece, List<Filter> additionalFilters) {
 		this.type = type;
-		this.view = view;
+		this.queryPiece = queryPiece;
 
 		this.additionalFilters = new ArrayList<Filter>();
 		for(Filter filter: additionalFilters) {
 			Filter narrowedFilter = filter.narrow();
 			this.additionalFilters.add(narrowedFilter);	
 		}	
-		this.additionalFilters.addAll(view.getFilters());	
+		this.additionalFilters.addAll(queryPiece.getFilters());	
 		
 		Collections.sort(additionalFilters);
 	}	
 
-	public void init(BusinessObject entity, QueryTree view, List<Filter> additionalFilters) {
-		init(entity.getDomainType(), view, additionalFilters);
+	public void init(BusinessObject entity, QueryPiece queryPiece, List<Filter> additionalFilters) {
+		init(entity.getDomainType(), queryPiece, additionalFilters);
 		this.entity = entity;
-		view.normalizeFilters(this.additionalFilters, getQueryCapability(entity.getObjectCreator().getPersistenceOrchestrator()));
+		queryPiece.normalizeFilters(this.additionalFilters, getQueryCapability(entity.getObjectCreator().getPersistenceOrchestrator()));
 		
 		if(entity.getIdentifierValue() != null) {
 			addIdentifier = true;
@@ -133,7 +133,7 @@ public class QueryBuilder {
 	}
 
 	public Query constructQuery(Settings settings, Map<String, Object> filters) {
-		return constructDML(view.getContentView(), settings, filters);
+		return constructDML(queryPiece.getContentView(), settings, filters);
 	}
 
 	public Query constructDML(View view, Settings settings, Map<String, Object> filters) {
@@ -202,7 +202,7 @@ public class QueryBuilder {
 	private void debugSelectColumns(Map<String, ColumnMeta> meta) {
 		final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
 		if(vb.isDebugEnabled()) {
-			StringBuilder sb = new StringBuilder("********* C O L U M N   M E T A [" + view.getName() + "] *********\r\n");
+			StringBuilder sb = new StringBuilder("********* C O L U M N   M E T A [" + queryPiece.getName() + "] *********\r\n");
 			for(ColumnMeta columnMeta: meta.values()) {
 				sb.append(columnMeta.toString() + "\r\n");
 			}			
@@ -211,7 +211,7 @@ public class QueryBuilder {
 	}
 
 	protected String constructOQL(Settings settings, PersistenceOrchestrator po) {
-		Map<String, ColumnMeta> meta = view.getAugmentedAttributes();
+		Map<String, ColumnMeta> meta = queryPiece.getAugmentedAttributes();
 
 		StringBuilder OQL = new StringBuilder(SELECT_CLAUSE);
 
@@ -232,10 +232,10 @@ public class QueryBuilder {
 		debugSelectColumns(meta);
 
 		Class<?> entityClass = (settings == null || settings.getNarrowedClass() == null) ? type.getInstanceClass() : settings.getNarrowedClass();
-		OQL.append(" FROM " + entityClass.getName() + " AS " + view.getViewProperty(QueryProperty.ROOT_PROPERTY_NAME).getAlias() + " " + po.getPolymorphicClause(entityClass));
+		OQL.append(" FROM " + entityClass.getName() + " AS " + queryPiece.getViewProperty(QueryProperty.ROOT_PROPERTY_NAME).getAlias() + " " + po.getPolymorphicClause(entityClass));
 		
 		// Join explicitly against all open property types as the persistence layer does not know about these relationships
-		for(QueryProperty viewProperty: view.getAliasedItems()) {
+		for(QueryProperty viewProperty: queryPiece.getAliasedItems()) {
 			
 			if(viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) {
 				ExtendedProperty extendedProperty = (ExtendedProperty) viewProperty.getProperty();
@@ -256,7 +256,7 @@ public class QueryBuilder {
 
 		// if more than one collection property is specified then we would get a severe performance hit due to cartesian product
 		// This is solved by breaking the query intelligently. 
-		for(QueryProperty viewProperty: view.getAliasedItems()) {
+		for(QueryProperty viewProperty: queryPiece.getAliasedItems()) {
 			QueryProperty parentView = viewProperty.getParent();
 			
 			// Skip joining open content properties as the persistence layer does not know about these relationships
@@ -267,8 +267,8 @@ public class QueryBuilder {
 			OQL.append(po.getOQLJoinFragment(viewProperty));
 		}
 
-		if(view.getContentView() != null && view.getContentView().getJoin() != null && view.getContentView().getJoin().getEntity() != null)
-			OQL.append(", " + view.getContentView().getJoin().getEntity());		
+		if(queryPiece.getContentView() != null && queryPiece.getContentView().getJoin() != null && queryPiece.getContentView().getJoin().getEntity() != null)
+			OQL.append(", " + queryPiece.getContentView().getJoin().getEntity());		
 
 		return OQL.toString();
 	}	
@@ -277,7 +277,7 @@ public class QueryBuilder {
 		StringBuilder result = new StringBuilder();
 
 		Map<Integer, String> orderClauses = new TreeMap<Integer, String>();
-		for(ColumnMeta columnMeta: view.getAugmentedAttributes().values()) {
+		for(ColumnMeta columnMeta: queryPiece.getAugmentedAttributes().values()) {
 			if(columnMeta.getAttributePath().endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE)) {
 				String columnString = columnMeta.getQueryString(getQueryCapability(po));
 				orderClauses.put(columnMeta.getAttributeLevel(), columnString);
@@ -309,7 +309,7 @@ public class QueryBuilder {
 	}
 
 	protected String getNormalizedName(String propertyPath) {
-		QueryProperty viewProperty = view.getViewProperty(QueryProperty.qualifyProperty(propertyPath));
+		QueryProperty viewProperty = queryPiece.getViewProperty(QueryProperty.qualifyProperty(propertyPath));
 		return viewProperty.getNormalizedName();
 	}	
 	
@@ -318,7 +318,7 @@ public class QueryBuilder {
 		filters.clear();
 
 		Map<String, Parameter> parameterMap = new HashMap<String, Parameter>();
-		for(Parameter parameter: view.getParameter())
+		for(Parameter parameter: queryPiece.getParameter())
 			parameterMap.put(parameter.name, parameter);
 		
 		// Initialize the filterbypath map
@@ -338,11 +338,11 @@ public class QueryBuilder {
 		}	
 		
 		// Set parameters referred from native query or join clause
-		if(view.getContentView() != null && view.getContentView().getJoin() != null) {
+		if(queryPiece.getContentView() != null && queryPiece.getContentView().getJoin() != null) {
 			// Expression
 			addWhereStep(result);
 
-			for(Parameter parameter: view.getContentView().getJoin().getParameter()) {		
+			for(Parameter parameter: queryPiece.getContentView().getJoin().getParameter()) {		
 				if(originalFilters.containsKey(parameter.name)) {
 					filters.put(parameter.name, originalFilters.get(parameter.name));
 					result.append(parameter.expression);
@@ -453,7 +453,7 @@ public class QueryBuilder {
 	
 	private void checkAndAddOpenPropertyJoins(StringBuilder result) {
 		StringBuilder whereFragment = new StringBuilder("");
-		for(QueryProperty viewProperty: view.getAliasedItems()) {
+		for(QueryProperty viewProperty: queryPiece.getAliasedItems()) {
 			
 			if(viewProperty.getProperty() != null && viewProperty.getProperty().isOpenContent()) {
 				ExtendedProperty extendedProperty = (ExtendedProperty) viewProperty.getProperty();
@@ -505,7 +505,7 @@ public class QueryBuilder {
 			result.append(" WHERE ");		
 	}
 
-	public void postProcess(QueryTree queryView, Settings settings, Query query, Map<String, Object> filters) {
+	public void postProcess(QueryPiece queryView, Settings settings, Query query, Map<String, Object> filters) {
 		
 		for(Map.Entry<String, Object> entry: filters.entrySet()) {
 			query.setParameter(entry.getKey(), entry.getValue());

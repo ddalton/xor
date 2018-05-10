@@ -19,15 +19,15 @@
 
 package tools.xor.view;
 
-import org.apache.commons.lang.StringUtils;
-import tools.xor.AggregateAction;
-import tools.xor.Settings;
-
-import java.lang.annotation.Native;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
+
+import tools.xor.AggregateAction;
+import tools.xor.Settings;
 
 public class JPAQuery extends AbstractQuery {
 	

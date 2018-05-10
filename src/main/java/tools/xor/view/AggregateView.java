@@ -50,7 +50,7 @@ import tools.xor.util.Vertex;
 import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
-import tools.xor.view.QueryTree.ViewKey;
+import tools.xor.view.QueryTree.QueryKey;
 
 /**
  * If the view and its children have types then the children will be considered as being subtypes
@@ -124,7 +124,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	private Shape shape; // The Shape with which this view is associated
 	
 	@XmlTransient
-	private final Map<ViewKey, QueryTree>  viewCache = new ConcurrentHashMap<>();
+	private final Map<QueryKey, QueryTree>  queryCache = new ConcurrentHashMap<>();
 
 	// A view can be valid for multiple entity types, especially if the view refers
 	// to the attributes in a base class. Then in this case, the view can be 
@@ -132,8 +132,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	@XmlTransient
 	private final Map<String, StateGraph<State, Edge<State>>> stateGraph =  new ConcurrentHashMap<>();
 
-	public AggregateView(QueryTree queryView) {
-		initQuery(queryView);
+	public AggregateView(QueryPiece queryPiece) {
+		initQuery(queryPiece);
 	}
 	
 	public AggregateView(Type type, String viewName) {
@@ -152,9 +152,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public AggregateView() {
 	}
 	
-	private void initQuery(QueryTree queryView) {
-		this.name = queryView.getName();
-		this.typeName = queryView.getAggregateType().getInstanceClass().getName();
+	private void initQuery(QueryPiece queryPiece) {
+		this.name = queryPiece.getName();
+		this.typeName = queryPiece.getAggregateType().getInstanceClass().getName();
 		
 		// We create the OQLQuery object and populate it with information from the query view
 		// such as ColumnMeta information
@@ -328,12 +328,12 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		this.name = name;
 	}
 
-	private QueryTree getQueryView(ViewKey viewKey) {
-		if(viewCache.containsKey(viewKey))
-			return viewCache.get(viewKey);
+	private QueryTree getQueryView(QueryKey viewKey) {
+		if(queryCache.containsKey(viewKey))
+			return queryCache.get(viewKey);
 		
-		QueryTree result = new QueryTree(viewKey, this);
-		viewCache.put(viewKey, result);
+		QueryTree result = QueryTree.buildFlattened(viewKey, this);
+		queryCache.put(viewKey, result);
 
 		return result;
 	}
@@ -346,7 +346,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 					throw new IllegalArgumentException("A content view cannot have more than one level of child content views");
 		}
 		
-		QueryTree result = getQueryView(new ViewKey(type, name, narrow));
+		QueryTree result = getQueryView(new QueryKey(type, name, narrow));
 
 		return result;
 	}

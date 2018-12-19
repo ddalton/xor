@@ -193,7 +193,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			Collection<E> edges = inEdges.get(end);
 			edges.add(edge);
 		} else {
-			Collection<E> edges = new HashSet<E>();
+			Collection<E> edges = newEdgeCollection();
 			edges.add(edge);
 			inEdges.put(end, edges);
 		}
@@ -202,10 +202,18 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			Collection<E> edges = outEdges.get(start);
 			edges.add(edge);
 		} else {
-			Collection<E> edges = new HashSet<E>();
+			Collection<E> edges = newEdgeCollection();
 			edges.add(edge);
 			outEdges.put(start, edges);
 		}
+	}
+
+	protected Collection<E> newEdgeCollection() {
+		return new HashSet<E>();
+	}
+
+	protected Collection<E> newEdgeCollection(Collection<E> input) {
+		return new HashSet<E>(input);
 	}
 
 	private void unlinkLoops(V target, V ancestor) {
@@ -316,7 +324,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	@Override
 	public Collection<E> getOutEdges(V vertex) {
 		Collection<E> result = outEdges.get(vertex);
-		return result == null ? new HashSet<E>() : new HashSet<>(result);
+		return result == null ? newEdgeCollection() : newEdgeCollection(result);
 	}
 
 	@Override

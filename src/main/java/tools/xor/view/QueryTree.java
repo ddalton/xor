@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,20 +49,31 @@ import tools.xor.util.graph.DirectedSparseGraph;
  *    The queries are all in one level, i.e., the first level children
  *    They are split by the leaf attributes, grouping them by what can efficiently be done in a single query
  * 2. State Tree
- *    Queries can be spread through multiple levels and represent the State Tree. 
- * 
- * There are 3 ways the nested queries are executed:
- * 1. Using sub-queries
- *    In this approach the ancestors of the current node form a nested sub-query.
- *    The disadvantage of this approach is that if the request is deeply nested, then the query can become complex.
- *    The advantage is that intermediate results do not have to be materialized on the client.
- * 2. Using IN clause
- *    In this approach the parent node has the results materialized and the left query runs this result in an IN clause.
- *    The disadvantage of this approach is that special care needs to be taken if the list is sufficiently long
- *    The advantage is that the queries are much simpler and run faster. 
- * 3. Hybrid approach
- *    We can allow the user to specify the mechanism to use on each node to tailor the performance.
- * 
+ *    Queries can be spread through multiple levels and represent the State Tree.
+ *    There are 3 ways a State Tree is executed:
+ *    a) Using sub-queries
+ *       In this approach the ancestors of the current node form a nested sub-query.
+ *       The disadvantage of this approach is that if the request is deeply nested, then the query can become complex.
+ *       The advantage is that intermediate results do not have to be materialized on the client.
+ *    b) Using IN clause
+ *       In this approach the parent node has the results materialized and the left query runs this result in an IN clause.
+ *       The disadvantage of this approach is that special care needs to be taken if the list is sufficiently long
+ *       The advantage is that the queries are much simpler and run faster.
+ *    c) Hybrid approach
+ *       We can allow the user to specify the mechanism to use on each node to tailor the performance.
+ *
+ * The QueryTree execution can be done in either of the following modes:
+ * 1. SERIAL
+ *    All queries are executed by the same thread and depending on the ORM, that could be the same
+ *    JDBC connection
+ * 2. PARALLEL
+ *    The queries are sent to a "Query Pool", that is responsible for executing each query in parallel
+ *    There should be sufficient context to take the results and construct the portion of the object
+ *    it is responsible for.
+ *    The thread from the Query Pool can be used to do this construction or can hand it off to the
+ *    calling thread. The recommended approach is to hand it off so the Query Pool solely focuses
+ *    on executing queries
+ *
  * @author Dilip Dalton
  *
  */
@@ -169,6 +182,17 @@ public class QueryTree<V extends QueryPiece, E extends Edge<V>> extends Directed
 			result = 37 * result + ((narrow) ? 1 : 0);
 			return result;
 		}
+	}
+
+	@Override
+	protected Collection<E> newEdgeCollection() {
+		// We expect the edges to be iterated in the order it was added/constructed
+		return new LinkedHashSet<E>();
+	}
+
+	@Override
+	protected Collection<E> newEdgeCollection(Collection<E> input) {
+		return new LinkedHashSet<E>(input);
 	}
 
 	public static String getNext(String propertyPath) {

@@ -65,22 +65,22 @@ public class QueryOperation extends TreeTraversal {
 		
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
-		QueryTree aggregateView = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
+		QueryTree queryTree = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
 		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();
 
 		// Put in loop if there are sub-branches
-		if(aggregateView.getOutEdges(aggregateView.getRoot()).size() > 1) {
-			StoredProcedure sp = aggregateView.getRoot().getContentView().getStoredProcedure(AggregateAction.READ);
+		if(queryTree.getOutEdges(queryTree.getRoot()).size() > 1) {
+			StoredProcedure sp = queryTree.getRoot().getContentView().getStoredProcedure(AggregateAction.READ);
 			if(sp != null && sp.isMultiple()) {
-				executeBranch(aggregateView.getRoot(), uniqueList, qb, callInfo);
+				executeBranch(queryTree.getRoot(), uniqueList, qb, callInfo);
 			} else {
-				for (Object edge : aggregateView.getOutEdges(aggregateView.getRoot())) {
+				for (Object edge : queryTree.getOutEdges(queryTree.getRoot())) {
 					QueryPiece branch = ((Edge<QueryPiece>)edge).getEnd();
 					executeBranch(branch, uniqueList, qb, callInfo);
 				}
 			}
 		} else {
-			executeBranch(aggregateView.getRoot(), uniqueList, qb, callInfo);
+			executeBranch(queryTree.getRoot(), uniqueList, qb, callInfo);
 		}
 		
 		// Do a second pass

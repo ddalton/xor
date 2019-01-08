@@ -19,12 +19,19 @@
 
 package tools.xor.operation;
 
-import tools.xor.Settings;
-import tools.xor.service.DataAccessService;
-
 /**
  * Operations that work on a QueryTree instance.
  * Uses BFS (Breadth First Search) to navigate and execute the queries from the QueryTree.
+ *
+ * The main difference between TreeTraversal and GraphTraversal operations is the fact
+ * that GraphTraversal supports recursive queries.
+ * TreeTraversal can support recursive queries if they are unrolled. For example,
+ * a recursive relationship that needs to be queried to a depth of 3 will be unrolled as
+ * a.a.a
+ * Because of this restriction, we can optimize TreeTraversal operations to execute
+ * faster than GraphTraversal operations.
+ * We can also optimize GraphTraversal operations to execute faster if the underlying
+ * DB supports it and we create a custom SQL for the named view utilizing that DB optimization.
  * 
  * There are two ways the RequestSlice nodes of a QueryTree are constructed:
  * 1. LEAF_GROUP partitioning

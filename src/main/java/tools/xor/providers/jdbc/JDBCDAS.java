@@ -33,7 +33,7 @@ import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.PersistenceType;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryBuilder;
+import tools.xor.view.QueryTransformer;
 import tools.xor.view.View;
 
 import javax.sql.DataSource;
@@ -108,9 +108,9 @@ public abstract class JDBCDAS implements DataAccessService
         return null;
     }
 
-    @Override public QueryBuilder getQueryBuilder ()
+    @Override public QueryTransformer getQueryBuilder ()
     {
-        return new QueryBuilder();
+        return new QueryTransformer();
     }
 
     @Override

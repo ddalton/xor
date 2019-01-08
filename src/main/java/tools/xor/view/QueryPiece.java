@@ -45,13 +45,20 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Edge;
+import tools.xor.util.InterQuery;
+import tools.xor.util.IntraQuery;
 import tools.xor.util.Vertex;
+import tools.xor.util.graph.DirectedSparseGraph;
+import tools.xor.util.graph.Tree;
 import tools.xor.view.QueryTree.QueryKey;
 
 /**
  * Represents a portion of the user's request that can be satisfied by a single query.
  */
-public class QueryPiece implements Vertex {
+public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extends Tree<V, E>
+	implements Vertex
+	{
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private        Type                           aggregateType;
@@ -68,6 +75,11 @@ public class QueryPiece implements Vertex {
 	private        QueryPiece                      parent; // branch containing the parent step
 	private        QueryPiece                      twig;         // attributes of simple type
 	private        boolean                         collection;   // How many collections are under this branch	
+
+
+	public QueryPiece(EntityType rootType) {
+		this.aggregateType = rootType;
+	}
 
 	/**
 	 * Used for manually creating the child query pieces
@@ -258,14 +270,14 @@ public class QueryPiece implements Vertex {
 	
 	private List<QueryPiece> grandChildToChild(QueryPiece branch, QueryPiece child) {
 		List<QueryPiece> newChildren = new ArrayList<QueryPiece>();
-		
+/*
 		for(QueryPiece grandChild: child.getSubBranches()) {
 			// NOTE: Name is irrelevant in merge. So we don't do anything about updating it.
 			grandChild.setAggregateType(child.getAggregateType());
 			grandChild.setParent(branch);
 			newChildren.add(grandChild); // make the grandChild the child
 		}
-		
+*/
 		return newChildren;
 	}	
 	
@@ -782,6 +794,15 @@ public class QueryPiece implements Vertex {
 	 */
 	public List<QueryPiece> getSubBranches() {
 		return Collections.unmodifiableList(this.subBranches);
-	}	
+	}
+
+		protected String getLabel(V vertex) {
+
+			StringBuilder content = new StringBuilder(vertex.toString() + "\\n");
+			for(String path: vertex.getPaths()) {
+				content.append(QueryProperty.getBaseName(path) + "\\l");
+			}
+			return content.toString();
+		}
 }
 

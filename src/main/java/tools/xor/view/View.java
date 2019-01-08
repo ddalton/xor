@@ -113,7 +113,7 @@ public interface View {
 
 	/**
 	 * Allows a user OQL to be used instead of the system generated OQL query.
-	 * @see tools.xor.view.QueryBuilder
+	 * @see QueryTransformer
 	 *
 	 * @return user specified OQL
 	 */
@@ -208,7 +208,7 @@ public interface View {
 	public void setName(String name);
 
 	/**
-	 * Get the QueryView instance that is specific to a particular EntityType.
+	 * Get the QueryTree instance that is specific to a particular EntityType.
 	 *
 	 * @param type entity type
 	 * @param narrow true, if the query result returns type information for the entity and

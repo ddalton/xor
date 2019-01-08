@@ -57,7 +57,7 @@ import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryBuilder;
+import tools.xor.view.QueryTransformer;
 import tools.xor.view.View;
 
 public abstract class AbstractDataAccessService implements DataAccessService {
@@ -384,8 +384,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		getShape().removeOpenProperty(openProperty);
 	}
 
-	public QueryBuilder getQueryBuilder() {
-		return new QueryBuilder();
+	public QueryTransformer getQueryBuilder() {
+		return new QueryTransformer();
 	}
 
 	public void initGenerators(InputStream is) {

@@ -178,7 +178,7 @@
 	<aggregateView>
 		<name>TASKGRANDCHILDREN</name>
 		<attributeList>[TASKCHILDREN]</attributeList>							
-		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>										
+		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
 	</aggregateView>		
 	<aggregateView>
 		<name>TASKGRANDCHILDRENSKIP</name>
@@ -413,4 +413,13 @@
 		<attributeList>name</attributeList>
 		<attributeList>taskChildren.invalidField</attributeList>			
 	</aggregateView>
+	<aggregateView>
+		<name>COMPLEX</name>
+		<attributeList>[TASKCHILDREN]</attributeList>							
+		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
+		<attributeList>project.name</attributeList>
+		<attributeList>dependants.[VERYBASIC]</attributeList>
+		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]</attributeList>
+		<attributeList>assignedTo.name</attributeList>
+	</aggregateView>		
 </AggregateViews>

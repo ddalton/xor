@@ -28,7 +28,7 @@ import tools.xor.util.ClassUtil;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
-import tools.xor.view.QueryBuilder;
+import tools.xor.view.QueryTransformer;
 import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedureQuery;
 import tools.xor.view.View;
@@ -48,7 +48,7 @@ public class DenormalizedQueryOperation extends QueryOperation {
 	{
 		BusinessObject sourceEntity = (BusinessObject)callInfo.getInput();
 		DataAccessService das = sourceEntity.getObjectCreator().getDAS();
-		QueryBuilder qb = das.getQueryBuilder();
+		QueryTransformer qb = das.getQueryBuilder();
 
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ?
@@ -73,12 +73,12 @@ public class DenormalizedQueryOperation extends QueryOperation {
 
 	@Override
 	public void execute(Settings settings, DataAccessService das) {
-		QueryBuilder qb = das.getQueryBuilder();
+		QueryTransformer qb = das.getQueryBuilder();
 		Query query = createQuery(settings, qb);
 		execute(query, settings);
 	}
 
-	protected Query createQuery(Settings settings, QueryBuilder qb) {
+	protected Query createQuery(Settings settings, QueryTransformer qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getFilters());
 		Query query = qb.constructDML(settings.getView(), settings, mutableFilters);
 

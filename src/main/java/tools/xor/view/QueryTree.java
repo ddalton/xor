@@ -32,7 +32,9 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
+import tools.xor.util.InterQuery;
 import tools.xor.util.graph.DirectedSparseGraph;
+import tools.xor.util.graph.Tree;
 
 /**
  * This is an optimization data structure used by queries.
@@ -78,7 +80,8 @@ import tools.xor.util.graph.DirectedSparseGraph;
  *
  */
 
-public class QueryTree<V extends QueryPiece, E extends Edge<V>> extends DirectedSparseGraph<V, E> {
+public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tree<V, E>
+{
 	
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
@@ -111,7 +114,7 @@ public class QueryTree<V extends QueryPiece, E extends Edge<V>> extends Directed
 	}	
 	
 	public static QueryTree buildFlattened(QueryKey queryKey, AggregateView contentView) {
-		QueryTree<QueryPiece, Edge<QueryPiece>> result = new QueryTree<QueryPiece, Edge<QueryPiece>>();
+		QueryTree result = new QueryTree();
 		
 		result.setRoot(new QueryPiece(queryKey, contentView));
 		result.getRoot().buildFlattened();
@@ -129,7 +132,7 @@ public class QueryTree<V extends QueryPiece, E extends Edge<V>> extends Directed
 		addVertex(root);
 		
 		if(root.getSubBranches() != null && root.getSubBranches().size() > 0) {
-			for(QueryPiece qp: root.getSubBranches()) {
+			for(QueryPiece qp: this.getChildren(root)) {
 				addEdge((E) new Edge("", root, qp), root, (V) qp);
 			}
 		}
@@ -182,17 +185,6 @@ public class QueryTree<V extends QueryPiece, E extends Edge<V>> extends Directed
 			result = 37 * result + ((narrow) ? 1 : 0);
 			return result;
 		}
-	}
-
-	@Override
-	protected Collection<E> newEdgeCollection() {
-		// We expect the edges to be iterated in the order it was added/constructed
-		return new LinkedHashSet<E>();
-	}
-
-	@Override
-	protected Collection<E> newEdgeCollection(Collection<E> input) {
-		return new LinkedHashSet<E>(input);
 	}
 
 	public static String getNext(String propertyPath) {

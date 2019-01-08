@@ -35,7 +35,7 @@ import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Edge;
 import tools.xor.view.Query;
-import tools.xor.view.QueryBuilder;
+import tools.xor.view.QueryTransformer;
 import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedure;
@@ -61,7 +61,7 @@ public class QueryOperation extends TreeTraversal {
 	public void execute(CallInfo callInfo) {
 		BusinessObject sourceEntity = (BusinessObject) callInfo.getInput();
 		DataAccessService das = sourceEntity.getObjectCreator().getDAS();
-		QueryBuilder qb = das.getQueryBuilder();
+		QueryTransformer qb = das.getQueryBuilder();
 		
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
@@ -89,7 +89,7 @@ public class QueryOperation extends TreeTraversal {
 				result.add(root);
 	}
 	
-	protected Query createQuery(QueryPiece queryPiece, CallInfo callInfo, QueryBuilder qb) {
+	protected Query createQuery(QueryPiece queryPiece, CallInfo callInfo, QueryTransformer qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
 		Query query = qb.constructQuery(callInfo.getSettings(), mutableFilters);
 
@@ -98,14 +98,14 @@ public class QueryOperation extends TreeTraversal {
 		return query;				
 	}
 
-	protected Query getQueryInstance(QueryPiece branch, QueryBuilder qb, CallInfo callInfo) {
+	protected Query getQueryInstance(QueryPiece branch, QueryTransformer qb, CallInfo callInfo) {
 		qb.init((BusinessObject) callInfo.getInput(), branch, callInfo.getSettings().getAdditionalFilters());
 		Query query = createQuery(branch, callInfo, qb);
 
 		return query;
 	}
 
-	private void executeBranch(QueryPiece branch, Map<BusinessObject, Object> uniqueList, QueryBuilder qb, CallInfo callInfo) {
+	private void executeBranch(QueryPiece branch, Map<BusinessObject, Object> uniqueList, QueryTransformer qb, CallInfo callInfo) {
 
 		Query query = getQueryInstance(branch, qb, callInfo);
 		
@@ -133,16 +133,4 @@ public class QueryOperation extends TreeTraversal {
 	public Object getResult() {
 		return result;
 	}
-
-	@Override
-	public BusinessObject getDomainParent(CallInfo ci) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public BusinessObject getExternalParent(CallInfo ci) {
-		// TODO Auto-generated method stub
-		return null;
-	}		
 }

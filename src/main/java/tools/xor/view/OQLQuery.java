@@ -36,7 +36,7 @@ public class OQLQuery {
 	}
 	
 	public OQLQuery generateQuery(AggregateManager am, QueryPiece queryPiece) {
-		QueryBuilder qb = am.getDAS().getQueryBuilder();
+		QueryTransformer qb = am.getDAS().getQueryBuilder();
 		qb.init(queryPiece.getAggregateType(), queryPiece, new LinkedList<Filter>());	
 		
 		am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));	

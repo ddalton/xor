@@ -30,7 +30,9 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.MetaEntity;
 import tools.xor.db.base.MetaEntityState;
@@ -49,7 +51,11 @@ import tools.xor.db.enums.common.ValueTypeEnum;
 import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
+import tools.xor.service.DataAccessService;
 import tools.xor.view.AggregateView;
+import tools.xor.view.FragmentBuilder;
+import tools.xor.view.QueryPiece;
+import tools.xor.view.View;
 
 public class DefaultQueryOperation extends AbstractDBTest {
 	@Autowired
@@ -1262,5 +1268,15 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		List<?> toList = aggregateService.query(input, settings);	
 
 		assert(toList.size() == 1);
+	}
+
+	public void validateComplex() {
+		View view = aggregateService.getView("COMPLEX");
+		DataAccessService das = aggregateManager.getDAS();
+		Type task = das.getType(Task.class);
+
+		QueryPiece qp = new FragmentBuilder().build((EntityType)task, view.getAttributeList());
+
+		qp.exportToDOT("Complex.dot");
 	}
 }

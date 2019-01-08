@@ -32,7 +32,7 @@ import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
 import tools.xor.util.PersistenceType;
 import tools.xor.view.AggregateView;
-import tools.xor.view.QueryBuilder;
+import tools.xor.view.QueryTransformer;
 import tools.xor.view.View;
 
 /**
@@ -127,7 +127,7 @@ public interface DataAccessService {
 	 * Gets the builder responsible for forming queries
 	 * @return query builder object
 	 */
-	public QueryBuilder getQueryBuilder();
+	public QueryTransformer getQueryBuilder();
 	
 	/**
 	 * Returns the access type

@@ -152,5 +152,10 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	@Test
 	public void listCatalogOfPatents() {
 		super.listCatalogOfPatents();
-	}		
+	}
+
+	@Test
+	public void validateComplex() {
+		super.validateComplex();
+	}
 }

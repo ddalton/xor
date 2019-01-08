@@ -19,27 +19,14 @@
 
 package tools.xor.operation;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import tools.xor.BusinessObject;
-import tools.xor.CallInfo;
 import tools.xor.Settings;
-import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
-import tools.xor.view.AggregateView;
 import tools.xor.view.DML;
-import tools.xor.view.NativeQuery;
-import tools.xor.view.OQLQuery;
-import tools.xor.view.Query;
-import tools.xor.view.QueryBuilder;
-import tools.xor.view.QueryTree;
-import tools.xor.view.StoredProcedure;
-import tools.xor.view.StoredProcedureQuery;
-import tools.xor.view.View;
+import tools.xor.view.QueryTransformer;
 
 public class DenormalizedModifyOperation extends GraphTraversal {
 	
@@ -48,7 +35,7 @@ public class DenormalizedModifyOperation extends GraphTraversal {
 
 	@Override
 	public void execute(Settings settings, DataAccessService das) {
-		QueryBuilder qb = das.getQueryBuilder();
+		QueryTransformer qb = das.getQueryBuilder();
 		DML dml = createDML(settings, qb);
 
 		try {
@@ -59,7 +46,7 @@ public class DenormalizedModifyOperation extends GraphTraversal {
 		}
 	}
 
-	protected DML createDML(Settings settings, QueryBuilder qb) {
+	protected DML createDML(Settings settings, QueryTransformer qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getFilters());
 
 		DML dml = qb.constructDML(settings.getView(), settings, mutableFilters);

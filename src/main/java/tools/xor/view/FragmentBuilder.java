@@ -19,32 +19,45 @@
 
 package tools.xor.view;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.util.Constants;
 import tools.xor.util.IntraQuery;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class FragmentBuilder
 {
-    Map<String, QueryFragment> pathToFragment = new HashMap<>();
-    int aliasCounter = 0;
+    private static final Logger qtLogger = LogManager.getLogger(Constants.Log.QUERY_TRANSFORMER);
+
+    private Map<String, QueryFragment> pathToFragment = new HashMap<>();
+    private int aliasCounter = 0;
+    private QueryTree queryTree;
+
+    public FragmentBuilder(QueryTree queryTree) {
+        this.queryTree = queryTree;
+    }
 
     /**
      * Builds a QueryPiece.
      * @param entityType of root
      * @param paths of all that data that needs to be queried
      */
-    public QueryPiece build(EntityType entityType, List<String> paths) {
+    public void build(EntityType entityType, List<String> paths) {
         QueryPiece queryPiece = new QueryPiece(entityType);
 
         // First create a start fragment
-        QueryFragment start = new QueryFragment(entityType, nextAlias(), null);
+        QueryFragment start = new QueryFragment(entityType, queryTree.nextAlias(), null);
         queryPiece.addVertex(start);
         pathToFragment.put(QueryFragment.ROOT_NAME, start);
 
@@ -52,7 +65,21 @@ public class FragmentBuilder
             makeFragments(queryPiece, path);
         }
 
-        return queryPiece;
+        // write the .dot content to log
+        if(qtLogger.isDebugEnabled()) {
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+
+            try {
+                queryPiece.writeDOT(bw);
+                qtLogger.debug(sw.toString());
+            }
+            catch (IOException e) {
+                qtLogger.debug("Error in writing .dot content to log: " + e.getMessage());
+            }
+        }
+
+        this.queryTree.addVertex(queryPiece);
     }
 
     private void makeFragments(QueryPiece queryPiece, String path) {
@@ -93,8 +120,7 @@ public class FragmentBuilder
 
                 // Is this a simple collection
                 if(elementType.isDataType()) {
-                    fragment.addPath(path);
-                    fragment.incrementSimpleCollectionCount();
+                    fragment.addSimpleCollectionPath(path);
                 } else {
                     // create a new fragment
                     fragment = addNewFragment(property, step, currentPath.toString(), fragment, queryPiece);
@@ -109,7 +135,7 @@ public class FragmentBuilder
 
         QueryFragment next = null;
         if(!pathToFragment.containsKey(currentPath)) {
-            next = new QueryFragment(type, nextAlias(), currentPath);
+            next = new QueryFragment(type, queryTree.nextAlias(), currentPath);
             pathToFragment.put(currentPath, next);
 
             // connect this new query fragment
@@ -120,9 +146,5 @@ public class FragmentBuilder
         }
 
         return next;
-    }
-
-    private String nextAlias() {
-        return QueryTree.ENTITY_ALIAS_PREFIX + aliasCounter++;
     }
 }

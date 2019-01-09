@@ -25,9 +25,11 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.InterQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTransformer;
 import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedureQuery;
@@ -54,7 +56,7 @@ public class DenormalizedQueryOperation extends QueryOperation {
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ?
 			((BusinessObject)callInfo.getInput()).getDomainType() :
 			getNarrowedClass(das, callInfo.getSettings());
-		QueryTree queryTree = callInfo.getSettings().getView().getEntityView(
+		QueryTree<QueryPiece, InterQuery< QueryPiece>> queryTree = callInfo.getSettings().getView().getEntityView(
 			referenceType,
 			callInfo.getSettings().doNarrow());
 

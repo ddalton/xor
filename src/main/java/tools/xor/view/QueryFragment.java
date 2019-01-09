@@ -34,7 +34,12 @@ public class QueryFragment implements Vertex
     String ancestorPath;
     String alias;
     List<String> paths;
-    int simpleCollectionCount;
+    List<String> simpleCollectionPaths;   // number of simple collections within the fragment
+
+    int simpleCollectionCount;   // count of all simple collections within a fragment and its
+                                 //  descendants
+    int parallelCollectionCount; // max parallel collections within a fragment in the descendants,
+                                 // this count includes simple collections
 
     public EntityType getEntityType ()
     {
@@ -51,11 +56,16 @@ public class QueryFragment implements Vertex
         this.alias = alias;
         this.ancestorPath = ancestorPath;
         this.paths = new LinkedList<>();
-        this.simpleCollectionCount = 0;
+        this.simpleCollectionPaths = new LinkedList<>();
     }
 
-    public void incrementSimpleCollectionCount() {
-        this.simpleCollectionCount++;
+    public int getSimpleCollectionCount() {
+        return this.simpleCollectionCount;
+    }
+
+    public void setSimpleCollectionCount (int simpleCollectionCount)
+    {
+        this.simpleCollectionCount = simpleCollectionCount;
     }
 
     @Override public String getName ()
@@ -67,11 +77,33 @@ public class QueryFragment implements Vertex
         this.paths.add(path);
     }
 
+    public void addSimpleCollectionPath (String path) {
+        this.paths.add(path);
+    }
+
+    public void removeSimpleCollectionPath (String path) {
+        this.paths.remove(path);
+    }
+
     @Override public String toString() {
         return getAlias();
     }
 
     public List<String> getPaths() {
         return Collections.unmodifiableList(this.paths);
+    }
+
+    public List<String> getSimpleCollectionPaths() {
+        return Collections.unmodifiableList(this.simpleCollectionPaths);
+    }
+
+    public int getParallelCollectionCount ()
+    {
+        return parallelCollectionCount;
+    }
+
+    public void setParallelCollectionCount (int parallelCollectionCount)
+    {
+        this.parallelCollectionCount = parallelCollectionCount;
     }
 }

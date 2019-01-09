@@ -19,12 +19,27 @@
 
 package tools.xor.util;
 
+import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryPiece;
 
 public class InterQuery<V extends QueryPiece> extends Edge<V>
 {
-    public InterQuery (String name, V start, V end)
+    private QueryFragment source;
+    private QueryFragment target;
+
+    public InterQuery (String name, V start, V end, QueryFragment source, QueryFragment target)
     {
         super(name, start, end);
+
+        this.source = source;
+        this.target = target;
+    }
+
+    public QueryFragment getSource() {
+        return this.source;
+    }
+
+    public QueryFragment getTarget() {
+        return this.target;
     }
 }

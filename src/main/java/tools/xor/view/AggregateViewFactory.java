@@ -55,6 +55,7 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
+import tools.xor.util.InterQuery;
 import tools.xor.view.QueryTree.QueryKey;
 
 public class AggregateViewFactory {
@@ -175,7 +176,7 @@ public class AggregateViewFactory {
 			groupByPackage(type, av, viewsByPackage);
 			
 			QueryKey viewKey = new QueryKey(type, av.getName(), false);
-			QueryTree queryTree = QueryTree.buildFlattened(viewKey, (AggregateView)av);
+			QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = QueryTree.buildFlattened(viewKey, (AggregateView)av);
 			
 			// Extract system generated OQL query
 			List<AggregateView> parallelViews = new ArrayList<>();

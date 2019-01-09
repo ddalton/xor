@@ -17,24 +17,9 @@
  * under the License.
  */
 
-package tools.xor.util;
+package tools.xor.view;
 
-import tools.xor.Property;
-import tools.xor.view.QueryFragment;
-
-public class IntraQuery<V extends QueryFragment> extends Edge<V>
+public interface QuerySplitter
 {
-    private Property property;
-
-    public IntraQuery (String name, V start, V end, Property property)
-    {
-        super(name, start, end);
-
-        this.property = property;
-    }
-
-    public Property getProperty ()
-    {
-        return property;
-    }
+    void execute();
 }

@@ -530,7 +530,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	}
 
 	@Override
-	protected void writeDOTEdges(BufferedWriter writer) throws IOException
+	public void writeGraphvizDot(BufferedWriter writer) throws IOException
 	{
 		for(Map.Entry<String, E> entry: getEdgeMap(new ArrayList()).entrySet()) {
 			E edge = entry.getValue();

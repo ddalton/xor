@@ -763,7 +763,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 
 	/**
 	 * This is overridden by subclasses
-	 * @param writer to write to a .gml file
+	 * @param writer to write .gml content
 	 * @throws IOException exception
 	 */
 	protected void writeGMLEdges(BufferedWriter writer) throws IOException
@@ -771,9 +771,39 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 
 	}
 
-	protected void writeDOTEdges(BufferedWriter writer) throws IOException
+	protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
 	{
 
+	}
+
+	/**
+	 * Overridden by subclasses.
+	 * visibility is public as it allows the content to be embedded as a cluster
+	 * in a subgraph setting
+	 *
+	 * @param writer to write .dot content
+	 * @throws IOException exception
+	 */
+	public void writeGraphvizDot(BufferedWriter writer) throws IOException
+	{
+
+	}
+
+	/**
+	 * Writes the content of the graph/tree in .dot format.
+	 *
+	 * @param writer to which the content is written
+	 * @throws IOException
+	 */
+	public void writeDOT(BufferedWriter writer) throws IOException
+	{
+		writer.write("digraph " + getGraphName() + "{\n");
+
+		writeGraphvizDotHeader(writer);
+		writeGraphvizDot(writer);
+
+		writer.write("}");
+		writer.flush();
 	}
 
 	/**
@@ -824,14 +854,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 			File logFile=new File(filename);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
 
-			writer.write("digraph " + getGraphName() + "{\n");
-
-			// Not necessary to list the vertices as the
-			// are inferred from the edges
-			//writeDOTVertices(writer);
-			writeDOTEdges(writer);
-
-			writer.write("}");
+			writeDOT(writer);
 
 			//Close writer
 			writer.close();

@@ -25,15 +25,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.PersistenceOrchestrator;

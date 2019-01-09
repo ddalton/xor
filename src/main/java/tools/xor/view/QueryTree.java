@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -95,15 +97,7 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	public static final String PROPERTY_ALIAS_PREFIX = "PROP";
 
 	private PartitionType partitionType;
-	private V    root; // represents the root of the tree
-
-	public V getRoot() {
-		return this.root;
-	}
-	
-	public void setRoot(V root) {
-		this.root = root;
-	}
+	private int aliasCounter;
 	
 	public PartitionType getPartitionType() {
 		return this.partitionType;
@@ -114,9 +108,9 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	}	
 	
 	public static QueryTree buildFlattened(QueryKey queryKey, AggregateView contentView) {
-		QueryTree result = new QueryTree();
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> result = new QueryTree();
 		
-		result.setRoot(new QueryPiece(queryKey, contentView));
+		result.addVertex(new QueryPiece(queryKey, contentView));
 		result.getRoot().buildFlattened();
 		result.setPartitionType(PartitionType.LEAF_GROUP);
 		
@@ -129,6 +123,7 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	 * Build the tree
 	 */
 	private void build() {
+		V root = getRoot();
 		addVertex(root);
 		
 		if(root.getSubBranches() != null && root.getSubBranches().size() > 0) {
@@ -141,6 +136,7 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	public List<AggregateView> extractViews(AggregateManager am) {
 		List<AggregateView> result = new LinkedList<AggregateView>();
 
+		V root = getRoot();
 		for (E edge : getOutEdges((V) root)) {
 			QueryPiece qv = edge.getEnd();
 			AggregateView av = new AggregateView(qv);
@@ -202,5 +198,43 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 			return propertyPath.substring(0, propertyPath.indexOf(Settings.PATH_DELIMITER));
 		} else
 			return propertyPath;
+	}
+
+	public String nextAlias() {
+		return generateAlias(aliasCounter++);
+	}
+
+	public static String generateAlias(int counter) {
+		return QueryTree.ENTITY_ALIAS_PREFIX + counter;
+	}
+
+	@Override
+	protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
+	{
+		super.writeGraphvizDotHeader(writer);
+		writer.write("  style=filled;\n");
+		writer.write("  node[style=filled,color=white];\n");
+	}
+
+	@Override
+	public void writeGraphvizDot(BufferedWriter writer) throws IOException
+	{
+		// Write the content of each QueryPiece as a cluster
+		for(V qp: toposort(null)) {
+			writer.write("  subgraph cluster" + getId(qp) + " {\n");
+			qp.writeGraphvizDot(writer);
+			writer.write("  }\n\n");
+		}
+
+		// Write the edges
+		// Do not constrain all the types that have been explicitly expanded
+		for(E edge: getEdges()) {
+
+			StringBuilder result = new StringBuilder("  " + edge.getSource() + " -> " + edge.getTarget());
+			result.append("[label=").append(edge.getName()).append(",penwidth=3,color=\"#8B4513\"]\n");
+
+
+			writer.write(result.toString());
+		}
 	}
 }

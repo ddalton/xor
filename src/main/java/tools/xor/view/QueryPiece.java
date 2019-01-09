@@ -58,7 +58,7 @@ import tools.xor.view.QueryTree.QueryKey;
  */
 public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extends Tree<V, E>
 	implements Vertex
-	{
+{
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private        Type                           aggregateType;
@@ -74,7 +74,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	private        List<QueryPiece>                subBranches;  // split according to parallel collections.
 	private        QueryPiece                      parent; // branch containing the parent step
 	private        QueryPiece                      twig;         // attributes of simple type
-	private        boolean                         collection;   // How many collections are under this branch	
+	private        boolean                         collection;   // How many collections are under this branch
 
 
 	public QueryPiece(EntityType rootType) {
@@ -796,13 +796,55 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		return Collections.unmodifiableList(this.subBranches);
 	}
 
-		protected String getLabel(V vertex) {
-
-			StringBuilder content = new StringBuilder(vertex.toString() + "\\n");
-			for(String path: vertex.getPaths()) {
-				content.append(QueryProperty.getBaseName(path) + "\\l");
-			}
-			return content.toString();
+	protected String getLabel (V vertex)
+	{
+		StringBuilder content = new StringBuilder(vertex.toString() + "\\n");
+		for (String path : vertex.getPaths()) {
+			content.append(QueryProperty.getBaseName(path) + "\\l");
 		}
+		for (String path : vertex.getSimpleCollectionPaths()) {
+			content.append(QueryProperty.getBaseName(path) + "\\l");
+		}
+		return content.toString();
+	}
+
+	public void computeCollectionCount (V node)
+	{
+		int maxParallelCount = 0;
+		int maxSimpleCount = 0;
+		for(V fragment: getChildren(node)) {
+			computeCollectionCount(fragment);
+
+			// Get the simple count
+			maxSimpleCount += fragment.getSimpleCollectionCount();
+
+			// Get the indirect collection count
+			// First look at the incoming edge to the child fragment
+			IntraQuery incoming = getInEdges(fragment).iterator().next();
+			int fragmentParallel = 0;
+			if(incoming.getProperty().isMany()) {
+				fragmentParallel = 1;
+			}
+			if(fragment.getParallelCollectionCount() > fragmentParallel) {
+				fragmentParallel = fragment.getParallelCollectionCount();
+			}
+			// update the count for this child fragment
+			maxParallelCount += fragmentParallel;
+		}
+
+		node.setParallelCollectionCount(maxParallelCount);
+
+		maxSimpleCount += node.getSimpleCollectionPaths().size();
+		node.setSimpleCollectionCount(maxSimpleCount);
+	}
+
+	/**
+	 * Copy the root fragment and prepare it to become a root in a new QueryPiece
+	 * @return new QueryFrament copy
+	 */
+	public QueryFragment copyRoot(QueryTree queryTree) {
+		QueryFragment root = getRoot();
+		return new QueryFragment(root.getEntityType(), queryTree.nextAlias(), null);
+	}
 }
 

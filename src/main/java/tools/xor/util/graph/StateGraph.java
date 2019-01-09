@@ -1481,12 +1481,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 	}
 
-	@Override
-	protected void writeDOTEdges(BufferedWriter writer) throws IOException
-	{
-		writeGraphvizDot(writer);
-	}
-
 	private String getLabel(V vertex) {
 		Type type = vertex.getType();
 
@@ -1556,10 +1550,15 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return QueryProperty.getBaseName(this.getClass().getName());
 	}
 
-	protected void writeGraphvizDot(BufferedWriter writer) throws IOException
+	@Override
+	protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
 	{
 		writer.write("  node[shape=record,style=filled,fillcolor=ivory]\n");
+	}
 
+	@Override
+	public void writeGraphvizDot(BufferedWriter writer) throws IOException
+	{
 		// write the vertices
 		writeDOTVertices(writer);
 

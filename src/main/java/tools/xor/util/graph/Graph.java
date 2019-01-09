@@ -1,11 +1,6 @@
 package tools.xor.util.graph;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
-
-import tools.xor.util.Vertex;
 
 public interface Graph<V, E> {
 	

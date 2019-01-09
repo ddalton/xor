@@ -34,6 +34,7 @@ import tools.xor.TypeMapper;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Edge;
+import tools.xor.util.InterQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryTransformer;
 import tools.xor.view.QueryPiece;
@@ -65,7 +66,7 @@ public class QueryOperation extends TreeTraversal {
 		
 		// Always use the REFERENCE type
 		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
-		QueryTree queryTree = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
 		Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();
 
 		// Put in loop if there are sub-branches

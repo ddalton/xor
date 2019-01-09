@@ -52,9 +52,12 @@ import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.util.InterQuery;
 import tools.xor.view.AggregateView;
+import tools.xor.view.CartesianJoinSplitter;
 import tools.xor.view.FragmentBuilder;
 import tools.xor.view.QueryPiece;
+import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
 public class DefaultQueryOperation extends AbstractDBTest {
@@ -1275,8 +1278,29 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 		Type task = das.getType(Task.class);
 
-		QueryPiece qp = new FragmentBuilder().build((EntityType)task, view.getAttributeList());
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree();
+		new FragmentBuilder(queryTree).build((EntityType)task, view.getAttributeList());
+		QueryPiece qp = queryTree.getRoot();
 
 		qp.exportToDOT("Complex.dot");
+
+		assert(qp != null);
+		assert(qp.getHeight() == 4);
+		assert(qp.getVertices().size() == 9);
+	}
+
+	public void querySplit() {
+		View view = aggregateService.getView("COMPLEX");
+		DataAccessService das = aggregateManager.getDAS();
+		Type task = das.getType(Task.class);
+
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree();
+		new FragmentBuilder(queryTree).build((EntityType)task, view.getAttributeList());
+		CartesianJoinSplitter cjs = new CartesianJoinSplitter(queryTree);
+		cjs.execute();
+
+		queryTree.exportToDOT("ComplexT.dot");
+
+		System.out.println("QueryPieces: " + queryTree.getVertices().size());
 	}
 }

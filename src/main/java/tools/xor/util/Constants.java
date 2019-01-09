@@ -32,6 +32,7 @@ public class Constants {
     public static final String STATE_GRAPH   = "state.graph";
     public static final String CYCLE_FINDER  = "cycle.finder";
     public static final String VIEW_BRANCH   = "view.branch";
+	  public static final String QUERY_TRANSFORMER   = "query.transformer";
     
     public static final int DEBUG_DATA_SIZE = 64;
   }

@@ -419,6 +419,7 @@
 		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
 		<attributeList>project.name</attributeList>
 		<attributeList>dependants.[VERYBASIC]</attributeList>
+		<attributeList>dependants.project.name</attributeList>
 		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]</attributeList>
 		<attributeList>assignedTo.name</attributeList>
 	</aggregateView>		

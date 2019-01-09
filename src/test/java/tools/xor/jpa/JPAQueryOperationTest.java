@@ -158,4 +158,9 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	public void validateComplex() {
 		super.validateComplex();
 	}
+
+	@Test
+	public void querySplit() {
+		super.querySplit();
+	}
 }

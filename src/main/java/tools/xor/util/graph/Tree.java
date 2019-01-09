@@ -25,6 +25,7 @@ import tools.xor.view.QueryProperty;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -46,6 +47,49 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
         assert getInEdges(end).size() == 0 : "A node in a tree can have at most one incoming edge";
 
         super.addEdge(edge, start, end);
+    }
+
+    /**
+     * Split the tree at the edge and add the new edge along with its descendants to
+     * the target tree's root.
+     *
+     * @param splitAtEdge which is being split from this tree
+     * @param target tree to which the edge and its descendants are grafted
+     */
+    public <Q extends Tree<V, E>> void split(E splitAtEdge, E newEdge, Q target) {
+        List<V> vertices = new LinkedList<>();
+        List<V> verticesToRemove = new LinkedList<>();
+
+        vertices.add(splitAtEdge.getEnd());
+        while(!vertices.isEmpty()) {
+            V vertex = vertices.remove(0);
+            verticesToRemove.add(vertex);
+
+            vertices.addAll(getChildren(vertex));
+        }
+
+        // The vertices can only be added to the target after they are first
+        // removed from the source, due to the constraint on Tree having one incoming edge
+        List<E> edgesToAdd = new LinkedList<>();
+        edgesToAdd.add(newEdge);
+        for(V vertex: verticesToRemove) {
+            if(vertex == newEdge.getEnd()) {
+                continue;
+            }
+            edgesToAdd.add(getInEdges(vertex).iterator().next());
+        }
+
+        // Now the vertices can be removed
+        for(V vertex: verticesToRemove) {
+            removeVertex(vertex);
+        }
+
+        // Add the edges to the target
+        assert(target.getRoot() != null);
+
+        for(E edge: edgesToAdd) {
+            target.addEdge(edge, edge.getStart(), edge.getEnd());
+        }
     }
 
     public List<V> getChildren(V node) {
@@ -73,6 +117,24 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
         return current;
     }
 
+    public int getHeight() {
+        return getHeight(getRoot());
+    }
+
+    private int getHeight(V node) {
+        int result = 0;
+
+        if(node == null) {
+            return result;
+        }
+
+        for(Edge<V> edge: getOutEdges(node)) {
+            result = Math.max(result, getHeight(edge.getEnd()));
+        }
+
+        return result + 1;
+    }
+
     @Override
     /**
      * We would like the getOutEdges to have order
@@ -85,12 +147,6 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
     @Override
     protected Collection<E> newEdgeCollection(Collection<E> input) {
         return new LinkedHashSet<E>(input);
-    }
-
-    @Override
-    protected void writeDOTEdges(BufferedWriter writer) throws IOException
-    {
-        writeGraphvizDot(writer);
     }
 
     protected String getGraphName() {
@@ -114,15 +170,20 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
             V vertex = bfsOrder.get(currentPos++);
             bfsOrder.addAll(getChildren(vertex));
 
-            writer.write("  " + getId(vertex) + "[label = \"" + getLabel(vertex) + "\"]\n");
+            writer.write("  " + vertex + "[label = \"" + getLabel(vertex) + "\"]\n");
         }
     }
 
-    protected void writeGraphvizDot(BufferedWriter writer) throws IOException
+    @Override
+    protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
     {
         writer.write("  ranksep=1.5; nodesep=1;\n");
         writer.write("  node[shape=record,height=.1];\n");
+    }
 
+    @Override
+    public void writeGraphvizDot(BufferedWriter writer) throws IOException
+    {
         // write the vertices in the desired order
         writeDOTVertices(writer);
 
@@ -130,7 +191,7 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
         // Do not constrain all the types that have been explicitly expanded
         for(E edge: getEdges()) {
 
-            StringBuilder result = new StringBuilder("  " + getId((V)edge.getStart()) + " -> " + getId((V)edge.getEnd()));
+            StringBuilder result = new StringBuilder("  " + edge.getStart() + " -> " + edge.getEnd());
             result.append("[label=").append(edge.getName()).append("]\n");
 
 

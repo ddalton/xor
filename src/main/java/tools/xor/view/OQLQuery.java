@@ -35,7 +35,7 @@ public class OQLQuery {
 		this.queryString = queryString;
 	}
 	
-	public OQLQuery generateQuery(AggregateManager am, QueryPiece queryPiece) {
+	public OQLQuery generateQuery(AggregateManager am, QueryTree queryTree, QueryPiece queryPiece) {
 		QueryTransformer qb = am.getDAS().getQueryBuilder();
 		qb.init(queryPiece.getAggregateType(), queryPiece, new LinkedList<Filter>());	
 		

@@ -410,7 +410,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		if(filter != null) {
 			List<Filter> filterCopy = new ArrayList<>();
 			for(Filter f: filter) {
-				filterCopy.add(new Filter(f.expression, f.position));
+				filterCopy.add(new Filter(f));
 			}
 			result.setFilter(filterCopy);
 		}

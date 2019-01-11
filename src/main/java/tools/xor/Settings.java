@@ -137,7 +137,7 @@ public class Settings {
 
 	private AggregateAction mainAction; // represents action, unless it is explicitly set. This is needed since the main action can spawn sub actions
 
-	private Map<String, Object> filters = new HashMap<String, Object>(); // Used for filtering the result
+	private Map<String, Object> params = new HashMap<String, Object>(); // Used for filtering the result
 
 	private Map<String, AggregateAction> actionOverrides; // A collection can have a specific action override set
 
@@ -307,7 +307,7 @@ public class Settings {
 	}
 
 	public Settings() {
-		this.filters = new HashMap<String, Object>();
+		this.params = new HashMap<String, Object>();
 		this.actionOverrides = new HashMap<String, AggregateAction>();
 		this.userkeyOverrides = new HashMap<String, String>();	
 		this.expandedAssociations = new ArrayList<AssociationSetting>();
@@ -444,7 +444,7 @@ public class Settings {
 				shape);
 		}
 
-		this.filters = populateFilters(queryParams);
+		this.params = populateFilters(queryParams);
 		this.actionOverrides = getActionOverrides(queryParams);
 		this.userkeyOverrides = getUserkeyOverrides(queryParams);
 
@@ -457,16 +457,16 @@ public class Settings {
 
 	public Map<String, Object> populateFilters(Map<String, String> queryParams) {
 		if(view == null || queryParams == null)
-			return filters;
+			return params;
 
 		// TODO: skip recurse attributes and display a warning as this is not yet supported
 		for(String key: view.getAttributeList()) {
 			String encodedKey = encodeParam(key);
 			if(queryParams.containsKey(encodedKey))
-				filters.put(key, queryParams.get(encodedKey));					
+				params.put(key, queryParams.get(encodedKey));
 		}
 
-		return filters;
+		return params;
 	}
 
 	protected void initMutableAction(Map<String, String> queryParams) {
@@ -595,12 +595,12 @@ public class Settings {
 		this.mainAction = mainAction;
 	}
 
-	public Map<String, Object> getFilters() {
-		return filters;
+	public Map<String, Object> getParams () {
+		return params;
 	}
 
-	public void setFilters(Map<String, Object> filters) {
-		this.filters = filters;
+	public void setParams (Map<String, Object> params) {
+		this.params = params;
 	}
 
 	public Map<String, AggregateAction> getActionOverrides() {
@@ -687,7 +687,7 @@ public class Settings {
 	}
 
 	public void addFilter(String name, Object value) {
-		filters.put(name, value);
+		params.put(name, value);
 	}
 
 	public void initNarrowClass(TypeNarrower typeNarrower, Object entity, TypeMapper typeMapper)
@@ -972,6 +972,11 @@ public class Settings {
 			this.advance();
 
 			return result;
+		}
+
+		@Override public void remove ()
+		{
+			throw new UnsupportedOperationException();
 		}
 	}
 

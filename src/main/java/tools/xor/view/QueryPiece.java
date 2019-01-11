@@ -45,11 +45,10 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
-import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
+import tools.xor.util.State;
 import tools.xor.util.Vertex;
-import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.util.graph.Tree;
 import tools.xor.view.QueryTree.QueryKey;
 
@@ -75,6 +74,13 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	private        QueryPiece                      parent; // branch containing the parent step
 	private        QueryPiece                      twig;         // attributes of simple type
 	private        boolean                         collection;   // How many collections are under this branch
+
+	private Query    query; // Query representing this QueryPiece
+	private List<QueryField> fields = new LinkedList<>();
+
+	public void setQuery(Query query) {
+		this.query = query;
+	}
 
 
 	public QueryPiece(EntityType rootType) {
@@ -406,20 +412,6 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		for(int i = 0; i < attributeList.size(); i++)
 			addAttribute(attributeList.get(i));
 	}
-	
-	public Set<Parameter> getParameter() {
-		View cView = this.aggregateView;
-		if(cView == null && parent != null)
-			cView = parent.getContentView();
-
-		return (cView.getParameter() == null) ? new HashSet<Parameter>() : new HashSet<Parameter>(cView.getParameter());
-	}
-	
-	public void normalizeFilters(Collection<Filter> filterObjects, QueryCapability queryCapability) {
-		// use the entity alias to replace the filter attribute names
-		for(Filter filter: filterObjects)
-			filter.normalize(getNormalizedNames(queryCapability));		
-	}
 
 	private Map<String, String> getNormalizedNames(QueryCapability queryCapability) {
 		Map<String, String> result = new HashMap<String, String>();		
@@ -448,7 +440,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 		// Copy the relevant filters from the content view
 		for(Filter filter: cView.getFilter()) {
-			Filter narrowedFilter = filter.narrow();
+			Filter narrowedFilter = filter.copy();
 			filters.add(narrowedFilter);	
 		}		
 	}	
@@ -516,7 +508,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 			}
 
 			Type type = property.getType();
-			if(EntityType.class.isAssignableFrom(type.getClass()) && !((EntityType)type).isQueryable()) {
+			if(EntityType.class.isAssignableFrom(type.getClass()) && !((EntityType)type).isExplorable()) {
 				return false;
 			}
 			parentPath = getParentPath(parentPath);
@@ -840,11 +832,94 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 	/**
 	 * Copy the root fragment and prepare it to become a root in a new QueryPiece
-	 * @return new QueryFrament copy
+	 * @return new QueryFragment copy
 	 */
 	public QueryFragment copyRoot(QueryTree queryTree) {
 		QueryFragment root = getRoot();
 		return new QueryFragment(root.getEntityType(), queryTree.nextAlias(), null);
+	}
+
+	/**
+	 * First generate the QueryFields for a fragment
+	 * NOTE: If there are custom OQL, native SQL or stored procedure queries
+	 * then the position will need to be updated based on the position of the
+	 * corresponding fields in the custom queries
+	 *
+	 * Custom queries are specified on the view. The following conditions have
+	 * to be met to use a custom query.
+	 * 1. The root type of the QueryPiece should match
+	 * 2. The fields of the QueryPiece should be a subset of the fields retrieved
+	 *    by the custom query
+	 * 3. The parameters of the custom query should be a subset of the parameters
+	 *    provided by the user. The parameters are found by name matching.
+	 * 4. Custom query resolution should be initiated by the user
+	 *
+	 * If not, the generated OQL query fields is used.
+	 *
+	 * @param settings to decide if a custom query should be used
+	 * @param queryTree to get the view containing the custom query
+	 */
+	public void generateFields(Settings settings, QueryTree queryTree) {
+		// We can have the fields in any position, but we need to know what the position is
+		int position = 0;
+		for(QueryFragment fragment: getVertices()) {
+			position = fragment.generateFields(position);
+		}
+
+		// We now collect the fields and sort them
+		for(QueryFragment fragment: getVertices()) {
+			fields.addAll(fragment.getQueryFields());
+		}
+		Collections.sort(fields);
+	}
+
+	public List<E> getOpenContentJoins() {
+		List<E> result = new LinkedList<>();
+
+		for(E joinEdge: getEdges()) {
+			if(joinEdge.getProperty().isOpenContent()) {
+				result.add(joinEdge);
+			}
+		}
+
+		return result;
+	}
+
+	private QueryField findField(V vertex, String path) {
+
+		String next = State.getNextAttr(path);
+		V nextFragment = null;
+		for(E e: getOutEdges(vertex)) {
+			if(e.getName().equals(next)) {
+				nextFragment = e.getEnd();
+				break;
+			}
+		}
+
+		if(nextFragment == null) {
+			return vertex.getField(path);
+		} else {
+			return findField(nextFragment, State.getRemaining(path));
+		}
+	}
+
+	/**
+	 * If the path is applicable to this QueryPiece, then we return the OQL name (aliased name)
+	 *
+	 * @param path to resolve to the OQL name
+	 * @return OQL name
+	 */
+	public String getOQLName(String path) {
+		if(getRoot().getAncestorPath() == null || path.startsWith(getRoot().getAncestorPath())) {
+			QueryField field = findField(getRoot(), path);
+			return field.getOQL();
+		}
+
+		return null;
+	}
+
+	public List<QueryField> getFields() {
+		return this.fields;
 	}
 }
 

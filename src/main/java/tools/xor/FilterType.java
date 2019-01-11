@@ -20,6 +20,6 @@
 package tools.xor;
 
 public enum FilterType {
-  WHITELIST,
-  BLACKLIST
+  ALIAS,
+  EXPRESSION
 }

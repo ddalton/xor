@@ -33,7 +33,6 @@ public class DescFunctionExpression extends AbstractFunctionExpression implement
 
 	@Override
 	public String getQueryString() {
-		this.orderBy = true;
 		return getNormalizedAttributeName() + " DESC";
 	}
 	

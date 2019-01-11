@@ -20,6 +20,9 @@
 package tools.xor.util;
 
 import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryFragment;
 
 public class IntraQuery<V extends QueryFragment> extends Edge<V>
@@ -36,5 +39,22 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
     public Property getProperty ()
     {
         return property;
+    }
+
+    public String getJoinClause(PersistenceOrchestrator po) {
+        String className = getEnd().getEntityType().getEntityName();
+
+        // If the join edge represents an open content, that means that relationship is
+        // not captured by the ORM and the join condition has to be explicitly
+        // specified in the WHERE clause of the OQL
+        if(property.isOpenContent()) {
+            return QueryBuilder.COMMA_DELIMITER + className + QueryBuilder.AS_CLAUSE + getEnd().getAlias();
+        } else {
+            return po.getOQLJoinFragment((IntraQuery<QueryFragment>)this);
+        }
+    }
+
+    public String getNormalizedName() {
+        return getStart().getAlias() + Settings.PATH_DELIMITER + property.getName();
     }
 }

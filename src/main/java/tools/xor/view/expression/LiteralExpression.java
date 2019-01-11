@@ -1,0 +1,59 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2019, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.view.expression;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class LiteralExpression extends AbstractFunctionExpression {
+
+    @Override
+    protected String getAttributePattern() {
+        return "(\\[\\s*([^\\s]*)\\s*\\]+|\\s*:([\\w_]*)\\s*)+";
+    }
+
+    @Override
+    public String getQueryString() {
+        String queryString = expression;
+
+        // replace with normalized names
+        for(Map.Entry<String, String> entry: normalizedNames.entrySet()) {
+            queryString = queryString.replaceAll("\\[" + entry.getKey() + "\\]", entry.getValue() );
+        }
+        return queryString;
+    }
+
+    @Override
+    public void init() {
+        // An enhancement would be to return a set of attributes if an expression consists of multiple filter functions
+        Pattern pattern = Pattern.compile( getAttributePattern() );
+        Matcher matcher = pattern.matcher(getExpression());
+
+        while (matcher.find()) {
+            System.out.println("Full match: " + matcher.group(0));
+            if(matcher.group(2) != null) {
+                normalizedNames.put(matcher.group(2), null);
+            } else if(matcher.group(3) != null) {
+                parameterName.add(matcher.group(3));
+            }
+        }
+    }
+}

@@ -40,6 +40,10 @@ import tools.xor.util.Constants;
  * @author Dilip Dalton
  *
  */
+
+// TODO: This class is no longer needed as some of the functionality is
+	// done by QueryField.
+	// QueryField does what was previously done by ColumnMeta and QueryProperty
 public class QueryProperty {
 	public static final String ROOT_PROPERTY_NAME = "root";	
 

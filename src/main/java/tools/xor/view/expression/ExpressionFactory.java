@@ -20,6 +20,8 @@
 package tools.xor.view.expression;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +30,8 @@ import tools.xor.util.ClassUtil;
 
 
 public class ExpressionFactory {
-	private static final String FUNCTION_NAME_PAT = "^(\\w+)\\s*\\(.*"; // ^(\w+)\s*\( - Get the name of the filter function
+	private static final String FUNCTION_NAME_PAT = "^(\\w+)\\s*\\(.*"; // Get the name of the filter function
+	private static final String FIELD_NAME_PAT = "\\[\\s*([^\\s]*)\\s*\\]+"; // Get the name of the field name enclosed in [entity.id]
 
 	private static final Map<String, Class> FUNCTION_MAP  = new HashMap<String, Class>() {
 		{
@@ -45,28 +48,56 @@ public class ExpressionFactory {
 		}
 	};
 
-	public static AbstractFunctionExpression getExpression(String expression) {
-		Class clazz = FUNCTION_MAP.get(getFilterFunction(expression).toUpperCase());
-		AbstractFunctionExpression result;
-		try {
-			result = (AbstractFunctionExpression) clazz.newInstance();
-		} catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
+	public static AbstractFunctionExpression getFunctionExpression(String expression) {
+		String functionName = getFilterFunction(expression);
+
+		AbstractFunctionExpression result = null;
+		if(functionName == null) {
+			result = new LiteralExpression();
+		} else {
+			Class clazz = FUNCTION_MAP.get(functionName.toUpperCase());
+			try {
+				if (clazz != null) {
+					result = (AbstractFunctionExpression)clazz.newInstance();
+				}
+			}
+			catch (Exception e) {
+				throw ClassUtil.wrapRun(e);
+			}
 		}
-		result.setExpression(expression);
+
+		if(result != null) {
+			result.setExpression(expression);
+		}
 
 		return result;
 	}	
 
 	public static String getFilterFunction(String expression) {
-		Pattern pattern = Pattern.compile(FUNCTION_NAME_PAT); 
-		Matcher matcher = pattern.matcher(expression);
+		final Pattern pattern = Pattern.compile(FUNCTION_NAME_PAT);
+		final Matcher matcher = pattern.matcher(expression);
 		matcher.find();
 
-		if(matcher.matches())
+		if(matcher.matches()) {
 			return matcher.group(1);
-		else
-			throw new RuntimeException("Cannot find the filter function");
+		}
 
-	}			
+		return null;
+	}
+
+	public static List<String> extractFields(String input) {
+		final Pattern pattern = Pattern.compile(FIELD_NAME_PAT);
+		final Matcher matcher = pattern.matcher(input);
+
+		List<String> result = new LinkedList<>();
+		while (matcher.find()) {
+			System.out.println("Full match: " + matcher.group(0));
+			for (int i = 1; i <= matcher.groupCount(); i++) {
+				System.out.println("Group " + i + ": " + matcher.group(i));
+				result.add(matcher.group(i));
+			}
+		}
+
+		return result;
+	}
 }

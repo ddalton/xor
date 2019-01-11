@@ -36,12 +36,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class is responsible for building a tree of QueryFragment nodes connected by
+ * InterQuery edges.
+ */
 public class FragmentBuilder
 {
     private static final Logger qtLogger = LogManager.getLogger(Constants.Log.QUERY_TRANSFORMER);
 
     private Map<String, QueryFragment> pathToFragment = new HashMap<>();
-    private int aliasCounter = 0;
     private QueryTree queryTree;
 
     public FragmentBuilder(QueryTree queryTree) {
@@ -51,9 +54,9 @@ public class FragmentBuilder
     /**
      * Builds a QueryPiece.
      * @param entityType of root
-     * @param paths of all that data that needs to be queried
      */
-    public void build(EntityType entityType, List<String> paths) {
+    public void build(EntityType entityType) {
+        List<String> paths = queryTree.getView().getAttributeList();
         QueryPiece queryPiece = new QueryPiece(entityType);
 
         // First create a start fragment
@@ -111,7 +114,16 @@ public class FragmentBuilder
                     // we don't create a new fragment for embedded objects
                     continue;
                 } else {
-                    fragment = addNewFragment(property, step, currentPath.toString(), fragment, queryPiece);
+                    if(!isExplorable(queryPiece, currentPath.toString())) {
+                        fragment.addPath(path);
+                    } else {
+                        fragment = addNewFragment(
+                            property,
+                            step,
+                            currentPath.toString(),
+                            fragment,
+                            queryPiece);
+                    }
                 }
             }
             // handle collection properties
@@ -125,6 +137,11 @@ public class FragmentBuilder
                     // create a new fragment
                     fragment = addNewFragment(property, step, currentPath.toString(), fragment, queryPiece);
                 }
+            }
+
+            // fragment can be null if the property is not queryable
+            if(fragment == null) {
+                return;
             }
         }
     }
@@ -146,5 +163,26 @@ public class FragmentBuilder
         }
 
         return next;
+    }
+
+    /**
+     * If the type is not explorable then we just select the property representing that type.
+     *
+     * @param qp is the QueryPiece containing the path
+     * @param currentPath is the property to check
+     * @return true if the attribute can be referenced using an alias, i.e., it is explorable
+     */
+    private boolean isExplorable(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, String currentPath) {
+
+        EntityType entityType = qp.getRoot().getEntityType();
+        Property property = entityType.getProperty(currentPath);
+        if(property != null) {
+            Type type = property.getType();
+            if(EntityType.class.isAssignableFrom(type.getClass()) && !((EntityType)type).isExplorable()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

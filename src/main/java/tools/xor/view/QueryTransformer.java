@@ -98,6 +98,9 @@ import tools.xor.view.expression.AscFunctionExpression;
  *      CartesianJoinSplitter,
  *      NestedJoinSplitter,
  *      LoopSplitter
+ * 3. Filter
+ *    Add necessary filters to the QueryPiece and the placeholders in the QueryFragments
+ *      setParameters
  * 3. Validation
  *    Based on the user input like ordering and paging, if it spans across
  *    queries then we need to error out while suggesting how the user can rectify the issue.
@@ -116,32 +119,11 @@ import tools.xor.view.expression.AscFunctionExpression;
  *
  * NOTE: Each step should have its own unit tests
  *
- * FragmentBuilder
- * ---------------
- * This class is responsible for building a tree of QueryFragment nodes connected by
- * InterQuery edges.
- * This can give rise to a forest of trees. In this case each tree is represented by a QueryPiece
- * and we have a dummy root node connecting to all the QueryPiece nodes.
  *
- * CartesianJoinSplitter
- * ---------------------
- * 1. Loop through every QueryPiece
- * 2. Do a DFS and rollup all the collections found in the descendants. At the end of this
- *    process, the root node will have a count of the total number of collections in the tree.
- * 3. Do a BFS and check if each QueryFragment node has more than one children, and if more
- *    than one child has a collection present. If so, this represents a CartesianJoin and need
- *    to be split into separate queries.
- *    Randomly choose a child to split and create a new QueryPiece out of it and add it to the
- *    end of the list of QueryPieces to process.
- *
- * NestedJoinSplitter
- * ------------------
- * This class ensures that a given QueryFragment tree belonging to a QueryPiece does not
- * exceed a certain depth. If it does exceed then it is split at that point and a new QueryPiece
- * created out of it.
- * To reduce the number of QueryPiece created, we can limit this only to collection length. i.e.,
- * the number of collections joined in a path from the root to the left does not exceed a certain
- * number.
+ * AliasSplitter
+ * -------------
+ * This class creates a new QueryFragment with the alias name.
+ * A single property can be represented with multiple fragments if there are multiple aliases.
  *
  * LoopSplitter
  * ------------
@@ -164,6 +146,14 @@ import tools.xor.view.expression.AscFunctionExpression;
  * ------------
  * Generates the literal OQL QueryString from a QueryPiece.
  * Binds it with the provided parameters.
+ * Two types of queries are possible:
+ *
+ * 1. Objects with same ids are shared. The result will be a graph of information.
+ *    To allow the identification of shareable objects, additional information will need to
+ *    be fetched such as the id of the objects.
+ * 2. Objects with same ids are not shared. This is faithful to what the customer requested.
+ *    The data for the same object might occur multiple times in the result.
+ *    The result becomes a tree of information.
  *
  * QueryDispatcher
  * ---------------
@@ -180,6 +170,8 @@ import tools.xor.view.expression.AscFunctionExpression;
  * ObjectResolver
  * --------------
  * Takes the ResultSet results and builds an Object graph out of it.
+ * When a query for a QueryPiece is built, all the ids/natural keys for objects in the source
+ * of an InterQuery edge needs to be also retrieved.
  *
  * EXAMPLE
  * =======
@@ -294,9 +286,6 @@ public class QueryTransformer
 {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-	private static final String SELECT_CLAUSE = "SELECT ";
-	private static final String COMMA_DELIMITER = ", ";
-
 	private BusinessObject   entity;
 	private Type             type;	
 	private QueryPiece       queryPiece;
@@ -322,7 +311,7 @@ public class QueryTransformer
 
 		this.additionalFilters = new ArrayList<Filter>();
 		for(Filter filter: additionalFilters) {
-			Filter narrowedFilter = filter.narrow();
+			Filter narrowedFilter = filter.copy();
 			this.additionalFilters.add(narrowedFilter);	
 		}	
 		this.additionalFilters.addAll(queryPiece.getFilters());	
@@ -333,7 +322,6 @@ public class QueryTransformer
 	public void init(BusinessObject entity, QueryPiece queryPiece, List<Filter> additionalFilters) {
 		init(entity.getDomainType(), queryPiece, additionalFilters);
 		this.entity = entity;
-		queryPiece.normalizeFilters(this.additionalFilters, getQueryCapability(entity.getObjectCreator().getPersistenceOrchestrator()));
 		
 		if(entity.getIdentifierValue() != null) {
 			addIdentifier = true;
@@ -424,9 +412,9 @@ public class QueryTransformer
 
 	protected String constructOQL(Settings settings, PersistenceOrchestrator po) {
 		Map<String, ColumnMeta> meta = queryPiece.getAugmentedAttributes();
-
-		StringBuilder OQL = new StringBuilder(SELECT_CLAUSE);
 /*
+		StringBuilder OQL = new StringBuilder(SELECT_CLAUSE);
+
 		int position = 0;
 		selectedColumns = new ArrayList<String>();
 		for(ColumnMeta columnMeta: meta.values()) {
@@ -481,8 +469,10 @@ public class QueryTransformer
 
 		if(queryPiece.getContentView() != null && queryPiece.getContentView().getJoin() != null && queryPiece.getContentView().getJoin().getEntity() != null)
 			OQL.append(", " + queryPiece.getContentView().getJoin().getEntity());		
-*/
+
 		return OQL.toString();
+		*/
+		return "";
 	}	
 
 	protected String buildOrderClause(PersistenceOrchestrator po) {

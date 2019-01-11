@@ -81,7 +81,7 @@ public class DenormalizedQueryOperation extends QueryOperation {
 	}
 
 	protected Query createQuery(Settings settings, QueryTransformer qb) {
-		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getFilters());
+		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getParams());
 		Query query = qb.constructDML(settings.getView(), settings, mutableFilters);
 
 		for(Map.Entry<String, Object> entry: mutableFilters.entrySet()) {

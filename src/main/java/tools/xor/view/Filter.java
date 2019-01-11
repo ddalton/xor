@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.xml.bind.annotation.XmlAttribute;
 
 import tools.xor.Settings;
+import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.AbstractFunctionExpression;
 import tools.xor.view.expression.ExpressionFactory;
 
@@ -33,6 +34,12 @@ public class Filter implements Comparable<Filter> {
 	
 	@XmlAttribute
 	protected int position;
+
+	@XmlAttribute
+	protected String name;
+
+	@XmlAttribute
+	protected String alias;
 	
 	protected AbstractFunctionExpression functionExpression;
 	
@@ -41,10 +48,12 @@ public class Filter implements Comparable<Filter> {
 	 */
 	public Filter() {
 	}
-	
-	public Filter(String expression) {
-		this(expression, 0);
-	}	
+
+	public Filter(Filter f) {
+		this(f.expression, f.position);
+		this.name = f.name;
+		this.alias = f.alias;
+	}
 	
 	public Filter(String expression, int position) {
 		init(expression);
@@ -54,23 +63,32 @@ public class Filter implements Comparable<Filter> {
 	private void init(String expression) {
 		this.expression = expression;
 		if(expression != null) {
-			this.functionExpression = ExpressionFactory.getExpression(expression);
-			this.functionExpression.init();
+			this.functionExpression = ExpressionFactory.getFunctionExpression(expression);
+			if(this.functionExpression != null) {
+				this.functionExpression.init();
+			}
 		} else {
 			this.functionExpression = null;
 		}
 	}
 
-	public Filter narrow() {
-		return new Filter(expression, position);
+	public Filter copy() {
+		return new Filter(this);
 	}
 
 	public boolean isOrderBy() {
 		return functionExpression.isOrderBy();
 	}
 
+	public boolean isAliasFilter() {
+		return alias != null && !"".equals(alias.trim());
+	}
+
 	public String getQueryString() {
-		return functionExpression.getQueryString();
+		if(isAliasFilter()) {
+			return null;
+		}
+		return functionExpression != null ? functionExpression.getQueryString() : expression;
 	}
 
 	public String getNormalizedName() {
@@ -89,9 +107,27 @@ public class Filter implements Comparable<Filter> {
 		return functionExpression.getAttributeName();
 	}
 
-	public void normalize(Map<String, String> normalizedNames) {
-		functionExpression.normalize(normalizedNames);
+	/**
+	 * Identify the mapping between the entity field path and the query alias name
+	 *
+	 * @param qp QueryPiece for which the alias name is mapped
+	 * @return true if all the names can be normalized, false otherwise
+	 */
+	public boolean normalize(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+		boolean all = true;
+
+		for(String path: functionExpression.getAttributes()) {
+			String oqlname = qp.getOQLName(path);
+			if(oqlname != null) {
+				functionExpression.setNormalizedName(path, oqlname);
+			} else {
+				all = false;
+			}
+		}
+
+		return all;
 	}
+
 
 	public Object getNormalizedValue(Object object) {
 		return functionExpression.getNormalizedValue(object);
@@ -100,29 +136,29 @@ public class Filter implements Comparable<Filter> {
 	/**
 	 * Checks to see if a filter is relevant for this query based on the input parameters
 	 * 
-	 * @param originalFilters user supplied filters
-	 * @param filters normalized filters
+	 * @param userParams user supplied parameter values
+	 * @param normParam normalized users parameter values. This is populated by this code.
 	 * @param parameterMap parameter map used by filters
 	 * @return true if filter is included
 	 */
-	public boolean isFilterIncluded(Map<String, Object> originalFilters, Map<String, Object> filters, Map<String, Parameter> parameterMap) {
+	public boolean isFilterIncluded(Map<String, Object> userParams, Map<String, Object> normParam, Map<String, Parameter> parameterMap) {
 		boolean result = false;
 		
 		for(String parameterName: functionExpression.getParameters()) {
 
 			Parameter param =  parameterMap.get(parameterName);
-			if(!originalFilters.containsKey(Settings.encodeParam(parameterName)) ) { // parameter is not set
+			if(!userParams.containsKey(Settings.encodeParam(parameterName)) ) { // parameter is not set
 				// check if the parameter has a default value
 				if(param != null)
-					filters.put( Settings.encodeParam(parameterName), getNormalizedValue(param.defaultValue));
+					normParam.put( Settings.encodeParam(parameterName), getNormalizedValue(param.defaultValue));
 				else
 					return result;
 			} else {
 				String key = Settings.encodeParam(parameterName);
 				if(param != null)
 					key = param.filterName;
-				Object normalizedValue = getNormalizedValue(originalFilters.get(Settings.encodeParam(key)));
-				filters.put( Settings.encodeParam(parameterName), normalizedValue);
+				Object normalizedValue = getNormalizedValue(userParams.get(Settings.encodeParam(key)));
+				normParam.put( Settings.encodeParam(parameterName), normalizedValue);
 			}
 		}
 

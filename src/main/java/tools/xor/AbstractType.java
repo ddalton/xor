@@ -1219,7 +1219,7 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public boolean isQueryable() {
+	public boolean isExplorable () {
 		return true;
 	}
 

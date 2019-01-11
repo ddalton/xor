@@ -186,6 +186,7 @@ public class AggregateViewFactory {
 				((AggregateView)av).setSystemOQLQuery(
 					(new OQLQuery()).generateQuery(
 						am,
+						queryTree,
 						queryTree.getRoot()));
 			}
 			

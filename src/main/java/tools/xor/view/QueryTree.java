@@ -22,9 +22,11 @@ package tools.xor.view;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -87,36 +89,41 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
-	
-	public static enum PartitionType {
-		LEAF_GROUP,
-		STATE_TREE
-	};
 
 	public static final String ENTITY_ALIAS_PREFIX = "_XOR_";
 	public static final String PROPERTY_ALIAS_PREFIX = "PROP";
 
-	private PartitionType partitionType;
+	private ObjectResolver.Type type = ObjectResolver.Type.SHARED;
 	private int aliasCounter;
-	
-	public PartitionType getPartitionType() {
-		return this.partitionType;
+	private View view; // for custom queries
+
+	public View getView() {
+		return this.view;
+	}
+
+	public QueryTree(View view) {
+		this.view = view;
 	}
 	
-	public void setPartitionType(PartitionType type) {
-		this.partitionType = type;
-	}	
-	
 	public static QueryTree buildFlattened(QueryKey queryKey, AggregateView contentView) {
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> result = new QueryTree();
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> result = new QueryTree(contentView);
 		
 		result.addVertex(new QueryPiece(queryKey, contentView));
 		result.getRoot().buildFlattened();
-		result.setPartitionType(PartitionType.LEAF_GROUP);
 		
 		result.build();
 		
 		return result;
+	}
+
+	public ObjectResolver.Type getType ()
+	{
+		return type;
+	}
+
+	public void setType (ObjectResolver.Type type)
+	{
+		this.type = type;
 	}
 	
 	/**
@@ -140,7 +147,7 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 		for (E edge : getOutEdges((V) root)) {
 			QueryPiece qv = edge.getEnd();
 			AggregateView av = new AggregateView(qv);
-			av.setSystemOQLQuery((new OQLQuery()).generateQuery(am, qv));
+			av.setSystemOQLQuery((new OQLQuery()).generateQuery(am, this, qv));
 			result.add(new AggregateView(qv));
 		}
 
@@ -206,6 +213,10 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 
 	public static String generateAlias(int counter) {
 		return QueryTree.ENTITY_ALIAS_PREFIX + counter;
+	}
+
+	public Set<Parameter> getParameter() {
+		return (view == null || view.getParameter() == null) ? new HashSet<Parameter>() : new HashSet<Parameter>(view.getParameter());
 	}
 
 	@Override

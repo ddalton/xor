@@ -163,4 +163,9 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	public void querySplit() {
 		super.querySplit();
 	}
+
+	@Test
+	public void oqlQuery() {
+		super.oqlQuery();
+	}
 }

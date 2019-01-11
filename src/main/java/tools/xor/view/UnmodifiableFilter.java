@@ -30,8 +30,8 @@ public class UnmodifiableFilter extends Filter
         this.filter = filter;
     }
 
-    public Filter narrow() {
-        return new Filter(filter.expression, filter.position);
+    public Filter copy() {
+        return new Filter(filter);
     }
 
     public boolean isOrderBy() {
@@ -69,10 +69,6 @@ public class UnmodifiableFilter extends Filter
         return filter.getAttribute();
     }
 
-    public void normalize (Map<String, String> normalizedNames)
-    {
-        filter.normalize(normalizedNames);
-    }
 
     public Object getNormalizedValue (Object object)
     {

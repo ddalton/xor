@@ -20,6 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.util.Vertex;
 
 import java.util.Collections;
@@ -35,7 +36,7 @@ public class QueryFragment implements Vertex
     String alias;
     List<String> paths;
     List<String> simpleCollectionPaths;   // number of simple collections within the fragment
-
+    List<QueryField> queryFields;
     int simpleCollectionCount;   // count of all simple collections within a fragment and its
                                  //  descendants
     int parallelCollectionCount; // max parallel collections within a fragment in the descendants,
@@ -57,6 +58,7 @@ public class QueryFragment implements Vertex
         this.ancestorPath = ancestorPath;
         this.paths = new LinkedList<>();
         this.simpleCollectionPaths = new LinkedList<>();
+        this.queryFields = new LinkedList<>();
     }
 
     public int getSimpleCollectionCount() {
@@ -68,17 +70,29 @@ public class QueryFragment implements Vertex
         this.simpleCollectionCount = simpleCollectionCount;
     }
 
+    public String getAncestorPath() {
+        return this.ancestorPath;
+    }
+
     @Override public String getName ()
     {
         return this.ancestorPath == null ? ROOT_NAME : this.ancestorPath;
     }
 
+    private String stripAncestor(String path) {
+        if(ancestorPath != null && path.startsWith(ancestorPath)) {
+            return path.substring(ancestorPath.length()+Settings.PATH_DELIMITER.length());
+        } else {
+            return path;
+        }
+    }
+
     public void addPath(String path) {
-        this.paths.add(path);
+        this.paths.add(stripAncestor(path));
     }
 
     public void addSimpleCollectionPath (String path) {
-        this.paths.add(path);
+        this.paths.add(stripAncestor(path));
     }
 
     public void removeSimpleCollectionPath (String path) {
@@ -105,5 +119,43 @@ public class QueryFragment implements Vertex
     public void setParallelCollectionCount (int parallelCollectionCount)
     {
         this.parallelCollectionCount = parallelCollectionCount;
+    }
+
+    public List<QueryField> getQueryFields() {
+        return Collections.unmodifiableList(this.queryFields);
+    }
+
+    /**
+     * Create the QueryField instances for this fragment and initialize it starting with
+     * the given position.
+     *
+     * @param position from which the fields are present
+     * @return the updated position
+     */
+    public int generateFields(int position) {
+        queryFields = new LinkedList<>();
+
+        for(String path: this.paths) {
+            queryFields.add(new QueryField(path, position++, this));
+        }
+        for(String path: this.simpleCollectionPaths) {
+            queryFields.add(new QueryField(path, position++, this));
+        }
+
+        return position;
+    }
+
+    public String getId() {
+        return getAlias() + Settings.PATH_DELIMITER + getEntityType().getIdentifierProperty().getName();
+    }
+
+    public QueryField getField(String path) {
+        for(QueryField field: queryFields) {
+            if(path.equals(field.getPath())) {
+                return field;
+            }
+        }
+
+        return null;
     }
 }

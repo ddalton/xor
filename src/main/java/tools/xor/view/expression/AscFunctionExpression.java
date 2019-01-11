@@ -33,7 +33,6 @@ public class AscFunctionExpression extends AbstractFunctionExpression implements
 
 	@Override
 	public String getQueryString() {
-		this.orderBy = true;
 		return getNormalizedAttributeName() + " ASC";
 	}
 	

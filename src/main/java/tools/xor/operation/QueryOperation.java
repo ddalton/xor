@@ -91,7 +91,7 @@ public class QueryOperation extends TreeTraversal {
 	}
 	
 	protected Query createQuery(QueryPiece queryPiece, CallInfo callInfo, QueryTransformer qb) {
-		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getFilters());
+		Map<String, Object> mutableFilters = new HashMap<String, Object>(callInfo.getSettings().getParams());
 		Query query = qb.constructQuery(callInfo.getSettings(), mutableFilters);
 
 		qb.postProcess(queryPiece, callInfo.getSettings(), query, mutableFilters);

@@ -33,8 +33,10 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
+import tools.xor.util.IntraQuery;
 import tools.xor.view.AggregateView;
 import tools.xor.view.Query;
+import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryProperty;
 import tools.xor.view.StoredProcedure;
 
@@ -253,11 +255,11 @@ public interface PersistenceOrchestrator {
     public MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize);
 
     /**
-     * Retrive provider specific OQL join fragment
-     * @param viewProperty representing the associated property being retrieved
+     * Retrieve provider specific OQL join fragment
+     * @param joinEdge representing the associated property being retrieved
      * @return join fragment
      */
-    public String getOQLJoinFragment(QueryProperty viewProperty);
+    public String getOQLJoinFragment(IntraQuery<QueryFragment> joinEdge);
 
     /**
      * Provider specific construct to control polymorphic object retrieval

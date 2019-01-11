@@ -303,10 +303,10 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 
 	/**
 	 * When building OQL queries, some embedded types are not considered to be directly
-	 * queryable.
+	 * explorable.
 	 * @return true if it can appear in the FROM clause of a query
 	 */
-	public boolean isQueryable();
+	public boolean isExplorable ();
 
 	/**
 	 * Checks if this is the root concrete type. That is there is no parent type that

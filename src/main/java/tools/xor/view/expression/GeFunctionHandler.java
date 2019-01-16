@@ -19,6 +19,19 @@
 
 package tools.xor.view.expression;
 
-public interface Expression {
+import java.util.List;
 
+public class GeFunctionHandler extends FunctionHandler
+{
+
+	@Override public void init (List<String> args)
+	{
+		normalizedNames.put(args.get(0), null);
+		parameterName.add(args.get(1));
+	}
+
+	@Override
+	public String getQueryString() {
+		return getNormalizedAttributeName() + " >= :" + getParameterName();
+	}	
 }

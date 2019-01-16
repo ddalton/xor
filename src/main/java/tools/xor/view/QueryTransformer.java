@@ -37,7 +37,7 @@ import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator.QueryType;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.Constants;
-import tools.xor.view.expression.AscFunctionExpression;
+import tools.xor.view.expression.AscHandler;
 
 /**
  *
@@ -92,22 +92,26 @@ import tools.xor.view.expression.AscFunctionExpression;
  *    made up of QueryFragment nodes and InterQuery edges for all the property paths.
  *    REF:
  *     FragmentBuilder
- * 2. Split into efficient queries
+ * 2. QueryTree modification for efficient queries
  *    This is analyzed and the necessary QueryPiece instances created.
  *    REF:
  *      CartesianJoinSplitter,
  *      NestedJoinSplitter,
  *      LoopSplitter
- * 3. Filter
- *    Add necessary filters to the QueryPiece and the placeholders in the QueryFragments
+ * 3. QueryTree modification for user functionality
+ *    We modify the query to account for user features such as:
+ *      AliasSplitter
+ *      QueryTrimmer
+ * 4. Function
+ *    Add necessary functions to the QueryPiece and the placeholders in the QueryFragments
  *      setParameters
- * 3. Validation
+ * 5. Validation
  *    Based on the user input like ordering and paging, if it spans across
  *    queries then we need to error out while suggesting how the user can rectify the issue.
  *    REF:
  *      SortValidator
  *      PageValidator
- * 4. Execution
+ * 6. Execution
  *    Then each QueryPiece has its query built and executed in the order specified by
  *    its dependency in the tree of InterQuery edges.
  *    REF:
@@ -124,6 +128,11 @@ import tools.xor.view.expression.AscFunctionExpression;
  * -------------
  * This class creates a new QueryFragment with the alias name.
  * A single property can be represented with multiple fragments if there are multiple aliases.
+ *
+ * QueryTrimmer
+ * ------------
+ * Based on the skip and include filters, the copy of the QueryTree is trimmed before it
+ * is executed
  *
  * LoopSplitter
  * ------------
@@ -169,9 +178,11 @@ import tools.xor.view.expression.AscFunctionExpression;
  *
  * ObjectResolver
  * --------------
- * Takes the ResultSet results and builds an Object graph out of it.
- * When a query for a QueryPiece is built, all the ids/natural keys for objects in the source
- * of an InterQuery edge needs to be also retrieved.
+ * Interface implemented by the appropriate query operation
+ * For e.g.,
+ * QueryOperation - Takes the ResultSet results and builds an Object graph out of it.
+ * DenormalizedQueryOperation - Takes the result set and builds a table out of it, repeating the
+ *  values of the parent object
  *
  * EXAMPLE
  * =======
@@ -247,37 +258,7 @@ import tools.xor.view.expression.AscFunctionExpression;
  *
  *
  *
- * 
- * First Phase -- Restrict to simple needs 
- * 
- * Example filters
- * -----------------------------
- * ilike(param, %1)
- * in(param, %1)
- * idEq(%1)
- * ge(%1)
- * asc(%1)
- * 
- * e.g.
- * 
- * ilike(name, "%xyz%")
- * in("id", String[])
- * idEq(String)
- * ge("createdOn", long)
- * ge("updatedOn", long)
- * asc("name")
- * 
- * Modify view to support filters
- * ------------------------------
- * 
- * FILTERS
- * ilike(name, ":name")            // lower(name) LIKE :name
- * in(state, ":state"              // name IN(:state)
- * equal(ownedBy.name, ":owner")   // ownedBy.name = :owner 
- * ge(createdOn, ":createdSince")  // createdOn > :createdSince
- * ge(updatedOn, ":updatedSince"); // updaetdOn > :updatedSince
- * asc(name)                       // ORDER BY name  also honor OrderBy annotation in model if no ORDER BY clause is provided
- * between(updatedOn, ":updatedFrom", ":updatedTo")
+ *
  * 
  * */
 
@@ -289,7 +270,7 @@ public class QueryTransformer
 	private BusinessObject   entity;
 	private Type             type;	
 	private QueryPiece       queryPiece;
-	private List<Filter>     additionalFilters;
+	private List<Function> additionalFunctions;
 	private boolean          addIdentifier;
 	private List<String>     selectedColumns;    
 
@@ -305,22 +286,22 @@ public class QueryTransformer
 		this.addIdentifier = addIdentifier;
 	}
 	
-	public void init(Type type, QueryPiece queryPiece, List<Filter> additionalFilters) {
+	public void init(Type type, QueryPiece queryPiece, List<Function> additionalFunctions) {
 		this.type = type;
 		this.queryPiece = queryPiece;
 
-		this.additionalFilters = new ArrayList<Filter>();
-		for(Filter filter: additionalFilters) {
-			Filter narrowedFilter = filter.copy();
-			this.additionalFilters.add(narrowedFilter);	
+		this.additionalFunctions = new ArrayList<>();
+		for(Function function : additionalFunctions) {
+			Function narrowedFunction = function.copy();
+			this.additionalFunctions.add(narrowedFunction);
 		}	
-		this.additionalFilters.addAll(queryPiece.getFilters());	
+		this.additionalFunctions.addAll(queryPiece.getFunctions());
 		
-		Collections.sort(additionalFilters);
+		Collections.sort(additionalFunctions);
 	}	
 
-	public void init(BusinessObject entity, QueryPiece queryPiece, List<Filter> additionalFilters) {
-		init(entity.getDomainType(), queryPiece, additionalFilters);
+	public void init(BusinessObject entity, QueryPiece queryPiece, List<Function> additionalFunctions) {
+		init(entity.getDomainType(), queryPiece, additionalFunctions);
 		this.entity = entity;
 		
 		if(entity.getIdentifierValue() != null) {
@@ -564,20 +545,20 @@ public class QueryTransformer
 		}
 	}
 	
-	private String getDirection(Filter filter) {
-		if(filter.functionExpression instanceof AscFunctionExpression) {
+	private String getDirection(Function function) {
+		if(function.functionHandler instanceof AscHandler) {
 			return " > ";
 		} else {
 			return " < ";
 		}
 	}
 	
-	private String getEqualOrderByExp(int endPos, List<Filter> orderBy) {
+	private String getEqualOrderByExp(int endPos, List<Function> orderBy) {
 		// 	Create an equals condition for all the orderBy fields until endPos
 		
 		StringBuilder result = new StringBuilder("");
 		for(int i = 0; i <= endPos; i++) {
-			Filter f = orderBy.get(i);
+			Function f = orderBy.get(i);
 			if(i > 0) {
 				result.append(" AND ");
 			}
@@ -616,17 +597,17 @@ public class QueryTransformer
 			return;
 		}
 		
-		List<Filter> orderBy = new LinkedList<Filter>();
-		for(Filter filter: this.additionalFilters) {
-			if(filter.isOrderBy()) {
-				orderBy.add(filter);
+		List<Function> orderBy = new LinkedList<Function>();
+		for(Function function : this.additionalFunctions) {
+			if(function.isOrderBy()) {
+				orderBy.add(function);
 			}
 		}		
 		
 		addWhereStep(queryString);
 		queryString.append( " ( ");		
 		for(int i = 0; i < orderBy.size(); i++) {
-			Filter f = orderBy.get(i);
+			Function f = orderBy.get(i);
 			// AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
 		
 			if(i == 0) {
@@ -708,39 +689,5 @@ public class QueryTransformer
 			result.append(" AND ");		
 		else
 			result.append(" WHERE ");		
-	}
-
-	public void postProcess(QueryPiece queryView, Settings settings, Query query, Map<String, Object> filters) {
-		
-		for(Map.Entry<String, Object> entry: filters.entrySet()) {
-			query.setParameter(entry.getKey(), entry.getValue());
-		}
-
-		if(doAddIdentifier() && query.hasParameter(QueryProperty.ID_PARAMETER_NAME)) {
-			query.setParameter(QueryProperty.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
-		}
-
-		// Set the chunk values
-		Map<String, Object> nextToken = settings.getNextToken();
-		if(nextToken != null) {
-			for(Map.Entry<String, Object> entry: nextToken.entrySet()) {
-				if(!query.hasParameter(QueryProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
-					throw new IllegalStateException("NextToken missing information for orderBy field: " + entry.getKey());
-				}
-				query.setParameter(QueryProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
-			}
-		}
-
-		// pagination
-		if(settings.getOffset() != null)
-			query.setFirstResult(settings.getOffset());
-		if(settings.getLimit() != null)
-			query.setMaxResults(settings.getLimit());
-		
-		// initialize the query with the selected columns
-		query.setColumns(selectedColumns);
-
-		EntityType entityType = (EntityType)((entity == null) ? type : entity.getDomainType());
-		query.prepare(entityType, queryView);
 	}
 }

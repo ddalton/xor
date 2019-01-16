@@ -19,9 +19,9 @@
 
 package tools.xor.view;
 
+import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.service.QueryCapability;
-import tools.xor.util.IntraQuery;
 
 /**
  * Identifies the information of a column value in the query result.
@@ -39,6 +39,8 @@ public class QueryField implements Comparable<QueryField>
     private String  path;           // simple property name or a path if an embedded field
     private int     position;       // position of this field in the query result record
     private QueryFragment fragment; // The QueryFragment to which this field belongs
+    private boolean augmenter;      // This property is not part of the result but is
+                                    // needed to construct the result
 
     public QueryField(String path, int position, QueryFragment fragment) {
         this.path = path;
@@ -46,12 +48,28 @@ public class QueryField implements Comparable<QueryField>
         this.fragment = fragment;
     }
 
+    public QueryField(String path, int position, QueryFragment fragment, boolean augmenter) {
+        this(path, position, fragment);
+        this.augmenter = augmenter;
+    }
+
     /**
      * Retrieve the OQL query representation of this field.
      * @return OQL query representation
      */
-    public String getOQL() {
-        return fragment.getAlias() + Settings.PATH_DELIMITER + path;
+    public String getOQL(QueryCapability qc) {
+        String result = fragment.getAlias() + Settings.PATH_DELIMITER + path;
+
+        if(path.endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE))
+            result = qc.getListIndexMechanism(fragment.getAlias());
+        else if(path.endsWith(QueryProperty.MAP_KEY_ATTRIBUTE))
+            result = qc.getMapKeyMechanism(fragment.getAlias());
+        else if(path.equals(fragment.getEntityType().getIdentifierProperty().getName())) {
+                // Is this an id property
+            result = qc.getSurrogateValueMechanism(fragment.getAlias(), Settings.PATH_DELIMITER + path);
+        }
+
+        return result;
     }
 
     public int getPosition() {

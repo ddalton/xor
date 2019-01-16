@@ -62,15 +62,15 @@ public class UnmodifiableView implements View
         return result;
     }
 
-    @Override public List<Filter> getFilter ()
+    @Override public List<Function> getFunction ()
     {
-        if(view.getFilter() == null) {
+        if(view.getFunction() == null) {
             return null;
         }
 
-        List result = new ArrayList(view.getFilter().size());
-        for(Filter filter: view.getFilter()) {
-            result.add(new UnmodifiableFilter(filter));
+        List result = new ArrayList(view.getFunction().size());
+        for(Function function : view.getFunction()) {
+            result.add(new UnmodifiableFunction(function));
         }
 
         return result;

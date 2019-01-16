@@ -19,7 +19,13 @@
 
 package tools.xor.view;
 
-public class ObjectResolver
+import tools.xor.CallInfo;
+import tools.xor.Settings;
+
+import java.util.List;
+import java.util.Map;
+
+public interface ObjectResolver
 {
     /**
      * 1. Shared - Objects with same ids are shared. The result will be a graph of information.
@@ -36,4 +42,10 @@ public class ObjectResolver
         SHARED,
         DISTINCT
     }
+
+    void preProcess(QueryPiece qp, Settings settings, Query query, Map<String, Object> params);
+
+    void processRecords(List records, QueryPiece queryPiece, CallInfo callInfo);
+
+    void postProcess();
 }

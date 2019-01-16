@@ -19,11 +19,15 @@
 
 package tools.xor.view.expression;
 
-public class EqualFunctionExpression extends AbstractFunctionExpression {
+import java.util.List;
 
-	@Override
-	protected String getAttributePattern() {
-		return "^.*\\((\\s*)([\\w|\\.]+)\\s*,[\\s\"']*:(\\w+).*$";
+public class EqualFunctionHandler extends FunctionHandler
+{
+
+	@Override public void init (List<String> args)
+	{
+		normalizedNames.put(args.get(0), null);
+		parameterName.add(args.get(1));
 	}
 
 	@Override

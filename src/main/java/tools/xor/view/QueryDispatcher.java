@@ -1,7 +1,7 @@
 /**
  * XOR, empowering Model Driven Architecture in J2EE applications
  *
- * Copyright (c) 2012, Dilip Dalton
+ * Copyright (c) 2019, Dilip Dalton
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@
  * under the License.
  */
 
-package tools.xor;
+package tools.xor.view;
 
-public enum FilterType {
-  ALIAS,
-  EXPRESSION
+import tools.xor.CallInfo;
+import tools.xor.util.InterQuery;
+
+import java.util.List;
+
+public interface QueryDispatcher
+{
+    void execute(QueryTree<QueryPiece, InterQuery<QueryPiece>>  queryTree, ObjectResolver resolver, CallInfo callInfo);
 }

@@ -19,15 +19,18 @@
 
 package tools.xor.view.expression;
 
-public class LtFunctionExpression extends AbstractFunctionExpression {
-	
-	@Override
-	protected String getAttributePattern() {
-		return "^.*\\((\\s*)([\\w|\\.]+)\\s*,[\\s\"']*:(\\w+).*$";
+import java.util.List;
+
+public class GtFunctionHandler extends FunctionHandler
+{
+	@Override public void init (List<String> args)
+	{
+		normalizedNames.put(args.get(0), null);
+		parameterName.add(args.get(1));
 	}
 
 	@Override
 	public String getQueryString() {
-		return getNormalizedAttributeName() + " < :" + getParameterName();
+		return getNormalizedAttributeName() + " > :" + getParameterName();
 	}	
 }

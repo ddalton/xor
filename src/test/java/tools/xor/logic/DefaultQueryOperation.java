@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.EntityType;
+import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Employee;
@@ -60,6 +61,7 @@ import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
 import tools.xor.view.View;
+import tools.xor.view.expression.FunctionHandler;
 
 public class DefaultQueryOperation extends AbstractDBTest {
 	@Autowired
@@ -1219,12 +1221,12 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ilike(name, :name)");
-		settings.addFunctionFilter("in(state, :state)");
-		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
-		settings.addFunctionFilter("ge(createdOn, :createdSince)");
-		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
+		settings.addFunction(FunctionHandler.IN, "state", ":state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionType.ASC, "name");
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntity input = new MetaEntity();
 		input.setMetaEntityType(getType(MetaEntityTypeEnum.PATENT.name()));		

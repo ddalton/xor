@@ -239,9 +239,9 @@
 		<attributeList>name</attributeList>
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
-		<filter>
-			<expression position="1">asc(name)</expression>
-		</filter>		
+		<function type="ASC" position="1">
+			<args>name</args>
+		</function>		
 	</aggregateView>
 		<aggregateView>
 		<name>PERSON_DESC</name>
@@ -249,9 +249,9 @@
 		<attributeList>name</attributeList>
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
-		<filter>
-			<expression position="1">desc(name)</expression>
-		</filter>		
+		<function type="DESC" position="1">
+			<args>name</args>
+		</function>		
 	</aggregateView>
 	<aggregateView>
 		<name>TASKFILTER</name>
@@ -261,24 +261,29 @@
 		<attributeList>description</attributeList>
 		<attributeList>iconUrl</attributeList>
 		<attributeList>detailedDescription</attributeList>	
-		<filter>
-			<expression>ilike(name, :name)</expression>
-		</filter>
-		<filter>
-			<expression>in(state, :state)</expression>
-		</filter>
-		<filter>
-			<expression>equal(ownedBy.name, :owner)</expression>
-		</filter>
-		<filter>
-			<expression>ge(createdOn, :createdSince)</expression>
-		</filter>
-		<filter>
-			<expression>ge(updatedOn, :updatedSince)</expression>
-		</filter>
-		<filter>
-			<expression position="1">asc(name)</expression>
-		</filter>
+		<function type="COMPARISON" name="ilike">
+			<args>name</args>
+			<args>:name</args>
+		</function>
+		<function type="COMPARISON" name="in">
+			<args>state</args>
+			<args>:state</args>
+		</function>
+		<function type="COMPARISON" name="equal">
+			<args>ownedBy.name</args>
+			<args>:owner</args>
+		</function>
+		<function type="COMPARISON" name="ge">
+			<args>createdOn</args>
+			<args>:createdSince</args>
+		</function>
+		<function type="COMPARISON" name="ge">
+			<args>updatedOn</args>
+			<args>:updatedSince</args>
+		</function>
+		<function type="ASC" position="1">
+			<args>name</args>
+		</function>		
 	</aggregateView>
 	<aggregateView>
 		<name>SERVICESINFO</name>
@@ -308,12 +313,14 @@
 		<attributeList>property.displayName</attributeList>		
 		<attributeList>property.valueType.name</attributeList>
 		<attributeList>property.values.value</attributeList>
-		<filter>
-			<expression>equal(property.name, :propertyName)</expression>
-		</filter>
-		<filter>
-			<expression>equal(id, :artifactId)</expression>
-		</filter>
+		<function type="COMPARISON" name="equal">
+			<args>property.name</args>
+			<args>:propertyName</args>
+		</function>
+		<function type="COMPARISON" name="equal">
+			<args>id</args>
+			<args>:artifactId</args>
+		</function>
 	</aggregateView>	
 	<aggregateView>
 		<name>OM_BY_ARTIFACT</name>
@@ -323,9 +330,10 @@
 		<attributeList>optionModel.description</attributeList>
 		<attributeList>optionModel.iconUrl</attributeList>
 		<attributeList>optionModel.detailedDescription</attributeList>	
-		<filter>
-			<expression>equal(id, :artifactId)</expression>
-		</filter>
+		<function type="COMPARISON" name="equal">
+			<args>id</args>
+			<args>:artifactId</args>
+		</function>
 	</aggregateView>	
 	<aggregateView>
 		<name>FIND_PROPERTIES_BY_BINDING</name>
@@ -335,59 +343,67 @@
 		<attributeList>property.description</attributeList>
 		<attributeList>property.iconUrl</attributeList>
 		<attributeList>property.detailedDescription</attributeList>	
-		<filter>
-			<expression>equal(property.name, :propertyName)</expression>
-		</filter>
-		<filter>
-			<expression>equal(property.propertyBindingType.name, :bindingTypeName)</expression>
-		</filter>		
-		<filter>
-			<expression>equal(id, :artifactId)</expression>
-		</filter>
+		<function type="COMPARISON" name="equal">
+			<args>property.name</args>
+			<args>:propertyName</args>
+		</function>
+		<function type="COMPARISON" name="equal">
+			<args>property.propertyBindingType.name</args>
+			<args>:bindingTypeName</args>
+		</function>
+		<function type="COMPARISON" name="equal">
+			<args>id</args>
+			<args>:artifactId</args>
+		</function>
 	</aggregateView>
 	<aggregateView>
 		<name>TASKUNIONFILTER</name>	
 		<children>
 			<attributeList>[BASICINFO]</attributeList>	
-			<filter>
-				<expression>ilike(name, :name1)</expression>
-			</filter>
+			<function type="COMPARISON" name="ilike">
+				<args>name</args>
+				<args>:name1</args>
+			</function>
 		</children>
 		<children>
 			<attributeList>[BASICINFO]</attributeList>	
-			<filter>
-				<expression>ilike(name, :name2)</expression>
-			</filter>
+			<function type="COMPARISON" name="ilike">
+				<args>name</args>
+				<args>:name2</args>
+			</function>
 		</children>	
 	</aggregateView>			
 	<aggregateView>
 		<name>TASKUNIONSET</name>
 		<children>		
 			<attributeList>[TASKSET]</attributeList>		
-			<filter>
-				<expression>ilike(name, :name1)</expression>
-			</filter>
+			<function type="COMPARISON" name="ilike">
+				<args>name</args>
+				<args>:name1</args>
+			</function>
 		</children>			
 		<children>		
 			<attributeList>[TASKSET]</attributeList>		
-			<filter>
-				<expression>ilike(name, :name2)</expression>
-			</filter>
+			<function type="COMPARISON" name="ilike">
+				<args>name</args>
+				<args>:name2</args>
+			</function>
 		</children>			
 	</aggregateView>	
 	<aggregateView>
 		<name>TASKUNIONOVERLAP</name>
 		<children>		
 			<attributeList>[TASKSET]</attributeList>			
-			<filter>
-				<expression>asc(name)</expression>
-			</filter>			
+			<function type="ASC" position="1">
+				<args>name</args>
+			</function>		
 		</children>			
 		<children>		
 			<attributeList>[TASKSET]</attributeList>				
-			<filter>
-				<expression>ilike(name, :name1)</expression>
-			</filter>
+			<function type="COMPARISON" name="ilike">
+				<args>name</args>
+				<args>:name1</args>
+			</function>
 		</children>			
 	</aggregateView>		
 	<aggregateView>

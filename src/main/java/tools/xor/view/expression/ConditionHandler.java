@@ -19,16 +19,14 @@
 
 package tools.xor.view.expression;
 
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LiteralExpression extends AbstractFunctionExpression {
-
-    @Override
-    protected String getAttributePattern() {
-        return "(\\[\\s*([^\\s]*)\\s*\\]+|\\s*:([\\w_]*)\\s*)+";
-    }
+public class ConditionHandler extends FunctionHandler
+{
+    private static final String PATTERN = "(\\[\\s*([^\\s]*)\\s*\\]+|\\s*:([\\w_]*)\\s*)+";
 
     @Override
     public String getQueryString() {
@@ -42,10 +40,9 @@ public class LiteralExpression extends AbstractFunctionExpression {
     }
 
     @Override
-    public void init() {
-        // An enhancement would be to return a set of attributes if an expression consists of multiple filter functions
-        Pattern pattern = Pattern.compile( getAttributePattern() );
-        Matcher matcher = pattern.matcher(getExpression());
+    public void init(List<String> args) {
+        Pattern pattern = Pattern.compile( PATTERN );
+        Matcher matcher = pattern.matcher(args.get(0));
 
         while (matcher.find()) {
             System.out.println("Full match: " + matcher.group(0));

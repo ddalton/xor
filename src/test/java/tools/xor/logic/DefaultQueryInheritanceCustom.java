@@ -27,6 +27,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.db.base.Citation;
 import tools.xor.db.base.MetaEntityState;
@@ -39,6 +40,7 @@ import tools.xor.db.vo.base.MetaEntityTypeVO;
 import tools.xor.db.vo.base.MetaEntityVO;
 import tools.xor.db.vo.base.PatentVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.view.expression.FunctionHandler;
 
 public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 	@Autowired
@@ -137,12 +139,12 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ilike(name, :name)");
-		settings.addFunctionFilter("in(state, :state)");
-		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
-		settings.addFunctionFilter("ge(createdOn, :createdSince)");
-		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
+		settings.addFunction(FunctionHandler.IN, "state", ":state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionType.ASC, "name");
 		
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
@@ -182,12 +184,12 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ilike(name, :name)");
-		settings.addFunctionFilter("in(state, :state)");
-		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
-		settings.addFunctionFilter("ge(createdOn, :createdSince)");
-		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
+		settings.addFunction(FunctionHandler.IN, "state", ":state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
 		settings.addFilter("name", "PATENT1");
@@ -238,12 +240,12 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ilike(name, :name)");
-		settings.addFunctionFilter("in(state.name, :state)");
-		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
-		settings.addFunctionFilter("ge(createdOn, :createdSince)");
-		settings.addFunctionFilter("ge(updatedOn, :updatedSince)");
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
+		settings.addFunction(FunctionHandler.IN, "state", ":state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
 		settings.addFilter("state", "ACTIVE");
@@ -294,11 +296,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ilike(name, :name)");
-		settings.addFunctionFilter("in(state.name, :state)");
-		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
-		settings.addFunctionFilter("lt(createdOn, :createdBefore)");
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
+		settings.addFunction(FunctionHandler.IN, "state", ":state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdBefore");
+		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
 		settings.addFilter("createdBefore", today);
@@ -360,11 +362,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ilike(name, :name)");
-		settings.addFunctionFilter("in(state.name, :state)");
-		settings.addFunctionFilter("equal(ownedBy.name, :owner)");
-		settings.addFunctionFilter("between(createdOn, :createdFrom, :createdTo)");
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
+		settings.addFunction(FunctionHandler.IN, "state", ":state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
+		settings.addFunction(FunctionHandler.BETWEEN, "createdOn", ":createdFrom", ":createdTo");
+		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by date
 		Date yesterday = new Date();
@@ -431,7 +433,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionType.ASC, 1, "name");
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntityVO input = new MetaEntityVO();
@@ -443,7 +445,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		assert(toList.size() == 3);		
 
 		settings = new Settings();
-		settings.addFunctionFilter("asc(name)", 1);
+		settings.addFunction(FunctionType.ASC, 1, "name");
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		settings.setLimit(2);
 		toList = aggregateService.query(input, settings);

@@ -46,34 +46,6 @@ public class DenormalizedQueryOperation extends QueryOperation {
 	private List<Object[]> result = new ArrayList<Object[]>();
 
 	@Override
-	public void execute (CallInfo callInfo)
-	{
-		BusinessObject sourceEntity = (BusinessObject)callInfo.getInput();
-		DataAccessService das = sourceEntity.getObjectCreator().getDAS();
-		QueryTransformer qb = das.getQueryBuilder();
-
-		// Always use the REFERENCE type
-		Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ?
-			((BusinessObject)callInfo.getInput()).getDomainType() :
-			getNarrowedClass(das, callInfo.getSettings());
-		QueryTree<QueryPiece, InterQuery< QueryPiece>> queryTree = callInfo.getSettings().getView().getEntityView(
-			referenceType,
-			callInfo.getSettings().doNarrow());
-
-		// We do not support Native SQL queries with sub-branches
-		if (queryTree.getOutEdges(queryTree.getRoot()).size() > 1) {
-			throw new RuntimeException("Denormalized queries not supported with sub-branch views");
-		}
-
-		qb.init(
-			(BusinessObject)callInfo.getInput(),
-			queryTree.getRoot(),
-			callInfo.getSettings().getAdditionalFilters());
-		Query query = createQuery(queryTree.getRoot(), callInfo, qb);
-		execute(query, callInfo.getSettings());
-	}
-
-	@Override
 	public void execute(Settings settings, DataAccessService das) {
 		QueryTransformer qb = das.getQueryBuilder();
 		Query query = createQuery(settings, qb);

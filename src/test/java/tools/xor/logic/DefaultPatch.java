@@ -27,12 +27,12 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.db.base.Consultant;
 import tools.xor.db.vo.base.ConsultantVO;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.service.AggregateManager;
-import tools.xor.util.ObjectCreator;
 
 public class DefaultPatch extends AbstractDBTest {
 	@Autowired
@@ -122,7 +122,7 @@ public class DefaultPatch extends AbstractDBTest {
 		System.out.println("View object: " + settings.getView());
 
 		// We order by name so the first person is guaranteed to end with "0"
-		settings.addFunctionFilter("asc(name)");
+		settings.addFunction(FunctionType.ASC, "name");
 		List<?> toList = aggregateManager.query(person, settings);
 
 		assert(toList.size() == 10);
@@ -193,7 +193,7 @@ public class DefaultPatch extends AbstractDBTest {
 		PersonVO person = new PersonVO();
 		settings = new Settings();
 		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
-		settings.addFunctionFilter("asc(name)");
+		settings.addFunction(FunctionType.ASC, "name");
 		List<?> toList = aggregateManager.query(person, settings);
 
 		assert(toList.size() == 10);

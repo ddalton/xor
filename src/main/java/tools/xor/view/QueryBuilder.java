@@ -24,12 +24,11 @@ import org.apache.log4j.Logger;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
-import tools.xor.service.AggregateManager;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
-import tools.xor.view.expression.AscFunctionExpression;
+import tools.xor.view.expression.AscHandler;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +56,7 @@ public class QueryBuilder
 
     private QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree;
     private boolean             addIdentifier;
-    List<Filter> consolidatedFilters = new LinkedList<>();
+    List<Function> consolidatedFunctions = new LinkedList<>();
 
     public QueryBuilder(QueryTree queryTree) {
         this.queryTree = queryTree;
@@ -90,24 +89,24 @@ public class QueryBuilder
 
         // Consolidate the user supplied filters and the filters
         // defined on the view
-        List<Filter> temp = new LinkedList<>();
-        for(Filter filter: settings.getAdditionalFilters()) {
-            Filter narrowedFilter = filter.copy();
-            temp.add(narrowedFilter);
+        List<Function> temp = new LinkedList<>();
+        for(Function function : settings.getAdditionalFunctions()) {
+            Function narrowedFunction = function.copy();
+            temp.add(narrowedFunction);
         }
-        if(queryTree.getView() != null && queryTree.getView().getFilter() != null) {
-            temp.addAll(queryTree.getView().getFilter());
+        if(queryTree.getView() != null && queryTree.getView().getFunction() != null) {
+            temp.addAll(queryTree.getView().getFunction());
         }
 
         // We populate only those filters for while all the attributes can be found in
         // the QueryPiece
-        consolidatedFilters = new LinkedList<>();
-        for(Filter filter: temp) {
-            if(filter.normalize(qp)) {
-                consolidatedFilters.add(filter);
+        consolidatedFunctions = new LinkedList<>();
+        for(Function function : temp) {
+            if(function.normalize(qp)) {
+                consolidatedFunctions.add(function);
             }
         }
-        Collections.sort(consolidatedFilters);
+        Collections.sort(consolidatedFunctions);
 
 
         qp.generateFields(settings, this.queryTree);
@@ -115,7 +114,7 @@ public class QueryBuilder
         // The following steps are not necessary if a custom query is being used
         StringBuilder oql = new StringBuilder(constructOQL(settings.getPersistenceOrchestrator(), qp));
         oql.append(buildWhereClause(settings, qp));
-        oql.append(buildOrderClause(qp));
+        oql.append(buildOrderClause(qp, settings.getPersistenceOrchestrator()));
 
         final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
         if(vb.isDebugEnabled()) {
@@ -138,7 +137,7 @@ public class QueryBuilder
             if(!SELECT_CLAUSE.equals(OQL.toString())) {
                 OQL.append(COMMA_DELIMITER);
             }
-            OQL.append(field.getOQL());
+            OQL.append(field.getOQL(po.getQueryCapability()));
         }
 
         // FROM clause
@@ -202,19 +201,19 @@ public class QueryBuilder
             parameterMap.put(parameter.name, parameter);
         }
 
-		for(Filter filter: consolidatedFilters) {
+		for(Function function : consolidatedFunctions) {
 
 			// Order By filters are handled separately
-			if(filter.isOrderBy()) {
+			if(function.isOrderBy()) {
 				continue;
 			}
 
 			// Filter is skipped
-			if(!filter.isFilterIncluded(userParams, normParams, parameterMap))
+			if(!function.isFilterIncluded(userParams, normParams, parameterMap))
 				continue;
 
 			addWhereStep(result);
-			result.append(filter.getQueryString());
+			result.append(function.getQueryString());
 		}
 
 		// Set parameters referred from native query or join clause
@@ -278,17 +277,17 @@ public class QueryBuilder
             return;
         }
 
-        List<Filter> orderBy = new LinkedList<Filter>();
-        for(Filter filter: this.consolidatedFilters) {
-            if(filter.isOrderBy()) {
-                orderBy.add(filter);
+        List<Function> orderBy = new LinkedList<Function>();
+        for(Function function : this.consolidatedFunctions) {
+            if(function.isOrderBy()) {
+                orderBy.add(function);
             }
         }
 
         addWhereStep(queryString);
         queryString.append( " ( ");
         for(int i = 0; i < orderBy.size(); i++) {
-            Filter f = orderBy.get(i);
+            Function f = orderBy.get(i);
             // AND ( B > pageColumn.B OR (B = pageColumn.B AND I > pageColumn.I))
 
             if(i == 0) {
@@ -305,20 +304,20 @@ public class QueryBuilder
         queryString.append( " ) ");
     }
 
-    private String getDirection(Filter filter) {
-        if(filter.functionExpression instanceof AscFunctionExpression) {
+    private String getDirection(Function function) {
+        if(function.functionHandler instanceof AscHandler) {
             return " > ";
         } else {
             return " < ";
         }
     }
 
-    private String getEqualOrderByExp(int endPos, List<Filter> orderBy) {
+    private String getEqualOrderByExp(int endPos, List<Function> orderBy) {
         // 	Create an equals condition for all the orderBy fields until endPos
 
         StringBuilder result = new StringBuilder("");
         for(int i = 0; i <= endPos; i++) {
-            Filter f = orderBy.get(i);
+            Function f = orderBy.get(i);
             if(i > 0) {
                 result.append(" AND ");
             }
@@ -369,24 +368,24 @@ public class QueryBuilder
 		}
     }
 
-    protected String buildOrderClause( QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+    protected String buildOrderClause( QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, PersistenceOrchestrator po) {
         StringBuilder result = new StringBuilder();
 
         Map<Integer, String> orderClauses = new TreeMap<>();
         for(QueryField field: qp.getFields()) {
 			if(field.getPath().endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE)) {
-				String columnString = field.getOQL();
+				String columnString = field.getOQL(po.getQueryCapability());
 				orderClauses.put(field.getAttributeLevel(), columnString);
 			}
 		}
 
 		// filter order clauses
 		StringBuilder filterOrderBy = new StringBuilder();
-		for(Filter filter: this.consolidatedFilters) {
-			if(filter.isOrderBy()) {
+		for(Function function : this.consolidatedFunctions) {
+			if(function.isOrderBy()) {
 				if(filterOrderBy.length() > 0)
 					filterOrderBy.append(COMMA_DELIMITER);
-				filterOrderBy.append(filter.getQueryString());
+				filterOrderBy.append(function.getQueryString());
 			}
 		}
 

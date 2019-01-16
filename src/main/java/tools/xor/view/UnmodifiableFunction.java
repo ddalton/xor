@@ -21,70 +21,54 @@ package tools.xor.view;
 
 import java.util.Map;
 
-public class UnmodifiableFilter extends Filter
+public class UnmodifiableFunction extends Function
 {
-    private Filter filter;
+    private Function function;
 
-    public UnmodifiableFilter (Filter filter)
+    public UnmodifiableFunction (Function function)
     {
-        this.filter = filter;
+        this.function = function;
     }
 
-    public Filter copy() {
-        return new Filter(filter);
+    public Function copy() {
+        return new Function(function);
     }
 
     public boolean isOrderBy() {
-        return filter.isOrderBy();
-    }
-
-    private void raiseException ()
-    {
-        throw new UnsupportedOperationException(
-            "Changes are not allowed on the filter, make a copy of the view to make necessary changes.");
+        return function.isOrderBy();
     }
 
     public String getQueryString ()
     {
-        return filter.getQueryString();
+        return function.getQueryString();
     }
 
     public String getNormalizedName ()
     {
-        return filter.getNormalizedName();
-    }
-
-    public String getExpression ()
-    {
-        return filter.getExpression();
-    }
-
-    public void setExpression (String expression)
-    {
-        raiseException();
+        return function.getNormalizedName();
     }
 
     public String getAttribute ()
     {
-        return filter.getAttribute();
+        return function.getAttribute();
     }
 
 
     public Object getNormalizedValue (Object object)
     {
-        return filter.getNormalizedValue(object);
+        return function.getNormalizedValue(object);
     }
 
     public boolean isFilterIncluded (Map<String, Object> originalFilters,
                                      Map<String, Object> filters,
                                      Map<String, Parameter> parameterMap)
     {
-        return filter.isFilterIncluded(originalFilters, filters, parameterMap);
+        return function.isFilterIncluded(originalFilters, filters, parameterMap);
     }
 
     @Override
-    public int compareTo (Filter o)
+    public int compareTo (Function o)
     {
-        return filter.compareTo(o);
+        return function.compareTo(o);
     }
 }

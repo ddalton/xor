@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -67,8 +68,9 @@ import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.BindParameter;
-import tools.xor.view.Filter;
+import tools.xor.view.Function;
 import tools.xor.view.NativeQuery;
+import tools.xor.view.ObjectResolver;
 import tools.xor.view.View;
 import tools.xor.view.ViewType;
 
@@ -169,7 +171,7 @@ public class Settings {
 	private boolean denormalized; // specifies if the query should return a denormalized result
 	                              // Also can be used for update, specifying if the input data is denormalized
 	
-	private List<Filter> additionalFilters = new ArrayList<Filter>();
+	private List<Function> additionalFunctions = new ArrayList<Function>();
 
 	private Class<?> narrowedClass;
 	
@@ -196,6 +198,8 @@ public class Settings {
 	
 	// User provided data that is made available to callbacks
 	private Object externalData;
+
+	private ObjectResolver.Type resolverType;
 	
 	// User provided data that is efficiently obtained
 	private PrefetchCache prefetchCache;
@@ -599,6 +603,10 @@ public class Settings {
 		return params;
 	}
 
+	public ObjectResolver.Type getResolverType () {
+		return resolverType;
+	}
+
 	public void setParams (Map<String, Object> params) {
 		this.params = params;
 	}
@@ -713,18 +721,50 @@ public class Settings {
 		narrowedClass = typeMapper.toDomain(narrowedClass);
 	}
 
-	public List<Filter> getAdditionalFilters() {
-		return this.additionalFilters;
+	public List<Function> getAdditionalFunctions () {
+		return this.additionalFunctions;
 	}
 	
-	public void addFunctionFilter(String filterExpression) {
-		addFunctionFilter(filterExpression, 0);
+	public Function addFunction (FunctionType type, String arg) {
+		List<String> args = new LinkedList<>();
+		args.add(arg);
+		return addFunction(null, type, 1, args);
+	}
+
+	public Function addFunction (String name, String arg1, String arg2) {
+		List<String> args = new LinkedList<>();
+		args.add(arg1);
+		args.add(arg2);
+
+		return addFunction(name, FunctionType.COMPARISON, 1, args);
+	}
+
+	public Function addFunction (String name, String arg1, String arg2, String arg3) {
+		List<String> args = new LinkedList<>();
+		args.add(arg1);
+		args.add(arg2);
+		args.add(arg3);
+
+		return addFunction(name, FunctionType.COMPARISON, 1, args);
 	}
 	
-	public void addFunctionFilter(String filterExpression, int position) {
-		Filter newFilter = new Filter(filterExpression, position);
-		this.additionalFilters.add(newFilter);
-	}	
+	public Function addFunction (FunctionType type, int position, String arg) {
+		List<String> args = new LinkedList<>();
+		args.add(arg);
+		return addFunction(null, type, position, args);
+	}
+
+	public Function addFunction (String name, FunctionType type, int position, List<String> args) {
+		// We prohibit directly adding condition by the user for security reasons
+		if(type == FunctionType.CONDITION) {
+			throw new IllegalStateException("Direct addition of query condition is prohibited from Settings");
+		}
+
+		Function newFunction = new Function(name, type, position, args);
+		this.additionalFunctions.add(newFunction);
+
+		return newFunction;
+	}
 
 	public Integer getOffset() {
 		return offset;

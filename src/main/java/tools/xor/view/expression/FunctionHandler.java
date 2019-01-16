@@ -25,16 +25,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.util.ClassUtil;
+public abstract class FunctionHandler
+{
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-public abstract class AbstractFunctionExpression implements Expression {
-	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
+	public static final String ILIKE = "ILIKE";
+	public static final String IN = "IN";
+	public static final String EQUAL = "EQUAL";
+	public static final String GE = "GE";
+	public static final String GT = "GT";
+	public static final String LE = "LE";
+	public static final String LT = "LT";
+	public static final String BETWEEN = "BETWEEN";
 
 	protected String       expression;
 	protected List<String> parameterName = new ArrayList<String>();
@@ -43,39 +49,19 @@ public abstract class AbstractFunctionExpression implements Expression {
 	// If the value is null, then the normalized name has not been initialized
 	protected Map<String, String> normalizedNames = new HashMap<>();
 
-	protected abstract String getAttributePattern();
-	public abstract String getQueryString();
+
+	public abstract void init(List<String> args);
+
+	public String getQueryString() {
+		return "";
+	}
 
 	public String getNormalizedAttributeName() {
 		return normalizedNames.values().iterator().next();
 	}
 
-	public boolean isOrderBy() {
-		return false;
-	}
-
 	public String getAttributeName() {
 		return normalizedNames.keySet().iterator().next();
-	}
-
-	public String getExpression() {
-		return expression;
-	}
-
-	public void setExpression(String value) {
-		this.expression = value;
-	}
-
-	public AbstractFunctionExpression copy() {
-		AbstractFunctionExpression result;
-		try {
-			result = this.getClass().newInstance();
-		} catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
-		}
-		result.setExpression(this.getExpression());
-
-		return result;
 	}
 
 	public List<String> getParameters() {
@@ -87,24 +73,6 @@ public abstract class AbstractFunctionExpression implements Expression {
 			throw new RuntimeException("Wrong number of parameters for this function expression");
 
 		return parameterName.get(0);
-	}
-
-	public void init() {
-		// An enhancement would be to return a set of attributes if an expression consists of multiple filter functions			
-		Pattern pattern = Pattern.compile( getAttributePattern() ); 
-		Matcher matcher = pattern.matcher(getExpression());
-		matcher.find();
-
-		if(matcher.matches()) {
-			int groupCount = matcher.groupCount();
-			if(groupCount > 1)
-				normalizedNames.put(matcher.group(2), null);
-			if(groupCount > 2) {
-				int i = 2;
-				while(i++ < groupCount)
-					parameterName.add(matcher.group(i));
-			}
-		} 
 	}
 
 	public Set<String> getAttributes() {

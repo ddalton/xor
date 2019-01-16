@@ -109,7 +109,7 @@ public interface View {
 	 * Retrieve the filters defined on this view. Currently used only in queries.
 	 * @return list of filters
 	 */
-	public List<Filter> getFilter();
+	public List<Function> getFunction ();
 
 	/**
 	 * Allows a user OQL to be used instead of the system generated OQL query.

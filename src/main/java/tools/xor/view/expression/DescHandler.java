@@ -20,33 +20,29 @@
 package tools.xor.view.expression;
 
 import java.util.Comparator;
+import java.util.List;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
 
-public class DescFunctionExpression extends AbstractFunctionExpression implements Comparator {
-
-	@Override
-	protected String getAttributePattern() {
-		return "^.*\\((\\s*)([\\w|\\.]+).*$";
-	}
+public class DescHandler extends FunctionHandler implements Comparator {
 
 	@Override
 	public String getQueryString() {
 		return getNormalizedAttributeName() + " DESC";
 	}
-	
+
 	@Override
-	public boolean isOrderBy() {
-		return true;
+	public void init(List<String> args) {
+		normalizedNames.put(args.get(0), null);
 	}
 	
 	@Override
 	public boolean equals(Object o) {
-		if(!DescFunctionExpression.class.isAssignableFrom(o.getClass()))
+		if(!DescHandler.class.isAssignableFrom(o.getClass()))
 			return false;
 		
-		DescFunctionExpression other = (DescFunctionExpression) o;
+		DescHandler other = (DescHandler) o;
 		return this.getAttributeName().equals(other.getAttributeName());
 	}
 	

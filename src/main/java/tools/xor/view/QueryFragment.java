@@ -20,16 +20,24 @@
 package tools.xor.view;
 
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
+import tools.xor.util.InterQuery;
+import tools.xor.util.IntraQuery;
 import tools.xor.util.Vertex;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class QueryFragment implements Vertex
 {
     public static final String ROOT_NAME = "<ROOT>";
+    public static final String ENTITY_TYPE_ATTRIBUTE  = "TYPE_";
+    public static final String MAP_KEY_ATTRIBUTE     = "KEY_";
+    public static final String LIST_INDEX_ATTRIBUTE  = "INDEX_";
+    public static final String USERKEY_ATTRIBUTE     = "USERKEY_";
 
     EntityType entityType;
     String ancestorPath;
@@ -130,9 +138,16 @@ public class QueryFragment implements Vertex
      * the given position.
      *
      * @param position from which the fields are present
+     * @param settings describing the result structure (SHARED or DISTINCT)
      * @return the updated position
      */
-    public int generateFields(int position) {
+    /**
+     *
+     * @param position
+
+     * @return
+     */
+    public int generateFields(int position, ObjectResolver.Type type, QueryPiece queryPiece) {
         queryFields = new LinkedList<>();
 
         for(String path: this.paths) {
@@ -140,6 +155,49 @@ public class QueryFragment implements Vertex
         }
         for(String path: this.simpleCollectionPaths) {
             queryFields.add(new QueryField(path, position++, this));
+        }
+
+        // Add the id if we need to share the object in the result
+        if(type == ObjectResolver.Type.SHARED) {
+            // add surrogate key
+            String idName = getEntityType().getIdentifierProperty().getName();
+            if(!paths.contains(idName)) {
+                queryFields.add(new QueryField(idName, position++, this, true));
+            }
+
+            // add USERKEY
+            if( getEntityType().getNaturalKey() != null ) {
+                for(String key: getEntityType().getExpandedNaturalKey()) {
+                    if(!paths.contains(key)) {
+                        queryFields.add(new QueryField(key, position++, this, true));
+                    }
+                }
+            }
+        }
+
+        Iterator<IntraQuery<QueryFragment>> iter = queryPiece.getInEdges(this).iterator();
+
+        if(iter.hasNext()) {
+            IntraQuery<QueryFragment> incomingEdge = iter.next();
+            ExtendedProperty property = (ExtendedProperty)incomingEdge.getProperty();
+            if (incomingEdge.getProperty().isMany()) {
+                if (property.isList()) {
+                    // add INDEX
+                    queryFields.add(new QueryField(LIST_INDEX_ATTRIBUTE, position++, this, true));
+                }
+                else if (property.isMap()) {
+                    // add KEY
+                    queryFields.add(new QueryField(MAP_KEY_ATTRIBUTE, position++, this, true));
+                }
+                // add COLLECTION_USERKEY
+                if (property.getCollectionKey() != null) {
+                    for (String key : property.getCollectionKey()) {
+                        if (!paths.contains(key)) {
+                            queryFields.add(new QueryField(key, position++, this, true));
+                        }
+                    }
+                }
+            }
         }
 
         return position;

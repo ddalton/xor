@@ -19,15 +19,24 @@
 
 package tools.xor.view.expression;
 
-public class BetweenFunctionExpression extends AbstractFunctionExpression {
-	
-	@Override
-	protected String getAttributePattern() {
-		return "^.*\\((\\s*)([\\w|\\.]+)\\s*,[\\s\"']*:(\\w+)[\\s\"']*,[\\s\"']*:(\\w+).*$";    // between(updatedOn, ":updatedFrom", ":updatedTo")
+import java.util.List;
+
+public class IlikeFunctionHandler extends FunctionHandler
+{
+
+	@Override public void init (List<String> args)
+	{
+		normalizedNames.put(args.get(0), null);
+		parameterName.add(args.get(1));
 	}
 
 	@Override
 	public String getQueryString() {
-		return getNormalizedAttributeName() + " BETWEEN :" + parameterName.get(0) + " AND :" + parameterName.get(1);
-	}	
+		return "LOWER(" + getNormalizedAttributeName() + ") LIKE :" + getParameterName();
+	}
+	
+	@Override
+	public Object getNormalizedValue(Object object) {
+		return object.toString().toLowerCase();
+	}		
 }

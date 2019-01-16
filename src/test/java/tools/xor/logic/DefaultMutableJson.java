@@ -29,6 +29,7 @@ import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.EntitySize;
 import tools.xor.EntityType;
+import tools.xor.FunctionType;
 import tools.xor.ImmutableJsonProperty;
 import tools.xor.OpenType;
 import tools.xor.Settings;
@@ -521,7 +522,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		
 
 		Settings settings = new Settings();
-		settings.addFunctionFilter("ASC(name)", 1);
+		settings.addFunction(FunctionType.ASC, 1, "name");
 		settings.setView(view);		
 		settings.expand(new AssociationSetting(TaskDetails.class));
 		settings.setEntityClass(Task.class);
@@ -888,7 +889,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 
 		settings = new Settings();
-		settings.addFunctionFilter("asc(name)", 1);		
+		settings.addFunction(FunctionType.ASC, 1, "name");
 		settings.setView(view);		
 		settings.setEntityClass(Task.class);		
 		settings.setDenormalized(true);
@@ -1018,8 +1019,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		assert(spJson.length() == 2);
 		
 		settings = new Settings();
-		settings.addFunctionFilter("asc(supplierParts.partNo)", 1);	
-		settings.addFunctionFilter("asc(supplierParts.supplierNo)", 2);	
+		settings.addFunction(FunctionType.ASC, 1, "supplierParts.partNo");
+		settings.addFunction(FunctionType.ASC, 2, "supplierParts.supplierNo");
 		settings.setView(view);		
 		settings.setEntityClass(P.class);		
 		List<?> result = aggregateService.query(null, settings);	

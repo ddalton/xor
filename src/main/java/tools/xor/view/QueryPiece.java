@@ -20,7 +20,6 @@
 package tools.xor.view;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,16 +35,15 @@ import org.apache.log4j.Logger;
 
 import tools.xor.AbstractBO;
 import tools.xor.BusinessObject;
+import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.AggregateManager;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
-import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
@@ -67,7 +65,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	private        String                         name;
 	private        AggregateView                  aggregateView;
 	private        boolean                        narrow;
-	private        List<Filter>                   filters = new ArrayList<Filter>();
+	private        List<Function> functions = new ArrayList<Function>();
 	
 	// Related to constructing child Query Branches
 	private        List<QueryPiece>                subBranches;  // split according to parallel collections.
@@ -314,7 +312,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 			return null;
 	}	
 
-	public BusinessObject getQueryRoot(Object obj, BusinessObject entity) throws Exception {
+	public BusinessObject getRootObject (Object obj, BusinessObject entity) throws Exception {
 		BusinessObject result = null;
 
 		if(ClassUtil.getDimensionCount(obj) == 1) {
@@ -336,7 +334,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 			// find and create data object
 			if(idValue != null) {
-				result = ((AbstractBO)entity).getBySurrogateKey(idValue, this.aggregateType);
+				result = entity.getBySurrogateKey(idValue, this.aggregateType);
 			}
 			if(result == null) {
 				if(logger.isDebugEnabled()) {
@@ -359,6 +357,22 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		for(int i = 0; i < queryResultRow.length; i++) {
 			ColumnMeta columnMeta = metaMap.get(i);
 			propertyResult.put(columnMeta.getAttributePath(), queryResultRow[i]);
+		}
+
+		for(String propertyPath: propertyResult.keySet()) {
+			ColumnMeta meta = augmentedAttributes.get(propertyPath);
+			if(meta.getViewProperty().isDynamic())
+				continue;
+
+			// Set the value and create any intermediate objects if necessary
+			root.set(QueryProperty.unqualifyProperty(propertyPath), propertyResult, (EntityType) this.aggregateType);
+		}
+	}
+
+	public void resolveField(BusinessObject root, Object[] queryResultRow) throws Exception {
+		Map<String, Object> propertyResult = new HashMap<String, Object>();
+		for(QueryField field: this.fields) {
+			propertyResult.put(field.getPath(), queryResultRow[field.getPosition()]);
 		}
 
 		for(String propertyPath: propertyResult.keySet()) {
@@ -435,13 +449,13 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		if(cView == null && parent != null)
 			cView = parent.getContentView();
 
-		if(cView == null || cView.getFilter() == null)
+		if(cView == null || cView.getFunction() == null)
 			return;
 
 		// Copy the relevant filters from the content view
-		for(Filter filter: cView.getFilter()) {
-			Filter narrowedFilter = filter.copy();
-			filters.add(narrowedFilter);	
+		for(Function function : cView.getFunction()) {
+			Function narrowedFunction = function.copy();
+			functions.add(narrowedFunction);
 		}		
 	}	
 	
@@ -459,9 +473,9 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		setAugmentedAttributes();
 
 		// Create view property objects for attributes in the filter list that are not in the select list
-		for(Filter filter: filters) {
-			if(!containsProperty(filter.getAttribute())) // should not be fetched
-				addProperty(filter.getAttribute(), true, false, null);
+		for(Function function : functions) {
+			if(!containsProperty(function.getAttribute())) // should not be fetched
+				addProperty(function.getAttribute(), true, false, null);
 		}
 	}
 	
@@ -740,12 +754,12 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		this.name = name;
 	}	
 	
-	public List<Filter> getFilters() {
-		return filters;
+	public List<Function> getFunctions () {
+		return functions;
 	}
 
-	public void setFilters(List<Filter> filters) {
-		this.filters = filters;
+	public void setFunctions (List<Function> functions) {
+		this.functions = functions;
 	}	
 
 	public View getContentView() {
@@ -863,7 +877,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		// We can have the fields in any position, but we need to know what the position is
 		int position = 0;
 		for(QueryFragment fragment: getVertices()) {
-			position = fragment.generateFields(position);
+			position = fragment.generateFields(position, settings.getResolverType(), this);
 		}
 
 		// We now collect the fields and sort them
@@ -912,7 +926,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	public String getOQLName(String path) {
 		if(getRoot().getAncestorPath() == null || path.startsWith(getRoot().getAncestorPath())) {
 			QueryField field = findField(getRoot(), path);
-			return field.getOQL();
+			return field.getOQL(null);
 		}
 
 		return null;
@@ -920,6 +934,28 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 	public List<QueryField> getFields() {
 		return this.fields;
+	}
+
+	public List<String> getFieldNames() {
+		List<String> result = new ArrayList<>(this.fields.size());
+
+		for(QueryField qf: this.fields) {
+			result.add(qf.getPath());
+		}
+
+		return result;
+	}
+
+	protected Query prepare(CallInfo callInfo, ObjectResolver resolver)
+	{
+		Map<String, Object> params = new HashMap<String, Object>();
+		if(callInfo.getSettings().getParams() != null) {
+			params.putAll(callInfo.getSettings().getParams());
+		}
+
+		resolver.preProcess(this, callInfo.getSettings(), this.query, params);
+
+		return query;
 	}
 }
 

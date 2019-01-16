@@ -68,7 +68,7 @@ import tools.xor.util.PersistenceType;
 import tools.xor.util.excel.ExcelExporter;
 import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.AggregateViewFactory;
-import tools.xor.view.Filter;
+import tools.xor.view.Function;
 import tools.xor.view.TypeVersion;
 import tools.xor.view.View;
 
@@ -1183,23 +1183,23 @@ public class AggregateManager implements Xor
 
 			// Ensure we capture the order by field values for the last object in the nextToken
 			Map<String, Object> nextTokenValues = new HashMap<String, Object>();
-			List<Filter> consolidated = new ArrayList<Filter>(settings.getAdditionalFilters());
+			List<Function> consolidated = new ArrayList<Function>(settings.getAdditionalFunctions());
 			// Also Look for the filters in the view
-			if (settings.getView().getFilter() != null) {
-				consolidated.addAll(settings.getView().getFilter());
+			if (settings.getView().getFunction() != null) {
+				consolidated.addAll(settings.getView().getFunction());
 			}
 
-			for (Filter filter : consolidated) {
-				if (filter.isOrderBy()) {
+			for (Function function : consolidated) {
+				if (function.isOrderBy()) {
 					if (lastObject instanceof BusinessObject) {
 						nextTokenValues.put(
-							filter.getAttribute(),
-							((BusinessObject)lastObject).get(filter.getAttribute()));
+							function.getAttribute(),
+							((BusinessObject)lastObject).get(function.getAttribute()));
 					}
 					else if (lastObject.getClass().isArray()) {
 						nextTokenValues.put(
-							filter.getAttribute(),
-							((Object[])lastObject)[colPositions.get(filter.getAttribute())]);
+							function.getAttribute(),
+							((Object[])lastObject)[colPositions.get(function.getAttribute())]);
 					}
 				}
 			}

@@ -19,92 +19,91 @@
 
 package tools.xor.view;
 
+import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlTransient;
 
+import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.util.IntraQuery;
-import tools.xor.view.expression.AbstractFunctionExpression;
-import tools.xor.view.expression.ExpressionFactory;
+import tools.xor.view.expression.FunctionHandler;
+import tools.xor.view.expression.FunctionHandlerFactory;
 
-public class Filter implements Comparable<Filter> {
-
-	protected String expression;
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Function implements Comparable<Function> {
 	
 	@XmlAttribute
 	protected int position;
 
 	@XmlAttribute
-	protected String name;
+	protected String name; // Used in comparison and custom functions
 
-	@XmlAttribute
-	protected String alias;
-	
-	protected AbstractFunctionExpression functionExpression;
+	@XmlAttribute(required = true)
+	protected FunctionType type;
+
+	protected List<String> args;
+
+	@XmlTransient
+	protected FunctionHandler functionHandler;
 	
 	/**
 	 * No-args constructor required for Unmarshalling purpose. Don't use this directly.
 	 */
-	public Filter() {
+	public Function () {
 	}
 
-	public Filter(Filter f) {
-		this(f.expression, f.position);
-		this.name = f.name;
-		this.alias = f.alias;
+	public Function (Function f) {
+		this(f.name, f.type, f.position, f.args);
 	}
 	
-	public Filter(String expression, int position) {
-		init(expression);
+	public Function (String name, FunctionType type, int position, List<String> args) {
+		this.name = name;
+		this.type = type;
+		this.args = args;
 		this.position = position;
+
+		init();
 	}	
 	
-	private void init(String expression) {
-		this.expression = expression;
-		if(expression != null) {
-			this.functionExpression = ExpressionFactory.getFunctionExpression(expression);
-			if(this.functionExpression != null) {
-				this.functionExpression.init();
-			}
-		} else {
-			this.functionExpression = null;
+	private void init() {
+		this.functionHandler = FunctionHandlerFactory.getFunctionHandler(type, name);
+		if(this.functionHandler != null) {
+			this.functionHandler.init(this.args);
 		}
 	}
 
-	public Filter copy() {
-		return new Filter(this);
+	public String getName ()
+	{
+		return name;
+	}
+
+	public void setName (String name)
+	{
+		this.name = name;
+	}
+
+	public Function copy() {
+		return new Function(this);
 	}
 
 	public boolean isOrderBy() {
-		return functionExpression.isOrderBy();
-	}
-
-	public boolean isAliasFilter() {
-		return alias != null && !"".equals(alias.trim());
+		return type == FunctionType.ASC || type == FunctionType.DESC;
 	}
 
 	public String getQueryString() {
-		if(isAliasFilter()) {
-			return null;
-		}
-		return functionExpression != null ? functionExpression.getQueryString() : expression;
+		return functionHandler != null ? functionHandler.getQueryString() : "";
 	}
 
 	public String getNormalizedName() {
-		return functionExpression.getNormalizedAttributeName();
-	}
-
-	public String getExpression() {
-		return expression;
-	}
-	
-	public void setExpression(String expression) {
-		init(expression);
+		return functionHandler.getNormalizedAttributeName();
 	}
 
 	public String getAttribute() {
-		return functionExpression.getAttributeName();
+		return functionHandler.getAttributeName();
 	}
 
 	/**
@@ -116,10 +115,10 @@ public class Filter implements Comparable<Filter> {
 	public boolean normalize(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
 		boolean all = true;
 
-		for(String path: functionExpression.getAttributes()) {
+		for(String path: functionHandler.getAttributes()) {
 			String oqlname = qp.getOQLName(path);
 			if(oqlname != null) {
-				functionExpression.setNormalizedName(path, oqlname);
+				functionHandler.setNormalizedName(path, oqlname);
 			} else {
 				all = false;
 			}
@@ -130,7 +129,7 @@ public class Filter implements Comparable<Filter> {
 
 
 	public Object getNormalizedValue(Object object) {
-		return functionExpression.getNormalizedValue(object);
+		return functionHandler.getNormalizedValue(object);
 	}	
 
 	/**
@@ -144,7 +143,7 @@ public class Filter implements Comparable<Filter> {
 	public boolean isFilterIncluded(Map<String, Object> userParams, Map<String, Object> normParam, Map<String, Parameter> parameterMap) {
 		boolean result = false;
 		
-		for(String parameterName: functionExpression.getParameters()) {
+		for(String parameterName: functionHandler.getParameters()) {
 
 			Parameter param =  parameterMap.get(parameterName);
 			if(!userParams.containsKey(Settings.encodeParam(parameterName)) ) { // parameter is not set
@@ -166,7 +165,7 @@ public class Filter implements Comparable<Filter> {
 	}
 
 	@Override
-	public int compareTo(Filter o) {
+	public int compareTo(Function o) {
 		return position-o.position;
 	}
 }

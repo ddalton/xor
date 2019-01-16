@@ -19,14 +19,13 @@
 
 package tools.xor;
 
+import tools.xor.exception.AmbiguousMatchException;
+import tools.xor.exception.PropertyNotFoundException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import tools.xor.exception.AmbiguousMatchException;
-import tools.xor.exception.PropertyNotFoundException;
-import tools.xor.view.QueryProperty;
 
 public class ClassResolver {
 	private BasicType type;
@@ -43,8 +42,8 @@ public class ClassResolver {
 			initProperties();
 
 		List<PropertyResolver> result = new ArrayList<ClassResolver.PropertyResolver>();
-		String rootName = QueryProperty.getRootName(propertyPath);
-		String remainingPath = QueryProperty.getNext(propertyPath);
+		String rootName = Settings.getRootName(propertyPath);
+		String remainingPath = Settings.getNext(propertyPath);
 
 		// found a unique result, add the ClassResolver and go to the next property in the property path
 		ClassResolver root = uniqueProperties.get(rootName);

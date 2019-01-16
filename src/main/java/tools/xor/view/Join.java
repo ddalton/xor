@@ -19,21 +19,10 @@
 
 package tools.xor.view;
 
-import java.util.List;
-
-
 public class Join {
 
 	protected String          entity;
-	protected List<Parameter> parameter;   // The parameters specified in the filter or in the native query	
-	
-	public List<Parameter> getParameter() {
-		return parameter;
-	}
-	public void setParameter(List<Parameter> parameter) {
-		this.parameter = parameter;
-	}
-	
+
 	public String getEntity() {
 		return entity;
 	}

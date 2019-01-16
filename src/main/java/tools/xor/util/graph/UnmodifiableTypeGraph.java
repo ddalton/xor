@@ -102,10 +102,6 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.dumpState();
 	}
 
-	@Override public List<QueryPiece> getQueryableRegions ()
-	{
-		return typeGraph.getQueryableRegions();
-	}
 
 	@Override public boolean supportsDynamicUpdate ()
 	{

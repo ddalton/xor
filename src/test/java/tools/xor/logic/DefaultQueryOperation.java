@@ -830,7 +830,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("name", "FIX_DEFECTS");
+		settings.setParam("name", "FIX_DEFECTS");
 		settings.setView(aggregateService.getView("TASKFILTER"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
@@ -868,8 +868,8 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("name1", "FIX_DEFECTS");
-		settings.addFilter("name2", "PRIORITIZE_DEFECTS");		
+		settings.setParam("name1", "FIX_DEFECTS");
+		settings.setParam("name2", "PRIORITIZE_DEFECTS");
 		settings.setView(aggregateService.getView("TASKUNIONFILTER"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
@@ -917,8 +917,8 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("name1", "FIX_DEFECTS");
-		settings.addFilter("name2", "PRIORITIZE_DEFECTS");		
+		settings.setParam("name1", "FIX_DEFECTS");
+		settings.setParam("name2", "PRIORITIZE_DEFECTS");
 		settings.setView(aggregateService.getView("TASKUNIONSET"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
@@ -979,8 +979,8 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("name1", "DEFECTS");
-		settings.addFilter("name2", "PRIORITIZE_DEFECTS");		
+		settings.setParam("name1", "DEFECTS");
+		settings.setParam("name2", "PRIORITIZE_DEFECTS");
 		settings.setView(aggregateService.getView("TASKUNIONSET"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
@@ -1082,7 +1082,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("name1", "FIX_DEFECTS");
+		settings.setParam("name1", "FIX_DEFECTS");
 		settings.setView(aggregateService.getView("TASKUNIONOVERLAP"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
@@ -1161,8 +1161,8 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		try {
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFilter("artifactId", artifact.getId());
-		settings.addFilter("propertyName", "PRIORITIZE_DEFECTS");
+		settings.setParam("artifactId", artifact.getId());
+		settings.setParam("propertyName", "PRIORITIZE_DEFECTS");
 		settings.setView(aggregateService.getView("PROPERTY_BY_NAME_AND_ARTIFACT"));		
 		List<?> toList = aggregateService.query(artifact, settings);
 		assert(toList.size() == 1);
@@ -1268,7 +1268,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the offerings
 		Settings settings = new Settings();
-		settings.addFilter("catalogId", catalog.getId());
+		settings.setParam("catalogId", catalog.getId());
 		settings.setView(aggregateService.getView("SERVICESINFO"));	
 		MetaEntity input = new MetaEntity();		
 		List<?> toList = aggregateService.query(input, settings);	

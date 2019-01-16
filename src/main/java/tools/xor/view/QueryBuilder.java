@@ -98,6 +98,8 @@ public class QueryBuilder
             temp.addAll(queryTree.getView().getFunction());
         }
 
+        qp.generateFields(settings, this.queryTree);
+
         // We populate only those filters for while all the attributes can be found in
         // the QueryPiece
         consolidatedFunctions = new LinkedList<>();
@@ -107,9 +109,6 @@ public class QueryBuilder
             }
         }
         Collections.sort(consolidatedFunctions);
-
-
-        qp.generateFields(settings, this.queryTree);
 
         // The following steps are not necessary if a custom query is being used
         StringBuilder oql = new StringBuilder(constructOQL(settings.getPersistenceOrchestrator(), qp));
@@ -121,6 +120,7 @@ public class QueryBuilder
             vb.debug("OQL of view [" + this.queryTree.getView().getName() + "] => " + oql.toString());
         }
 
+        System.out.println("QUERY:::: " + oql.toString());
         Query query = settings.getPersistenceOrchestrator().getQuery(
             oql.toString(),
             PersistenceOrchestrator.QueryType.OQL,
@@ -159,8 +159,13 @@ public class QueryBuilder
             children.addAll(0, qp.getOutEdges(child.getEnd()));
         }
 
-        if(queryTree.getView() != null && queryTree.getView().getJoin() != null && queryTree.getView().getJoin().getEntity() != null)
-            OQL.append(", " + queryTree.getView().getJoin().getEntity());
+        if(queryTree.getView() != null && queryTree.getView().getJoin() != null) {
+            for(Join join: queryTree.getView().getJoin()) {
+                if(join.getEntity() != null) {
+                    OQL.append(", " + join.getEntity());
+                }
+            }
+        }
 
         return OQL.toString();
     }
@@ -194,12 +199,6 @@ public class QueryBuilder
 
     protected void checkAndAddFilters(StringBuilder result, Settings settings) {
         Map<String, Object> userParams = settings.getParams();
-        Map<String, Object> normParams = new HashMap<>();
-
-		Map<String, Parameter> parameterMap = new HashMap<String, Parameter>();
-		for(Parameter parameter: queryTree.getParameter()) {
-            parameterMap.put(parameter.name, parameter);
-        }
 
 		for(Function function : consolidatedFunctions) {
 
@@ -209,24 +208,11 @@ public class QueryBuilder
 			}
 
 			// Filter is skipped
-			if(!function.isFilterIncluded(userParams, normParams, parameterMap))
+			if(!function.isFilterIncluded(userParams))
 				continue;
 
 			addWhereStep(result);
 			result.append(function.getQueryString());
-		}
-
-		// Set parameters referred from native query or join clause
-		if(queryTree.getView() != null && queryTree.getView().getJoin() != null) {
-			// Expression
-			addWhereStep(result);
-
-			for(Parameter parameter: queryTree.getView().getJoin().getParameter()) {
-				if(userParams.containsKey(parameter.name)) {
-					normParams.put(parameter.name, userParams.get(parameter.name));
-					result.append(parameter.expression);
-				}
-			}
 		}
     }
 
@@ -237,7 +223,7 @@ public class QueryBuilder
             addWhereStep(result);
 
             result.append( qp.getRoot().getId() );
-            result.append( " = :" + QueryProperty.ID_PARAMETER_NAME);
+            result.append( " = :" + QueryFragment.ID_PARAMETER_NAME);
         }
     }
 
@@ -292,12 +278,12 @@ public class QueryBuilder
 
             if(i == 0) {
                 queryString.append( f.getNormalizedName() );
-                queryString.append( getDirection(f) + ":" + QueryProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+                queryString.append( getDirection(f) + ":" + QueryFragment.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
             }
 
             if(i > 0) {
                 queryString.append( " OR ( " + getEqualOrderByExp(i-1, orderBy) );
-                queryString.append( " AND " + f.getNormalizedName() + getDirection(f) + ":" + QueryProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+                queryString.append( " AND " + f.getNormalizedName() + getDirection(f) + ":" + QueryFragment.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
                 queryString.append( " ) ");
             }
         }
@@ -321,7 +307,7 @@ public class QueryBuilder
             if(i > 0) {
                 result.append(" AND ");
             }
-            result.append( f.getNormalizedName() + " = : " + QueryProperty.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
+            result.append( f.getNormalizedName() + " = : " + QueryFragment.NEXTTOKEN_PARAM_PREFIX + f.getAttribute());
         }
 
         return result.toString();
@@ -373,7 +359,9 @@ public class QueryBuilder
 
         Map<Integer, String> orderClauses = new TreeMap<>();
         for(QueryField field: qp.getFields()) {
-			if(field.getPath().endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE)) {
+			if(field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE)) {
+                // TODO: we have to sort all the parent collection objects
+                // so this collection is clubbed together
 				String columnString = field.getOQL(po.getQueryCapability());
 				orderClauses.put(field.getAttributeLevel(), columnString);
 			}

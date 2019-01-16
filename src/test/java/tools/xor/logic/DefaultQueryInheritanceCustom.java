@@ -192,7 +192,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
-		settings.addFilter("name", "PATENT1");
+		settings.setParam("name", "PATENT1");
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntityVO input = new MetaEntityVO();
@@ -248,7 +248,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
-		settings.addFilter("state", "ACTIVE");
+		settings.setParam("state", "ACTIVE");
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntityVO input = new MetaEntityVO();
@@ -303,7 +303,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
-		settings.addFilter("createdBefore", today);
+		settings.setParam("createdBefore", today);
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntityVO input = new MetaEntityVO();
@@ -373,8 +373,8 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		yesterday.setTime( today.getTime() - 1*1000*60*60*24 );
 		Date fiveDaysAgo = new Date();
 		fiveDaysAgo.setTime( today.getTime() - 5*1000*60*60*24 );		
-		settings.addFilter("createdFrom", fiveDaysAgo);
-		settings.addFilter("createdTo", yesterday);
+		settings.setParam("createdFrom", fiveDaysAgo);
+		settings.setParam("createdTo", yesterday);
 		
 		settings.setView(aggregateService.getView("ARTIFACTINFO"));	
 		MetaEntityVO input = new MetaEntityVO();

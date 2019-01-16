@@ -19,19 +19,13 @@
 
 package tools.xor.operation;
 
-import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
-import tools.xor.util.InterQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTransformer;
-import tools.xor.view.QueryTree;
 import tools.xor.view.StoredProcedureQuery;
 import tools.xor.view.View;
 
@@ -40,21 +34,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DenormalizedQueryOperation extends QueryOperation {
+public class DenormalizedQueryOperation extends AbstractOperation {
 
 	// Represents a list of map objects
 	private List<Object[]> result = new ArrayList<Object[]>();
 
+	@Override public void execute (CallInfo callInfo)
+	{
+		execute(callInfo.getSettings());
+	}
+
 	@Override
-	public void execute(Settings settings, DataAccessService das) {
-		QueryTransformer qb = das.getQueryBuilder();
+	public void execute(Settings settings) {
+
+		QueryTransformer qb = new QueryTransformer();
 		Query query = createQuery(settings, qb);
 		execute(query, settings);
 	}
 
 	protected Query createQuery(Settings settings, QueryTransformer qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getParams());
-		Query query = qb.constructDML(settings.getView(), settings, mutableFilters);
+		Query query = qb.constructDML(settings.getView(), settings);
 
 		for(Map.Entry<String, Object> entry: mutableFilters.entrySet()) {
 			query.setParameter(entry.getKey(), entry.getValue());

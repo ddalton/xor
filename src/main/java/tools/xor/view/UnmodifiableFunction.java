@@ -53,17 +53,9 @@ public class UnmodifiableFunction extends Function
         return function.getAttribute();
     }
 
-
-    public Object getNormalizedValue (Object object)
+    public boolean isFilterIncluded (Map<String, Object> originalFilters)
     {
-        return function.getNormalizedValue(object);
-    }
-
-    public boolean isFilterIncluded (Map<String, Object> originalFilters,
-                                     Map<String, Object> filters,
-                                     Map<String, Parameter> parameterMap)
-    {
-        return function.isFilterIncluded(originalFilters, filters, parameterMap);
+        return function.isFilterIncluded(originalFilters);
     }
 
     @Override

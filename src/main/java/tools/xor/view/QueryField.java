@@ -53,6 +53,10 @@ public class QueryField implements Comparable<QueryField>
         this.augmenter = augmenter;
     }
 
+    public boolean isAugmenter() {
+        return this.augmenter;
+    }
+
     /**
      * Retrieve the OQL query representation of this field.
      * @return OQL query representation
@@ -60,9 +64,9 @@ public class QueryField implements Comparable<QueryField>
     public String getOQL(QueryCapability qc) {
         String result = fragment.getAlias() + Settings.PATH_DELIMITER + path;
 
-        if(path.endsWith(QueryProperty.LIST_INDEX_ATTRIBUTE))
+        if(path.endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE))
             result = qc.getListIndexMechanism(fragment.getAlias());
-        else if(path.endsWith(QueryProperty.MAP_KEY_ATTRIBUTE))
+        else if(path.endsWith(QueryFragment.MAP_KEY_ATTRIBUTE))
             result = qc.getMapKeyMechanism(fragment.getAlias());
         else if(path.equals(fragment.getEntityType().getIdentifierProperty().getName())) {
                 // Is this an id property
@@ -78,6 +82,10 @@ public class QueryField implements Comparable<QueryField>
 
     public String getPath() {
         return this.path;
+    }
+
+    public String getFullPath() {
+        return this.fragment.getFullPath(this.path);
     }
 
     @Override public int compareTo (QueryField o)

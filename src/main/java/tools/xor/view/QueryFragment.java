@@ -27,9 +27,13 @@ import tools.xor.util.IntraQuery;
 import tools.xor.util.Vertex;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class QueryFragment implements Vertex
 {
@@ -38,13 +42,16 @@ public class QueryFragment implements Vertex
     public static final String MAP_KEY_ATTRIBUTE     = "KEY_";
     public static final String LIST_INDEX_ATTRIBUTE  = "INDEX_";
     public static final String USERKEY_ATTRIBUTE     = "USERKEY_";
+    public static final String ID_PARAMETER_NAME     = "id_";
+    public static final String NEXTTOKEN_PARAM_PREFIX = "orderBy_";
 
-    EntityType entityType;
-    String ancestorPath;
-    String alias;
-    List<String> paths;
-    List<String> simpleCollectionPaths;   // number of simple collections within the fragment
-    List<QueryField> queryFields;
+    EntityType entityType;               // Entity type for this fragment
+    String ancestorPath;                 // path from root of the QueryTree
+    String alias;                        // alias used in the query string
+    List<String> paths;                  // attributes of simple types
+    List<String> simpleCollectionPaths;  // attributes of collections of simple types
+    List<QueryField> queryFields;        // refers to fields that are retrieved from database
+    Map<String, QueryField> pathToFieldMap; // optimization
     int simpleCollectionCount;   // count of all simple collections within a fragment and its
                                  //  descendants
     int parallelCollectionCount; // max parallel collections within a fragment in the descendants,
@@ -133,6 +140,19 @@ public class QueryFragment implements Vertex
         return Collections.unmodifiableList(this.queryFields);
     }
 
+    private void clearFields() {
+        this.queryFields = new LinkedList<>();
+        this.pathToFieldMap = new HashMap<>();
+    }
+
+    public String getFullPath(String path) {
+        return ((ancestorPath == null) ? "" : (ancestorPath + Settings.PATH_DELIMITER)) + path;
+    }
+
+    private boolean isUserAttribute(Set<String> attributePaths, String path) {
+        return attributePaths.contains(getFullPath(path));
+    }
+
     /**
      * Create the QueryField instances for this fragment and initialize it starting with
      * the given position.
@@ -141,23 +161,26 @@ public class QueryFragment implements Vertex
      * @param settings describing the result structure (SHARED or DISTINCT)
      * @return the updated position
      */
-    /**
-     *
-     * @param position
+    public int generateFields(int position, Settings settings, QueryPiece queryPiece, QueryTree queryTree) {
+        clearFields();
 
-     * @return
-     */
-    public int generateFields(int position, ObjectResolver.Type type, QueryPiece queryPiece) {
-        queryFields = new LinkedList<>();
+        // We should not create QueryField instances for fields that are only
+        // referenced from functions
+        Set<String> attributePaths = new HashSet<>(queryTree.getAttributes(queryTree.getView()));
 
         for(String path: this.paths) {
-            queryFields.add(new QueryField(path, position++, this));
+            if(isUserAttribute(attributePaths, path)) {
+                queryFields.add(new QueryField(path, position++, this));
+            }
         }
         for(String path: this.simpleCollectionPaths) {
-            queryFields.add(new QueryField(path, position++, this));
+            if(isUserAttribute(attributePaths, path)) {
+                queryFields.add(new QueryField(path, position++, this));
+            }
         }
 
         // Add the id if we need to share the object in the result
+        ObjectResolver.Type type = settings.getResolverType();
         if(type == ObjectResolver.Type.SHARED) {
             // add surrogate key
             String idName = getEntityType().getIdentifierProperty().getName();
@@ -200,6 +223,10 @@ public class QueryFragment implements Vertex
             }
         }
 
+        for(QueryField field: queryFields) {
+            pathToFieldMap.put(field.getPath(), field);
+        }
+
         return position;
     }
 
@@ -208,10 +235,8 @@ public class QueryFragment implements Vertex
     }
 
     public QueryField getField(String path) {
-        for(QueryField field: queryFields) {
-            if(path.equals(field.getPath())) {
-                return field;
-            }
+        if(pathToFieldMap.containsKey(path)) {
+            return pathToFieldMap.get(path);
         }
 
         return null;

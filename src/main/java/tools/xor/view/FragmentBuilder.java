@@ -56,11 +56,21 @@ public class FragmentBuilder
      * @param entityType of root
      */
     public void build(EntityType entityType) {
-        List<String> paths = queryTree.getView().getAttributeList();
         QueryPiece queryPiece = new QueryPiece(entityType);
+        build(queryPiece);
+    }
+
+    public void build(QueryPiece queryPiece) {
+        List<String> paths = queryTree.getView().getAttributeList();
+
+        // Also add the function attributes
+        paths.addAll(queryTree.getView().getFunctionAttributes());
 
         // First create a start fragment
-        QueryFragment start = new QueryFragment(entityType, queryTree.nextAlias(), null);
+        QueryFragment start = new QueryFragment(
+            (EntityType)queryPiece.getAggregateType(),
+            queryTree.nextAlias(),
+            null);
         queryPiece.addVertex(start);
         pathToFragment.put(QueryFragment.ROOT_NAME, start);
 

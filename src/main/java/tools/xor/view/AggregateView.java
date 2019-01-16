@@ -45,6 +45,7 @@ import tools.xor.Type;
 import tools.xor.service.Shape;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
+import tools.xor.util.InterQuery;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.StateTree;
@@ -100,10 +101,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	 * NOTE: Only one level of child Content views are permitted. Nesting is not allowed.
 	 */
 	protected List<AggregateView> children;
-	
-	// The parameters specified in the filter or in the native query
-	protected List<Parameter>   parameter;
-	protected Join              join;
+
+	protected List<Join>        join;
 	
 	protected int               version; // The version from which this view is effective
 	
@@ -189,21 +188,12 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	@Override
-	public Join getJoin() {
+	public List<Join> getJoin() {
 		return join;
 	}
 
-	public void setJoin(Join join) {
+	public void setJoin(List<Join> join) {
 		this.join = join;
-	}
-
-	@Override
-	public List<Parameter> getParameter() {
-		return parameter;
-	}
-
-	public void setParameter(List<Parameter> parameter) {
-		this.parameter = parameter;
 	}
 
 	public List<AggregateView> getChildren() {
@@ -329,13 +319,16 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	private QueryTree getQueryView(QueryKey viewKey) {
-		if(queryCache.containsKey(viewKey))
+		if(queryCache.containsKey(viewKey)) {
 			return queryCache.get(viewKey);
-		
-		QueryTree result = QueryTree.buildFlattened(viewKey, this);
-		queryCache.put(viewKey, result);
+		}
 
-		return result;
+		// Build the QueryTree
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(this);
+		new FragmentBuilder(queryTree).build((EntityType)viewKey.type);
+		queryCache.put(viewKey, queryTree);
+
+		return queryTree;
 	}
 
 	@Override
@@ -347,16 +340,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		}
 		
 		QueryTree result = getQueryView(new QueryKey(type, name, narrow));
-
-		return result;
-	}
-
-	public Set<String> getParameterNames() {
-		Set<String> result = new HashSet<>();
-
-		if(parameter != null)
-			for(Parameter param: parameter)
-				result.add(param.name);
 
 		return result;
 	}
@@ -425,11 +408,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 				childrenCopy.add(c.copy());
 			}
 			result.setChildren(childrenCopy);
-		}
-
-		// TODO: can this be made immutable
-		if(parameter != null) {
-			result.setParameter(new ArrayList<>(parameter));
 		}
 
 		result.setJoin(join);
@@ -562,6 +540,17 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		}
 		
 		return newList;
+	}
+
+	@Override
+	public Set<String> getFunctionAttributes() {
+		Set<String> functionAttributes = new HashSet<>();
+
+		for(Function function: getFunction()) {
+			functionAttributes.addAll(function.getAttributes());
+		}
+
+		return functionAttributes;
 	}
 
 	private List<String> expand(String attribute) {

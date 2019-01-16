@@ -24,7 +24,6 @@ import tools.xor.service.Shape;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
-import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
 import tools.xor.util.DFAtoRE.TypedExpression;
@@ -32,10 +31,6 @@ import tools.xor.util.DFAtoRE.UnionExpression;
 import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
-import tools.xor.view.AggregateView;
-import tools.xor.view.QueryPiece;
-import tools.xor.view.QueryTree;
-import tools.xor.view.QueryProperty;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -285,7 +280,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					} else {
 						int delimLen = propertyPath.length() > 0 ? Settings.PATH_DELIMITER.length() : 0;
 						String remaining = path.substring(propertyPath.length()+delimLen);
-						Property p = type.getProperty(QueryProperty.getRootName(remaining));
+						Property p = type.getProperty(Settings.getRootName(remaining));
 						if(p != null) {
 							result.add(p);
 						}
@@ -690,163 +685,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		return result;
 	}
-	
-	/*
-		To support Excel export/import. We need to create non-duplicated data by creating appropriate queries.
-		    The approach is to add a method to the state graph that will pull all the toMany and cascaded loop
-		    relationships.
-		    The goal is to find the disjoint regions. A disjoint region is rooted at a toMany relationship
-		    There is one toMany relationship in a disjoint region.
-		    The next step is to find the owner of the toMany collection. With this information a query containing the data of the owner id and the disjoint region is created.
-		    A single such query will map to a single disjoint region.
-		
-		    The API of the state graph will be:
-		    QueryView getQueryableRegions()
-		
-		    QueryView 
-		      String name  // becomes the fieldName for getting the query from parent DisjointRegion
-		      DisjointRegion parent
-		      List<String> fields
-		
-		      getSubQuery(String fieldName)
-		
-		    Example fields
-		    ==============
-		    owner.id
-		    owner.child.id
-		    owner.child.name
-		
-		    Query 
-		    =====
-		    SELECT owner.id, owner.child.id, owner.child.name ... From ownerType owner
-		     WHERE owner.id IN (SELECT id ... <From parent disjoint region if any> | <id> )
-		
-		    The subquery is extracted from the parent DisjointRegion provided the field
-		
-		    Example:
-		    [Export]
-		      Select owner.id, child.field1, child.field2 from Owner owner inner join owner.child child where
-		        owner.id in (Select ...)
-		    [Import]
-		      Here based on FIFO order we build the root object first and add the remaining objects
-		
-		    The QueryView will contain a list of HQL/SQLs related to the number of queries.
-		
-		
-		Algorithm
-		=========
-		1. Start from the root node and go through each field. Collect all simple fields and toOne cascaded relationships
-		
-		2. If the field is a toMany cascaded relationship then create a new QueryView and save it (BFS)
-		
-		3. Once all the fields are processed in step 1. Then create the query string in this form 
-		   SELECT [LIST] FROM typeName. The [LIST] will be substituted based on usage. i.e., fields if
-		   selecting the data, name if being used as a subquery.
-		
-		4. Go through each saved QueryView in step 2 and initialize it with the subquery obtained from
-		   the parent queryView. Do the same with this queryView starting from Step 1.
-		   
-		UPDATE
-		======
-		A simpler algorithm is now proposed:
-		Each sheet in the Excel will represent a query region, roughly mapping to a database table.
-		A sheet will contain data that is shareable.
-		1. Each attribute (even one-to-one associations) is in a different sheet, as long as it is shareable
-		2. Cascaded loops should be saved 
-		3. Reference (Foreign key) to other entities should not be by Id, but by Business key 
-			(Json object, if the business key is composite). This helps with migration from one system, to 
-			another system where the ids of the same object can be different.
-		4. For attributes participating in cascade loops. The query might not be simple and cannot be deduced
-			automatically. For these queries, manual support is needed and the method should generate a skeleton view (XML),
-			which the user needs to fill with the appropriate query for the entity and attribute appropriately.
-		5. Each query representing a sheet should contain the parent information.
-		6. Subquery chaining is used to get the necessary rows if the model does not provide ancestor information. i.e.,
-		   if we consider A->B->C and the entity is rooted in A, then inorder to find all C rows, we create a query like
-		   SELECT c.* FROM C c WHERE c.parentId IN (SELECT b.id FROM B b WHERE b.parentId IN (SELECT a.id FROM A a))
-		   Alternatively, if ancestor information was provided we could do something like:
-		   SELECT c.* FROM C c WHERE c.ancestorPath LIKE '?%', and the parameter is bound to A.id
-		7. In any case with whatever approach is taken (subquery chaining or ancestor path), we will create an 
-			XML document that contains all the QueryViews for each attribute comprising an entity.
-			The default query approach will be subquery chaining, starting with the root entity id.
-		8. QueryViews involving cascading loop attributes will not be populated and the user is expected to provide
-		 	the actual SQL query for performance reasons. Only the fields that need to be returned will be provided in the view
-		 	and the SQL needs to map to these fields.
-		9. Query chaining could be very expensive for graphs with long cascade attribute chains. In these cases, it is better to 
-			augment the model with the ancestor information and a warning will be generated to this effect if the chain gets
-			longer than a set configurable value (e.g., 10).
-		10. Entity QueryViews are different from the hand crafted query views, since they are generated by the software. So the
-			the queries might be inefficient and there will be lots of opportunities to tune them.
-		11. A placeholder will be put in the generated query if it is auto-generated. For example,
-			SELECT c.* FROM C c WHERE c.parentId IN (SELECT p.id FROM [%<parentAttributePath>.QUERY%])
-		12. The XML generation algorithm is based on BFS.
-		    a) Staring with the root node we traverse all cascade attributes
-		    b) Mark the node as visited
-		    c) For each child cascade attribute create a QueryView with the name as the attribute path from the root
-		    d) Create the query based on the parent node
-		    e) If a node is part of a cascade loop, then mark this in the view, so the user can fill in the appropriate query
-		    f) Once the XML file is generated and the queries populated, it is flagged as READY
-		    g) The export can then be processed from least dependent to most dependent. As the objects are being written out,
-		       a map between the id and business key (by type) is maintained, this helps in writing out the business key values.
-		       Similarly during import, a map between business key and id (on the target system) will be maintained. This
-		       will help to hydrate the object before it is used for update/create.
-		
-		NOTE: Ideally the best performance is got by storing the ancestor information, so it is easy to query the needed
-		rows efficiently. 
-   
-	 * @return the root QueryView
-	 */
-	public List<QueryPiece> getQueryableRegions() {
-		QueryPiece regionRoot = new QueryPiece(null, null, root);
-		List<QueryPiece> result = new LinkedList<QueryPiece>();
-		
-		processRegion(regionRoot, regionRoot, result, new HashSet<Type>());
-		
-		for(QueryPiece view: result) {
-			view.initProperties();
-		}
-		
-		return result;
-	}
-	
-	private void processRegion(QueryPiece regionRoot, QueryPiece regionNode, List<QueryPiece> result, Set<Type> processed) {
-		Type type = regionNode.getAggregateType();
-		if(processed.contains(type)) {
-			return;
-		} else {
-			processed.add(type);
-		}
-		
-		for(Property p: type.getProperties()) {
-			Type propertyType = GraphUtil.getPropertyType(p, shape);
-			if(propertyType.isDataType() && !p.isMany()) {
-				StringBuilder attrPath = new StringBuilder(regionNode.getAnchorPath());
-				attrPath.append(Settings.PATH_DELIMITER);
-				attrPath.append(p.getName());
-				
-				// All attributes are added to the region root
-				regionRoot.addAttribute(attrPath.toString());
-			} else if(p.isContainment()) {
-				if(!p.isMany() ) {
-					// Process a type interior to a region
-					processRegion(
-							regionRoot, 
-							new QueryPiece(regionNode, p.getName(), propertyType ),
-							result,
-							processed);
-				} else {
-					// process a new region
-					QueryPiece newRegion = new QueryPiece(regionNode, p.getName(), ((ExtendedProperty)p).getElementType() );
-					result.add(newRegion);
-					processRegion(
-							newRegion,
-							newRegion,
-							result,
-							processed);
-				}
-			}
-
-		}	
-	}
 
 	/**
 	 * Renumber the vertices based on topological order
@@ -1159,8 +997,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		Object result = null;
 
 		do {
-			String root = QueryProperty.getRootName(keyPath);
-			keyPath = QueryProperty.getNext(keyPath);
+			String root = Settings.getRootName(keyPath);
+			keyPath = Settings.getNext(keyPath);
 
 			if(object.has(root) && object.get(root) != null) {
 				if(keyPath != null) {
@@ -1183,8 +1021,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 	public static void setKeyValue(JSONObject object, String keyPath, Object value) {
 		do {
-			String root = QueryProperty.getRootName(keyPath);
-			keyPath = QueryProperty.getNext(keyPath);
+			String root = Settings.getRootName(keyPath);
+			keyPath = Settings.getNext(keyPath);
 
 			if(object.has(root) && object.get(root) != null) {
 				if(keyPath != null) {
@@ -1486,7 +1324,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		// Type name
 		StringBuilder label = new StringBuilder();
-		label.append(QueryProperty.getBaseName(type.getName()));
+		label.append(Settings.getBaseName(type.getName()));
 
 		if(!vertex.isReference()) {
 			label.append("|");
@@ -1518,7 +1356,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 								requiredEntities.append("\\n");
 							}
 							requiredEntities.append(
-								property.getName() + " : " + QueryProperty.getBaseName(
+								property.getName() + " : " + Settings.getBaseName(
 									requiredEntityType.getName()));
 						}
 					}
@@ -1547,7 +1385,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	protected String getGraphName() {
-		return QueryProperty.getBaseName(this.getClass().getName());
+		return Settings.getBaseName(this.getClass().getName());
 	}
 
 	@Override

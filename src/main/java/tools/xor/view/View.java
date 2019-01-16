@@ -97,13 +97,7 @@ public interface View {
 	 *
 	 * @return object containing the join conditions
 	 */
-	public Join getJoin();
-
-	/**
-	 * Used to model user specified values to bind to the query
-	 * @return list of parameters defined for this view to be used in the query
-	 */
-	public List<Parameter> getParameter();
+	public List<Join> getJoin();
 
 	/**
 	 * Retrieve the filters defined on this view. Currently used only in queries.
@@ -263,6 +257,12 @@ public interface View {
 	 * @return expanded attributes
 	 */
 	public List<String> getExpandedList(List<String> input);
+
+	/**
+	 * Return the attributes referenced from within functions
+	 * @return function attribute paths
+	 */
+	public Set<String> getFunctionAttributes();
 
 	/**
 	 * The set of attributes that are not regular expressions

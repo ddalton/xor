@@ -263,23 +263,19 @@
 		<attributeList>detailedDescription</attributeList>	
 		<function type="COMPARISON" name="ilike">
 			<args>name</args>
-			<args>:name</args>
-		</function>
-		<function type="COMPARISON" name="in">
-			<args>state</args>
-			<args>:state</args>
+			<args>name</args>
 		</function>
 		<function type="COMPARISON" name="equal">
 			<args>ownedBy.name</args>
-			<args>:owner</args>
+			<args>owner</args>
 		</function>
 		<function type="COMPARISON" name="ge">
 			<args>createdOn</args>
-			<args>:createdSince</args>
+			<args>createdSince</args>
 		</function>
 		<function type="COMPARISON" name="ge">
 			<args>updatedOn</args>
-			<args>:updatedSince</args>
+			<args>updatedSince</args>
 		</function>
 		<function type="ASC" position="1">
 			<args>name</args>
@@ -301,10 +297,10 @@
 		<attributeList>catalogItem.catalog.id</attributeList>					
 		<join>
 			<entity>CatalogItem ci</entity>
-			<parameter name="catalogId">
-				<expression>_XOR_1.id = ci.context.id and ci.catalog.id= :catalogId</expression>
-			</parameter>
 		</join>
+		<function type="CONDITION">
+			<args>[id] = ci.context.id and ci.catalog.id= :catalogId</args>
+		</function>
 	</aggregateView>	
 	<aggregateView>
 		<name>PROPERTY_BY_NAME_AND_ARTIFACT</name>
@@ -315,11 +311,11 @@
 		<attributeList>property.values.value</attributeList>
 		<function type="COMPARISON" name="equal">
 			<args>property.name</args>
-			<args>:propertyName</args>
+			<args>propertyName</args>
 		</function>
 		<function type="COMPARISON" name="equal">
 			<args>id</args>
-			<args>:artifactId</args>
+			<args>artifactId</args>
 		</function>
 	</aggregateView>	
 	<aggregateView>
@@ -332,7 +328,7 @@
 		<attributeList>optionModel.detailedDescription</attributeList>	
 		<function type="COMPARISON" name="equal">
 			<args>id</args>
-			<args>:artifactId</args>
+			<args>artifactId</args>
 		</function>
 	</aggregateView>	
 	<aggregateView>
@@ -345,15 +341,15 @@
 		<attributeList>property.detailedDescription</attributeList>	
 		<function type="COMPARISON" name="equal">
 			<args>property.name</args>
-			<args>:propertyName</args>
+			<args>propertyName</args>
 		</function>
 		<function type="COMPARISON" name="equal">
 			<args>property.propertyBindingType.name</args>
-			<args>:bindingTypeName</args>
+			<args>bindingTypeName</args>
 		</function>
 		<function type="COMPARISON" name="equal">
 			<args>id</args>
-			<args>:artifactId</args>
+			<args>artifactId</args>
 		</function>
 	</aggregateView>
 	<aggregateView>
@@ -362,14 +358,14 @@
 			<attributeList>[BASICINFO]</attributeList>	
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
-				<args>:name1</args>
+				<args>name1</args>
 			</function>
 		</children>
 		<children>
 			<attributeList>[BASICINFO]</attributeList>	
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
-				<args>:name2</args>
+				<args>name2</args>
 			</function>
 		</children>	
 	</aggregateView>			
@@ -379,14 +375,14 @@
 			<attributeList>[TASKSET]</attributeList>		
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
-				<args>:name1</args>
+				<args>name1</args>
 			</function>
 		</children>			
 		<children>		
 			<attributeList>[TASKSET]</attributeList>		
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
-				<args>:name2</args>
+				<args>name2</args>
 			</function>
 		</children>			
 	</aggregateView>	
@@ -402,7 +398,7 @@
 			<attributeList>[TASKSET]</attributeList>				
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
-				<args>:name1</args>
+				<args>name1</args>
 			</function>
 		</children>			
 	</aggregateView>		

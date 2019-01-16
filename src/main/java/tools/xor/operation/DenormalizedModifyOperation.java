@@ -34,8 +34,8 @@ public class DenormalizedModifyOperation extends GraphTraversal {
 	private Object result;
 
 	@Override
-	public void execute(Settings settings, DataAccessService das) {
-		QueryTransformer qb = das.getQueryBuilder();
+	public void execute(Settings settings) {
+		QueryTransformer qb = new QueryTransformer();
 		DML dml = createDML(settings, qb);
 
 		try {
@@ -49,7 +49,7 @@ public class DenormalizedModifyOperation extends GraphTraversal {
 	protected DML createDML(Settings settings, QueryTransformer qb) {
 		Map<String, Object> mutableFilters = new HashMap<String, Object>(settings.getParams());
 
-		DML dml = qb.constructDML(settings.getView(), settings, mutableFilters);
+		DML dml = qb.constructDML(settings.getView(), settings);
 		for(Map.Entry<String, Object> entry: mutableFilters.entrySet()) {
 			dml.setParameter(entry.getKey(), entry.getValue());
 		}

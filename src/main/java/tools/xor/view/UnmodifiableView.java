@@ -11,6 +11,7 @@ import tools.xor.util.graph.UnmodifiableTypeGraph;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,23 +44,17 @@ public class UnmodifiableView implements View
         return view.getVersion();
     }
 
-    @Override public Join getJoin ()
+    @Override public List<Join> getJoin ()
     {
-        return view.getJoin() != null ? new UnmodifiableJoin(view.getJoin()) : null;
-    }
+        List<Join> result = new LinkedList<>();
 
-    @Override public List<Parameter> getParameter ()
-    {
-        if(view.getParameter() == null) {
-            return null;
+        if(view.getJoin() != null) {
+            for (Join join : view.getJoin()) {
+                result.add(new UnmodifiableJoin(join));
+            }
         }
 
-        List result = new ArrayList(view.getParameter().size());
-        for(Parameter param: view.getParameter()) {
-            result.add(new UnmodifiableParam(param));
-        }
-
-        return result;
+        return view.getJoin() != null ? result : null;
     }
 
     @Override public List<Function> getFunction ()
@@ -189,6 +184,12 @@ public class UnmodifiableView implements View
     @Override public List<String> getExpandedList (List<String> input)
     {
         return view.getExpandedList(input);
+    }
+
+    @Override
+    public Set<String> getFunctionAttributes()
+    {
+        return view.getFunctionAttributes();
     }
 
     @Override public Set<String> getExactAttributes ()

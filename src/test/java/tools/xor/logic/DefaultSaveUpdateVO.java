@@ -173,8 +173,8 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 
 		// query the properties
 		Settings settings = new Settings();
-		settings.addFilter("artifactId", artifactVO.getId());
-		settings.addFilter("propertyName", "PRIORITIZE_DEFECTS");
+		settings.setParam("artifactId", artifactVO.getId());
+		settings.setParam("propertyName", "PRIORITIZE_DEFECTS");
 		settings.setView(aggregateService.getView("PROPERTY_BY_NAME_AND_ARTIFACT"));	
 		List<?> toList = aggregateService.query(artifactVO, settings);
 

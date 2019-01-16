@@ -21,12 +21,14 @@ package tools.xor.view;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.apache.commons.lang.RandomStringUtils;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.util.IntraQuery;
@@ -106,6 +108,10 @@ public class Function implements Comparable<Function> {
 		return functionHandler.getAttributeName();
 	}
 
+	public Set<String> getAttributes() {
+		return functionHandler.getAttributes();
+	}
+
 	/**
 	 * Identify the mapping between the entity field path and the query alias name
 	 *
@@ -127,37 +133,30 @@ public class Function implements Comparable<Function> {
 		return all;
 	}
 
-
-	public Object getNormalizedValue(Object object) {
-		return functionHandler.getNormalizedValue(object);
-	}	
-
 	/**
 	 * Checks to see if a filter is relevant for this query based on the input parameters
 	 * 
 	 * @param userParams user supplied parameter values
-	 * @param normParam normalized users parameter values. This is populated by this code.
-	 * @param parameterMap parameter map used by filters
 	 * @return true if filter is included
 	 */
-	public boolean isFilterIncluded(Map<String, Object> userParams, Map<String, Object> normParam, Map<String, Parameter> parameterMap) {
-		boolean result = false;
+	public boolean isFilterIncluded(Map<String, Object> userParams) {
 		
 		for(String parameterName: functionHandler.getParameters()) {
-
-			Parameter param =  parameterMap.get(parameterName);
 			if(!userParams.containsKey(Settings.encodeParam(parameterName)) ) { // parameter is not set
-				// check if the parameter has a default value
-				if(param != null)
-					normParam.put( Settings.encodeParam(parameterName), getNormalizedValue(param.defaultValue));
-				else
-					return result;
+				return false;
 			} else {
 				String key = Settings.encodeParam(parameterName);
-				if(param != null)
-					key = param.filterName;
-				Object normalizedValue = getNormalizedValue(userParams.get(Settings.encodeParam(key)));
-				normParam.put( Settings.encodeParam(parameterName), normalizedValue);
+				Object transformedValue = functionHandler.getTransformation(userParams.get(Settings.encodeParam(key)));
+				if(transformedValue != null) {
+					// since the value is changed, we need to refer to it using a new parameter
+					String uniqueSuffix = RandomStringUtils.randomAlphanumeric(5).toUpperCase();
+					key = key + Settings.URI_PATH_DELIMITER + uniqueSuffix;
+					userParams.put(key, transformedValue);
+
+					// We now have to update the parameter name with the modified parameter name
+					// so the function can use the modfied value
+					functionHandler.updateParamName(parameterName, key);
+				}
 			}
 		}
 

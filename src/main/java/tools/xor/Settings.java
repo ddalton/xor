@@ -599,6 +599,12 @@ public class Settings {
 		this.mainAction = mainAction;
 	}
 
+	/**
+	 * This can be augmented by the framework if the function is going to
+	 * transform the value.
+	 *
+	 * @return The user specified parameter values
+	 */
 	public Map<String, Object> getParams () {
 		return params;
 	}
@@ -694,7 +700,7 @@ public class Settings {
 		this.narrow = narrow;
 	}
 
-	public void addFilter(String name, Object value) {
+	public void setParam (String name, Object value) {
 		params.put(name, value);
 	}
 
@@ -1217,12 +1223,12 @@ public class Settings {
 							JSONObject filters = (JSONObject) obj;
 							for (String filterName : JSONObject.getNames(filters)) {
 								Object filterValue = filters.get(filterName);
-								this.settings.addFilter(filterName, filterValue);
+								this.settings.setParam(filterName, filterValue);
 							}
 						} else if(obj instanceof JSONArray) {
 							JSONArray array = (JSONArray) obj;
 							for(int i = 0; i < array.length(); i++) {
-								this.settings.addFilter(new Integer(i+1).toString(), array.get(i));
+								this.settings.setParam(new Integer(i + 1).toString(), array.get(i));
 							}
 						}
 						break;
@@ -1491,5 +1497,26 @@ public class Settings {
 		} catch (IOException e) {
 			// Exception handling
 		}
+	}
+
+	public static String getBaseName(String propertyPath) {
+		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
+			return propertyPath.substring(propertyPath.lastIndexOf(Settings.PATH_DELIMITER)+1);
+		else
+			return propertyPath;
+	}
+
+	public static String getRootName(String propertyPath) {
+		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
+			return propertyPath.substring(0, propertyPath.indexOf(Settings.PATH_DELIMITER));
+		else
+			return propertyPath;
+	}
+
+	public static String getNext(String propertyPath) {
+		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
+			return propertyPath.substring(propertyPath.indexOf(Settings.PATH_DELIMITER)+1);
+		else
+			return null;
 	}
 }

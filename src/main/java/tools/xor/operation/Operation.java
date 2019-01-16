@@ -39,9 +39,8 @@ public interface Operation {
 	 * Use this form of execute when data does not need to be transformed between
 	 * external and domain models. Used when executing DML queries.
 	 * @param settings object
-	 * @param das provider specific DataAccessService
 	 */
-	public void execute(Settings settings, DataAccessService das);
+	public void execute(Settings settings);
 
 	/**
 	 * Allows operation specific behavior in the creation of DataObjects

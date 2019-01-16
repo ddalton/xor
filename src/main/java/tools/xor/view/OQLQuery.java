@@ -19,9 +19,7 @@
 
 package tools.xor.view;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-
+import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
 
 public class OQLQuery {
@@ -36,12 +34,17 @@ public class OQLQuery {
 	}
 	
 	public OQLQuery generateQuery(AggregateManager am, QueryTree queryTree, QueryPiece queryPiece) {
-		QueryTransformer qb = am.getDAS().getQueryBuilder();
-		qb.init(queryPiece.getAggregateType(), queryPiece, new LinkedList<Function>());
-		
-		am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));	
-		
-		this.queryString = qb.generateOQLQuery(null, am.getPersistenceOrchestrator(), new HashMap<String, Object>()).toString();
+
+		am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));
+
+		Settings settings = new Settings();
+		am.checkPO(settings);
+
+		QueryBuilder qb = new QueryBuilder(queryTree);
+		qb.construct(settings, queryPiece);
+
+		this.queryString = queryPiece.getQueryString();
+
 		return this;
 	} 
 }

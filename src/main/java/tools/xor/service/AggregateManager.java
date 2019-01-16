@@ -526,7 +526,7 @@ public class AggregateManager implements Xor
 			operation = new DenormalizedModifyOperation();
 		}
 
-		operation.execute(settings, getDAS());
+		operation.execute(settings);
 		return operation.getResult();
 	}
 
@@ -1043,7 +1043,7 @@ public class AggregateManager implements Xor
 		// Create a new operation for each entity,so we don't mix different entities
 		// in the same queue
 		operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
-		operation.execute(settings, null);
+		operation.execute(settings);
 	}
 
 	@Override

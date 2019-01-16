@@ -19,13 +19,12 @@
 
 package tools.xor.util.graph;
 
+import tools.xor.Settings;
 import tools.xor.util.Edge;
 import tools.xor.util.Vertex;
-import tools.xor.view.QueryProperty;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -150,7 +149,7 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
     }
 
     protected String getGraphName() {
-        return QueryProperty.getBaseName(this.getClass().getName());
+        return Settings.getBaseName(this.getClass().getName());
     }
 
     protected String getLabel(V vertex) {

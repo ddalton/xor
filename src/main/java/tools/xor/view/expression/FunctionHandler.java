@@ -83,7 +83,26 @@ public abstract class FunctionHandler
 		normalizedNames.put(path, name);
 	}
 
-	public Object getNormalizedValue(Object object) {
-		return object;
-	}	
+	/**
+	 * Return null if the value is not going to be transformed
+	 * @param object input
+	 * @return transformed object if there is a transformation else return null
+	 */
+	public Object getTransformation (Object object) {
+		return null;
+	}
+
+	public void updateParamName(String oldName, String newName) {
+		List<String> paramNames = new ArrayList<>(this.parameterName.size());
+
+		for(String paramName: this.parameterName) {
+			if(oldName.equals(paramName)) {
+				paramNames.add(newName);
+			} else {
+				paramNames.add(paramName);
+			}
+		}
+
+		this.parameterName = paramNames;
+	}
 }

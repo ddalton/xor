@@ -416,9 +416,8 @@ public class MigrateOperation extends GraphTraversal
     /**
      * execute the migrate operation
      * @param Settings user provided settings
-     * @param das not used since the source and target are set during the construction
      */
-    public void execute(Settings settings, DataAccessService das) {
+    public void execute(Settings settings) {
 
         // 1 producer since that is cursor powered
         // 1 or more consumers. We need to profile this to find the desirable number.

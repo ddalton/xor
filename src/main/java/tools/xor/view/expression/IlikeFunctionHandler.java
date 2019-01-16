@@ -36,7 +36,7 @@ public class IlikeFunctionHandler extends FunctionHandler
 	}
 	
 	@Override
-	public Object getNormalizedValue(Object object) {
+	public Object getTransformation (Object object) {
 		return object.toString().toLowerCase();
 	}		
 }

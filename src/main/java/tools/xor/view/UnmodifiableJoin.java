@@ -19,9 +19,6 @@
 
 package tools.xor.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class UnmodifiableJoin extends Join
 {
     private Join join;
@@ -34,22 +31,6 @@ public class UnmodifiableJoin extends Join
     {
         throw new UnsupportedOperationException(
             "Changes are not allowed on the join, make a copy of the view to make necessary changes.");
-    }
-
-    @Override
-    public List<Parameter> getParameter() {
-        List result = new ArrayList(join.getParameter().size());
-        for(Parameter p: join.getParameter()) {
-            result.add(new UnmodifiableParam(p));
-        }
-
-        return result;
-    }
-
-    @Override
-    public void setParameter (List<Parameter> parameter)
-    {
-        raiseException();
     }
 
     @Override

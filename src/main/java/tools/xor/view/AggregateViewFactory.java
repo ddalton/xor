@@ -50,6 +50,7 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
@@ -176,7 +177,9 @@ public class AggregateViewFactory {
 			groupByPackage(type, av, viewsByPackage);
 			
 			QueryKey viewKey = new QueryKey(type, av.getName(), false);
-			QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = QueryTree.buildFlattened(viewKey, (AggregateView)av);
+
+			QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(av);
+			new FragmentBuilder(queryTree).build(new QueryPiece((EntityType)viewKey.type));
 			
 			// Extract system generated OQL query
 			List<AggregateView> parallelViews = new ArrayList<>();

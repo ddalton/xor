@@ -28,7 +28,7 @@ import tools.xor.util.ClassUtil;
 
 public abstract class AbstractOperation implements Operation {
 	@Override
-	public void execute(Settings settings, DataAccessService das) {
+	public void execute(Settings settings) {
 		throw new UnsupportedOperationException("This method is not supported for this operation. Use the execute method that takes a CallInfo object as input.");
 	}
 	

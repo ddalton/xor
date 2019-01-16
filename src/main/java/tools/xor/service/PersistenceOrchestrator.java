@@ -19,12 +19,6 @@
 
 package tools.xor.service;
 
-import java.sql.Blob;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.json.JSONObject;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -34,11 +28,14 @@ import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.util.IntraQuery;
-import tools.xor.view.AggregateView;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryProperty;
-import tools.xor.view.StoredProcedure;
+
+import java.sql.Blob;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface PersistenceOrchestrator {
 	

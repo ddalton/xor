@@ -19,11 +19,6 @@
 
 package tools.xor.operation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -34,12 +29,17 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.view.ObjectResolver;
 import tools.xor.view.Query;
+import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryDispatcher;
-import tools.xor.view.QueryProperty;
-import tools.xor.view.QueryTransformer;
+import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
 import tools.xor.view.SerialDispatcher;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Needs to handle both the types of QueryTree instances:
@@ -65,17 +65,23 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		return das.getType(typeMapper.toDomain(settings.getNarrowedClass()));
 	}
 
+	protected void validate() {
+	}
+
 	@Override
 	public void execute(CallInfo callInfo) {
 		this.entity = (BusinessObject) callInfo.getInput();
 		assert entity != null : "Entity information is required.";
 
 		DataAccessService das = this.entity.getObjectCreator().getDAS();
-		QueryTransformer qb = das.getQueryBuilder();
 		
 		// Always use the REFERENCE type
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
+
+		// Construct the query based on the settings
+		QueryBuilder builder = new QueryBuilder(queryTree);
+		builder.construct(callInfo.getSettings());
 
 		QueryDispatcher dispatcher = new SerialDispatcher();
 		dispatcher.execute(queryTree, this, callInfo);
@@ -104,7 +110,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 					(BusinessObject)callInfo.getOutput());
 
 				if(ClassUtil.getDimensionCount(obj) == 1) {
-					queryPiece.normalize(newRootObject, (Object[])obj);
+					queryPiece.resolveField(newRootObject, (Object[])obj);
 					if(newRootObject.getContainer() == null && !uniqueList.containsKey(newRootObject)) // Only add root objects
 						uniqueList.put(newRootObject, null);
 				}
@@ -122,21 +128,23 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	@Override
 	public void preProcess(QueryPiece qp, Settings settings, Query query, Map<String, Object> params) {
 		for(Map.Entry<String, Object> entry: params.entrySet()) {
-			query.setParameter(entry.getKey(), entry.getValue());
+			if(query.hasParameter(entry.getKey())) {
+				query.setParameter(entry.getKey(), entry.getValue());
+			}
 		}
 
-		if(getEntity().getIdentifierValue() != null && query.hasParameter(QueryProperty.ID_PARAMETER_NAME)) {
-			query.setParameter(QueryProperty.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
+		if(getEntity().getIdentifierValue() != null && query.hasParameter(QueryFragment.ID_PARAMETER_NAME)) {
+			query.setParameter(QueryFragment.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
 		}
 
 		// Set the chunk values
 		Map<String, Object> nextToken = settings.getNextToken();
 		if(nextToken != null) {
 			for(Map.Entry<String, Object> entry: nextToken.entrySet()) {
-				if(!query.hasParameter(QueryProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
+				if(!query.hasParameter(QueryFragment.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
 					throw new IllegalStateException("NextToken missing information for orderBy field: " + entry.getKey());
 				}
-				query.setParameter(QueryProperty.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
+				query.setParameter(QueryFragment.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
 			}
 		}
 

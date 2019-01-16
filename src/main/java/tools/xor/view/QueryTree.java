@@ -104,17 +104,6 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	public QueryTree(View view) {
 		this.view = view;
 	}
-	
-	public static QueryTree buildFlattened(QueryKey queryKey, AggregateView contentView) {
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> result = new QueryTree(contentView);
-		
-		result.addVertex(new QueryPiece(queryKey, contentView));
-		result.getRoot().buildFlattened();
-		
-		result.build();
-		
-		return result;
-	}
 
 	public ObjectResolver.Type getType ()
 	{
@@ -125,21 +114,7 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	{
 		this.type = type;
 	}
-	
-	/**
-	 * Build the tree
-	 */
-	private void build() {
-		V root = getRoot();
-		addVertex(root);
-		
-		if(root.getSubBranches() != null && root.getSubBranches().size() > 0) {
-			for(QueryPiece qp: this.getChildren(root)) {
-				addEdge((E) new Edge("", root, qp), root, (V) qp);
-			}
-		}
-	}
-	
+
 	public List<AggregateView> extractViews(AggregateManager am) {
 		List<AggregateView> result = new LinkedList<AggregateView>();
 
@@ -152,7 +127,20 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 		}
 
 		return result;
-	}		
+	}
+
+	public Set<String> getAttributes(View view) {
+		Set<String> result = new HashSet<>();
+
+		result.addAll(view.getAttributeList());
+		if(getView().getChildren() != null) {
+			for (View child : getView().getChildren()) {
+				result.addAll(getAttributes(child));
+			}
+		}
+
+		return result;
+	}
 
 	public final static class QueryKey {
 		final Type type;
@@ -213,10 +201,6 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 
 	public static String generateAlias(int counter) {
 		return QueryTree.ENTITY_ALIAS_PREFIX + counter;
-	}
-
-	public Set<Parameter> getParameter() {
-		return (view == null || view.getParameter() == null) ? new HashSet<Parameter>() : new HashSet<Parameter>(view.getParameter());
 	}
 
 	@Override

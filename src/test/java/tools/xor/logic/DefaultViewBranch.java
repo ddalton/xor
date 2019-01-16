@@ -84,17 +84,6 @@ public class DefaultViewBranch extends AbstractDBTest {
 	}
 	
 	@Test
-	public void testTaskQueryableRegions() {
-		DataAccessService das = aggregateManager.getDAS(); 
-
-		Type taskType = das.getType(Task.class);	
-		View view = das.getView((EntityType) taskType);
-		
-		List<QueryPiece> regions = view.getTypeGraph((EntityType)taskType).getQueryableRegions();
-		System.out.println("Regions: " + regions.size());
-	}
-	
-	@Test
 	public void testValidView() {	
 		View view = aggregateManager.getView("VALIDENTITY");
 		assert(view.isValid());		

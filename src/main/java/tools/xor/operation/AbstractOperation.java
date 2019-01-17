@@ -21,10 +21,17 @@ package tools.xor.operation;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
+import tools.xor.view.Query;
+import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryPiece;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AbstractOperation implements Operation {
 	@Override
@@ -70,5 +77,39 @@ public abstract class AbstractOperation implements Operation {
 	@Override
 	public BusinessObject getExternalParent(CallInfo ci) {
 		return ci.getParentInputEntity();
-	}		
+	}
+
+	public void preProcess(Settings settings, Query query)
+	{
+		Map<String, Object> params = new HashMap<String, Object>();
+		if(settings.getParams() != null) {
+			params.putAll(settings.getParams());
+		}
+
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			if (query.hasParameter(entry.getKey())) {
+				query.setParameter(entry.getKey(), entry.getValue());
+			}
+		}
+
+		// Set the chunk values
+		Map<String, Object> nextToken = settings.getNextToken();
+		if (nextToken != null) {
+			for (Map.Entry<String, Object> entry : nextToken.entrySet()) {
+				if (!query.hasParameter(QueryFragment.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
+					throw new IllegalStateException(
+						"NextToken missing information for orderBy field: " + entry.getKey());
+				}
+				query.setParameter(
+					QueryFragment.NEXTTOKEN_PARAM_PREFIX + entry.getKey(),
+					entry.getValue());
+			}
+		}
+
+		// pagination
+		if (settings.getOffset() != null)
+			query.setFirstResult(settings.getOffset());
+		if (settings.getLimit() != null)
+			query.setMaxResults(settings.getLimit());
+	}
 }

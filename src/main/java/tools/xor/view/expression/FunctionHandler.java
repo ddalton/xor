@@ -40,9 +40,9 @@ public abstract class FunctionHandler
 	public static final String GT = "GT";
 	public static final String LE = "LE";
 	public static final String LT = "LT";
+	public static final String NE = "NE";
 	public static final String BETWEEN = "BETWEEN";
 
-	protected String       expression;
 	protected List<String> parameterName = new ArrayList<String>();
 
 	// Key is the full attribute name and the value is the normalized name

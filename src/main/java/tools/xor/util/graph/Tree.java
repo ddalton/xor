@@ -103,6 +103,11 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
     }
 
     public V getRoot() {
+
+        if(getVertices().size() == 0) {
+            return null;
+        }
+
         // take any node and go up the ancestor path until the first node is reached.
         // This node is the root of the tree
         V current = getVertices().iterator().next();

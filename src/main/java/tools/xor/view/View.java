@@ -77,14 +77,6 @@ public interface View {
 	public boolean isExpanded();
 
 	/**
-	 * Checks if the child views contained by this view form a UNION relationship as
-	 * defined in set theory.
-	 *
-	 * @return true if the child views need to be combined using the UNION operator
-	 */
-	public boolean isUnion();
-
-	/**
 	 * Retrieve the version of this view.
 	 * @return version value
 	 */
@@ -163,6 +155,13 @@ public interface View {
 	public void setShape(Shape shape);
 
 	/**
+	 * Retrieves a collection of all attributes defined in the view
+	 * and all its descendant views
+	 * @return attributes
+	 */
+	public List<String> getAttributes();
+
+	/**
 	 * Retrieves the list of attributes defined in the view.
 	 * @return attribute list
 	 */
@@ -209,7 +208,7 @@ public interface View {
 	 *               we want the objects that are created to be based off this type.
 	 * @return QueryView instance
 	 */
-	public QueryTree getEntityView(Type type, boolean narrow);
+	public QueryTree getQueryTree (Type type, boolean narrow);
 
 	/**
 	 * Helps to infer the Entity Type from the view name.
@@ -228,6 +227,7 @@ public interface View {
 
 	/**
 	 * Returns the names of all the views that this view references from its attribute list.
+	 * Includes attributes from child views.
 	 *
 	 * @return set of view names
 	 */

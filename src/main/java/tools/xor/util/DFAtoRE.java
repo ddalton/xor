@@ -766,7 +766,7 @@ public class DFAtoRE {
 		StateGraph<State, Edge<State>> constrainedGraph = new StateGraph<State, Edge<State>>(type, aggregateView.getShape());
 		constrainedGraph.addVertex(startState);
 
-		for(String attrPath: aggregateView.getAttributeList()) {
+		for(String attrPath: aggregateView.getAttributes()) {
 			if(!isRegex(attrPath)) {
 				constrainedGraph.extend(attrPath, startState, false);
 			}

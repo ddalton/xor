@@ -43,7 +43,7 @@ public interface ObjectResolver
         DISTINCT
     }
 
-    void preProcess(QueryPiece qp, Settings settings, Query query, Map<String, Object> params);
+    void preProcess(QueryPiece qp, Settings settings, Query query);
 
     void processRecords(List records, QueryPiece queryPiece, CallInfo callInfo);
 

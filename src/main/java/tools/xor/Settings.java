@@ -464,7 +464,7 @@ public class Settings {
 			return params;
 
 		// TODO: skip recurse attributes and display a warning as this is not yet supported
-		for(String key: view.getAttributeList()) {
+		for(String key: view.getAttributes()) {
 			String encodedKey = encodeParam(key);
 			if(queryParams.containsKey(encodedKey))
 				params.put(key, queryParams.get(encodedKey));

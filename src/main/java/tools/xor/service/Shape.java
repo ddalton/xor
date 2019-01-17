@@ -705,7 +705,7 @@ public class Shape
                 if(start == end) {
                     throw new IllegalStateException("Self-loop cycle found in view references: " + edge);
                 }
-                dg.addEdge(new Edge<AggregateView>(edge, start, end), start, end);
+                dg.addEdge(new Edge<>(edge, start, end), start, end);
             }
         }
 
@@ -759,7 +759,7 @@ public class Shape
 
             Class<?> narrowedClass = null;
             Set multipleNarrowedClass = new HashSet();
-            for(String propertyPath: view.getAttributeList()) {
+            for(String propertyPath: view.getAttributes()) {
                 String propertyName = Settings.getRootName(propertyPath);
                 Class<?> potentialNarrowedClass = null;
                 try {

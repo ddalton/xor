@@ -27,12 +27,14 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.Constants;
+import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -45,26 +47,73 @@ public class FragmentBuilder
     private static final Logger qtLogger = LogManager.getLogger(Constants.Log.QUERY_TRANSFORMER);
 
     private Map<String, QueryFragment> pathToFragment = new HashMap<>();
-    private QueryTree queryTree;
+    private QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree;
 
     public FragmentBuilder(QueryTree queryTree) {
         this.queryTree = queryTree;
+    }
+
+    private void constructPieces(QueryPiece parent, View childView) {
+        // first build the QueryPiece for the child
+        EntityType entityType = null;
+        if(childView.getTypeName() != null && !"".equals(childView.getTypeName().trim())) {
+            entityType = (EntityType)queryTree.getView().getShape().getType(childView.getTypeName());
+        } else {
+            // derive it from the root
+            if(childView.getName() != null && !"".equals(childView.getName().trim()) ) {
+                entityType = (EntityType)this.queryTree.getRoot().getAggregateType().getProperty(childView.getName()).getType();
+            } else {
+                // use the parent's entity type
+                entityType = (EntityType)parent.getAggregateType();
+            }
+        }
+        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> childPiece = new QueryPiece(entityType, childView);
+        build(childPiece);
+
+        QueryFragment sourceFragment = queryTree.getRoot().findFragment(childView.getName()).fragment;
+        QueryFragment targetFragment = childPiece.getRoot();
+
+        queryTree.addEdge(new InterQuery("", parent,
+            childPiece, sourceFragment, targetFragment), parent, childPiece);
+
+        if(childView.getChildren() != null) {
+            for (View grandchildView: childView.getChildren()) {
+                constructPieces(childPiece, grandchildView);
+            }
+        }
     }
 
     /**
      * Builds a QueryPiece.
      * @param entityType of root
      */
-    public void build(EntityType entityType) {
-        QueryPiece queryPiece = new QueryPiece(entityType);
+    public void build(EntityType entityType)
+    {
+        View view = queryTree.getView();
+        QueryPiece queryPiece = new QueryPiece(entityType, view);
+
         build(queryPiece);
+
+        if (view.getChildren() != null) {
+            for (View childView : view.getChildren()) {
+                constructPieces(queryPiece, childView);
+            }
+        }
     }
 
-    public void build(QueryPiece queryPiece) {
-        List<String> paths = queryTree.getView().getAttributeList();
+    public void build(QueryPiece queryPiece)
+    {
+        View view = queryPiece.getView();
+
+        // We need to handle child views
+        List<String> paths = new LinkedList<>(view.getAttributeList());
+
+        if(paths == null || paths.isEmpty()) {
+            return;
+        }
 
         // Also add the function attributes
-        paths.addAll(queryTree.getView().getFunctionAttributes());
+        paths.addAll(view.getFunctionAttributes());
 
         // First create a start fragment
         QueryFragment start = new QueryFragment(

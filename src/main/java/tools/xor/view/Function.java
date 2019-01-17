@@ -31,6 +31,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.commons.lang.RandomStringUtils;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.FunctionHandler;
 import tools.xor.view.expression.FunctionHandlerFactory;
@@ -118,11 +119,11 @@ public class Function implements Comparable<Function> {
 	 * @param qp QueryPiece for which the alias name is mapped
 	 * @return true if all the names can be normalized, false otherwise
 	 */
-	public boolean normalize(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+	public boolean normalize(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, PersistenceOrchestrator po) {
 		boolean all = true;
 
 		for(String path: functionHandler.getAttributes()) {
-			String oqlname = qp.getOQLName(path);
+			String oqlname = qp.getOQLName(path, po);
 			if(oqlname != null) {
 				functionHandler.setNormalizedName(path, oqlname);
 			} else {

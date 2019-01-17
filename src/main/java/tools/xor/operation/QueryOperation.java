@@ -77,7 +77,9 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		
 		// Always use the REFERENCE type
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getEntityView( referenceType, callInfo.getSettings().doNarrow() );
+		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getQueryTree(
+			referenceType,
+			callInfo.getSettings().doNarrow());
 
 		// Construct the query based on the settings
 		QueryBuilder builder = new QueryBuilder(queryTree);
@@ -126,33 +128,12 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	}
 
 	@Override
-	public void preProcess(QueryPiece qp, Settings settings, Query query, Map<String, Object> params) {
-		for(Map.Entry<String, Object> entry: params.entrySet()) {
-			if(query.hasParameter(entry.getKey())) {
-				query.setParameter(entry.getKey(), entry.getValue());
-			}
-		}
+	public void preProcess(QueryPiece qp, Settings settings, Query query) {
+		super.preProcess(settings, query);
 
 		if(getEntity().getIdentifierValue() != null && query.hasParameter(QueryFragment.ID_PARAMETER_NAME)) {
 			query.setParameter(QueryFragment.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
 		}
-
-		// Set the chunk values
-		Map<String, Object> nextToken = settings.getNextToken();
-		if(nextToken != null) {
-			for(Map.Entry<String, Object> entry: nextToken.entrySet()) {
-				if(!query.hasParameter(QueryFragment.NEXTTOKEN_PARAM_PREFIX + entry.getKey())) {
-					throw new IllegalStateException("NextToken missing information for orderBy field: " + entry.getKey());
-				}
-				query.setParameter(QueryFragment.NEXTTOKEN_PARAM_PREFIX + entry.getKey(), entry.getValue());
-			}
-		}
-
-		// pagination
-		if(settings.getOffset() != null)
-			query.setFirstResult(settings.getOffset());
-		if(settings.getLimit() != null)
-			query.setMaxResults(settings.getLimit());
 
 		// initialize the query with the selected columns
 		query.setColumns(qp.getFieldNames());

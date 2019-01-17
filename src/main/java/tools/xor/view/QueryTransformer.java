@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator.QueryType;
 import tools.xor.util.InterQuery;
@@ -120,14 +121,12 @@ import tools.xor.util.InterQuery;
  * Based on the skip and include filters, the copy of the QueryTree is trimmed before it
  * is executed
  *
- * LoopSplitter
- * ------------
- * If a loop is detected, then it is the responsibility of the client to provide a
- * LoopResolver for that edge.
- * The loop resolver can be specified for the property in the join edge by the following API:
- * property.addLoopResolver(resolver)
- * The resolver has the following API:
- *   String unrollTo(int level)
+ * QueryConsolidator
+ * -----------------
+ * If there are multiple inline (child views) and named views (view references), then
+ * the QueryPiece constructed from them might have a single fragment in most cases. If so,
+ * they can be rolled into the parent view.
+ * Also, the functions will need to be rolled as well.
  *
  * SortValidator
  * -------------
@@ -286,6 +285,7 @@ public class QueryTransformer
 
 		// System OQL
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
+		new FragmentBuilder(queryTree).build((EntityType)settings.getEntityType());
 		QueryBuilder qb = new QueryBuilder(queryTree);
 		qb.construct(settings);
 

@@ -55,8 +55,6 @@ public class QueryBuilder
     public static final String AS_CLAUSE = " AS ";
 
     private QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree;
-    private boolean             addIdentifier;
-    List<Function> consolidatedFunctions = new LinkedList<>();
 
     public QueryBuilder(QueryTree queryTree) {
         this.queryTree = queryTree;
@@ -72,7 +70,7 @@ public class QueryBuilder
 
         while(!queries.isEmpty()) {
             QueryPiece qp = queries.remove(0);
-            queries.addAll(qp.getChildren(qp));
+            queries.addAll(this.queryTree.getChildren(qp));
 
             // construct the query and set it one the qp
             construct(settings, qp);
@@ -94,17 +92,21 @@ public class QueryBuilder
             Function narrowedFunction = function.copy();
             temp.add(narrowedFunction);
         }
-        if(queryTree.getView() != null && queryTree.getView().getFunction() != null) {
-            temp.addAll(queryTree.getView().getFunction());
+        if(qp.getView() != null && qp.getView().getFunction() != null) {
+            temp.addAll(qp.getView().getFunction());
         }
 
         qp.generateFields(settings, this.queryTree);
 
+        if(qp.getVertices().size() == 0) {
+            return;
+        }
+
         // We populate only those filters for while all the attributes can be found in
         // the QueryPiece
-        consolidatedFunctions = new LinkedList<>();
+        List<Function> consolidatedFunctions = new LinkedList<>();
         for(Function function : temp) {
-            if(function.normalize(qp)) {
+            if(function.normalize(qp, settings.getPersistenceOrchestrator())) {
                 consolidatedFunctions.add(function);
             }
         }
@@ -112,12 +114,12 @@ public class QueryBuilder
 
         // The following steps are not necessary if a custom query is being used
         StringBuilder oql = new StringBuilder(constructOQL(settings.getPersistenceOrchestrator(), qp));
-        oql.append(buildWhereClause(settings, qp));
-        oql.append(buildOrderClause(qp, settings.getPersistenceOrchestrator()));
+        oql.append(buildWhereClause(settings, qp, consolidatedFunctions));
+        oql.append(buildOrderClause(qp, settings.getPersistenceOrchestrator(), consolidatedFunctions));
 
         final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
         if(vb.isDebugEnabled()) {
-            vb.debug("OQL of view [" + this.queryTree.getView().getName() + "] => " + oql.toString());
+            vb.debug("OQL of view [" + qp.getView().getName() + "] => " + oql.toString());
         }
 
         System.out.println("QUERY:::: " + oql.toString());
@@ -159,8 +161,8 @@ public class QueryBuilder
             children.addAll(0, qp.getOutEdges(child.getEnd()));
         }
 
-        if(queryTree.getView() != null && queryTree.getView().getJoin() != null) {
-            for(Join join: queryTree.getView().getJoin()) {
+        if(qp.getView() != null && qp.getView().getJoin() != null) {
+            for(Join join: qp.getView().getJoin()) {
                 if(join.getEntity() != null) {
                     OQL.append(", " + join.getEntity());
                 }
@@ -186,18 +188,17 @@ public class QueryBuilder
         return result;
     }
 
-    protected String buildWhereClause(Settings settings, QueryPiece qp) {
+    protected String buildWhereClause(Settings settings, QueryPiece qp, List<Function> consolidatedFunctions) {
         StringBuilder result = new StringBuilder();
 
-        checkAndAddFilters(result, settings);
-        checkAndAddId(result, qp);
-        checkAndAddChunkStart(settings, result);
+        checkAndAddFilters(result, settings, consolidatedFunctions);
+        checkAndAddChunkStart(settings, result, consolidatedFunctions);
         checkAndAddOpenPropertyJoins(result, qp);
 
         return result.toString();
     }
 
-    protected void checkAndAddFilters(StringBuilder result, Settings settings) {
+    protected void checkAndAddFilters(StringBuilder result, Settings settings, List<Function> consolidatedFunctions) {
         Map<String, Object> userParams = settings.getParams();
 
 		for(Function function : consolidatedFunctions) {
@@ -214,17 +215,6 @@ public class QueryBuilder
 			addWhereStep(result);
 			result.append(function.getQueryString());
 		}
-    }
-
-
-    protected void checkAndAddId(StringBuilder result, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
-
-        if(addIdentifier) {
-            addWhereStep(result);
-
-            result.append( qp.getRoot().getId() );
-            result.append( " = :" + QueryFragment.ID_PARAMETER_NAME);
-        }
     }
 
     private void addWhereStep(StringBuilder result) {
@@ -253,7 +243,7 @@ public class QueryBuilder
      * @param settings user provided settings
      * @param queryString the current query string that has been built so far
      */
-    protected void checkAndAddChunkStart(Settings settings, StringBuilder queryString) {
+    protected void checkAndAddChunkStart(Settings settings, StringBuilder queryString, List<Function> consolidatedFunctions) {
         if(settings == null) {
             return;
         }
@@ -264,7 +254,7 @@ public class QueryBuilder
         }
 
         List<Function> orderBy = new LinkedList<Function>();
-        for(Function function : this.consolidatedFunctions) {
+        for(Function function : consolidatedFunctions) {
             if(function.isOrderBy()) {
                 orderBy.add(function);
             }
@@ -354,7 +344,7 @@ public class QueryBuilder
 		}
     }
 
-    protected String buildOrderClause( QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, PersistenceOrchestrator po) {
+    protected String buildOrderClause( QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, PersistenceOrchestrator po, List<Function> consolidatedFunctions) {
         StringBuilder result = new StringBuilder();
 
         Map<Integer, String> orderClauses = new TreeMap<>();
@@ -369,7 +359,7 @@ public class QueryBuilder
 
 		// filter order clauses
 		StringBuilder filterOrderBy = new StringBuilder();
-		for(Function function : this.consolidatedFunctions) {
+		for(Function function : consolidatedFunctions) {
 			if(function.isOrderBy()) {
 				if(filterOrderBy.length() > 0)
 					filterOrderBy.append(COMMA_DELIMITER);

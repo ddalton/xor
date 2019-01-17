@@ -166,7 +166,7 @@ public class QueryFragment implements Vertex
 
         // We should not create QueryField instances for fields that are only
         // referenced from functions
-        Set<String> attributePaths = new HashSet<>(queryTree.getAttributes(queryTree.getView()));
+        Set<String> attributePaths = new HashSet<>(queryTree.getView().getAttributes());
 
         for(String path: this.paths) {
             if(isUserAttribute(attributePaths, path)) {
@@ -179,6 +179,10 @@ public class QueryFragment implements Vertex
             }
         }
 
+        for(QueryField field: queryFields) {
+            pathToFieldMap.put(field.getPath(), field);
+        }
+
         // Add the id if we need to share the object in the result
         ObjectResolver.Type type = settings.getResolverType();
         assert type != null : "Except a value for resolver type";
@@ -186,14 +190,14 @@ public class QueryFragment implements Vertex
         if(type == ObjectResolver.Type.SHARED) {
             // add surrogate key
             String idName = getEntityType().getIdentifierProperty().getName();
-            if(!paths.contains(idName)) {
+            if(!pathToFieldMap.containsKey(idName)) {
                 queryFields.add(new QueryField(idName, position++, this, true));
             }
 
             // add USERKEY
             if( getEntityType().getNaturalKey() != null ) {
                 for(String key: getEntityType().getExpandedNaturalKey()) {
-                    if(!paths.contains(key)) {
+                    if(!pathToFieldMap.containsKey(key)) {
                         queryFields.add(new QueryField(key, position++, this, true));
                     }
                 }
@@ -217,16 +221,12 @@ public class QueryFragment implements Vertex
                 // add COLLECTION_USERKEY
                 if (property.getCollectionKey() != null) {
                     for (String key : property.getCollectionKey()) {
-                        if (!paths.contains(key)) {
+                        if (!pathToFieldMap.containsKey(key)) {
                             queryFields.add(new QueryField(key, position++, this, true));
                         }
                     }
                 }
             }
-        }
-
-        for(QueryField field: queryFields) {
-            pathToFieldMap.put(field.getPath(), field);
         }
 
         return position;

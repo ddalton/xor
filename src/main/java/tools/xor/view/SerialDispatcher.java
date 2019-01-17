@@ -41,8 +41,10 @@ public class SerialDispatcher implements QueryDispatcher
             qp = queries.remove(0);
 
             Query query = qp.prepare(callInfo, resolver);
-            List records = query.getResultList(null, callInfo.getSettings());
-            resolver.processRecords(records, qp, callInfo);
+            if(query != null) {
+                List records = query.getResultList(null, callInfo.getSettings());
+                resolver.processRecords(records, qp, callInfo);
+            }
 
             queries.addAll(qt.getChildren(qp));
         }

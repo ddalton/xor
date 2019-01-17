@@ -19,8 +19,6 @@
 
 package tools.xor.logic;
 
-import java.util.List;
-
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -49,7 +47,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		View view = aggregateManager.getView("TASKCHILDREN");
 		
 		// change to accept entity type
-		QueryTree viewBranch = view.getEntityView(taskType, false); 
+		QueryTree viewBranch = view.getQueryTree(taskType, false);
 		assert(viewBranch != null);
 		assert(viewBranch.getOutEdges(viewBranch.getRoot()).size() == 0); // Ensure no child branches are created
 	}
@@ -66,9 +64,13 @@ public class DefaultViewBranch extends AbstractDBTest {
 		View view = aggregateManager.getView("TASKSET");
 		
 		// change to accept entity type
-		QueryTree viewBranch = view.getEntityView(taskType, false); 
-		assert(viewBranch != null);
-		assert(viewBranch.getOutEdges(viewBranch.getRoot()).size() == 2);
+		QueryTree queryTree = view.getQueryTree(taskType, false);
+		queryTree.exportToDOT("branches2.dot");
+
+		assert(queryTree != null);
+
+		QueryPiece root = (QueryPiece)queryTree.getRoot();
+		assert(root.getOutEdges(root.getRoot()).size() == 2);
 	}	
 	
 	//@Test
@@ -78,7 +80,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		Type taskType = das.getType(Task.class);	
 		View view = das.getView((EntityType) taskType);
 		
-		QueryTree viewBranch = view.getEntityView(taskType, false); 
+		QueryTree viewBranch = view.getQueryTree(taskType, false);
 		assert(viewBranch != null);
 		System.out.println("Subbranches: " + viewBranch.getOutEdges(viewBranch.getRoot()).size());
 	}

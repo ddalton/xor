@@ -119,7 +119,7 @@ public class CartesianJoinSplitter implements QuerySplitter
 
     private QueryPiece split(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> originalQP, QueryFragment fragment, IntraQuery<QueryFragment> splitAtEdge) {
         QueryFragment clone = originalQP.copyRoot(this.queryTree);
-        QueryPiece newQP = new QueryPiece(clone.getEntityType());
+        QueryPiece newQP = new QueryPiece(clone.getEntityType(), originalQP.getView());
         newQP.addVertex(clone);
 
         // Split the original QueryPiece

@@ -34,11 +34,6 @@ public class UnmodifiableView implements View
         return view.isExpanded();
     }
 
-    @Override public boolean isUnion ()
-    {
-        return view.isUnion();
-    }
-
     @Override public int getVersion ()
     {
         return view.getVersion();
@@ -121,6 +116,11 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
+    @Override public List<String> getAttributes ()
+    {
+        return Collections.unmodifiableList(view.getAttributes());
+    }
+
     @Override public List<String> getAttributeList ()
     {
         return Collections.unmodifiableList(view.getAttributeList());
@@ -151,9 +151,9 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public QueryTree getEntityView (Type type, boolean narrow)
+    @Override public QueryTree getQueryTree (Type type, boolean narrow)
     {
-        return view.getEntityView(type, narrow);
+        return view.getQueryTree(type, narrow);
     }
 
     @Override public Class inferDomainClass ()

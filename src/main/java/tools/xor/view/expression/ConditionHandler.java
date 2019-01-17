@@ -28,6 +28,8 @@ public class ConditionHandler extends FunctionHandler
 {
     private static final String PATTERN = "(\\[\\s*([^\\s]*)\\s*\\]+|\\s*:([\\w_]*)\\s*)+";
 
+    protected String       expression;
+
     @Override
     public String getQueryString() {
         String queryString = expression;
@@ -41,8 +43,10 @@ public class ConditionHandler extends FunctionHandler
 
     @Override
     public void init(List<String> args) {
+        this.expression = args.get(0);
+
         Pattern pattern = Pattern.compile( PATTERN );
-        Matcher matcher = pattern.matcher(args.get(0));
+        Matcher matcher = pattern.matcher(this.expression);
 
         while (matcher.find()) {
             System.out.println("Full match: " + matcher.group(0));

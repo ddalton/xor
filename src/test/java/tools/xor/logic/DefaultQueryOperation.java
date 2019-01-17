@@ -959,7 +959,9 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		c.add(d1);
 		c.add(d2);
 		task1.setTaskChildren(c);
-		task1 = (Task) aggregateService.create(task1, new Settings());	
+		task1 = (Task) aggregateService.create(task1, new Settings());
+
+			System.out.println("Name: " + task1.getName() + ", Id: " + task1.getId());
 
 		// task 2
 		Task task2 = new Task();
@@ -981,9 +983,16 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.setParam("name1", "DEFECTS");
 		settings.setParam("name2", "PRIORITIZE_DEFECTS");
+		settings.setParam("name3", "FIX_DEFECTS");
+		settings.addFunction(FunctionHandler.NE, "name", "name3");
 		settings.setView(aggregateService.getView("TASKUNIONSET"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
+		System.out.println("SIZE    :   " + toList.size());
+		for(Object o: toList) {
+			Task t = (Task) o;
+			System.out.println("Name: " + t.getName() + ", Id: " + t.getId());
+		}
 		assert(toList.size() == 2);
 
 		Object obj1 = toList.get(0);

@@ -129,19 +129,6 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 		return result;
 	}
 
-	public Set<String> getAttributes(View view) {
-		Set<String> result = new HashSet<>();
-
-		result.addAll(view.getAttributeList());
-		if(getView().getChildren() != null) {
-			for (View child : getView().getChildren()) {
-				result.addAll(getAttributes(child));
-			}
-		}
-
-		return result;
-	}
-
 	public final static class QueryKey {
 		final Type type;
 		final String viewName;

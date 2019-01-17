@@ -170,16 +170,14 @@ public class AggregateViewFactory {
 			if(av.getTypeName() == null) {
 				continue;
 			}
-			System.out.println(
-				"**** AggregateTye: " + av.getTypeName() + ", attribute size: "
-					+ av.getAttributeList().size());
+
 			Type type = am.getDAS().getType(av.getTypeName());
 			groupByPackage(type, av, viewsByPackage);
 			
 			QueryKey viewKey = new QueryKey(type, av.getName(), false);
 
 			QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(av);
-			new FragmentBuilder(queryTree).build(new QueryPiece((EntityType)viewKey.type));
+			new FragmentBuilder(queryTree).build(new QueryPiece((EntityType)viewKey.type, av));
 			
 			// Extract system generated OQL query
 			List<AggregateView> parallelViews = new ArrayList<>();

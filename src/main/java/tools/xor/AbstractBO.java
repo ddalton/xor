@@ -759,7 +759,8 @@ public abstract class AbstractBO implements BusinessObject {
 			currentPath.append(step);
 
 			Property property = current.getInstanceProperty(step);
-			Property domainProperty = domainEntityType.getProperty(currentPath.substring(currentPath.indexOf(Settings.PATH_DELIMITER)+1));
+			//Property domainProperty = domainEntityType.getProperty(currentPath.substring(currentPath.indexOf(Settings.PATH_DELIMITER)+1));
+			Property domainProperty = domainEntityType.getProperty(currentPath.toString());
 			if(property == null)
 				throw new RuntimeException("Unable to resolve property: " + propertyPath);
 

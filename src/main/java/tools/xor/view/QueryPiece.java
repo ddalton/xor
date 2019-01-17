@@ -42,6 +42,7 @@ import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.IntraQuery;
@@ -60,17 +61,35 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 	private Type      aggregateType;
 	private String    name;
-	private Query     query; // Query representing this QueryPiece
-	private String    queryString;
 	private List<QueryField> fields = new LinkedList<>();
 	private Map<String, QueryField> attributeToFieldMap = new HashMap<>();
+	private Query     query;          // Query representing this QueryPiece
+	private String    queryString;
+	private View      view; // view associated with this QueryPiece, needed for functions
 
-	public QueryPiece(EntityType rootType) {
+	public QueryPiece(EntityType rootType, View view) {
 		this.aggregateType = rootType;
+		this.view = view;
+	}
+
+	public View getView() {
+		return this.view;
 	}
 
 	public void setQuery(Query query) {
 		this.query = query;
+
+		// Also set the selected columns
+		this.query.setColumns(getSelectedColumns());
+	}
+
+	private List<String> getSelectedColumns() {
+		List<String> result = new LinkedList<>();
+		for(QueryField field: fields) {
+			result.add(field.getPath());
+		}
+
+		return result;
 	}
 
 	public Query getQuery() {
@@ -84,7 +103,6 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	public String getQueryString() {
 		return this.queryString;
 	}
-
 	
 	public Object getQueryValue(Object[] queryResultRow, String path) {
 		QueryField field = attributeToFieldMap.get(path);
@@ -273,6 +291,9 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	 * @return path relative to the QueryPiece
 	 */
 	private String makeRelative(String path) {
+		if(path == null) {
+			return null;
+		}
 		String anchorPath = (getRoot().getAncestorPath() == null) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);
 
 		// we first strip out the ancestor path from the root QueryPiece
@@ -280,18 +301,49 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	}
 
 	public boolean isFragment(String path) {
-		QueryFragment fragment = findFragment(path);
-		return (fragment == null || fragment.getAncestorPath() == null) ? false : fragment.getAncestorPath().equals(path);
+		FragmentAnchor anchor = findFragment(path);
+		return anchor.path == null;
 	}
 
-	public QueryFragment findFragment(String path) {
+	/**
+	 * Find the closest fragment at which this path is anchored
+	 * @param path for which we want to find the fragment
+	 * @return fragment
+	 */
+	public FragmentAnchor findFragment(String path) {
 		return findFragment(getRoot(), makeRelative(path));
 	}
 
-	private QueryFragment findFragment(V vertex, String path) {
+	public static class FragmentAnchor {
+		public QueryFragment fragment;
+		public String path;
+
+		public FragmentAnchor(QueryFragment fragment, String path) {
+			this.fragment = fragment;
+			this.path = path;
+		}
+
+		public boolean isValidPath() {
+			if(path == null) {
+				return false;
+			}
+			String property = State.getNextAttr(path);
+			return fragment.getEntityType().getProperty(property) != null;
+		}
+
+		public String getOQLName() {
+			return fragment.getAlias() + Settings.PATH_DELIMITER + path;
+		}
+
+		public boolean isFragment() {
+			return path == null;
+		}
+	}
+
+	private FragmentAnchor findFragment(V vertex, String path) {
 
 		if(path == null) {
-			return vertex;
+			return new FragmentAnchor(vertex, path);
 		}
 
 		String next = State.getNextAttr(path);
@@ -304,7 +356,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		}
 
 		if(nextFragment == null) {
-			return null;
+			return new FragmentAnchor(vertex, path);
 		} else {
 			return findFragment(nextFragment, State.getRemaining(path));
 		}
@@ -340,17 +392,22 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	 * If the path is applicable to this QueryPiece, then we return the OQL name (aliased name)
 	 *
 	 * @param path to resolve to the OQL name
+	 * @param po persistence orchestrator
 	 * @return OQL name
 	 */
-	public String getOQLName(String path) {
+	public String getOQLName(String path, PersistenceOrchestrator po) {
 		if(getRoot().getAncestorPath() == null || path.startsWith(getRoot().getAncestorPath())) {
 			QueryField field = findField(path);
 			if(field == null) {
-				if(isFragment(path)) {
-					return findFragment(path).getAlias();
+				FragmentAnchor anchor = findFragment(path);
+				if(anchor.isValidPath()) {
+					return anchor.getOQLName();
+				}
+				if(anchor.isFragment()) {
+					return anchor.fragment.getAlias();
 				}
 			} else {
-				return field.getOQL(null);
+				return field.getOQL(po.getQueryCapability());
 			}
 		}
 
@@ -373,12 +430,9 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 	protected Query prepare(CallInfo callInfo, ObjectResolver resolver)
 	{
-		Map<String, Object> params = new HashMap<String, Object>();
-		if(callInfo.getSettings().getParams() != null) {
-			params.putAll(callInfo.getSettings().getParams());
+		if(query != null) {
+			resolver.preProcess(this, callInfo.getSettings(), this.query);
 		}
-
-		resolver.preProcess(this, callInfo.getSettings(), this.query, params);
 
 		return query;
 	}

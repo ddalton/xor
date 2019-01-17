@@ -22,6 +22,7 @@ package tools.xor.view;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -77,6 +78,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	protected String            name;
 	protected List<String>      attributeList;
+
 	protected String            typeName; // represents the root entity type
 	
 	// Each function should be independent of one another
@@ -94,13 +96,13 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	
 	protected List<StoredProcedure>   storedProcedure;
 
-	/** This description only applies to query partitions
-	 * validation should be done by the PersistenceOrchestrator
-	 * If the children are specified, it is not necessary to split it automatically
-	 * and we will trust the user has done a better split
-	 * NOTE: Only one level of child Content views are permitted. Nesting is not allowed.
-	 */
-	protected List<AggregateView> children;
+	// Child AggregateViews are considered as inline views and do not persist independently
+	// Their name represents the anchor (the edge) where they connect to. It is a full path
+	// starting from the root.
+	// View references are named views whose anchor is the path where they appear.
+	// If the view to which it attaches does not have a type then it is a container view
+	// and all its members are aliases
+ 	protected List<AggregateView> children;
 
 	protected List<Join>        join;
 	
@@ -108,9 +110,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	
 	@XmlTransient
 	private boolean expanded;
-
-	@XmlTransient
-	private boolean union;
 
 	@XmlTransient
 	private Set<String> exactAttributes; // These do not have the recursive operand (*)
@@ -167,15 +166,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	public void setExpanded(boolean expanded) {
 		this.expanded = expanded;
-	}
-
-	@Override
-	public boolean isUnion() {
-		return union;
-	}
-
-	public void setUnion(boolean union) {
-		this.union = union;
 	}
 
 	@Override
@@ -284,13 +274,23 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	@Override
-	public List<String> getAttributeList() {
-		if(attributeList == null && children != null) { // UNION functionality
-			setUnion(true);
-			attributeList = new ArrayList<>();
-			for(View child: children)
-				attributeList.addAll(child.getAttributeList());
+	public List<String> getAttributes() {
+		List<String> result = new LinkedList<>();
+
+		if(getAttributeList() != null) {
+			result.addAll(getAttributeList());
 		}
+		if(getChildren() != null) {
+			for (View child : getChildren()) {
+				result.addAll(child.getAttributes());
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	public List<String> getAttributeList() {
 		return attributeList;
 	}
 
@@ -332,16 +332,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	@Override
-	public QueryTree getEntityView(Type type, boolean narrow) {
-		if(children != null) {
-			for(View child: children)
-				if( ((AggregateView)child).getChildren() != null && ((AggregateView)child).getChildren().size() > 0)
-					throw new IllegalArgumentException("A content view cannot have more than one level of child content views");
-		}
-		
-		QueryTree result = getQueryView(new QueryKey(type, name, narrow));
-
-		return result;
+	public QueryTree getQueryTree (Type type, boolean narrow) {
+		return getQueryView(new QueryKey(type, name, narrow));
 	}
 
 	public static boolean isBuiltInView(String viewName) {
@@ -411,7 +403,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		}
 
 		result.setJoin(join);
-		result.setUnion(union);
 
 		if(regexAttributes != null) {
 			result.regexAttributes = new HashMap(regexAttributes);
@@ -435,7 +426,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public Set<String> getViewReferences() {
 		Set<String> result = new HashSet<>();
 		
-		for(String attribute: getAttributeList()) {
+		for(String attribute: getAttributes()) {
 			String viewName = getViewReference(attribute);
 			if(viewName != null)
 				result.add(viewName);
@@ -462,9 +453,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	@Override
 	public boolean hasViewReference() {
-		 
-		for(String attribute: getAttributeList()) {
-			if(getViewReference(attribute) != null)
+
+		for (String attribute : getAttributes()) {
+			if (getViewReference(attribute) != null)
 				return true;
 		}
 		

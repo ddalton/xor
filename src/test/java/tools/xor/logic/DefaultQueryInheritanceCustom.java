@@ -139,11 +139,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
-		settings.addFunction(FunctionHandler.IN, "state", ":state");
-		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
-		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
-		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionHandler.ILIKE, "name", "name");
+		settings.addFunction(FunctionHandler.IN, "state", "state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", "owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", "createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", "updatedSince");
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		
@@ -184,11 +184,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
-		settings.addFunction(FunctionHandler.IN, "state", ":state");
-		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
-		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
-		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionHandler.ILIKE, "name", "name");
+		settings.addFunction(FunctionHandler.IN, "state", "state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", "owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", "createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", "updatedSince");
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
@@ -240,11 +240,11 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
-		settings.addFunction(FunctionHandler.IN, "state", ":state");
-		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
-		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdSince");
-		settings.addFunction(FunctionHandler.GE, "updatedOn", ":updatedSince");
+		settings.addFunction(FunctionHandler.ILIKE, "name", "name");
+		settings.addFunction(FunctionHandler.IN, "state.name", "state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", "owner");
+		settings.addFunction(FunctionHandler.GE, "createdOn", "createdSince");
+		settings.addFunction(FunctionHandler.GE, "updatedOn", "updatedSince");
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
@@ -296,10 +296,10 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
-		settings.addFunction(FunctionHandler.IN, "state", ":state");
-		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
-		settings.addFunction(FunctionHandler.GE, "createdOn", ":createdBefore");
+		settings.addFunction(FunctionHandler.ILIKE, "name", "name");
+		settings.addFunction(FunctionHandler.IN, "state", "state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", "owner");
+		settings.addFunction(FunctionHandler.LT, "createdOn", "createdBefore");
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by name
@@ -312,7 +312,7 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 		input.setMetaEntityType(typeVO);		
 		List<?> toList = aggregateService.query(input, settings);
 
-		assert(toList.size() == 1);		
+		assert(toList.size() == 1);
 
 		Object obj = toList.get(0);
 		assert(PatentVO.class.isAssignableFrom(obj.getClass()));
@@ -362,10 +362,10 @@ public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 				
 		// query the task object
 		Settings settings = new Settings();
-		settings.addFunction(FunctionHandler.ILIKE, "name", ":name");
-		settings.addFunction(FunctionHandler.IN, "state", ":state");
-		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", ":owner");
-		settings.addFunction(FunctionHandler.BETWEEN, "createdOn", ":createdFrom", ":createdTo");
+		settings.addFunction(FunctionHandler.ILIKE, "name", "name");
+		settings.addFunction(FunctionHandler.IN, "state", "state");
+		settings.addFunction(FunctionHandler.EQUAL, "ownedBy.name", "owner");
+		settings.addFunction(FunctionHandler.BETWEEN, "createdOn", "createdFrom", "createdTo");
 		settings.addFunction(FunctionType.ASC, "name");
 		
 		// Filter by date

@@ -181,6 +181,8 @@ public class QueryFragment implements Vertex
 
         // Add the id if we need to share the object in the result
         ObjectResolver.Type type = settings.getResolverType();
+        assert type != null : "Except a value for resolver type";
+
         if(type == ObjectResolver.Type.SHARED) {
             // add surrogate key
             String idName = getEntityType().getIdentifierProperty().getName();

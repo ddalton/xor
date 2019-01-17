@@ -266,7 +266,59 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		return result;
 	}
 
+	/**
+	 * Make the absolute path relative to this QueryPiece.
+	 *
+	 * @param path absolute path of the QueryTree
+	 * @return path relative to the QueryPiece
+	 */
+	private String makeRelative(String path) {
+		String anchorPath = (getRoot().getAncestorPath() == null) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);
+
+		// we first strip out the ancestor path from the root QueryPiece
+		return path.startsWith(anchorPath) ? path.substring(anchorPath.length()) : path;
+	}
+
+	public boolean isFragment(String path) {
+		QueryFragment fragment = findFragment(path);
+		return (fragment == null || fragment.getAncestorPath() == null) ? false : fragment.getAncestorPath().equals(path);
+	}
+
+	public QueryFragment findFragment(String path) {
+		return findFragment(getRoot(), makeRelative(path));
+	}
+
+	private QueryFragment findFragment(V vertex, String path) {
+
+		if(path == null) {
+			return vertex;
+		}
+
+		String next = State.getNextAttr(path);
+		V nextFragment = null;
+		for(E e: getOutEdges(vertex)) {
+			if(e.getName().equals(next)) {
+				nextFragment = e.getEnd();
+				break;
+			}
+		}
+
+		if(nextFragment == null) {
+			return null;
+		} else {
+			return findFragment(nextFragment, State.getRemaining(path));
+		}
+	}
+
+	private QueryField findField(String path) {
+		return findField(getRoot(), makeRelative(path));
+	}
+
 	private QueryField findField(V vertex, String path) {
+
+		if(path == null) {
+			return null;
+		}
 
 		String next = State.getNextAttr(path);
 		V nextFragment = null;
@@ -292,8 +344,14 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	 */
 	public String getOQLName(String path) {
 		if(getRoot().getAncestorPath() == null || path.startsWith(getRoot().getAncestorPath())) {
-			QueryField field = findField(getRoot(), path);
-			return field.getOQL(null);
+			QueryField field = findField(path);
+			if(field == null) {
+				if(isFragment(path)) {
+					return findFragment(path).getAlias();
+				}
+			} else {
+				return field.getOQL(null);
+			}
 		}
 
 		return null;

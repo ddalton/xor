@@ -546,8 +546,10 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public Set<String> getFunctionAttributes() {
 		Set<String> functionAttributes = new HashSet<>();
 
-		for(Function function: getFunction()) {
-			functionAttributes.addAll(function.getAttributes());
+		if(getFunction() != null) {
+			for (Function function : getFunction()) {
+				functionAttributes.addAll(function.getAttributes());
+			}
 		}
 
 		return functionAttributes;

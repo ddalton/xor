@@ -199,7 +199,7 @@ public class Settings {
 	// User provided data that is made available to callbacks
 	private Object externalData;
 
-	private ObjectResolver.Type resolverType;
+	private ObjectResolver.Type resolverType = ObjectResolver.Type.SHARED;
 	
 	// User provided data that is efficiently obtained
 	private PrefetchCache prefetchCache;

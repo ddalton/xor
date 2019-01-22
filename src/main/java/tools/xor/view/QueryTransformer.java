@@ -79,6 +79,9 @@ import tools.xor.util.InterQuery;
  *    made up of QueryFragment nodes and InterQuery edges for all the property paths.
  *    REF:
  *     FragmentBuilder
+ *       Should also take care of creating fragments for aliases, i.e., it needs
+ *       to add QueryType for the root if needed and add the necessary external properties
+ *       to the QueryTree if needed.
  * 2. QueryTree modification for efficient queries
  *    This is analyzed and the necessary QueryPiece instances created.
  *    REF:
@@ -87,7 +90,6 @@ import tools.xor.util.InterQuery;
  *      LoopSplitter
  * 3. QueryTree modification for user functionality
  *    We modify the query to account for user features such as:
- *      AliasSplitter
  *      QueryTrimmer
  * 4. Function
  *    Add necessary functions to the QueryPiece and the placeholders in the QueryFragments
@@ -110,11 +112,6 @@ import tools.xor.util.InterQuery;
  *
  * NOTE: Each step should have its own unit tests
  *
- *
- * AliasSplitter
- * -------------
- * This class creates a new QueryFragment with the alias name.
- * A single property can be represented with multiple fragments if there are multiple aliases.
  *
  * QueryTrimmer
  * ------------

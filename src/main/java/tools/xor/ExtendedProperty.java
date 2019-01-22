@@ -31,6 +31,16 @@ import tools.xor.generator.Generator;
 
 public interface ExtendedProperty extends Property {
 
+	/**
+	 * Create a new property that is same as the current property
+	 * except that it has a new name and an optionally refined property type (subclass)
+	 * @param name new name, a.k.a alias
+	 * @param type of the property
+	 * @param parentType entity type holding this property
+	 * @return
+	 */
+	Property refine (String name, Type type, EntityType parentType);
+
 	public enum Phase {
 		/**
 		 * Process before the property is processed

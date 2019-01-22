@@ -52,6 +52,11 @@ public class ExternalProperty extends AbstractProperty {
 	}
 
 	@Override
+	public Property refine (String name, Type type, EntityType parentType) {
+		throw new UnsupportedOperationException("Refine of external property is not allowed. Refine a domain property instead and create an external property from it");
+	}
+
+	@Override
 	protected void initBusinessLogicAnnotations() {
 		// Business logic not supported on external types
 	}

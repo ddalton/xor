@@ -47,25 +47,30 @@ public class ExternalType extends AbstractType {
 
 	public void setProperty (Shape shape)
 	{
-		// populate the properties for this type
+		setProperty(shape, true);
+	}
 
+	public void setProperty (Shape shape, boolean add) {
+		// populate the properties for this type
 		for (Property domainProperty : shape.getProperties(domainType).values()) {
 			ExternalProperty externalProperty = (ExternalProperty)defineProperty(
 				domainProperty,
 				shape);
 
-			if (externalProperty.getGetterMethod() == null) {
-				logger.warn(
-					"Out-of-sync between external and domain types. The following property is not present in the external type: "
-						+ domainProperty.getName());
-				continue;
-			}
-
 			externalProperty.init(shape);
-			logger.debug(
-				"[" + getName() + "] Domain property name: " + domainProperty.getName()
-					+ ", type name: " + externalProperty.getJavaType());
-			shape.addProperty(externalProperty);
+			if(add) {
+				if (externalProperty.getGetterMethod() == null) {
+					logger.warn(
+						"Out-of-sync between external and domain types. The following property is not present in the external type: "
+							+ domainProperty.getName());
+					continue;
+				}
+
+				logger.debug(
+					"[" + getName() + "] Domain property name: " + domainProperty.getName()
+						+ ", type name: " + externalProperty.getJavaType());
+				shape.addProperty(externalProperty);
+			}
 		}
 	}
 

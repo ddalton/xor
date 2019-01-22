@@ -160,7 +160,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 			}
 
 			// Set the value and create any intermediate objects if necessary
-			root.set(propertyPath, propertyResult, (EntityType) this.aggregateType);
+			root.set(propertyPath, propertyResult, this);
 		}
 	}
 
@@ -435,6 +435,33 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		}
 
 		return query;
+	}
+
+	/**
+	 * Check if this QueryPiece is part of the path and is not the root anchor
+	 * @param path in the QueryTree
+	 * @return tree if the QueryTree is part of the path
+	 */
+	public boolean isPartOf(String path) {
+		QueryFragment root = getRoot();
+
+		return root.getAncestorPath() != null && path.startsWith(root.getAncestorPath());
+	}
+
+	public Property getProperty(String path)
+	{
+		QueryPiece.FragmentAnchor fragmentAnchor = findFragment(path);
+		if (fragmentAnchor != null && fragmentAnchor.fragment != null) {
+			// Get the property from the incoming edge
+			Iterator<E> iter = getInEdges((V)fragmentAnchor.fragment).iterator();
+
+			if (iter.hasNext()) {
+				E incomingEdge = iter.next();
+				return incomingEdge.getProperty();
+			}
+		}
+
+		return null;
 	}
 }
 

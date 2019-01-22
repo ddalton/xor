@@ -23,6 +23,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,18 +32,26 @@ import java.util.Set;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.ExtendedProperty;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
+import tools.xor.util.IntraQuery;
 import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.util.graph.Tree;
 
 /**
  * This is an optimization data structure used by queries.
- * This data structure is used for TreeTraversal operations. 
+ * It contains additional properties and a root of type QueryType that is not
+ * present in the meta data (Shape object), but specific to this QueryTree.
+ * The additional properties may or may not be part of the meta data. So these properties
+ * do not have a domain counterpart.
+ *
+ * This data structure is used for query processing.
  * Suitable for simple requests that do not involve hierarchical structures a.k.a recursion.
  *
  * The mapping is typically:
@@ -218,5 +227,21 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 
 			writer.write(result.toString());
 		}
+	}
+
+	public Property getProperty(String path) {
+		return getProperty(getRoot(), path);
+	}
+
+	private Property getProperty(V queryPiece, String path) {
+
+		Collection<E> edges = getOutEdges(queryPiece);
+		for(E edge: edges) {
+			if(edge.getEnd().isPartOf(path)) {
+				return getProperty(edge.getEnd(), path);
+			}
+		}
+
+		return queryPiece.getProperty(path);
 	}
 }

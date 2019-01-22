@@ -27,6 +27,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ExternalType;
 import tools.xor.OpenType;
 import tools.xor.Property;
+import tools.xor.QueryType;
 import tools.xor.Settings;
 import tools.xor.SimpleType;
 import tools.xor.SimpleTypeFactory;
@@ -150,6 +151,46 @@ public class Shape
     }
 
     /**
+     * Creates a QueryType with properties created from the rootType renamed based on aliases map
+     * and with the type defined by typeMappings.
+     * QueryType objects are temporary and hence are not part of the Shape system.
+     *
+     * @param rootType on which this QueryType is based.
+     * @param aliases for the properties of rootType
+     * @param typeMappings subclass types of the properties of the rootType. The key is alias name.
+     * @return QueryType entity type
+     */
+    public EntityType createQueryType(EntityType rootType, Map<String, String> aliases, Map<String, String> typeMappings) {
+
+        Set<Property> properties = new HashSet<>();
+
+        // check if the aliases have any missing type mappings
+        // if so, they are added with the predefined type mapping
+        for(Map.Entry<String, String> entry: aliases.entrySet()) {
+            if(!typeMappings.containsKey(entry.getKey())) {
+                String propertyName = aliases.get(entry.getKey());
+                ExtendedProperty property = (ExtendedProperty)getProperty(rootType, propertyName);
+                String typeName = property.isMany() ? property.getElementType().getName() : property.getType().getName();
+
+                typeMappings.put(entry.getKey(), typeName);
+            }
+        }
+
+        // We first create the properties and then create the QueryType instance from it.
+        for(Map.Entry<String, String> entry: typeMappings.entrySet()) {
+            // Get the domain property for this entry
+            String propertyName = aliases.get(entry.getKey());
+            Property property = getProperty(rootType, propertyName);
+
+            Type newPropertyType = getType(entry.getValue());
+            Property queryProperty = ((ExtendedProperty) property).refine(entry.getKey(), newPropertyType, rootType);
+            properties.add(queryProperty);
+        }
+
+        return new QueryType(properties);
+    }
+
+    /**
      * Returns true if this Shape is the owner of the type whether domain or external
      * @param entityType entityType
      * @return true if this Shape created this type
@@ -257,6 +298,26 @@ public class Shape
         }
     }
 
+    /**
+     * We derive an external type from the QueryType.
+     * QueryType are not part of the shape. Similarly we do not add external type to the shape.
+     *
+     * @param type QueryType for which we need to derive the external type
+     * @return external type
+     */
+    public ExternalType deriveExternalType(QueryType type) {
+        ExternalType externalType = null;
+        Class<?> externalClass = getDAS().getTypeMapper().toExternal(type.getInstanceClass());
+        if(externalClass != null) {
+            externalType = getDAS().getTypeMapper().createExternalType(
+                type,
+                externalClass);
+            externalType.setProperty(this, false);
+        }
+
+        return externalType;
+    }
+
     protected void setBiDirectionOnExternalType (ExternalType externalType) {
         externalType.setOpposite(getDAS());
     }
@@ -301,7 +362,7 @@ public class Shape
 
     /**
      * Method to optimially retrieve a single property
-     * @param type entit type
+     * @param type entity type
      * @param name of the property
      * @return property meta object
      */

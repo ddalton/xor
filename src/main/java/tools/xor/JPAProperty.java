@@ -93,13 +93,27 @@ public class JPAProperty extends AbstractProperty {
 		super(name, type, parentType);
 	}
 
+	public JPAProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
+		super(name, type, parentType, relType, elementType);
+	}
+
+	public Property refine (String name, Type type, EntityType parentType) {
+		JPAProperty result = null;
+
+		if(this.isMany()) {
+			result = new JPAProperty(name, this.getType(), parentType, getRelationshipType(),
+				(EntityType)type);
+		} else {
+			// Create a HibernateProperty
+			result = new JPAProperty(name, type, parentType);
+		}
+
+		return result;
+	}
+
 	@Override public boolean isIdentifier ()
 	{
 		return super.isIdentifier();
-	}
-
-	public JPAProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
-		super(name, type, parentType, relType, elementType);
 	}
 
 	@Override public boolean isOpenContent ()

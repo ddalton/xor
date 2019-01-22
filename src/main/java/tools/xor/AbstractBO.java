@@ -33,6 +33,8 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryPiece;
+import tools.xor.view.QueryTree;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -241,16 +243,30 @@ public abstract class AbstractBO implements BusinessObject {
 	@Override
 	public BusinessObject getBySurrogateKey(Object id, Type type) {
 		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName()), type);
-	}	
-	
+	}
+
+	@Override
+	public BusinessObject getBySurrogateKey(Object id, Type type, String path) {
+		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName(), path), type);
+	}
+
 	@Override
 	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type) {
 		return getObjectCreator().getByEntityKey(
 			new NaturalEntityKey(
 				naturalKeyValues,
 				type.getName()), type);
-	}		
-	
+	}
+
+	@Override
+	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type, String path) {
+		return getObjectCreator().getByEntityKey(
+			new NaturalEntityKey(
+				naturalKeyValues,
+				type.getName(),
+				path), type);
+	}
+
 	private Map<String, Object> getKeyValue(Set<String> keys) {
 		Map<String, Object> keyValues = new HashMap<String, Object>();
 		for(String key: keys) {
@@ -734,8 +750,10 @@ public abstract class AbstractBO implements BusinessObject {
 	}	
 
 	@Override
-	public void set(String propertyPath, Map<String, Object> propertyResult, EntityType domainEntityType) throws Exception {
+	public void set(String propertyPath, Map<String, Object> propertyResult, QueryPiece queryPiece) throws Exception {
 
+		/*
+		  TODO: Needs to create a QueryType
 		if(domainEntityType.isOpen()) {
 			String propertyName = propertyPath.substring(propertyPath.indexOf(OpenType.DELIM)+1);
 			Property property = getType().getProperty(propertyName);
@@ -744,10 +762,12 @@ public abstract class AbstractBO implements BusinessObject {
 				propertyResult.get(propertyPath));
 			return;
 		}
+		*/
 
 		// If we are setting a null value then nothing needs to be done
-		if( propertyResult.get(propertyPath) == null)
+		if( propertyResult.get(propertyPath) == null) {
 			return;
+		}
 
 		// Since this builds the path for objects already persisted, the identifier value will not be null
 		String[] pathSteps = propertyPath.split(Settings.PATH_DELIMITER_REGEX);
@@ -759,8 +779,8 @@ public abstract class AbstractBO implements BusinessObject {
 			currentPath.append(step);
 
 			Property property = current.getInstanceProperty(step);
-			//Property domainProperty = domainEntityType.getProperty(currentPath.substring(currentPath.indexOf(Settings.PATH_DELIMITER)+1));
-			Property domainProperty = domainEntityType.getProperty(currentPath.toString());
+			//Property domainProperty = domainEntityType.getProperty(currentPath.toString());
+			Property domainProperty = queryPiece.getProperty(currentPath.toString());
 			if(property == null)
 				throw new RuntimeException("Unable to resolve property: " + propertyPath);
 
@@ -788,7 +808,9 @@ public abstract class AbstractBO implements BusinessObject {
 								Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
 								naturalKeyValues.put(key, keyValue);
 							}
-							propertyDO = getByNaturalKey(naturalKeyValues, domainProperty.getType());
+							// NOTE: if path is set then we get ObjectResolver.Type#DISTINCT objects
+							// else if path is null we get ObjectResolver.Type#SHARED objects
+							propertyDO = getByNaturalKey(naturalKeyValues, domainProperty.getType(), currentPath.toString());
 						}				
 					}
 					// Check if there is a data object with the given key
@@ -796,7 +818,9 @@ public abstract class AbstractBO implements BusinessObject {
 					Object idValue = null;
 					if(propertyDO == null && ((EntityType)property.getType()).getIdentifierProperty() != null) {
 						idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
-						propertyDO = getBySurrogateKey(idValue, domainProperty.getType());
+						// NOTE: if path is set then we get ObjectResolver.Type#DISTINCT objects
+						// else if path is null we get ObjectResolver.Type#SHARED objects
+						propertyDO = getBySurrogateKey(idValue, domainProperty.getType(), currentPath.toString());
 					}
 
 					if(propertyDO == null) { // create and set the instance object
@@ -842,13 +866,13 @@ public abstract class AbstractBO implements BusinessObject {
 					}
 
 					// Get the element
-					elementDO = getByNaturalKey(naturalKeyValues, domainElementType);
+					elementDO = getByNaturalKey(naturalKeyValues, domainElementType, currentPath.toString());
 				}				
 				
 				Object idValue = null;
 				if(elementDO == null && ((EntityType) elementType).getIdentifierProperty() != null) {
 					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
-					elementDO = getBySurrogateKey(idValue, domainElementType);
+					elementDO = getBySurrogateKey(idValue, domainElementType, currentPath.toString());
 				}
 
 				// check flag to see if the containment should be set

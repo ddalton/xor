@@ -142,10 +142,6 @@ public class OpenType extends AbstractType {
 		return new ArrayList<Type>();
 	}
 
-	public void setBaseType(List<Type> types) {
-		// No effect as the base types can be inferred from the openProperties;
-	}
-
 	@Override
 	public List<Property> getDeclaredProperties() {
 		return getProperties();

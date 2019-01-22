@@ -25,6 +25,8 @@ import java.util.Set;
 
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
+import tools.xor.view.QueryPiece;
+import tools.xor.view.QueryTree;
 
 public interface BusinessObject extends DataObject {
 
@@ -239,10 +241,10 @@ public interface BusinessObject extends DataObject {
 	 * Set the property of this object using the values from propertyResult. This method is mainly used from a query result.
 	 * @param propertyPath The path representing property whose value needs to be set
 	 * @param propertyResult The result from a query
-	 * @param domainEntityType the domain EntityType
+	 * @param queryPiece for the query
 	 * @throws Exception if property cannot be found
 	 */
-	void set(String propertyPath, Map<String, Object> propertyResult, EntityType domainEntityType) throws Exception;
+	void set(String propertyPath, Map<String, Object> propertyResult, QueryPiece queryPiece) throws Exception;
 	
 	/**
 	 * Responsible for creating a new data object whose lifecycle is linked with this object.
@@ -389,6 +391,15 @@ public interface BusinessObject extends DataObject {
 	 * @return BusinessObject if found, null otherwise
 	 */
 	public BusinessObject getBySurrogateKey(Object id, Type type);
+
+	/**
+	 * Get a business object of the same type as the current business object but with different id
+	 * @param id surrogate key value
+	 * @param type domain type irrespective of whether we are obtaining an external or a domain object
+	 * @param path at which the object is anchored from the root object
+	 * @return BusinessObject if found, null otherwise
+	 */
+	public BusinessObject getBySurrogateKey(Object id, Type type, String path);
 	
 	/**
 	 * Get a business object of the same type as the current business object but with different natural key
@@ -397,6 +408,15 @@ public interface BusinessObject extends DataObject {
 	 * @return BusinessObject if found, null otherwise
 	 */
 	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type);
+
+	/**
+	 * Retrieve a business object of the same type with a different natural key and path
+	 * @param naturalKeyValues natural key
+	 * @param type domain type
+	 * @param path at which the object is anchored from the root object
+	 * @return BusinessObject if found, null otherwise
+	 */
+	public BusinessObject getByNaturalKey(Map<String, Object> naturalKeyValues, Type type, String path);
 
 	/**
 	 * Get the object from the object graph for open property

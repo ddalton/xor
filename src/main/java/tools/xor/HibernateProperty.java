@@ -52,7 +52,30 @@ public class HibernateProperty extends AbstractProperty {
 		this.setConfiguration(configuration);
 
 		init();		
-	}	
+	}
+
+	public HibernateProperty(String name, Type type, EntityType parentType) {
+		super(name, type, parentType);
+	}
+
+	public HibernateProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
+		super(name, type, parentType, relType, elementType);
+	}
+
+	public Property refine (String name, Type type, EntityType parentType) {
+		HibernateProperty result = null;
+
+		if(this.isMany()) {
+			result = new HibernateProperty(name, this.getType(), parentType, getRelationshipType(),
+				(EntityType)type);
+		} else {
+			// Create a HibernateProperty
+			result = new HibernateProperty(name, type, parentType);
+		}
+		result.setConfiguration(this.getConfiguration());
+
+		return result;
+	}
 
 	@Override
 	public String getName() {

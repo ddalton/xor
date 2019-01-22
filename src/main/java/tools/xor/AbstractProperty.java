@@ -111,7 +111,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 */
 	// Business logic related annotations 
 	protected List<MethodInfo>     lambdas;
-	protected String           name; // If this is used, it represents an open property
+	protected String           name; // If this is used, it represents an open property or alias
 	protected RelationshipType relType; // The type of relationship this open property models
 	
 	/**
@@ -168,9 +168,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
+	public Property refine (String name, Type type, EntityType parentType) {
+		throw new UnsupportedOperationException("Refine of property not allowed");
+	}
+
+	@Override
 	public void addKeyMapping(String[] thisSet, String[] thatSet) {
 		if(this.keyFields == null) {
-			this.keyFields = new HashMap<String, String>();
+			this.keyFields = new HashMap<>();
 		}
 		if(thisSet == null || thatSet == null ||
 				thisSet.length == 0 || thatSet.length == 0) {

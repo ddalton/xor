@@ -62,6 +62,8 @@ public class DenormalizedQueryOperation extends AbstractOperation {
 			query.setParameter(entry.getKey(), entry.getValue());
 		}
 
+		preProcess(settings, query);
+
 		return query;
 	}
 
@@ -69,24 +71,8 @@ public class DenormalizedQueryOperation extends AbstractOperation {
 
 		try {
 			View view = settings.getView();
-			NativeQuery nativeQuery = view.getNativeQuery();
-			OQLQuery userOQLQuery = view.getUserOQLQuery();
-			List<String> selectedColumns;
+			List<String> selectedColumns = view.getAttributeList();
 
-			if (nativeQuery != null) {
-				selectedColumns = nativeQuery.getResultList();
-			}
-			else if (userOQLQuery != null) {
-				selectedColumns = view.getAttributeList();
-			}
-			else {
-				if (query instanceof StoredProcedureQuery) {
-					selectedColumns = ((StoredProcedureQuery)query).getStoredProcedure().getResultList();
-				}
-				else {
-					selectedColumns = query.getColumns();
-				}
-			}
 			if (selectedColumns != null && selectedColumns.size() > 0) {
 				result.add(selectedColumns.toArray());
 			}

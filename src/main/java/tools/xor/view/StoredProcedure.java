@@ -36,7 +36,7 @@ public class StoredProcedure {
 	protected String                 name;
 	protected AggregateAction        action;
 	protected List<BindParameter> parameterList;
-	protected List<String>           resultList;
+	protected List<String>           resultList;        // Needs to be in dotten notation
 	protected OutputLocation         outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
 	protected Statement              statement;
 	protected String                 callString;

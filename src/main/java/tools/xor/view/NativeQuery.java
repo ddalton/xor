@@ -22,82 +22,100 @@ package tools.xor.view;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NativeQuery {
+public class NativeQuery
+{
 
-	protected List<String>      resultList;
-	protected String            queryString;
-	protected String            identifierClause;
-	protected List<BindParameter> parameterList;
-	protected boolean           usable;
-	
-	public String getIdentifierClause() {
-		return identifierClause;
-	}
+    protected List<String> resultList;  // Names
+    protected String selectClause;
+    protected List<BindParameter> parameterList;
+    protected boolean usable;
+    protected List<Function> function; // should only be of type FREESTYLE
 
-	public void setIdentifierClause(String identifier) {
-		this.identifierClause = identifier;
-	}	
-	
-	public boolean isUsable() {
-		return usable;
-	}
-	
-	public void setUsable(boolean usable) {
-		this.usable = usable;
-	}
-	
-	public List<String> getResultList() {
-		return resultList;
-	}
-	public void setResultList(List<String> attributeList) {
-		this.resultList = attributeList;
-	}
-	public String getQueryString() {
-		return queryString;
-	}
-	public void setQueryString(String queryString) {
-		this.queryString = queryString;
-	}
+    public boolean isUsable ()
+    {
+        return usable;
+    }
 
-	public List<BindParameter> getParameterList() {
-		return parameterList;
-	}
+    public void setUsable (boolean usable)
+    {
+        this.usable = usable;
+    }
 
-	public void setParameterList(List<BindParameter> parameterList) {
-		this.parameterList = parameterList;
-	}
-	
-	public void expand(AggregateView view) {
-		this.resultList = view.getExpandedList(getResultList());
-	}
-	
-	public NativeQuery copy() {
-		NativeQuery result = new NativeQuery();
-		result.resultList = new ArrayList<String>(resultList);
-		result.queryString = queryString;
-		result.identifierClause = identifierClause;
-		result.usable = usable;
-		
-		return result;
-	}
+    public List<String> getResultList ()
+    {
+        return resultList;
+    }
 
-	/**
-	 * The starting position is 1
-	 * @param value of path
-	 * @return position
-	 */
-	public int getPosition(String value) {
-		int result = -1;
-		
-		for(int i = 0; i < resultList.size(); i++) {
-			if(resultList.get(i).equals(value)) {
-				result = i;
-				break;
-			}
-		}
-		
-		return result;
-	}
+    public void setResultList (List<String> attributeList)
+    {
+        this.resultList = attributeList;
+    }
 
+    public String getSelectClause ()
+    {
+        return selectClause;
+    }
+
+    public void setSelectClause (String queryString)
+    {
+        this.selectClause = queryString;
+    }
+
+    public List<Function> getFunction ()
+    {
+        return this.function;
+    }
+
+    public void setFunction(List<Function> function) {
+        this.function = function;
+    }
+
+    public List<BindParameter> getParameterList ()
+    {
+        return parameterList;
+    }
+
+    public void setParameterList (List<BindParameter> parameterList)
+    {
+        this.parameterList = parameterList;
+    }
+
+    public NativeQuery copy ()
+    {
+        NativeQuery result = new NativeQuery();
+        result.resultList = new ArrayList<>(resultList);
+        result.selectClause = selectClause;
+        result.usable = usable;
+        result.parameterList = new ArrayList<>();
+        for (BindParameter bind : parameterList) {
+            result.parameterList.add(bind.copy());
+        }
+        result.function = new ArrayList<>();
+        for(Function function: this.function) {
+            result.function.add(function.copy());
+        }
+
+        return result;
+    }
+
+    /**
+     * The starting position is 1
+     *
+     * @param value of path
+     * @return position
+     */
+    public int getPosition (String value)
+    {
+        int result = -1;
+
+        for (int i = 0; i < resultList.size(); i++) {
+            if (resultList.get(i).equals(value)) {
+                result = i;
+                break;
+            }
+        }
+
+        return result;
+    }
 
 }

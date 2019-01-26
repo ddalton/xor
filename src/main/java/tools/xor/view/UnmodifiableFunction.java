@@ -58,6 +58,10 @@ public class UnmodifiableFunction extends Function
         return function.isFilterIncluded(originalFilters);
     }
 
+    public int getPositionalParamCount() {
+        return function.getPositionalParamCount();
+    }
+
     @Override
     public int compareTo (Function o)
     {

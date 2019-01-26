@@ -26,15 +26,20 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.Settings;
 
 public abstract class AbstractQuery implements Query {
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private List<String> columns;
+	private Map<String, Integer> columnMap;
 	
 	@Override
 	public List<String> getColumns() {
@@ -43,34 +48,51 @@ public abstract class AbstractQuery implements Query {
 
 	@Override
 	public void setColumns(List<String> columns) {
-		this.columns = columns;
-	}	
+		this.columns = new ArrayList<>(columns);
+
+		this.columnMap = new HashMap<>();
+		for(int i = 0; i < columns.size(); i++) {
+			columnMap.put(columns.get(i), i);
+		}
+	}
+
+	@Override
+	public int getColumnPosition(String path) {
+		if(columnMap.containsKey(path)) {
+			return columnMap.get(path);
+		} else {
+			return -1;
+		}
+	}
 	
 	@Override
 	public void prepare(EntityType entityType, QueryPiece queryView) {
 		// nothing to prepare for a SQL query, but StoredProcedure needs to be prepared
 	}
 
-	protected void setPositionalParameters (Settings settings,
-											Map<Integer, Object> positionalParameters,
-											Map<Integer, BindParameter> paramMap,
-											PreparedStatement statement)
-	{
-		if (positionalParameters != null) {
-			for (Map.Entry<Integer, Object> entry : positionalParameters.entrySet()) {
-				if (!paramMap.containsKey(entry.getKey())) {
-					throw new RuntimeException(
-						"Unable to find parameterList with key: " + entry.getKey());
-				}
-				// Note JDBC positional parameters start from 1
-				BindParameter pm = paramMap.get(entry.getKey());
+	protected void setBindParameter(int position, Object value) {
 
-				int timestampType = BindParameter.getType(pm.type);
-				if (timestampType == Types.TIMESTAMP
-					|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
-					pm.setDateFormat(settings.getDateFormat());
+	}
+
+	protected void setParameters (Settings settings, Map<String, BindParameter> paramMap,
+								  Map<String, Object> paramValues)
+	{
+		if (paramMap != null) {
+			for (Map.Entry<String, BindParameter> entry : paramMap.entrySet()) {
+				if (!paramValues.containsKey(entry.getKey())) {
+					throw new RuntimeException(
+						"Unable to find param value with key: " + entry.getKey());
 				}
-				pm.setValue(statement, entry.getValue());
+				BindParameter bp = entry.getValue();
+
+				if(bp.type != null) {
+					int timestampType = BindParameter.getType(bp.type);
+					if (timestampType == Types.TIMESTAMP
+						|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
+						bp.setDateFormat(settings.getDateFormat());
+					}
+				}
+				setBindParameter(bp.position, paramValues.get(entry.getKey()));
 			}
 		}
 	}

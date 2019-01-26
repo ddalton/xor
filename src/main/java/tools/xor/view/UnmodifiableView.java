@@ -249,4 +249,8 @@ public class UnmodifiableView implements View
 		return view.isValid();
 	}
 
+    @Override
+    public boolean hasUserQuery() {
+        return view.hasUserQuery();
+    }
 }

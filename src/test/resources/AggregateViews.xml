@@ -56,16 +56,20 @@
 				 So this section is to map the attribute name to the column position.
 			-->
 			<resultList>[BASICINFO]</resultList>	
-			<queryString>
+			<parameterList name="id_"/>
+			<selectClause>
 				<![CDATA[SELECT UUID, 
 				                NAME,
-								DISPLAYNAME,
-								DESCRIPTION,
-								ICONURL,
-								DETAILEDDESCRIPTION
-							FROM Person]]>
-			</queryString>
-			<identifierClause>WHERE UUID</identifierClause>			
+					        DISPLAYNAME,
+					        DESCRIPTION,
+					        ICONURL,
+					        DETAILEDDESCRIPTION
+					   FROM Person
+                                 ]]>
+			</selectClause>
+		        <function type="FREESTYLE">
+		        	<args>WHERE UUID = ?</args>
+        		</function>
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
@@ -73,7 +77,7 @@
 		<attributeList>[BASICINFO]</attributeList>
 		<userOQLQuery>
 			<resultList>[BASICINFO]</resultList>
-			<queryString>
+			<selectClause>
 				<![CDATA[SELECT id,
 				                name,
 								displayName,
@@ -81,8 +85,10 @@
 								iconUrl,
 								detailedDescription
 							FROM tools.xor.db.base.Person]]>
-			</queryString>
-			<identifierClause>WHERE id</identifierClause>
+			</selectClause>
+		        <function type="FREESTYLE">
+		        	<args>WHERE id = :id_</args>
+        		</function>
 		</userOQLQuery>
 	</aggregateView>
 	<aggregateView>
@@ -91,6 +97,12 @@
 		<storedProcedure>
 			<name>GetPersonBasic</name>
 			<action>READ</action>
+			<resultList>id</resultList>
+			<resultList>name</resultList>
+			<resultList>displayName</resultList>
+			<resultList>description</resultList>
+			<resultList>iconUrl</resultList>
+			<resultList>detailedDescription</resultList>				
         		<!--implicit>true</implicit-->
         		<!--multiple>true</multiple-->
 			<outputLocation position="1"/>
@@ -104,12 +116,6 @@
 				 If the result list is not specified we then go by the attribute list order
 			-->
 			<!--callString>begin GetPersonBasic; end;</callString-->
-			<resultList>id</resultList>
-			<resultList>name</resultList>
-			<resultList>displayName</resultList>
-			<resultList>description</resultList>
-			<resultList>iconUrl</resultList>
-			<resultList>detailedDescription</resultList>				
 		</storedProcedure>
 		<storedProcedure>
 			<!-- The call can contain additional columns like the following required to construct an object:
@@ -152,10 +158,17 @@
 				 2. Map key
 				 3. Entity type
 				 So this section is to map the attribute name to the column position.
+                             These additional columns should come after all the attribute list has been satisfied
 			-->
-			<resultList>[BASICINFO]</resultList>		
+			<resultList>p.uuid</resultList>		
+			<resultList>name</resultList>		
+			<resultList>displayname</resultList>		
+			<resultList>description</resultList>		
+			<resultList>iconurl</resultList>		
+			<resultList>detaileddescription</resultList>				
 			<resultList>TYPE_</resultList>				
-			<queryString>
+			<parameterList name="id_"/>
+			<selectClause>
 				<![CDATA[SELECT p.uuid,
 							  name,
 							  displayname,
@@ -166,8 +179,10 @@
 							FROM Person p
 							  LEFT JOIN Employee e
 							ON p.uuid = e.uuid]]>
-			</queryString>
-			<identifierClause>WHERE p.UUID</identifierClause>				
+			</selectClause>
+		        <function type="FREESTYLE">
+		        	<args>WHERE p.UUID = ?</args>
+        		</function>
 		</nativeQuery>
 	</aggregateView>	
 	<aggregateView>
@@ -298,8 +313,9 @@
 		<join>
 			<entity>CatalogItem ci</entity>
 		</join>
-		<function type="CONDITION">
+		<function type="FREESTYLE">
 			<args>[id] = ci.context.id and ci.catalog.id= :catalogId</args>
+			<args>oql</args>
 		</function>
 	</aggregateView>	
 	<aggregateView>

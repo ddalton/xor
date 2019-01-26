@@ -78,15 +78,12 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 	public void setQuery(Query query) {
 		this.query = query;
-
-		// Also set the selected columns
-		this.query.setColumns(getSelectedColumns());
 	}
 
-	private List<String> getSelectedColumns() {
+	public List<String> getSelectedColumns() {
 		List<String> result = new LinkedList<>();
 		for(QueryField field: fields) {
-			result.add(field.getPath());
+			result.add(field.getFullPath());
 		}
 
 		return result;
@@ -106,10 +103,15 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	
 	public Object getQueryValue(Object[] queryResultRow, String path) {
 		QueryField field = attributeToFieldMap.get(path);
-		if(field != null)
+		if(field != null) {
 			return queryResultRow[field.getPosition()];
-		else
-			return null;
+		} else {
+			int position = this.query.getColumnPosition(path);
+			if(position == -1) {
+				return null;
+			}
+			return queryResultRow[position];
+		}
 	}	
 
 	public BusinessObject getRootObject (Object obj, BusinessObject entity) throws Exception {
@@ -149,16 +151,37 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 
 	public void resolveField(BusinessObject root, Object[] queryResultRow) throws Exception {
 		Map<String, Object> propertyResult = new HashMap<String, Object>();
-		for(QueryField field: this.fields) {
-			propertyResult.put(field.getFullPath(), queryResultRow[field.getPosition()]);
-		}
+		Set<String> propertyPaths = new HashSet<>();
 
-		for(String propertyPath: propertyResult.keySet()) {
-			QueryField field = attributeToFieldMap.get(propertyPath);
-			if(field.isAugmenter()) {
-				continue;
+		// system generated query
+		if(this.fields.size() > 0) {
+			for (QueryField field : this.fields) {
+				propertyResult.put(field.getFullPath(), queryResultRow[field.getPosition()]);
 			}
 
+			for (String propertyPath : propertyResult.keySet()) {
+				QueryField field = attributeToFieldMap.get(propertyPath);
+				if (field.isAugmenter()) {
+					continue;
+				}
+
+				propertyPaths.add(propertyPath);
+			}
+		} // user specified query
+		else if(getQuery().getColumns().size() > 0) {
+			List<String> columns = getQuery().getColumns();
+			for(int i = 0; i < columns.size(); i++) {
+				propertyResult.put(columns.get(i), queryResultRow[i]);
+			}
+
+			for(String path: columns) {
+				if (!QueryFragment.systemFields.contains(Settings.getBaseName(path))) {
+					propertyPaths.add(path);
+				}
+			}
+		}
+
+		for(String propertyPath: propertyPaths) {
 			// Set the value and create any intermediate objects if necessary
 			root.set(propertyPath, propertyResult, this);
 		}
@@ -418,20 +441,11 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		return this.fields;
 	}
 
-	public List<String> getFieldNames() {
-		List<String> result = new ArrayList<>(this.fields.size());
-
-		for(QueryField qf: this.fields) {
-			result.add(qf.getPath());
-		}
-
-		return result;
-	}
-
 	protected Query prepare(CallInfo callInfo, ObjectResolver resolver)
 	{
 		if(query != null) {
 			resolver.preProcess(this, callInfo.getSettings(), this.query);
+
 		}
 
 		return query;

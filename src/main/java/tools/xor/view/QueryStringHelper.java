@@ -1,0 +1,173 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2019, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
+package tools.xor.view;
+
+import tools.xor.FunctionType;
+import tools.xor.Settings;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+public class QueryStringHelper
+{
+    /**
+     * The only function types supported are
+     *   ASC
+     *   DESC
+     *   FREESTYLE
+     * @return list of functions
+     */
+    private static List<Function> getFreestyleFunctions (Settings settings,
+                                                         List<Function> functions) {
+        // Consolidate the user supplied filters and the filters
+        // defined on the view
+        List<Function> temp = new LinkedList<>();
+        for(Function function : settings.getAdditionalFunctions()) {
+            Function narrowedFunction = function.copy();
+            temp.add(narrowedFunction);
+        }
+
+        for(Function function: functions) {
+            if(function.type == FunctionType.FREESTYLE) {
+                temp.add(function);
+            }
+        }
+
+        Collections.sort(temp);
+
+        return temp;
+    }
+
+    public static String getFilterClause (Settings settings, List<Function> functions)
+    {
+
+        StringBuilder result = new StringBuilder("");
+
+        Map<String, Object> userParams = settings.getParams();
+        List<Function> consolidatedFunctions = getFreestyleFunctions(settings, functions);
+
+        for (Function function : consolidatedFunctions) {
+
+            // Filter is skipped
+            if (!function.isFilterIncluded(userParams))
+                continue;
+
+            result.append(function.getQueryString());
+        }
+
+        return result.toString();
+    }
+
+    public static String getFilterClause (Settings settings, List<Function> functions, List<BindParameter> binds, List<BindParameter> relevantParams)
+    {
+
+        StringBuilder result = new StringBuilder("");
+
+        Map<String, Object> userParams = settings.getParams();
+        List<Function> consolidatedFunctions = getFreestyleFunctions(settings, functions);
+
+        int currentBindPos = 0;
+        outer: for (Function function : consolidatedFunctions) {
+
+            int numBinds = function.getPositionalParamCount();
+
+            // Validation check
+            if(currentBindPos+numBinds > binds.size()) {
+                throw new IllegalStateException("Not all bind parameters are defined for the native query");
+            }
+
+            // We need to check if the bind parameters are going to be satisfied
+            // by the user parameters
+            int startPos = currentBindPos;
+            if(numBinds > 0) {
+                for(int i = currentBindPos; i < currentBindPos+numBinds; i++) {
+
+                    // This particular bind parameter does not have a value
+                    // so skip this whole function
+                    // make sure to update the currentBindPos before doing so
+                    if(!userParams.containsKey(binds.get(i).name) && !(!settings.isDenormalized() && QueryFragment.systemFields.contains(binds.get(i).name))) {
+
+                        currentBindPos = currentBindPos+numBinds;
+                        continue outer;
+                    }
+                }
+                currentBindPos = currentBindPos+numBinds;
+            }
+
+            // record the actual bind parameters that need to be honored
+            for(int i = startPos; i < currentBindPos; i++) {
+                relevantParams.add(binds.get(i));
+            }
+
+            result.append(function.getQueryString());
+        }
+
+        return result.toString();
+    }
+
+    public static List<Function> getQueryPieceFunctions(Settings settings, QueryPiece qp) {
+        // Consolidate the user supplied filters and the filters
+        // defined on the view
+        List<Function> temp = new LinkedList<>();
+        for(Function function : settings.getAdditionalFunctions()) {
+            Function narrowedFunction = function.copy();
+            temp.add(narrowedFunction);
+        }
+        if(qp.getView() != null && qp.getView().getFunction() != null) {
+            temp.addAll(qp.getView().getFunction());
+        }
+
+        // We populate only those filters for while all the attributes can be found in
+        // the QueryPiece
+        List<Function> consolidatedFunctions = new LinkedList<>();
+        for(Function function : temp) {
+            if(function.normalize(qp, settings.getPersistenceOrchestrator())) {
+                consolidatedFunctions.add(function);
+            }
+        }
+        Collections.sort(consolidatedFunctions);
+
+        return consolidatedFunctions;
+    }
+
+    public static void initParamMap(Map<String, BindParameter> paramMap, List<BindParameter> paramList, boolean preferAttr) {
+        int position = 1; // JDBC starts at 1
+
+        paramMap.clear();
+        if (paramList != null) {
+            for (BindParameter param : paramList) {
+                param.position = position++;
+
+                String attrName = param.attribute;
+                if(!preferAttr || attrName == null) {
+                    attrName = param.name;
+                }
+
+                paramMap.put(attrName, param);
+            }
+        }
+    }
+
+    public static void initParamMap(Map<String, BindParameter> paramMap, List<BindParameter> paramList) {
+        initParamMap(paramMap, paramList, false);
+    }
+}

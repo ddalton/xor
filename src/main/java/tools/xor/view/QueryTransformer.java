@@ -250,34 +250,10 @@ public class QueryTransformer
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	public Query constructDML(View view, Settings settings) {
-		//		First check for a StoredProcedure query, then a SQL query 
-		//		When retrieving the QueryBuilder instance, registered SQL queries are given preference over HQL/JPQL queries.
-		//
-		//		It is the responsibility of the user to ensure that the registered SQL is ANSI compliant 
-		//		and can work with all the databases that the user uses.
-		
-		if(view != null && view.getStoredProcedure() != null) {
-			StoredProcedure querySP = view.getStoredProcedure(settings.getAction());
 
-			if(querySP != null) {
-				return settings.getPersistenceOrchestrator().getQuery(
-					querySP.getName(),
-					QueryType.SP,
-					querySP,
-					settings);
-			}
-		}
-
-		if(view != null && view.getNativeQuery() != null) {
-			String queryString = view.getNativeQuery().getQueryString();
-			queryString.replaceAll("[\n\r]", "");
-			return settings.getPersistenceOrchestrator().getQuery(queryString, QueryType.SQL, view.getNativeQuery(), settings);
-		}
-
-		// User OQL
-		if(view != null && view.getUserOQLQuery() != null) {
-			String oqlString = view.getUserOQLQuery().getQueryString();
-			return settings.getPersistenceOrchestrator().getQuery(oqlString, QueryType.OQL, view.getUserOQLQuery(), settings);
+		Query userQuery = getUserQuery(view, settings);
+		if(userQuery != null) {
+			return userQuery;
 		}
 
 		// System OQL
@@ -287,5 +263,20 @@ public class QueryTransformer
 		qb.construct(settings);
 
 		return queryTree.getRoot().getQuery();
+	}
+
+	public static Query getUserQuery(View view, Settings settings) {
+		//		First check for a StoredProcedure query, then a SQL query
+		//		When retrieving the QueryBuilder instance, registered SQL queries are given preference over HQL/JPQL queries.
+		//
+		//		It is the responsibility of the user to ensure that the registered SQL is ANSI compliant
+		//		and can work with all the databases that the user uses.
+
+		QueryBuilderStrategy strategy = QueryBuilder.getBuilderStrategy(null, view, null);
+		if(strategy != null) {
+			return strategy.construct(settings);
+		}
+
+		return null;
 	}
 }

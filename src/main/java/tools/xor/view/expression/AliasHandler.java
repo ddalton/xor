@@ -30,10 +30,15 @@ import java.util.List;
  */
 public class AliasHandler extends FunctionHandler
 {
+    private String joinClause; // required for native queries
 
     @Override
     public void init(List<String> args) {
         // name is the alias name and the argument is the attribute path
         normalizedNames.put(args.get(0), null);
+
+        if(args.size() > 1) {
+            joinClause = args.get(1);
+        }
     }
 }

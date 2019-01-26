@@ -19,27 +19,63 @@
 
 package tools.xor.view;
 
+import tools.xor.AggregateAction;
+import tools.xor.Settings;
+
+import java.sql.Types;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
-
-import tools.xor.AggregateAction;
-import tools.xor.Settings;
 
 public class JPAQuery extends AbstractQuery {
 	
 	private javax.persistence.Query jpaQuery;
+	private NativeQuery nativeQuery;
+	private Map<String, BindParameter> paramMap = new HashMap<>();
+	private Map<String, Object> paramValues = new HashMap<>();
 
 	public JPAQuery(javax.persistence.Query jpaQuery) {
+		this(jpaQuery, null);
+	}
+
+	private boolean isNativeQuery() {
+		return this.nativeQuery != null;
+	}
+
+	public JPAQuery(javax.persistence.Query jpaQuery, NativeQuery nativeQuery) {
 		this.jpaQuery = jpaQuery;
+		this.nativeQuery = nativeQuery;
+
+		if(isNativeQuery()) {
+			initParamMap();
+		}
+	}
+
+	private void initParamMap() {
+		QueryStringHelper.initParamMap(paramMap, nativeQuery.getParameterList());
+	}
+
+	@Override
+	public void updateParamMap (List<BindParameter> relevantParams) {
+		QueryStringHelper.initParamMap(paramMap, relevantParams);
+	}
+
+	@Override
+	protected void setBindParameter(int position, Object value) {
+		jpaQuery.setParameter(position, value);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public List getResultList(View view, Settings settings) {
+		if(isNativeQuery()) {
+			setParameters(settings, paramMap, paramValues);
+		}
+
 		return jpaQuery.getResultList();
 	}
 
@@ -50,32 +86,40 @@ public class JPAQuery extends AbstractQuery {
 
 	@Override
 	public void setParameter(String name, Object value) {
-		// check if this is a positional parameter
-		if(!hasParameter(name)) {
-			if(StringUtils.isNumeric(name)) {
-				jpaQuery.setParameter(Integer.parseInt(name), value);
-			} else {
-				throw new RuntimeException("Unable to set parameter: " + name + ", check if the parameter name is correct");
+		if(isNativeQuery()) {
+			if(paramMap.containsKey(name)) {
+				paramValues.put(name, value);
 			}
 		} else {
-			jpaQuery.setParameter(name, value);
+			if (hasParameter(name)) {
+				jpaQuery.setParameter(name, value);
+			}
 		}
 	}
 
 	@Override
 	public boolean hasParameter(String name) {
-		Set<String> paramNames = new HashSet<String>();
 
-		Iterator<javax.persistence.Parameter<?>> iter = jpaQuery.getParameters().iterator();
-		while(iter.hasNext())
-			paramNames.add(iter.next().getName());
+		if(isNativeQuery()) {
+			return paramMap.containsKey(name);
+		} else {
+			Set<String> paramNames = new HashSet<String>();
 
-		return paramNames.contains(name);
+			Iterator<javax.persistence.Parameter<?>> iter = jpaQuery.getParameters().iterator();
+			while (iter.hasNext()) {
+				paramNames.add(iter.next().getName());
+			}
+
+			return paramNames.contains(name);
+		}
 	}
 
 	@Override public Object execute (Settings settings)
 	{
 		if(settings.getAction() != AggregateAction.READ) {
+			if(isNativeQuery()) {
+				setParameters(settings, paramMap, paramValues);
+			}
 			return jpaQuery.executeUpdate();
 		} else {
 			return getResultList(null, settings);

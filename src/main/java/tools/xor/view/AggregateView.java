@@ -394,6 +394,14 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			result.setNativeQuery(nativeQuery.copy());
 		}
 
+		if(userOQLQuery != null) {
+			result.setUserOQLQuery(userOQLQuery.copy());
+		}
+
+		if(systemOQLQuery != null) {
+			result.setUserOQLQuery(systemOQLQuery.copy());
+		}
+
 		if(children != null) {
 			List<AggregateView> childrenCopy = new ArrayList<>();
 			for(AggregateView c: children) {
@@ -484,11 +492,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			for(View child: children) {
 				child.expand();
 			}
-		}
-		
-		// Expand the native query if any
-		if(nativeQuery != null) {
-			nativeQuery.expand(this);
 		}
 		
 		// Find and substitute the view references
@@ -701,5 +704,10 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean hasUserQuery() {
+		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null;
 	}
 }

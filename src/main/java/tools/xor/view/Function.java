@@ -33,6 +33,7 @@ import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.IntraQuery;
+import tools.xor.view.expression.FreestyleHandler;
 import tools.xor.view.expression.FunctionHandler;
 import tools.xor.view.expression.FunctionHandlerFactory;
 
@@ -111,6 +112,19 @@ public class Function implements Comparable<Function> {
 
 	public Set<String> getAttributes() {
 		return functionHandler.getAttributes();
+	}
+
+	/**
+	 * Returns the number of positional parameters in a freestyle function
+	 * @return
+	 */
+	public int getPositionalParamCount() {
+		if(this.type == FunctionType.FREESTYLE) {
+			return ((FreestyleHandler)functionHandler).getPositionalParamCount();
+		}
+
+		// Not supported for other functions
+		return -1;
 	}
 
 	/**

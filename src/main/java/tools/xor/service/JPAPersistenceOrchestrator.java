@@ -60,6 +60,7 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
 import tools.xor.view.JPAQuery;
+import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
@@ -193,7 +194,8 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 			break;
 
 		case SQL:
-			result = new JPAQuery(getEntityManager().createNativeQuery(queryString));
+			result = new JPAQuery(getEntityManager().createNativeQuery(queryString),
+				(NativeQuery)queryInput);
 			break;
 			
 		case SP:

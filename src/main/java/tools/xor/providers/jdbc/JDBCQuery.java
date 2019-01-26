@@ -1,12 +1,12 @@
 package tools.xor.providers.jdbc;
 
-import org.apache.commons.lang.StringUtils;
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.AbstractQuery;
 import tools.xor.view.BindParameter;
 import tools.xor.view.NativeQuery;
+import tools.xor.view.QueryStringHelper;
 import tools.xor.view.View;
 
 import java.sql.Connection;
@@ -14,20 +14,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class JDBCQuery extends AbstractQuery
 {
 	private String sqlQuery;
 	private Connection connection;
 	private PreparedStatement preparedStatement;
-	private Map<Integer, Object> positionalParameters;
 	private NativeQuery nativeQuery;
-	private Map<Integer, BindParameter> paramMap = new HashMap<Integer, BindParameter>();
+	private Map<String, BindParameter> paramMap = new HashMap<>();
+	private Map<String, Object> paramValues = new HashMap<>();
 
 	public JDBCQuery(String sql, Connection connection, NativeQuery nativeQuery) {
 		this.sqlQuery = sql;
@@ -45,47 +45,24 @@ public class JDBCQuery extends AbstractQuery
 	}
 
 	private void initParamMap() {
-		int position = 1;
-		if (nativeQuery.getParameterList() != null) {
-			for (BindParameter param : nativeQuery.getParameterList()) {
-				param.position = position;
-				paramMap.put(position++, param);
-			}
-		}
+		QueryStringHelper.initParamMap(paramMap, nativeQuery.getParameterList());
 	}
 
+	@Override
+	public void updateParamMap (List<BindParameter> relevantParams) {
+		QueryStringHelper.initParamMap(paramMap, relevantParams);
+	}
 
 	@Override
 	public void setParameter(String name, Object value) {
-		boolean isPositional = false;
-		if (StringUtils.isNumeric(name)) {
-			isPositional = true;
-		}
-
-		if (isPositional) {
-			if (positionalParameters == null) {
-				// Sort the parameters by its position
-				positionalParameters = new TreeMap<>();
-			}
-
-			int position = Integer.valueOf(name);
-			positionalParameters.put(position, value);
-
-		}
-		else {
-			throw new RuntimeException("Named parameters not supported for JDBC");
-		}
-	}
-
-	public void reset() {
-		if(positionalParameters != null) {
-			positionalParameters.clear();
+		if(paramMap.containsKey(name)) {
+			paramValues.put(name, value);
 		}
 	}
 
 	@Override
 	public boolean hasParameter(String name) {
-		throw new RuntimeException("Named parameters not supported for JDBC");
+		return paramMap.containsKey(name);
 	}
 
 	private int executeUpdate (Settings settings)
@@ -110,7 +87,7 @@ public class JDBCQuery extends AbstractQuery
 					}
 				}
 
-			setPositionalParameters(settings, positionalParameters, paramMap, preparedStatement);
+			setParameters(settings, paramMap, paramValues, preparedStatement);
 
 			if (context != null) {
 				if(context.isShouldBatch()) {
@@ -142,13 +119,35 @@ public class JDBCQuery extends AbstractQuery
 		}
 	}
 
+	protected void setParameters (Settings settings,
+								  Map<String, BindParameter> paramMap,
+								  Map<String, Object> paramValues,
+								  PreparedStatement statement)
+	{
+		if (paramMap != null) {
+			for (Map.Entry<String, BindParameter> entry : paramMap.entrySet()) {
+				if (!paramValues.containsKey(entry.getKey())) {
+					throw new RuntimeException(
+						"Unable to find param value with key: " + entry.getKey());
+				}
+				BindParameter pm = entry.getValue();
+
+				int timestampType = BindParameter.getType(pm.type);
+				if (timestampType == Types.TIMESTAMP
+					|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
+					pm.setDateFormat(settings.getDateFormat());
+				}
+				pm.setValue(statement, paramValues.get(entry.getKey()));
+			}
+		}
+	}
 
 	private List getResultSet (Settings settings)
 	{
 		List result = new ArrayList<>();
 
 		try {
-			setPositionalParameters(settings, positionalParameters, paramMap, preparedStatement);
+			setParameters(settings, paramMap, paramValues, preparedStatement);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			ResultSetMetaData rsmd = rs.getMetaData();

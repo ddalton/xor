@@ -22,29 +22,72 @@ package tools.xor.view;
 import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
 
-public class OQLQuery {
+import java.util.ArrayList;
+import java.util.List;
 
-	protected String            queryString;
+public class OQLQuery
+{
+    protected List<String> resultList; // Needs to be in dotten notation
+    protected String selectClause;
+    protected List<Function> function; // should only be of type FREESTYLE
 
-	public String getQueryString() {
-		return queryString;
-	}
-	public void setQueryString(String queryString) {
-		this.queryString = queryString;
-	}
-	
-	public OQLQuery generateQuery(AggregateManager am, QueryTree queryTree, QueryPiece queryPiece) {
 
-		am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));
+    public List<String> getResultList ()
+    {
+        return resultList;
+    }
 
-		Settings settings = new Settings();
-		am.checkPO(settings);
+    public void setResultList (List<String> attributeList)
+    {
+        this.resultList = attributeList;
+    }
 
-		QueryBuilder qb = new QueryBuilder(queryTree);
-		qb.construct(settings, queryPiece);
+    public String getSelectClause ()
+    {
+        return selectClause;
+    }
 
-		this.queryString = queryPiece.getQueryString();
+    public void setSelectClause (String selectClause)
+    {
+        this.selectClause = selectClause;
+    }
 
-		return this;
-	} 
+    public List<Function> getFunction ()
+    {
+        return this.function;
+    }
+
+    public void setFunction (List<Function> function)
+    {
+        this.function = function;
+    }
+
+    public OQLQuery copy ()
+    {
+        OQLQuery result = new OQLQuery();
+        result.resultList = new ArrayList<>(resultList);
+        result.selectClause = selectClause;
+        result.function = new ArrayList<>();
+        for(Function function: this.function) {
+            result.function.add(function.copy());
+        }
+
+        return result;
+    }
+
+    public OQLQuery generateQuery (AggregateManager am, QueryTree queryTree, QueryPiece queryPiece)
+    {
+
+        am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));
+
+        Settings settings = new Settings();
+        am.checkPO(settings);
+
+        QueryBuilder qb = new QueryBuilder(queryTree);
+        qb.construct(settings, queryPiece);
+
+        this.selectClause = queryPiece.getQueryString();
+
+        return this;
+    }
 }

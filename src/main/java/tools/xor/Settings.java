@@ -762,7 +762,7 @@ public class Settings {
 
 	public Function addFunction (String name, FunctionType type, int position, List<String> args) {
 		// We prohibit directly adding condition by the user for security reasons
-		if(type == FunctionType.CONDITION) {
+		if(type == FunctionType.FREESTYLE) {
 			throw new IllegalStateException("Direct addition of query condition is prohibited from Settings");
 		}
 
@@ -1274,7 +1274,7 @@ public class Settings {
 						// of the SQL query string
 						NativeQuery nq = view.getNativeQuery();
 						if(nq != null) {
-							view.setName(DigestUtils.md5Hex(nq.getQueryString()));
+							view.setName(DigestUtils.md5Hex(nq.getSelectClause()));
 						}
 
 						if(view.getName() != null) {
@@ -1296,7 +1296,7 @@ public class Settings {
 			if(settings.getAction() == null) {
 				if(settings.getView() != null && settings.getView().getNativeQuery() != null) {
 					NativeQuery nq = settings.getView().getNativeQuery();
-					String qs = nq.getQueryString().trim().toUpperCase();
+					String qs = nq.getSelectClause().trim().toUpperCase();
 					if(qs.startsWith("SELECT")) {
 						settings.setAction(AggregateAction.READ);
 					} else if(qs.startsWith("INSERT")) {

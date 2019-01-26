@@ -45,6 +45,17 @@ public class QueryFragment implements Vertex
     public static final String ID_PARAMETER_NAME     = "id_";
     public static final String NEXTTOKEN_PARAM_PREFIX = "orderBy_";
 
+    public static final Set<String> systemFields = new HashSet<>();
+
+    static {
+        systemFields.add(ENTITY_TYPE_ATTRIBUTE);
+        systemFields.add(MAP_KEY_ATTRIBUTE);
+        systemFields.add(LIST_INDEX_ATTRIBUTE);
+        systemFields.add(USERKEY_ATTRIBUTE);
+        systemFields.add(ID_PARAMETER_NAME);
+        systemFields.add(NEXTTOKEN_PARAM_PREFIX);
+    }
+
     EntityType entityType;               // Entity type for this fragment
     String ancestorPath;                 // path from root of the QueryTree
     String alias;                        // alias used in the query string

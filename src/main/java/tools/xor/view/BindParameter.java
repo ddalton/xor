@@ -4,6 +4,8 @@ import tools.xor.MutableJsonProperty;
 import tools.xor.util.ClassUtil;
 
 import javax.persistence.ParameterMode;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -26,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@XmlAccessorType(XmlAccessType.FIELD)
 public class BindParameter
 {
 
@@ -47,6 +50,7 @@ public class BindParameter
 	@XmlAttribute
 	ParameterMode mode = ParameterMode.IN;  // Default is IN
 
+	@XmlAttribute
 	boolean returnType;
 	
 	@XmlAttribute
@@ -58,6 +62,21 @@ public class BindParameter
 	static final Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<>();
 	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
 	static final Map<String, Integer> typeMap = new HashMap<>();
+
+	public BindParameter copy() {
+		BindParameter result = new BindParameter();
+		result.name = name;
+		result.attribute = attribute;
+		result.type = type;
+		result.scale = scale;
+		result.defaultValue = defaultValue;
+		result.mode = mode;
+		result.returnType = returnType;
+		result.position = position;
+		result.dateFormat = dateFormat;
+
+		return result;
+	}
 
 /*
 
@@ -825,7 +844,6 @@ public class BindParameter
 		this.dateFormat = format;
 	}
 
-	@XmlAttribute
 	public boolean isReturnType() {
 		return this.returnType;
 	}

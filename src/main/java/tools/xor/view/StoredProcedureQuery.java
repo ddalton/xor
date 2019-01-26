@@ -70,18 +70,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 	public StoredProcedureQuery(StoredProcedure sp) {
 
 		this.sp = sp;
-		
-		int position = 1;
-		if (sp.parameterList != null) {
-			for (BindParameter param : sp.parameterList) {
-				param.position = position;
-				String attrName = param.attribute;
-				if (attrName == null) {
-					attrName = param.name;
-				}
-				paramMap.put(attrName, param);
-			}
-		}
+
+		QueryStringHelper.initParamMap(paramMap, sp.parameterList, true);
 	}
 
 	public StoredProcedure getStoredProcedure() {
@@ -221,8 +211,13 @@ public class StoredProcedureQuery extends AbstractQuery {
 	@Override
 	public void setFirstResult(int offset) {
 		throw new UnsupportedOperationException("The setFirstResult is currently unsupported for stored procedures");
-	}	
-	
+	}
+
+	@Override public void updateParamMap (List<BindParameter> relevantParams)
+	{
+		QueryStringHelper.initParamMap(paramMap, relevantParams, true);
+	}
+
 	@Override
 	public void prepare(EntityType entityType, QueryPiece queryView) {
 

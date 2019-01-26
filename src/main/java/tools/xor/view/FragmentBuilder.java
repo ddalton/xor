@@ -112,6 +112,8 @@ public class FragmentBuilder
             return;
         }
 
+        this.queryTree.addVertex(queryPiece);
+
         // Also add the function attributes
         paths.addAll(view.getFunctionAttributes());
 
@@ -140,8 +142,6 @@ public class FragmentBuilder
                 qtLogger.debug("Error in writing .dot content to log: " + e.getMessage());
             }
         }
-
-        this.queryTree.addVertex(queryPiece);
     }
 
     private void makeFragments(QueryPiece queryPiece, String path) {

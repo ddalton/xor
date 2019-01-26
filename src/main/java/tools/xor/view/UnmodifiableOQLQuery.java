@@ -36,12 +36,17 @@ public class UnmodifiableOQLQuery extends OQLQuery
             "Changes are not allowed on the OQLQuery, make a copy of the view to make necessary changes.");
     }
 
-    @Override public String getQueryString ()
+    public OQLQuery copy ()
     {
-        return query.getQueryString();
+        return new UnmodifiableOQLQuery(query.copy());
     }
 
-    @Override public void setQueryString (String queryString)
+    @Override public String getSelectClause ()
+    {
+        return query.getSelectClause();
+    }
+
+    @Override public void setSelectClause (String queryString)
     {
         raiseException();
     }

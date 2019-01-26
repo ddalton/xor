@@ -22,21 +22,56 @@ package tools.xor.view;
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
 
+import javax.persistence.Parameter;
+import java.sql.Types;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class HibernateQuery extends AbstractQuery {
 
 	private org.hibernate.Query hibQuery;
+	private NativeQuery nativeQuery;
+	private Map<String, BindParameter> paramMap = new HashMap<>();
+	private Map<String, Object> paramValues = new HashMap<>();
 
 	public HibernateQuery(org.hibernate.Query hibQuery) {
+		this(hibQuery, null);
+	}
+
+	public HibernateQuery(org.hibernate.Query hibQuery, NativeQuery nativeQuery) {
 		this.hibQuery = hibQuery;
+		this.nativeQuery = nativeQuery;
+
+		if(isNativeQuery()) {
+			initParamMap();
+		}
+	}
+
+	private boolean isNativeQuery() {
+		return this.nativeQuery != null;
+	}
+
+	private void initParamMap() {
+		QueryStringHelper.initParamMap(paramMap, nativeQuery.getParameterList());
+	}
+
+	@Override
+	public void updateParamMap (List<BindParameter> relevantParams) {
+		QueryStringHelper.initParamMap(paramMap, relevantParams);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public List getResultList(View view, Settings settings) {
+		if(isNativeQuery()) {
+			setParameters(settings, paramMap, paramValues);
+		}
+
 		return hibQuery.list();
 	}
 
@@ -47,17 +82,38 @@ public class HibernateQuery extends AbstractQuery {
 
 	@Override
 	public void setParameter(String name, Object value) {
-			hibQuery.setParameter(name, value);
+		if(isNativeQuery()) {
+			if(paramMap.containsKey(name)) {
+				paramValues.put(name, value);
+			}
+		} else {
+			if (hasParameter(name)) {
+				hibQuery.setParameter(name, value);
+			}
+		}
 	}
 
 	@Override
 	public boolean hasParameter(String name) {
-		return (new HashSet<String>(Arrays.asList(hibQuery.getNamedParameters()))).contains(name);
+		if(isNativeQuery()) {
+			return paramMap.containsKey(name);
+		} else {
+			return (new HashSet<>(Arrays.asList(hibQuery.getNamedParameters()))).contains(name);
+		}
+	}
+
+	@Override
+	protected void setBindParameter(int position, Object value) {
+		// Hibernate indexes this from 0
+		hibQuery.setParameter(position-1, value);
 	}
 
 	@Override public Object execute (Settings settings)
 	{
 		if(settings.getAction() != AggregateAction.READ) {
+			if(isNativeQuery()) {
+				setParameters(settings, paramMap, paramValues);
+			}
 			return hibQuery.executeUpdate();
 		} else {
 			return getResultList(null, settings);

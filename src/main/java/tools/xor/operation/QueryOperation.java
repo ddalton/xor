@@ -82,7 +82,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			callInfo.getSettings().doNarrow());
 
 		// Construct the query based on the settings
-		QueryBuilder builder = new QueryBuilder(queryTree);
+		QueryBuilder builder = new QueryBuilder(queryTree, this.entity);
 		builder.construct(callInfo.getSettings());
 
 		QueryDispatcher dispatcher = new SerialDispatcher();
@@ -136,7 +136,6 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		}
 
 		// initialize the query with the selected columns
-		query.setColumns(qp.getFieldNames());
 		query.prepare((EntityType)entity.getType(), qp);
 	}
 }

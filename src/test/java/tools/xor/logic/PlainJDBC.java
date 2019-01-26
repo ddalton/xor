@@ -42,7 +42,7 @@ public class PlainJDBC
 
 	@Test
 	public void selectTest() {
-		String jsonString = "{ \"normalized\": false, \"view\" : { \"nativeQuery\" : { \"queryString\": \"SELECT count(*) FROM Person\" } } }";
+		String jsonString = "{ \"normalized\": false, \"view\" : { \"nativeQuery\" : { \"selectClause\": \"SELECT count(*) FROM Person\" } } }";
 
 		DataAccessService das = am.getDAS();
 		Settings settings = das.settings().json(jsonString).build();

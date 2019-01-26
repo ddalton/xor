@@ -19,7 +19,9 @@
 
 package tools.xor.view;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class UnmodifiableNativeQuery extends NativeQuery
@@ -36,16 +38,6 @@ public class UnmodifiableNativeQuery extends NativeQuery
     {
         throw new UnsupportedOperationException(
             "Changes are not allowed on the NativeQuery, make a copy of the view to make necessary changes.");
-    }
-
-    public String getIdentifierClause ()
-    {
-        return query.getIdentifierClause();
-    }
-
-    public void setIdentifierClause (String identifier)
-    {
-        raiseException();
     }
 
     public boolean isUsable ()
@@ -68,24 +60,19 @@ public class UnmodifiableNativeQuery extends NativeQuery
         raiseException();
     }
 
-    public String getQueryString ()
+    public String getSelectClause ()
     {
-        return query.getQueryString();
+        return query.getSelectClause();
     }
 
-    public void setQueryString (String queryString)
+    public void setSelectClause (String queryString)
     {
         raiseException();
     }
 
-    public void expand (AggregateView view)
-    {
-        query.expand(view);
-    }
-
     public NativeQuery copy ()
     {
-        return query.copy();
+        return new UnmodifiableNativeQuery(query.copy());
     }
 
     /**
@@ -97,5 +84,32 @@ public class UnmodifiableNativeQuery extends NativeQuery
     public int getPosition (String value)
     {
         return query.getPosition(value);
+    }
+
+    public List<Function> getFunction ()
+    {
+        List<Function> result = new LinkedList<>();
+        for(Function func: query.getFunction()) {
+            result.add(func.copy());
+        }
+        return result;
+    }
+
+    public void setFunction(List<Function> function) {
+        raiseException();
+    }
+
+    public List<BindParameter> getParameterList ()
+    {
+        List<BindParameter> result = new LinkedList<>();
+        for(BindParameter param: query.getParameterList()) {
+            result.add(param.copy());
+        }
+        return result;
+    }
+
+    public void setParameterList (List<BindParameter> parameterList)
+    {
+        raiseException();
     }
 }

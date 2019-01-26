@@ -58,6 +58,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
 import tools.xor.view.HibernateQuery;
+import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
@@ -246,7 +247,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 			break;
 
 		case SQL:
-			result = new HibernateQuery(getSessionFactory().getCurrentSession().createSQLQuery(queryString));
+			result = new HibernateQuery(getSessionFactory().getCurrentSession().createSQLQuery(queryString), (NativeQuery)queryInput);
 			break;
 			
 		case SP:

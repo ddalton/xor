@@ -81,7 +81,7 @@ public abstract class AbstractOperation implements Operation {
 
 	public void preProcess(Settings settings, Query query)
 	{
-		Map<String, Object> params = new HashMap<String, Object>();
+		Map<String, Object> params = new HashMap<>();
 		if(settings.getParams() != null) {
 			params.putAll(settings.getParams());
 		}

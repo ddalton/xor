@@ -48,7 +48,7 @@ public class FunctionHandlerFactory
 
 	private static final Map<FunctionType, Class> HANDLER_MAP  = new HashMap<FunctionType, Class>() {
 		{
-			put(FunctionType.CONDITION,  ConditionHandler.class);
+			put(FunctionType.FREESTYLE,  FreestyleHandler.class);
 			put(FunctionType.ASC,        AscHandler.class);
 			put(FunctionType.DESC,       DescHandler.class);
 			put(FunctionType.ALIAS,      AliasHandler.class);

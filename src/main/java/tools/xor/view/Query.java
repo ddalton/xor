@@ -62,8 +62,21 @@ public interface Query extends DML {
 	public List<String> getColumns();
 
 	/**
+	 * Get the position a particular attribute path is located
+	 * @param path column in the select query
+	 * @return position starting from 0
+	 */
+	public int getColumnPosition(String path);
+
+	/**
 	 * Set the list of columns selected by this query
 	 * @param columns to set
 	 */
 	public void setColumns(List<String> columns);
+
+	/**
+	 * Update the bind parameters
+	 * @param relevantParams
+	 */
+	public void updateParamMap (List<BindParameter> relevantParams);
 }

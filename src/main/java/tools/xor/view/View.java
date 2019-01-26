@@ -324,4 +324,10 @@ public interface View {
 	 * @return true if the view has all valid paths
 	 */
 	public boolean isValid();
+
+	/**
+	 * Checks if a user has provided a query for this view
+	 * @return true if a user specified OQL/SQL/SP is present
+	 */
+	boolean hasUserQuery ();
 }

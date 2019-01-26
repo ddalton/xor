@@ -23,14 +23,14 @@ Below is an example of using a native query:
         <attributeList>description</attributeList>
         <attributeList>taskDetails.id</attributeList>
         <nativeQuery>
-            <queryString>
+            <selectClause>
                 <![CDATA[SELECT t.UUID,
                                 t.NAME,
                                 t.DESCRIPTION,
 				td.UUID
                            FROM Task t, TaskDetails td
 			  WHERE t.UUID = td.UUID]]>
-            </queryString>
+            </selectClause>
         </nativeQuery>
     </aggregateView>
 </AggregateViews>

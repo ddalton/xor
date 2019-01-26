@@ -1049,7 +1049,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		view.setAttributeList(new ArrayList<String>(properties));
 
 		OQLQuery q = new OQLQuery();
-		q.setQueryString("SELECT p.partNo, s.supplierNo FROM S s, P p");
+		q.setSelectClause("SELECT p.partNo, s.supplierNo FROM S s, P p");
 		view.setUserOQLQuery(q);
 
 		List o = aggregateService.query(null, settings);

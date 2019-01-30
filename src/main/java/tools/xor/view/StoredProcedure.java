@@ -24,23 +24,18 @@ import tools.xor.AggregateAction;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * TODO: some common functionality between NativeQuery and StoredProcedure?
- * something like CallInterface (SQL or StoredProcedure)
- * Where/How is this invoked? THis should influence the interface
- */
-public class StoredProcedure {
+public class StoredProcedure extends QuerySupport {
 
-	protected String                 name;
-	protected AggregateAction        action;
-	protected List<BindParameter> parameterList;
-	protected List<String>           resultList;        // Needs to be in dotten notation
-	protected OutputLocation         outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
-	protected Statement              statement;
-	protected String                 callString;
-	protected boolean                implicit;          // By default a callable statement is created,
+	protected String              name;
+	protected AggregateAction     action;
+	protected List<BindParameter> parameterList;    // Pass data to the stored procedure
+	protected OutputLocation      outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
+	protected Statement           statement;
+	protected String              callString;
+	protected boolean             implicit;         // By default a callable statement is created,
 
 	// Set this to true if the code implicitly returns resultsets
 	protected boolean           multiple; // flag to denote if it supports multiple resultsets
@@ -87,14 +82,6 @@ public class StoredProcedure {
 	public void setOutputLocation(OutputLocation outputLocation) {
 		this.outputLocation = outputLocation;
 	}
-
-	public List<String> getResultList() {
-		return resultList;
-	}
-
-	public void setResultList(List<String> resultList) {
-		this.resultList = resultList;
-	}
 	
 	public String getMaxResults() {
 		return this.maxResults;
@@ -125,14 +112,19 @@ public class StoredProcedure {
 
 	public StoredProcedure copy() {
 		StoredProcedure result = new StoredProcedure();
+
+		super.copy(result);
+
 		result.setName(name);
 		result.setCallString(callString);
 		result.setAction(action);
-		result.setParameterList(parameterList);
-		result.setOutputLocation(outputLocation);
-		result.setResultList(resultList);
+		result.setOutputLocation(outputLocation.copy());
 		result.setImplicit(implicit);
 		result.setMultiple(multiple);
+
+		for (BindParameter bind : parameterList) {
+			result.parameterList.add(bind.copy());
+		}
 
 		// NOTE: we don't copy Statement as that is specific to the JDBC connection
 

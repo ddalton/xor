@@ -22,10 +22,8 @@ package tools.xor.view;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NativeQuery
+public class NativeQuery extends QuerySupport
 {
-
-    protected List<String> resultList;  // Names
     protected String selectClause;
     protected List<BindParameter> parameterList;
     protected boolean usable;
@@ -39,16 +37,6 @@ public class NativeQuery
     public void setUsable (boolean usable)
     {
         this.usable = usable;
-    }
-
-    public List<String> getResultList ()
-    {
-        return resultList;
-    }
-
-    public void setResultList (List<String> attributeList)
-    {
-        this.resultList = attributeList;
     }
 
     public String getSelectClause ()
@@ -83,7 +71,7 @@ public class NativeQuery
     public NativeQuery copy ()
     {
         NativeQuery result = new NativeQuery();
-        result.resultList = new ArrayList<>(resultList);
+        super.copy(result);
         result.selectClause = selectClause;
         result.usable = usable;
         result.parameterList = new ArrayList<>();
@@ -97,25 +85,4 @@ public class NativeQuery
 
         return result;
     }
-
-    /**
-     * The starting position is 1
-     *
-     * @param value of path
-     * @return position
-     */
-    public int getPosition (String value)
-    {
-        int result = -1;
-
-        for (int i = 0; i < resultList.size(); i++) {
-            if (resultList.get(i).equals(value)) {
-                result = i;
-                break;
-            }
-        }
-
-        return result;
-    }
-
 }

@@ -55,7 +55,6 @@
 				 3. Entity type
 				 So this section is to map the attribute name to the column position.
 			-->
-			<resultList>[BASICINFO]</resultList>	
 			<parameterList name="id_"/>
 			<selectClause>
 				<![CDATA[SELECT UUID, 
@@ -76,7 +75,6 @@
 		<name>BASICINFO_OQL</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<userOQLQuery>
-			<resultList>[BASICINFO]</resultList>
 			<selectClause>
 				<![CDATA[SELECT id,
 				                name,
@@ -97,12 +95,12 @@
 		<storedProcedure>
 			<name>GetPersonBasic</name>
 			<action>READ</action>
-			<resultList>id</resultList>
-			<resultList>name</resultList>
-			<resultList>displayName</resultList>
-			<resultList>description</resultList>
-			<resultList>iconUrl</resultList>
-			<resultList>detailedDescription</resultList>				
+			<augmenter>id</augmenter>
+			<augmenter>name</augmenter>
+			<augmenter>displayName</augmenter>
+			<augmenter>description</augmenter>
+			<augmenter>iconUrl</augmenter>
+			<augmenter>detailedDescription</augmenter>
         		<!--implicit>true</implicit-->
         		<!--multiple>true</multiple-->
 			<outputLocation position="1"/>
@@ -160,13 +158,7 @@
 				 So this section is to map the attribute name to the column position.
                              These additional columns should come after all the attribute list has been satisfied
 			-->
-			<resultList>p.uuid</resultList>		
-			<resultList>name</resultList>		
-			<resultList>displayname</resultList>		
-			<resultList>description</resultList>		
-			<resultList>iconurl</resultList>		
-			<resultList>detaileddescription</resultList>				
-			<resultList>TYPE_</resultList>				
+			<augmenter>TYPE_</augmenter>				
 			<parameterList name="id_"/>
 			<selectClause>
 				<![CDATA[SELECT p.uuid,

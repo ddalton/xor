@@ -43,10 +43,10 @@ public class QueryFromSP implements QueryBuilderStrategy
                 querySP,
                 settings);
 
-            if (querySP.getResultList() == null || querySP.getResultList().size() == 0) {
-                throw new IllegalArgumentException("Columns names need to be provided in resultList");
+            if (querySP.getAugmenter() == null || querySP.getAugmenter().size() == 0) {
+                throw new IllegalArgumentException("Columns names need to be provided in augmenter");
             }
-            query.setColumns(view.getAttributeList());
+            query.setColumns(querySP.getColumns(view));
         }
 
         return query;

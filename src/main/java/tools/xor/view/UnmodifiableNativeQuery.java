@@ -19,7 +19,6 @@
 
 package tools.xor.view;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,12 +49,12 @@ public class UnmodifiableNativeQuery extends NativeQuery
         raiseException();
     }
 
-    public List<String> getResultList ()
+    public List<String> getAugmenter ()
     {
-        return Collections.unmodifiableList(query.getResultList());
+        return Collections.unmodifiableList(query.getAugmenter());
     }
 
-    public void setResultList (List<String> attributeList)
+    public void setAugmenter (List<String> attributeList)
     {
         raiseException();
     }
@@ -73,17 +72,6 @@ public class UnmodifiableNativeQuery extends NativeQuery
     public NativeQuery copy ()
     {
         return new UnmodifiableNativeQuery(query.copy());
-    }
-
-    /**
-     * The starting position is 1
-     *
-     * @param value of path
-     * @return position
-     */
-    public int getPosition (String value)
-    {
-        return query.getPosition(value);
     }
 
     public List<Function> getFunction ()

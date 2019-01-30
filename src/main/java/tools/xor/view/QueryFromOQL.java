@@ -52,7 +52,7 @@ public class QueryFromOQL implements QueryBuilderStrategy
             settings);
 
         // Initialized the selected columns
-        query.setColumns(view.getAttributeList());
+        query.setColumns(oqlQuery.getColumns(view));
 
         return query;
     }

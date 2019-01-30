@@ -60,7 +60,7 @@ public class QueryFromSQL implements QueryBuilderStrategy
         query.updateParamMap(relevantParams);
 
         // Initialized the selected columns
-        query.setColumns(view.getAttributeList());
+        query.setColumns(nativeQuery.getColumns(view));
 
         return query;
     }

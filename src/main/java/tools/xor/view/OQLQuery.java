@@ -25,22 +25,10 @@ import tools.xor.service.AggregateManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OQLQuery
+public class OQLQuery extends QuerySupport
 {
-    protected List<String> resultList; // Needs to be in dotten notation
     protected String selectClause;
     protected List<Function> function; // should only be of type FREESTYLE
-
-
-    public List<String> getResultList ()
-    {
-        return resultList;
-    }
-
-    public void setResultList (List<String> attributeList)
-    {
-        this.resultList = attributeList;
-    }
 
     public String getSelectClause ()
     {
@@ -65,7 +53,7 @@ public class OQLQuery
     public OQLQuery copy ()
     {
         OQLQuery result = new OQLQuery();
-        result.resultList = new ArrayList<>(resultList);
+        super.copy(result);
         result.selectClause = selectClause;
         result.function = new ArrayList<>();
         for(Function function: this.function) {

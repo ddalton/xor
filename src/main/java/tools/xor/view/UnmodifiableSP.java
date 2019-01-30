@@ -90,12 +90,12 @@ public class UnmodifiableSP extends StoredProcedure
         raiseException();
     }
 
-    @Override public List<String> getResultList ()
+    @Override public List<String> getAugmenter ()
     {
-        return sp.getResultList() == null ? null : Collections.unmodifiableList(sp.getResultList());
+        return sp.getAugmenter() == null ? null : Collections.unmodifiableList(sp.getAugmenter());
     }
 
-    @Override public void setResultList (List<String> resultList)
+    @Override public void setAugmenter (List<String> resultList)
     {
         raiseException();
     }

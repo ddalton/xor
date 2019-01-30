@@ -46,9 +46,11 @@ public class QueryStringHelper
             temp.add(narrowedFunction);
         }
 
-        for(Function function: functions) {
-            if(function.type == FunctionType.FREESTYLE) {
-                temp.add(function);
+        if(functions != null) {
+            for (Function function : functions) {
+                if (function.type == FunctionType.FREESTYLE) {
+                    temp.add(function);
+                }
             }
         }
 

@@ -125,6 +125,11 @@ public class FragmentBuilder
         queryPiece.addVertex(start);
         pathToFragment.put(QueryFragment.ROOT_NAME, start);
 
+        // We do not construct fragments for open types
+        if(queryPiece.getAggregateType().isOpen()) {
+            return;
+        }
+
         for(String path: paths) {
             makeFragments(queryPiece, path);
         }

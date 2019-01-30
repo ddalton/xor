@@ -315,4 +315,13 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @return true if this is the root concrete type.
 	 */
 	public boolean isRootConcreteType();
+
+	/**
+	 * Allows setting an open property value dynamically.
+	 *
+	 * @param obj open instance
+	 * @param propertyName of the property whose value need to be set
+	 * @param value to be set
+	 */
+	public void setOpenProperty(Object obj, String propertyName, Object value );
 }

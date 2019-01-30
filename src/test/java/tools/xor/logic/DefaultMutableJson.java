@@ -1053,6 +1053,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		view.setUserOQLQuery(q);
 
 		List o = aggregateService.query(null, settings);
+		assert(o.size() == 30);
 		System.out.println("OQL Query Output size : " + o.size());
 	}
 

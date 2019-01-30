@@ -781,8 +781,17 @@ public abstract class AbstractBO implements BusinessObject {
 			Property property = current.getInstanceProperty(step);
 			//Property domainProperty = domainEntityType.getProperty(currentPath.toString());
 			Property domainProperty = queryPiece.getProperty(currentPath.toString());
-			if(property == null)
-				throw new RuntimeException("Unable to resolve property: " + propertyPath);
+			if(property == null) {
+				if(getType().isOpen()) {
+					((EntityType)getType()).setOpenProperty(
+						this.getInstance(),
+						propertyPath,
+						propertyResult.get(propertyPath));
+					return;
+				} else {
+					throw new RuntimeException("Unable to resolve property: " + propertyPath);
+				}
+			}
 
 			//Object propertyDO = current.get(property);
 			Object propertyDO = current.getDataObject(property);

@@ -25,6 +25,7 @@ import java.util.HashMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.json.JSONObject;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 
@@ -98,5 +99,15 @@ public class MutableJsonType extends ExternalType {
 					+ ", type name: " + dynamicProperty.getJavaType());
 			shape.addProperty(dynamicProperty);
 		}
-	}	
+	}
+
+	@Override
+	public void setOpenProperty(Object obj, String propertyName, Object value ) {
+		if(obj instanceof JSONObject) {
+			JSONObject json = (JSONObject) obj;
+			json.put(propertyName, value);
+		} else {
+			super.setOpenProperty(obj, propertyName, value);
+		}
+	}
 }

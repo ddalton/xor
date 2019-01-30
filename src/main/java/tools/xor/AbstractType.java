@@ -1239,4 +1239,9 @@ public abstract class AbstractType implements EntityType {
 
 		return result;
 	}
+
+	@Override
+	public void setOpenProperty(Object obj, String propertyName, Object value ) {
+		throw new RuntimeException("Unable to set property: " + propertyName);
+	}
 }

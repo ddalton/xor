@@ -38,21 +38,27 @@ public class JPAQuery extends AbstractQuery {
 	private Map<String, BindParameter> paramMap = new HashMap<>();
 	private Map<String, Object> paramValues = new HashMap<>();
 
-	public JPAQuery(javax.persistence.Query jpaQuery) {
-		this(jpaQuery, null);
+	public JPAQuery(String queryString, javax.persistence.Query jpaQuery) {
+		this(queryString, jpaQuery, null);
 	}
 
 	private boolean isNativeQuery() {
 		return this.nativeQuery != null;
 	}
 
-	public JPAQuery(javax.persistence.Query jpaQuery, NativeQuery nativeQuery) {
+	public JPAQuery(String queryString, javax.persistence.Query jpaQuery, NativeQuery nativeQuery) {
+		super(queryString);
 		this.jpaQuery = jpaQuery;
 		this.nativeQuery = nativeQuery;
 
 		if(isNativeQuery()) {
 			initParamMap();
 		}
+	}
+
+	public void setProviderQuery(String queryString, javax.persistence.Query jpaQuery) {
+		setQueryString(queryString);
+		this.jpaQuery = jpaQuery;
 	}
 
 	private void initParamMap() {
@@ -62,6 +68,16 @@ public class JPAQuery extends AbstractQuery {
 	@Override
 	public void updateParamMap (List<BindParameter> relevantParams) {
 		QueryStringHelper.initParamMap(paramMap, relevantParams);
+	}
+
+	@Override public boolean isOQL ()
+	{
+		return !isNativeQuery();
+	}
+
+	@Override public boolean isSQL ()
+	{
+		return isNativeQuery();
 	}
 
 	@Override

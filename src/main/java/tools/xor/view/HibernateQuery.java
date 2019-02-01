@@ -39,17 +39,33 @@ public class HibernateQuery extends AbstractQuery {
 	private Map<String, BindParameter> paramMap = new HashMap<>();
 	private Map<String, Object> paramValues = new HashMap<>();
 
-	public HibernateQuery(org.hibernate.Query hibQuery) {
-		this(hibQuery, null);
+	public HibernateQuery(String queryString, org.hibernate.Query hibQuery) {
+		this(queryString, hibQuery, null);
 	}
 
-	public HibernateQuery(org.hibernate.Query hibQuery, NativeQuery nativeQuery) {
+	public HibernateQuery(String queryString, org.hibernate.Query hibQuery, NativeQuery nativeQuery) {
+		super(queryString);
 		this.hibQuery = hibQuery;
 		this.nativeQuery = nativeQuery;
 
 		if(isNativeQuery()) {
 			initParamMap();
 		}
+	}
+
+	@Override public boolean isOQL ()
+	{
+		return !isNativeQuery();
+	}
+
+	@Override public boolean isSQL ()
+	{
+		return isNativeQuery();
+	}
+
+	public void setProviderQuery(String queryString, org.hibernate.Query hibQuery) {
+		setQueryString(queryString);
+		this.hibQuery = hibQuery;
 	}
 
 	private boolean isNativeQuery() {

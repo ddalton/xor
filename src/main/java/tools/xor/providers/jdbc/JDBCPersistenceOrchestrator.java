@@ -8,8 +8,10 @@ import tools.xor.Type;
 import tools.xor.service.AbstractPersistenceOrchestrator;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
+import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 
@@ -147,7 +149,10 @@ public class JDBCPersistenceOrchestrator
 		switch(queryType) {
 
 		case SQL:
-			Connection connection = DataSourceUtils.getConnection(dataSource);
+			Connection connection = null;
+			if (!Query.isDeferred(queryString)) {
+				connection = DataSourceUtils.getConnection(dataSource);
+			}
 			result = new JDBCQuery(queryString, connection, (NativeQuery) queryInput);
 			break;
 
@@ -164,6 +169,16 @@ public class JDBCPersistenceOrchestrator
 		}
 
 		return result;
+	}
+
+	@Override
+	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
+		if(query instanceof JDBCQuery && Query.isDeferred(query.getQueryString())) {
+			String queryString = qti.getResolvedQuery(query);
+			if (queryType == QueryType.SQL) {
+				((JDBCQuery)query).setProviderQuery(queryString, DataSourceUtils.getConnection(dataSource));
+			}
+		}
 	}
 
 	@Override

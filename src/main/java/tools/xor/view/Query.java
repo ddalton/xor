@@ -23,8 +23,25 @@ import java.util.List;
 
 import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.service.PersistenceOrchestrator;
 
 public interface Query extends DML {
+
+	public static final String INTERQUERY_JOIN_PLACEHOLDER = " ^PLACEHOLDER^ ";
+
+	public static boolean isDeferred(String queryString) {
+		return queryString.contains(Query.INTERQUERY_JOIN_PLACEHOLDER);
+	}
+
+	public static PersistenceOrchestrator.QueryType getQueryType(Query query) {
+		if(query.isOQL()) {
+			return PersistenceOrchestrator.QueryType.OQL;
+		} else if(query.isSQL()) {
+			return PersistenceOrchestrator.QueryType.SQL;
+		} else {
+			return PersistenceOrchestrator.QueryType.SP;
+		}
+	}
 
 	/**
 	 * Get the result from the query
@@ -33,7 +50,7 @@ public interface Query extends DML {
 	 * @return query result
 	 */
 	@SuppressWarnings("rawtypes")
-	public List getResultList(View view, Settings settings);
+	List getResultList(View view, Settings settings);
 
 	/**
 	 * Get single result from the query
@@ -41,42 +58,60 @@ public interface Query extends DML {
 	 * @param settings for this operation
 	 * @return single result object
 	 */
-	public Object getSingleResult(View view, Settings settings);
+	Object getSingleResult(View view, Settings settings);
 	
 	/**
 	 * set the limit for the number of returned results
 	 * @param limit value
 	 */
-	public void setMaxResults(int limit);
+	void setMaxResults(int limit);
 	
 	/**
 	 * Set the starting position in the result set
 	 * @param offset value
 	 */
-	public void setFirstResult(int offset);
+	void setFirstResult(int offset);
 
 	/**
 	 * Get a list of the columns selected by this query
 	 * @return list of columns
 	 */
-	public List<String> getColumns();
+	List<String> getColumns();
 
 	/**
 	 * Get the position a particular attribute path is located
 	 * @param path column in the select query
 	 * @return position starting from 0
 	 */
-	public int getColumnPosition(String path);
+	int getColumnPosition(String path);
+
+	/**
+	 * Return the string representation of the query
+	 * @return query string
+	 */
+	String getQueryString ();
 
 	/**
 	 * Set the list of columns selected by this query
 	 * @param columns to set
 	 */
-	public void setColumns(List<String> columns);
+	void setColumns(List<String> columns);
 
 	/**
 	 * Update the bind parameters
 	 * @param relevantParams
 	 */
-	public void updateParamMap (List<BindParameter> relevantParams);
+	void updateParamMap (List<BindParameter> relevantParams);
+
+	/**
+	 * Checks if the query is an OQL
+	 * @return true if this is the case
+	 */
+	boolean isOQL();
+
+	/**
+	 * Checks if the query is an SQL
+	 * @return true if this is the case
+	 */
+	boolean isSQL();
 }

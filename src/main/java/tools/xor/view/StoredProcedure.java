@@ -35,6 +35,9 @@ public class StoredProcedure extends QuerySupport {
 	protected OutputLocation      outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
 	protected Statement           statement;
 	protected String              callString;
+	protected String              inListParamName;  // Name of the array parameter containing
+	                                                // a list of parent IDs used for
+	                                                // constructing the IN list
 	protected boolean             implicit;         // By default a callable statement is created,
 
 	// Set this to true if the code implicitly returns resultsets

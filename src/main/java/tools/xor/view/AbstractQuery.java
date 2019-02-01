@@ -40,10 +40,24 @@ public abstract class AbstractQuery implements Query {
 	
 	private List<String> columns;
 	private Map<String, Integer> columnMap;
+	private String queryString;
 	
 	@Override
 	public List<String> getColumns() {
 		return this.columns;
+	}
+
+	@Override
+	public String getQueryString () {
+		return this.queryString;
+	}
+
+	public AbstractQuery(String queryString) {
+		this.queryString = queryString;
+	}
+
+	protected void setQueryString(String queryString) {
+		this.queryString = queryString;
 	}
 
 	@Override

@@ -134,6 +134,7 @@ public class CartesianJoinSplitter implements QuerySplitter
     }
 
     private void addInterGraphEdge(QueryPiece originalQP, QueryPiece newQP, QueryFragment original, QueryFragment clone, IntraQuery<QueryFragment> splitAtEdge) {
+        // TODO: Ensure source fragment has id property to assist with reconstitution between the different query pieces
         InterQuery edge = new InterQuery(splitAtEdge.getProperty().getName(), originalQP, newQP, original, clone);
         queryTree.addEdge(edge, originalQP, newQP);
     }

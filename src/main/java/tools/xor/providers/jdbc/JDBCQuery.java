@@ -22,7 +22,6 @@ import java.util.Map;
 
 public class JDBCQuery extends AbstractQuery
 {
-	private String sqlQuery;
 	private Connection connection;
 	private PreparedStatement preparedStatement;
 	private NativeQuery nativeQuery;
@@ -30,18 +29,30 @@ public class JDBCQuery extends AbstractQuery
 	private Map<String, Object> paramValues = new HashMap<>();
 
 	public JDBCQuery(String sql, Connection connection, NativeQuery nativeQuery) {
-		this.sqlQuery = sql;
+		super(sql);
 		this.connection = connection;
 		this.nativeQuery = nativeQuery;
 
+		createPreparedStatement();
+		initParamMap();
+	}
+
+	private void createPreparedStatement() {
 		try {
-			this.preparedStatement = connection.prepareStatement(sqlQuery);
+			if(connection != null) {
+				this.preparedStatement = connection.prepareStatement(getQueryString());
+			}
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);
 		}
+	}
 
-		initParamMap();
+	public void setProviderQuery(String queryString, Connection connection) {
+		setQueryString(queryString);
+		this.connection = connection;
+
+		createPreparedStatement();
 	}
 
 	private void initParamMap() {
@@ -51,6 +62,16 @@ public class JDBCQuery extends AbstractQuery
 	@Override
 	public void updateParamMap (List<BindParameter> relevantParams) {
 		QueryStringHelper.initParamMap(paramMap, relevantParams);
+	}
+
+	@Override public boolean isOQL ()
+	{
+		return false;
+	}
+
+	@Override public boolean isSQL ()
+	{
+		return true;
 	}
 
 	@Override
@@ -80,7 +101,7 @@ public class JDBCQuery extends AbstractQuery
 				// We will try to auto discover the types of the columns being inserted
 				if(nq.getParameterList() == null) {
 					if (settings.getAction() == AggregateAction.CREATE) {
-						nq.setParameterList(autoDiscoverInsert(connection, sqlQuery));
+						nq.setParameterList(autoDiscoverInsert(connection, getQueryString()));
 						initParamMap();
 					} else {
 						throw new RuntimeException("Bind variable types need to be specified");

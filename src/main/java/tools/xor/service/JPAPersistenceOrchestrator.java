@@ -62,6 +62,7 @@ import tools.xor.view.AggregateView;
 import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 
@@ -190,11 +191,11 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 		Query result = null;
 		switch(queryType) {
 		case OQL:
-			result = new JPAQuery(getEntityManager().createQuery(queryString));
+			result = new JPAQuery(queryString, Query.isDeferred(queryString) ? null : getEntityManager().createQuery(queryString));
 			break;
 
 		case SQL:
-			result = new JPAQuery(getEntityManager().createNativeQuery(queryString),
+			result = new JPAQuery(queryString, Query.isDeferred(queryString) ? null : getEntityManager().createNativeQuery(queryString),
 				(NativeQuery)queryInput);
 			break;
 			
@@ -208,7 +209,23 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 		}
 
 		return result;
-	}	
+	}
+
+	@Override
+	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
+		if(query instanceof JPAQuery && Query.isDeferred(query.getQueryString())) {
+			String queryString = qti.getResolvedQuery(query);
+			if(queryType == QueryType.OQL) {
+				((JPAQuery)query).setProviderQuery(
+					queryString,
+					getEntityManager().createQuery(queryString));
+			}  else if (queryType == QueryType.SQL) {
+				((JPAQuery)query).setProviderQuery(
+					queryString,
+					getEntityManager().createNativeQuery(queryString));
+			}
+		}
+	}
 	
 	protected void createStatement (final StoredProcedure sp) {
 		try {

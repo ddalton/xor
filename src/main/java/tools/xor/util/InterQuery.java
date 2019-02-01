@@ -35,6 +35,13 @@ public class InterQuery<V extends QueryPiece> extends Edge<V>
         this.target = target;
     }
 
+    public static enum JoinType {
+        INLIST,   // used if the interquery edge is satisfied using an IN list
+        SUBQUERY, // used if the interquery edge is satisfied using a subquery. Not supported
+                  // for StoredProcedureQuery
+        NONE      // used if the interquery edge is not present, such as a root query piece
+    };
+
     public QueryFragment getSource() {
         return this.source;
     }

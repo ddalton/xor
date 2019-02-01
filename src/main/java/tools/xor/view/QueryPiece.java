@@ -1,7 +1,7 @@
 /**
  * XOR, empowering Model Driven Architecture in J2EE applications
  *
- * Copyright (c) 2012, Dilip Dalton
+ * Copyright (c) 2019, Dilip Dalton
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,37 +19,30 @@
 
 package tools.xor.view;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
-import tools.xor.AbstractBO;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.PersistenceOrchestrator;
-import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.Tree;
-import tools.xor.view.QueryTree.QueryKey;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a portion of the user's request that can be satisfied by a single query.
@@ -59,12 +52,14 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
+	private static final int START_POS = 0;
+
 	private Type      aggregateType;
 	private String    name;
 	private List<QueryField> fields = new LinkedList<>();
 	private Map<String, QueryField> attributeToFieldMap = new HashMap<>();
 	private Query     query;          // Query representing this QueryPiece
-	private String    queryString;
+	private String    selectString;
 	private View      view; // view associated with this QueryPiece, needed for functions
 
 	public QueryPiece(EntityType rootType, View view) {
@@ -93,12 +88,12 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		return this.query;
 	}
 
-	public void setQueryString(String queryString) {
-		this.queryString = queryString;
+	public void setSelectString (String selectString) {
+		this.selectString = selectString;
 	}
 
-	public String getQueryString() {
-		return this.queryString;
+	public String getSelectString () {
+		return this.selectString;
 	}
 	
 	public Object getQueryValue(Object[] queryResultRow, String path) {
@@ -149,7 +144,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		return result;
 	}
 
-	public void resolveField(BusinessObject root, Object[] queryResultRow) throws Exception {
+	public void resolveField(BusinessObject root, Object[] queryResultRow, QueryTreeInvocation queryInvocation) throws Exception {
 		Map<String, Object> propertyResult = new HashMap<String, Object>();
 		Set<String> propertyPaths = new HashSet<>();
 
@@ -184,6 +179,9 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		for(String propertyPath: propertyPaths) {
 			// Set the value and create any intermediate objects if necessary
 			root.set(propertyPath, propertyResult, this);
+
+			// Notify the queryTreeInvocation visitor
+			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
 		}
 	}
 
@@ -279,7 +277,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		clearFields();
 
 		// We can have the fields in any position, but we need to know what the position is
-		int position = 0;
+		int position = START_POS;
 		for(QueryFragment fragment: getVertices()) {
 			position = fragment.generateFields(position, settings, this, queryTree);
 		}
@@ -290,8 +288,32 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		}
 		Collections.sort(fields);
 
+		generateIdFields(queryTree);
+
 		for(QueryField field: this.fields) {
 			attributeToFieldMap.put(field.getFullPath(), field);
+		}
+	}
+
+	private void generateIdFields(QueryTree queryTree) {
+		// We generate the id fields only if this entity is selected
+		if(fields.size() == 0) {
+			return;
+		}
+
+		// Generate the id fields if it does not exist for each outgoing edge
+		for(Object edge: queryTree.getOutEdges(this)) {
+			InterQuery outgoing = (InterQuery) edge;
+
+			// check that the source fragment of the edge has the id field
+			QueryFragment source = outgoing.getSource();
+			// find the position at which to add this field
+			int position = (fields.size() > 0) ? fields.get(fields.size()-1).getPosition()+1 : START_POS;
+			QueryField newField = source.checkAndAddId(position);
+
+			if(newField != null) {
+				fields.add(newField);
+			}
 		}
 	}
 
@@ -444,7 +466,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	protected Query prepare(CallInfo callInfo, ObjectResolver resolver)
 	{
 		if(query != null) {
-			resolver.preProcess(this, callInfo.getSettings(), this.query);
+			resolver.preProcess(this, callInfo.getSettings());
 
 		}
 

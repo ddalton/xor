@@ -73,14 +73,20 @@ public class FragmentBuilder
         QueryFragment sourceFragment = queryTree.getRoot().findFragment(childView.getName()).fragment;
         QueryFragment targetFragment = childPiece.getRoot();
 
-        queryTree.addEdge(new InterQuery("", parent,
-            childPiece, sourceFragment, targetFragment), parent, childPiece);
+        addInterQueryEdge(parent, childPiece, sourceFragment, targetFragment);
 
         if(childView.getChildren() != null) {
             for (View grandchildView: childView.getChildren()) {
                 constructPieces(childPiece, grandchildView);
             }
         }
+    }
+
+    private void addInterQueryEdge(QueryPiece parent, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> childPiece,
+                                   QueryFragment sourceFragment, QueryFragment targetFragment) {
+        // TODO: Ensure that the source fragment has id property to help with reconstitution
+        queryTree.addEdge(new InterQuery("", parent,
+                childPiece, sourceFragment, targetFragment), parent, childPiece);
     }
 
     /**

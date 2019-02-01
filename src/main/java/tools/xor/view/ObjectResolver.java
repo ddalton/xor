@@ -43,9 +43,26 @@ public interface ObjectResolver
         DISTINCT
     }
 
-    void preProcess(QueryPiece qp, Settings settings, Query query);
+    /**
+     * We set the runtime parameters before the query is executed
+     *
+     * @param qp query piece for the query
+     * @param settings user settings
+     */
+    void preProcess(QueryPiece qp, Settings settings);
 
-    void processRecords(List records, QueryPiece queryPiece, CallInfo callInfo);
+    /**
+     * Takes the result from the query and reconstitutes the object
+     *
+     * @param records results from the query
+     * @param queryPiece containing the query
+     * @param callInfo details on the user request
+     * @param queryInvocation contains details on the query to be used by dependent queries
+     */
+    void processRecords(List records, QueryPiece queryPiece, CallInfo callInfo, QueryTreeInvocation queryInvocation);
 
+    /**
+     * Extract the root entities and return to the user.
+     */
     void postProcess();
 }

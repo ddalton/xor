@@ -20,6 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.CallInfo;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.InterQuery;
 
 import java.util.LinkedList;
@@ -37,13 +38,29 @@ public class SerialDispatcher implements QueryDispatcher
         List<QueryPiece> queries = new LinkedList<>();
         queries.add(qp);
 
+        QueryTreeInvocation queryInvocation = new QueryTreeInvocation();
         while(!queries.isEmpty()) {
             qp = queries.remove(0);
 
             Query query = qp.prepare(callInfo, resolver);
             if(query != null) {
                 List records = query.getResultList(null, callInfo.getSettings());
-                resolver.processRecords(records, qp, callInfo);
+                queryInvocation.start(qt, qp);
+                resolver.processRecords(records, qp, callInfo, queryInvocation);
+                queryInvocation.finish(qt, qp);
+
+                // Now update the dependent queries
+                for(InterQuery<QueryPiece> outEdge: qt.getOutEdges(qp)) {
+                    queryInvocation.resolveQuery(qt, outEdge);
+                }
+
+                // Rebuild the dependent queries
+                // Now update the dependent queries
+                for(InterQuery<QueryPiece> outEdge: qt.getOutEdges(qp)) {
+                    PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
+                    Query childQuery = outEdge.getEnd().getQuery();
+                    po.evaluateDeferred(childQuery, Query.getQueryType(childQuery), queryInvocation);
+                }
             }
 
             queries.addAll(qt.getChildren(qp));

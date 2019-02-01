@@ -58,8 +58,10 @@ import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
 import tools.xor.view.HibernateQuery;
+import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 
@@ -243,11 +245,11 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 		Query result = null;
 		switch(queryType) {
 		case OQL:
-			result = new HibernateQuery(getSessionFactory().getCurrentSession().createQuery(queryString));
+			result = new HibernateQuery(queryString, getSessionFactory().getCurrentSession().createQuery(queryString));
 			break;
 
 		case SQL:
-			result = new HibernateQuery(getSessionFactory().getCurrentSession().createSQLQuery(queryString), (NativeQuery)queryInput);
+			result = new HibernateQuery(queryString, getSessionFactory().getCurrentSession().createSQLQuery(queryString), (NativeQuery)queryInput);
 			break;
 			
 		case SP:
@@ -260,6 +262,22 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 		}
 
 		return result;
+	}
+
+	@Override
+	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
+		if(query instanceof HibernateQuery && Query.isDeferred(query.getQueryString())) {
+			String queryString = qti.getResolvedQuery(query);
+			if(queryType == QueryType.OQL) {
+				((HibernateQuery)query).setProviderQuery(
+					queryString,
+					getSessionFactory().getCurrentSession().createQuery(queryString));
+			}  else if (queryType == QueryType.SQL) {
+				((HibernateQuery)query).setProviderQuery(
+					queryString,
+					getSessionFactory().getCurrentSession().createSQLQuery(queryString));
+			}
+		}
 	}
 	
 	@Override

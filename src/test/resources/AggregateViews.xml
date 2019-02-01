@@ -55,7 +55,7 @@
 				 3. Entity type
 				 So this section is to map the attribute name to the column position.
 			-->
-			<parameterList name="id_"/>
+			<parameterList name="ID_"/>
 			<selectClause>
 				<![CDATA[SELECT UUID, 
 				                NAME,
@@ -85,7 +85,7 @@
 							FROM tools.xor.db.base.Person]]>
 			</selectClause>
 		        <function type="FREESTYLE">
-		        	<args>WHERE id = :id_</args>
+		        	<args>WHERE id = :ID_</args>
         		</function>
 		</userOQLQuery>
 	</aggregateView>
@@ -159,7 +159,7 @@
                              These additional columns should come after all the attribute list has been satisfied
 			-->
 			<augmenter>TYPE_</augmenter>				
-			<parameterList name="id_"/>
+			<parameterList name="ID_"/>
 			<selectClause>
 				<![CDATA[SELECT p.uuid,
 							  name,

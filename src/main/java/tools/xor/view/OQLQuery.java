@@ -74,7 +74,7 @@ public class OQLQuery extends QuerySupport
         QueryBuilder qb = new QueryBuilder(queryTree);
         qb.construct(settings, queryPiece);
 
-        this.selectClause = queryPiece.getQueryString();
+        this.selectClause = queryPiece.getSelectString();
 
         return this;
     }

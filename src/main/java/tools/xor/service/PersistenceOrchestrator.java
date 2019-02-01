@@ -30,6 +30,7 @@ import tools.xor.operation.MigrateOperation;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTreeInvocation;
 
 import java.sql.Blob;
 import java.util.Collection;
@@ -187,6 +188,14 @@ public interface PersistenceOrchestrator {
 	 * @return Query object
 	 */
 	public Query getQuery(String queryString, QueryType queryType, Object queryInput, Settings settings);
+
+    /**
+     * Create the provider specific query object if the query entails deferred construction
+     * @param query for which the provider specific query object needs to be created
+     * @param queryType the type of query
+     * @param qti query tree invocation details
+     */
+    public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti);
 	
 	/**
 	 * If the persistence orchestrator can dynamically track a user object (i.e, track changes),

@@ -42,8 +42,9 @@ public class QueryFragment implements Vertex
     public static final String MAP_KEY_ATTRIBUTE     = "KEY_";
     public static final String LIST_INDEX_ATTRIBUTE  = "INDEX_";
     public static final String USERKEY_ATTRIBUTE     = "USERKEY_";
-    public static final String ID_PARAMETER_NAME     = "id_";
-    public static final String NEXTTOKEN_PARAM_PREFIX = "orderBy_";
+    public static final String ID_PARAMETER_NAME     = "ID_";
+    public static final String NEXTTOKEN_PARAM_PREFIX = "ORDER_BY_";
+    public static final String PARENT_INLIST = "PARENT_INLIST_";
 
     public static final Set<String> systemFields = new HashSet<>();
 
@@ -84,7 +85,8 @@ public class QueryFragment implements Vertex
         this.ancestorPath = ancestorPath;
         this.paths = new LinkedList<>();
         this.simpleCollectionPaths = new LinkedList<>();
-        this.queryFields = new LinkedList<>();
+
+        clearFields();
     }
 
     public int getSimpleCollectionCount() {
@@ -201,16 +203,12 @@ public class QueryFragment implements Vertex
         if(type == ObjectResolver.Type.SHARED) {
             // add surrogate key
             String idName = getEntityType().getIdentifierProperty().getName();
-            if(!pathToFieldMap.containsKey(idName)) {
-                queryFields.add(new QueryField(idName, position++, this, true));
-            }
+            position += addField(new QueryField(idName, position, this, true)) ? 1 : 0 ;
 
             // add USERKEY
             if( getEntityType().getNaturalKey() != null ) {
                 for(String key: getEntityType().getExpandedNaturalKey()) {
-                    if(!pathToFieldMap.containsKey(key)) {
-                        queryFields.add(new QueryField(key, position++, this, true));
-                    }
+                    position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
                 }
             }
         }
@@ -223,18 +221,16 @@ public class QueryFragment implements Vertex
             if (incomingEdge.getProperty().isMany()) {
                 if (property.isList()) {
                     // add INDEX
-                    queryFields.add(new QueryField(LIST_INDEX_ATTRIBUTE, position++, this, true));
+                    position += addField(new QueryField(LIST_INDEX_ATTRIBUTE, position++, this, true)) ? 1 : 0;
                 }
                 else if (property.isMap()) {
                     // add KEY
-                    queryFields.add(new QueryField(MAP_KEY_ATTRIBUTE, position++, this, true));
+                    position += addField(new QueryField(MAP_KEY_ATTRIBUTE, position++, this, true)) ? 1 : 0;
                 }
                 // add COLLECTION_USERKEY
                 if (property.getCollectionKey() != null) {
                     for (String key : property.getCollectionKey()) {
-                        if (!pathToFieldMap.containsKey(key)) {
-                            queryFields.add(new QueryField(key, position++, this, true));
-                        }
+                        position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
                     }
                 }
             }
@@ -250,6 +246,39 @@ public class QueryFragment implements Vertex
     public QueryField getField(String path) {
         if(pathToFieldMap.containsKey(path)) {
             return pathToFieldMap.get(path);
+        }
+
+        return null;
+    }
+
+    public QueryField getIdField() {
+        String idPropertyName = getEntityType().getIdentifierProperty().getName();
+        return pathToFieldMap.get(idPropertyName);
+    }
+
+    private boolean addField(QueryField field) {
+        boolean added = false;
+
+        if(!pathToFieldMap.containsKey(field.getPath())) {
+            queryFields.add(field);
+            pathToFieldMap.put(field.getPath(), field);
+            added = true;
+        }
+
+        return added;
+    }
+
+    /**
+     * Add the identifier property if it is not present
+     * @param atPosition
+     * @return field that was added else return null
+     */
+    public QueryField checkAndAddId (int atPosition)
+    {
+        String idPropertyName = getEntityType().getIdentifierProperty().getName();
+        QueryField newField = new QueryField(idPropertyName, atPosition, this, true);
+        if(addField(newField)) {
+            return newField;
         }
 
         return null;

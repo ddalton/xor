@@ -68,6 +68,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 	private int resultCount = 0;
 
 	public StoredProcedureQuery(StoredProcedure sp) {
+		// Stored procedure does not have a query string
+		super(null);
 
 		this.sp = sp;
 
@@ -216,6 +218,16 @@ public class StoredProcedureQuery extends AbstractQuery {
 	@Override public void updateParamMap (List<BindParameter> relevantParams)
 	{
 		QueryStringHelper.initParamMap(paramMap, relevantParams, true);
+	}
+
+	@Override public boolean isOQL ()
+	{
+		return false;
+	}
+
+	@Override public boolean isSQL ()
+	{
+		return false;
 	}
 
 	@Override

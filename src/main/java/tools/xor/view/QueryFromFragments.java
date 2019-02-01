@@ -26,6 +26,7 @@ import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.Constants;
+import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.AscHandler;
 
@@ -57,9 +58,10 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
         List<Function> consolidatedFunctions = QueryStringHelper.getQueryPieceFunctions(settings, this.queryPiece);
 
-        StringBuilder oql = new StringBuilder(constructOQL(settings.getPersistenceOrchestrator(), this.queryPiece));
-        oql.append(buildWhereClause(settings, this.queryPiece, consolidatedFunctions));
-        oql.append(buildOrderClause(this.queryPiece, settings.getPersistenceOrchestrator(), consolidatedFunctions));
+        StringBuilder oql = new StringBuilder(constructOQL(settings.getPersistenceOrchestrator()));
+        queryPiece.setSelectString(oql.toString());
+        oql.append(buildWhereClause(settings, consolidatedFunctions));
+        oql.append(buildOrderClause(settings.getPersistenceOrchestrator(), consolidatedFunctions));
 
         final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
         if(vb.isDebugEnabled()) {
@@ -67,6 +69,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
         }
 
         System.out.println("QUERY:::: " + oql.toString());
+
         Query query = settings.getPersistenceOrchestrator().getQuery(
             oql.toString(),
             PersistenceOrchestrator.QueryType.OQL,
@@ -79,7 +82,9 @@ public class QueryFromFragments implements QueryBuilderStrategy
         return query;
     }
 
-    private String constructOQL(PersistenceOrchestrator po, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+    private String constructOQL(PersistenceOrchestrator po) {
+
+        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
 
         // SELECT clause
         StringBuilder OQL = new StringBuilder(QueryBuilder.SELECT_CLAUSE);
@@ -136,32 +141,49 @@ public class QueryFromFragments implements QueryBuilderStrategy
         return result;
     }
 
-    protected String buildWhereClause(Settings settings, QueryPiece qp, List<Function> consolidatedFunctions) {
-        StringBuilder result = new StringBuilder();
+    private String buildWhereClause(Settings settings, List<Function> consolidatedFunctions) {
+        StringBuilder queryString = new StringBuilder();
 
-        checkAndAddFilters(result, settings, consolidatedFunctions);
-        checkAndAddId(result, qp);
-        checkAndAddChunkStart(settings, result, consolidatedFunctions);
-        checkAndAddOpenPropertyJoins(result, qp);
+        checkAndAddFilters(queryString, settings, consolidatedFunctions);
+        checkAndAddId(queryString);
+        checkAndAddInterQueryJoinPlaceholder(queryString);
+        checkAndAddChunkStart(settings, queryString, consolidatedFunctions);
+        checkAndAddOpenPropertyJoins(queryString);
 
-        return result.toString();
+        return queryString.toString();
+    }
+
+    private void checkAndAddInterQueryJoinPlaceholder (StringBuilder queryString)
+    {
+        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+        if(builder.getQueryTree().getInEdges(qp).size() > 0) {
+            InterQuery<QueryPiece> edge = builder.getQueryTree().getInEdges(qp).iterator().next();
+            QueryPiece parent = edge.getStart();
+            if (edge != null && parent.getQuery() != null) {
+                addWhereStep(queryString);
+                queryString.append(qp.getRoot().getId()).append(" IN ( ").append(Query.INTERQUERY_JOIN_PLACEHOLDER).append(
+                    ")");
+            }
+        }
     }
 
     /*
      * In the future this can be expanded to more fields in the entity, similiar
      * to Query By Example, if the id is not present.
      */
-    private void checkAndAddId(StringBuilder result, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+    private void checkAndAddId(StringBuilder queryString) {
+        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+
         // Do this only for the root query piece and if the id is provided
         if(builder.getQueryTree().getRoot() == qp && builder.getEntity() != null) {
             if(builder.getEntity().getIdentifierValue() != null) {
-                addWhereStep(result);
-                result.append( qp.getRoot().getId() + " = :" + QueryFragment.ID_PARAMETER_NAME);
+                addWhereStep(queryString);
+                queryString.append(qp.getRoot().getId() + " = :" + QueryFragment.ID_PARAMETER_NAME);
             }
         }
     }
 
-    protected void checkAndAddFilters(StringBuilder result, Settings settings, List<Function> consolidatedFunctions) {
+    protected void checkAndAddFilters(StringBuilder queryString, Settings settings, List<Function> consolidatedFunctions) {
         Map<String, Object> userParams = settings.getParams();
 
         for(Function function : consolidatedFunctions) {
@@ -175,16 +197,16 @@ public class QueryFromFragments implements QueryBuilderStrategy
             if(!function.isFilterIncluded(userParams))
                 continue;
 
-            addWhereStep(result);
-            result.append(function.getQueryString());
+            addWhereStep(queryString);
+            queryString.append(function.getQueryString());
         }
     }
 
-    private void addWhereStep(StringBuilder result) {
-        if(result.length() > 0)
-            result.append(" AND ");
+    private void addWhereStep(StringBuilder queryString) {
+        if(queryString.length() > 0)
+            queryString.append(" AND ");
         else
-            result.append(" WHERE ");
+            queryString.append(" WHERE ");
     }
 
     /*
@@ -266,9 +288,10 @@ public class QueryFromFragments implements QueryBuilderStrategy
         return result.toString();
     }
 
-    private void checkAndAddOpenPropertyJoins(StringBuilder result, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+    private void checkAndAddOpenPropertyJoins(StringBuilder queryString) {
         StringBuilder whereFragment = new StringBuilder("");
 
+        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
         for(IntraQuery<QueryFragment> edge: qp.getOpenContentJoins()) {
 
             ExtendedProperty extendedProperty = (ExtendedProperty) edge.getProperty();
@@ -302,15 +325,16 @@ public class QueryFromFragments implements QueryBuilderStrategy
             }
         }
         if(whereFragment.length() > 0) {
-            addWhereStep(result);
-            result.append(whereFragment);
+            addWhereStep(queryString);
+            queryString.append(whereFragment);
         }
     }
 
-    protected String buildOrderClause( QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, PersistenceOrchestrator po, List<Function> consolidatedFunctions) {
+    private String buildOrderClause( PersistenceOrchestrator po, List<Function> consolidatedFunctions) {
         StringBuilder result = new StringBuilder();
-
         Map<Integer, String> orderClauses = new TreeMap<>();
+        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+
         for(QueryField field: qp.getFields()) {
             if(field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE)) {
                 // TODO: we have to sort all the parent collection objects

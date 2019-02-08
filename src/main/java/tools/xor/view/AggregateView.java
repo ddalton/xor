@@ -795,6 +795,14 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			return this.subclassName;
 		}
 
+		public String getAlias() {
+			return this.alias;
+		}
+
+		public String getOriginal() {
+			return Settings.getBaseName(this.propertyName);
+		}
+
 		@Override
 		public boolean equals(Object o) {
 			if(this == o)

@@ -3,9 +3,11 @@ package tools.xor.util.graph;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.QueryType;
 import tools.xor.Resolver;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.Shape;
 import tools.xor.util.DFAtoNFA;
@@ -174,6 +176,9 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			entityType = (EntityType)view.getShape().getType(view.getTypeName());
 		}
 
+		// Allow it to host aliases
+		entityType = new QueryType(entityType, null);
+
 		// Scan through all the child views and build a map between a root state and its
 		// view and between the view name and the state.
 		Map<PropertyAlias, State> viewAliasStateMap = new HashMap<>();
@@ -208,7 +213,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 			// Iterate through each attribute path
 			for(String attrPath: view.getAttributeList()) {
-				extend(view.getAlias(attrPath), attrPath, (V) current, viewAliasStateMap);
+				extend(view, "", attrPath, (V) current, viewAliasStateMap);
 			}
 		}
 
@@ -241,20 +246,25 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	 * @param current root state of the path. The path is relative.
 	 * @param viewAliasStateMap map between view name and the root state
 	 */
-	private void extend (AggregateView.PropertyAlias alias, String path, V current, Map<PropertyAlias, State> viewAliasStateMap)
+	private void extend (AggregateView view, String processed, String path, V current, Map<PropertyAlias, State> viewAliasStateMap)
 	{
 		if (path == null || "".equals(path.trim())) {
 			return; // terminating condition
 		}
 
 		String attribute = State.getNextAttr(path);
+		processed = ((processed.length() > 0) ? Settings.PATH_DELIMITER : "") + attribute;
 
 		// subtypes
+		PropertyAlias alias = view.getAlias(path);
 		if(alias != null && alias.isViewReference()) {
 			V subTypeState = getFragmentState(alias, viewAliasStateMap);
 			current.addSubtypeState(subTypeState);
 			current.setNeedsRebuild(true);
 			return;
+		}
+		if(processed.length() > 0) {
+			alias = view.getAlias(processed);
 		}
 
 		String remaining = State.getRemaining(path);
@@ -262,15 +272,36 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 		// Not in the current state graph, let us find and add it
 		if (t == null) {
-			// TODO: add an alias property if present to the QueryType
 			Property childProperty = (current.getType()).getProperty(attribute);
 			if (childProperty == null) {
-				logger.error(
-					"Unable to add unknown attribute to state graph: " + attribute + " to state: "
-						+ current.getType().getName());
-				return;
+				if(alias != null) {
+					QueryType queryType = (QueryType)current.getType();
+					ExtendedProperty original = (ExtendedProperty)queryType.getProperty(alias.getOriginal());
+					Type newPropertyType = getShape().getType(alias.getSubclassName());
+
+					if(original != null) {
+						if (!newPropertyType.isDataType() || original.isMany()) {
+							newPropertyType = new QueryType((EntityType)newPropertyType, null);
+						}
+
+						childProperty = original.refine(
+							alias.getAlias(),
+							newPropertyType,
+							queryType);
+					} else {
+						queryType.addSelfJoin(alias);
+					}
+
+					queryType.addProperty(childProperty);
+				} else {
+					logger.error(
+						"Unable to add unknown attribute to state graph: " + attribute
+							+ " to state: "
+							+ current.getType().getName());
+					return;
+				}
 			}
-			// TODO: Create a QueryType here if relevant
+
 			Type propertyType = GraphUtil.getPropertyEntityType(childProperty, getShape());
 			if (propertyType.isDataType()) {
 				// This is an attribute of this state
@@ -283,13 +314,12 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				addVertex(end);
 
 				// add the transition
-				// TODO: add the alias name here if relevant
 				t = (E)new AutonomousEdge(childProperty.getName(), current, end, true);
 				addEdge(t);
 			}
 		}
 
-		extend(alias, remaining, t.getEnd(), viewAliasStateMap);
+		extend(view, processed, remaining, t.getEnd(), viewAliasStateMap);
 	}
 
 	@Override

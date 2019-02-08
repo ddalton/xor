@@ -23,11 +23,14 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.service.DataAccessService;
+import tools.xor.view.AggregateView;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A temporary type that is used for Queries. The user can modify the shape of this type
@@ -43,13 +46,19 @@ public class QueryType extends AbstractType {
     private String name;
     private EntityType basedOn;
     private Map<String, Property> properties;
+    private List<AggregateView.PropertyAlias> selfJoins; // Needed for root query type as it does not have a parent
 
     public QueryType(EntityType basedOn, Map<String, Property> properties) {
         super();
 
         this.name = RandomStringUtils.randomAlphanumeric(16).toUpperCase();
         this.basedOn = basedOn;
-        this.properties = properties;
+        this.properties = properties != null ? new ConcurrentHashMap<>(properties) : new ConcurrentHashMap<>();
+        this.selfJoins = new LinkedList<>();
+    }
+
+    public void addSelfJoin(AggregateView.PropertyAlias alias) {
+        selfJoins.add(alias);
     }
 
     @Override
@@ -81,6 +90,11 @@ public class QueryType extends AbstractType {
     @Override
     public boolean isInstance(Object object) {
         return false;
+    }
+
+    @Override
+    public void addProperty(Property property) {
+        this.properties.put(property.getName(), property);
     }
 
     @Override

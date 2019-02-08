@@ -106,12 +106,12 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 	private int aliasCounter;
 	private View view; // for custom queries
 
-	public View getView() {
-		return this.view;
-	}
-
 	public QueryTree(View view) {
 		this.view = view;
+	}
+
+	public View getView() {
+		return this.view;
 	}
 
 	public ObjectResolver.Type getType ()

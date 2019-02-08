@@ -3,6 +3,7 @@ package tools.xor.view;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Type;
+import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
@@ -151,9 +152,9 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public QueryTree getQueryTree (Type type, boolean narrow)
+    @Override public QueryTree getQueryTree (DataAccessService das, Type type, boolean narrow)
     {
-        return view.getQueryTree(type, narrow);
+        return view.getQueryTree(das, type, narrow);
     }
 
     @Override public Class inferDomainClass ()

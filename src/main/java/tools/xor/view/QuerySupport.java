@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import tools.xor.Settings;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +47,15 @@ public abstract class QuerySupport
         }
 
         return result;
+    }
+
+    public void deriveColumns(QueryPiece qp, Query query, Settings settings, QueryTree queryTree, View view) {
+        if(qp != null && !qp.getAggregateType().isOpen()) {
+            qp.generateFields(settings, queryTree);
+            query.setColumns(qp.getSelectedColumns());
+        } else {
+            query.setColumns(getColumns(view));
+        }
     }
 
     public void copy(QuerySupport object) {

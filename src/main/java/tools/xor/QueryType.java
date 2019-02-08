@@ -22,9 +22,11 @@ package tools.xor;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import tools.xor.service.DataAccessService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,18 +34,21 @@ import java.util.Set;
  * as desired and hence we don't persist it. It could be cached for performance if the shape
  * of this type rarely changes.
  *
+ *
  * Because it is temporary, it has a randomly generated name, that is mainly used for debugging.
  */
 public class QueryType extends AbstractType {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private String name;
-    private Set<Property> properties;
+    private EntityType basedOn;
+    private Map<String, Property> properties;
 
-    public QueryType(Set<Property> properties) {
+    public QueryType(EntityType basedOn, Map<String, Property> properties) {
         super();
 
         this.name = RandomStringUtils.randomAlphanumeric(16).toUpperCase();
+        this.basedOn = basedOn;
         this.properties = properties;
     }
 
@@ -59,7 +64,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public List<Type> getEmbeddableTypes() {
-        return new ArrayList<>();
+        return this.basedOn.getEmbeddableTypes();
     }
 
     @Override
@@ -69,6 +74,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public Class<?> getInstanceClass() {
+        // A query type does not have a corresponding domain class as it is a temporary type
         return null;
     }
 
@@ -79,7 +85,11 @@ public class QueryType extends AbstractType {
 
     @Override
     public Property getProperty(String path) {
-        return getDAS().getShape().getProperty(this, path);
+        if(this.properties.containsKey(path)) {
+            return this.properties.get(path);
+        } else {
+            return this.basedOn.getProperty(path);
+        }
     }
 
     @Override
@@ -94,7 +104,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public boolean isAbstract() {
-        return false;
+        return true;
     }
 
     @Override
@@ -129,7 +139,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public Property getIdentifierProperty() {
-        return null;
+        return this.basedOn.getIdentifierProperty();
     }
 
     @Override
@@ -144,7 +154,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public Property getVersionProperty() {
-        return null;
+        return this.basedOn.getVersionProperty();
     }
 
     @Override

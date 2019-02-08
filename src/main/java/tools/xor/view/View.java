@@ -57,6 +57,7 @@ package tools.xor.view;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Type;
+import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
@@ -203,12 +204,13 @@ public interface View {
 	/**
 	 * Get the QueryTree instance that is specific to a particular EntityType.
 	 *
+	 * @param das needed to create temporary types (e.g., QueryType for aliases)
 	 * @param type entity type
 	 * @param narrow true, if the query result returns type information for the entity and
 	 *               we want the objects that are created to be based off this type.
 	 * @return QueryView instance
 	 */
-	public QueryTree getQueryTree (Type type, boolean narrow);
+	public QueryTree getQueryTree (DataAccessService das, Type type, boolean narrow);
 
 	/**
 	 * Helps to infer the Entity Type from the view name.

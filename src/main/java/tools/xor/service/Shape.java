@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,7 +163,7 @@ public class Shape
      */
     public EntityType createQueryType(EntityType rootType, Map<String, String> aliases, Map<String, String> typeMappings) {
 
-        Set<Property> properties = new HashSet<>();
+        Map<String, Property> propertyMap = new HashMap<>(); // for existence check
 
         // check if the aliases have any missing type mappings
         // if so, they are added with the predefined type mapping
@@ -184,10 +185,15 @@ public class Shape
 
             Type newPropertyType = getType(entry.getValue());
             Property queryProperty = ((ExtendedProperty) property).refine(entry.getKey(), newPropertyType, rootType);
-            properties.add(queryProperty);
+            propertyMap.put(queryProperty.getName(), queryProperty);
         }
 
-        return new QueryType(properties);
+        // create QueryType for all the embedded types
+
+        EntityType result = new QueryType(rootType, propertyMap);
+        result.setDAS(this.das);
+
+        return result;
     }
 
     /**

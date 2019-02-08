@@ -22,7 +22,6 @@ package tools.xor.view;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
-import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.Vertex;
 
@@ -200,38 +199,95 @@ public class QueryFragment implements Vertex
         ObjectResolver.Type type = settings.getResolverType();
         assert type != null : "Except a value for resolver type";
 
-        if(type == ObjectResolver.Type.SHARED) {
-            // add surrogate key
-            String idName = getEntityType().getIdentifierProperty().getName();
-            position += addField(new QueryField(idName, position, this, true)) ? 1 : 0 ;
+        if(!queryPiece.getView().hasUserQuery()) {
+            if (type == ObjectResolver.Type.SHARED) {
+                // add surrogate key
+                String idName = getEntityType().getIdentifierProperty().getName();
+                position += addField(new QueryField(idName, position, this, true)) ? 1 : 0;
 
-            // add USERKEY
-            if( getEntityType().getNaturalKey() != null ) {
-                for(String key: getEntityType().getExpandedNaturalKey()) {
-                    position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
-                }
-            }
-        }
-
-        Iterator<IntraQuery<QueryFragment>> iter = queryPiece.getInEdges(this).iterator();
-
-        if(iter.hasNext()) {
-            IntraQuery<QueryFragment> incomingEdge = iter.next();
-            ExtendedProperty property = (ExtendedProperty)incomingEdge.getProperty();
-            if (incomingEdge.getProperty().isMany()) {
-                if (property.isList()) {
-                    // add INDEX
-                    position += addField(new QueryField(LIST_INDEX_ATTRIBUTE, position++, this, true)) ? 1 : 0;
-                }
-                else if (property.isMap()) {
-                    // add KEY
-                    position += addField(new QueryField(MAP_KEY_ATTRIBUTE, position++, this, true)) ? 1 : 0;
-                }
-                // add COLLECTION_USERKEY
-                if (property.getCollectionKey() != null) {
-                    for (String key : property.getCollectionKey()) {
+                // add USERKEY
+                if (getEntityType().getNaturalKey() != null) {
+                    for (String key : getEntityType().getExpandedNaturalKey()) {
                         position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
                     }
+                }
+            }
+
+            Iterator<IntraQuery<QueryFragment>> iter = queryPiece.getInEdges(this).iterator();
+
+            if (iter.hasNext()) {
+                IntraQuery<QueryFragment> incomingEdge = iter.next();
+                ExtendedProperty property = (ExtendedProperty)incomingEdge.getProperty();
+                if (incomingEdge.getProperty().isMany()) {
+                    if (property.isList()) {
+                        // add INDEX
+                        position += addField(
+                            new QueryField(
+                                LIST_INDEX_ATTRIBUTE,
+                                position++,
+                                this,
+                                true)) ? 1 : 0;
+                    }
+                    else if (property.isMap()) {
+                        // add KEY
+                        position += addField(
+                            new QueryField(
+                                MAP_KEY_ATTRIBUTE,
+                                position++,
+                                this,
+                                true)) ? 1 : 0;
+                    }
+                    // add COLLECTION_USERKEY
+                    if (property.getCollectionKey() != null) {
+                        for (String key : property.getCollectionKey()) {
+                            position += addField(new QueryField(key, position++, this, true)) ?
+                                1 :
+                                0;
+                        }
+                    }
+                }
+            }
+        } else {
+            QuerySupport qs = queryPiece.getQuerySupport();
+
+            if(qs != null && qs.getAugmenter() != null) {
+                Set<String> augmenterSet = new HashSet<>(qs.getAugmenter());
+
+                // If collection
+                if(augmenterSet.contains(getFullPath(LIST_INDEX_ATTRIBUTE))) {
+                    position += addField(
+                        new QueryField(
+                            LIST_INDEX_ATTRIBUTE,
+                            position++,
+                            this,
+                            true)) ? 1 : 0;
+                }
+
+                if(augmenterSet.contains(getFullPath(MAP_KEY_ATTRIBUTE))) {
+                    position += addField(
+                        new QueryField(
+                            MAP_KEY_ATTRIBUTE,
+                            position++,
+                            this,
+                            true)) ? 1 : 0;
+                }
+
+                if(augmenterSet.contains(getFullPath(ENTITY_TYPE_ATTRIBUTE))) {
+                    position += addField(
+                        new QueryField(
+                            ENTITY_TYPE_ATTRIBUTE,
+                            position++,
+                            this,
+                            true)) ? 1 : 0;
+                }
+
+                if(augmenterSet.contains(getFullPath(ID_PARAMETER_NAME))) {
+                    position += addField(
+                        new QueryField(
+                            getEntityType().getIdentifierProperty().getName(),
+                            position++,
+                            this,
+                            true)) ? 1 : 0;
                 }
             }
         }

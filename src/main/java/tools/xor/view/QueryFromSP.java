@@ -25,10 +25,14 @@ import tools.xor.service.PersistenceOrchestrator;
 public class QueryFromSP implements QueryBuilderStrategy
 {
     private final View view;
+    private final QueryPiece queryPiece;
+    private final QueryTree queryTree;
 
-    public QueryFromSP (View view)
+    public QueryFromSP (View view, QueryPiece queryPiece, QueryTree queryTree)
     {
         this.view = view;
+        this.queryPiece = queryPiece;
+        this.queryTree = queryTree;
     }
 
     @Override public Query construct(Settings settings)
@@ -43,10 +47,7 @@ public class QueryFromSP implements QueryBuilderStrategy
                 querySP,
                 settings);
 
-            if (querySP.getAugmenter() == null || querySP.getAugmenter().size() == 0) {
-                throw new IllegalArgumentException("Columns names need to be provided in augmenter");
-            }
-            query.setColumns(querySP.getColumns(view));
+            querySP.deriveColumns(this.queryPiece, query, settings, this.queryTree, this.view);
         }
 
         return query;

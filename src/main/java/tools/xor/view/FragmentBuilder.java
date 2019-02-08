@@ -26,6 +26,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.service.DataAccessService;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
@@ -48,8 +49,10 @@ public class FragmentBuilder
 
     private Map<String, QueryFragment> pathToFragment = new HashMap<>();
     private QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree;
+    private DataAccessService das; // optional for denormalized query, needed for creating QueryType instances
 
-    public FragmentBuilder(QueryTree queryTree) {
+    public FragmentBuilder(DataAccessService das, QueryTree queryTree) {
+        this.das = das;
         this.queryTree = queryTree;
     }
 

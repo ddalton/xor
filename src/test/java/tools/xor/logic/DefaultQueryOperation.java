@@ -1291,7 +1291,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getType(Task.class);
 
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
-		new FragmentBuilder(queryTree).build((EntityType)task);
+		new FragmentBuilder(das, queryTree).build((EntityType)task);
 		QueryPiece qp = queryTree.getRoot();
 
 		//qp.exportToDOT("Complex.dot");
@@ -1307,7 +1307,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getType(Task.class);
 
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
-		new FragmentBuilder(queryTree).build((EntityType)task);
+		new FragmentBuilder(das, queryTree).build((EntityType)task);
 		CartesianJoinSplitter cjs = new CartesianJoinSplitter(queryTree);
 		cjs.execute();
 
@@ -1322,7 +1322,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getType(Task.class);
 
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
-		new FragmentBuilder(queryTree).build((EntityType)task);
+		new FragmentBuilder(das, queryTree).build((EntityType)task);
 
 		QueryBuilder builder = new QueryBuilder(queryTree);
 		Settings settings = new Settings();

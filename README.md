@@ -1,16 +1,46 @@
 XOR - Fast object retrieval and persistence for JPA
 
-Test that uses 2 QueryPieces  (Subquery or IN clause) - QueryTreeInvocation.java
+
+1. Process ALIAS and NARROW functions
+  How is an alias field processed? Add a property to an open type
+  StateTree#extend
+
+2. Test that uses 2 QueryPieces  (Subquery or IN clause) - QueryTreeInvocation.java
    for e.g., Task + children
    and another query for children (i.e., grand children)
    Evaluate how 2 query pieces are evaluated and the objects reconsituted
 
-SP multi query ordering
 
-QueryTree reconstitution from View with children
+3. QueryTree reconstitution from View with children
+   with children that are fragments and disjoint queries
+   inline and named child views (fragments)
 
-Alias filter testing with type subclass
+4. SP multi query ordering
 
-inline and named child views (fragments)
+5. include/skip functionality
 
-including/skip functionality
+
+parent
+QueryType {
+  basedOn: null
+  a: t1
+  b: t2
+  c: t3
+}
+
+split into ->
+
+QueryType {
+ basedOn: t1
+ a: t1
+}
+
+QueryType {
+ basedOn: t2
+ a: t2
+}
+
+QueryType {
+ basedOn: t3
+ a: t3
+}

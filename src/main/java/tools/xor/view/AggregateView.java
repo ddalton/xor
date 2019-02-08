@@ -41,8 +41,11 @@ import org.apache.log4j.Logger;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
+import tools.xor.FunctionType;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
@@ -53,13 +56,45 @@ import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.QueryTree.QueryKey;
+import tools.xor.view.expression.AliasHandler;
 
 /**
- * If the view and its children have types then the children will be considered as being subtypes
  *
- * Else, if the children do not have types, it will be considered as query partitions
- * For query partitions, the user can specify child branches if necessary directly.
- * NOTE: If one or more child branch are specified, then only the child branches are executed.
+	 Views are interpreted based on the following:
+
+	 a.b.[VIEW_NAME] - would expand the properties list to include that in the VIEW_NAME
+
+	 child view:
+       1. It has a generated name
+	   2. Used to represent a separate query
+	   3. Used to narrow a type
+	   4. Specify relative properties
+
+	 An alias cannot be specified without the anchor path
+	 By default all properties are absolute paths
+
+	 So with regards to the child view, we have 2 dimensions, and let us look at how they affect the child view functionality:
+	 A ‘✓’ marks the presence of that dimension
+
+	 These values are specified using the ALIAS function on the parent view.
+     If the alias refers to a view then the alias type is VIEW, if it refers to a property then the alias type is PROPERTY.
+	 For a view alias, the view name is required, the view entity type or anchor path is optional.
+
+     The table below shows how the view alias is interpreted depending upon if the EntityType and/or the anchor path is provided.
+
+	 child EntityType      anchor path          Outcome
+	 =======================================================================================================
+
+	      ✓                  ✓                 Used for reasons (2), (3) and (4)
+	                         ✓                 Used for reasons (2) and (4)
+
+
+	 Question: What if I want the child query to be part of the parent query and to have type narrowing on the child
+	 Solution: A NARROW function needs to be created and a child view is not necessary
+
+	 Question: An ALIAS function is provided, but the queries are not created using FragmentBuilder
+	 Solution: We don’t have to create Fragments, but we have to have QueryField objects for each query
+
  */
 
 @XmlRootElement(name="AggregateView")
@@ -129,6 +164,12 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	// used by all the subtypes of that base class.
 	@XmlTransient
 	private final Map<String, StateGraph<State, Edge<State>>> stateGraph =  new ConcurrentHashMap<>();
+
+	@XmlTransient
+	private final Map<String, PropertyAlias> aliasMap = new ConcurrentHashMap<>();
+
+	@XmlTransient
+	private final Map<String, PropertyAlias> viewAliasMap = new ConcurrentHashMap<>();
 
 	public AggregateView(QueryPiece queryPiece) {
 		initQuery(queryPiece);
@@ -318,22 +359,22 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		this.name = name;
 	}
 
-	private QueryTree getQueryView(QueryKey viewKey) {
+	private QueryTree getQueryTree (DataAccessService das, QueryKey viewKey) {
 		if(queryCache.containsKey(viewKey)) {
 			return queryCache.get(viewKey);
 		}
 
 		// Build the QueryTree
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(this);
-		new FragmentBuilder(queryTree).build((EntityType)viewKey.type);
+		new FragmentBuilder(das, queryTree).build((EntityType)viewKey.type);
 		queryCache.put(viewKey, queryTree);
 
 		return queryTree;
 	}
 
 	@Override
-	public QueryTree getQueryTree (Type type, boolean narrow) {
-		return getQueryView(new QueryKey(type, name, narrow));
+	public QueryTree getQueryTree (DataAccessService das, Type type, boolean narrow) {
+		return getQueryTree(das, new QueryKey(type, name, narrow));
 	}
 
 	public static boolean isBuiltInView(String viewName) {
@@ -378,6 +419,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 		result.setName(name);
 		result.setTypeName(typeName);
+		result.setExpanded(expanded);
 		if(attributeList != null) {
 			result.setAttributeList(new ArrayList<>(attributeList));
 		}
@@ -670,6 +712,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 				}
 			}
 			if(isEdgeGraph(this)) {
+				// TODO: Find all the views that are disjoint (need separate queries)
+				// TODO: and build the statetree for each of them
 				stateGraph.put(entityName, StateTree.build(this, entityType));
 			} else {
 				stateGraph.put(entityName, DFAtoRE.build(this, entityType));
@@ -709,5 +753,126 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	@Override
 	public boolean hasUserQuery() {
 		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null;
+	}
+
+	/**
+	 * The propertyName is required and it represents the anchor path for a view
+	 * At least one of the following should be provided:
+	 * - alias
+	 * - subclassName
+	 * - viewName
+	 */
+	public static class PropertyAlias {
+		String alias;
+		String propertyName; // Required
+		String subclassName;
+		String viewName;
+		boolean isInterQuery; // If present, then this alias represents an interquery edge
+
+		public PropertyAlias(String viewName) {
+			this(null, "", null, viewName, false);
+		}
+
+		public PropertyAlias(String alias, String propertyName, String subclassName, String viewName, boolean isInterQuery) {
+			this.alias = alias;
+			this.propertyName = propertyName;
+			this.subclassName = subclassName;
+			this.viewName = viewName;
+			this.isInterQuery = isInterQuery;
+
+			assert(this.propertyName != null && (this.alias != null || this.subclassName != null || this.viewName != null));
+		}
+
+		public boolean isViewReference() {
+			return this.viewName != null;
+		}
+
+		public String getViewName() {
+			return this.viewName;
+		}
+
+		public String getSubclassName() {
+			return this.subclassName;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if(this == o)
+				return true;
+
+			if(!PropertyAlias.class.isAssignableFrom(o.getClass()))
+				return false;
+
+			PropertyAlias other = (PropertyAlias) o;
+			if(!propertyName.equals(other.propertyName)) {
+				return false;
+			}
+
+			if( (alias != null ? alias.equals(other.alias) : other.alias == null) &&
+				(subclassName != null ? subclassName.equals(other.subclassName) : other.subclassName == null) &&
+				(viewName != null ? viewName.equals(other.viewName) : other.viewName == null)
+				) {
+				if(isInterQuery == other.isInterQuery) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			int h = 17;
+
+			h = 31 * h + propertyName.hashCode();
+			h = alias != null ? (31 * h + alias.hashCode()) : h;
+			h = subclassName != null ? (31 * h + subclassName.hashCode()) : h;
+			h = viewName != null ? (31 * h + viewName.hashCode()) : h;
+			h = isInterQuery ? 31 * h : h;
+
+			return h;
+		}
+	}
+
+	/**
+	 * Return the aliases of a property
+	 * @param path the path for which to check for alias
+	 * @return the alias if present, null otherwise
+	 */
+	public PropertyAlias getAlias(String path) {
+
+		if(aliasMap.size() == 0) {
+			// check and initialize if needed
+			if(getFunction() != null) {
+				for (Function function : getFunction()) {
+					if (function.type == FunctionType.ALIAS) {
+						AliasHandler ah = (AliasHandler)function.getHandler();
+						PropertyAlias pa = new PropertyAlias(
+							function.getName(),
+							function.getAttribute(),
+							ah.getSubclassName(),
+							ah.getViewName(),
+							ah.isInterQuery());
+
+						if(pa.isViewReference()) {
+							viewAliasMap.put(function.getAttribute(), pa);
+						} else {
+							aliasMap.put(function.getAttribute(), pa);
+						}
+					}
+				}
+			}
+		}
+
+		// Get the anchor path for the view reference
+		if(path.startsWith(VIEW_REFERENCE_START)) {
+			path = path.substring(0, path.indexOf(VIEW_REFERENCE_START));
+		}
+
+		return aliasMap.get(path);
+	}
+
+	public Set<PropertyAlias> getViewAliases() {
+		return new HashSet(viewAliasMap.values());
 	}
 }

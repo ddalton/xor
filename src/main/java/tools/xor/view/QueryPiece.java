@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -286,12 +287,35 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		for(QueryFragment fragment: getVertices()) {
 			fields.addAll(fragment.getQueryFields());
 		}
-		Collections.sort(fields);
 
-		generateIdFields(queryTree);
+		if(!getView().hasUserQuery()) {
+			Collections.sort(fields);
+			generateIdFields(queryTree);
+		}
 
 		for(QueryField field: this.fields) {
 			attributeToFieldMap.put(field.getFullPath(), field);
+		}
+
+		// We need to reposition based on the list order
+		if(getView().hasUserQuery()) {
+			List<QueryField> fieldOrder = new LinkedList<>();
+			addQueryField(fieldOrder, getView().getAttributeList());
+			QuerySupport qs = getQuerySupport();
+			addQueryField(fieldOrder, qs.getAugmenter());
+		}
+	}
+
+	private void addQueryField(List<QueryField> fieldOrder, List<String> paths) {
+		if(paths != null) {
+			for (String path : paths) {
+				if (attributeToFieldMap.containsKey(path)) {
+					fieldOrder.add(attributeToFieldMap.get(path));
+				}
+				else {
+					throw new RuntimeException("Unable to find QueryField with path: " + path);
+				}
+			}
 		}
 	}
 
@@ -498,6 +522,18 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		}
 
 		return null;
+	}
+
+	public QuerySupport getQuerySupport() {
+		QuerySupport qs = getView().getStoredProcedure(AggregateAction.READ);
+		if(qs == null) {
+			qs = getView().getNativeQuery();
+			if(qs == null) {
+				qs = getView().getUserOQLQuery();
+			}
+		}
+
+		return qs;
 	}
 }
 

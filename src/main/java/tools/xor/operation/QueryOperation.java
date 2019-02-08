@@ -79,6 +79,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		// Always use the REFERENCE type
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getQueryTree(
+			das,
 			referenceType,
 			callInfo.getSettings().doNarrow());
 

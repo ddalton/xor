@@ -258,7 +258,7 @@ public class QueryTransformer
 
 		// System OQL
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
-		new FragmentBuilder(queryTree).build((EntityType)settings.getEntityType());
+		new FragmentBuilder(null, queryTree).build((EntityType)settings.getEntityType());
 		QueryBuilder qb = new QueryBuilder(queryTree);
 		qb.construct(settings);
 
@@ -272,7 +272,7 @@ public class QueryTransformer
 		//		It is the responsibility of the user to ensure that the registered SQL is ANSI compliant
 		//		and can work with all the databases that the user uses.
 
-		QueryBuilderStrategy strategy = QueryBuilder.getBuilderStrategy(null, view, null);
+		QueryBuilderStrategy strategy = QueryBuilder.getBuilderStrategy(null, view, null, null);
 		if(strategy != null) {
 			return strategy.construct(settings);
 		}

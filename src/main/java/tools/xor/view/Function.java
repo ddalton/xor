@@ -178,6 +178,10 @@ public class Function implements Comparable<Function> {
 		return true;
 	}
 
+	public FunctionHandler getHandler() {
+		return this.functionHandler;
+	}
+
 	@Override
 	public int compareTo(Function o) {
 		return position-o.position;

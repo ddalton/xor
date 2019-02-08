@@ -103,15 +103,15 @@ public class QueryBuilder
      * @param builder responsible for constructing the queries
      * @return builder startegy object
      */
-    public static QueryBuilderStrategy getBuilderStrategy(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, View view, QueryBuilder builder) {
+    public static QueryBuilderStrategy getBuilderStrategy(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, View view, QueryBuilder builder, QueryTree queryTree) {
         view = qp != null ? qp.getView() : view;
 
         if(view.getStoredProcedure(AggregateAction.READ) != null) {
-            return new QueryFromSP(view);
+            return new QueryFromSP(view, qp, queryTree);
         } else if(view.getNativeQuery() != null) {
-            return new QueryFromSQL(view);
+            return new QueryFromSQL(view, qp, queryTree);
         } else if(view.getUserOQLQuery() != null) {
-            return new QueryFromOQL(view);
+            return new QueryFromOQL(view, qp, queryTree);
         } else {
             if(qp != null) {
                 return new QueryFromFragments(qp, builder);
@@ -129,7 +129,9 @@ public class QueryBuilder
      */
     public void construct(Settings settings, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
 
-        QueryBuilderStrategy strategy = getBuilderStrategy(qp, null, this);
+        assert(qp != null);
+
+        QueryBuilderStrategy strategy = getBuilderStrategy(qp, null, this, this.queryTree);
 
         Query query = strategy.construct(settings);
         qp.setQuery(query);

@@ -104,7 +104,6 @@ public class JPAProperty extends AbstractProperty {
 			result = new JPAProperty(name, this.getType(), parentType, getRelationshipType(),
 				(EntityType)type);
 		} else {
-			// Create a HibernateProperty
 			result = new JPAProperty(name, type, parentType);
 		}
 

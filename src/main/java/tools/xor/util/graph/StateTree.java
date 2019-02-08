@@ -4,6 +4,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.Property;
+import tools.xor.QueryType;
 import tools.xor.Resolver;
 import tools.xor.Type;
 import tools.xor.service.Shape;
@@ -12,6 +13,7 @@ import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
 import tools.xor.view.AggregateView;
+import tools.xor.view.AggregateView.PropertyAlias;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -168,62 +170,60 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	 * @return Type graph for the view
 	 */
 	public static StateGraph build(AggregateView view, EntityType entityType) {
-		// Prerequistie - all child views need to have a type
-
-		if(view.getTypeName() != null) {
+		if(entityType == null && view.getTypeName() != null) {
 			entityType = (EntityType)view.getShape().getType(view.getTypeName());
 		}
 
 		// Scan through all the child views and build a map between a root state and its
 		// view and between the view name and the state.
-		Map<State, AggregateView> stateViewMap = new HashMap<>();
-		Map<String, State> viewNameStateMap = new HashMap<>();
+		Map<PropertyAlias, State> viewAliasStateMap = new HashMap<>();
+		Map<String, AggregateView> nameViewMap = new HashMap<>();
 
 		State startState = new SubtypeState(entityType, true);
-		stateViewMap.put(startState, view);
-		viewNameStateMap.put(view.getName(), startState);
-		buildMaps(stateViewMap, viewNameStateMap, view);
+		viewAliasStateMap.put(new PropertyAlias(view.getName()), startState);
+		nameViewMap.put(view.getName(), view);
+		buildMaps(viewAliasStateMap, nameViewMap, view, entityType);
 
 		// Create the graph and add all states to it
 		StateTree result = new StateTree<>(entityType, view.getShape(), startState);
-		for(State state: stateViewMap.keySet()) {
+		for(State state: viewAliasStateMap.values()) {
 			result.addVertex(state);
 		}
 
-		result.linkEdges(stateViewMap, viewNameStateMap);
+		result.linkEdges(viewAliasStateMap, nameViewMap);
 
 		return result;
 	}
 
-	private void linkEdges(Map<State, AggregateView> stateViewMap, Map<String, State> viewNameStateMap) {
+	private void linkEdges(Map<PropertyAlias, State> viewAliasStateMap, Map<String, AggregateView> nameViewMap) {
 		// Iterate through each view and add the edges by each attribute path
-		for(AggregateView view: stateViewMap.values()) {
+		for(PropertyAlias pa: viewAliasStateMap.keySet()) {
 
-			V current = (V)viewNameStateMap.get(view.getName());
+			V current = (V)viewAliasStateMap.get(pa);
 
+			AggregateView view = nameViewMap.get(pa.getViewName());
 			if(view.getAttributeList() == null) {
 				throw new RuntimeException("View does not have any attributes set");
 			}
 
 			// Iterate through each attribute path
 			for(String attrPath: view.getAttributeList()) {
-				extend(attrPath, (V) current, viewNameStateMap);
+				extend(view.getAlias(attrPath), attrPath, (V) current, viewAliasStateMap);
 			}
 		}
 
 		for(V state: getVertices()) {
-			((SubtypeState)state).rebuild(this);
+			state.rebuild(this);
 		}
 	}
 
-	private V getFragmentState(String path, Map<String, State> viewNameStateMap) {
+	private V getFragmentState(PropertyAlias alias, Map<PropertyAlias, State> viewNameStateMap) {
 		V result = null;
 
-		String viewFragmentName = AggregateView.getViewReference(path);
-		if(viewNameStateMap.containsKey(viewFragmentName)) {
-			result = (V)viewNameStateMap.get(viewFragmentName);
+		if(viewNameStateMap.containsKey(alias)) {
+			result = (V)viewNameStateMap.get(alias);
 		} else {
-			throw new RuntimeException("Unable to find fragment with name: " + viewFragmentName);
+			throw new RuntimeException("Unable to find fragment with name: " + alias.getViewName());
 		}
 
 		return result;
@@ -239,11 +239,10 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	 * Extend the StateGraph by adding the necessary states lying on the path being added
 	 * @param path that extends this type graph
 	 * @param current root state of the path. The path is relative.
-	 * @param viewNameStateMap map between view name and the root state
+	 * @param viewAliasStateMap map between view name and the root state
 	 */
-	public void extend (String path, V current, Map<String, State> viewNameStateMap)
+	private void extend (AggregateView.PropertyAlias alias, String path, V current, Map<PropertyAlias, State> viewAliasStateMap)
 	{
-
 		if (path == null || "".equals(path.trim())) {
 			return; // terminating condition
 		}
@@ -251,8 +250,8 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		String attribute = State.getNextAttr(path);
 
 		// subtypes
-		if(attribute.startsWith(AggregateView.VIEW_REFERENCE_START)) {
-			V subTypeState = getFragmentState(attribute, viewNameStateMap);
+		if(alias != null && alias.isViewReference()) {
+			V subTypeState = getFragmentState(alias, viewAliasStateMap);
 			current.addSubtypeState(subTypeState);
 			current.setNeedsRebuild(true);
 			return;
@@ -263,6 +262,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 		// Not in the current state graph, let us find and add it
 		if (t == null) {
+			// TODO: add an alias property if present to the QueryType
 			Property childProperty = (current.getType()).getProperty(attribute);
 			if (childProperty == null) {
 				logger.error(
@@ -270,6 +270,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 						+ current.getType().getName());
 				return;
 			}
+			// TODO: Create a QueryType here if relevant
 			Type propertyType = GraphUtil.getPropertyEntityType(childProperty, getShape());
 			if (propertyType.isDataType()) {
 				// This is an attribute of this state
@@ -277,31 +278,18 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				return;
 			}
 			else {
-				V end = null;
-
-				// Check if the remaining type is a view fragment
-				boolean isViewRef = false;
-				if(remaining != null && remaining.startsWith(AggregateView.VIEW_REFERENCE_START)) {
-					end = getFragmentState(remaining, viewNameStateMap);
-					isViewRef = true;
-				} else {
-					// Add a new state to the state graph
-					end = (V)new SubtypeState(propertyType, false);
-					addVertex(end);
-				}
+				// Add a new state to the state graph
+				V end = (V)new SubtypeState(propertyType, false);
+				addVertex(end);
 
 				// add the transition
+				// TODO: add the alias name here if relevant
 				t = (E)new AutonomousEdge(childProperty.getName(), current, end, true);
 				addEdge(t);
-
-				if(isViewRef) {
-					// No further processing necessary
-					return;
-				}
 			}
 		}
 
-		extend(remaining, t.getEnd(), viewNameStateMap);
+		extend(alias, remaining, t.getEnd(), viewAliasStateMap);
 	}
 
 	@Override
@@ -327,29 +315,37 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		return result;
 	}
 
-	private static void buildMaps (Map<State, AggregateView> stateViewMap,
-								   Map<String, State> viewNameStateMap,
-								   AggregateView view)
+	private static void buildMaps (Map<PropertyAlias, State> viewAliasStateMap,
+								   Map<String, AggregateView> nameViewMap,
+								   AggregateView view,
+								   EntityType entityType)
 	{
-		SubtypeState parentState = null;
-		EntityType parentEntityType = (EntityType)view.getShape().getType(view.getTypeName());
-		if (!viewNameStateMap.containsKey(view.getName())) {
-			if (view.getTypeName() == null) {
-				throw new RuntimeException("EntityType is required in view: " + view.getName());
-			}
-			parentState = new SubtypeState(parentEntityType, true);
-			stateViewMap.put(parentState, view);
-			viewNameStateMap.put(view.getName(), parentState);
-		}
-		else {
-			parentState = (SubtypeState)viewNameStateMap.get(view.getName());
-		}
-
-		if(parentState.subtypeStates.isEmpty() && view.getChildren() != null) {
-			// process child view fragments if any
+		if(view.getChildren() != null) {
 			for (AggregateView child : view.getChildren()) {
-				buildMaps(stateViewMap, viewNameStateMap, child);
+				nameViewMap.put(child.getName(), child);
+			}
+
+			for (PropertyAlias viewAlias : view.getViewAliases()) {
+				AggregateView childView = nameViewMap.get(viewAlias.getViewName());
+				if (childView != null) {
+					EntityType childEntityType = (EntityType)entityType.getDAS().getType(viewAlias.getSubclassName());
+
+					SubtypeState childRootState = new SubtypeState(childEntityType, true);
+					viewAliasStateMap.put(viewAlias, childRootState);
+
+					buildMaps(viewAliasStateMap, nameViewMap, childView, childEntityType);
+				}
+				else {
+					// TODO: check view in the general view list
+					throw new RuntimeException(
+						"view alias referring to a missing view: " + viewAlias.getViewName());
+				}
 			}
 		}
+	}
+
+	public QueryType createQueryType() {
+		// We need to augment the state tree with aliases
+		return null;
 	}
 }

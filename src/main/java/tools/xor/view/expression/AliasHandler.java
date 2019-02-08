@@ -30,7 +30,9 @@ import java.util.List;
  */
 public class AliasHandler extends FunctionHandler
 {
-    private String joinClause; // required for native queries
+    private String subclassName;
+    private String viewName;
+    private boolean interQuery;
 
     @Override
     public void init(List<String> args) {
@@ -38,7 +40,25 @@ public class AliasHandler extends FunctionHandler
         normalizedNames.put(args.get(0), null);
 
         if(args.size() > 1) {
-            joinClause = args.get(1);
+            subclassName = args.get(1);
         }
+        if(args.size() > 2) {
+            viewName = args.get(2);
+        }
+        if(args.size() > 3) {
+            interQuery = Boolean.parseBoolean(args.get(3));
+        }
+    }
+
+    public String getSubclassName() {
+        return this.subclassName;
+    }
+
+    public String getViewName() {
+        return this.viewName;
+    }
+
+    public boolean isInterQuery() {
+        return this.interQuery;
     }
 }

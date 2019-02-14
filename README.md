@@ -1,15 +1,21 @@
 XOR - Fast object retrieval and persistence for JPA
 
+0. If view name is built-in then get full state graph
+   else get Exact state graph
 
 1. Process ALIAS and NARROW functions
   How is an alias field processed? Add a property to an open type
   StateTree#extend
+    a) Alias test of an existing property e.g.,
+       taskDetails t1
+       taskDetails t2
+    b) Alias test of a non-existing property e.g., root
 
 2. Test that uses 2 QueryPieces  (Subquery or IN clause) - QueryTreeInvocation.java
    for e.g., Task + children
    and another query for children (i.e., grand children)
    Evaluate how 2 query pieces are evaluated and the objects reconsituted
-
+   - Alias interQuery flag set to true
 
 3. QueryTree reconstitution from View with children
    with children that are fragments and disjoint queries

@@ -55,6 +55,8 @@ public class QueryType extends AbstractType {
         this.basedOn = basedOn;
         this.properties = properties != null ? new ConcurrentHashMap<>(properties) : new ConcurrentHashMap<>();
         this.selfJoins = new LinkedList<>();
+
+        setDAS(basedOn.getDAS());
     }
 
     public void addSelfJoin(AggregateView.PropertyAlias alias) {
@@ -104,6 +106,16 @@ public class QueryType extends AbstractType {
         } else {
             return this.basedOn.getProperty(path);
         }
+    }
+
+    @Override
+    public List<Property> getProperties() {
+        List<Property> result = super.getProperties();
+        if(this.properties.size() > 0) {
+            result.addAll(properties.values());
+        }
+
+        return result;
     }
 
     @Override

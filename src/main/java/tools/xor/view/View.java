@@ -61,6 +61,7 @@ import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 
 import java.util.List;
@@ -290,9 +291,9 @@ public interface View {
 	 * Adds a StateGraph instance for a particular type against this view
 	 * @param type for which the StateGraph is configured based off this view
 	 * @param value StateGraph instance
-	 * @param isExact true if this represents an exact Type Graph or a graph that includes subtypes
+	 * @param scope of the state graph for that view
 	 */
-	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, boolean isExact);
+	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, StateGraph.Scope scope);
 
 	/**
 	 * Cache the generated state graph by EntityType.
@@ -300,10 +301,10 @@ public interface View {
 	 * we could end up thrashing between building the graph for these two types.
 	 *
 	 * @param entityType for which the corresponding StateGraph needs to be built
-	 * @param isExact true if this represents an exact Type Graph or a graph that includes subtypes
+	 * @param scope of the state graph for that view
 	 * @return StateGraph instance for the given type for this view
 	 */
-	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact);
+	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, StateGraph.Scope scope);
 
 	/**
 	 * By default we return the Type Graph includes all types expanded by subtypes and supertypes.

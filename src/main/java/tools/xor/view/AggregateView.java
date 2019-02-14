@@ -108,7 +108,6 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public static final Pattern REGEX_STRING_MATCHER = Pattern.compile(REGEX_STRING);
 
 	public static final String DOMAIN = "DOMAIN:";
-	public static final String EXACT = "EXACT:";
 	public static final String REGEX = "_REGEX_";
 
 	protected String            name;
@@ -657,25 +656,25 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return this.stateGraph;
 	}
 
-	private String getEntityName(EntityType type, boolean isExact) {
-		String exactPrefix = isExact ? EXACT : "";
+	private String getEntityName(EntityType type, StateGraph.Scope scope) {
+		String namePrefix = scope.name() + ":";
 
 		if(type.isDomainType()) {
-			return exactPrefix + DOMAIN + type.getName();
+			return namePrefix + DOMAIN + type.getName();
 		} else {
-			return exactPrefix + type.getName();
+			return namePrefix + type.getName();
 		}
 	}
 
 	@Override
-	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, boolean isExact) {
+	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, StateGraph.Scope scope) {
 
-		stateGraph.put(getEntityName(type, isExact), (StateGraph<State, Edge<State>>)value);
+		stateGraph.put(getEntityName(type, scope), (StateGraph<State, Edge<State>>)value);
 	}
 
 	@Override
 	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType) {
-		return getTypeGraph(entityType, false);
+		return getTypeGraph(entityType, StateGraph.Scope.TYPE_GRAPH);
 	}
 
 	public TypeGraph<State, Edge<State>> getTypeGraph () {
@@ -688,14 +687,26 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	@Override
-	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact) {
+	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, StateGraph.Scope scope) {
 
-		String entityName = this.typeName != null ? this.typeName : getEntityName(entityType, isExact);
+		// If entityType is provided, it takes precedence over typeName
+		// Ensure entityType is same or subType of typeName
+		EntityType type = null;
+		if(typeName != null) {
+			type = (EntityType)shape.getType(typeName);
+
+			if(entityType != null) {
+				assert type.getInstanceClass().isAssignableFrom(entityType.getInstanceClass()) :
+					"EntityType should be of the same type as " + typeName;
+			} else {
+				entityType = type;
+			}
+		}
+		String entityName = getEntityName(entityType, scope);
 
 		// This is not a default view, then we need to construct the type graph for this view
 		if(!stateGraph.containsKey(entityName) ) {
 			if(typeName != null) {
-				Type type = shape.getType(typeName);
 				
 				// If EntityType is not provided, then use type as the EntityType
 				if(entityType == null && type instanceof EntityType) {
@@ -711,7 +722,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 							+ entityType.getName());
 				}
 			}
-			if(isEdgeGraph(this)) {
+			// TODO: Is method isEdgeGraph relevant
+			if(StateGraph.Scope.EDGE == scope || AggregateView.isEdgeGraph(this)) {
 				// TODO: Find all the views that are disjoint (need separate queries)
 				// TODO: and build the statetree for each of them
 				stateGraph.put(entityName, StateTree.build(this, entityType));
@@ -784,7 +796,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		}
 
 		public boolean isViewReference() {
-			return this.viewName != null;
+			return this.viewName != null && !"".equals(this.viewName.trim());
 		}
 
 		public String getViewName() {

@@ -41,6 +41,7 @@ import tools.xor.util.GraphUtil;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.DirectedSparseGraph;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.UnmodifiableView;
 import tools.xor.view.View;
@@ -610,8 +611,8 @@ public class Shape
             Set<String> paths = AggregatePropertyPaths.enumerate(type, this);
 
             DFAtoRE dfaRE = new DFAtoRE(type, this);
-            result.addTypeGraph(type, dfaRE.getExactStateGraph(), true);
-            result.addTypeGraph(type, dfaRE.getFullStateGraph(), false);
+            result.addTypeGraph(type, dfaRE.getExactStateGraph(), StateGraph.Scope.TYPE_GRAPH);
+            result.addTypeGraph(type, dfaRE.getFullStateGraph(), StateGraph.Scope.FULL_GRAPH);
 
             updateView(result, viewName, paths);
         }

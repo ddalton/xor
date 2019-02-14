@@ -60,6 +60,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	//private Map<Type, List<Property>> attrByType = new HashMap<Type, List<Property>>();
 	private Map<Type, Map<String, List<Property>>> attrByType = new HashMap<Type, Map<String, List<Property>>>();
 	private Shape shape; // The shape of type system on which this state graph is based
+
+	public enum Scope {
+		FULL_GRAPH, // Represents a full graph state of the type, sub-types are included
+		TYPE_GRAPH, // Represents a graph state of the type (sub-types are not included)
+		VIEW_GRAPH, // Represents a graph state of the view
+		EDGE        // Represents a tree state of the view
+	};
 	
 	public StateGraph(Type aggregateRoot, Shape shape) {
 		super();
@@ -501,8 +508,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		if(additionalType.isDataType()) {
 			throw new RuntimeException("Type " + additionalType.getName() + " has to be an entity type");
 		}
+
+		StateGraph.Scope scope = isExact ? Scope.TYPE_GRAPH : Scope.FULL_GRAPH;
+
 		StateGraph<State, Edge<State>> addendum = shape.getView(additionalType)
-			.getTypeGraph(additionalType, isExact)
+			.getTypeGraph(additionalType, scope)
 			.copy((Map<Type, State>)this.states);
 
 		merge(addendum);

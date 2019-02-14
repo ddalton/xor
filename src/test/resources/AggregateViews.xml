@@ -13,6 +13,24 @@
 		<attributeList>detailedDescription</attributeList>			
 	</aggregateView>
 	<aggregateView>
+		<name>ALIASEXISTING</name>
+		<attributeList>[VERYBASIC]</attributeList>
+		<attributeList>techtask.id</attributeList>
+		<attributeList>techtask.name</attributeList>
+		<attributeList>techtask.displayName</attributeList>
+		<attributeList>techtask.description</attributeList>
+		<attributeList>processtask.id</attributeList>
+		<attributeList>processtask.name</attributeList>
+		<attributeList>processtask.displayName</attributeList>
+		<attributeList>processtask.description</attributeList>
+		<function type="ALIAS" name="techtask">
+			<args>taskDetails</args>
+		</function>
+		<function type="ALIAS" name="processtask">
+			<args>taskDetails</args>
+		</function>
+	</aggregateView>
+	<aggregateView>
 		<name>BASICINFO</name>
 		<version>2</version>
 		<attributeList>[VERYBASIC]</attributeList>

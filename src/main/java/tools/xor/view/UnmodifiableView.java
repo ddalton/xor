@@ -7,6 +7,7 @@ import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.util.graph.UnmodifiableTypeGraph;
 
@@ -212,14 +213,14 @@ public class UnmodifiableView implements View
         return view.matches(path);
     }
 
-    @Override public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, boolean isExact)
+    @Override public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, StateGraph.Scope scope)
     {
         raiseException();
     }
 
-    @Override public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, boolean isExact)
+    @Override public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, StateGraph.Scope scope)
     {
-        return new UnmodifiableTypeGraph<>(view.getTypeGraph(entityType, isExact));
+        return new UnmodifiableTypeGraph<>(view.getTypeGraph(entityType, scope));
     }
 
     @Override public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType)

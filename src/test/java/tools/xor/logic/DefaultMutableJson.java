@@ -44,6 +44,7 @@ import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;

@@ -35,6 +35,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
@@ -298,7 +299,7 @@ public class CallInfo {
 	{
 		checkView();
 
-		if (AggregateView.isEdgeGraph(settings.getView())) {
+		if(getSettings().getScope() == StateGraph.Scope.EDGE) {
 			return getCurrentState().isReference();
 		}
 		else {
@@ -328,8 +329,8 @@ public class CallInfo {
 		}
 
 		List<Property> exactProperties = null;
-		// If the view is not expanded, then it represents an EdgeStateGraph
-		if(AggregateView.isEdgeGraph(settings.getView())) {
+
+		if(getSettings().getScope() == StateGraph.Scope.EDGE) {
 			State state = getCurrentState();
 			if (settings.getAction() == AggregateAction.READ) {
 				Object obj = ClassUtil.getInstance(getInput());

@@ -386,6 +386,10 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return false;
 	}
 
+	public static boolean isAggregateView(String viewName) {
+		return viewName.endsWith(ViewType.AGGREGATE.toString());
+	}
+
 	@Override
 	public Class inferDomainClass() {
 		String suffix = null;
@@ -674,7 +678,11 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	@Override
 	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType) {
-		return getTypeGraph(entityType, StateGraph.Scope.TYPE_GRAPH);
+		if(isAggregateView(getName())) {
+			return getTypeGraph(entityType, StateGraph.Scope.TYPE_GRAPH);
+		} else {
+			return getTypeGraph(entityType, StateGraph.Scope.VIEW_GRAPH);
+		}
 	}
 
 	public TypeGraph<State, Edge<State>> getTypeGraph () {
@@ -722,13 +730,22 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 							+ entityType.getName());
 				}
 			}
-			// TODO: Is method isEdgeGraph relevant
-			if(StateGraph.Scope.EDGE == scope || AggregateView.isEdgeGraph(this)) {
-				// TODO: Find all the views that are disjoint (need separate queries)
-				// TODO: and build the statetree for each of them
+
+			switch(scope) {
+			case EDGE:
 				stateGraph.put(entityName, StateTree.build(this, entityType));
-			} else {
+				break;
+			case VIEW_GRAPH:
 				stateGraph.put(entityName, DFAtoRE.build(this, entityType));
+				break;
+			case TYPE_GRAPH:
+				DFAtoRE dfaRE = new DFAtoRE(entityType, shape);
+				stateGraph.put(entityName, dfaRE.getExactStateGraph());
+				break;
+			case FULL_GRAPH:
+				dfaRE = new DFAtoRE(entityType, shape);
+				stateGraph.put(entityName, dfaRE.getFullStateGraph());
+				break;
 			}
 		}
 		

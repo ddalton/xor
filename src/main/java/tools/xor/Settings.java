@@ -132,8 +132,9 @@ public class Settings {
 	// The entity type on which the data is based
 	protected Type entityType;
 
-	// If the scope is ContentScope.VIEW then the actual view is referenced in this property
 	protected View view;
+
+	protected StateGraph.Scope scope = StateGraph.Scope.VIEW_GRAPH;
 
 	private AggregateAction action; // specifies the type of action being performed that involves data change in the database
 
@@ -319,6 +320,14 @@ public class Settings {
 		this.pruneRelative = new HashSet<>();
 		this.references = new ArrayList<>();
 		this.tags.add(AbstractProperty.EMPTY_TAG);
+	}
+
+	public StateGraph.Scope getScope() {
+		return this.scope;
+	}
+
+	public void setScope(StateGraph.Scope scope) {
+		this.scope = scope;
 	}
 	
 	public int getCurrentApiVersion() {

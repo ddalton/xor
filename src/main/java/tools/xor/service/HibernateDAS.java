@@ -47,8 +47,7 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 	.getStackTrace()[0].getClassName());
 	
 	public HibernateDAS(TypeMapper typeMapper, DASFactory dasFactory) {
-		super(dasFactory);
-		this.typeMapper = typeMapper;
+		super(dasFactory, typeMapper);
 	}
 	
 	public abstract SessionFactory getSessionFactory();

@@ -425,7 +425,7 @@ public abstract class AbstractType implements EntityType {
 		Map<String, Method> map = new HashMap<String, Method>();
 
 		Class<?> instanceClass = getInstanceClass();
-		if(instanceClass.isInterface())
+		if(!isValidInstanceClass(instanceClass))
 			return;
 		while (instanceClass != Object.class) {
 			Method[] ma = instanceClass.getDeclaredMethods();
@@ -518,7 +518,7 @@ public abstract class AbstractType implements EntityType {
 		Map<String, Method> map = new HashMap<String, Method>();
 
 		Class<?> instanceClass = getInstanceClass();
-		if(instanceClass.isInterface())
+		if(!isValidInstanceClass(instanceClass))
 			return;
 		while (instanceClass != Object.class) {
 			Method[] ma = instanceClass.getDeclaredMethods();
@@ -575,7 +575,7 @@ public abstract class AbstractType implements EntityType {
 		Map<String, Field> map = new HashMap<String, Field>();
 
 		Class<?> instanceClass = getInstanceClass();
-		if(instanceClass.isInterface())
+		if(!isValidInstanceClass(instanceClass))
 			return;
 		while (instanceClass != Object.class) {
 			Field[] fa = instanceClass.getDeclaredFields();
@@ -651,6 +651,10 @@ public abstract class AbstractType implements EntityType {
 		
 		return result;
 	}
+
+	private static boolean isValidInstanceClass(Class<?> instanceClass) {
+		return !instanceClass.isInterface();
+	}
 	
 	protected void initClassAnnotations() {
 
@@ -660,7 +664,7 @@ public abstract class AbstractType implements EntityType {
 		Map<String, Annotation> map = new HashMap<String, Annotation>();
 
 		Class<?> instanceClass = getInstanceClass();
-		if(instanceClass.isInterface())
+		if(!isValidInstanceClass(instanceClass))
 			return;
 
 		while (instanceClass != Object.class) {
@@ -695,6 +699,8 @@ public abstract class AbstractType implements EntityType {
 
 			Set<MethodInfo> methods = new HashSet<MethodInfo>();			
 			Class<?> instanceClass = getInstanceClass();
+			if(!isValidInstanceClass(instanceClass))
+				return;
 			for(Method method: instanceClass.getMethods()) {
 				if(method.getAnnotation(XorAfter.class) != null) {
 					if(method.getParameterTypes().length != 0) {
@@ -794,6 +800,10 @@ public abstract class AbstractType implements EntityType {
 	public static Map<String, List<MethodInfo>> initLambdas(Class<?> instanceClass) {
 
 		HashMap<String, List<MethodInfo>> allMethods = new HashMap<String, List<MethodInfo>>();
+
+		if(!isValidInstanceClass(instanceClass))
+			return Collections.unmodifiableMap(allMethods);
+
 		Set<String> notUnique = new HashSet<String>();
 		for(Method method: instanceClass.getMethods()) {
 			if(method.getAnnotation(XorLambda.class) != null) {

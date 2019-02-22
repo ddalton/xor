@@ -45,8 +45,7 @@ public abstract class JPADAS extends AbstractDataAccessService {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 	
 	public JPADAS(TypeMapper typeMapper, String name, DASFactory dasFactory) {
-		super(dasFactory);
-		this.typeMapper = typeMapper;
+		super(dasFactory, typeMapper);
 	}
 	
 	public abstract EntityManagerFactory getEmf();	

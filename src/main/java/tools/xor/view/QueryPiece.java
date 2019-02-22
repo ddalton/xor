@@ -431,7 +431,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 		}
 	}
 
-	private QueryField findField(String path) {
+	public QueryField findField(String path) {
 		return findField(getRoot(), makeRelative(path));
 	}
 

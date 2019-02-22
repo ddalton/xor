@@ -46,7 +46,7 @@ public class DefaultDASFactory extends AbstractDASFactory {
 	}
 
 	@Override
-	protected JDBCDAS createJDBCDAS() {
-		return new JDBCConfigDAS();
+	protected JDBCDAS createJDBCDAS(TypeMapper typeMapper) {
+		return new JDBCConfigDAS(this, typeMapper);
 	}
 }

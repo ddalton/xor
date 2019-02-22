@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
@@ -58,10 +59,10 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
         List<Function> consolidatedFunctions = QueryStringHelper.getQueryPieceFunctions(settings, this.queryPiece);
 
-        StringBuilder oql = new StringBuilder(constructOQL(settings.getPersistenceOrchestrator()));
+        StringBuilder oql = new StringBuilder(constructOQL(settings));
         queryPiece.setSelectString(oql.toString());
         oql.append(buildWhereClause(settings, consolidatedFunctions));
-        oql.append(buildOrderClause(settings.getPersistenceOrchestrator(), consolidatedFunctions));
+        oql.append(buildOrderClause(settings, consolidatedFunctions));
 
         final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
         if(vb.isDebugEnabled()) {
@@ -82,8 +83,9 @@ public class QueryFromFragments implements QueryBuilderStrategy
         return query;
     }
 
-    private String constructOQL(PersistenceOrchestrator po) {
+    private String constructOQL(Settings settings) {
 
+        PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
         QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
 
         // SELECT clause
@@ -92,7 +94,10 @@ public class QueryFromFragments implements QueryBuilderStrategy
             if(!QueryBuilder.SELECT_CLAUSE.equals(OQL.toString())) {
                 OQL.append(QueryBuilder.COMMA_DELIMITER);
             }
-            OQL.append(field.getOQL(po.getQueryCapability()));
+            OQL.append(
+                settings.doSQL(po) ?
+                    field.getSQL() :
+                    field.getOQL(po.getQueryCapability()));
         }
 
         // FROM clause
@@ -330,13 +335,15 @@ public class QueryFromFragments implements QueryBuilderStrategy
         }
     }
 
-    private String buildOrderClause( PersistenceOrchestrator po, List<Function> consolidatedFunctions) {
+    private String buildOrderClause(Settings settings, List<Function> consolidatedFunctions) {
+
         StringBuilder result = new StringBuilder();
+        PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
         Map<Integer, String> orderClauses = new TreeMap<>();
         QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
 
         for(QueryField field: qp.getFields()) {
-            if(field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE)) {
+            if(field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE) && !Settings.doSQL(po)) {
                 // TODO: we have to sort all the parent collection objects
                 // so this collection is clubbed together
                 String columnString = field.getOQL(po.getQueryCapability());

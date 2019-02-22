@@ -58,6 +58,7 @@ import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
@@ -1527,5 +1528,9 @@ public class Settings {
 			return propertyPath.substring(propertyPath.indexOf(Settings.PATH_DELIMITER)+1);
 		else
 			return null;
+	}
+
+	public static boolean doSQL(PersistenceOrchestrator po) {
+		return po instanceof JDBCPersistenceOrchestrator;
 	}
 }

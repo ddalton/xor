@@ -137,7 +137,14 @@ public class Function implements Comparable<Function> {
 		boolean all = true;
 
 		for(String path: functionHandler.getAttributes()) {
-			String oqlname = qp.getOQLName(path, po);
+			String oqlname = null;
+
+			if(Settings.doSQL(po)) {
+				QueryField field = qp.findField(path);
+				oqlname = field.getSQL();
+			} else {
+				oqlname = qp.getOQLName(path, po);
+			}
 			if(oqlname != null) {
 				functionHandler.setNormalizedName(path, oqlname);
 			} else {

@@ -59,7 +59,7 @@ public class ExternalType extends AbstractType {
 
 			externalProperty.init(shape);
 			if(add) {
-				if (externalProperty.getGetterMethod() == null) {
+				if (externalProperty.getGetterMethod() == null && !(domainType instanceof JDBCType) ) {
 					logger.warn(
 						"Out-of-sync between external and domain types. The following property is not present in the external type: "
 							+ domainProperty.getName());

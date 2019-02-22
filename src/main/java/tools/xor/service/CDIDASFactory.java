@@ -43,7 +43,6 @@ public class CDIDASFactory extends AbstractDASFactory {
 
 
 	@Override
-	// TODO: HibernateCDIDAS?
 	protected HibernateDAS createHibernateDAS(TypeMapper typeMapper) {
 		return new HibernateSpringDAS(typeMapper, this);
 	}
@@ -54,9 +53,8 @@ public class CDIDASFactory extends AbstractDASFactory {
 		return new JPASpringDAS(typeMapper, name, this);
 	}
 
-	@Override protected JDBCDAS createJDBCDAS ()
+	@Override protected JDBCDAS createJDBCDAS (TypeMapper typeMapper)
 	{
-		// TODO: JDBCCDIDAS?
-		return new JDBCSpringDAS();
+		return new JDBCSpringDAS(this, typeMapper);
 	}
 }

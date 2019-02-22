@@ -19,24 +19,12 @@
 
 package tools.xor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import javax.persistence.metamodel.Attribute;
-import javax.persistence.metamodel.EmbeddableType;
-import javax.persistence.metamodel.EntityType;
-import javax.persistence.metamodel.SingularAttribute;
-import javax.persistence.metamodel.Type.PersistenceType;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.DataAccessService;
-import tools.xor.service.JPADAS;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An OpenType represents a custom type that is a composition of properties from other

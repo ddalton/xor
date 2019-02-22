@@ -20,6 +20,9 @@
 package tools.xor.view;
 
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.JDBCProperty;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.service.QueryCapability;
 
@@ -72,6 +75,21 @@ public class QueryField implements Comparable<QueryField>
                 // Is this an id property
             result = qc.getSurrogateValueMechanism(fragment.getAlias(), Settings.PATH_DELIMITER + path);
         }
+
+        return result;
+    }
+
+    public String getSQL() {
+        if(path.endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE) || path.endsWith(QueryFragment.MAP_KEY_ATTRIBUTE)) {
+            throw new UnsupportedOperationException("LIST or MAP functions not supported in a SQL context");
+        }
+
+        if(path.contains(Settings.PATH_DELIMITER)) {
+            throw new UnsupportedOperationException("multi-part path not supported in a SQL context");
+        }
+
+        JDBCProperty property = (JDBCProperty) fragment.getEntityType().getProperty(path);
+        String result = fragment.getAlias() + Settings.PATH_DELIMITER + property.getColumnName();
 
         return result;
     }

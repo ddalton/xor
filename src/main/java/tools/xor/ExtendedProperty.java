@@ -162,13 +162,7 @@ public interface ExtendedProperty extends Property {
 	 * If this property refer to a bi-directional relationship and the types are symmetrical, i.e., the backRef points to the same type and not to a sub-type
 	 * @return boolean value
 	 */
-	public boolean isSymmetricalBiDirectionalType();	
-
-	/**
-	 * Returns the mapped by Property of a bi-directional relation. The mapped by property is the property that stores the value of the link in the database.
-	 * @return Property object
-	 */
-	public Property getMappedBy();
+	public boolean isSymmetricalBiDirectionalType();
 
 	/**
 	 * Returns the Property that is the other side of a bi-directional relation.

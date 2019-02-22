@@ -53,8 +53,8 @@ public class SpringDASFactory extends AbstractDASFactory {
 		return new JPASpringDAS(typeMapper, name, this);
 	}
 
-	@Override protected JDBCDAS createJDBCDAS ()
+	@Override protected JDBCDAS createJDBCDAS (TypeMapper typeMapper)
 	{
-		return new JDBCSpringDAS();
+		return new JDBCSpringDAS(this, typeMapper);
 	}
 }

@@ -96,7 +96,15 @@ public interface Property
    * Returns the opposite Property if the Property is bi-directional or null otherwise.
    * @return the opposite Property if the Property is bi-directional or null
    */
-  Property getOpposite(); 
+  Property getOpposite();
+
+  /**
+   * Valid only in the context of a TO_MANY relationship. This represents the property
+   * on the many side that captures this relationship.
+   *
+   * @return Property object
+   */
+  public Property getMappedBy();
 
   /**
    * Returns a list of alias names for this Property.

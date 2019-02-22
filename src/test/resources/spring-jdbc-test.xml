@@ -27,14 +27,19 @@
 	<!-- XOR -->
 	<bean id="aggregateManager"
 		  class="tools.xor.service.AggregateManager">
+                <property name="typeMapper" ref="typeMapper" />
 		<property name="dasFactory" ref="jdbcdas" />
 		<property name="persistenceType" value="JDBC" />
 	</bean>
 
 	<bean id="jdbcdas"
-		class="tools.xor.providers.jdbc.JDBCDASFactory">
+		class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="jdbcdas" />
 	</bean>
+
+        <bean id="typeMapper" class="tools.xor.ExcelJsonTypeMapper">
+                <property name="domainPackagePath" value="tools.xor.db" />
+        </bean>
 	
 	<!-- DataSource -->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"

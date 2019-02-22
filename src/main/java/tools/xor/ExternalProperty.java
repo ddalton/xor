@@ -74,7 +74,15 @@ public class ExternalProperty extends AbstractProperty {
 	}
 	
 	public Class<?> getJavaType() {
-		return (field != null) ? field.getDeclaringClass() : getterMethod.getDeclaringClass();
+		if (field != null) {
+			return field.getDeclaringClass();
+		} else {
+			if(getterMethod != null) {
+				return getterMethod.getDeclaringClass();
+			} else {
+				throw new RuntimeException("Unable to obtain Java type for external property. Maybe a JSON type mapper needs to be configured.");
+			}
+		}
 	}
 	
 	@Override

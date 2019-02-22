@@ -27,7 +27,6 @@ import java.util.Set;
 public class JDBCPersistenceOrchestrator
 	extends AbstractPersistenceOrchestrator
 {
-
 	private DataSource dataSource;
 
 	public DataSource getDataSource ()

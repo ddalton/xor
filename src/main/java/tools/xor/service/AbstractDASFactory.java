@@ -58,7 +58,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 	
 	protected abstract JPADAS createJPADAS(TypeMapper typeMapper, String name);
 
-	protected abstract JDBCDAS createJDBCDAS();
+	protected abstract JDBCDAS createJDBCDAS(TypeMapper typeMapper);
 
 	/**
 	 * This should be overridden by a custom DASFactory
@@ -88,13 +88,11 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		try { // HibernateDAS
 			if(persistenceType == null || persistenceType == PersistenceType.HIBERNATE) {
-				das.put(name, createHibernateDAS(typeMapper));
-				injectDependencies(das.get(name), name);
+				addDAS(createHibernateDAS(typeMapper), false);
 
 				// Try version 4 specifically
 				if( ((HibernateDAS)das.get(name)).getConfiguration() == null) {
-					das.put(name, new HibernateSpringDAS(typeMapper, this));
-					injectDependencies(das.get(name), name);
+					addDAS(new HibernateSpringDAS(typeMapper, this), false);
 				}
 
 				if( ((HibernateDAS)das.get(name)).getConfiguration() == null)
@@ -109,10 +107,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		try { // JPADataAccessService
 			if(persistenceType == null || persistenceType == PersistenceType.JPA) {
-				das.put(name, createJPADAS(typeMapper, name));
-				injectDependencies(das.get(name), name);
-				das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
-				return das.get(name);
+				return addDAS(createJPADAS(typeMapper, name), true);
 			}
 		} catch (BeanCreationException e) {
 			logger.warn("JPA configuration not found, hence cannot create a JPADataAccessService instance");
@@ -120,10 +115,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		try { // Google App Engine, use JPA for metadata configuration
 			if(persistenceType == null || persistenceType == PersistenceType.DATASTORE) {
-				das.put(name, createCustomDAS(typeMapper, name));
-				injectDependencies(das.get(name), name);
-				das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
-				return das.get(name);
+				return addDAS(createCustomDAS(typeMapper, name), true);
 			}
 		} catch (BeanCreationException e) {
 			logger.warn("App Engine Datastore configuration not found");
@@ -131,23 +123,27 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		// Ariba persistence uses a custom implementation
 		if(persistenceType == null || persistenceType == PersistenceType.AML) {
-			das.put(name, createCustomDAS(typeMapper, name));
-			injectDependencies(das.get(name), name);
-			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
-			return das.get(name);
+			return addDAS(createCustomDAS(typeMapper, name), true);
 		}
 
 		// Enterprise Objects Framework (EO) persistence uses a custom implementation
 		if(persistenceType == null || persistenceType == PersistenceType.EOF) {
-			das.put(name, createCustomDAS(typeMapper, name));
-			injectDependencies(das.get(name), name);
-			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
-			return das.get(name);
+			return addDAS(createCustomDAS(typeMapper, name), true);
 		}
 
 		if(persistenceType == null || persistenceType == PersistenceType.JDBC) {
-			das.put(name, createJDBCDAS());
-			return das.get(name);
+			return addDAS(createJDBCDAS(typeMapper), true);
+		}
+
+		return das.get(name);
+	}
+
+	private DataAccessService addDAS(DataAccessService instance, boolean addShape) {
+		das.put(name, instance);
+		injectDependencies(das.get(name), name);
+
+		if(addShape) {
+			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
 		}
 
 		return das.get(name);

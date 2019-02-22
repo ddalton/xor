@@ -70,8 +70,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
 	private ThreadLocal<Shape> overriddenShape = new ThreadLocal<Shape>(); // temporarily overridden by user
 
-	public AbstractDataAccessService(DASFactory factory) {
+	public AbstractDataAccessService(DASFactory factory, TypeMapper typeMapper) {
 		this.dasFactory = factory;
+		this.typeMapper = typeMapper;
 		this.shapes = new HashMap<>();
 		shapes.put(DEFAULT_SHAPE, new Shape(DEFAULT_SHAPE, null, this));
 	}

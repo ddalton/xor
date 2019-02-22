@@ -71,4 +71,14 @@ public class Person extends Identity {
 	{
 		this.photo = photo;
 	}
+
+	private String email;
+
+	public void setEmail(String value) {
+		this.email = value;
+	}
+
+	public String getEmail() {
+		return this.email;
+	}
 }

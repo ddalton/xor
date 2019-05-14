@@ -1,6 +1,18 @@
-XOR - Fast object retrieval and persistence for JPA
+XOR - Light weight ORM
+  XOR is a light weight ORM, that can work directly against a relational database.
+  It helps to quickly prototype a Single page application developed using javascript.
 
-0. open types?? No JPA support. Just query DB using JDBC and create schema based on foreign keys and table names
+  The flow is:
+  1. Develop the schema in an RDBMS with the necessary tables, indexes and foreign key constraints
+  2. Configure XOR with this database schema
+  3. Deploy it against a servlet container and expose a REST endpoint to it
+
+HSQLDB testing -
+java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.util.DatabaseManagerSwing
+
+0. Testing enhancement - The below feature assists with testing various data models without 
+     an explicit Java model hierarchy 
+   open types?? No JPA support. Just query DB using JDBC and create schema based on foreign keys and table names
    Need to provide table name to entity name mapping and
    Column name to property name mapping
    No inheritance support
@@ -8,14 +20,21 @@ XOR - Fast object retrieval and persistence for JPA
    Helps with testing - especially aliases
    and also expands scope of what it can support.
 
-   JDBCType - contains table name, needs to extend EntityType
+   Details
+   =======
+   JDBC Persistence -
+   Collection update/add/delete
 
-   JDBCQuery - join syntax has two containment behavior (CASCADE DELETE)
-   1. If the foreign key is between 2 tables connecting their primary keys
-      then that relationship represents an inheritance relationship
-      NOTE: A foreign key between two primary keys is supported on both
-            Oracle and HANA
-   2. Else it represents a containment relationship between 2 entities
+   Querying -
+   Support querying using OQL
+   Create JDBCProvider to convert OQL to SQL queries
+
+   extract Domain java object from JSON
+   call save on a java object - extract JSON from domain and persist using version column
+   Need to pass the original objects, so a snapshot can be taken and the original version identified.
+
+   3. A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
+
 
 
 1. Process ALIAS and NARROW functions

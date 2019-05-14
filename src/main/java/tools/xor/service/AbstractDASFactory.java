@@ -38,10 +38,12 @@ public abstract class AbstractDASFactory implements DASFactory {
 	protected AggregateManager                      aggregateManager;
 	protected static final Map<String, DataAccessService> das = new ConcurrentHashMap<String, DataAccessService>(); // If the name is specified then the DAS is cached by the name
 
+	@Override
 	public AggregateManager getAggregateManager() {
 		return aggregateManager;
 	}
 
+	@Override
 	public void setAggregateManager(AggregateManager aggregateManager) {
 		this.aggregateManager = aggregateManager;
 	}

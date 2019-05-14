@@ -19,11 +19,13 @@
 
 package tools.xor.providers.jdbc;
 
+import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,6 +60,32 @@ public abstract class DBTranslator
         translators.put("HSQL DATABASE ENGINE", new HSQLTranslator() );
     }
 
+    protected static final Map<String, Class> SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
+
+    static {
+        SQL_TO_JAVA_TYPE_MAP.put("CHAR", java.lang.String.class);
+        SQL_TO_JAVA_TYPE_MAP.put("VARCHAR", java.lang.String.class);
+        SQL_TO_JAVA_TYPE_MAP.put("LONGVARCHAR", java.lang.String.class);
+        SQL_TO_JAVA_TYPE_MAP.put("NUMERIC", java.math.BigDecimal.class);
+        SQL_TO_JAVA_TYPE_MAP.put("DECIMAL", java.math.BigDecimal.class);
+        SQL_TO_JAVA_TYPE_MAP.put("BIT", Boolean.class);
+        SQL_TO_JAVA_TYPE_MAP.put("BOOLEAN", Boolean.class);
+        SQL_TO_JAVA_TYPE_MAP.put("TINYINT", Integer.class);
+        SQL_TO_JAVA_TYPE_MAP.put("SMALLINT", Integer.class);
+        SQL_TO_JAVA_TYPE_MAP.put("INTEGER", Integer.class);
+        SQL_TO_JAVA_TYPE_MAP.put("BIGINT", Long.class);
+        SQL_TO_JAVA_TYPE_MAP.put("REAL", Float.class);
+        SQL_TO_JAVA_TYPE_MAP.put("DOUBLE", Double.class);
+        SQL_TO_JAVA_TYPE_MAP.put("BINARY", byte[].class);
+        SQL_TO_JAVA_TYPE_MAP.put("VARBINARY", byte[].class);
+        SQL_TO_JAVA_TYPE_MAP.put("LONGVARBINARY", byte[].class);
+        SQL_TO_JAVA_TYPE_MAP.put("DATE", java.sql.Date.class);
+        SQL_TO_JAVA_TYPE_MAP.put("TIME", java.sql.Time.class);
+        SQL_TO_JAVA_TYPE_MAP.put("TIMESTAMP", java.sql.Timestamp.class);
+        SQL_TO_JAVA_TYPE_MAP.put("BLOB", java.sql.Blob.class);
+        SQL_TO_JAVA_TYPE_MAP.put("CLOB", java.sql.Clob.class);
+    }
+
     public static DBTranslator instance(Connection conn) {
         DBTranslator result;
         try {
@@ -79,7 +107,9 @@ public abstract class DBTranslator
         return result;
     }
 
-    public abstract List<JDBCDAS.ColumnInfo> getColumns(String tableName);
+    public abstract JDBCDAS.TableInfo getTable(ForeignKeyEnhancer enhancer, String tableName);
 
-    public abstract List<String> getTables();
+    public abstract List<JDBCDAS.TableInfo> getTables(ForeignKeyEnhancer enhancer);
+
+    public abstract Map<String, List<String>> getPrimaryKeys();
 }

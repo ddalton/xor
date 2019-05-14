@@ -20,17 +20,13 @@
 package tools.xor.logic;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import tools.xor.Settings;
-import tools.xor.providers.jdbc.JDBCDAS;
-import tools.xor.service.AbstractDataAccessService;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 
@@ -51,34 +47,37 @@ public class PlainJDBCTest
 	@Autowired
 	protected DataSource dataSource;
 
-	// Uncomment Before and After methods if running this test independently
-
-	//@Before
+	@Before
 	public void init() throws SQLException, ClassNotFoundException, IOException
 	{
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
-			statement.execute("CREATE TABLE person (id VARCHAR(10) NOT NULL, name VARCHAR(50) NOT NULL,"
-					+ "email VARCHAR(50) NOT NULL, PRIMARY KEY (id))");
+			statement.execute("CREATE TABLE library (id VARCHAR(10) NOT NULL, name VARCHAR(50) NOT NULL, PRIMARY KEY(id))");
+			connection.commit();
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L100', 'British Library')");
+			connection.commit();
+
+			statement.execute("CREATE TABLE librarian (id VARCHAR(10) NOT NULL, name VARCHAR(50) NOT NULL,"
+					+ "email VARCHAR(50) NOT NULL, library VARCHAR(10) NOT NULL, PRIMARY KEY (id), FOREIGN KEY(library) REFERENCES library(id))");
 			connection.commit();
 			statement.executeUpdate(
-				"INSERT INTO person VALUES ('1001','Jack Wayne', 'jwayne@somewhere.com')");
-			statement.executeUpdate("INSERT INTO person VALUES ('1002','John Wayne', 'jowayne@somewhere.com')");
+				"INSERT INTO librarian (id, name, email, library) VALUES ('1001','Jack Wayne', 'jwayne@somewhere.com', 'L100')");
+			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1002','John Wayne', 'jowayne@somewhere.com', 'L100')");
 			connection.commit();
 		}
 	}
 
 
-	//@After
+	@After
 	public void destroy() throws SQLException, ClassNotFoundException, IOException {
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
-			statement.executeUpdate("DROP TABLE Person");
+			statement.executeUpdate("DROP TABLE librarian");
 			connection.commit();
 		}
 	}
 
 	@Test
 	public void jsonSelect() {
-		String jsonString = "{ \"normalized\": false, \"view\" : { \"attributeList\" : [\"count\"], \"nativeQuery\" : { \"selectClause\": \"SELECT count(*) FROM Person\" } } }";
+		String jsonString = "{ \"normalized\": false, \"view\" : { \"attributeList\" : [\"count\"], \"nativeQuery\" : { \"selectClause\": \"SELECT count(*) FROM librarian\" } } }";
 
 		DataAccessService das = am.getDAS();
 

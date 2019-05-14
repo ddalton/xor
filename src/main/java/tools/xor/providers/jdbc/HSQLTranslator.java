@@ -19,6 +19,7 @@
 
 package tools.xor.providers.jdbc;
 
+import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 
 import java.sql.PreparedStatement;
@@ -27,52 +28,105 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class HSQLTranslator extends DBTranslator
 {
+    private static final String FOREIGN_KEY_SQL = "SELECT FK_NAME, FKTABLE_NAME, PKTABLE_NAME, FKCOLUMN_NAME, PKCOLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM INFORMATION_SCHEMA.SYSTEM_CROSSREFERENCE WHERE FKTABLE_SCHEM = 'PUBLIC' ORDER BY FK_NAME, KEY_SEQ";
+    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DTD_IDENTIFIER FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = 'PUBLIC'";
+    private static final String PRIMARY_KEY_SQL = "SELECT table_name, pk_name, column_name, key_seq FROM INFORMATION_SCHEMA.SYSTEM_PRIMARYKEYS WHERE table_schem = 'PUBLIC' ORDER BY pk_name, key_seq";
 
-    private static final String TABLE_SQL = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = 'PUBLIC'";
-    private static final String COLUMNS_SQL = "SELECT COLUMN_NAME, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = 'PUBLIC'";
-    private static final String COLUMN_TYPES_SQL = "SELECT * FROM %s LIMIT 1";
+    private Map<String, JDBCDAS.TableInfo> tableMap;
 
-    @Override public List<JDBCDAS.ColumnInfo> getColumns (String tableName)
+    @Override public JDBCDAS.TableInfo getTable (ForeignKeyEnhancer enhancer, String tableName)
     {
-        List<JDBCDAS.ColumnInfo> result = new ArrayList<>();
-        Map<String, Class> columnTypes = new HashMap<>();
-
-        String sql = String.format(COLUMN_TYPES_SQL, tableName);
-        try (PreparedStatement ps = connection.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-        ) {
-            ResultSetMetaData rsmd=rs.getMetaData();
-            for(int i = 0; i < rsmd.getColumnCount(); i++) {
-                String javaClassName = rsmd.getColumnClassName(i+1);
-                Class javaClass = Class.forName(javaClassName);
-                columnTypes.put(rsmd.getColumnName(i+1), javaClass);
-            }
-        }
-        catch (Exception e) {
-            throw ClassUtil.wrapRun(e);
+        if(tableMap == null) {
+            getTables(enhancer);
         }
 
-        sql = String.format(COLUMNS_SQL, tableName);
-        try (PreparedStatement ps = connection.prepareStatement(sql);
+        return tableMap.get(tableName);
+    }
+
+    @Override public List<JDBCDAS.TableInfo> getTables (ForeignKeyEnhancer enhancer)
+    {
+        if(tableMap != null) {
+            return new ArrayList<>(tableMap.values());
+        }
+
+        Map<String, List<String>> primaryKeys = getPrimaryKeys();
+
+        Map<String, JDBCDAS.TableInfo> result = new HashMap<>();
+        try (PreparedStatement ps = connection.prepareStatement(COLUMNS_SQL);
             ResultSet rs = ps.executeQuery();
         ) {
+            JDBCDAS.TableInfo table = null;
+            List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
             while(rs.next()) {
-                String name = rs.getString(1);
-                Boolean nullable = "NO".equals(rs.getString(2)) ? false : true;
-                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(name, nullable, columnTypes.get(name));
-                result.add(ci);
+                if(table != null) {
+                    // check if we need to reset
+                    if(!table.getName().equals(rs.getString(1))) {
+                        table.setColumns(columns);
+                        result.put(table.getName(), table);
+
+                        table = null;
+                        columns = new LinkedList<>();
+                    }
+                }
+
+                if(table == null) {
+                    table = new JDBCDAS.TableInfo(rs.getString(1));
+                    table.setPrimaryKeys(primaryKeys.get(table.getName()));
+                }
+
+                String columnName = rs.getString(2);
+                Boolean nullable = "NO".equals(rs.getString(3)) ? false : true;
+                String columnType = rs.getString(4);
+                if(columnType.contains("(")) {
+                    columnType = columnType.substring(0, columnType.indexOf("("));
+                }
+                if(!SQL_TO_JAVA_TYPE_MAP.containsKey(columnType)) {
+                    throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
+                }
+                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType));
+                columns.add(ci);
+            }
+            if(table != null) {
+                table.setColumns(columns);
+                result.put(table.getName(), table);
             }
         }
         catch (Exception e) {
             throw ClassUtil.wrapRun(e);
         }
 
-        return result;
+        List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(result);
+
+            // Give a chance to add any additional business logic based relationships
+            // not captured by a database foreign key
+        foreignKeys = enhancer.process(foreignKeys);
+        Map<String, List<JDBCDAS.ForeignKey>> fkMap = new HashMap<>();
+        for(JDBCDAS.ForeignKey fk: foreignKeys) {
+            fk.init();
+            List<JDBCDAS.ForeignKey> fkeys = null;
+            if(fkMap.containsKey(fk.getReferencingTable().getName())) {
+                fkeys = fkMap.get(fk.getReferencingTable().getName());
+            } else {
+                fkeys = new LinkedList<>();
+                fkMap.put(fk.getReferencingTable().getName(), fkeys);
+            }
+            fkeys.add(fk);
+        }
+
+        List<JDBCDAS.TableInfo> tables = new ArrayList<>(result.values());
+        for(JDBCDAS.TableInfo tableInfo: tables) {
+            tableInfo.setForeignKeys(fkMap.get(tableInfo.getName()));
+        }
+
+        tableMap = result;
+
+        return tables;
     }
 
     private void printResult(String sql) {
@@ -107,15 +161,45 @@ public class HSQLTranslator extends DBTranslator
         }
     }
 
-    @Override public List<String> getTables ()
+    private List<JDBCDAS.ForeignKey> getForeignKeys (Map<String, JDBCDAS.TableInfo> tableMap)
     {
-        List<String> result = new ArrayList<>();
+        List<JDBCDAS.ForeignKey> result = new ArrayList<>();
 
-        try (PreparedStatement ps = connection.prepareStatement(TABLE_SQL);
+        try (PreparedStatement ps = connection.prepareStatement(FOREIGN_KEY_SQL);
             ResultSet rs = ps.executeQuery();
         ) {
+            JDBCDAS.ForeignKey fkey = null;
+            List<String> referencingColumns = new LinkedList<>();
+            List<String> referencedColumns = new LinkedList<>();
             while(rs.next()) {
-                result.add(rs.getString(1));
+                if(fkey != null) {
+                    // check if we need to reset
+                    if(!fkey.getName().equals(rs.getString(1))) {
+                        fkey.setReferencingColumns(referencingColumns);
+                        fkey.setReferencedColumns(referencedColumns);
+                        result.add(fkey);
+
+                        fkey = null;
+                        referencingColumns = new LinkedList<>();
+                        referencedColumns = new LinkedList<>();
+                    }
+                }
+
+                if(fkey == null) {
+                    JDBCDAS.ForeignKeyRule deleteRule = getForeignKeyRule(rs.getInt(6));
+                    JDBCDAS.ForeignKeyRule updateRule = getForeignKeyRule(rs.getInt(7));
+                    JDBCDAS.TableInfo referencing = tableMap.get(rs.getString(2));
+                    JDBCDAS.TableInfo referenced = tableMap.get(rs.getString(3));
+                    fkey = new JDBCDAS.ForeignKey(rs.getString(1),
+                        referencing, referenced, deleteRule, updateRule);
+                }
+                referencingColumns.add(rs.getString(4));
+                referencedColumns.add(rs.getString(5));
+            }
+            if(fkey != null) {
+                fkey.setReferencingColumns(referencingColumns);
+                fkey.setReferencedColumns(referencedColumns);
+                result.add(fkey);
             }
         }
         catch (SQLException e) {
@@ -123,5 +207,57 @@ public class HSQLTranslator extends DBTranslator
         }
 
         return result;
+    }
+
+    @Override public Map<String, List<String>> getPrimaryKeys ()
+    {
+        Map<String, List<String>> result = new HashMap<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(PRIMARY_KEY_SQL);
+            ResultSet rs = ps.executeQuery();
+        ) {
+            String tableName = null;
+            List<String> columns = new LinkedList<>();
+            while(rs.next()) {
+                if(columns.size() > 0) {
+                    // check if we need to reset
+                    if(!tableName.equals(rs.getString(1))) {
+                        result.put(tableName, columns);
+
+                        columns = new LinkedList<>();
+                    }
+                }
+
+                if(columns.size() == 0) {
+                    tableName = rs.getString(1);
+                }
+                columns.add(rs.getString(3));
+            }
+            if(tableName != null) {
+                result.put(tableName, columns);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        return result;
+    }
+
+    private JDBCDAS.ForeignKeyRule getForeignKeyRule(int value) {
+        switch(value) {
+        case 1:
+            return JDBCDAS.ForeignKeyRule.CASCADE;
+        case 2:
+            return JDBCDAS.ForeignKeyRule.SET_NULL;
+        case 3:
+            return JDBCDAS.ForeignKeyRule.SET_DEFAULT;
+        case 4:
+            return JDBCDAS.ForeignKeyRule.RESTRICT;
+        case 5:
+            return JDBCDAS.ForeignKeyRule.NO_ACTION;
+        }
+
+        throw new RuntimeException("Unknown value for foreign key rule: " + value);
     }
 }

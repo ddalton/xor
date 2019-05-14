@@ -22,31 +22,25 @@ package tools.xor.providers.jdbc;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.JDBCType;
-import tools.xor.OpenType;
-import tools.xor.Property;
-import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
 import tools.xor.service.AbstractDataAccessService;
-import tools.xor.service.AggregateManager;
 import tools.xor.service.DASFactory;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.PersistenceType;
-import tools.xor.view.AggregateView;
-import tools.xor.view.QueryTransformer;
-import tools.xor.view.View;
 
 import javax.sql.DataSource;
-import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is part of the Data Access Service framework.
@@ -91,6 +85,181 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         }
     }
 
+    public static class TableInfo {
+        private String name;
+        private List<ColumnInfo> columns;
+        private List<String> primaryKeys;
+        private List<ForeignKey> foreignKeys;
+
+        public String getName() {
+            return this.name;
+        }
+
+        public void setColumns(List<ColumnInfo> columns) {
+            this.columns = columns;
+        }
+
+        public List<ColumnInfo> getColumnInfo(List<String> columnssubset) {
+            Map<String, ColumnInfo> columnInfoMap = new HashMap<>();
+            for(ColumnInfo ci: columns) {
+                columnInfoMap.put(ci.getName(), ci);
+            }
+
+            List<ColumnInfo> result = new LinkedList<>();
+            for(String column: columnssubset) {
+                if(columnInfoMap.containsKey(column)) {
+                    result.add(columnInfoMap.get(column));
+                }
+            }
+
+            return result;
+        }
+
+        public TableInfo(String name) {
+            this.name = name;
+        }
+
+        public void setPrimaryKeys(List<String> primaryKeys) {
+            this.primaryKeys = primaryKeys;
+        }
+
+        public List<ForeignKey> getForeignKeys() {
+            return this.foreignKeys;
+        }
+
+        public void setForeignKeys(List<ForeignKey> foreignKeys) {
+            this.foreignKeys = foreignKeys;
+        }
+
+        public List<String> getPrimaryKeys() {
+            return this.primaryKeys;
+        }
+
+        public List<ColumnInfo> getBasicColumns() {
+            Map<String, ColumnInfo> all = new HashMap<>();
+            for(ColumnInfo ci: columns) {
+                all.put(ci.getName(), ci);
+            }
+
+            Set<String> fkColumns = new HashSet<>();
+            for(ForeignKey fk: foreignKeys) {
+                fkColumns.addAll(fk.getReferencingColumns());
+            }
+
+            Set<String> basicColumns = new HashSet(all.keySet());
+            basicColumns.removeAll(fkColumns);
+
+            List<ColumnInfo> result = new LinkedList<>();
+            for(String basicCol: basicColumns) {
+                result.add(all.get(basicCol));
+            }
+
+            return result;
+        }
+    }
+
+    public static enum ForeignKeySide {
+        REFERENCED,
+        REFERENCING,
+        UNKNOWN
+    }
+
+    public static enum ForeignKeyRule {
+        CASCADE,
+        RESTRICT,
+        NO_ACTION,
+        SET_NULL,
+        SET_DEFAULT
+    }
+
+    public static class ForeignKey {
+        private TableInfo referencingTable;      // table representing source of the relationship
+        private TableInfo referencedTable;       // table representing target of the relationship
+        private String name;                     // name of the foreign key.
+        private List<String> referencingColumns;
+        private List<String> referencedColumns;
+        private ForeignKeyRule deleteRule;
+        private ForeignKeyRule updateRule;
+        private boolean inheritance;             // Does this foreign key model an inheritance
+                                                 //   relationship?
+
+        public String getName() {
+            return this.name;
+        }
+
+        /**
+         * Represents the name of the JDBCProperty representing this foreign key relationship.
+         *
+         * If the foreign key is comprised of a single column, then the property name is the
+         * the name of the column, else the property name is the name of the foreign key,
+         * or a name overridden by the user (ForeignKeyEnhancer).
+         *
+         * @return
+         */
+        public String getPropertyName() {
+            if(referencedColumns.size() == 1) {
+                return referencedColumns.get(0);
+            }
+
+            return name;
+        }
+
+        public TableInfo getReferencingTable() {
+            return this.referencingTable;
+        }
+
+        public TableInfo getReferencedTable() {
+            return this.referencedTable;
+        }
+
+        public ForeignKeySide getSide(JDBCType type) {
+            if(type.getTableName().equals(this.referencedTable)) {
+                return ForeignKeySide.REFERENCED;
+            } else if(type.getTableName().equals(this.referencingTable)) {
+                return ForeignKeySide.REFERENCING;
+            } else {
+                return ForeignKeySide.UNKNOWN;
+            }
+        }
+
+        public ForeignKey(String name, TableInfo referencing, TableInfo referenced, ForeignKeyRule deleteRule, ForeignKeyRule updateRule) {
+            this.name = name;
+            this.referencingTable = referencing;
+            this.referencedTable = referenced;
+            this.deleteRule = deleteRule;
+            this.updateRule = updateRule;
+        }
+
+        public List<String> getReferencingColumns() {
+            return this.referencingColumns;
+        }
+
+        public void setReferencingColumns(List<String> columns) {
+            this.referencingColumns = columns;
+        }
+
+        public void setReferencedColumns(List<String> columns) {
+            this.referencedColumns = columns;
+        }
+
+        public boolean isContainment() {
+            return deleteRule == ForeignKeyRule.CASCADE;
+        }
+
+        public boolean isInheritance() {
+            return this.inheritance;
+        }
+
+        public void init() {
+            if(this.referencingTable.getPrimaryKeys() != null && this.referencedTable.getPrimaryKeys() != null) {
+                if (this.referencingTable.getPrimaryKeys().equals(this.referencingColumns) &&
+                    this.referencedTable.getPrimaryKeys().equals(this.referencedColumns)) {
+                    this.inheritance = true;
+                }
+            }
+        }
+    }
+
     public JDBCDAS(DASFactory dasFactory, TypeMapper typeMapper) {
         super(dasFactory, typeMapper);
     }
@@ -101,18 +270,28 @@ public abstract class JDBCDAS extends AbstractDataAccessService
      * @param tableName RDBMS table name
      * @return map of columns and their types
      */
-    public List<ColumnInfo> getColumns(String tableName) {
+    public TableInfo getTable(String tableName) {
         try(Connection c = getDataSource().getConnection()) {
-            return DBTranslator.instance(c).getColumns(tableName);
+            return DBTranslator.instance(c).getTable(getAggregateManager().getForeignKeyEnhancer(), tableName);
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
         }
     }
 
-    public List<String> getTables() {
+    public Map<String, List<String>> getPrimaryKeys() {
         try(Connection c = getDataSource().getConnection()) {
-            return DBTranslator.instance(c).getTables();
+            return DBTranslator.instance(c).getPrimaryKeys();
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+    }
+
+    public List<TableInfo> getTables() {
+        try(Connection c = getDataSource().getConnection()) {
+            List<TableInfo> tables = DBTranslator.instance(c).getTables(getAggregateManager().getForeignKeyEnhancer());
+            return tables;
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
@@ -125,8 +304,8 @@ public abstract class JDBCDAS extends AbstractDataAccessService
     {
         Shape shape = getOrCreateShape(name);
 
-        for(String tableName: getTables()){
-            JDBCType dataType = new JDBCType(tableName, tableName);
+        for(TableInfo table: getTables()){
+            JDBCType dataType = new JDBCType(table.getName(), table.getName());
             shape.addType(dataType.getName(), dataType);
         }
 
@@ -145,6 +324,14 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             if(JDBCType.class.isAssignableFrom(type.getClass())) {
                 JDBCType jdbcType = (JDBCType) type;
                 jdbcType.defineProperties(shape);
+            }
+        }
+
+        // Create and Link the bi-directional relationship between the properties
+        for(Type type: shape.getUniqueTypes()) {
+            if(JDBCType.class.isAssignableFrom(type.getClass())) {
+                JDBCType jdbcType = (JDBCType) type;
+                jdbcType.setOpposite(shape);
             }
         }
     }

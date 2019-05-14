@@ -144,11 +144,9 @@ public interface DataAccessService {
 	 * This should be invoked after all the shapes are registered with the
 	 * DataAccessService.
 	 *
-	 * @param am AggregateManager
 	 * @param avVersions views grouped by view name
 	 */
-	public void sync(AggregateManager am,
-			Map<String, List<AggregateView>> avVersions);
+	public void sync(Map<String, List<AggregateView>> avVersions);
 
 	/**
 	 * Refresh the view mapping with the entity based on the

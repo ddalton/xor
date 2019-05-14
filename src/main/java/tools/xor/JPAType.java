@@ -143,10 +143,9 @@ public class JPAType extends AbstractType {
 		initAccessType();
 	}
 
-	public void setOpposite() {
-		JPADAS dataAccessService = (JPADAS)getDAS();
+	public void setOpposite(Shape shape) {
 		for(Property property: getProperties()) {
-			((JPAProperty)property).initMappedBy(dataAccessService);
+			((JPAProperty)property).initMappedBy(shape);
 		}
 	}
 

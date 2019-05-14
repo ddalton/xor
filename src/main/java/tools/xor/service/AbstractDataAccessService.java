@@ -111,6 +111,10 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		return overriddenShape.get();
 	}
 
+	public AggregateManager getAggregateManager() {
+		return this.dasFactory.getAggregateManager();
+	}
+
 	/**
 	 * Override the current shape
 	 * @param name for the overridden shape
@@ -133,6 +137,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 		overriddenShape.remove();
 	}
+
+
 
 	@Override
 	public Shape getOrCreateShape (String name, Shape parent) {
@@ -320,7 +326,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 	
 	@Override
-	public void sync(AggregateManager am, Map<String, List<AggregateView>> avVersions) {
+	public void sync(Map<String, List<AggregateView>> avVersions) {
+		AggregateManager am = getAggregateManager();
 		for(Shape shape: shapes.values()) {
 			shape.sync(am, avVersions);
 		}

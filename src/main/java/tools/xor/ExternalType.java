@@ -101,9 +101,9 @@ public class ExternalType extends AbstractType {
 		return externalProperty;
 	}
 
-	public void setOpposite(DataAccessService das) {
+	public void setOpposite(Shape shape) {
 		for(Property property: getProperties())
-			((AbstractProperty)property).initMappedBy(das);
+			((AbstractProperty)property).initMappedBy(shape);
 	}
 
 	@Override

@@ -107,7 +107,7 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 		for (Type type : shape.getUniqueTypes()) {
 			if (HibernateType.class.isAssignableFrom(type.getClass())) {
 				HibernateType hibernateType = (HibernateType) type;
-				hibernateType.setOpposite();
+				hibernateType.setOpposite(shape);
 			}
 		}
 	}

@@ -1349,7 +1349,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return result;
 	}
 
-	public abstract void initMappedBy(DataAccessService das);
+	public abstract void initMappedBy(Shape shape);
 
 	@Override
 	public Property getDomainProperty() {

@@ -25,6 +25,7 @@ import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.Shape;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -64,11 +65,28 @@ public class JDBCType extends AbstractType {
 
         JDBCDAS das = (JDBCDAS)getDAS();
         // Key is column name and value is java type
-        for(JDBCDAS.ColumnInfo column: das.getColumns(this.tableName)) {
+        for(JDBCDAS.ColumnInfo column: das.getTable(this.tableName).getBasicColumns()) {
             Type propertyType = getDAS().getType(column.getType());
-            JDBCProperty property = new JDBCProperty(column.getName(), column.getName(), propertyType, this, column.isNullable());
+            List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
+            columns.add(column);
+            JDBCProperty property = new JDBCProperty(column.getName(), columns, propertyType, this);
 
             shape.addProperty(property);
+        }
+
+        // For each foreign key add a relationship property
+        for(JDBCDAS.ForeignKey fkey: das.getTable(this.tableName).getForeignKeys()) {
+            Type propertyType = getDAS().getType(fkey.getReferencedTable().getName());
+            List<JDBCDAS.ColumnInfo> columns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
+            JDBCProperty property = new JDBCProperty(fkey.getPropertyName(), columns, propertyType, this);
+
+            shape.addProperty(property);
+        }
+    }
+
+    public void setOpposite(Shape shape) {
+        for(Property property: getProperties()) {
+            ((JDBCProperty)property).initMappedBy(shape);
         }
     }
 

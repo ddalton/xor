@@ -23,6 +23,8 @@ public interface DASFactory {
 	DataAccessService create();
 
 	void setAggregateManager(AggregateManager aggregateManager);
+
+	AggregateManager getAggregateManager();
 	
 	PersistenceOrchestrator getPersistenceOrchestrator(Object sessionContext);
 	

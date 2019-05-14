@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Uniquely identifies a persistent entity based on a surrogate key.
+ * Uniquely identifies a persistent entity based on one or more entity attributes.
  */
 public final class NaturalEntityKey extends AbstractEntityKey
 {

@@ -335,7 +335,7 @@ public class JPAProperty extends AbstractProperty {
 	}
 
 	@Override
-	public void initMappedBy(DataAccessService das) {
+	public void initMappedBy(Shape shape) {
 		String mappedBy = getMappedByName();
 
 		Type type = isMany() ? getElementType() : getType();

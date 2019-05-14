@@ -326,7 +326,7 @@ public class Shape
     }
 
     protected void setBiDirectionOnExternalType (ExternalType externalType) {
-        externalType.setOpposite(getDAS());
+        externalType.setOpposite(this);
     }
 
     protected void setSuperTypeOnExternalType (ExternalType externalType) {

@@ -57,6 +57,7 @@ import tools.xor.operation.AbstractOperation;
 import tools.xor.operation.DenormalizedModifyOperation;
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.MigrateOperation;
+import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.exim.CSVExportImport;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.service.exim.ExportImport;
@@ -109,6 +110,7 @@ public class AggregateManager implements Xor
 	private PersistenceType persistenceType;
 	private TypeNarrower typeNarrower;
 	private String viewsDirectory;
+	private ForeignKeyEnhancer foreignKeyEnhancer = new DefaultForeignKeyEnhancer();
 
 	// This is maintained per thread, because the persistence orchestrator holds
 	// the session that is thread specific
@@ -226,6 +228,14 @@ public class AggregateManager implements Xor
 	public void setAssociationStrategy (AssociationStrategy associationStrategy)
 	{
 		this.associationStrategy = associationStrategy;
+	}
+
+	public ForeignKeyEnhancer getForeignKeyEnhancer () {
+		return this.foreignKeyEnhancer;
+	}
+
+	public void setForeignKeyEnhancer (ForeignKeyEnhancer enhancer) {
+		this.foreignKeyEnhancer = enhancer;
 	}
 
 	public void setDetailStrategy (DetailStrategy detailStrategy)
@@ -1207,6 +1217,15 @@ public class AggregateManager implements Xor
 		}
 
 		return result;
+	}
+
+	public static class DefaultForeignKeyEnhancer implements ForeignKeyEnhancer
+	{
+
+		@Override public List<JDBCDAS.ForeignKey> process (List<JDBCDAS.ForeignKey> foreignKeys)
+		{
+			return foreignKeys;
+		}
 	}
 
 	public static class AggregateManagerBuilder

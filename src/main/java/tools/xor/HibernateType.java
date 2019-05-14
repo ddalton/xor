@@ -139,10 +139,9 @@ public class HibernateType extends AbstractType {
 		} 		
 	}
 
-	public void setOpposite() {
-		HibernateDAS dataAccessService = (HibernateDAS)getDAS();
+	public void setOpposite(Shape shape) {
 		for(Property property: getProperties()) {
-			((HibernateProperty)property).initMappedBy(dataAccessService);
+			((HibernateProperty)property).initMappedBy(shape);
 		}
 	}
 

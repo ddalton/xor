@@ -98,7 +98,7 @@ public abstract class JPADAS extends AbstractDataAccessService {
 		for(Type type: shape.getUniqueTypes()) {
 			if(JPAType.class.isAssignableFrom(type.getClass())) {
 				JPAType jPAType = (JPAType) type;
-				jPAType.setOpposite();
+				jPAType.setOpposite(shape);
 			}			
 		}		
 	}	

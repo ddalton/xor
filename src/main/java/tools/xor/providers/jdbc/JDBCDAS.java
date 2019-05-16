@@ -58,12 +58,12 @@ import java.util.Set;
  */
 public abstract class JDBCDAS extends AbstractDataAccessService
 {
-
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     public static class ColumnInfo {
         private String name;
-        private Class type;
+        private Class javaType;
+        private String dataType;
         private boolean nullable;
 
         public String getName() {
@@ -71,17 +71,22 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         }
 
         public Class getType() {
-            return this.type;
+            return this.javaType;
+        }
+
+        public String getDataType() {
+            return this.dataType;
         }
 
         public boolean isNullable() {
             return this.nullable;
         }
 
-        public ColumnInfo(String name, boolean nullable, Class type) {
+        public ColumnInfo(String name, boolean nullable, Class javaType, String dataType) {
             this.name = name;
             this.nullable = nullable;
-            this.type = type;
+            this.javaType = javaType;
+            this.dataType = dataType;
         }
     }
 
@@ -135,6 +140,16 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             return this.primaryKeys;
         }
 
+        public void initNoPrimaryKey() {
+            // All the fields comprise to form the primary key
+            List<String> keys = new LinkedList<>();
+            for(ColumnInfo ci: columns) {
+                keys.add(ci.getName());
+            }
+
+            this.primaryKeys = keys;
+        }
+
         public List<ColumnInfo> getBasicColumns() {
             Map<String, ColumnInfo> all = new HashMap<>();
             for(ColumnInfo ci: columns) {
@@ -142,8 +157,10 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             }
 
             Set<String> fkColumns = new HashSet<>();
-            for(ForeignKey fk: foreignKeys) {
-                fkColumns.addAll(fk.getReferencingColumns());
+            if(foreignKeys != null) {
+                for (ForeignKey fk : foreignKeys) {
+                    fkColumns.addAll(fk.getReferencingColumns());
+                }
             }
 
             Set<String> basicColumns = new HashSet(all.keySet());
@@ -238,6 +255,10 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             this.referencingColumns = columns;
         }
 
+        public List<String> getReferencedColumns() {
+            return this.referencedColumns;
+        }
+
         public void setReferencedColumns(List<String> columns) {
             this.referencedColumns = columns;
         }
@@ -300,12 +321,18 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
     public abstract DataSource getDataSource();
 
+    @Override
+    public Type getType(String name) {
+        // We ignore case
+        return getShape().getType(name.toUpperCase());
+    }
+
     @Override public void addShape (String name)
     {
         Shape shape = getOrCreateShape(name);
 
         for(TableInfo table: getTables()){
-            JDBCType dataType = new JDBCType(table.getName(), table.getName());
+            JDBCType dataType = new JDBCType(table.getName(), table);
             shape.addType(dataType.getName(), dataType);
         }
 

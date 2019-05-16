@@ -12,28 +12,40 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
 
 0. Testing enhancement - The below feature assists with testing various data models without 
      an explicit Java model hierarchy 
-   open types?? No JPA support. Just query DB using JDBC and create schema based on foreign keys and table names
-   Need to provide table name to entity name mapping and
-   Column name to property name mapping
-   No inheritance support
 
    Helps with testing - especially aliases
    and also expands scope of what it can support.
 
    Details
    =======
-   JDBC Persistence -
-   Collection update/add/delete
+1) JDBC Persistence -
+   the getId of JDBCPersistenceOrchestrator should refer to the original object passed by the user.
+   The original object is used to populate the persistent object cache. All original objects should have ids. Else it is an error.
+   if the id of a modified object cannot be found, it is considered as a transient object and will be created.
 
-   Querying -
+   Create
+   - Iterate through the BusinessObjects in the object creator
+   - If the object is a transient instance then it needs to be created.
+     NOTE: A transient instance might have a user provided id. If not, the id generator associated with its type needs to be used
+   - sort all the transient instances
+   - Create INSERT statements
+
+   Update/Delete
+   - JDBCObjectPersister takes the Action objects and creates the UPDATE and DELETE statements
+
+   Two ways of executing the above set of statements:
+   1. Batching using explicit SQL - addBatch(sql) dates are specified using CAST('str', datetime) etc... 
+         strings are validated and embedded apostrophe's are escaped accordingly, i.e., replace a single ' with ''
+   2. Batching using prepared statement
+
+   The advantage of #1 is that it reduces the number of round trips
+   The advantage of #2 is that it can more effectively use the SQL cache.
+
+2) Querying -
    Support querying using OQL
    Create JDBCProvider to convert OQL to SQL queries
 
-   extract Domain java object from JSON
-   call save on a java object - extract JSON from domain and persist using version column
-   Need to pass the original objects, so a snapshot can be taken and the original version identified.
-
-   3. A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
+3) A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
 
 
 

@@ -89,7 +89,7 @@ public class QueryField implements Comparable<QueryField>
         }
 
         JDBCProperty property = (JDBCProperty) fragment.getEntityType().getProperty(path);
-        String result = fragment.getAlias() + Settings.PATH_DELIMITER + property.getColumnName();
+        String result = property.getSelectList(fragment.getAlias());
 
         return result;
     }

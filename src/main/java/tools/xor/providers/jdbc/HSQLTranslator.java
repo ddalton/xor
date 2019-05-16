@@ -51,10 +51,6 @@ public class HSQLTranslator extends DBTranslator
 
     @Override public List<JDBCDAS.TableInfo> getTables (ForeignKeyEnhancer enhancer)
     {
-        if(tableMap != null) {
-            return new ArrayList<>(tableMap.values());
-        }
-
         Map<String, List<String>> primaryKeys = getPrimaryKeys();
 
         Map<String, JDBCDAS.TableInfo> result = new HashMap<>();
@@ -67,8 +63,7 @@ public class HSQLTranslator extends DBTranslator
                 if(table != null) {
                     // check if we need to reset
                     if(!table.getName().equals(rs.getString(1))) {
-                        table.setColumns(columns);
-                        result.put(table.getName(), table);
+                        addTable(result, columns, table, primaryKeys.get(table.getName()));
 
                         table = null;
                         columns = new LinkedList<>();
@@ -77,7 +72,6 @@ public class HSQLTranslator extends DBTranslator
 
                 if(table == null) {
                     table = new JDBCDAS.TableInfo(rs.getString(1));
-                    table.setPrimaryKeys(primaryKeys.get(table.getName()));
                 }
 
                 String columnName = rs.getString(2);
@@ -89,12 +83,11 @@ public class HSQLTranslator extends DBTranslator
                 if(!SQL_TO_JAVA_TYPE_MAP.containsKey(columnType)) {
                     throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
                 }
-                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType));
+                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType), columnType);
                 columns.add(ci);
             }
             if(table != null) {
-                table.setColumns(columns);
-                result.put(table.getName(), table);
+                addTable(result, columns, table, primaryKeys.get(table.getName()));
             }
         }
         catch (Exception e) {
@@ -127,6 +120,21 @@ public class HSQLTranslator extends DBTranslator
         tableMap = result;
 
         return tables;
+    }
+
+    private void addTable(Map<String, JDBCDAS.TableInfo> tables,
+                          List<JDBCDAS.ColumnInfo> columns,
+                          JDBCDAS.TableInfo table,
+                          List<String> primaryKeys) {
+        table.setColumns(columns);
+        tables.put(table.getName(), table);
+
+        if(primaryKeys != null) {
+            table.setPrimaryKeys(primaryKeys);
+        } else {
+            // all the fields of the table become the primary key
+            table.initNoPrimaryKey();
+        }
     }
 
     private void printResult(String sql) {

@@ -19,6 +19,7 @@
 
 package tools.xor.logic;
 
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,9 +27,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -72,6 +75,8 @@ public class PlainJDBCTest
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
 			statement.executeUpdate("DROP TABLE librarian");
 			connection.commit();
+			statement.executeUpdate("DROP TABLE library");
+			connection.commit();
 		}
 	}
 
@@ -92,5 +97,29 @@ public class PlainJDBCTest
 
 		List list = (List) result;
 		assert(list.size() == 2);
+	}
+
+	@Test
+	public void selectView() {
+		DataAccessService das = am.getDAS();
+		das.addShape("_DEFAULT_");
+		Shape shape = das.getShape();
+
+		// create library
+		JSONObject json = new JSONObject();
+		json.put("ID", "L101");
+		json.put("NAME", "Natural History Museum");
+
+		Settings settings = new Settings();
+		JDBCType type = (JDBCType) das.getType("library");
+		settings.setEntityType(type);
+		settings.init(shape);
+		Object obj = am.create(json, settings);
+
+		assert(obj != null);
+
+		Object jsonObject = am.read(obj, settings);
+		json = (JSONObject) jsonObject;
+		System.out.println("JSON string: " + json.toString());
 	}
 }

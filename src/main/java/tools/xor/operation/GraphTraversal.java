@@ -365,7 +365,7 @@ public abstract class GraphTraversal extends AbstractOperation {
 
 			// Add edge to any open property objects
 			// Collection edges are handled later using the build method
-			BusinessObject invokee = (BusinessObject)ci.getParentOutputEntity();
+			BusinessObject invokee = ci.getParentOutputEntity();
 			if(invokee != null && invokee.getObjectCreator().getObjectGraph() != null && ci.getStage() == ProcessingStage.UPDATE) {
 				BusinessObject value = (BusinessObject) ci.getOutput();
 				BusinessEdge<BusinessObject> edge = new BusinessEdge<BusinessObject>(invokee, value, ci.getOutputProperty());

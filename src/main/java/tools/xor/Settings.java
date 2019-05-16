@@ -59,6 +59,7 @@ import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
@@ -164,8 +165,6 @@ public class Settings {
 
 	private boolean narrow; // Request the query operation to narrow the object to the appropriate type. This can have a performance impact
 
-	private boolean crossAggregate; // Flag to allow an operation to cross aggregate boundaries. Relevant when a view is used.
-
 	private AssociationStrategy associationStrategy;
 	
 	private DetailStrategy detailStrategy;
@@ -178,7 +177,6 @@ public class Settings {
 	private Class<?> narrowedClass;
 	
 	private List<String> tags = new ArrayList<String>();
-	private Map<String, Object> context = new HashMap<String, Object>(); // used by clients to pass data to the logic methods
 	
 	// Paging related attributes
 	private Integer limit;
@@ -247,6 +245,10 @@ public class Settings {
 	public void setPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
 	{
 		this.persistenceOrchestrator = persistenceOrchestrator;
+
+		if(this.persistenceOrchestrator instanceof JDBCPersistenceOrchestrator) {
+			setSessionContext(new JDBCSessionContext());
+		}
 	}
 
 	public boolean isShouldCreate(Class<?> clazz) {
@@ -345,14 +347,6 @@ public class Settings {
 
 	public List<String> getTags() {
 		return this.tags;
-	}
-	
-	public void addContext(String key, Object value){
-		context.put(key, value);
-	}
-	
-	public Object getContext(String key) {
-		return context.get(key);
 	}
 
 	public Class<?> getNarrowedClass() {

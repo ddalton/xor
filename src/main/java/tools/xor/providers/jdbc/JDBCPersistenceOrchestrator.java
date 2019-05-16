@@ -2,13 +2,18 @@ package tools.xor.providers.jdbc;
 
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import tools.xor.BusinessObject;
+import tools.xor.CallInfo;
+import tools.xor.EntityKey;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.NaturalEntityKey;
+import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.TypeMapper;
 import tools.xor.service.AbstractPersistenceOrchestrator;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
-import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryTreeInvocation;
@@ -16,10 +21,13 @@ import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 
 import javax.sql.DataSource;
+import java.io.Serializable;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +36,7 @@ public class JDBCPersistenceOrchestrator
 	extends AbstractPersistenceOrchestrator
 {
 	private DataSource dataSource;
+	private JDBCSessionContext context;
 
 	public DataSource getDataSource ()
 	{
@@ -40,23 +49,37 @@ public class JDBCPersistenceOrchestrator
 	}
 
 	public JDBCPersistenceOrchestrator() {
-
 	}
 
 	public JDBCPersistenceOrchestrator(Object sessionContext, Object data) {
-
+		this.context = (JDBCSessionContext) sessionContext;
 	}
 
+	public Connection getConnection() {
+		if(context != null) {
+			if (context.getConnection() == null) {
+				context.setConnection(DataSourceUtils.getConnection(dataSource));
+			}
+			return context.getConnection();
+		} else {
+			return DataSourceUtils.getConnection(dataSource);
+		}
+	}
+
+	/**
+	 * No-op for JDBC.
+	 * @see tools.xor.providers.jdbc.JDBCSessionContext#persistGraph(tools.xor.util.ObjectCreator, tools.xor.Settings)
+	 * @param entity to save
+	 */
 	@Override
 	public void saveOrUpdate(Object entity) {
 
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
 	}
 
 	@Override protected void createStatement (StoredProcedure sp)
 	{
 		try {
-			Connection connection = DataSourceUtils.getConnection(dataSource);
+			Connection connection = getConnection();
 			if (sp.isImplicit()) {
 				sp.setStatement(connection.createStatement());
 			}
@@ -71,27 +94,32 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public void clear() {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		context.clear();
 	}
 
 	@Override
 	public void clear(Set<Object> ids) {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
 	}
 	
 	@Override 
 	public void refresh(Object object) {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
 	}
 
+	/**
+	 * No-op for JDBC.
+	 * @see tools.xor.providers.jdbc.JDBCSessionContext#deleteGraph(tools.xor.util.ObjectCreator, tools.xor.Settings)
+	 * @param entity to delete
+	 */
 	@Override
 	public void delete(Object entity) {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+
 	}
 
 	@Override
 	public void flush() {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		context.flush();
 	}
 
 	@Override
@@ -106,40 +134,112 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	protected boolean isTransient(BusinessObject from) {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		// If the object cannot be found in the JDBCSessionContext, then it is considered transient
+		if(getEntity(from) == null) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public Object getPersistentObject(CallInfo callInfo, TypeMapper typeMapper) {
+		// The persistent object is the original object if any
+		// get it from the JDBCSessionContext
+
+		BusinessObject from = (BusinessObject) callInfo.getInput();
+		return getEntity(from);
+	}
+
+	public Object getEntity(BusinessObject bo) {
+		Object persistentObject = null;
+
+		if(!EntityType.class.isAssignableFrom(bo.getType().getClass())) {
+			return null;
+		}
+
+		EntityType type = (EntityType) bo.getType();
+		ExtendedProperty identifierProperty = (ExtendedProperty) type.getIdentifierProperty();
+		if(identifierProperty != null) {
+			Serializable id = (Serializable)identifierProperty.getValue(bo);
+			if (id != null && !"".equals(id)) {
+				persistentObject = findById(type, id);
+			}
+		} else {
+			// Use the natural key
+			Map<String, Object> naturalKey = new HashMap<>();
+			if(type.getNaturalKey() != null) {
+				for(String key: type.getExpandedNaturalKey()) {
+					Property property = type.getProperty(key);
+					Object value = ((ExtendedProperty)property).getValue(bo);
+					naturalKey.put(property.getName(), value);
+				}
+				NaturalEntityKey nek = new NaturalEntityKey(naturalKey, type.getName());
+				persistentObject = findById(type, nek);
+			} else {
+				throw new RuntimeException("Type " + type.getName() + " does not have a natural key");
+			}
+		}
+
+		return persistentObject;
 	}
 
 	@Override
 	public Object findById(Class<?> persistentClass, Object id) {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		throw new UnsupportedOperationException("Use findById with type argument instead.");
+	}
+
+	@Override
+	public Object findById(Type type, Object id) {
+		// The object with the given id is obtained from the JDBCSessionContext
+		// primary key is always represented using the natural key
+
+		EntityKey ek;
+		if(!(id instanceof EntityKey)) {
+			EntityType entityType = (EntityType) type;
+			ExtendedProperty identifierProperty = (ExtendedProperty) entityType.getIdentifierProperty();
+			Map<String, Object> key = new HashMap<>();
+			key.put(identifierProperty.getName(), id);
+			ek = new NaturalEntityKey(key, type.getName());
+		} else {
+			ek = (EntityKey) id;
+		}
+
+		return context.getEntity(ek);
 	}
 
 	@Override public List<Object> findByIds (EntityType entityType, Collection ids)
 	{
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		List<Object> result = new LinkedList<>();
+
+		for(Object id: ids) {
+			result.add(findById(entityType, id));
+		}
+
+		return result;
 	}
 	
 	@Override
 	public Object findByProperty(Type type, Map<String, Object> propertyValues) {
-
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		// TODO
+		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
 	}
 
 	@Override public Object getCollection (Type type, Map<String, Object> collectionOwnerKey)
 	{
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
 	}
 
 	@Override
 	public QueryCapability getQueryCapability() {
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
 	}
 
 
 	@Override
 	public Object getCached(Class<?> persistentClass, Object id)
 	{
-		throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
 	}
 
 	@Override public Query getQuery (String queryString, QueryType queryType, Object queryInput, Settings settings)
@@ -150,7 +250,7 @@ public class JDBCPersistenceOrchestrator
 		case SQL:
 			Connection connection = null;
 			if (!Query.isDeferred(queryString)) {
-				connection = DataSourceUtils.getConnection(dataSource);
+				connection = getConnection();
 			}
 			result = new JDBCQuery(queryString, connection, (NativeQuery) queryInput);
 			break;
@@ -175,7 +275,7 @@ public class JDBCPersistenceOrchestrator
 		if(query instanceof JDBCQuery && Query.isDeferred(query.getQueryString())) {
 			String queryString = qti.getResolvedQuery(query);
 			if (queryType == QueryType.SQL) {
-				((JDBCQuery)query).setProviderQuery(queryString, DataSourceUtils.getConnection(dataSource));
+				((JDBCQuery)query).setProviderQuery(queryString, getConnection());
 			}
 		}
 	}
@@ -194,7 +294,7 @@ public class JDBCPersistenceOrchestrator
 	@Override public Blob createBlob ()
 	{
 		try {
-			return DataSourceUtils.getConnection(dataSource).createBlob();
+			return getConnection().createBlob();
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

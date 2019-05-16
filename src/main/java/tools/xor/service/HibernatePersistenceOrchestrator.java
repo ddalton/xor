@@ -199,6 +199,11 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	}
 
 	@Override
+	public Object findById(Type type, Object id) {
+		return findById(type.getInstanceClass(), id);
+	}
+
+	@Override
 	public List<Object> findByIds(EntityType entityType, final Collection ids) {
 		org.hibernate.Query query = getSession().createQuery(
 			"SELECT e FROM " + entityType.getName() + " e WHERE e.id in :ids");

@@ -21,6 +21,7 @@ package tools.xor;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.Shape;
 
@@ -37,14 +38,14 @@ public class JDBCType extends AbstractType {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private String name;
-    private String tableName;
+    private JDBCDAS.TableInfo tableInfo;
     private Property id;
 
-    public JDBCType(String name, String tableName) {
+    public JDBCType(String name, JDBCDAS.TableInfo tableInfo) {
         super();
 
         this.name = name;
-        this.tableName = tableName;
+        this.tableInfo = tableInfo;
     }
 
     @Override
@@ -53,7 +54,7 @@ public class JDBCType extends AbstractType {
     }
 
     public String getTableName() {
-        return this.tableName;
+        return this.tableInfo.getName();
     }
 
     public void defineProperties (Shape shape)
@@ -65,7 +66,7 @@ public class JDBCType extends AbstractType {
 
         JDBCDAS das = (JDBCDAS)getDAS();
         // Key is column name and value is java type
-        for(JDBCDAS.ColumnInfo column: das.getTable(this.tableName).getBasicColumns()) {
+        for(JDBCDAS.ColumnInfo column: das.getTable(getTableName()).getBasicColumns()) {
             Type propertyType = getDAS().getType(column.getType());
             List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
             columns.add(column);
@@ -75,12 +76,30 @@ public class JDBCType extends AbstractType {
         }
 
         // For each foreign key add a relationship property
-        for(JDBCDAS.ForeignKey fkey: das.getTable(this.tableName).getForeignKeys()) {
-            Type propertyType = getDAS().getType(fkey.getReferencedTable().getName());
-            List<JDBCDAS.ColumnInfo> columns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
-            JDBCProperty property = new JDBCProperty(fkey.getPropertyName(), columns, propertyType, this);
+        List<JDBCDAS.ForeignKey> fkeys = das.getTable(getTableName()).getForeignKeys();
+        if(fkeys != null) {
+            for (JDBCDAS.ForeignKey fkey : fkeys) {
+                Type propertyType = getDAS().getType(fkey.getReferencedTable().getName());
+                List<JDBCDAS.ColumnInfo> columns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
+                JDBCProperty property = new JDBCProperty(
+                    fkey.getPropertyName(),
+                    columns,
+                    propertyType,
+                    this);
 
-            shape.addProperty(property);
+                shape.addProperty(property);
+            }
+        }
+
+
+        if(this.tableInfo.getPrimaryKeys() != null) {
+            if(this.tableInfo.getPrimaryKeys().size() == 1) {
+                String propertyName = this.tableInfo.getPrimaryKeys().get(0);
+                this.id = getProperty(propertyName);
+            } else {
+                String[] keys = this.tableInfo.getPrimaryKeys().stream().toArray(String[]::new);
+                setNaturalKey(keys);
+            }
         }
     }
 
@@ -107,7 +126,7 @@ public class JDBCType extends AbstractType {
 
     @Override
     public Class<?> getInstanceClass() {
-        return Map.class;
+        return JSONObject.class;
     }
 
     @Override
@@ -166,10 +185,6 @@ public class JDBCType extends AbstractType {
     @Override
     public AccessType getAccessType() {
         throw new UnsupportedOperationException("JDBC type does not define an access mechanism");
-    }
-
-    public void setIdentifierProperty(Property property) {
-        this.id = property;
     }
 
     @Override

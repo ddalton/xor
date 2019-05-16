@@ -52,6 +52,8 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
+import tools.xor.providers.jdbc.CustomPersister;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.graph.ObjectGraph;
@@ -147,6 +149,11 @@ public class ObjectCreator {
 	}		
 	
 	public Type getType(Class<?> inputClass, Type domainType) {
+		// We have the same type for JDBC
+		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+			return domainType;
+		}
+
 		inputClass = ClassUtil.getUnEnhanced(inputClass);
 		if(typeMapper.isDomain(inputClass)) {
 			return das.getType(inputClass);
@@ -818,11 +825,19 @@ public class ObjectCreator {
 	}
 	
 	public void persistGraph(Settings settings) {
-		objectGraph.persistGraph(this, settings);
+		if(settings.getSessionContext() instanceof CustomPersister) {
+			((CustomPersister)settings.getSessionContext()).persistGraph(this, settings);
+		} else {
+			objectGraph.persistGraph(this, settings);
+		}
 	}
 
 	public void deleteGraph(Settings settings) {
-		objectGraph.deleteGraph(this, settings);
+		if(settings.getSessionContext() instanceof CustomPersister) {
+			((CustomPersister)settings.getSessionContext()).deleteGraph(this, settings);
+		} else {
+			objectGraph.deleteGraph(this, settings);
+		}
 	}
 
 	public static class CreateInstanceTracker implements Detector

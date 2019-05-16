@@ -19,13 +19,29 @@
 
 package tools.xor.providers.jdbc;
 
+import org.json.JSONObject;
+import tools.xor.BasicType;
+import tools.xor.BusinessObject;
+import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.JDBCProperty;
+import tools.xor.JDBCType;
+import tools.xor.MutableJsonProperty;
+import tools.xor.Property;
+import tools.xor.Settings;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.graph.StateGraph;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,6 +77,7 @@ public abstract class DBTranslator
     }
 
     protected static final Map<String, Class> SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
+    protected static final Map<String, JDBCtoSQLConverter> convertersByDataType = new ConcurrentHashMap<>();
 
     static {
         SQL_TO_JAVA_TYPE_MAP.put("CHAR", java.lang.String.class);
@@ -86,6 +103,216 @@ public abstract class DBTranslator
         SQL_TO_JAVA_TYPE_MAP.put("CLOB", java.sql.Clob.class);
     }
 
+    public interface JDBCtoSQLConverter {
+        public String toSQLLiteral (Object value);
+    }
+
+    static {
+
+        JDBCtoSQLConverter charConverter = new JDBCtoSQLConverter()
+        {
+            @Override public String toSQLLiteral (Object value)
+            {
+                if(value == null) return "NULL";
+                return "'" + value.toString().replace("'", "''") + "'";
+            }
+        };
+        convertersByDataType.put("CHAR", charConverter);
+        convertersByDataType.put("VARCHAR", charConverter);
+        convertersByDataType.put("LONGVARCHAR", charConverter);
+        convertersByDataType.put("CLOB", charConverter);
+
+        JDBCtoSQLConverter bigDecimalConverter = new JDBCtoSQLConverter()
+        {
+            @Override public String toSQLLiteral (Object value)
+            {
+                if(value == null) return "NULL";
+                if(value instanceof String) {
+                    return (String) value;
+                } else if(value instanceof BigDecimal) {
+                    return value.toString();
+                } else {
+                    throw new RuntimeException("Unsupported value type for BigDecimal converter");
+                }
+            }
+        };
+        convertersByDataType.put("NUMERIC", bigDecimalConverter);
+        convertersByDataType.put("DECIMAL", bigDecimalConverter);
+
+        JDBCtoSQLConverter booleanConverter = new JDBCtoSQLConverter()
+        {
+            @Override public String toSQLLiteral (Object value)
+            {
+                if(value == null) return "NULL";
+                if(value instanceof String) {
+                    return (String) value;
+                } else if(value instanceof Boolean) {
+                    return value.toString();
+                } else {
+                    throw new RuntimeException("Unsupported value type for boolean converter");
+                }
+            }
+        };
+        convertersByDataType.put("BIT", booleanConverter);
+        convertersByDataType.put("BOOLEAN", booleanConverter);
+
+        convertersByDataType.put(
+            "TINYINT", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof String) {
+                        return (String) value;
+                    } else if(value instanceof Byte || value instanceof Number) {
+                        return value.toString();
+                    } else {
+                        throw new RuntimeException("Unsupported value type for TINYINT converter");
+                    }
+                }
+            });
+
+        JDBCtoSQLConverter integerConverter = new JDBCtoSQLConverter()
+        {
+            @Override public String toSQLLiteral (Object value)
+            {
+                if(value == null) return "NULL";
+                if(value instanceof String) {
+                    return (String) value;
+                } else if(value instanceof Integer || value instanceof Number) {
+                    return value.toString();
+                } else {
+                    throw new RuntimeException("Unsupported value type for Integer converter");
+                }
+            }
+        };
+        convertersByDataType.put("SMALLINT", integerConverter);
+        convertersByDataType.put("INTEGER", integerConverter);
+
+        convertersByDataType.put(
+            "BIGINT", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof String) {
+                        return (String) value;
+                    } else if (value instanceof Long || value instanceof Number) {
+                        return value.toString();
+                    } else {
+                        throw new RuntimeException("Unsupported value type for BIGINT converter");
+                    }
+                }
+            });
+
+        convertersByDataType.put(
+            "REAL", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof String) {
+                        return (String) value;
+                    } else if(value instanceof Float || value instanceof Number) {
+                        return value.toString();
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Float converter");
+                    }
+                }
+            });
+
+        convertersByDataType.put(
+            "DOUBLE", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof String) {
+                        return (String) value;
+                    } else if(value instanceof Double || value instanceof Number) {
+                        return value.toString();
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Double converter");
+                    }
+                }
+            });
+
+        // Convert to string -> byte array -> hex
+        JDBCtoSQLConverter binaryConverter = new JDBCtoSQLConverter()
+        {
+            @Override public String toSQLLiteral (Object value)
+            {
+                if(value == null) return "NULL";
+                if(value instanceof String) {
+                    value = ((String)value).getBytes();
+                }
+                if(value instanceof byte[]) {
+                    return String.format("%x", (byte[])value);
+                } else {
+                    throw new RuntimeException("Unsupported value type for binary converter");
+                }
+            }
+        };
+        convertersByDataType.put("BINARY", binaryConverter);
+        convertersByDataType.put("VARBINARY", binaryConverter);
+        convertersByDataType.put("LONGVARBINARY", binaryConverter);
+        convertersByDataType.put("BLOB", binaryConverter);
+
+        convertersByDataType.put(
+            "DATE", new JDBCtoSQLConverter()
+            {
+                DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT_DATE);
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return "CAST (df.format(value) AS date)";
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Date converter");
+                    }
+                }
+            });
+
+        convertersByDataType.put(
+            "TIME", new JDBCtoSQLConverter()
+            {
+                DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT_TIME);
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return "CAST (df.format(value) AS time)";
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Time converter");
+                    }
+                }
+            });
+
+        convertersByDataType.put(
+            "TIMESTAMP", new JDBCtoSQLConverter()
+            {
+                DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT);
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return "CAST (df.format(value) AS datetime)";
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Timestamp converter");
+                    }
+                }
+            });
+    }
+
+    /**
+     * Can be overridden as necessary
+     * @param dataType for which the appropriate converter is to be found
+     * @return converter
+     */
+    protected JDBCtoSQLConverter getConverter(String dataType) {
+        return convertersByDataType.get(dataType);
+    }
+
     public static DBTranslator instance(Connection conn) {
         DBTranslator result;
         try {
@@ -105,6 +332,77 @@ public abstract class DBTranslator
         }
 
         return result;
+    }
+
+    public String getInsertSql(Settings settings, BusinessObject bo) {
+        StringBuilder result = new StringBuilder();
+
+        JSONObject json = (JSONObject)bo.getInstance();
+
+        // Check if the identifier column has been populated
+        JDBCType entityType = (JDBCType)bo.getType();
+        ExtendedProperty identifierProperty = (ExtendedProperty) entityType.getIdentifierProperty();
+        if(identifierProperty != null) {
+            Serializable id = (Serializable)identifierProperty.getValue(bo);
+            if(id == null || "".equals(id.toString())) {
+                Object value = ((BasicType)identifierProperty.getType()).generate(
+                    settings,
+                    identifierProperty,
+                    null,
+                    null,
+                    null);
+                bo.set(identifierProperty, value);
+            }
+        }
+
+        StringBuilder sqlstr = new StringBuilder();
+        sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
+
+        // iterate through the properties
+        List<String> columnNames = new LinkedList<>();
+        for(Property p: entityType.getProperties()) {
+            // simple type
+            if(p.getType().isDataType() && !p.isMany()) {
+                columnNames.add(((JDBCProperty)p).getColumns().get(0).getName());
+            }
+
+            // foreign keys
+            if(!p.getType().isDataType()) {
+                JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
+                if(fkey == null) {
+                    throw new RuntimeException("A TO_ONE relationship should have a foreign key");
+                }
+                // get the referencing columns
+                columnNames.addAll(fkey.getReferencingColumns());
+            }
+        }
+        sqlstr.append(String.join(",", columnNames))
+            .append(") VALUES (");
+
+        // get the values
+        List<String> values = new LinkedList<>();
+        for(Property p: entityType.getProperties()) {
+            // simple type
+            if(p.getType().isDataType() && !p.isMany()) {
+                JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
+                values.add(getConverter(col.getDataType()).toSQLLiteral(bo.get(col.getName())));
+            }
+
+            // foreign keys
+            if(!p.getType().isDataType()) {
+                List<String> keys = ((EntityType)p.getType()).getExpandedNaturalKey();
+                JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
+                List<JDBCDAS.ColumnInfo> referencingColumns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
+                for (int i = 0; i < keys.size(); i++) {
+                    String dataType = referencingColumns.get(i).getDataType();
+                    values.add(getConverter(dataType).toSQLLiteral(bo.get(keys.get(i))));
+                }
+            }
+        }
+        sqlstr.append(String.join(",", values))
+            .append(")");
+
+        return sqlstr.toString();
     }
 
     public abstract JDBCDAS.TableInfo getTable(ForeignKeyEnhancer enhancer, String tableName);

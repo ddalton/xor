@@ -185,7 +185,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 				if( ((EntityType)property.getType()).getIdentifierProperty().getName().equals(entry.getValue()) ) {
 					// The value in the source object referenced by the key property 
 					// is the id value of the target object
-					return findById(property.getType().getInstanceClass(), source.get(entry.getKey()));
+					return findById(property.getType(), source.get(entry.getKey()));
 				}
 			} else {
 				// For all other cases we query the DB

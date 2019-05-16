@@ -134,6 +134,11 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 	}
 
 	@Override
+	public Object findById(Type type, Object id) {
+		return findById(type.getInstanceClass(), id);
+	}
+
+	@Override
 	public List<Object> findByIds(EntityType entityType, final Collection ids) {
 		javax.persistence.Query query = getEntityManager().createQuery(
 			"SELECT e FROM " + entityType.getName() + " e WHERE e.id in :ids");

@@ -19,6 +19,7 @@
 
 package tools.xor.util;
 
+import tools.xor.JDBCProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
@@ -44,13 +45,27 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
     public String getJoinClause(PersistenceOrchestrator po) {
         String className = getEnd().getEntityType().getEntityName();
 
-        // If the join edge represents an open content, that means that relationship is
-        // not captured by the ORM and the join condition has to be explicitly
-        // specified in the WHERE clause of the OQL
-        if(property.isOpenContent()) {
-            return QueryBuilder.COMMA_DELIMITER + className + QueryBuilder.AS_CLAUSE + getEnd().getAlias();
+        if(Settings.doSQL(po)) {
+            StringBuilder join = new StringBuilder();
+            join.append(" LEFT OUTER JOIN ")
+                .append(getNormalizedName())
+                .append(" AS ")
+                .append(getEnd().getAlias())
+                .append(" ON (")
+                .append(((JDBCProperty)property).getOnClause(getStart().getAlias(), getEnd().getAlias()))
+                .append(")");
+            return join.toString();
         } else {
-            return po.getOQLJoinFragment((IntraQuery<QueryFragment>)this);
+            // If the join edge represents an open content, that means that relationship is
+            // not captured by the ORM and the join condition has to be explicitly
+            // specified in the WHERE clause of the OQL
+            if (property.isOpenContent()) {
+                return QueryBuilder.COMMA_DELIMITER + className + QueryBuilder.AS_CLAUSE
+                    + getEnd().getAlias();
+            }
+            else {
+                return po.getOQLJoinFragment((IntraQuery<QueryFragment>)this);
+            }
         }
     }
 

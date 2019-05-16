@@ -362,7 +362,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		return dataObject;
 	}
 	
-	class StateComparator implements Comparator<V> {
+	public static class StateComparator<V extends BusinessObject> implements Comparator<V> {
 		TypeGraph<State, Edge<State>> sg;
 		private boolean areTypesOrdered;
 		

@@ -57,6 +57,7 @@ import tools.xor.operation.AbstractOperation;
 import tools.xor.operation.DenormalizedModifyOperation;
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.MigrateOperation;
+import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.exim.CSVExportImport;
 import tools.xor.service.exim.ExcelExportImport;
@@ -385,6 +386,10 @@ public class AggregateManager implements Xor
 
 		checkPO(settings);
 
+		if(settings.getSessionContext() instanceof CustomPersister) {
+			((CustomPersister)settings.getSessionContext()).process((JSONObject) inputObject, (EntityType) settings.getEntityType());
+		}
+
 		if (settings.getAssociationStrategy() == null) {
 			settings.setAssociationStrategy(associationStrategy);
 		}
@@ -449,8 +454,9 @@ public class AggregateManager implements Xor
 			}
 		}
 
-		if (settings.doPreClear())
+		if (settings.doPreClear()) {
 			getPersistenceOrchestrator().clear();
+		}
 	}
 
 	private String getStackTrace (int numStackElements)

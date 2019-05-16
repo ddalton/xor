@@ -55,6 +55,14 @@ public interface PersistenceOrchestrator {
 	public Object findById(Class<?> persistentClass, Object id);
 
     /**
+     * Find the entity by its primary key
+     * @param type of the entity
+     * @param id of the entity
+     * @return Persistence managed object
+     */
+    public Object findById(Type type, Object id);
+
+    /**
      * Batch fetch a list of ids from the database.
      * Main use case is to initialize a collection of object references.
      * @see tools.xor.ExtendedProperty#isCollectionOfReferences()

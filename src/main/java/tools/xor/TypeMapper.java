@@ -51,13 +51,13 @@ public interface TypeMapper {
 	 * @param bo BusinessObject
 	 * @return the domain java class
 	 */
-	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);	
-	
+	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);
+
 	/**
-	 * This is a more flexible form of getting the 
+	 * This is a more flexible form of getting the
 	 * external form of the class and allows a particalar
 	 * type implementation to store more information on the external type
-	 * 
+	 *
 	 * @param  type external
 	 * @return the domain java class
 	 */

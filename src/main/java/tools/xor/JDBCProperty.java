@@ -22,6 +22,7 @@ package tools.xor;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.view.QueryBuilder;
 
 import java.util.List;
 
@@ -95,19 +96,49 @@ public class JDBCProperty extends AbstractProperty
         return this.name;
     }
 
-    public String getColumnName ()
-    {
-        if(this.columns.size() > 1) {
-            throw new UnsupportedOperationException("Currently a property containing multiple columns is not supported");
+    public String getSelectList(String alias) {
+        StringBuilder selectList = new StringBuilder();
+        for(JDBCDAS.ColumnInfo ci: this.columns) {
+            if(selectList.length() > 0) {
+                selectList.append(QueryBuilder.COMMA_DELIMITER);
+            }
+            selectList.append(alias + Settings.PATH_DELIMITER + ci.getName());
         }
 
-        // If this is a TO_MANY property then columnName is the alias of the MANY side
-        // this will be checked and added by the builder
-        if(!isMany()) {
-            return columns.get(0).getName();
-        } else {
-            throw new IllegalStateException("The MANY side of a TO_MANY relationship is an entity and not mapped to a column");
+        return selectList.toString();
+    }
+
+    public String getOnClause(String leftAlias, String rightAlias) {
+        // Get the foreign key and the direction, so the aliases are applied on
+        // the correct side
+        // i.e., if the property has a foreign key then the referencing table is leftAlias
+        // and referenced table is rightAlias and vice verse for the inverse
+
+        JDBCDAS.ForeignKey fk = this.foreignKey;
+        boolean inverse = false;
+        if(fk == null) {
+            if(getMappedBy() != null) {
+                fk = ((JDBCProperty)getMappedBy()).getForeignKey();
+                inverse = true;
+            } else {
+                throw new RuntimeException("Unable to find foreign key for relationship");
+            }
         }
+
+        List<String> leftColumns = !inverse ? fk.getReferencingColumns() : fk.getReferencedColumns();
+        List<String> rightColumns = !inverse ? fk.getReferencedColumns() : fk.getReferencingColumns();
+
+        StringBuilder builder = new StringBuilder();
+        for(int i = 0; i < leftColumns.size(); i++) {
+            if(builder.length() > 0) {
+                builder.append(" AND ");
+            }
+            builder.append(leftAlias + Settings.PATH_DELIMITER + leftColumns.get(i))
+                .append(" = ")
+                .append(rightAlias + Settings.PATH_DELIMITER + rightColumns.get(i));
+        }
+
+        return builder.toString();
     }
 
     @Override
@@ -126,6 +157,10 @@ public class JDBCProperty extends AbstractProperty
     @Override public boolean isContainment ()
     {
         return foreignKey != null && foreignKey.isContainment();
+    }
+
+    public List<JDBCDAS.ColumnInfo> getColumns() {
+        return this.columns;
     }
 
     @Override public void init (Shape shape)
@@ -150,6 +185,10 @@ public class JDBCProperty extends AbstractProperty
 
             inverse.setMappedBy(this, this.getName());
         }
+    }
+
+    public JDBCDAS.ForeignKey getForeignKey() {
+        return this.foreignKey;
     }
 
     @Override public boolean isNullable ()

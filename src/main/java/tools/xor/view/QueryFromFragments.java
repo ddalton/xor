@@ -95,7 +95,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
                 OQL.append(QueryBuilder.COMMA_DELIMITER);
             }
             OQL.append(
-                settings.doSQL(po) ?
+                Settings.doSQL(po) ?
                     field.getSQL() :
                     field.getOQL(po.getQueryCapability()));
         }

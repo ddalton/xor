@@ -26,6 +26,7 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
+import tools.xor.JSONObjectProperty;
 import tools.xor.MutableJsonProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -261,7 +262,7 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "DATE", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT_DATE);
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
                 @Override public String toSQLLiteral (Object value)
                 {
                     if(value == null) return "NULL";
@@ -276,7 +277,7 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "TIME", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT_TIME);
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
                 @Override public String toSQLLiteral (Object value)
                 {
                     if(value == null) return "NULL";
@@ -291,7 +292,7 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "TIMESTAMP", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT);
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT);
                 @Override public String toSQLLiteral (Object value)
                 {
                     if(value == null) return "NULL";
@@ -335,14 +336,13 @@ public abstract class DBTranslator
     }
 
     public String getInsertSql(Settings settings, BusinessObject bo) {
-        StringBuilder result = new StringBuilder();
 
-        JSONObject json = (JSONObject)bo.getInstance();
+        StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(null, settings, null);
 
         // Check if the identifier column has been populated
         JDBCType entityType = (JDBCType)bo.getType();
         ExtendedProperty identifierProperty = (ExtendedProperty) entityType.getIdentifierProperty();
-        if(identifierProperty != null) {
+        if(identifierProperty != null && !identifierProperty.isGenerated()) {
             Serializable id = (Serializable)identifierProperty.getValue(bo);
             if(id == null || "".equals(id.toString())) {
                 Object value = ((BasicType)identifierProperty.getType()).generate(
@@ -350,7 +350,7 @@ public abstract class DBTranslator
                     identifierProperty,
                     null,
                     null,
-                    null);
+                    visitor);
                 bo.set(identifierProperty, value);
             }
         }
@@ -361,6 +361,10 @@ public abstract class DBTranslator
         // iterate through the properties
         List<String> columnNames = new LinkedList<>();
         for(Property p: entityType.getProperties()) {
+            if(((ExtendedProperty)p).isGenerated()) {
+                continue;
+            }
+
             // simple type
             if(p.getType().isDataType() && !p.isMany()) {
                 columnNames.add(((JDBCProperty)p).getColumns().get(0).getName());
@@ -382,6 +386,10 @@ public abstract class DBTranslator
         // get the values
         List<String> values = new LinkedList<>();
         for(Property p: entityType.getProperties()) {
+            if(((ExtendedProperty)p).isGenerated()) {
+                continue;
+            }
+
             // simple type
             if(p.getType().isDataType() && !p.isMany()) {
                 JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
@@ -410,4 +418,8 @@ public abstract class DBTranslator
     public abstract List<JDBCDAS.TableInfo> getTables(ForeignKeyEnhancer enhancer);
 
     public abstract Map<String, List<String>> getPrimaryKeys();
+
+    public abstract JDBCDAS.SequenceInfo getSequence (String sequenceName);
+
+    public abstract List<JDBCDAS.SequenceInfo> getSequences();
 }

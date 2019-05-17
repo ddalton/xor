@@ -22,6 +22,7 @@ package tools.xor;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.util.Constants;
 import tools.xor.view.QueryBuilder;
 
 import java.util.List;
@@ -38,7 +39,8 @@ public class JDBCProperty extends AbstractProperty
     private boolean    isOwner;       // Should be true if there is cascade delete on inverse relationship
     private boolean    nullable;
     private List<JDBCDAS.ColumnInfo> columns;
-    private JDBCDAS.ForeignKey foreignKey;
+    private JDBCDAS.ForeignKey       foreignKey;
+    private final JSONObjectProperty jsonObjectProperty;
 
     /**
      * JDBC property object constructor
@@ -64,6 +66,12 @@ public class JDBCProperty extends AbstractProperty
                 break;
             }
         }
+
+        if(this.columns.size() == 1) {
+            addConstraint(Constants.XOR.CONS_LENGTH, this.columns.get(0).getLength());
+        }
+
+        jsonObjectProperty = new JSONObjectProperty(this);
     }
 
     /**
@@ -89,6 +97,20 @@ public class JDBCProperty extends AbstractProperty
     {
         super(name, type, parentType, RelationshipType.TO_MANY, elementType);
         this.isMany = true;
+
+        jsonObjectProperty = new JSONObjectProperty(this);
+    }
+
+    @Override
+    // Is this an identify column or a generated column?
+    // Supported only for a single column
+    public boolean isGenerated() {
+
+        if(this.columns.size() == 1) {
+            return this.columns.get(0).isGenerated();
+        }
+
+        return false;
     }
 
     @Override public String getName ()
@@ -239,5 +261,39 @@ public class JDBCProperty extends AbstractProperty
     @Override public boolean isCollectionOfReferences ()
     {
         return false;
+    }
+
+    @Override
+    public String getStringValue(BusinessObject dataObject)
+    {
+        return this.jsonObjectProperty.getStringValue(dataObject);
+    }
+
+    @Override
+    public Object query(Object dataObject) {
+        return this.jsonObjectProperty.query(dataObject);
+    }
+
+    @Override
+    public Object getValue(BusinessObject dataObject)
+    {
+        return this.jsonObjectProperty.getValue(dataObject);
+    }
+
+    @Override
+    public void setValue(Settings settings, Object dataObject, Object propertyValue)
+    {
+        this.jsonObjectProperty.setValue(settings, dataObject, propertyValue);
+    }
+
+    @Override
+    public void addElement(BusinessObject dataObject, Object element) {
+
+        this.jsonObjectProperty.addElement(dataObject, element);
+    }
+
+    @Override
+    public void addMapEntry(Object dataObject, Object key, Object value) {
+        this.jsonObjectProperty.addMapEntry(dataObject, key, value);
     }
 }

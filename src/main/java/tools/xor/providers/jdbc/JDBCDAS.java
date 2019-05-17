@@ -65,6 +65,8 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         private Class javaType;
         private String dataType;
         private boolean nullable;
+        private boolean generated; // Does INSERT/UPDATE need to populate this column
+        private int length;
 
         public String getName() {
             return this.name;
@@ -82,11 +84,51 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             return this.nullable;
         }
 
-        public ColumnInfo(String name, boolean nullable, Class javaType, String dataType) {
+        public ColumnInfo(String name, boolean nullable, Class javaType, String dataType, Boolean generated, int length) {
             this.name = name;
             this.nullable = nullable;
             this.javaType = javaType;
             this.dataType = dataType;
+            this.generated = generated;
+            this.length = length;
+        }
+
+        public boolean isGenerated() {
+            return this.generated;
+        }
+
+        public int getLength() {
+            return this.length;
+        }
+    }
+
+    public static class SequenceInfo {
+        private String name;
+        private String dataType;
+        private long min;
+        private long max;
+        private int incrementBy;
+        private long startWith;
+        private boolean cycle;
+
+        public SequenceInfo(String name,
+                            String dataType,
+                            long min,
+                            long max,
+                            int incrementBy,
+                            long startWith,
+                            boolean cycle) {
+            this.name = name;
+            this.dataType = dataType;
+            this.min = min;
+            this.max = max;
+            this.incrementBy = incrementBy;
+            this.startWith = startWith;
+            this.cycle = cycle;
+        }
+
+        public String getName() {
+            return this.name;
         }
     }
 
@@ -381,6 +423,9 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
     @Override public PersistenceOrchestrator createPO (Object sessionContext, Object data)
     {
+        if(sessionContext == null) {
+            sessionContext = new JDBCSessionContext();
+        }
         JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator(sessionContext, data);
         po.setDataSource(getDataSource());
 

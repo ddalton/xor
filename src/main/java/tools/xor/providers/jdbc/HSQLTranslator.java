@@ -19,6 +19,7 @@
 
 package tools.xor.providers.jdbc;
 
+import tools.xor.BooleanType;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 
@@ -35,10 +36,12 @@ import java.util.Map;
 public class HSQLTranslator extends DBTranslator
 {
     private static final String FOREIGN_KEY_SQL = "SELECT FK_NAME, FKTABLE_NAME, PKTABLE_NAME, FKCOLUMN_NAME, PKCOLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM INFORMATION_SCHEMA.SYSTEM_CROSSREFERENCE WHERE FKTABLE_SCHEM = 'PUBLIC' ORDER BY FK_NAME, KEY_SEQ";
-    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DTD_IDENTIFIER FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = 'PUBLIC'";
+    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DTD_IDENTIFIER, is_identity, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = 'PUBLIC'";
     private static final String PRIMARY_KEY_SQL = "SELECT table_name, pk_name, column_name, key_seq FROM INFORMATION_SCHEMA.SYSTEM_PRIMARYKEYS WHERE table_schem = 'PUBLIC' ORDER BY pk_name, key_seq";
+    private static final String SEQUENCES_SQL = "SELECT sequence_name, data_type, maximum_value, minimum_value, increment, cycle_option, start_with  FROM information_schema.sequences";
 
     private Map<String, JDBCDAS.TableInfo> tableMap;
+    private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
 
     @Override public JDBCDAS.TableInfo getTable (ForeignKeyEnhancer enhancer, String tableName)
     {
@@ -47,6 +50,15 @@ public class HSQLTranslator extends DBTranslator
         }
 
         return tableMap.get(tableName);
+    }
+
+    @Override public JDBCDAS.SequenceInfo getSequence (String sequenceName)
+    {
+        if(sequenceMap == null) {
+            getSequences();
+        }
+
+        return sequenceMap.get(sequenceName);
     }
 
     @Override public List<JDBCDAS.TableInfo> getTables (ForeignKeyEnhancer enhancer)
@@ -80,10 +92,12 @@ public class HSQLTranslator extends DBTranslator
                 if(columnType.contains("(")) {
                     columnType = columnType.substring(0, columnType.indexOf("("));
                 }
+                Boolean generated = "YES".equals(rs.getString(5)) ? true : false;
+                int length = rs.getInt(6);
                 if(!SQL_TO_JAVA_TYPE_MAP.containsKey(columnType)) {
                     throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
                 }
-                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType), columnType);
+                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType), columnType, generated, length);
                 columns.add(ci);
             }
             if(table != null) {
@@ -250,6 +264,35 @@ public class HSQLTranslator extends DBTranslator
         }
 
         return result;
+    }
+
+    @Override public List<JDBCDAS.SequenceInfo> getSequences ()
+    {
+        Map<String, JDBCDAS.SequenceInfo> result = new HashMap<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(SEQUENCES_SQL);
+            ResultSet rs = ps.executeQuery();
+        ) {
+            JDBCDAS.SequenceInfo seq = null;
+            while(rs.next()) {
+                seq = new JDBCDAS.SequenceInfo(
+                    rs.getString(1),
+                    rs.getString(2),
+                    rs.getLong(3),
+                    rs.getLong(4),
+                    rs.getInt(5),
+                    rs.getLong(6),
+                    rs.getBoolean(7));
+                result.put(seq.getName(), seq);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        this.sequenceMap = result;
+
+        return new ArrayList<>(this.sequenceMap.values());
     }
 
     private JDBCDAS.ForeignKeyRule getForeignKeyRule(int value) {

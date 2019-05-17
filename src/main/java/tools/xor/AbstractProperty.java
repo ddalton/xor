@@ -1130,7 +1130,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
-	public boolean isTransient() {	
+	public boolean isGenerated () {
 		return (field != null) ? Modifier.isTransient(field.getModifiers()) : Modifier.isTransient(getterMethod.getModifiers());
 
 	}	

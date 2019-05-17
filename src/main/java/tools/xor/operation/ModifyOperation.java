@@ -86,7 +86,7 @@ public class ModifyOperation extends GraphTraversal {
 		if(ci.getInput() == null || ci.getInputProperty() == null)
 			return true;
 
-		return ci.getInputProperty().isTransient();
+		return ci.getInputProperty().isGenerated();
 	}	
 
 	@Override

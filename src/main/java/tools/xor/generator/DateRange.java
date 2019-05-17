@@ -21,6 +21,7 @@ package tools.xor.generator;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import tools.xor.JSONObjectProperty;
 import tools.xor.MutableJsonProperty;
 import tools.xor.util.graph.StateGraph;
 
@@ -44,7 +45,7 @@ public class DateRange extends DefaultGenerator
         long minimum = 0;
         long maximum = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years in future
 
-        DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT);
+        DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT);
         try {
             if(getValues().length >= 1 ) {
                 minimum = (df.parse(getValues()[0])).getTime();

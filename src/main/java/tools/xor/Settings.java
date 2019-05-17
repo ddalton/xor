@@ -116,7 +116,7 @@ public class Settings {
 		this.dateForm = dateForm;
 	}
 
-	protected String dateFormat = MutableJsonProperty.ISO8601_FORMAT; // this is the default format and can be overridden
+	protected String dateFormat = JSONObjectProperty.ISO8601_FORMAT; // this is the default format and can be overridden
 	public String getDateFormat ()
 	{
 		return dateFormat;
@@ -245,10 +245,6 @@ public class Settings {
 	public void setPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
 	{
 		this.persistenceOrchestrator = persistenceOrchestrator;
-
-		if(this.persistenceOrchestrator instanceof JDBCPersistenceOrchestrator) {
-			setSessionContext(new JDBCSessionContext());
-		}
 	}
 
 	public boolean isShouldCreate(Class<?> clazz) {

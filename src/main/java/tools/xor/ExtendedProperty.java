@@ -150,7 +150,7 @@ public interface ExtendedProperty extends Property {
 	 * For a POJO property it checks if the java transient annotation is present
 	 * @return boolean value
 	 */
-	public boolean isTransient();
+	public boolean isGenerated ();
 
 	/**
 	 * Does this property refer to a bi-directional relationship

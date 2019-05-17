@@ -1,5 +1,6 @@
 package tools.xor.view;
 
+import tools.xor.JSONObjectProperty;
 import tools.xor.MutableJsonProperty;
 import tools.xor.util.ClassUtil;
 
@@ -509,12 +510,12 @@ public class BindParameter
 				{
 					Date date = null;
 					if(value instanceof String) {
-						DateFormat df = new SimpleDateFormat(MutableJsonProperty.ISO8601_FORMAT_DATE);
+						DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
 						try {
 							date = new Date(df.parse(value.toString()).getTime());
 						}
 						catch (ParseException e) {
-							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + MutableJsonProperty.ISO8601_FORMAT_DATE);
+							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + JSONObjectProperty.ISO8601_FORMAT_DATE);
 						}
 					} else if(value instanceof Date) {
 						date = (Date) value;
@@ -754,12 +755,12 @@ public class BindParameter
 				{
 					Timestamp timestamp = null;
 					if(value instanceof String) {
-						DateFormat df = new SimpleDateFormat(this.dateFormat != null ? this.dateFormat : MutableJsonProperty.ISO8601_FORMAT);
+						DateFormat df = new SimpleDateFormat(this.dateFormat != null ? this.dateFormat : JSONObjectProperty.ISO8601_FORMAT);
 						try {
 							timestamp = new Timestamp(df.parse(value.toString()).getTime());
 						}
 						catch (ParseException e) {
-							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + MutableJsonProperty.ISO8601_FORMAT);
+							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + JSONObjectProperty.ISO8601_FORMAT);
 						}
 					} else if(value instanceof Timestamp) {
 						timestamp = (Timestamp) value;

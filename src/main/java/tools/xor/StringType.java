@@ -50,7 +50,8 @@ public class StringType extends SimpleType {
 		super(clazz);
 	}
 	
-	static public int getLength(int value) {
+	static public int getLength(Integer value) {
+		value = (value == null) ? DEFAULT_LENGTH : value;
 		if(MAX_LENGTH != -1 && value > MAX_LENGTH) {
 			return MAX_LENGTH;
 		}

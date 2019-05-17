@@ -200,7 +200,7 @@ public class ExternalProperty extends AbstractProperty {
 	}
 
 	@Override
-	public boolean isTransient() {
+	public boolean isGenerated () {
 		// check if the annotation is on the getter method
 		if(getterMethod != null && getterMethod.getAnnotation(XmlTransient.class) != null)
 			return true;	

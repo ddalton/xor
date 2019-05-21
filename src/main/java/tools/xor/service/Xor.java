@@ -112,6 +112,8 @@ public interface Xor {
 	
 	/**
 	 * Get a list of the objects in external form
+	 * For JDBC, it is more efficient to use multiple queries then a read, as the
+	 * read is based on the objects queried earlier.
 	 * 
 	 * @param inputObject  The input object from the user in external form
 	 *                     If the input object has an id then only that object is returned

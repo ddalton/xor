@@ -174,7 +174,7 @@ public abstract class AbstractType implements EntityType {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.AGGREGATE);
 
@@ -186,7 +186,7 @@ public abstract class AbstractType implements EntityType {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.BASE);
 		
@@ -198,7 +198,7 @@ public abstract class AbstractType implements EntityType {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.MIGRATE);
 
@@ -210,7 +210,7 @@ public abstract class AbstractType implements EntityType {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type));
 		sb.append("#");
 		sb.append(property.getName());
 		sb.append(Settings.URI_PATH_DELIMITER);
@@ -224,7 +224,7 @@ public abstract class AbstractType implements EntityType {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type.getInstanceClass()));
+		StringBuilder sb = new StringBuilder(ClassUtil.getBucketName(type));
 		sb.append(Settings.URI_PATH_DELIMITER);
 		sb.append(ViewType.REF);
 

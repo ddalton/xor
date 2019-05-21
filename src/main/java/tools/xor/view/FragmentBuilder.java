@@ -175,7 +175,7 @@ public class FragmentBuilder
 
             Property property = fragment.getEntityType().getProperty(step);
             if (property == null) {
-                throw new RuntimeException("Unable to resolve property: " + currentPath);
+                throw new RuntimeException("Unable to resolve property: " + currentPath + ", is it part of a subtype?");
             }
 
             if(!property.isMany()) {

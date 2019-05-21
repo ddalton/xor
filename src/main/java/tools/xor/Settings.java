@@ -245,6 +245,14 @@ public class Settings {
 	public void setPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
 	{
 		this.persistenceOrchestrator = persistenceOrchestrator;
+
+		if(this.persistenceOrchestrator instanceof JDBCPersistenceOrchestrator &&
+			getSessionContext() == null) {
+			setSessionContext(((JDBCPersistenceOrchestrator)this.persistenceOrchestrator).getSessionContext());
+
+			// Need this to be true for JDBCPersistenceOrchestrator
+			this.postFlush = true;
+		}
 	}
 
 	public boolean isShouldCreate(Class<?> clazz) {

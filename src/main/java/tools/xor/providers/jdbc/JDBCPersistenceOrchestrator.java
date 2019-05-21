@@ -1,5 +1,6 @@
 package tools.xor.providers.jdbc;
 
+import org.hsqldb.SessionContext;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -46,6 +47,10 @@ public class JDBCPersistenceOrchestrator
 	public void setDataSource (DataSource dataSource)
 	{
 		this.dataSource = dataSource;
+	}
+
+	public Object getSessionContext() {
+		return this.context;
 	}
 
 	public JDBCPersistenceOrchestrator() {

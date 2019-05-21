@@ -37,9 +37,7 @@
 		<property name="name" value="jdbcdas" />
 	</bean>
 
-        <bean id="typeMapper" class="tools.xor.ExcelJsonTypeMapper">
-                <property name="domainPackagePath" value="tools.xor.db" />
-        </bean>
+        <bean id="typeMapper" class="tools.xor.UnchangedTypeMapper"/>
 	
 	<!-- DataSource -->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"

@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -597,6 +596,9 @@ public class Shape
      * StateGraph that is generated is also pre-defined and comes in 2 flavors:
      * 1. StateGraph with subtypes populated
      * 2. StateGraph with no subtypes
+     *
+     * NOTE: We do not set the paths for the built-in views, since they
+     * can be enumerated from the TypeGraph
      * 
      * @param type representing the EntityType corresponding to the view
      * @return built-in view
@@ -608,13 +610,12 @@ public class Shape
 
         if(result == null) {
             result = new AggregateView(viewName);
-            Set<String> paths = AggregatePropertyPaths.enumerate(type, this);
 
             DFAtoRE dfaRE = new DFAtoRE(type, this);
             result.addTypeGraph(type, dfaRE.getExactStateGraph(), StateGraph.Scope.TYPE_GRAPH);
             result.addTypeGraph(type, dfaRE.getFullStateGraph(), StateGraph.Scope.FULL_GRAPH);
 
-            updateView(result, viewName, paths);
+            updateView(result, viewName, new HashSet<>());
         }
 
         return getView(viewName);
@@ -704,7 +705,7 @@ public class Shape
     }
 
     private void updateView(View view, String viewName, Set<String> paths) {
-        view.setAttributeList(new ArrayList<String>(paths));
+        view.setAttributeList(new ArrayList<>(paths));
         view.setShape(this);
 
         // built-in views are always expanded
@@ -871,8 +872,8 @@ public class Shape
     }
 
     private Object findCommonClass(Set result) {
-        // First set all the classes to be eligble
-        Map<Class<?>, Boolean> eligibleClass = new HashMap<Class<?>, Boolean>();
+        // First set all the classes to be eligible
+        Map<Class<?>, Boolean> eligibleClass = new HashMap<>();
 
         for(Object obj: result) {
             if(Class.class.isAssignableFrom(obj.getClass()))
@@ -880,15 +881,15 @@ public class Shape
             else if(MultipleClassForPropertyException.class.isAssignableFrom(obj.getClass())) {
                 MultipleClassForPropertyException me = (MultipleClassForPropertyException) obj;
                 for(Class<?> clazz: me.getMatchedClasses())
-                    eligibleClass.put((Class<?>) obj, Boolean.TRUE);
+                    eligibleClass.put(clazz, Boolean.TRUE);
             }
         }
 
         // markInEligible
         for(Object obj: result)
-            markInEligible(eligibleClass, (Class<?>) obj);
+            markInEligible(eligibleClass, obj);
 
-        Set<Class<?>> multipleCommonClasses = new HashSet<Class<?>>();
+        Set<Class<?>> multipleCommonClasses = new HashSet<>();
         for(Map.Entry<Class<?>, Boolean> eligibleEntry: eligibleClass.entrySet()) {
             if(eligibleEntry.getValue())
                 multipleCommonClasses.add(eligibleEntry.getKey());
@@ -899,6 +900,9 @@ public class Shape
         } else if(multipleCommonClasses.size() == 1) {
             return multipleCommonClasses.iterator().next();
         } else {
+            for(Class<?> clazz: multipleCommonClasses) {
+                Type type = getType(clazz);
+            }
             // This will be treated as an error in getNarrowedClass method
             return multipleCommonClasses;
         }

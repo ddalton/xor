@@ -27,6 +27,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -51,10 +52,12 @@ import java.util.Map;
 public class JDBCSessionContext implements CustomPersister
 {
     private Connection connection;
-    private Statement statement;
+    private Statement insertStatement;
 
     private Map<PropertyKey, List<Executable>> propertyActions = new Object2ObjectOpenHashMap<PropertyKey, List<Executable>>();
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
+
+    private final List insertBatch = new LinkedList<>();
 
     /**
      * This method is used to navigate the input object and map the
@@ -117,8 +120,8 @@ public class JDBCSessionContext implements CustomPersister
         JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator();
         Connection connection = po.getConnection();
 
-        try(Statement stmt = connection.createStatement()) {
-            this.statement = stmt; // save it to be used later
+        try {
+            this.insertStatement = connection.createStatement();
             List<BusinessObject> objects = new ArrayList<>(objectCreator.getDataObjects());
             EntityType entityType = (EntityType)settings.getEntityType();
             TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
@@ -129,7 +132,8 @@ public class JDBCSessionContext implements CustomPersister
                     if (po.isTransient(bo)) {
                         // create INSERT statement for this object
                         String insertSql = DBTranslator.instance(connection).getInsertSql(settings, bo);
-                        statement.addBatch(insertSql);
+                        insertStatement.addBatch(insertSql);
+                        insertBatch.add(insertSql);
                     }
                 }
             }
@@ -167,17 +171,46 @@ public class JDBCSessionContext implements CustomPersister
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
+        } finally {
+            try {
+                connection.close();
+            }
+            catch (SQLException e) {
+                throw ClassUtil.wrapRun(e);
+            }
         }
     }
 
     @Override
     public void flush() {
         try {
-            int[] result = statement.executeBatch();
-            // TODO: check the result and act appropriately
+            int[] result = insertStatement.executeBatch();
+
+            if(result.length != insertBatch.size()) {
+                throw new RuntimeException("The number of insert SQLs do not match the number received by the database");
+            }
+
+            StringBuilder failedSqls = new StringBuilder();
+            for(int i = 0; i < result.length; i++) {
+                if(result[i] != 1) {
+                    failedSqls.append(insertBatch.get(i))
+                        .append("\n");
+                }
+            }
+
+            if(failedSqls.length() > 0) {
+                throw new RuntimeException("The following SQLs have failed: \n " + failedSqls.toString());
+            }
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
+        } finally {
+            try {
+                this.insertStatement.close();
+            }
+            catch (SQLException e) {
+                throw ClassUtil.wrapRun(e);
+            }
         }
     }
 

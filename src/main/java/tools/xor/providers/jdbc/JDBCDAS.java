@@ -413,12 +413,12 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
     @Override public void populateNarrowedClass (Class<?> entityClass, TypeNarrower typeNarrower)
     {
-        throw new UnsupportedOperationException("A JDBCType does not have an associated Java class");
+        // do nothing
     }
 
     @Override public Class<?> getNarrowedClass (Class<?> entityClass, String viewName)
     {
-        throw new UnsupportedOperationException("A JDBCType does not have an associated Java class");
+        return entityClass;
     }
 
     @Override public PersistenceOrchestrator createPO (Object sessionContext, Object data)

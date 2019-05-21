@@ -24,6 +24,7 @@ import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.TypeMapper;
+import tools.xor.UnchangedTypeMapper;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
@@ -61,8 +62,13 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		return entity;
 	}
 	
-	protected tools.xor.Type getNarrowedClass(DataAccessService das, Settings settings) {
+	protected tools.xor.Type getNarrowedType (DataAccessService das, Settings settings) {
 		TypeMapper typeMapper = das.getTypeMapper();
+
+		if(typeMapper instanceof UnchangedTypeMapper) {
+			return settings.getEntityType();
+		}
+
 		return das.getType(typeMapper.toDomain(settings.getNarrowedClass()));
 	}
 
@@ -77,7 +83,9 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		DataAccessService das = this.entity.getObjectCreator().getDAS();
 		
 		// Always use the REFERENCE type
-		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedClass(das, callInfo.getSettings());
+		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedType(
+			das,
+			callInfo.getSettings());
 		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getQueryTree(
 			das,
 			referenceType,

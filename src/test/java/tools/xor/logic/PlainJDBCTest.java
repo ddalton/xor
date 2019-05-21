@@ -118,8 +118,9 @@ public class PlainJDBCTest
 
 		assert(obj != null);
 
-		Object jsonObject = am.read(obj, settings);
-		json = (JSONObject) jsonObject;
+		//Object jsonObject = am.read(obj, settings);
+		List<?> toList = am.query(obj, settings);
+		assert(toList.size() == 1);
 		System.out.println("JSON string: " + json.toString());
 	}
 }

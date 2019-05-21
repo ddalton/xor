@@ -54,14 +54,14 @@ public class AggregatePropertyPaths {
 				SimpleType.class.isAssignableFrom(property.getType().getClass());
 	}
 	
-	public static Set<String> enumerate(Type aggregateType, Shape shape) {
+	public static Set<String> enumerateRegEx (Type aggregateType, Shape shape) {
 		Set<String> paths = aggregatePaths.get(aggregateType);
 
-		if(!aggregatePaths.containsKey(aggregateType)) { 
+		if(!aggregatePaths.containsKey(aggregateType)) {
 			DFAtoRE dfaRE = new DFAtoRE(aggregateType, shape);
 			Map<State, Expression> expressions = dfaRE.getRegEx();
 
-			paths  = new HashSet<String>();
+			paths  = new HashSet<>();
 			for(Map.Entry<State, Expression> entry: expressions.entrySet()) {
 				Type type = entry.getKey().getType();
 				UnionExpression ue = null;
@@ -72,12 +72,6 @@ public class AggregatePropertyPaths {
 						} else {
 							ue.addAlternate(new LiteralExpression(childProperty.getName()));
 						}
-						/*
-						for(String prefix: getExpression(entry.getValue() )) {
-							String path = prefix.concat(childProperty.getName());
-							paths.add(path);
-						}
-						*/
 					}
 				}
 				if(ue != null) {
@@ -111,7 +105,7 @@ public class AggregatePropertyPaths {
 		}
 		
 		if(!basePaths.containsKey(aggregateType)) {
-			paths  = new HashSet<String>();
+			paths  = new HashSet<>();
 			for(Property property: aggregateType.getProperties()) {
 				if(isPartofBase(property)) {
 					paths.add(property.getName());

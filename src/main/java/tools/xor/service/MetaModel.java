@@ -22,15 +22,12 @@ package tools.xor.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.AggregatePropertyPaths;
-import tools.xor.view.AggregateView;
-import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
 public class MetaModel {
@@ -121,7 +118,7 @@ public class MetaModel {
 	public List<String> getAggregateAttributes(String aggregateName) {
 		Type type = getDAS().getType(aggregateName);
 		List<String> paths = new ArrayList<String>();
-		paths.addAll(AggregatePropertyPaths.enumerate(type, getDAS().getShape()));
+		paths.addAll(AggregatePropertyPaths.enumerateRegEx(type, getDAS().getShape()));
 		
 		paths = sortPaths(paths);
 		

@@ -66,7 +66,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Type dir = das.getType(Directory.class);
 		View view = aggregateManager.getDAS().getView((EntityType) dir);
 
-		Set<String> paths = AggregatePropertyPaths.enumerate(dir, das.getShape());
+		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(dir, das.getShape());
 		System.out.println("********* Directory model paths **********");
 		for(String path: paths) {
 			System.out.println(path);
@@ -82,7 +82,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type person = das.getType(Person.class);
-		Set<String> paths = AggregatePropertyPaths.enumerate(person, das.getShape());
+		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(person, das.getShape());
 
 		assert(paths.size() > 0);
 		String path = paths.iterator().next();
@@ -135,7 +135,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS(); 
 
 		Type task = das.getType(Task.class);
-		Set<String> paths = AggregatePropertyPaths.enumerate(task, das.getShape());
+		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(task, das.getShape());
 
 		assert(paths.size() > 0);
 		String path = paths.iterator().next();
@@ -155,7 +155,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 				);
 		
 		Type patent = das.getType(Patent.class);
-		paths = AggregatePropertyPaths.enumerate(patent, das.getShape());
+		paths = AggregatePropertyPaths.enumerateRegEx(patent, das.getShape());
 		// Print the paths
 		Level oldLevel = logger.getLevel();
 		//logger.setLevel(Level.DEBUG);

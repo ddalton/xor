@@ -604,9 +604,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		
 		// Not in the current state graph, let us find and add it
 		if(t == null) {
-			Property childProperty = ((EntityType)current.getType()).getProperty(attribute);
+			Property childProperty = current.getType().getProperty(attribute);
 			if(childProperty == null) {
-				logger.error("Unable to add unknown attribute to state graph: " + attribute + " to state: " + current.getType().getName());
+				logger.error("Unable to add unknown attribute to state graph: " + attribute + " to state: " + current.getType().getName() + ". Does this attribute belong to a subtype?");
 				return;
 			}
 			Type propertyType = GraphUtil.getPropertyEntityType(childProperty, shape);

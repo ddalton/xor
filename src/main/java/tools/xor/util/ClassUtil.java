@@ -47,7 +47,9 @@ import org.springframework.stereotype.Component;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
+import tools.xor.JDBCType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.view.AggregateView;
 import tools.xor.view.View;
 
@@ -345,8 +347,9 @@ public class ClassUtil {
 		}
 	}
 
-	public static String getBucketName(Class<?> clazz) {
-		String name = clazz.getName();
+	public static String getBucketName(Type type) {
+
+		String name = type.getName();
 		return Settings.encodeParam(name);
 	}
 	

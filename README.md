@@ -96,3 +96,28 @@ QueryType {
  basedOn: t3
  a: t3
 }
+
+
+
+Vision
+=======
+Support CRUD automation over REST using JPA
+Allows developers to quickly add J2EE persistence to their UI development. Assists with RAD.
+Helps bootstrap J2EE development and business logic can slowly be exposed to users over time.
+
+1. Very fast object retrieval from an RDBMS using views, optimized for stored procedures
+2. Native JSON support. Directly interact using JSON and hence just a JS library.
+3. Support for models with loops using the swizzler JS library
+4. Multiple query access methods:
+   1. Default - By navigation
+   2. OQL 
+   3. SQL
+   4. Stored procedure
+5. Support Excel import/export for Perf data population
+6. Shape support - type of versioning
+7. Loose coupling between persistence and JSON/External models - Model mirroring technology.
+
+TODO:
+=====
+Refactor QueryTree to utilize StateTree data structure to store results.
+Test batching optimization based on BFS.

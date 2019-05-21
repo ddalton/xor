@@ -55,6 +55,7 @@ Now the challenge is how are the sub-types identified?
 2. Support order for select list through type graph. i.e., the enumeration of the type graph
    should be the same as the list of attributes in the view
    
+3. StateGraph extend method for path should support adding sub-types
 
 
 

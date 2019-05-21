@@ -26,9 +26,12 @@ import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.Shape;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An OpenType represents a custom type that is a composition of properties from other
@@ -112,6 +115,42 @@ public class JDBCType extends AbstractType {
     @Override
     public String getEntityName() {
         return getName();
+    }
+
+    @Override
+    public void defineSubtypes(List<Type> types) {
+        subTypes = new HashSet<>();
+
+        for(Type type: types) {
+            if(type instanceof EntityType) {
+                if(type.isOpen()) {
+                    continue;
+                }
+
+                EntityType superType = ((EntityType)type).getSuperType();
+                while(superType != null) {
+                    if(superType == this) {
+                        subTypes.add(type.getName());
+                        break;
+                    }
+                    superType = superType.getSuperType();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void defineChildSubtypes() {
+        childSubTypes = new HashSet<>();
+
+        for(EntityType type: getSubtypes()) {
+            if(type.isOpen()) {
+                continue;
+            }
+            if(type.getSuperType() == this) {
+                childSubTypes.add(type.getName());
+            }
+        }
     }
 
     @Override

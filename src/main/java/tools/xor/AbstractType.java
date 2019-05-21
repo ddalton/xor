@@ -71,8 +71,8 @@ public abstract class AbstractType implements EntityType {
 
 	// Need to only contain type name, as the actual type should be resolved dynamically
 	protected String            rootEntityType;
-	private   Set<String>       subTypes;
-	private   Set<String>       childSubTypes;
+	protected Set<String>       subTypes;
+	protected Set<String>       childSubTypes;
 	private   String            superType;
 
 	private int                     order; //represents the topological sort order of the entity type

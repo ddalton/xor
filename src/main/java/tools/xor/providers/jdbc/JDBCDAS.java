@@ -162,6 +162,48 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             return result;
         }
 
+        /**
+         * Return the name of the referenced table where
+         * there is a foreign key between the 2 primary keys
+         * @return parent table name
+         */
+        public String getParentTable() {
+            String result = null;
+
+            ForeignKey parentFK = null;
+            if(this.foreignKeys != null) {
+                next: for (ForeignKey fk : foreignKeys) {
+                    if(fk.getReferencingColumns().size() == primaryKeys.size()) {
+                        for(int i = 0; i < primaryKeys.size(); i++) {
+                            String keyPart = primaryKeys.get(i);
+                            if(!keyPart.equals(fk.getReferencingColumns().get(i))) {
+                                continue next;
+                            }
+                        }
+
+                        // also check that the referenced end is the primary key of the
+                        // referenced table
+                        TableInfo rt = fk.getReferencedTable();
+                        if(fk.getReferencedColumns().size() == rt.getPrimaryKeys().size()) {
+                            for(int i = 0; i < primaryKeys.size(); i++) {
+                                String keyPart = rt.getPrimaryKeys().get(i);
+                                if(!keyPart.equals(fk.getReferencedColumns().get(i))) {
+                                    continue next;
+                                }
+                            }
+                        }
+                        parentFK = fk;
+                        break;
+                    }
+                }
+            }
+            if(parentFK != null) {
+                result = parentFK.getReferencedTable().getName();
+            }
+
+            return result;
+        }
+
         public TableInfo(String name) {
             this.name = name;
         }
@@ -378,8 +420,14 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             shape.addType(dataType.getName(), dataType);
         }
 
-        // TODO: supertypes can be defined as foreign keys between the primary keys of
-        // TODO: 2 tables
+        for(TableInfo table: getTables()) {
+            String parentName = table.getParentTable();
+            if(parentName != null) {
+                JDBCType child = (JDBCType)shape.getType(table.getName());
+                JDBCType parent = (JDBCType)shape.getType(parentName);
+                child.setSuperType(parent);
+            }
+        }
 
         // Define the properties for the Types
         // This will end up defining the simple types

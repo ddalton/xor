@@ -98,7 +98,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				for(SubtypeState subtypeState: allSubtypes.values()) {
 					// Ensure that only subtypes are being added
 					EntityType subType = (EntityType)subtypeState.getType();
-					if(!getType().getInstanceClass().isAssignableFrom(subType.getInstanceClass())) {
+					if( !(getType() instanceof EntityType) || !((EntityType)getType()).isSameOrAncestorOf(subType)) {
 						// not a subtype
 						continue;
 					}
@@ -200,6 +200,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		return result;
 	}
 
+	// populates both the simple and relationship attributes in a State
 	private void linkEdges(Map<PropertyAlias, State> viewAliasStateMap, Map<String, AggregateView> nameViewMap) {
 		// Iterate through each view and add the edges by each attribute path
 		for(PropertyAlias pa: viewAliasStateMap.keySet()) {

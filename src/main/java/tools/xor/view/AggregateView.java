@@ -42,7 +42,6 @@ import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.FunctionType;
-import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
@@ -176,7 +175,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	
 	public AggregateView(Type type, String viewName) {
 		this(viewName);
-		this.typeName = type.getInstanceClass().getName();
+		this.typeName = type.getName();
 	}	
 	
 	public AggregateView(String viewName) {
@@ -192,7 +191,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	
 	private void initQuery(QueryPiece queryPiece) {
 		this.name = queryPiece.getName();
-		this.typeName = queryPiece.getAggregateType().getInstanceClass().getName();
+		this.typeName = queryPiece.getAggregateType().getName();
 		
 		// We create the OQLQuery object and populate it with information from the query view
 		// such as ColumnMeta information
@@ -704,7 +703,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			type = (EntityType)shape.getType(typeName);
 
 			if(entityType != null) {
-				assert type.getInstanceClass().isAssignableFrom(entityType.getInstanceClass()) :
+				assert type.isSameOrAncestorOf(entityType) :
 					"EntityType should be of the same type as " + typeName;
 			} else {
 				entityType = type;
@@ -723,7 +722,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 				if(entityType == null) {
 					throw new RuntimeException("The given type should be an entityType: " + typeName);
 				}
-				if (!type.getInstanceClass().isAssignableFrom(entityType.getInstanceClass())) {
+				if (!type.isSameOrAncestorOf(entityType)) {
 					throw new RuntimeException(
 						"The view type " + type.getName()
 							+ " should either be the same or a supertype of the given type: "

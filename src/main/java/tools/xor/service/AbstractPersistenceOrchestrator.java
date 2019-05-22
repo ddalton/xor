@@ -30,6 +30,7 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.util.AggregatePropertyPaths;
@@ -276,7 +277,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	}
 
 	@Override
-	public String getPolymorphicClause(Class<?> entityClass) {
+	public String getPolymorphicClause(Type type) {
 		return "";
 	}
 

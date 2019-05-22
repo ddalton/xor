@@ -362,7 +362,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	public void prune(List<AssociationSetting> associations, Shape shape) {
 		for(AssociationSetting assoc: associations) {
 			if (assoc.getMatchType() == MatchType.TYPE) {
-				V state = states.get(shape.getType(assoc.getEntityClass()));
+				V state = states.get(shape.getType(assoc.getEntityName()));
 				removeVertex(state);
 			} else if(assoc.getMatchType() == MatchType.RELATIVE_PATH) {
 				String propertyToPrune = assoc.getPathSuffix();
@@ -432,7 +432,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		List<EntityType> fullTypes = new ArrayList<EntityType>();
 		for (AssociationSetting assoc : associations) {
 			if (assoc.getMatchType() == MatchType.TYPE) {
-				Type type = shape.getType(assoc.getEntityClass());
+				Type type = shape.getType(assoc.getEntityName());
 				if (type == null) {
 					throw new RuntimeException(
 						"Unable to get the type for class: " + assoc.getClass().getName());

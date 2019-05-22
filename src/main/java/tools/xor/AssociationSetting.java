@@ -21,7 +21,7 @@ package tools.xor;
 
 public final class AssociationSetting {
 	private final MatchType matchType;
-	private final Class<?> entityClass;
+	private final String entityName;
 	private final String pathSuffix;
 	private final Boolean createIfMissing;
 	private final Boolean exact;
@@ -33,15 +33,15 @@ public final class AssociationSetting {
 	 * @param entityClass the class of the Type
 	 */
 	public AssociationSetting(Class<?> entityClass) {
-		this(entityClass, Boolean.TRUE, Boolean.FALSE);
+		this(entityClass.getName(), Boolean.TRUE, Boolean.FALSE);
 	}
 
-	public static AssociationSetting getExact(Class<?> entityClass) {
-		return new AssociationSetting(entityClass, Boolean.TRUE, Boolean.TRUE);
+	public static AssociationSetting getExact(String entityName) {
+		return new AssociationSetting(entityName, Boolean.TRUE, Boolean.TRUE);
 	}
 
-	public AssociationSetting(Class<?> entityClass, Boolean createIfMissing, Boolean exact) {
-		this.entityClass = entityClass;
+	public AssociationSetting(String entityName, Boolean createIfMissing, Boolean exact) {
+		this.entityName = entityName;
 		this.matchType = MatchType.TYPE;
 		this.pathSuffix = null;
 		this.createIfMissing = createIfMissing;
@@ -51,7 +51,7 @@ public final class AssociationSetting {
 	public AssociationSetting(String pathSuffix) {
 		this.pathSuffix = pathSuffix;
 		this.matchType = MatchType.ABSOLUTE_PATH;
-		this.entityClass = null;
+		this.entityName = null;
 		this.createIfMissing = Boolean.TRUE;
 		this.exact = Boolean.FALSE;
 	}
@@ -64,13 +64,13 @@ public final class AssociationSetting {
 	public AssociationSetting(String path, MatchType matchType) {
 		this.pathSuffix = path;
 		this.matchType = matchType;
-		this.entityClass = null;
+		this.entityName = null;
 		this.createIfMissing = Boolean.TRUE;
 		this.exact = Boolean.FALSE;
 	}
 	
-	public Class<?> getEntityClass() {
-		return entityClass;
+	public String getEntityName() {
+		return entityName;
 	}
 
 	public String getPathSuffix() {
@@ -95,12 +95,14 @@ public final class AssociationSetting {
 			if(ci.getSettings().getAction() == AggregateAction.READ) {
 				domainObject = (BusinessObject)ci.getInput();
 			}
-			Object associatedInstance = domainObject != null ? domainObject.getInstance() : null;
-			boolean result = associatedInstance != null ? entityClass.isAssignableFrom(associatedInstance.getClass()) : false;
-			if(!result) {
-				// Check the type
-				result = entityClass.isAssignableFrom(domainObject.getDomainType().getInstanceClass());
+
+			boolean result = false;
+			if(domainObject != null) {
+				EntityType instanceType = (EntityType)domainObject.getDomainType();
+				EntityType entityType = (EntityType)instanceType.getDAS().getType(entityName);
+				result = entityType.isSameOrAncestorOf(instanceType);
 			}
+
 			return result;
 		}
 
@@ -111,6 +113,6 @@ public final class AssociationSetting {
 	}
 	
 	public String toString() {
-		return matchType + " - " + ((matchType == MatchType.TYPE) ? entityClass.getName() : pathSuffix );
+		return matchType + " - " + ((matchType == MatchType.TYPE) ? entityName : pathSuffix );
 	}
 }

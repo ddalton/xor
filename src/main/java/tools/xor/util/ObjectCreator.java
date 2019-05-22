@@ -288,7 +288,7 @@ public class ObjectCreator {
 		if(logger.isDebugEnabled()) {
 			//logger.debug("ObjectCreator#createDataType instance: " + (instance==null?"null":instance.toString())
 			logger.debug("ObjectCreator#createDataType instance: " + (instance==null?"null":instance.getClass().getName())
-					+ ", property: " + property.getType().getInstanceClass().getName()
+					+ ", property: " + property.getType().getName()
 					+ ", propertyName: " + property.getName() 
 					+ ", result: " + (result==null?"null":result.toString()));
 		}
@@ -537,7 +537,7 @@ public class ObjectCreator {
 							}
 						}
 					}
-					else if (existingRootType.getInstanceClass().isAssignableFrom(newRootType.getInstanceClass())) {
+					else if (existingRootType.isSameOrAncestorOf(newRootType)) {
 						swizzle = true;
 					}
 					else {
@@ -720,7 +720,7 @@ public class ObjectCreator {
 						targetType = domainEntityType;
 					}
 
-					if(settings.isShouldCreate(targetInstanceClass)) {
+					if(settings.isShouldCreate(targetType)) {
 						targetInstance = createInstance(
 							sourceInstance,
 							targetInstanceClass,

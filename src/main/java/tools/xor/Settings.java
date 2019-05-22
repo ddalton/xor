@@ -213,7 +213,7 @@ public class Settings {
 	private Detector detector;
 
 	// Transient
-	private Map<Class<?>, Boolean> shouldCreateIfMissing;
+	private Map<String, Boolean> shouldCreateIfMissing;
 
 	/** decides how sparse the graph is. This depicts the ratio between the number of vertices vs the number of edges
 	 *    So greater the number, the more dense the graph is.
@@ -255,23 +255,29 @@ public class Settings {
 		}
 	}
 
-	public boolean isShouldCreate(Class<?> clazz) {
+	public boolean isShouldCreate(Type type) {
+
 		if(action == AggregateAction.LOAD || action == AggregateAction.DELETE) {
 			return false;
 		}
-		
-		if(shouldCreateIfMissing == null && expandedAssociations.size() > 0) {
-			// populate
-			shouldCreateIfMissing = new HashMap<>();
-			for(AssociationSetting setting: expandedAssociations) {
-				if(setting.getEntityClass() != null) {
-					shouldCreateIfMissing.put(setting.getEntityClass(), setting.doCreateIfMissing());
+
+		if(type instanceof EntityType) {
+			if (shouldCreateIfMissing == null && expandedAssociations.size() > 0) {
+				// populate
+				shouldCreateIfMissing = new HashMap<>();
+				for (AssociationSetting setting : expandedAssociations) {
+					if (setting.getEntityName() != null) {
+						shouldCreateIfMissing.put(
+							setting.getEntityName(),
+							setting.doCreateIfMissing());
+					}
 				}
 			}
-		}
 
-		if(shouldCreateIfMissing != null && shouldCreateIfMissing.containsKey(clazz)) {
-			return shouldCreateIfMissing.get(clazz);
+			if (shouldCreateIfMissing != null
+				&& shouldCreateIfMissing.containsKey(type.getName())) {
+				return shouldCreateIfMissing.get(type.getName());
+			}
 		}
 
 		return true;
@@ -1174,8 +1180,7 @@ public class Settings {
 					case "EXPANDBYCLASSEXACT":
 						extensions = json.getJSONArray(key);
 						for(int i = 0; i < extensions.length(); i++) {
-							clazz = Class.forName(extensions.getString(i));
-							AssociationSetting extension = AssociationSetting.getExact(clazz);
+							AssociationSetting extension = AssociationSetting.getExact(extensions.getString(i));
 							expand(extension);
 						}
 						break;

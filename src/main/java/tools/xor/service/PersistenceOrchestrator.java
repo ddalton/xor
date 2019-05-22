@@ -277,10 +277,10 @@ public interface PersistenceOrchestrator {
 
     /**
      * Provider specific construct to control polymorphic object retrieval
-     * @param entityClass class whose retrieval of subclasses we would like to control
+     * @param type whose retrieval of subclasses we would like to control
      * @return provider specific polymorphic controls for a class
      */
-    public String getPolymorphicClause(Class<?> entityClass);
+    public String getPolymorphicClause(Type type);
 
     /**
      * Invoked as part of the migrate operation, to persist the surrogate key id mapping between

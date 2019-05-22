@@ -324,4 +324,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param value to be set
 	 */
 	public void setOpenProperty(Object obj, String propertyName, Object value );
+
+	/**
+	 * Check to see if the current type is an ancestor type of the given type
+	 * @param entityType is a descendant type
+	 * @return true if ancestor false otherwise
+	 */
+	public boolean isSameOrAncestorOf (EntityType entityType);
 }

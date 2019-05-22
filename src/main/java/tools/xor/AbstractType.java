@@ -1254,4 +1254,17 @@ public abstract class AbstractType implements EntityType {
 	public void setOpenProperty(Object obj, String propertyName, Object value ) {
 		throw new RuntimeException("Unable to set property: " + propertyName);
 	}
+
+	@Override
+	public boolean isSameOrAncestorOf (EntityType entityType) {
+		EntityType parent = entityType;
+		while(parent != null) {
+			if(parent == this) {
+				return true;
+			}
+			parent = parent.getSuperType();
+		}
+
+		return false;
+	}
 }

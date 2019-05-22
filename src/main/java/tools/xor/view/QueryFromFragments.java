@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
@@ -102,8 +103,8 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
         // FROM clause
         // The fragment's entityType should be of the correct type, so no narrowing is needed
-        Class<?> entityClass = qp.getRoot().getEntityType().getInstanceClass();
-        OQL.append(" FROM " + entityClass.getName() + QueryBuilder.AS_CLAUSE + qp.getRoot().getAlias() + " " + po.getPolymorphicClause(entityClass));
+        EntityType entityType = qp.getRoot().getEntityType();
+        OQL.append(" FROM " + entityType.getName() + QueryBuilder.AS_CLAUSE + qp.getRoot().getAlias() + " " + po.getPolymorphicClause(entityType));
 
         // Now iterate through the fragments and process all the fragments that are OUTER JOINED
         // with the fragment currently being processed

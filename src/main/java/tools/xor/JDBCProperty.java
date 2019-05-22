@@ -34,6 +34,7 @@ import java.util.List;
 public class JDBCProperty extends AbstractProperty
 {
     public static final String INVERSE = "−1";
+    public static final String PARENT = "_PARENT_";
 
     private boolean    isMany;
     private boolean    isOwner;       // Should be true if there is cascade delete on inverse relationship
@@ -70,6 +71,14 @@ public class JDBCProperty extends AbstractProperty
         if(this.columns.size() == 1) {
             addConstraint(Constants.XOR.CONS_LENGTH, this.columns.get(0).getLength());
         }
+
+        jsonObjectProperty = new JSONObjectProperty(this);
+    }
+
+    public JDBCProperty(String name, Type type, EntityType parentType)
+    {
+        super(name, type, parentType);
+        this.relType = RelationshipType.TO_ONE;
 
         jsonObjectProperty = new JSONObjectProperty(this);
     }
@@ -198,13 +207,22 @@ public class JDBCProperty extends AbstractProperty
     @Override public void initMappedBy (Shape shape)
     {
         if(this.foreignKey != null) {
-            // create and link a new JDBCProperty this is the inverse
-            // and representing the collection
-            DataAccessService das = shape.getDAS();
-            JDBCProperty inverse = new JDBCProperty(getName() + INVERSE, das.getType(java.util.List.class),
-                (EntityType)getType(), getContainingType());
-            shape.addProperty(inverse);
+            JDBCDAS.ForeignKey parentFK = foreignKey.getReferencedTable().getParentFK();
 
+            DataAccessService das = shape.getDAS();
+            JDBCProperty inverse;
+            if(this.foreignKey != parentFK) {
+                // create and link a new JDBCProperty this is the inverse
+                // and representing the collection
+                inverse = new JDBCProperty(
+                    getName() + INVERSE, das.getType(java.util.List.class),
+                    (EntityType)getType(), getContainingType());
+            } else {
+                // the inverse is a ONE_TO_ONE relationship
+                inverse = new JDBCProperty(
+                    getName() + INVERSE, getContainingType(), (EntityType) getType());
+            }
+            shape.addProperty(inverse);
             inverse.setMappedBy(this, this.getName());
         }
     }

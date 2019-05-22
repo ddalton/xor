@@ -28,8 +28,13 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.Constants;
+import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
+import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.StateTree;
+import tools.xor.util.graph.TypeGraph;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -64,8 +69,18 @@ public class FragmentBuilder
         } else {
             // derive it from the root
             if(childView.getName() != null && !"".equals(childView.getName().trim()) ) {
-                entityType = (EntityType)this.queryTree.getRoot().getAggregateType().getProperty(childView.getName()).getType();
-            } else {
+                Property property = null;
+                for(QueryPiece qp: queryTree.getRoots()) {
+                    property = qp.getAggregateType().getProperty(childView.getName());
+                    if(property != null) {
+                        break;
+                    }
+                }
+                if(property != null) {
+                    entityType = (EntityType) property.getType();
+                }
+            }
+            if(entityType == null) {
                 // use the parent's entity type
                 entityType = (EntityType)parent.getAggregateType();
             }
@@ -73,10 +88,22 @@ public class FragmentBuilder
         QueryPiece<QueryFragment, IntraQuery<QueryFragment>> childPiece = new QueryPiece(entityType, childView);
         build(childPiece);
 
-        QueryFragment sourceFragment = queryTree.getRoot().findFragment(childView.getName()).fragment;
-        QueryFragment targetFragment = childPiece.getRoot();
+        QueryPiece.FragmentAnchor sourceAnchor = null;
+        for(QueryPiece qp: queryTree.getRoots()) {
+            sourceAnchor = qp.findFragment(childView.getName());
+            if(sourceAnchor != null) {
+                break;
+            }
+        }
+        if(sourceAnchor != null) {
+            QueryFragment sourceFragment = sourceAnchor.fragment;
+            QueryFragment targetFragment = childPiece.getRoot();
 
-        addInterQueryEdge(parent, childPiece, sourceFragment, targetFragment);
+            addInterQueryEdge(parent, childPiece, sourceFragment, targetFragment);
+        } else {
+            // The QueryTree is a forest
+            this.queryTree.addVertex(childPiece);
+        }
 
         if(childView.getChildren() != null) {
             for (View grandchildView: childView.getChildren()) {
@@ -114,16 +141,19 @@ public class FragmentBuilder
     {
         View view = queryPiece.getView();
 
+        // get the StateTree instance
+        TypeGraph st = view.getTypeGraph((EntityType) queryPiece.getAggregateType(), StateGraph.Scope.EDGE);
+
+        this.queryTree.addVertex(queryPiece);
+
         // We need to handle child views
         List<String> paths = new LinkedList<>(view.getAttributeList());
-
         if(paths == null || paths.isEmpty()) {
             return;
         }
 
-        this.queryTree.addVertex(queryPiece);
-
         // Also add the function attributes
+        // Add them as NON-fetched properties
         paths.addAll(view.getFunctionAttributes());
 
         // First create a start fragment
@@ -138,6 +168,9 @@ public class FragmentBuilder
         if(queryPiece.getAggregateType().isOpen()) {
             return;
         }
+
+        // TODO: subtype fragments are supported only on JDBC
+        // using the special _PARENT_ property
 
         for(String path: paths) {
             makeFragments(queryPiece, path);

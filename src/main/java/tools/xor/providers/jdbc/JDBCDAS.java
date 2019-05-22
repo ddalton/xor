@@ -162,13 +162,8 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             return result;
         }
 
-        /**
-         * Return the name of the referenced table where
-         * there is a foreign key between the 2 primary keys
-         * @return parent table name
-         */
-        public String getParentTable() {
-            String result = null;
+
+        public ForeignKey getParentFK() {
 
             ForeignKey parentFK = null;
             if(this.foreignKeys != null) {
@@ -197,11 +192,23 @@ public abstract class JDBCDAS extends AbstractDataAccessService
                     }
                 }
             }
+
+            return parentFK;
+        }
+
+        /**
+         * Return the name of the referenced table where
+         * there is a foreign key between the 2 primary keys
+         * @return parent table name
+         */
+        public String getParentTable() {
+            ForeignKey parentFK = getParentFK();
+
             if(parentFK != null) {
-                result = parentFK.getReferencedTable().getName();
+                return parentFK.getReferencedTable().getName();
             }
 
-            return result;
+            return null;
         }
 
         public TableInfo(String name) {

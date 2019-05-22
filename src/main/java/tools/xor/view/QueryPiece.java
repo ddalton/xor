@@ -360,7 +360,7 @@ public class QueryPiece<V extends QueryFragment, E extends IntraQuery<V>> extend
 	 * @return path relative to the QueryPiece
 	 */
 	private String makeRelative(String path) {
-		if(path == null) {
+		if(path == null || getRoot() == null) {
 			return null;
 		}
 		String anchorPath = (getRoot().getAncestorPath() == null) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);

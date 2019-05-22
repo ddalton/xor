@@ -102,6 +102,21 @@ public class Tree<V extends Vertex, E extends Edge<V>> extends DirectedSparseGra
         return result;
     }
 
+    /**
+     * Vertices with no incoming edges
+     * @return roots of all trees
+     */
+    public List<V> getRoots() {
+        List<V> result = new LinkedList<>();
+        for(V vertex: getVertices()) {
+            if(getInEdges(vertex).size() == 0) {
+                result.add(vertex);
+            }
+        }
+
+        return result;
+    }
+
     public V getRoot() {
 
         if(getVertices().size() == 0) {

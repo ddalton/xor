@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -187,6 +188,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	 * Don't use this directly.
 	 */
 	public AggregateView() {
+		// Name is required
+		setName(UUID.randomUUID().toString());
 	}
 	
 	private void initQuery(QueryPiece queryPiece) {

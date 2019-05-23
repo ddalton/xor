@@ -12,12 +12,10 @@ Algorithm:
        The TYPE meta attribute is automatically added for this property for StateTree by FragmentBuilder
     
     Exception: If more than 1 state is found then all those states are added to the StateTree
+extendByPath needs to be updated to handle subtype matching for properties that are on the subtypes or supertypes.
     
     
 This extend algorithm needs to be updated for StateTree only and not StateGraph
-    
-    
-    Cannot enhance extend and merge a StateTree graph
     
     
     We use StateTree only for Query

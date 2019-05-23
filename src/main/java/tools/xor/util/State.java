@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 
 import tools.xor.AbstractTypeNarrower;
 import tools.xor.EntityType;
+import tools.xor.QueryType;
 import tools.xor.Settings;
 import tools.xor.Type;
 
@@ -87,6 +88,19 @@ public class State implements Vertex {
 
 	public Type getType() {
 		return this.type;
+	}
+
+	/**
+	 * Get the type name on which this State is based.
+	 * Overridden by subclasses.
+	 *
+	 * @return type name
+	 */
+	public String getTypeName() {
+		if(getType() instanceof QueryType) {
+			return ((QueryType)type).getBasedOn().getName();
+		}
+		return getType().getName();
 	}
 
 	@Override

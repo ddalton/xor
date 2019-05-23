@@ -34,9 +34,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.swing.text.html.parser.Entity;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -1266,5 +1268,22 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		return false;
+	}
+
+	@Override
+	public List<EntityType> getDescendantsTo(EntityType entityType) {
+		List<EntityType> result = new LinkedList<>();
+
+		Stack<EntityType> reverse = new Stack<>();
+		while(entityType.getSuperType() != this) {
+			reverse.push(entityType);
+			entityType = entityType.getSuperType();
+		}
+
+		while(!reverse.isEmpty()) {
+			result.add(reverse.pop());
+		}
+
+		return result;
 	}
 }

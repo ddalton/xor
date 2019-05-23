@@ -331,4 +331,14 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @return true if ancestor false otherwise
 	 */
 	public boolean isSameOrAncestorOf (EntityType entityType);
+
+	/**
+	 * Returns the list of the descendant sub types starting from the child
+	 * and ending at the parent of the descendant.
+	 * i.e., the starting and end are not included in the descendant chain.
+	 *
+	 * @param entityType descendant type representing the child of the chain end
+	 * @return descendant chain
+	 */
+	public List<EntityType> getDescendantsTo(EntityType entityType);
 }

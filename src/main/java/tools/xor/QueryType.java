@@ -73,6 +73,10 @@ public class QueryType extends AbstractType {
         return getName();
     }
 
+    public EntityType getBasedOn() {
+        return this.basedOn;
+    }
+
     @Override
     public List<Type> getEmbeddableTypes() {
         return this.basedOn.getEmbeddableTypes();

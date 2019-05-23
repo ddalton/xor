@@ -62,8 +62,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 	public static class SubtypeState extends State {
 		Map<String, SubtypeState> subtypeStates;
-		State parent;
-		boolean needsRebuild; // is rebuilding of inheritance hierarchy necessary?
+		SubtypeState parent;
 		Map<String, Resolver> resolvers;
 
 		public SubtypeState(Type type, boolean startState) {
@@ -72,81 +71,69 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			subtypeStates = new HashMap<>();
 		}
 
-		public void setNeedsRebuild (boolean needsRebuild)
-		{
-			this.needsRebuild = needsRebuild;
-		}
-
-		public State getParent() {
+		public SubtypeState getParent() {
 			return this.parent;
 		}
 
-		public void setParent(State parent) {
-			this.parent = parent;
+		public void setParent(SubtypeState sts) {
+			this.parent = sts;
 		}
 
-		public void addSubtypeState(SubtypeState state) {
-			// TODO: the key should be the type name and not state name??
-			subtypeStates.put(state.getName(), state);
-			state.setParent(this);
+		public void addSupertype (SubtypeState ancestorState, TypeGraph tg) {
+			ancestorState.addSubtype(this, tg, this);
 		}
 
-		public void rebuild(TypeGraph tg) {
-			if(needsRebuild) {
-				Map<String, SubtypeState> allSubtypes = subtypeStates;
-				this.subtypeStates = new HashMap<>();
+		private void markSubType(String typeName, SubtypeState sts) {
+			this.subtypeStates.put(typeName, sts);
+		}
 
-				for(SubtypeState subtypeState: allSubtypes.values()) {
-					// Ensure that only subtypes are being added
-					EntityType subType = (EntityType)subtypeState.getType();
-					if( !(getType() instanceof EntityType) || !((EntityType)getType()).isSameOrAncestorOf(subType)) {
-						// not a subtype
-						continue;
-					}
+		public void addSubtype (SubtypeState descendantState, TypeGraph tg, SubtypeState bookkeepingState) {
+			// first check that the input state is a descendant of the current state
+			EntityType type = (EntityType)getType();
+			if(type instanceof QueryType) {
+				type = ((QueryType) type).getBasedOn();
+			}
 
-					// Find and add it to the most immediate supertype (i.e., the parent type)
-					boolean foundParent = false;
-					while(subType != getType()) {
-						if(allSubtypes.containsKey(subType.getSuperType().getName())) {
-							allSubtypes.get(subType.getSuperType().getName()).addSubtypeState(subtypeState);
-							foundParent = true;
-							break;
-						}
-						subType = subType.getSuperType();
-					}
-					if(!foundParent) {
-						// current type is the parent
-						addSubtypeState(subtypeState);
-					}
+			EntityType childType = (EntityType) descendantState.getType();
+			if(childType instanceof QueryType) {
+				childType = ((QueryType) childType).getBasedOn();
+			}
+
+			if(type.getName().equals(childType.getName())) {
+				return;
+			}
+
+			SubtypeState start = this; // start of inheritance edge
+			if(type.isSameOrAncestorOf(childType)) {
+				for(EntityType d: type.getDescendantsTo(childType)) {
+					SubtypeState sts = new SubtypeState(new QueryType(d, null), false);
+					sts.setParent(start);
+					bookkeepingState.markSubType(sts.getTypeName(), sts);
+
+					addInheritanceEdge(tg, start, sts);
+					start = sts;
 				}
-
-				// Finally add the inheritance edges
-				addInheritanceEdge(tg);
 			}
+
+			bookkeepingState.markSubType(descendantState.getTypeName(), descendantState);
+			descendantState.setParent(start);
+			addInheritanceEdge(tg, start, descendantState);
 		}
 
-		private void addInheritanceEdge(TypeGraph tg) {
-			for(SubtypeState subtypeState: subtypeStates.values()) {
-				tg.addEdge(
-					new Edge(DFAtoNFA.UNLABELLED, this, subtypeState),
-					this,
-					subtypeState);
-			}
+		private void addInheritanceEdge(TypeGraph tg, SubtypeState start, SubtypeState end) {
+			tg.addEdge(
+				new Edge(DFAtoNFA.UNLABELLED, start, end),
+				start,
+				end);
 		}
 
-		public State getState(EntityType entityType) {
-			State result = this;
+		public State findState (EntityType entityType) {
 
-			EntityType current = entityType;
-			while(current != null && !subtypeStates.containsKey(current.getName())) {
-				current = current.getSuperType();
+			if(subtypeStates.containsKey(entityType.getName())) {
+				return subtypeStates.get(entityType.getName());
 			}
 
-			if(current != null) {
-				result = subtypeStates.get(current.getName());
-			}
-
-			return result;
+			return this;
 		}
 
 		public Set<String> getAttributes() {
@@ -218,10 +205,6 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				extend(view, "", attrPath, (V) current, viewAliasStateMap);
 			}
 		}
-
-		for(V state: getVertices()) {
-			state.rebuild(this);
-		}
 	}
 
 	private V getFragmentState(PropertyAlias alias, Map<PropertyAlias, State> viewNameStateMap) {
@@ -261,8 +244,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		PropertyAlias alias = view.getAlias(path);
 		if(alias != null && alias.isViewReference()) {
 			V subTypeState = getFragmentState(alias, viewAliasStateMap);
-			current.addSubtypeState(subTypeState);
-			current.setNeedsRebuild(true);
+			current.addSubtype(subTypeState, this, current);
 			return;
 		}
 		if(processed.length() > 0) {
@@ -274,6 +256,8 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 		// Not in the current state graph, let us find and add it
 		if (t == null) {
+			// Extend along two ways
+			// 1. By inheritance - find the correct subtype from Property Alias
 			Property childProperty = (current.getType()).getProperty(attribute);
 			if (childProperty == null) {
 				if(alias != null) {
@@ -304,7 +288,10 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				}
 			}
 
-			t = extendProperty(current, attribute, false);
+			// 2. By the path - All new states by walking along the property path
+			// This approach could also involve inheritance, but the correct
+			// type needs to be deduced
+			t = extendByPath(current, attribute, false);
 		}
 
 		if(t != null) {
@@ -312,19 +299,22 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		}
 	}
 
-	private E extendProperty(V current, String attribute, boolean initialize) {
+	private E extendByPath (V current, String attribute, boolean initialize) {
 		E edge = null;
 
 		Property childProperty = current.getType().getProperty(attribute);
 		if(childProperty == null) {
+			// TODO: Find if the property is in the subtype or supertype
+			// TODO: If so, add either SubtypeState#addSubtype or SubtypeState#addSupertype
+
 			logger.error("Unable to add unknown attribute to state graph: " + attribute + " to state: " + current.getType().getName() + ". Does this attribute belong to a subtype?");
-			return null;
+			return edge;
 		}
 		Type propertyType = GraphUtil.getPropertyEntityType(childProperty, getShape());
 		if(propertyType.isDataType()) {
 			// This is an attribute of this state
 			current.addAttribute(childProperty.getName());
-			return null;
+			return edge;
 		} else {
 			V end = (V)new SubtypeState(propertyType, false);
 			if (initialize) {
@@ -356,7 +346,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 		// Not in the current state graph, let us find and add it
 		if(t == null) {
-			t = extendProperty(current, attribute, initialize);
+			t = extendByPath(current, attribute, initialize);
 		}
 
 		if(t != null) {

@@ -64,7 +64,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	public enum Scope {
 		FULL_GRAPH, // Represents a full graph state of the type, sub-types are included
 		TYPE_GRAPH, // Represents a graph state of the type (sub-types are not included)
-		VIEW_GRAPH, // Represents a graph state of the view
+		VIEW_GRAPH, // Represents a graph state of the view. Useful for topological ordering of a view.
 		EDGE        // Represents a tree state of the view
 	};
 	
@@ -359,7 +359,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return builder.toString();
 	}
 
-	public void prune(List<AssociationSetting> associations, Shape shape) {
+	@Override
+	public void prune (List<AssociationSetting> associations, Shape shape) {
 		for(AssociationSetting assoc: associations) {
 			if (assoc.getMatchType() == MatchType.TYPE) {
 				V state = states.get(shape.getType(assoc.getEntityName()));
@@ -378,6 +379,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 	}
 
+	@Override
 	public void markReferences (List<String> references, Shape shape)
 	{
 		for (String referenceType : references) {
@@ -405,15 +407,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 		}
 	}
-	
-	/**
-	 * This method is to enhance the state graph since the states are reused across other state graph entities.
-	 * We cannot just rebuild a part of the state graph with new state graph if we don't account for the sharing.
-	 * 
-	 * @param associations new properties e.g., open properties being added to the state graph
-	 * @param shape of the type being enhanced
-	 */
-	public void enhance(List<AssociationSetting> associations, Shape shape) {
+
+	@Override
+	public void enhance (List<AssociationSetting> associations, Shape shape) {
 
 		if(sgLogger.isDebugEnabled()) {
 			sgLogger.debug("Enhancing the state graph with associations/Types");

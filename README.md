@@ -1,8 +1,41 @@
+Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
+
+Depending on actual object the view scope differs? How is this implemented?
+
+Algorithm:
+  extend -
+    If the property is not in the expected type, then the corresponding subtype including the descendant chain (to help with JOIN) is retrieved and the appropriate states are added and the property is then added to the correct state.
+    
+    So extend does extend in 2 ways
+    1. Extend along the path
+    2. Extend along the inheritance hierarchy
+       The TYPE meta attribute is automatically added for this property for StateTree by FragmentBuilder
+    
+    Exception: If more than 1 state is found then all those states are added to the StateTree
+    
+    
+This extend algorithm needs to be updated for StateTree only and not StateGraph
+    
+    
+    Cannot enhance extend and merge a StateTree graph
+    
+    
+    We use StateTree only for Query
+    findById should get entity from DB for JDBC and Read action
+    
+    Fix getCurrentState - getName should be based on the type name
+
+
+
+
+
+
+
 XOR - Light weight ORM
   XOR is a light weight ORM, that can work directly against a relational database.
   It helps to quickly prototype a Single page application developed using javascript.
 
-  The flow is:
+
   1. Develop the schema in an RDBMS with the necessary tables, indexes and foreign key constraints
   2. Configure XOR with this database schema
   3. Deploy it against a servlet container and expose a REST endpoint to it
@@ -47,8 +80,16 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
 
 3) A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
 
-
-
+0. Type narrowing of a property
+   NarrowHandler(options)
+   options include
+   - SUBCLASS NONE (no sub classes included)
+   - SUBCLASS ANY (default behavior)
+   - SUBCLASS a
+   - SUBCLASS (a, b)
+   - SUBCLASS NOT b 
+   - SUBCLASS NOT (a, b)
+  
 1. Process ALIAS and NARROW functions
   How is an alias field processed? Add a property to an open type
   StateTree#extend

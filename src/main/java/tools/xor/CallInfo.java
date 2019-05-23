@@ -263,7 +263,7 @@ public class CallInfo {
 	private State getCurrentState() {
 		if(currentState == null) {
 			EntityType entityType = (EntityType)settings.getEntityType();
-			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
+			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType(), settings.getScope());
 			if(getParent() == null || getParent().isBulkInput()) {
 				currentState = sg.getRootState();
 			} else {
@@ -315,7 +315,7 @@ public class CallInfo {
 		checkView();
 
 		EntityType entityType = (EntityType)settings.getEntityType();
-		TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
+		TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType(), settings.getScope());
 		if(logger.isDebugEnabled()) {
 			logger.debug("Type: " + getOutputRoot().getType().getName() + ", view: " 
 					+ settings.getView().getName() 

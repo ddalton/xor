@@ -54,6 +54,7 @@ import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.InterQuery;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.CartesianJoinSplitter;
 import tools.xor.view.FragmentBuilder;

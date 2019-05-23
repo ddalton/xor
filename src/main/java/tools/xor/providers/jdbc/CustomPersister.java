@@ -48,4 +48,6 @@ public interface CustomPersister
     void flush ();
 
     void clear();
+
+    boolean readFromDB();
 }

@@ -56,6 +56,7 @@ package tools.xor.view;
 
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
@@ -294,6 +295,13 @@ public interface View {
 	 * @param scope of the state graph for that view
 	 */
 	public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, StateGraph.Scope scope);
+
+	/**
+	 * Used to check if the view represents a tree or a graph
+	 * @param settings
+	 * @return true if tree false otherwise
+	 */
+	public boolean isTree(Settings settings);
 
 	/**
 	 * Cache the generated state graph by EntityType.

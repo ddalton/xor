@@ -218,4 +218,9 @@ public class JDBCSessionContext implements CustomPersister
         this.propertyActions = new Object2ObjectOpenHashMap<>();
         this.idToObjects = new HashMap<>();
     }
+
+    @Override public boolean readFromDB ()
+    {
+        return false;
+    }
 }

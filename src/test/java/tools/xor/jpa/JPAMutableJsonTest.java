@@ -437,6 +437,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		//settings.setView(das.getView(taskType));
 
 		View view = das.getView(taskType);
+		settings = new Settings();
 		settings.setView(view);
 		System.out.println("********Entity view******");
 		for(String path: view.getAttributeList()) {

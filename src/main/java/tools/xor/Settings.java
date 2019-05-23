@@ -68,6 +68,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.Detector;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.BindParameter;
 import tools.xor.view.Function;
@@ -136,7 +137,7 @@ public class Settings {
 
 	protected View view;
 
-	protected StateGraph.Scope scope = StateGraph.Scope.VIEW_GRAPH;
+	protected StateGraph.Scope scope = StateGraph.Scope.EDGE;
 
 	private AggregateAction action; // specifies the type of action being performed that involves data change in the database
 
@@ -338,10 +339,6 @@ public class Settings {
 	public StateGraph.Scope getScope() {
 		return this.scope;
 	}
-
-	public void setScope(StateGraph.Scope scope) {
-		this.scope = scope;
-	}
 	
 	public int getCurrentApiVersion() {
 		return CURRENT_API_VERSION;
@@ -442,24 +439,30 @@ public class Settings {
 				view = view.copy();
 			}
 		}
+		if(!view.isTree(this)) {
+			this.scope = StateGraph.Scope.TYPE_GRAPH;
+		} else {
+			this.scope = StateGraph.Scope.EDGE;
+		}
 
-		if(hasExpandedAssociations()) {
-			((StateGraph)view.getTypeGraph((EntityType)entityType)).enhance(expandedAssociations, shape);
-		}
-		if(hasPrunedAssociations()) {
-			for(AssociationSetting as: prunedAssociations) {
-				if(as.getMatchType() == MatchType.RELATIVE_PATH) {
-					pruneRelative.add(as.getPathSuffix());
-				}
+		if(entityType != null) {
+			TypeGraph sg = view.getTypeGraph((EntityType)entityType, this.scope);
+			if (hasExpandedAssociations()) {
+				sg.enhance(expandedAssociations, shape);
 			}
-			// remove this from the StateGraph
-			((StateGraph)view.getTypeGraph((EntityType)entityType)).prune(prunedAssociations, shape);
-		}
-		if(hasReferences()) {
-			// Mark the appropriate states as references
-			((StateGraph)view.getTypeGraph((EntityType)entityType)).markReferences(
-				references,
-				shape);
+			if (hasPrunedAssociations()) {
+				for (AssociationSetting as : prunedAssociations) {
+					if (as.getMatchType() == MatchType.RELATIVE_PATH) {
+						pruneRelative.add(as.getPathSuffix());
+					}
+				}
+				// remove this from the StateGraph
+				sg.prune(prunedAssociations, shape);
+			}
+			if (hasReferences()) {
+				// Mark the appropriate states as references
+				sg.markReferences(references, shape);
+			}
 		}
 
 		this.params = populateFilters(queryParams);

@@ -1,9 +1,11 @@
 package tools.xor.util.graph;
 
 import org.json.JSONObject;
+import tools.xor.AssociationSetting;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.view.QueryPiece;
@@ -102,6 +104,20 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.dumpState();
 	}
 
+	@Override public void prune (List<AssociationSetting> associations, Shape shape)
+	{
+		typeGraph.prune(associations, shape);
+	}
+
+	@Override public void markReferences (List<String> references, Shape shape)
+	{
+		typeGraph.markReferences(references, shape);
+	}
+
+	@Override public void enhance (List<AssociationSetting> associations, Shape shape)
+	{
+		typeGraph.enhance(associations, shape);
+	}
 
 	@Override public boolean supportsDynamicUpdate ()
 	{

@@ -18,6 +18,8 @@ import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
+import tools.xor.view.AggregateView;
+import tools.xor.view.View;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -141,7 +143,11 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	public void persistGraph(ObjectCreator objectCreator, Settings settings) {
 
 		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
-		TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
+
+		// For topological sorting we need to use the VIEW_GRAPH
+		View view = settings.getView();
+		TypeGraph<State, Edge<State>> sg = AggregateView.isAggregateView(view.getName()) ? view.getTypeGraph(
+			entityType) : view.getTypeGraph(entityType, StateGraph.Scope.VIEW_GRAPH);
 		persistRoots(objectCreator, settings, sg);
 
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.ACTIVATE_DETECTORS)

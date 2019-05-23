@@ -86,6 +86,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		}
 
 		public void addSubtypeState(SubtypeState state) {
+			// TODO: the key should be the type name and not state name??
 			subtypeStates.put(state.getName(), state);
 			state.setParent(this);
 		}
@@ -256,7 +257,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		String attribute = State.getNextAttr(path);
 		processed = ((processed.length() > 0) ? Settings.PATH_DELIMITER : "") + attribute;
 
-		// subtypes
+		// subtypes based on function alias declared in the view for a property
 		PropertyAlias alias = view.getAlias(path);
 		if(alias != null && alias.isViewReference()) {
 			V subTypeState = getFragmentState(alias, viewAliasStateMap);
@@ -298,29 +299,69 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 					logger.error(
 						"Unable to add unknown attribute to state graph: " + attribute
 							+ " to state: "
-							+ current.getType().getName());
+							+ current.getType() + ". Is it a sub-type attribute?");
 					return;
 				}
 			}
 
-			Type propertyType = GraphUtil.getPropertyEntityType(childProperty, getShape());
-			if (propertyType.isDataType()) {
-				// This is an attribute of this state
-				current.addAttribute(childProperty.getName());
-				return;
-			}
-			else {
-				// Add a new state to the state graph
-				V end = (V)new SubtypeState(propertyType, false);
-				addVertex(end);
-
-				// add the transition
-				t = (E)new AutonomousEdge(childProperty.getName(), current, end, true);
-				addEdge(t);
-			}
+			t = extendProperty(current, attribute, false);
 		}
 
-		extend(view, processed, remaining, t.getEnd(), viewAliasStateMap);
+		if(t != null) {
+			extend(view, processed, remaining, t.getEnd(), viewAliasStateMap);
+		}
+	}
+
+	private E extendProperty(V current, String attribute, boolean initialize) {
+		E edge = null;
+
+		Property childProperty = current.getType().getProperty(attribute);
+		if(childProperty == null) {
+			logger.error("Unable to add unknown attribute to state graph: " + attribute + " to state: " + current.getType().getName() + ". Does this attribute belong to a subtype?");
+			return null;
+		}
+		Type propertyType = GraphUtil.getPropertyEntityType(childProperty, getShape());
+		if(propertyType.isDataType()) {
+			// This is an attribute of this state
+			current.addAttribute(childProperty.getName());
+			return null;
+		} else {
+			V end = (V)new SubtypeState(propertyType, false);
+			if (initialize) {
+				end.setAttributes(((EntityType)propertyType).getInitializedProperties());
+			}
+			addVertex(end);
+
+			// add the transition
+			edge = (E)new AutonomousEdge(childProperty.getName(), current, end, true);
+			addEdge(edge);
+		}
+
+		return edge;
+	}
+
+	@Override
+	public void extend(String path, V current, boolean initialize) {
+		if(path == null || "".equals(path.trim())) {
+			return; // terminating condition
+		}
+
+		// Is this an attribute
+		if(current.getAttributes().contains(path)) {
+			return;
+		}
+
+		String attribute = State.getNextAttr(path);
+		E t = getOutEdge(current, attribute);
+
+		// Not in the current state graph, let us find and add it
+		if(t == null) {
+			t = extendProperty(current, attribute, initialize);
+		}
+
+		if(t != null) {
+			extend(State.getRemaining(path), t.getEnd(), initialize);
+		}
 	}
 
 	@Override

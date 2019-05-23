@@ -196,21 +196,27 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public Object findById(Type type, Object id) {
-		// The object with the given id is obtained from the JDBCSessionContext
-		// primary key is always represented using the natural key
 
-		EntityKey ek;
-		if(!(id instanceof EntityKey)) {
-			EntityType entityType = (EntityType) type;
-			ExtendedProperty identifierProperty = (ExtendedProperty) entityType.getIdentifierProperty();
-			Map<String, Object> key = new HashMap<>();
-			key.put(identifierProperty.getName(), id);
-			ek = new NaturalEntityKey(key, type.getName());
+		if(context.readFromDB()) {
+			// TODO: get the object from the database
+			return null;
 		} else {
-			ek = (EntityKey) id;
-		}
+			// The object with the given id is obtained from the JDBCSessionContext
+			// primary key is always represented using the natural key
 
-		return context.getEntity(ek);
+			EntityKey ek;
+			if (!(id instanceof EntityKey)) {
+				EntityType entityType = (EntityType)type;
+				ExtendedProperty identifierProperty = (ExtendedProperty)entityType.getIdentifierProperty();
+				Map<String, Object> key = new HashMap<>();
+				key.put(identifierProperty.getName(), id);
+				ek = new NaturalEntityKey(key, type.getName());
+			}
+			else {
+				ek = (EntityKey)id;
+			}
+			return context.getEntity(ek);
+		}
 	}
 
 	@Override public List<Object> findByIds (EntityType entityType, Collection ids)

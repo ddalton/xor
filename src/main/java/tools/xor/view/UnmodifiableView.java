@@ -2,6 +2,7 @@ package tools.xor.view;
 
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
@@ -216,6 +217,11 @@ public class UnmodifiableView implements View
     @Override public void addTypeGraph (EntityType type, TypeGraph<State, Edge<State>> value, StateGraph.Scope scope)
     {
         raiseException();
+    }
+
+    @Override public boolean isTree (Settings settings)
+    {
+        return view.isTree(settings);
     }
 
     @Override public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType, StateGraph.Scope scope)

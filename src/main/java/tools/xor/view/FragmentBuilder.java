@@ -141,16 +141,29 @@ public class FragmentBuilder
     {
         View view = queryPiece.getView();
 
-        // get the StateTree instance
-        TypeGraph st = view.getTypeGraph((EntityType) queryPiece.getAggregateType(), StateGraph.Scope.EDGE);
-
         this.queryTree.addVertex(queryPiece);
 
         // We need to handle child views
         List<String> paths = new LinkedList<>(view.getAttributeList());
-        if(paths == null || paths.isEmpty()) {
+        if( (paths == null || paths.isEmpty()) && view.getChildren() != null && view.getChildren().size() > 0) {
             return;
         }
+
+        // get the StateTree instance
+        TypeGraph st = view.getTypeGraph((EntityType) queryPiece.getAggregateType(), StateGraph.Scope.EDGE);
+
+        /*
+         *  Algorithm
+         *  1. For each State in the StateTree we create a QueryFragment
+         *  2. For each non-inverse relationship property we create a InterQuery edge. Make sure the columns on both sides are included in the select
+         *  3. We join all the sub-types of i.e., _PARENT_-1 relationships [Not needed immediately]
+         *  4. Add non-fetchable properties (used for query condition etc)
+         *  5. Skip QueryPiece for open types
+         *  6. If it is not explorable we just add the id or the path
+         */
+
+
+
 
         // Also add the function attributes
         // Add them as NON-fetched properties

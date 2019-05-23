@@ -90,6 +90,11 @@ public class QueryType extends AbstractType {
     }
 
     @Override
+    public String toString() {
+        return getName() + " [" + this.basedOn.getName() + "]";
+    }
+
+    @Override
     public boolean isInstance(Object object) {
         return false;
     }

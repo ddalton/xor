@@ -1,9 +1,11 @@
 package tools.xor.util.graph;
 
 import org.json.JSONObject;
+import tools.xor.AssociationSetting;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.view.QueryPiece;
@@ -109,6 +111,30 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * @return a string representation of the contents
 	 */
 	public String dumpState();
+
+	/**
+	 * This method is to prune the state graph of the given associations.
+	 *
+	 * @param associations to be deleted
+	 * @param shape of the type being pruned
+	 */
+	void prune (List<AssociationSetting> associations, Shape shape);
+
+	/**
+	 * Mark the types that need to be handled as references
+	 * @param references list of types
+	 * @param shape of the type
+	 */
+	void markReferences (List<String> references, Shape shape);
+
+	/**
+	 * This method is to enhance the state graph since the states are reused across other state graph entities.
+	 * We cannot just rebuild a part of the state graph with new state graph if we don't account for the sharing.
+	 *
+	 * @param associations new properties e.g., open properties being added to the state graph
+	 * @param shape of the type being enhanced
+	 */
+	void enhance(List<AssociationSetting> associations, Shape shape);
 
 	/**
 	 * Checks to types to see if all them support dynamic update. Even if a single concrete type

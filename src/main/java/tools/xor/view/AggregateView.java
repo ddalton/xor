@@ -41,8 +41,10 @@ import org.apache.log4j.Logger;
 
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
+import tools.xor.AssociationSetting;
 import tools.xor.EntityType;
 import tools.xor.FunctionType;
+import tools.xor.MatchType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
@@ -564,6 +566,16 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		setExpanded(true);
 	}
 
+	private boolean hasRegex() {
+		for(String attrPath: this.attributeList) {
+			if (DFAtoRE.isRegex(attrPath)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	public List<String> getExpandedList(List<String> input) {
 		// Find and substitute the view references
@@ -680,11 +692,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	@Override
 	public TypeGraph<State, Edge<State>> getTypeGraph (EntityType entityType) {
-		if(isAggregateView(getName())) {
-			return getTypeGraph(entityType, StateGraph.Scope.TYPE_GRAPH);
-		} else {
-			return getTypeGraph(entityType, StateGraph.Scope.VIEW_GRAPH);
-		}
+		return getTypeGraph(entityType, StateGraph.Scope.TYPE_GRAPH);
 	}
 
 	public TypeGraph<State, Edge<State>> getTypeGraph () {
@@ -694,6 +702,28 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 		// Return the type graph related to the view EntityType
 		return getTypeGraph(null);
+	}
+
+	@Override
+	public boolean isTree (Settings settings) {
+		if(settings.getExpandedAssociations() != null && settings.getExpandedAssociations().size() > 0) {
+			for(AssociationSetting assoc: settings.getExpandedAssociations()) {
+				if(assoc.getMatchType() == MatchType.TYPE ||
+					assoc.getMatchType() == MatchType.RELATIVE_PATH) {
+					return false;
+				}
+			}
+		}
+
+		if(isAggregateView(getName())) {
+			return false;
+		}
+
+		if(hasRegex()) {
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override

@@ -367,7 +367,8 @@ public class Shape
     }
 
     /**
-     * Method to optimially retrieve a single property
+     * Method to optimally retrieve a single property. It also looks at the super types.
+     *
      * @param type entity type
      * @param name of the property
      * @return property meta object
@@ -375,7 +376,32 @@ public class Shape
     public Property getProperty(EntityType type, String name) {
         Property result = null;
 
-        if(getDirectProperties(type) != null && getDirectProperties(type).containsKey(name)) {
+        EntityType current = type;
+        do {
+            if (getDirectProperties(current) != null && getDirectProperties(current).containsKey(name)) {
+                result = getDirectProperties(current).get(name);
+            }
+            current = current.getSuperType();
+        } while(result == null && current != null);
+
+        if(result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+            result = parent.getProperty(type, name);
+        }
+
+        return result;
+    }
+
+    /**
+     * Check if a property is declared only on that type. This method does not check
+     * the super types to find the property. @See Shape#getProperty
+     * @param type
+     * @param name
+     * @return
+     */
+    public Property getDeclaredProperty(EntityType type, String name) {
+        Property result = null;
+
+        if (getDirectProperties(type) != null && getDirectProperties(type).containsKey(name)) {
             result = getDirectProperties(type).get(name);
         }
 

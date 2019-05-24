@@ -39,6 +39,8 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	public StateTree(Type aggregateRoot, Shape shape, State rootState) {
 		super(aggregateRoot, shape);
 		this.rootState = (V) rootState;
+
+		addVertex(this.rootState);
 	}
 	
 	@Override
@@ -65,7 +67,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		SubtypeState parent;
 		Map<String, Resolver> resolvers;
 
-		public SubtypeState(Type type, boolean startState) {
+		public SubtypeState(QueryType type, boolean startState) {
 			super(type, startState);
 
 			subtypeStates = new HashMap<>();
@@ -79,6 +81,8 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			this.parent = sts;
 		}
 
+		// Don't need this since getting a property from a subtype also searches the
+		// supertype
 		public void addSupertype (SubtypeState ancestorState, TypeGraph tg) {
 			ancestorState.addSubtype(this, tg, this);
 		}
@@ -127,7 +131,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				end);
 		}
 
-		public State findState (EntityType entityType) {
+		public SubtypeState findState (EntityType entityType) {
 
 			if(subtypeStates.containsKey(entityType.getName())) {
 				return subtypeStates.get(entityType.getName());
@@ -164,21 +168,22 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			entityType = (EntityType)view.getShape().getType(view.getTypeName());
 		}
 
-		// Allow it to host aliases
-		entityType = new QueryType(entityType, null);
-
 		// Scan through all the child views and build a map between a root state and its
 		// view and between the view name and the state.
 		Map<PropertyAlias, State> viewAliasStateMap = new HashMap<>();
 		Map<String, AggregateView> nameViewMap = new HashMap<>();
 
-		State startState = new SubtypeState(entityType, true);
-		viewAliasStateMap.put(new PropertyAlias(view.getName()), startState);
+		// Allow it to host aliases
+		QueryType queryType = new QueryType(entityType, null);
+		State startState = new SubtypeState(queryType, true);
+
+		// Handle the root view
+		viewAliasStateMap.put(new PropertyAlias("root", null, null, view.getName(), false), startState);
 		nameViewMap.put(view.getName(), view);
-		buildMaps(viewAliasStateMap, nameViewMap, view, entityType);
+		buildMaps(viewAliasStateMap, nameViewMap, view, queryType);
 
 		// Create the graph and add all states to it
-		StateTree result = new StateTree<>(entityType, view.getShape(), startState);
+		StateTree result = new StateTree<>(queryType, view.getShape(), startState);
 		for(State state: viewAliasStateMap.values()) {
 			result.addVertex(state);
 		}
@@ -241,13 +246,16 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		processed = ((processed.length() > 0) ? Settings.PATH_DELIMITER : "") + attribute;
 
 		// subtypes based on function alias declared in the view for a property
-		PropertyAlias alias = view.getAlias(path);
+		PropertyAlias alias = view.getAlias(processed);
 		if(alias != null && alias.isViewReference()) {
+			// get a view alias
 			V subTypeState = getFragmentState(alias, viewAliasStateMap);
 			current.addSubtype(subTypeState, this, current);
+			// The attributes of the view are later on added to the state using method linkEdges
 			return;
 		}
 		if(processed.length() > 0) {
+			// Get a property alias
 			alias = view.getAlias(processed);
 		}
 
@@ -256,29 +264,33 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 		// Not in the current state graph, let us find and add it
 		if (t == null) {
-			// Extend along two ways
-			// 1. By inheritance - find the correct subtype from Property Alias
 			Property childProperty = (current.getType()).getProperty(attribute);
 			if (childProperty == null) {
+				// Extend along three ways
+				// 1. Extend by using a alias
+				// find the correct subtype from Property Alias
 				if(alias != null) {
 					QueryType queryType = (QueryType)current.getType();
 					ExtendedProperty original = (ExtendedProperty)queryType.getProperty(alias.getOriginal());
-					Type newPropertyType = getShape().getType(alias.getSubclassName());
+					Type propertyType = alias.getTypeName() != null ?
+						getShape().getType(alias.getTypeName()) : queryType.getBasedOn();
 
 					if(original != null) {
-						if (!newPropertyType.isDataType() || original.isMany()) {
-							newPropertyType = new QueryType((EntityType)newPropertyType, null);
-						}
-
 						childProperty = original.refine(
 							alias.getAlias(),
-							newPropertyType,
+							propertyType,
 							queryType);
+
+						// Enhance the type by adding this new property (alias)
+						queryType.addProperty(childProperty);
+
+						// add it to the scope (state)
+						current.addAttribute(childProperty.getName());
 					} else {
+						// root alias
 						queryType.addSelfJoin(alias);
 					}
 
-					queryType.addProperty(childProperty);
 				} else {
 					logger.error(
 						"Unable to add unknown attribute to state graph: " + attribute
@@ -288,10 +300,9 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				}
 			}
 
-			// 2. By the path - All new states by walking along the property path
-			// This approach could also involve inheritance, but the correct
-			// type needs to be deduced
-			t = extendByPath(current, attribute, false);
+			// 2. By inheritance - Find the correct types
+			// 3. By the path - All new states by walking along the property path
+			t = extendByPath(current, attribute, remaining, false);
 		}
 
 		if(t != null) {
@@ -299,24 +310,62 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		}
 	}
 
-	private E extendByPath (V current, String attribute, boolean initialize) {
+	private E extendByPath (V current, String attribute, String remaining, boolean initialize) {
 		E edge = null;
 
 		Property childProperty = current.getType().getProperty(attribute);
 		if(childProperty == null) {
-			// TODO: Find if the property is in the subtype or supertype
-			// TODO: If so, add either SubtypeState#addSubtype or SubtypeState#addSupertype
 
-			logger.error("Unable to add unknown attribute to state graph: " + attribute + " to state: " + current.getType().getName() + ". Does this attribute belong to a subtype?");
-			return edge;
+			// Search and add the property from the subtype
+			boolean found = false;
+			if(current.getType() instanceof EntityType) {
+				EntityType entityType = (EntityType)current.getType();
+				List<EntityType> subTypes = entityType.findInSubtypes(attribute);
+
+				SubtypeState sts = null;
+				for(EntityType subType: subTypes) {
+					if(remaining != null && subType.getProperty(remaining) == null) {
+						continue;
+					}
+					found = true;
+					sts = current.findState(subType);
+					if(sts == null) {
+						sts = new SubtypeState(new QueryType(subType, null), false);
+						current.addSubtype(sts, this, current);
+					}
+					sts.addAttribute(attribute);
+				}
+
+				// add an edge where required
+				if(sts != null && remaining != null) {
+					Property p = ((QueryType)sts.getType()).getBasedOn().getProperty(attribute);
+					return addQueryEdge(current, p, initialize);
+				}
+			}
+
+			if(!found) {
+				logger.error(
+					"Unable to add unknown attribute to state graph: " + attribute + " to state: "
+						+ current.getType().getName());
+			}
+			return null;
+		} else {
+			edge = addQueryEdge(current, childProperty, initialize );
 		}
+
+		return edge;
+	}
+
+	private E addQueryEdge(V current, Property childProperty, boolean initialize) {
+		E edge;
+
 		Type propertyType = GraphUtil.getPropertyEntityType(childProperty, getShape());
 		if(propertyType.isDataType()) {
 			// This is an attribute of this state
 			current.addAttribute(childProperty.getName());
-			return edge;
+			return null;
 		} else {
-			V end = (V)new SubtypeState(propertyType, false);
+			V end = (V)new SubtypeState(new QueryType((EntityType) propertyType, null), false);
 			if (initialize) {
 				end.setAttributes(((EntityType)propertyType).getInitializedProperties());
 			}
@@ -345,12 +394,13 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		E t = getOutEdge(current, attribute);
 
 		// Not in the current state graph, let us find and add it
+		String remaining = State.getRemaining(path);
 		if(t == null) {
-			t = extendByPath(current, attribute, initialize);
+			t = extendByPath(current, attribute, remaining, initialize);
 		}
 
 		if(t != null) {
-			extend(State.getRemaining(path), t.getEnd(), initialize);
+			extend(remaining, t.getEnd(), initialize);
 		}
 	}
 
@@ -390,9 +440,9 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			for (PropertyAlias viewAlias : view.getViewAliases()) {
 				AggregateView childView = nameViewMap.get(viewAlias.getViewName());
 				if (childView != null) {
-					EntityType childEntityType = (EntityType)entityType.getDAS().getType(viewAlias.getSubclassName());
-
-					SubtypeState childRootState = new SubtypeState(childEntityType, true);
+					EntityType childEntityType = (EntityType)entityType.getDAS().getType(viewAlias.getTypeName());
+					QueryType queryType = new QueryType(childEntityType, null);
+					SubtypeState childRootState = new SubtypeState(queryType, false);
 					viewAliasStateMap.put(viewAlias, childRootState);
 
 					buildMaps(viewAliasStateMap, nameViewMap, childView, childEntityType);

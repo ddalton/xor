@@ -45,7 +45,7 @@ public class QueryType extends AbstractType {
 
     private String name;
     private EntityType basedOn;
-    private Map<String, Property> properties;
+    private Map<String, Property> properties; // Properties in addition to the basedOn type
     private List<AggregateView.PropertyAlias> selfJoins; // Needed for root query type as it does not have a parent
 
     public QueryType(EntityType basedOn, Map<String, Property> properties) {

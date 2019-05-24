@@ -8,8 +8,8 @@ Algorithm:
     
     So extend does extend in 2 ways
     1. Extend along the path
-    2. Extend along the inheritance hierarchy
-       The TYPE meta attribute is automatically added for this property for StateTree by FragmentBuilder
+    2. Extend along the inheritance hierarchy - TYPE attribute is NOT added as it can be incorrect,
+          as the subtypes are added only ondemand basis.
     
     Exception: If more than 1 state is found then all those states are added to the StateTree
 extendByPath needs to be updated to handle subtype matching for properties that are on the subtypes or supertypes.
@@ -20,11 +20,10 @@ This extend algorithm needs to be updated for StateTree only and not StateGraph
     
     We use StateTree only for Query
     findById should get entity from DB for JDBC and Read action
+
+     The data from the most specific type requested for a given primary key is used to
+     decide the type for that object
     
-    Fix getCurrentState - getName should be based on the type name
-
-
-
 
 
 

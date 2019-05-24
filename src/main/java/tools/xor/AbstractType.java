@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -1282,6 +1283,33 @@ public abstract class AbstractType implements EntityType {
 
 		while(!reverse.isEmpty()) {
 			result.add(reverse.pop());
+		}
+
+		return result;
+	}
+
+	@Override
+	public List<EntityType> findInSubtypes (String property) {
+		List<EntityType> result = new LinkedList<>();
+
+		// Ensure property is not present in the current type
+		assert(getDAS().getShape().getProperty(this, property) == null);
+
+		// We will do a BFS to get the result
+		Queue<EntityType> queue = new LinkedList<>();
+		queue.addAll(getChildSubtypes());
+		while(!queue.isEmpty()) {
+			// remove the head of the queue
+			EntityType childType = queue.remove();
+
+			// check if this type has the property. If it has it then
+			// add it to the result
+			// if not check its children by added them to the back of the queue
+			if(getDAS().getShape().getDeclaredProperty(childType, property) != null) {
+				result.add(childType);
+			} else {
+				queue.addAll(childType.getChildSubtypes());
+			}
 		}
 
 		return result;

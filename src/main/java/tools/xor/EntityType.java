@@ -341,4 +341,14 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @return descendant chain
 	 */
 	public List<EntityType> getDescendantsTo(EntityType entityType);
+
+	/**
+	 * Check in which subtypes is the property present.
+	 * Ideally this should return only a single item, but there can be cases
+	 * where the same property can be defined by unrelated sub types
+	 *
+	 * @param property to search for
+	 * @return subtypes containing that property definition
+	 */
+	public List<EntityType> findInSubtypes (String property);
 }

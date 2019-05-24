@@ -817,31 +817,26 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	/**
-	 * The propertyName is required and it represents the anchor path for a view
-	 * At least one of the following should be provided:
-	 * - alias
-	 * - subclassName
-	 * - viewName
+	 * propertyName - optional. If the propertyName is not provided then it represents an alias on the root object
+	 * alias - required
+	 * typeName - alias type, can be a sub type of the type of propertyName
+	 * viewName - optional, represents the properties added to the alias
 	 */
 	public static class PropertyAlias {
 		String alias;
-		String propertyName; // Required
-		String subclassName;
+		String propertyName;
+		String typeName;
 		String viewName;
 		boolean isInterQuery; // If present, then this alias represents an interquery edge
 
-		public PropertyAlias(String viewName) {
-			this(null, "", null, viewName, false);
-		}
-
-		public PropertyAlias(String alias, String propertyName, String subclassName, String viewName, boolean isInterQuery) {
+		public PropertyAlias(String alias, String propertyName, String typeName, String viewName, boolean isInterQuery) {
 			this.alias = alias;
 			this.propertyName = propertyName;
-			this.subclassName = subclassName;
+			this.typeName = typeName;
 			this.viewName = viewName;
 			this.isInterQuery = isInterQuery;
 
-			assert(this.propertyName != null && (this.alias != null || this.subclassName != null || this.viewName != null));
+			assert(this.alias != null);
 		}
 
 		public boolean isViewReference() {
@@ -852,8 +847,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			return this.viewName;
 		}
 
-		public String getSubclassName() {
-			return this.subclassName;
+		public String getTypeName () {
+			return this.typeName;
 		}
 
 		public String getAlias() {
@@ -873,12 +868,12 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 				return false;
 
 			PropertyAlias other = (PropertyAlias) o;
-			if(!propertyName.equals(other.propertyName)) {
+			if(!alias.equals(other.alias)) {
 				return false;
 			}
 
-			if( (alias != null ? alias.equals(other.alias) : other.alias == null) &&
-				(subclassName != null ? subclassName.equals(other.subclassName) : other.subclassName == null) &&
+			if( (propertyName != null ? propertyName.equals(other.propertyName) : other.propertyName == null) &&
+				(typeName != null ? typeName.equals(other.typeName) : other.typeName == null) &&
 				(viewName != null ? viewName.equals(other.viewName) : other.viewName == null)
 				) {
 				if(isInterQuery == other.isInterQuery) {
@@ -893,9 +888,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		public int hashCode() {
 			int h = 17;
 
-			h = 31 * h + propertyName.hashCode();
-			h = alias != null ? (31 * h + alias.hashCode()) : h;
-			h = subclassName != null ? (31 * h + subclassName.hashCode()) : h;
+			h = 31 * h + alias.hashCode();
+			h = propertyName != null ? (31 * h + propertyName.hashCode()) : h;
+			h = typeName != null ? (31 * h + typeName.hashCode()) : h;
 			h = viewName != null ? (31 * h + viewName.hashCode()) : h;
 			h = isInterQuery ? 31 * h : h;
 
@@ -934,7 +929,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		}
 
 		// Get the anchor path for the view reference
-		if(path.startsWith(VIEW_REFERENCE_START)) {
+		if(path.contains(VIEW_REFERENCE_START)) {
 			path = path.substring(0, path.indexOf(VIEW_REFERENCE_START));
 		}
 

@@ -97,6 +97,7 @@ public class JPAProperty extends AbstractProperty {
 		super(name, type, parentType, relType, elementType);
 	}
 
+	@Override
 	public Property refine (String name, Type type, EntityType parentType) {
 		JPAProperty result = null;
 

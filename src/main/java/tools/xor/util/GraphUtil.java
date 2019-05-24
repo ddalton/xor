@@ -44,9 +44,9 @@ public class GraphUtil {
 
 	public static Type getPropertyEntityType(Property property, Shape shape) {
 		Type result = property.getType();
-		//if(SimpleType.class.isAssignableFrom(result.getClass())) {
+
 		if(result instanceof SimpleType) {
-			if(property != null && property.isMany())
+			if(property.isMany())
 				result = ((ExtendedProperty)property).getElementType();
 		}
 

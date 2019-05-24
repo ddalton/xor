@@ -31,7 +31,7 @@ import java.util.List;
  * We do not implement ExtendedProperty since most the functionality from ExtendedProperty
  * is not captured in JDBC. Main motivation for this decision is to keep this simple.
  */
-public class JDBCProperty extends AbstractProperty
+public class JDBCProperty extends AbstractProperty implements Cloneable
 {
     public static final String INVERSE = "−1";
     public static final String PARENT = "_PARENT_";
@@ -313,5 +313,25 @@ public class JDBCProperty extends AbstractProperty
     @Override
     public void addMapEntry(Object dataObject, Object key, Object value) {
         this.jsonObjectProperty.addMapEntry(dataObject, key, value);
+    }
+
+    @Override
+    public Property refine (String name, Type type, EntityType parentType) {
+        JDBCProperty result = null;
+        try {
+            result = (JDBCProperty)this.clone();
+            result.name = name;
+
+            if(!isMany()) {
+                setType(type);
+            } else { // changing the element type
+                this.elementType = type;
+            }
+        }
+        catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 }

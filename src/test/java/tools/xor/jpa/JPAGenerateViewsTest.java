@@ -34,7 +34,7 @@ import tools.xor.logic.DefaultGenerateViews;
 @Transactional
 public class JPAGenerateViewsTest extends DefaultGenerateViews {
 
-	@Test(expected = RuntimeException.class)
+	@Test
 	public void generate() {
 		super.generate();		
 	}

@@ -34,7 +34,10 @@ public class JDBCQuery extends AbstractQuery
 		this.nativeQuery = nativeQuery;
 
 		createPreparedStatement();
-		initParamMap();
+
+		if(isNativeQuery()) {
+			initParamMap();
+		}
 	}
 
 	private void createPreparedStatement() {
@@ -53,6 +56,10 @@ public class JDBCQuery extends AbstractQuery
 		this.connection = connection;
 
 		createPreparedStatement();
+	}
+
+	private boolean isNativeQuery() {
+		return this.nativeQuery != null;
 	}
 
 	private void initParamMap() {
@@ -189,7 +196,7 @@ public class JDBCQuery extends AbstractQuery
 			}
 			rs.close();
 		} catch (SQLException se) {
-			ClassUtil.wrapRun(se);
+			throw ClassUtil.wrapRun(se);
 		}
 
 		return result;

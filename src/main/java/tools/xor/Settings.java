@@ -253,6 +253,9 @@ public class Settings {
 
 			// Need this to be true for JDBCPersistenceOrchestrator
 			this.postFlush = true;
+
+			// Needed for id to be copied
+			this.baseline = true;
 		}
 	}
 

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implements TypeGraph<V, E> {
+public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implements TypeGraph<V, E>, Tree<V, E> {
 
 	private TypeGraph<V, E> typeGraph;
 
@@ -145,5 +145,61 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 	@Override
 	public boolean hasPath(String path) {
 		return typeGraph.hasPath(path);
+	}
+
+	@Override public V getParent (V node)
+	{
+		if(typeGraph instanceof Tree) {
+			return ((Tree<V, E>)typeGraph).getParent(node);
+		} else {
+			throw new UnsupportedOperationException("getParent not supported on a graph");
+		}
+	}
+
+	@Override public List<V> getChildren (V node)
+	{
+		if(typeGraph instanceof Tree) {
+			return ((Tree<V, E>)typeGraph).getChildren(node);
+		} else {
+			throw new UnsupportedOperationException("getChildren not supported on a graph");
+		}
+	}
+
+	@Override public V getRoot ()
+	{
+		if(typeGraph instanceof Tree) {
+			return ((Tree<V, E>)typeGraph).getRoot();
+		} else {
+			throw new UnsupportedOperationException("getRoot not supported on a graph");
+		}
+	}
+
+	@Override public int getHeight ()
+	{
+		if(typeGraph instanceof Tree) {
+			return ((Tree<V, E>)typeGraph).getHeight();
+		} else {
+			throw new UnsupportedOperationException("getHeight not supported on a graph");
+		}
+	}
+
+	@Override public String getPathToRoot (V node)
+	{
+		if(typeGraph instanceof Tree) {
+			return ((Tree<V, E>)typeGraph).getPathToRoot(node);
+		} else {
+			throw new UnsupportedOperationException("getPathToRoot not supported on a graph");
+		}
+	}
+
+	@Override public <Q extends TreeOperations<V, E>> void split (E splitAtEdge,
+																  E newEdge,
+																  Q target)
+	{
+		if(typeGraph instanceof Tree) {
+			((Tree<V, E>)typeGraph).split(splitAtEdge, newEdge, target);
+		} else {
+			throw new UnsupportedOperationException("split not supported on a graph");
+		}
 	}
 }

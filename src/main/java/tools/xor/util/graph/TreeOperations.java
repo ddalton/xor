@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 public class TreeOperations<V extends Vertex, E extends Edge<V>> extends DirectedSparseGraph<V, E> implements Tree<V, E>
 {
@@ -171,19 +172,27 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         // A node in a tree has only one incoming edge
         // We walk up the tree from the given node until we reach the root node
 
-        StringBuilder path = new StringBuilder("");
-
         V root = tree.getRoot();
+        Stack<String> pathSteps = new Stack<>();
         while(node != root) {
             Collection<E> inEdges = tree.getInEdges(node);
 
-            assert inEdges.size() == 1 : "Non-root should have one incoming edge";
-            String propertyName = inEdges.iterator().next().getName();
+            assert inEdges.size() == 1 : "Non-root node should have only one incoming edge";
 
+            Edge<V> incoming = inEdges.iterator().next();
+            pathSteps.push(incoming.getName());
+
+            node = incoming.getStart();
+        }
+
+        // Build the path
+        StringBuilder path = new StringBuilder("");
+        while(!pathSteps.isEmpty()) {
             if(path.length() > 0) {
                 path.append(Settings.PATH_DELIMITER);
             }
-            path.append(propertyName);
+            String step = pathSteps.pop();
+            path.append(step);
         }
 
         return path.toString();

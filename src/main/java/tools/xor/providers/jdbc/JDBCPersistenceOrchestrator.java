@@ -255,7 +255,7 @@ public class JDBCPersistenceOrchestrator
 
 	@Override public Query getQuery (String queryString, QueryType queryType, Object queryInput, Settings settings)
 	{
-		Query result = null;
+		Query result;
 		switch(queryType) {
 
 		case SQL:
@@ -272,7 +272,12 @@ public class JDBCPersistenceOrchestrator
 			break;
 
 		case OQL:
-			throw new UnsupportedOperationException("This is not yet supported for the JDBC interface");
+			connection = null;
+			if (!Query.isDeferred(queryString)) {
+				connection = getConnection();
+			}
+			result = new JDBCQuery(queryString, connection, null);
+			break;
 
 		default:
 			throw new RuntimeException("Unsupported queryType: " + queryType.name());

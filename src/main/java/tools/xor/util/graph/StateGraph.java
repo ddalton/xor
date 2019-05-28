@@ -319,7 +319,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	public boolean hasPath(String path) {
 		return hasPath(getRootState(), path);
 	}
-	
+
 	public boolean hasPath(V vertex, String path) {
 		// Is this an attribute
 		if(vertex.getAttributes() != null && vertex.getAttributes().contains(path)) {

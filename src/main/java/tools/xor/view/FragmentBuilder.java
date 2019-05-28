@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
+import tools.xor.QueryType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
@@ -33,12 +34,14 @@ import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.Tree;
 import tools.xor.util.graph.TypeGraph;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +63,7 @@ public class FragmentBuilder
         this.aggregateTree = aggregateTree;
     }
 
-    private void constructPieces(QueryTree parent, View childView) {
+    private void constructQueryTrees (QueryTree parent, View childView) {
         // first build the QueryTree for the child
         EntityType entityType = null;
         if(childView.getTypeName() != null && !"".equals(childView.getTypeName().trim())) {
@@ -106,7 +109,7 @@ public class FragmentBuilder
 
         if(childView.getChildren() != null) {
             for (View grandchildView: childView.getChildren()) {
-                constructPieces(childPiece, grandchildView);
+                constructQueryTrees(childPiece, grandchildView);
             }
         }
     }
@@ -133,7 +136,7 @@ public class FragmentBuilder
 
         if (view.getChildren() != null) {
             for (View childView : view.getChildren()) {
-                constructPieces(queryTree, childView);
+                constructQueryTrees(queryTree, childView);
             }
         }
     }
@@ -152,7 +155,6 @@ public class FragmentBuilder
 
         // get the StateTree instance
         TypeGraph<State, Edge<State>> st = view.getTypeGraph((EntityType) queryTree.getAggregateType(), StateGraph.Scope.EDGE);
-        //assert st instanceof StateTree : "Expecting a StateTree instance";
 
         /*
          *  Algorithm
@@ -165,24 +167,66 @@ public class FragmentBuilder
          */
 
         // Function attributes
-        /*
         for(String attr: view.getFunctionAttributes()) {
             st.extend(attr, st.getRootState(), false);
         }
 
+        // Add the fragments
+        Map<State, QueryFragment> stateToFragmentMap = new HashMap<>();
+        Map<String, QueryFragment> pathToFragmentMap = new HashMap<>();
         for(State state: st.getVertices()) {
 
             QueryType qt = (QueryType)state.getType();
             QueryFragment fragment = new QueryFragment(
-                qt.getDomainType(),
+                qt.getBasedOn(),
                 aggregateTree.nextAlias(),
-                null);
+                ((Tree)st).getPathToRoot(state));
+            stateToFragmentMap.put(state, fragment);
+
+            // collect them to later add them in the correct order
+            for(String attr: state.getAttributes()) {
+                pathToFragmentMap.put(fragment.getFullPath(attr), fragment);
+            }
+
+            queryTree.addVertex(fragment);
         }
-*/
 
+        // Add the attributes in the correct order
+        for(String path: paths) {
+            if(pathToFragmentMap.containsKey(path)) {
+                QueryFragment qf = pathToFragmentMap.remove(path);
+                qf.addPath(path);
+            }
+        }
+        // Add the remaining attributes - order is irrelevant
+        for(String path: new HashSet<>(pathToFragmentMap.keySet())) {
+            QueryFragment qf = pathToFragmentMap.remove(path);
+            qf.addPath(path);
+        }
 
+        // Add the edges
+        // handle subtypes, joins etc
+        for(Edge<State> edge: st.getEdges()) {
+            EntityType startType = ((QueryType)edge.getStart().getType()).getBasedOn();
+            Property p = startType.getProperty(edge.getName());
 
+            QueryFragment start = stateToFragmentMap.get(edge.getStart());
+            QueryFragment end = stateToFragmentMap.get(edge.getEnd());
+            IntraQuery queryEdge = new IntraQuery(
+                edge.getName(),
+                start,
+                end,
+                p);
 
+            queryTree.addEdge(queryEdge, start, end);
+        }
+
+        // We do not construct fragments for open types
+        if(queryTree.getAggregateType().isOpen()) {
+            return;
+        }
+
+/*
         // Also add the function attributes
         // Add them as NON-fetched properties
         paths.addAll(view.getFunctionAttributes());
@@ -195,17 +239,12 @@ public class FragmentBuilder
         queryTree.addVertex(start);
         pathToFragment.put(QueryFragment.ROOT_NAME, start);
 
-        // We do not construct fragments for open types
-        if(queryTree.getAggregateType().isOpen()) {
-            return;
-        }
-
         // TODO: subtype fragments are supported only on JDBC
         // using the special _PARENT_ property
 
         for(String path: paths) {
             makeFragments(queryTree, path);
-        }
+        }*/
 
         // write the .dot content to log
         if(qtLogger.isDebugEnabled()) {

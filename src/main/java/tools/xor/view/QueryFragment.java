@@ -107,7 +107,7 @@ public class QueryFragment implements Vertex
     }
 
     private String stripAncestor(String path) {
-        if(ancestorPath != null && path.startsWith(ancestorPath)) {
+        if(ancestorPath != null && !"".equals(ancestorPath) && path.startsWith(ancestorPath)) {
             return path.substring(ancestorPath.length()+Settings.PATH_DELIMITER.length());
         } else {
             return path;
@@ -158,7 +158,7 @@ public class QueryFragment implements Vertex
     }
 
     public String getFullPath(String path) {
-        return ((ancestorPath == null) ? "" : (ancestorPath + Settings.PATH_DELIMITER)) + path;
+        return (ancestorPath == null || "".equals(ancestorPath)) ? path : (ancestorPath + Settings.PATH_DELIMITER) + path;
     }
 
     private boolean isUserAttribute(Set<String> attributePaths, String path) {

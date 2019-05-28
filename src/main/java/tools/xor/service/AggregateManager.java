@@ -31,6 +31,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
+import sun.java2d.pipe.SpanShapeRenderer;
 import tools.xor.AbstractBO;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
@@ -569,6 +570,9 @@ public class AggregateManager implements Xor
 		Type fromType = settings.getEntityType();
 		if (fromType == null || !fromType.isOpen()) {
 			fromType = oc.getType(getEntityClass(entity, settings));
+			if(!(fromType instanceof EntityType)) {
+				fromType = settings.getEntityType();
+			}
 		}
 		BusinessObject from = oc.createDataObject(entity, fromType, null, null);
 

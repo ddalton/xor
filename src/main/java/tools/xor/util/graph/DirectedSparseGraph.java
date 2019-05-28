@@ -75,6 +75,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 		this.id.put(vertex, vertexId);
 	}
 
+	@Override
 	public void removeVertex(V vertex) {
 		int vertexId = id.get(vertex);
 		unlinkVertex(vertexId);

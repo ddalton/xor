@@ -51,6 +51,10 @@ public interface Graph<V, E> {
 	 * @param vertex to add
 	 */
 	public void addVertex(V vertex);
-	
 
+	/**
+	 * Remove a vertex from the graph
+	 * @param vertex to remove
+	 */
+	void removeVertex(V vertex);
 }

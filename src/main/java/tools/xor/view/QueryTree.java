@@ -34,7 +34,7 @@ import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
-import tools.xor.util.graph.Tree;
+import tools.xor.util.graph.TreeOperations;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,7 +48,7 @@ import java.util.Set;
 /**
  * Represents a portion of the user's request that can be satisfied by a single query.
  */
-public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends Tree<V, E>
+public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends TreeOperations<V, E>
 	implements Vertex
 {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

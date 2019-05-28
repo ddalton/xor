@@ -34,7 +34,7 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
-import tools.xor.util.graph.Tree;
+import tools.xor.util.graph.TreeOperations;
 
 /**
  * This is an optimization data structure used by queries.
@@ -85,7 +85,7 @@ import tools.xor.util.graph.Tree;
  *
  */
 
-public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends Tree<V, E>
+public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends TreeOperations<V, E>
 {
 	
 	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

@@ -10,7 +10,6 @@ import tools.xor.util.Vertex;
 
 public interface DirectedGraph<V, E> extends Graph<V, E> {
 
-	
 	/**
 	 * Remove the incident edges of a vertex with 
 	 * the given id. The vertex itself is not removed

@@ -31,7 +31,7 @@ import java.util.Set;
  * @param <V> Vertex
  * @param <E> Edge
  */
-public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.AutonomousEdge<V>> extends StateGraph<V, E> {
+public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.AutonomousEdge<V>> extends StateGraph<V, E> implements Tree<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private V rootState;
@@ -46,7 +46,39 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	@Override
 	public V getRootState() {
 		return rootState;
-	}	
+	}
+
+	@Override public V getParent (V node)
+	{
+		return TreeOperations.getParent(this, node);
+	}
+
+	@Override public List<V> getChildren (V node)
+	{
+		return TreeOperations.getChildren(this, node);
+	}
+
+	@Override public V getRoot ()
+	{
+		return TreeOperations.getRoot(this);
+	}
+
+	@Override public int getHeight ()
+	{
+		return TreeOperations.getHeight(this);
+	}
+
+	@Override public String getPathToRoot (V node)
+	{
+		return TreeOperations.getPathToRoot(this, node);
+	}
+
+	@Override public <Q extends TreeOperations<V, E>> void split (E splitAtEdge,
+																  E newEdge,
+																  Q target)
+	{
+		TreeOperations.split(this, splitAtEdge, newEdge, target);
+	}
 
 	/**
 	 * An edge that has logic embedded in it and can independently decide on the outcome of

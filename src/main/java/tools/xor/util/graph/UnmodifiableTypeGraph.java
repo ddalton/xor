@@ -65,7 +65,12 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 	public void addVertex(V vertex) {
 		raiseException();
 	}
-	
+
+	@Override public void removeVertex (V vertex)
+	{
+		typeGraph.removeVertex(vertex);
+	}
+
 	public void addEdge(E edge) {
 		addEdge(edge, edge.getStart(), edge.getEnd());
 	}

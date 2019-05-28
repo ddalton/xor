@@ -41,9 +41,9 @@ public interface DML {
 	/**
 	 * Give a chance to initialize the query provider
 	 * @param entityType of entity
-	 * @param queryPiece query object
+	 * @param queryTree query object
 	 */
-	public void prepare(EntityType entityType, QueryPiece queryPiece);
+	public void prepare(EntityType entityType, QueryTree queryTree);
 
 	/**
 	 * Executes the DML statement

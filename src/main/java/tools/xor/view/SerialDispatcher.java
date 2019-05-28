@@ -27,43 +27,43 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Goes through each QueryPiece and executes it.
+ * Goes through each QueryTree and executes it.
  * The walk is done in a BFS manner.
  */
 public class SerialDispatcher implements QueryDispatcher
 {
-    @Override public void execute (QueryTree<QueryPiece, InterQuery<QueryPiece>> qt, ObjectResolver resolver, CallInfo callInfo)
+    @Override public void execute (AggregateTree<QueryTree, InterQuery<QueryTree>> at, ObjectResolver resolver, CallInfo callInfo)
     {
-        QueryPiece qp = qt.getRoot();
-        List<QueryPiece> queries = new LinkedList<>();
-        queries.add(qp);
+        QueryTree queryTree = at.getRoot();
+        List<QueryTree> queries = new LinkedList<>();
+        queries.add(queryTree);
 
         QueryTreeInvocation queryInvocation = new QueryTreeInvocation();
         while(!queries.isEmpty()) {
-            qp = queries.remove(0);
+            queryTree = queries.remove(0);
 
-            Query query = qp.prepare(callInfo, resolver);
+            Query query = queryTree.prepare(callInfo, resolver);
             if(query != null) {
                 List records = query.getResultList(null, callInfo.getSettings());
-                queryInvocation.start(qt, qp);
-                resolver.processRecords(records, qp, callInfo, queryInvocation);
-                queryInvocation.finish(qt, qp);
+                queryInvocation.start(at, queryTree);
+                resolver.processRecords(records, queryTree, callInfo, queryInvocation);
+                queryInvocation.finish(at, queryTree);
 
                 // Now update the dependent queries
-                for(InterQuery<QueryPiece> outEdge: qt.getOutEdges(qp)) {
-                    queryInvocation.resolveQuery(qt, outEdge);
+                for(InterQuery<QueryTree> outEdge: at.getOutEdges(queryTree)) {
+                    queryInvocation.resolveQuery(at, outEdge);
                 }
 
                 // Rebuild the dependent queries
                 // Now update the dependent queries
-                for(InterQuery<QueryPiece> outEdge: qt.getOutEdges(qp)) {
+                for(InterQuery<QueryTree> outEdge: at.getOutEdges(queryTree)) {
                     PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
                     Query childQuery = outEdge.getEnd().getQuery();
                     po.evaluateDeferred(childQuery, Query.getQueryType(childQuery), queryInvocation);
                 }
             }
 
-            queries.addAll(qt.getChildren(qp));
+            queries.addAll(at.getChildren(queryTree));
         }
 
         resolver.postProcess();

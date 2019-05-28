@@ -80,7 +80,7 @@ public abstract class AbstractQuery implements Query {
 	}
 	
 	@Override
-	public void prepare(EntityType entityType, QueryPiece queryView) {
+	public void prepare(EntityType entityType, QueryTree queryTree) {
 		// nothing to prepare for a SQL query, but StoredProcedure needs to be prepared
 	}
 

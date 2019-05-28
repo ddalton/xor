@@ -20,9 +20,9 @@
 package tools.xor.util;
 
 import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryPiece;
+import tools.xor.view.QueryTree;
 
-public class InterQuery<V extends QueryPiece> extends Edge<V>
+public class InterQuery<V extends QueryTree> extends Edge<V>
 {
     private QueryFragment source;
     private QueryFragment target;

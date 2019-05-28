@@ -130,11 +130,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		if(outTransitions.get(vertex).containsKey(name)) {
 			return outTransitions.get(vertex).get(name);
 		} else {
-			// The graph only has unlabelled edges from parent to child
-			// and not vice-versa so we have to explicitly get the parent
+			// The graph only has unlabelled edges from supertype to child
+			// and not vice-versa so we have to explicitly get the supertype
 			// vertex and check it
 
-			// check parent if there is an inheritance relationship
+			// check supertype if there is an inheritance relationship
 			V parentVertex = getParentVertex(vertex);
 			return parentVertex == null ? null : getOutEdge(parentVertex, name);
 		}
@@ -584,7 +584,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 	}
 
-	public void extend(String path, V current, boolean initialize) {
+	@Override
+	public void extend (String path, V current, boolean initialize) {
 
 		if(path == null || "".equals(path.trim())) {
 			return; // terminating condition

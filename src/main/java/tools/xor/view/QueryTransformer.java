@@ -23,14 +23,13 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator.QueryType;
 import tools.xor.util.InterQuery;
 
 /**
  *
- * The QueryTransformer currently flattens the QueryTree and works off ColumnMeta and the attributePath.
- * This needs to be refactored and built directly from the root QueryPiece of the original
- * QueryTree instance.
+ * The QueryTransformer currently flattens the AggregateTree and works off ColumnMeta and the attributePath.
+ * This needs to be refactored and built directly from the root QueryTree of the original
+ * AggregateTree instance.
  * This approach gives the developer more flexibility in customizing the query and making it
  * more powerful (support hierarchical queries) and reliable (easier to test).
  *
@@ -41,15 +40,15 @@ import tools.xor.util.InterQuery;
  *
  * Glossary:
  * ---------
- * The QueryTree data structure is a tree of a tree
- * QueryTree -> QueryPiece -> QueryFragment
+ * The AggregateTree data structure is a tree of a tree
+ * AggregateTree -> QueryTree -> QueryFragment
  *
- * QueryTree
- *   A QueryTree consists of a tree of QueryPiece nodes connected by InterQuery edges.
+ * AggregateTree
+ *   A AggregateTree consists of a tree of QueryTree nodes connected by InterQuery edges.
  *   It represents how all the data in a view can be retrieved just using queries.
  *
- * QueryPiece
- *   A QueryPiece consists of a tree of QueryFragment nodes connected by IntraQuery edges.
+ * QueryTree
+ *   A QueryTree consists of a tree of QueryFragment nodes connected by IntraQuery edges.
  *   It represents a complete query that can be executed on a relational DB.
  *
  * QueryFragment
@@ -60,7 +59,7 @@ import tools.xor.util.InterQuery;
  *
  * InterQuery
  *   It shows the dependency between 2 queries.
- *   This is an Edge in a tree of QueryPiece nodes that shows how 2 QueryPiece instances
+ *   This is an Edge in a tree of QueryTree nodes that shows how 2 QueryTree instances
  *   are connected.
  *   It might have additional details on how the dependent query needs to be executed with
  *   information provided by the depended upon query. For example, either through a sub-query
@@ -68,31 +67,31 @@ import tools.xor.util.InterQuery;
  *
  * IntraQuery
  *   Describes the foreign key relationship between 2 entities.
- *   It is an Edge in a tree of QueryFragment nodes that form a QueryPiece.
+ *   It is an Edge in a tree of QueryFragment nodes that form a QueryTree.
  *
  *
  * Algorithm:
  * ----------
  * 1. QueryFragment builder
- *    Initially the QueryTree consists of all the property paths.
- *    It is made up of a single QueryPiece, that contains a tree data structure
+ *    Initially the AggregateTree consists of all the property paths.
+ *    It is made up of a single QueryTree, that contains a tree data structure
  *    made up of QueryFragment nodes and InterQuery edges for all the property paths.
  *    REF:
  *     FragmentBuilder
  *       Should also take care of creating fragments for aliases, i.e., it needs
  *       to add QueryType for the root if needed and add the necessary external properties
- *       to the QueryTree if needed.
- * 2. QueryTree modification for efficient queries
- *    This is analyzed and the necessary QueryPiece instances created.
+ *       to the AggregateTree if needed.
+ * 2. AggregateTree modification for efficient queries
+ *    This is analyzed and the necessary QueryTree instances created.
  *    REF:
  *      CartesianJoinSplitter,
  *      NestedJoinSplitter,
  *      LoopSplitter
- * 3. QueryTree modification for user functionality
+ * 3. AggregateTree modification for user functionality
  *    We modify the query to account for user features such as:
  *      QueryTrimmer
  * 4. Function
- *    Add necessary functions to the QueryPiece and the placeholders in the QueryFragments
+ *    Add necessary functions to the QueryTree and the placeholders in the QueryFragments
  *      setParameters
  * 5. Validation
  *    Based on the user input like ordering and paging, if it spans across
@@ -101,7 +100,7 @@ import tools.xor.util.InterQuery;
  *      SortValidator
  *      PageValidator
  * 6. Execution
- *    Then each QueryPiece has its query built and executed in the order specified by
+ *    Then each QueryTree has its query built and executed in the order specified by
  *    its dependency in the tree of InterQuery edges.
  *    REF:
  *      QueryBuilder
@@ -115,13 +114,13 @@ import tools.xor.util.InterQuery;
  *
  * QueryTrimmer
  * ------------
- * Based on the skip and include filters, the copy of the QueryTree is trimmed before it
+ * Based on the skip and include filters, the copy of the AggregateTree is trimmed before it
  * is executed
  *
  * QueryConsolidator
  * -----------------
  * If there are multiple inline (child views) and named views (view references), then
- * the QueryPiece constructed from them might have a single fragment in most cases. If so,
+ * the QueryTree constructed from them might have a single fragment in most cases. If so,
  * they can be rolled into the parent view.
  * Also, the functions will need to be rolled as well.
  *
@@ -135,7 +134,7 @@ import tools.xor.util.InterQuery;
  *
  * QueryBuilder
  * ------------
- * Generates the literal OQL QueryString from a QueryPiece.
+ * Generates the literal OQL QueryString from a QueryTree.
  * Binds it with the provided parameters.
  * Two types of queries are possible:
  *
@@ -170,13 +169,13 @@ import tools.xor.util.InterQuery;
  * =======
  *
  *
- * Uses a QueryPiece with an IntraQuery edge that contains alias information,
+ * Uses a QueryTree with an IntraQuery edge that contains alias information,
  * useful for queries.
  * Also, IntraQuery instances can have a custom implementation of the generated OQL query string.
  *
  * In the below example the IntraQuery instances contain the alias, name and other information:
  *
- * QueryPiece
+ * QueryTree
  *   _path
  *
  *     S1[E0]                     S2[E1]
@@ -185,13 +184,13 @@ import tools.xor.util.InterQuery;
  *   | description |   details    --------
  *    -------------
  *
- *  _path is null for the root QueryTree, but is the ancestor path for the InterQuery edge
- *  where this QueryPiece attaches. All input property names are normalized using this (made
+ *  _path is null for the root AggregateTree, but is the ancestor path for the InterQuery edge
+ *  where this QueryTree attaches. All input property names are normalized using this (made
  *  relative).
  *
  * S1 and S2 are instance of the QueryFragment class. E0 and E1 are query aliases.
  *
- * This QueryPiece produces the following OQL query:
+ * This QueryTree produces the following OQL query:
  *
  * SELECT E0.name, E0.description, E1.count FROM
  *   class1 E0 LEFT OUTER JOIN class2 E1 ON E1.id = E0.details
@@ -208,26 +207,26 @@ import tools.xor.util.InterQuery;
  * QueryFragment s2;
  * s2.getSelectList() -> "E1.count"
  *
- * The modified QueryPiece (with IntraQuery edges) will select additional columns to help with
- * stitching results from different QueryPiece instances (broken for optimization reasons)
+ * The modified QueryTree (with IntraQuery edges) will select additional columns to help with
+ * stitching results from different QueryTree instances (broken for optimization reasons)
  * into the desired object.
  * These properties will be marked as not fetched.
  *
- * QueryPiece.ColumnMeta { position, fetch, name }
+ * QueryTree.ColumnMeta { position, fetch, name }
  *
  * ColumnMeta is used to reconstruct the result object from the ResultSet.
- * If this QueryPiece represents the target of an InterQuery edge, then it would contain the
+ * If this QueryTree represents the target of an InterQuery edge, then it would contain the
  * information populated from the ResultSet to resolve the foreign key to the source of this edge.
  *
  * PAGING
  * ======
  * When pageColumn information is provided, we validate that the column indeed exists
- * in the QueryTree before adding this information into the query
+ * in the AggregateTree before adding this information into the query
  *
  * SORTING
  * =======
  * When ordering information is provided, we validate that the column indeed exists in the
- * QueryTree before adding this information into the query
+ * AggregateTree before adding this information into the query
  *
  * FILTERING
  * =========
@@ -235,7 +234,7 @@ import tools.xor.util.InterQuery;
  *
  * Logging
  * =======
- * print - Print both the QueryPiece graph structure and the related OQL fragments produced by
+ * print - Print both the QueryTree graph structure and the related OQL fragments produced by
  *        the query tree
  *
  *
@@ -257,12 +256,12 @@ public class QueryTransformer
 		}
 
 		// System OQL
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
-		new FragmentBuilder(null, queryTree).build((EntityType)settings.getEntityType());
-		QueryBuilder qb = new QueryBuilder(queryTree);
+		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(view);
+		new FragmentBuilder(null, aggregateTree).build((EntityType)settings.getEntityType());
+		QueryBuilder qb = new QueryBuilder(aggregateTree);
 		qb.construct(settings);
 
-		return queryTree.getRoot().getQuery();
+		return aggregateTree.getRoot().getQuery();
 	}
 
 	public static Query getUserQuery(View view, Settings settings) {

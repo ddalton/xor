@@ -25,14 +25,14 @@ import tools.xor.service.PersistenceOrchestrator;
 public class QueryFromSP implements QueryBuilderStrategy
 {
     private final View view;
-    private final QueryPiece queryPiece;
     private final QueryTree queryTree;
+    private final AggregateTree aggregateTree;
 
-    public QueryFromSP (View view, QueryPiece queryPiece, QueryTree queryTree)
+    public QueryFromSP (View view, QueryTree queryTree, AggregateTree aggregateTree)
     {
         this.view = view;
-        this.queryPiece = queryPiece;
         this.queryTree = queryTree;
+        this.aggregateTree = aggregateTree;
     }
 
     @Override public Query construct(Settings settings)
@@ -47,7 +47,7 @@ public class QueryFromSP implements QueryBuilderStrategy
                 querySP,
                 settings);
 
-            querySP.deriveColumns(this.queryPiece, query, settings, this.queryTree, this.view);
+            querySP.deriveColumns(this.queryTree, query, settings, this.aggregateTree, this.view);
         }
 
         return query;

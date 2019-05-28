@@ -28,14 +28,14 @@ import java.util.List;
 public class QueryFromSQL implements QueryBuilderStrategy
 {
     private final View view;
-    private final QueryPiece queryPiece;
     private final QueryTree queryTree;
+    private final AggregateTree aggregateTree;
 
-    public QueryFromSQL (View view, QueryPiece queryPiece, QueryTree queryTree)
+    public QueryFromSQL (View view, QueryTree queryTree, AggregateTree aggregateTree)
     {
         this.view = view;
-        this.queryPiece = queryPiece;
         this.queryTree = queryTree;
+        this.aggregateTree = aggregateTree;
     }
 
     @Override public Query construct (Settings settings)
@@ -64,7 +64,7 @@ public class QueryFromSQL implements QueryBuilderStrategy
         query.updateParamMap(relevantParams);
 
         // Initialized the selected columns
-        nativeQuery.deriveColumns(this.queryPiece, query, settings, this.queryTree, this.view);
+        nativeQuery.deriveColumns(this.queryTree, query, settings, this.aggregateTree, this.view);
 
         return query;
     }

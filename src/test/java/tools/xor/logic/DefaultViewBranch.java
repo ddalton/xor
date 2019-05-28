@@ -28,8 +28,8 @@ import tools.xor.Type;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
+import tools.xor.view.AggregateTree;
 import tools.xor.view.View;
 
 public class DefaultViewBranch extends AbstractDBTest {
@@ -47,7 +47,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		View view = aggregateManager.getView("TASKCHILDREN");
 		
 		// change to accept entity type
-		QueryTree viewBranch = view.getQueryTree(das, taskType, false);
+		AggregateTree viewBranch = view.getAggregateTree(das, taskType, false);
 		assert(viewBranch != null);
 		assert(viewBranch.getOutEdges(viewBranch.getRoot()).size() == 0); // Ensure no child branches are created
 	}
@@ -64,12 +64,12 @@ public class DefaultViewBranch extends AbstractDBTest {
 		View view = aggregateManager.getView("TASKSET");
 		
 		// change to accept entity type
-		QueryTree queryTree = view.getQueryTree(das, taskType, false);
+		AggregateTree queryTree = view.getAggregateTree(das, taskType, false);
 		queryTree.exportToDOT("branches2.dot");
 
 		assert(queryTree != null);
 
-		QueryPiece root = (QueryPiece)queryTree.getRoot();
+		QueryTree root = (QueryTree)queryTree.getRoot();
 		assert(root.getOutEdges(root.getRoot()).size() == 2);
 	}	
 	
@@ -80,7 +80,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		Type taskType = das.getType(Task.class);	
 		View view = das.getView((EntityType) taskType);
 		
-		QueryTree viewBranch = view.getQueryTree(das, taskType, false);
+		AggregateTree viewBranch = view.getAggregateTree(das, taskType, false);
 		assert(viewBranch != null);
 		System.out.println("Subbranches: " + viewBranch.getOutEdges(viewBranch.getRoot()).size());
 	}

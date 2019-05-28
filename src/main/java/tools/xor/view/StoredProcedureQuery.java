@@ -21,7 +21,6 @@ package tools.xor.view;
 
 import java.sql.CallableStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -231,7 +230,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	}
 
 	@Override
-	public void prepare(EntityType entityType, QueryPiece queryView) {
+	public void prepare(EntityType entityType, QueryTree queryTree) {
 
 		// A Java Type can map to multiple SQL types, so it is mandatory for the user
 		// to specify the parameter type

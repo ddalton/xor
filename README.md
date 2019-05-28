@@ -2,22 +2,6 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 
 Depending on actual object the view scope differs? How is this implemented?
 
-Algorithm:
-  extend -
-    If the property is not in the expected type, then the corresponding subtype including the descendant chain (to help with JOIN) is retrieved and the appropriate states are added and the property is then added to the correct state.
-    
-    So extend does extend in 2 ways
-    1. Extend along the path
-    2. Extend along the inheritance hierarchy - TYPE attribute is NOT added as it can be incorrect,
-          as the subtypes are added only ondemand basis.
-    
-    Exception: If more than 1 state is found then all those states are added to the StateTree
-extendByPath needs to be updated to handle subtype matching for properties that are on the subtypes or supertypes.
-    
-    
-This extend algorithm needs to be updated for StateTree only and not StateGraph
-    
-    
     We use StateTree only for Query
     findById should get entity from DB for JDBC and Read action
 

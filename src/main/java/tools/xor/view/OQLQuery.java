@@ -63,7 +63,7 @@ public class OQLQuery extends QuerySupport
         return result;
     }
 
-    public OQLQuery generateQuery (AggregateManager am, QueryTree queryTree, QueryPiece queryPiece)
+    public OQLQuery generateQuery (AggregateManager am, AggregateTree aggregateTree, QueryTree queryTree)
     {
 
         am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));
@@ -71,10 +71,10 @@ public class OQLQuery extends QuerySupport
         Settings settings = new Settings();
         am.checkPO(settings);
 
-        QueryBuilder qb = new QueryBuilder(queryTree);
-        qb.construct(settings, queryPiece);
+        QueryBuilder qb = new QueryBuilder(aggregateTree);
+        qb.construct(settings, queryTree);
 
-        this.selectClause = queryPiece.getSelectString();
+        this.selectClause = queryTree.getSelectString();
 
         return this;
     }

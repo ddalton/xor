@@ -57,7 +57,7 @@ import tools.xor.util.Vertex;
 import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
-import tools.xor.view.QueryTree.QueryKey;
+import tools.xor.view.AggregateTree.QueryKey;
 import tools.xor.view.expression.AliasHandler;
 
 /**
@@ -158,7 +158,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	private Shape shape; // The Shape with which this view is associated
 	
 	@XmlTransient
-	private final Map<QueryKey, QueryTree>  queryCache = new ConcurrentHashMap<>();
+	private final Map<QueryKey, AggregateTree>  queryCache = new ConcurrentHashMap<>();
 
 	// A view can be valid for multiple entity types, especially if the view refers
 	// to the attributes in a base class. Then in this case, the view can be 
@@ -172,8 +172,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	@XmlTransient
 	private final Map<String, PropertyAlias> viewAliasMap = new ConcurrentHashMap<>();
 
-	public AggregateView(QueryPiece queryPiece) {
-		initQuery(queryPiece);
+	public AggregateView(QueryTree queryTree) {
+		initQuery(queryTree);
 	}
 	
 	public AggregateView(Type type, String viewName) {
@@ -194,9 +194,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		setName(UUID.randomUUID().toString());
 	}
 	
-	private void initQuery(QueryPiece queryPiece) {
-		this.name = queryPiece.getName();
-		this.typeName = queryPiece.getAggregateType().getName();
+	private void initQuery(QueryTree queryTree) {
+		this.name = queryTree.getName();
+		this.typeName = queryTree.getAggregateType().getName();
 		
 		// We create the OQLQuery object and populate it with information from the query view
 		// such as ColumnMeta information
@@ -362,22 +362,22 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		this.name = name;
 	}
 
-	private QueryTree getQueryTree (DataAccessService das, QueryKey viewKey) {
+	private AggregateTree getAggregateTree (DataAccessService das, QueryKey viewKey) {
 		if(queryCache.containsKey(viewKey)) {
 			return queryCache.get(viewKey);
 		}
 
 		// Build the QueryTree
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(this);
-		new FragmentBuilder(das, queryTree).build((EntityType)viewKey.type);
-		queryCache.put(viewKey, queryTree);
+		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(this);
+		new FragmentBuilder(das, aggregateTree).build((EntityType)viewKey.type);
+		queryCache.put(viewKey, aggregateTree);
 
-		return queryTree;
+		return aggregateTree;
 	}
 
 	@Override
-	public QueryTree getQueryTree (DataAccessService das, Type type, boolean narrow) {
-		return getQueryTree(das, new QueryKey(type, name, narrow));
+	public AggregateTree getAggregateTree (DataAccessService das, Type type, boolean narrow) {
+		return getAggregateTree(das, new QueryKey(type, name, narrow));
 	}
 
 	public static boolean isBuiltInView(String viewName) {

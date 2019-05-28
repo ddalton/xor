@@ -19,30 +19,17 @@
 
 package tools.xor.view;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
-import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.RelationshipType;
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
-import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
-import tools.xor.view.expression.AscHandler;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
- * Generates the literal OQL QueryString for each QueryPiece in a QueryTree.
+ * Generates the literal OQL QueryString for each QueryTree in an AggregateTree.
  * Binds it with the provided parameters.
  * Two types of queries are possible depending upon the type of object resolution desired:
  * 1. Shared
@@ -57,20 +44,20 @@ public class QueryBuilder
     public static final String COMMA_DELIMITER = ", ";
     public static final String AS_CLAUSE = " AS ";
 
-    private QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree;
+    private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
     private BusinessObject entity; // Used to get id, in future for Query By Example
 
-    public QueryBuilder(QueryTree queryTree) {
-        this(queryTree, null);
+    public QueryBuilder(AggregateTree aggregateTree) {
+        this(aggregateTree, null);
     }
 
-    public QueryBuilder(QueryTree queryTree, BusinessObject entity) {
-        this.queryTree = queryTree;
+    public QueryBuilder(AggregateTree aggregateTree, BusinessObject entity) {
+        this.aggregateTree = aggregateTree;
         this.entity = entity;
     }
 
-    public QueryTree<QueryPiece, InterQuery<QueryPiece>> getQueryTree() {
-        return this.queryTree;
+    public AggregateTree<QueryTree, InterQuery<QueryTree>> getAggregateTree () {
+        return this.aggregateTree;
     }
 
     public BusinessObject getEntity() {
@@ -78,32 +65,32 @@ public class QueryBuilder
     }
 
     /**
-     * Constructs the OQL query for each QueryPiece and populates it with it.
+     * Constructs the OQL query for each QueryTree and populates it with it.
      * We do it in a BFS traversal.
      */
     public void construct(Settings settings) {
-        List<QueryPiece> queries = new LinkedList<>();
-        queries.add(queryTree.getRoot());
+        List<QueryTree> queries = new LinkedList<>();
+        queries.add(aggregateTree.getRoot());
 
         while(!queries.isEmpty()) {
-            QueryPiece qp = queries.remove(0);
-            queries.addAll(this.queryTree.getChildren(qp));
+            QueryTree queryTree = queries.remove(0);
+            queries.addAll(this.aggregateTree.getChildren(queryTree));
 
             // construct the query and set it one the qp
-            construct(settings, qp);
+            construct(settings, queryTree);
         }
     }
 
     /**
-     * Get the correct Builder strategy object for the QueryPiece if present, else get it
+     * Get the correct Builder strategy object for the QueryTree if present, else get it
      * for the view.
      *
      * @param qp for which the builder strategy object is returned
-     * @param view fallback to view if the QueryPiece is not provided
+     * @param view fallback to view if the QueryTree is not provided
      * @param builder responsible for constructing the queries
      * @return builder startegy object
      */
-    public static QueryBuilderStrategy getBuilderStrategy(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, View view, QueryBuilder builder, QueryTree queryTree) {
+    public static QueryBuilderStrategy getBuilderStrategy(QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp, View view, QueryBuilder builder, AggregateTree queryTree) {
         view = qp != null ? qp.getView() : view;
 
         if(view.getStoredProcedure(AggregateAction.READ) != null) {
@@ -122,18 +109,18 @@ public class QueryBuilder
     }
 
     /**
-     * Construct the OQL query for a QueryPiece, and initialize the QueryPiece with it.
+     * Construct the OQL query for a QueryTree, and initialize the QueryTree with it.
      *
      * @param settings provided by the user
-     * @param qp QueryPiece for which we need to construct a query
+     * @param queryTree QueryTree for which we need to construct a query
      */
-    public void construct(Settings settings, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp) {
+    public void construct(Settings settings, QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree) {
 
-        assert(qp != null);
+        assert(queryTree != null);
 
-        QueryBuilderStrategy strategy = getBuilderStrategy(qp, null, this, this.queryTree);
+        QueryBuilderStrategy strategy = getBuilderStrategy(queryTree, null, this, this.aggregateTree);
 
         Query query = strategy.construct(settings);
-        qp.setQuery(query);
+        queryTree.setQuery(query);
     }
 }

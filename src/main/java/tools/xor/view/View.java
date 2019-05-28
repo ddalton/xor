@@ -212,7 +212,7 @@ public interface View {
 	 *               we want the objects that are created to be based off this type.
 	 * @return QueryView instance
 	 */
-	public QueryTree getQueryTree (DataAccessService das, Type type, boolean narrow);
+	public AggregateTree getAggregateTree (DataAccessService das, Type type, boolean narrow);
 
 	/**
 	 * Helps to infer the Entity Type from the view name.

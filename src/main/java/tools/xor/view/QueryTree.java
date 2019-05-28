@@ -19,94 +19,52 @@
 
 package tools.xor.view;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
-import tools.xor.ExtendedProperty;
+import tools.xor.AggregateAction;
+import tools.xor.BusinessObject;
+import tools.xor.CallInfo;
+import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.AggregateManager;
-import tools.xor.util.Constants;
-import tools.xor.util.Edge;
+import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
-import tools.xor.util.graph.DirectedSparseGraph;
+import tools.xor.util.State;
+import tools.xor.util.Vertex;
 import tools.xor.util.graph.Tree;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
- * This is an optimization data structure used by queries.
- * It contains additional properties and a root of type QueryType that is not
- * present in the meta data (Shape object), but specific to this QueryTree.
- * The additional properties may or may not be part of the meta data. So these properties
- * do not have a domain counterpart.
- *
- * This data structure is used for query processing.
- * Suitable for simple requests that do not involve hierarchical structures a.k.a recursion.
- *
- * The mapping is typically:
- * AggregateView -> QueryTree
- * 
- * A QueryTree is a tree data structure, where the nodes are QueryTree instances.
- * The TreeTraversal algorithm uses this data structure to execute the queries.
- * The QueryTree represents two types of partitioning of the queries
- * 1. Leaf group
- *    The queries are all in one level, i.e., the first level children
- *    They are split by the leaf attributes, grouping them by what can efficiently be done in a single query
- * 2. State Tree
- *    Queries can be spread through multiple levels and represent the State Tree.
- *    There are 3 ways a State Tree is executed:
- *    a) Using sub-queries
- *       In this approach the ancestors of the current node form a nested sub-query.
- *       The disadvantage of this approach is that if the request is deeply nested, then the query can become complex.
- *       The advantage is that intermediate results do not have to be materialized on the client.
- *    b) Using IN clause
- *       In this approach the parent node has the results materialized and the left query runs this result in an IN clause.
- *       The disadvantage of this approach is that special care needs to be taken if the list is sufficiently long
- *       The advantage is that the queries are much simpler and run faster.
- *    c) Hybrid approach
- *       We can allow the user to specify the mechanism to use on each node to tailor the performance.
- *
- * The QueryTree execution can be done in either of the following modes:
- * 1. SERIAL
- *    All queries are executed by the same thread and depending on the ORM, that could be the same
- *    JDBC connection
- * 2. PARALLEL
- *    The queries are sent to a "Query Pool", that is responsible for executing each query in parallel
- *    There should be sufficient context to take the results and construct the portion of the object
- *    it is responsible for.
- *    The thread from the Query Pool can be used to do this construction or can hand it off to the
- *    calling thread. The recommended approach is to hand it off so the Query Pool solely focuses
- *    on executing queries
- *
- * @author Dilip Dalton
- *
+ * Represents a portion of the user's request that can be satisfied by a single query.
  */
-
-public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tree<V, E>
+public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends Tree<V, E>
+	implements Vertex
 {
-	
-	//private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
-	private static final Logger logger = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-	public static final String ENTITY_ALIAS_PREFIX = "_XOR_";
-	public static final String PROPERTY_ALIAS_PREFIX = "PROP";
+	private static final int START_POS = 0;
 
-	private ObjectResolver.Type type = ObjectResolver.Type.SHARED;
-	private int aliasCounter;
-	private View view; // for custom queries
+	private Type      aggregateType;
+	private String    name;
+	private List<QueryField> fields = new LinkedList<>();
+	private Map<String, QueryField> attributeToFieldMap = new HashMap<>();
+	private Query     query;          // Query representing this QueryTree
+	private String    selectString;
+	private View      view; // view associated with this QueryTree, needed for functions
 
-	public QueryTree(View view) {
+	public QueryTree (EntityType rootType, View view) {
+		this.aggregateType = rootType;
 		this.view = view;
 	}
 
@@ -114,134 +72,468 @@ public class QueryTree<V extends QueryPiece, E extends InterQuery<V>> extends Tr
 		return this.view;
 	}
 
-	public ObjectResolver.Type getType ()
-	{
-		return type;
+	public void setQuery(Query query) {
+		this.query = query;
 	}
 
-	public void setType (ObjectResolver.Type type)
-	{
-		this.type = type;
-	}
-
-	public List<AggregateView> extractViews(AggregateManager am) {
-		List<AggregateView> result = new LinkedList<AggregateView>();
-
-		V root = getRoot();
-		for (E edge : getOutEdges((V) root)) {
-			QueryPiece qv = edge.getEnd();
-			AggregateView av = new AggregateView(qv);
-			av.setSystemOQLQuery((new OQLQuery()).generateQuery(am, this, qv));
-			result.add(new AggregateView(qv));
+	public List<String> getSelectedColumns() {
+		List<String> result = new LinkedList<>();
+		for(QueryField field: fields) {
+			result.add(field.getFullPath());
 		}
 
 		return result;
 	}
 
-	public final static class QueryKey {
-		final Type type;
-		final String viewName;
-		final boolean narrow;
-
-		public QueryKey(Type type, String viewName, boolean narrow) {
-			this.type = type;
-			this.viewName = viewName;
-			this.narrow = narrow;
-		}
-
-		@Override
-		public boolean equals(Object object) {
-			if(!QueryKey.class.isAssignableFrom(object.getClass()))
-				return false;
-
-			QueryKey otherKey = (QueryKey) object;
-
-			if(viewName.equals(otherKey.viewName) && 
-					this.type == otherKey.type &&
-					this.narrow == otherKey.narrow)
-				return true;
-
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			int result = 17;
-			result = 37 * result + viewName.hashCode();
-			result = 37 * result + this.type.hashCode();
-			result = 37 * result + ((narrow) ? 1 : 0);
-			return result;
-		}
+	public Query getQuery() {
+		return this.query;
 	}
 
-	public static String getNext(String propertyPath) {
-		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
-			return propertyPath.substring(propertyPath.indexOf(Settings.PATH_DELIMITER)+1);
-		else
-			return null;
+	public void setSelectString (String selectString) {
+		this.selectString = selectString;
+	}
+
+	public String getSelectString () {
+		return this.selectString;
+	}
+	
+	public Object getQueryValue(Object[] queryResultRow, String path) {
+		QueryField field = attributeToFieldMap.get(path);
+		if(field != null) {
+			return queryResultRow[field.getPosition()];
+		} else {
+			int position = this.query.getColumnPosition(path);
+			if(position == -1) {
+				return null;
+			}
+			return queryResultRow[position];
+		}
 	}	
 
-	public static String getTopAttribute(String propertyPath) {
-		if(propertyPath == null || "".equals(propertyPath))
-			return null;
+	public BusinessObject getRootObject (Object obj, BusinessObject entity) throws Exception {
+		BusinessObject result = null;
 
-		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1) {
-			return propertyPath.substring(0, propertyPath.indexOf(Settings.PATH_DELIMITER));
-		} else
-			return propertyPath;
-	}
+		if(ClassUtil.getDimensionCount(obj) == 1) {
+			Object[] queryRow = (Object[])obj;
 
-	public String nextAlias() {
-		return generateAlias(aliasCounter++);
-	}
+			Object idValue = null;
+			if(((EntityType)this.aggregateType).getIdentifierProperty() != null) {
+				String idPropertyName = ((EntityType)this.aggregateType).getIdentifierProperty().getName();
+				idValue = getQueryValue(queryRow, idPropertyName);
+			}
 
-	public static String generateAlias(int counter) {
-		return QueryTree.ENTITY_ALIAS_PREFIX + counter;
-	}
+			String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
+			Type type = entity.getType();
+			if(entityName != null) {
+				// This is padded with space based on the largest type name if a CASE statement is used
+				entityName = entityName.trim();
+				type = entity.getObjectCreator().getDAS().getType(entityName);
+			}
 
-	@Override
-	protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
-	{
-		super.writeGraphvizDotHeader(writer);
-		writer.write("  style=filled;\n");
-		writer.write("  node[style=filled,color=white];\n");
-	}
-
-	@Override
-	public void writeGraphvizDot(BufferedWriter writer) throws IOException
-	{
-		// Write the content of each QueryPiece as a cluster
-		for(V qp: toposort(null)) {
-			writer.write("  subgraph cluster" + getId(qp) + " {\n");
-			qp.writeGraphvizDot(writer);
-			writer.write("  }\n\n");
-		}
-
-		// Write the edges
-		// Do not constrain all the types that have been explicitly expanded
-		for(E edge: getEdges()) {
-
-			StringBuilder result = new StringBuilder("  " + edge.getSource() + " -> " + edge.getTarget());
-			result.append("[label=").append(edge.getName()).append(",penwidth=3,color=\"#8B4513\"]\n");
-
-
-			writer.write(result.toString());
-		}
-	}
-
-	public Property getProperty(String path) {
-		return getProperty(getRoot(), path);
-	}
-
-	private Property getProperty(V queryPiece, String path) {
-
-		Collection<E> edges = getOutEdges(queryPiece);
-		for(E edge: edges) {
-			if(edge.getEnd().isPartOf(path)) {
-				return getProperty(edge.getEnd(), path);
+			// find and create data object
+			if(idValue != null) {
+				result = entity.getBySurrogateKey(idValue, this.aggregateType);
+			}
+			if(result == null) {
+				if(logger.isDebugEnabled()) {
+					logger.debug("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
+				}
+				result = entity.createDataObject(idValue, type);
 			}
 		}
 
-		return queryPiece.getProperty(path);
+		return result;
+	}
+
+	public void resolveField(BusinessObject root, Object[] queryResultRow, QueryTreeInvocation queryInvocation) throws Exception {
+		Map<String, Object> propertyResult = new HashMap<String, Object>();
+		Set<String> propertyPaths = new HashSet<>();
+
+		// system generated query
+		if(this.fields.size() > 0) {
+			for (QueryField field : this.fields) {
+				propertyResult.put(field.getFullPath(), queryResultRow[field.getPosition()]);
+			}
+
+			for (String propertyPath : propertyResult.keySet()) {
+				QueryField field = attributeToFieldMap.get(propertyPath);
+				if (field.isAugmenter()) {
+					continue;
+				}
+
+				propertyPaths.add(propertyPath);
+			}
+		} // user specified query
+		else if(getQuery().getColumns().size() > 0) {
+			List<String> columns = getQuery().getColumns();
+			for(int i = 0; i < columns.size(); i++) {
+				propertyResult.put(columns.get(i), queryResultRow[i]);
+			}
+
+			for(String path: columns) {
+				if (!QueryFragment.systemFields.contains(Settings.getBaseName(path))) {
+					propertyPaths.add(path);
+				}
+			}
+		}
+
+		for(String propertyPath: propertyPaths) {
+			// Set the value and create any intermediate objects if necessary
+			root.set(propertyPath, propertyResult, this);
+
+			// Notify the queryTreeInvocation visitor
+			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
+		}
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	public Type getAggregateType() {
+		return aggregateType;
+	}
+
+	protected String getLabel (V vertex)
+	{
+		StringBuilder content = new StringBuilder(vertex.toString() + "\\n");
+		for (String path : vertex.getPaths()) {
+			content.append(Settings.getBaseName(path) + "\\l");
+		}
+		for (String path : vertex.getSimpleCollectionPaths()) {
+			content.append(Settings.getBaseName(path) + "\\l");
+		}
+		return content.toString();
+	}
+
+	public void computeCollectionCount (V node)
+	{
+		int maxParallelCount = 0;
+		int maxSimpleCount = 0;
+		for(V fragment: getChildren(node)) {
+			computeCollectionCount(fragment);
+
+			// Get the simple count
+			maxSimpleCount += fragment.getSimpleCollectionCount();
+
+			// Get the indirect collection count
+			// First look at the incoming edge to the child fragment
+			IntraQuery incoming = getInEdges(fragment).iterator().next();
+			int fragmentParallel = 0;
+			if(incoming.getProperty().isMany()) {
+				fragmentParallel = 1;
+			}
+			if(fragment.getParallelCollectionCount() > fragmentParallel) {
+				fragmentParallel = fragment.getParallelCollectionCount();
+			}
+			// update the count for this child fragment
+			maxParallelCount += fragmentParallel;
+		}
+
+		node.setParallelCollectionCount(maxParallelCount);
+
+		maxSimpleCount += node.getSimpleCollectionPaths().size();
+		node.setSimpleCollectionCount(maxSimpleCount);
+	}
+
+	/**
+	 * Copy the root fragment and prepare it to become a root in a new QueryTree
+	 * @return new QueryFragment copy
+	 */
+	public QueryFragment copyRoot(AggregateTree aggregateTree) {
+		QueryFragment root = getRoot();
+		return new QueryFragment(root.getEntityType(), aggregateTree.nextAlias(), null);
+	}
+
+	private void clearFields() {
+		this.fields = new LinkedList<>();
+		this.attributeToFieldMap = new HashMap<>();
+	}
+
+	/**
+	 * First generate the QueryFields for a fragment
+	 * NOTE: If there are custom OQL, native SQL or stored procedure queries
+	 * then the position will need to be updated based on the position of the
+	 * corresponding fields in the custom queries
+	 *
+	 * Custom queries are specified on the view. The following conditions have
+	 * to be met to use a custom query.
+	 * 1. The root type of the QueryTree should match
+	 * 2. The fields of the QueryTree should be a subset of the fields retrieved
+	 *    by the custom query
+	 * 3. The parameters of the custom query should be a subset of the parameters
+	 *    provided by the user. The parameters are found by name matching.
+	 * 4. Custom query resolution should be initiated by the user
+	 *
+	 * If not, the generated OQL query fields is used.
+	 *
+	 * @param settings to decide if a custom query should be used
+	 * @param aggregateTree to get the view containing the custom query
+	 */
+	public void generateFields(Settings settings, AggregateTree aggregateTree) {
+		clearFields();
+
+		// We can have the fields in any position, but we need to know what the position is
+		int position = START_POS;
+		for(QueryFragment fragment: getVertices()) {
+			position = fragment.generateFields(position, settings, this, aggregateTree);
+		}
+
+		// We now collect the fields and sort them
+		for(QueryFragment fragment: getVertices()) {
+			fields.addAll(fragment.getQueryFields());
+		}
+
+		if(!getView().hasUserQuery()) {
+			Collections.sort(fields);
+			generateIdFields(aggregateTree);
+		}
+
+		for(QueryField field: this.fields) {
+			attributeToFieldMap.put(field.getFullPath(), field);
+		}
+
+		// We need to reposition based on the list order
+		if(getView().hasUserQuery()) {
+			List<QueryField> fieldOrder = new LinkedList<>();
+			addQueryField(fieldOrder, getView().getAttributeList());
+			QuerySupport qs = getQuerySupport();
+			addQueryField(fieldOrder, qs.getAugmenter());
+		}
+	}
+
+	private void addQueryField(List<QueryField> fieldOrder, List<String> paths) {
+		if(paths != null) {
+			for (String path : paths) {
+				if (attributeToFieldMap.containsKey(path)) {
+					fieldOrder.add(attributeToFieldMap.get(path));
+				}
+				else {
+					throw new RuntimeException("Unable to find QueryField with path: " + path);
+				}
+			}
+		}
+	}
+
+	private void generateIdFields(AggregateTree aggregateTree) {
+		// We generate the id fields only if this entity is selected
+		if(fields.size() == 0) {
+			return;
+		}
+
+		// Generate the id fields if it does not exist for each outgoing edge
+		for(Object edge: aggregateTree.getOutEdges(this)) {
+			InterQuery outgoing = (InterQuery) edge;
+
+			// check that the source fragment of the edge has the id field
+			QueryFragment source = outgoing.getSource();
+			// find the position at which to add this field
+			int position = (fields.size() > 0) ? fields.get(fields.size()-1).getPosition()+1 : START_POS;
+			QueryField newField = source.checkAndAddId(position);
+
+			if(newField != null) {
+				fields.add(newField);
+			}
+		}
+	}
+
+	public List<E> getOpenContentJoins() {
+		List<E> result = new LinkedList<>();
+
+		for(E joinEdge: getEdges()) {
+			if(joinEdge.getProperty().isOpenContent()) {
+				result.add(joinEdge);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Make the absolute path relative to this QueryTree.
+	 *
+	 * @param path absolute path of the AggregateTree
+	 * @return path relative to the QueryTree
+	 */
+	private String makeRelative(String path) {
+		if(path == null || getRoot() == null) {
+			return null;
+		}
+		String anchorPath = (getRoot().getAncestorPath() == null) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);
+
+		// we first strip out the ancestor path from the root QueryTree
+		return path.startsWith(anchorPath) ? path.substring(anchorPath.length()) : path;
+	}
+
+	public boolean isFragment(String path) {
+		FragmentAnchor anchor = findFragment(path);
+		return anchor.path == null;
+	}
+
+	/**
+	 * Find the closest fragment at which this path is anchored
+	 * @param path for which we want to find the fragment
+	 * @return fragment
+	 */
+	public FragmentAnchor findFragment(String path) {
+		return findFragment(getRoot(), makeRelative(path));
+	}
+
+	public static class FragmentAnchor {
+		public QueryFragment fragment;
+		public String path;
+
+		public FragmentAnchor(QueryFragment fragment, String path) {
+			this.fragment = fragment;
+			this.path = path;
+		}
+
+		public boolean isValidPath() {
+			if(path == null) {
+				return false;
+			}
+			String property = State.getNextAttr(path);
+			return fragment.getEntityType().getProperty(property) != null;
+		}
+
+		public String getOQLName() {
+			return fragment.getAlias() + Settings.PATH_DELIMITER + path;
+		}
+
+		public boolean isFragment() {
+			return path == null;
+		}
+	}
+
+	private FragmentAnchor findFragment(V vertex, String path) {
+
+		if(path == null) {
+			return new FragmentAnchor(vertex, path);
+		}
+
+		String next = State.getNextAttr(path);
+		V nextFragment = null;
+		for(E e: getOutEdges(vertex)) {
+			if(e.getName().equals(next)) {
+				nextFragment = e.getEnd();
+				break;
+			}
+		}
+
+		if(nextFragment == null) {
+			return new FragmentAnchor(vertex, path);
+		} else {
+			return findFragment(nextFragment, State.getRemaining(path));
+		}
+	}
+
+	public QueryField findField(String path) {
+		return findField(getRoot(), makeRelative(path));
+	}
+
+	private QueryField findField(V vertex, String path) {
+
+		if(path == null) {
+			return null;
+		}
+
+		String next = State.getNextAttr(path);
+		V nextFragment = null;
+		for(E e: getOutEdges(vertex)) {
+			if(e.getName().equals(next)) {
+				nextFragment = e.getEnd();
+				break;
+			}
+		}
+
+		if(nextFragment == null) {
+			return vertex.getField(path);
+		} else {
+			return findField(nextFragment, State.getRemaining(path));
+		}
+	}
+
+	/**
+	 * If the path is applicable to this QueryTree, then we return the OQL name (aliased name)
+	 *
+	 * @param path to resolve to the OQL name
+	 * @param po persistence orchestrator
+	 * @return OQL name
+	 */
+	public String getOQLName(String path, PersistenceOrchestrator po) {
+		if(getRoot().getAncestorPath() == null || path.startsWith(getRoot().getAncestorPath())) {
+			QueryField field = findField(path);
+			if(field == null) {
+				FragmentAnchor anchor = findFragment(path);
+				if(anchor.isValidPath()) {
+					return anchor.getOQLName();
+				}
+				if(anchor.isFragment()) {
+					return anchor.fragment.getAlias();
+				}
+			} else {
+				return field.getOQL(po.getQueryCapability());
+			}
+		}
+
+		return null;
+	}
+
+	public List<QueryField> getFields() {
+		return this.fields;
+	}
+
+	protected Query prepare(CallInfo callInfo, ObjectResolver resolver)
+	{
+		if(query != null) {
+			resolver.preProcess(this, callInfo.getSettings());
+
+		}
+
+		return query;
+	}
+
+	/**
+	 * Check if this QueryTree is part of the path and is not the root anchor
+	 * @param path in the QueryTree
+	 * @return tree if the QueryTree is part of the path
+	 */
+	public boolean isPartOf(String path) {
+		QueryFragment root = getRoot();
+
+		return root.getAncestorPath() != null && path.startsWith(root.getAncestorPath());
+	}
+
+	public Property getProperty(String path)
+	{
+		QueryTree.FragmentAnchor fragmentAnchor = findFragment(path);
+		if (fragmentAnchor != null && fragmentAnchor.fragment != null) {
+			// Get the property from the incoming edge
+			Iterator<E> iter = getInEdges((V)fragmentAnchor.fragment).iterator();
+
+			if (iter.hasNext()) {
+				E incomingEdge = iter.next();
+				return incomingEdge.getProperty();
+			}
+		}
+
+		return null;
+	}
+
+	public QuerySupport getQuerySupport() {
+		QuerySupport qs = getView().getStoredProcedure(AggregateAction.READ);
+		if(qs == null) {
+			qs = getView().getNativeQuery();
+			if(qs == null) {
+				qs = getView().getUserOQLQuery();
+			}
+		}
+
+		return qs;
 	}
 }
+

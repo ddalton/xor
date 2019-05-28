@@ -22,9 +22,7 @@ package tools.xor.view;
 import tools.xor.CallInfo;
 import tools.xor.util.InterQuery;
 
-import java.util.List;
-
 public interface QueryDispatcher
 {
-    void execute(QueryTree<QueryPiece, InterQuery<QueryPiece>>  queryTree, ObjectResolver resolver, CallInfo callInfo);
+    void execute(AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree, ObjectResolver resolver, CallInfo callInfo);
 }

@@ -28,17 +28,14 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.util.Constants;
-import tools.xor.util.GraphUtil;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.QueryTree;
+import tools.xor.view.AggregateTree;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 public class DefaultGenerator implements Generator
 {
@@ -375,10 +372,10 @@ public class DefaultGenerator implements Generator
         // For each path, loop through each component and see if the value is available
         while (path != null) {
             // Extract the next attribute in the path
-            String component = QueryTree.getTopAttribute(path);
+            String component = AggregateTree.getTopAttribute(path);
 
             // Get the path ready for the next round if applicable
-            path = QueryTree.getNext(path);
+            path = AggregateTree.getNext(path);
 
             JSONObject current = parent;
             parent = getComponent(visitor, current, component);

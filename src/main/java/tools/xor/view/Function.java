@@ -130,20 +130,20 @@ public class Function implements Comparable<Function> {
 	/**
 	 * Identify the mapping between the entity field path and the query alias name
 	 *
-	 * @param qp QueryPiece for which the alias name is mapped
+	 * @param queryTree QueryTree for which the alias name is mapped
 	 * @return true if all the names can be normalized, false otherwise
 	 */
-	public boolean normalize(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, PersistenceOrchestrator po) {
+	public boolean normalize(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree, PersistenceOrchestrator po) {
 		boolean all = true;
 
 		for(String path: functionHandler.getAttributes()) {
 			String oqlname = null;
 
 			if(Settings.doSQL(po)) {
-				QueryField field = qp.findField(path);
+				QueryField field = queryTree.findField(path);
 				oqlname = field.getSQL();
 			} else {
-				oqlname = qp.getOQLName(path, po);
+				oqlname = queryTree.getOQLName(path, po);
 			}
 			if(oqlname != null) {
 				functionHandler.setNormalizedName(path, oqlname);

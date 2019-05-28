@@ -33,8 +33,8 @@ import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryDispatcher;
 import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
+import tools.xor.view.AggregateTree;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.SerialDispatcher;
 
@@ -86,7 +86,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedType(
 			das,
 			callInfo.getSettings());
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = callInfo.getSettings().getView().getQueryTree(
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = callInfo.getSettings().getView().getAggregateTree(
 			das,
 			referenceType,
 			callInfo.getSettings().doNarrow());
@@ -110,19 +110,19 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	}
 
 	@Override
-	public void processRecords(List records, QueryPiece queryPiece, CallInfo callInfo, QueryTreeInvocation queryInvocation) {
+	public void processRecords(List records, QueryTree queryTree, CallInfo callInfo, QueryTreeInvocation queryInvocation) {
 		
 		try {
 			// club all the results relevant to the same entity
 			// add an id attribute for the mail entity. Add an owner attribute for each collection property referenced.
 			// adjust the properties and for every new attribute added (id or owner) create a filler/dummy property column in the view
 			for(Object obj: records) {
-				BusinessObject newRootObject = queryPiece.getRootObject(
+				BusinessObject newRootObject = queryTree.getRootObject(
 					obj,
 					(BusinessObject)callInfo.getOutput());
 
 				if(ClassUtil.getDimensionCount(obj) == 1) {
-					queryPiece.resolveField(newRootObject, (Object[])obj, queryInvocation);
+					queryTree.resolveField(newRootObject, (Object[])obj, queryInvocation);
 					if(newRootObject.getContainer() == null && !uniqueList.containsKey(newRootObject)) // Only add root objects
 						uniqueList.put(newRootObject, null);
 				}
@@ -138,8 +138,8 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	}
 
 	@Override
-	public void preProcess(QueryPiece qp, Settings settings) {
-		Query query = qp.getQuery();
+	public void preProcess(QueryTree queryTree, Settings settings) {
+		Query query = queryTree.getQuery();
 		super.preProcess(settings, query);
 
 		if(getEntity().getIdentifierValue() != null && query.hasParameter(QueryFragment.ID_PARAMETER_NAME)) {
@@ -147,6 +147,6 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		}
 
 		// initialize the query with the selected columns
-		query.prepare((EntityType)entity.getType(), qp);
+		query.prepare((EntityType)entity.getType(), queryTree);
 	}
 }

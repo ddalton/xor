@@ -22,8 +22,8 @@ package tools.xor;
 public enum FunctionType
 {
   ALIAS,      // modify the name of a property in the result structure
-  SKIP,       // modify the QueryPiece to conditionally skip a QueryFragment
-  INCLUDE,    // modify the QueryPiece to conditionally include a QueryFragment
+  SKIP,       // modify the QueryTree to conditionally skip a QueryFragment
+  INCLUDE,    // modify the QueryTree to conditionally include a QueryFragment
   ASC,        // sort in ascending order in a query
   DESC,       // sort in descending order in query
   FREESTYLE,  // is added to the WHERE clause of the query

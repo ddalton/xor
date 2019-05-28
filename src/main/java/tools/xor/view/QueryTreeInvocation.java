@@ -44,7 +44,7 @@ public class QueryTreeInvocation
                                      // has been processed, that means it is a SUBQUERY join till
                                      // the root node
 
-    private Map<InterQuery, QueryVisitor> visitors; // used during a QueryPiece's resolveField calls
+    private Map<InterQuery, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
     private Map<String, QueryVisitor> visitorsByPath;
 
     public QueryTreeInvocation() {
@@ -61,10 +61,10 @@ public class QueryTreeInvocation
      *
      * @param edge for which the query string needs to be updated for the edge end
      */
-    public void resolveQuery(QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree, InterQuery<QueryPiece> edge) {
+    public void resolveQuery(AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree, InterQuery<QueryTree> edge) {
 
-        QueryPiece queryPiece = edge.getEnd();
-        QueryPiece current = queryPiece;
+        QueryTree queryTree = edge.getEnd();
+        QueryTree current = queryTree;
         InterQuery parentEdge = edge;
         InterQuery.JoinType joinType = null;
         while (parentEdge != null) {
@@ -72,20 +72,20 @@ public class QueryTreeInvocation
             if (joinType == InterQuery.JoinType.INLIST) {
                 break;
             }
-            current = queryTree.getParent(current);
-            parentEdge = queryTree.getInEdges(current).iterator().next();
+            current = aggregateTree.getParent(current);
+            parentEdge = aggregateTree.getInEdges(current).iterator().next();
         }
         if(parentEdge != null) {
-            idList.put(queryPiece.getQuery(), parentIdList.get(parentEdge));
+            idList.put(queryTree.getQuery(), parentIdList.get(parentEdge));
         }
 
-        String oqlString = queryPiece.getQuery().getQueryString();
+        String oqlString = queryTree.getQuery().getQueryString();
         if (joinType == InterQuery.JoinType.INLIST) {
 
             // This is simple replace
             oqlString = oqlString.replaceFirst(
                 Query.INTERQUERY_JOIN_PLACEHOLDER,
-                getParentInListBindString(idList.get(queryPiece.getQuery()).size(), queryPiece.getQuery()));
+                getParentInListBindString(idList.get(queryTree.getQuery()).size(), queryTree.getQuery()));
         }
         else {
             oqlString = oqlString.replaceFirst(
@@ -93,7 +93,7 @@ public class QueryTreeInvocation
                 resolvedQuery.get(edge.getStart()));
 
         }
-        resolvedQuery.put(queryPiece.getQuery(), oqlString);
+        resolvedQuery.put(queryTree.getQuery(), oqlString);
     }
 
     private String getParentInListBindString(int count, Query query) {
@@ -136,10 +136,10 @@ public class QueryTreeInvocation
     }
 
     public static class QueryVisitor {
-        InterQuery<QueryPiece> outgoingEdge;
+        InterQuery<QueryTree> outgoingEdge;
         Set ids;
 
-        public QueryVisitor(InterQuery<QueryPiece> outgoingEdge) {
+        public QueryVisitor(InterQuery<QueryTree> outgoingEdge) {
             this.outgoingEdge = outgoingEdge;
         }
 
@@ -154,18 +154,18 @@ public class QueryTreeInvocation
         }
     }
 
-    public void start(QueryTree<QueryPiece, InterQuery<QueryPiece>> qt, QueryPiece qp) {
+    public void start(AggregateTree<QueryTree, InterQuery<QueryTree>> at, QueryTree qt) {
         // Loop through each outgoing edge and create a visitor for them
-        for(InterQuery outgoing: qt.getOutEdges(qp)) {
+        for(InterQuery outgoing: at.getOutEdges(qt)) {
             QueryVisitor visitor = new QueryVisitor(outgoing);
             visitors.put(outgoing, visitor);
             visitorsByPath.put(outgoing.getSource().getIdField().getFullPath(), visitor);
         }
     }
 
-    public void finish(QueryTree<QueryPiece, InterQuery<QueryPiece>> qt, QueryPiece qp) {
+    public void finish(AggregateTree<QueryTree, InterQuery<QueryTree>> at, QueryTree qt) {
         // Loop through each outgoing edge and process the results
-        for(InterQuery outgoing: qt.getOutEdges(qp)) {
+        for(InterQuery outgoing: at.getOutEdges(qt)) {
             QueryVisitor visitor = visitors.get(outgoing);
             parentIdList.put(outgoing, visitor.ids);
 

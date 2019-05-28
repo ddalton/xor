@@ -33,7 +33,6 @@ import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.TypeGraph;
 
 import java.io.BufferedWriter;
@@ -53,24 +52,24 @@ public class FragmentBuilder
     private static final Logger qtLogger = LogManager.getLogger(Constants.Log.QUERY_TRANSFORMER);
 
     private Map<String, QueryFragment> pathToFragment = new HashMap<>();
-    private QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree;
+    private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
     private DataAccessService das; // optional for denormalized query, needed for creating QueryType instances
 
-    public FragmentBuilder(DataAccessService das, QueryTree queryTree) {
+    public FragmentBuilder(DataAccessService das, AggregateTree aggregateTree) {
         this.das = das;
-        this.queryTree = queryTree;
+        this.aggregateTree = aggregateTree;
     }
 
-    private void constructPieces(QueryPiece parent, View childView) {
-        // first build the QueryPiece for the child
+    private void constructPieces(QueryTree parent, View childView) {
+        // first build the QueryTree for the child
         EntityType entityType = null;
         if(childView.getTypeName() != null && !"".equals(childView.getTypeName().trim())) {
-            entityType = (EntityType)queryTree.getView().getShape().getType(childView.getTypeName());
+            entityType = (EntityType)aggregateTree.getView().getShape().getType(childView.getTypeName());
         } else {
             // derive it from the root
             if(childView.getName() != null && !"".equals(childView.getName().trim()) ) {
                 Property property = null;
-                for(QueryPiece qp: queryTree.getRoots()) {
+                for(QueryTree qp: aggregateTree.getRoots()) {
                     property = qp.getAggregateType().getProperty(childView.getName());
                     if(property != null) {
                         break;
@@ -85,11 +84,11 @@ public class FragmentBuilder
                 entityType = (EntityType)parent.getAggregateType();
             }
         }
-        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> childPiece = new QueryPiece(entityType, childView);
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> childPiece = new QueryTree(entityType, childView);
         build(childPiece);
 
-        QueryPiece.FragmentAnchor sourceAnchor = null;
-        for(QueryPiece qp: queryTree.getRoots()) {
+        QueryTree.FragmentAnchor sourceAnchor = null;
+        for(QueryTree qp: aggregateTree.getRoots()) {
             sourceAnchor = qp.findFragment(childView.getName());
             if(sourceAnchor != null) {
                 break;
@@ -102,7 +101,7 @@ public class FragmentBuilder
             addInterQueryEdge(parent, childPiece, sourceFragment, targetFragment);
         } else {
             // The QueryTree is a forest
-            this.queryTree.addVertex(childPiece);
+            this.aggregateTree.addVertex(childPiece);
         }
 
         if(childView.getChildren() != null) {
@@ -112,36 +111,38 @@ public class FragmentBuilder
         }
     }
 
-    private void addInterQueryEdge(QueryPiece parent, QueryPiece<QueryFragment, IntraQuery<QueryFragment>> childPiece,
+    private void addInterQueryEdge(QueryTree parent, QueryTree<QueryFragment, IntraQuery<QueryFragment>> childPiece,
                                    QueryFragment sourceFragment, QueryFragment targetFragment) {
         // TODO: Ensure that the source fragment has id property to help with reconstitution
-        queryTree.addEdge(new InterQuery("", parent,
+        aggregateTree.addEdge(
+            new InterQuery(
+                "", parent,
                 childPiece, sourceFragment, targetFragment), parent, childPiece);
     }
 
     /**
-     * Builds a QueryPiece.
+     * Builds a QueryTree.
      * @param entityType of root
      */
     public void build(EntityType entityType)
     {
-        View view = queryTree.getView();
-        QueryPiece queryPiece = new QueryPiece(entityType, view);
+        View view = aggregateTree.getView();
+        QueryTree queryTree = new QueryTree(entityType, view);
 
-        build(queryPiece);
+        build(queryTree);
 
         if (view.getChildren() != null) {
             for (View childView : view.getChildren()) {
-                constructPieces(queryPiece, childView);
+                constructPieces(queryTree, childView);
             }
         }
     }
 
-    public void build(QueryPiece queryPiece)
+    public void build(QueryTree queryTree)
     {
-        View view = queryPiece.getView();
+        View view = queryTree.getView();
 
-        this.queryTree.addVertex(queryPiece);
+        this.aggregateTree.addVertex(queryTree);
 
         // We need to handle child views
         List<String> paths = new LinkedList<>(view.getAttributeList());
@@ -150,7 +151,8 @@ public class FragmentBuilder
         }
 
         // get the StateTree instance
-        TypeGraph st = view.getTypeGraph((EntityType) queryPiece.getAggregateType(), StateGraph.Scope.EDGE);
+        TypeGraph<State, Edge<State>> st = view.getTypeGraph((EntityType) queryTree.getAggregateType(), StateGraph.Scope.EDGE);
+        //assert st instanceof StateTree : "Expecting a StateTree instance";
 
         /*
          *  Algorithm
@@ -158,9 +160,25 @@ public class FragmentBuilder
          *  2. For each non-inverse relationship property we create a InterQuery edge. Make sure the columns on both sides are included in the select
          *  3. We join all the sub-types of i.e., _PARENT_-1 relationships [Not needed immediately]
          *  4. Add non-fetchable properties (used for query condition etc)
-         *  5. Skip QueryPiece for open types
+         *  5. Skip QueryTree for open types
          *  6. If it is not explorable we just add the id or the path
          */
+
+        // Function attributes
+        /*
+        for(String attr: view.getFunctionAttributes()) {
+            st.extend(attr, st.getRootState(), false);
+        }
+
+        for(State state: st.getVertices()) {
+
+            QueryType qt = (QueryType)state.getType();
+            QueryFragment fragment = new QueryFragment(
+                qt.getDomainType(),
+                aggregateTree.nextAlias(),
+                null);
+        }
+*/
 
 
 
@@ -171,14 +189,14 @@ public class FragmentBuilder
 
         // First create a start fragment
         QueryFragment start = new QueryFragment(
-            (EntityType)queryPiece.getAggregateType(),
-            queryTree.nextAlias(),
+            (EntityType)queryTree.getAggregateType(),
+            aggregateTree.nextAlias(),
             null);
-        queryPiece.addVertex(start);
+        queryTree.addVertex(start);
         pathToFragment.put(QueryFragment.ROOT_NAME, start);
 
         // We do not construct fragments for open types
-        if(queryPiece.getAggregateType().isOpen()) {
+        if(queryTree.getAggregateType().isOpen()) {
             return;
         }
 
@@ -186,7 +204,7 @@ public class FragmentBuilder
         // using the special _PARENT_ property
 
         for(String path: paths) {
-            makeFragments(queryPiece, path);
+            makeFragments(queryTree, path);
         }
 
         // write the .dot content to log
@@ -195,7 +213,7 @@ public class FragmentBuilder
             BufferedWriter bw = new BufferedWriter(sw);
 
             try {
-                queryPiece.writeDOT(bw);
+                queryTree.writeDOT(bw);
                 qtLogger.debug(sw.toString());
             }
             catch (IOException e) {
@@ -204,7 +222,7 @@ public class FragmentBuilder
         }
     }
 
-    private void makeFragments(QueryPiece queryPiece, String path) {
+    private void makeFragments(QueryTree queryTree, String path) {
 
         if(path == null || "".equals(path.trim())) {
             return;
@@ -233,7 +251,7 @@ public class FragmentBuilder
                     // we don't create a new fragment for embedded objects
                     continue;
                 } else {
-                    if(!isExplorable(queryPiece, currentPath.toString())) {
+                    if(!isExplorable(queryTree, currentPath.toString())) {
                         fragment.addPath(path);
                     } else {
                         fragment = addNewFragment(
@@ -241,7 +259,7 @@ public class FragmentBuilder
                             step,
                             currentPath.toString(),
                             fragment,
-                            queryPiece);
+                            queryTree);
                     }
                 }
             }
@@ -254,7 +272,7 @@ public class FragmentBuilder
                     fragment.addSimpleCollectionPath(path);
                 } else {
                     // create a new fragment
-                    fragment = addNewFragment(property, step, currentPath.toString(), fragment, queryPiece);
+                    fragment = addNewFragment(property, step, currentPath.toString(), fragment, queryTree);
                 }
             }
 
@@ -265,18 +283,18 @@ public class FragmentBuilder
         }
     }
 
-    private QueryFragment addNewFragment(Property property, String step, String currentPath, QueryFragment fragment, QueryPiece queryPiece) {
+    private QueryFragment addNewFragment(Property property, String step, String currentPath, QueryFragment fragment, QueryTree queryTree) {
         EntityType type = property.isMany() ?
             (EntityType)((ExtendedProperty)property).getElementType() : (EntityType)property.getType();
 
         QueryFragment next = null;
         if(!pathToFragment.containsKey(currentPath)) {
-            next = new QueryFragment(type, queryTree.nextAlias(), currentPath);
+            next = new QueryFragment(type, aggregateTree.nextAlias(), currentPath);
             pathToFragment.put(currentPath, next);
 
             // connect this new query fragment
             IntraQuery edge = new IntraQuery(step, fragment, next, property);
-            queryPiece.addEdge(edge, fragment, next);
+            queryTree.addEdge(edge, fragment, next);
         } else {
             next = pathToFragment.get(currentPath.toString());
         }
@@ -287,11 +305,11 @@ public class FragmentBuilder
     /**
      * If the type is not explorable then we just select the property representing that type.
      *
-     * @param qp is the QueryPiece containing the path
+     * @param qp is the QueryTree containing the path
      * @param currentPath is the property to check
      * @return true if the attribute can be referenced using an alias, i.e., it is explorable
      */
-    private boolean isExplorable(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp, String currentPath) {
+    private boolean isExplorable(QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp, String currentPath) {
 
         EntityType entityType = qp.getRoot().getEntityType();
         Property property = entityType.getProperty(currentPath);

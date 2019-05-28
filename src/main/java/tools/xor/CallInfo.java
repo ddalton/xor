@@ -489,7 +489,7 @@ public class CallInfo {
 		return readCustomValue(operation, (BusinessObject) getParent().getInput(), (ExtendedProperty)getInputProperty());
 		
 		//ExtendedProperty p = (ExtendedProperty)getInputProperty();
-		//return p.getValue( (BusinessObject) getParent().getInput());
+		//return p.getValue( (BusinessObject) getSupertype().getInput());
 	}
 
 	public BusinessObject getOutputRoot() {

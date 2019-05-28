@@ -20,15 +20,10 @@
 package tools.xor.operation;
 
 import tools.xor.CallInfo;
-import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.util.ClassUtil;
-import tools.xor.view.NativeQuery;
-import tools.xor.view.OQLQuery;
 import tools.xor.view.Query;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTransformer;
-import tools.xor.view.StoredProcedureQuery;
 import tools.xor.view.View;
 
 import java.util.ArrayList;

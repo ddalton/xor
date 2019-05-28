@@ -64,7 +64,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 	public static class SubtypeState extends State {
 		Map<String, SubtypeState> subtypeStates;
-		SubtypeState parent;
+		SubtypeState supertype;
 		Map<String, Resolver> resolvers;
 
 		public SubtypeState(QueryType type, boolean startState) {
@@ -73,12 +73,12 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			subtypeStates = new HashMap<>();
 		}
 
-		public SubtypeState getParent() {
-			return this.parent;
+		public SubtypeState getSupertype () {
+			return this.supertype;
 		}
 
-		public void setParent(SubtypeState sts) {
-			this.parent = sts;
+		public void setSupertype (SubtypeState sts) {
+			this.supertype = sts;
 		}
 
 		// Don't need this since getting a property from a subtype also searches the
@@ -111,7 +111,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			if(type.isSameOrAncestorOf(childType)) {
 				for(EntityType d: type.getDescendantsTo(childType)) {
 					SubtypeState sts = new SubtypeState(new QueryType(d, null), false);
-					sts.setParent(start);
+					sts.setSupertype(start);
 					bookkeepingState.markSubType(sts.getTypeName(), sts);
 
 					addInheritanceEdge(tg, start, sts);
@@ -120,7 +120,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			}
 
 			bookkeepingState.markSubType(descendantState.getTypeName(), descendantState);
-			descendantState.setParent(start);
+			descendantState.setSupertype(start);
 			addInheritanceEdge(tg, start, descendantState);
 		}
 
@@ -141,9 +141,9 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		}
 
 		public Set<String> getAttributes() {
-			if(parent != null) {
+			if(supertype != null) {
 				Set<String> result = new HashSet<>(super.getAttributes());
-				result.addAll(parent.getAttributes());
+				result.addAll(supertype.getAttributes());
 				return result;
 			} else {
 				return super.getAttributes();

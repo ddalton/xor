@@ -25,7 +25,6 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
@@ -40,34 +39,36 @@ import java.util.TreeMap;
 
 public class QueryFromFragments implements QueryBuilderStrategy
 {
-    private final QueryPiece queryPiece;
+    private final QueryTree queryTree;
     private final QueryBuilder builder;
 
-    public QueryFromFragments (QueryPiece queryPiece, QueryBuilder builder)
+    public QueryFromFragments (QueryTree queryTree, QueryBuilder builder)
     {
-        this.queryPiece = queryPiece;
+        this.queryTree = queryTree;
         this.builder = builder;
     }
 
     @Override public Query construct(Settings settings)
     {
         // Generate the fields if needed
-        this.queryPiece.generateFields(settings, builder.getQueryTree());
+        this.queryTree.generateFields(settings, builder.getAggregateTree());
 
-        if(queryPiece.getVertices().size() == 0) {
+        if(queryTree.getVertices().size() == 0) {
             return null;
         }
 
-        List<Function> consolidatedFunctions = QueryStringHelper.getQueryPieceFunctions(settings, this.queryPiece);
+        List<Function> consolidatedFunctions = QueryStringHelper.getQueryTreeFunctions(
+            settings,
+            this.queryTree);
 
         StringBuilder oql = new StringBuilder(constructOQL(settings));
-        queryPiece.setSelectString(oql.toString());
+        queryTree.setSelectString(oql.toString());
         oql.append(buildWhereClause(settings, consolidatedFunctions));
         oql.append(buildOrderClause(settings, consolidatedFunctions));
 
         final Logger vb = LogManager.getLogger(Constants.Log.VIEW_BRANCH);
         if(vb.isDebugEnabled()) {
-            vb.debug("OQL of view [" + this.queryPiece.getView().getName() + "] => " + oql.toString());
+            vb.debug("OQL of view [" + this.queryTree.getView().getName() + "] => " + oql.toString());
         }
 
         System.out.println("QUERY:::: " + oql.toString());
@@ -79,7 +80,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
             settings);
 
         // Initialized the selected columns
-        query.setColumns(this.queryPiece.getSelectedColumns());
+        query.setColumns(this.queryTree.getSelectedColumns());
 
         return query;
     }
@@ -87,7 +88,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
     private String constructOQL(Settings settings) {
 
         PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
-        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
 
         // SELECT clause
         StringBuilder OQL = new StringBuilder(QueryBuilder.SELECT_CLAUSE);
@@ -161,10 +162,10 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
     private void checkAndAddInterQueryJoinPlaceholder (StringBuilder queryString)
     {
-        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
-        if(builder.getQueryTree().getInEdges(qp).size() > 0) {
-            InterQuery<QueryPiece> edge = builder.getQueryTree().getInEdges(qp).iterator().next();
-            QueryPiece parent = edge.getStart();
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
+        if(builder.getAggregateTree().getInEdges(qp).size() > 0) {
+            InterQuery<QueryTree> edge = builder.getAggregateTree().getInEdges(qp).iterator().next();
+            QueryTree parent = edge.getStart();
             if (edge != null && parent.getQuery() != null) {
                 addWhereStep(queryString);
                 queryString.append(qp.getRoot().getId()).append(" IN ( ").append(Query.INTERQUERY_JOIN_PLACEHOLDER).append(
@@ -178,10 +179,10 @@ public class QueryFromFragments implements QueryBuilderStrategy
      * to Query By Example, if the id is not present.
      */
     private void checkAndAddId(StringBuilder queryString) {
-        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
 
         // Do this only for the root query piece and if the id is provided
-        if(builder.getQueryTree().getRoot() == qp && builder.getEntity() != null) {
+        if(builder.getAggregateTree().getRoot() == qp && builder.getEntity() != null) {
             if(builder.getEntity().getIdentifierValue() != null) {
                 addWhereStep(queryString);
                 queryString.append(qp.getRoot().getId() + " = :" + QueryFragment.ID_PARAMETER_NAME);
@@ -297,7 +298,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
     private void checkAndAddOpenPropertyJoins(StringBuilder queryString) {
         StringBuilder whereFragment = new StringBuilder("");
 
-        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
         for(IntraQuery<QueryFragment> edge: qp.getOpenContentJoins()) {
 
             ExtendedProperty extendedProperty = (ExtendedProperty) edge.getProperty();
@@ -341,7 +342,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
         StringBuilder result = new StringBuilder();
         PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
         Map<Integer, String> orderClauses = new TreeMap<>();
-        QueryPiece<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryPiece;
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
 
         for(QueryField field: qp.getFields()) {
             if(field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE) && !Settings.doSQL(po)) {

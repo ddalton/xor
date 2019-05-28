@@ -21,11 +21,8 @@ package tools.xor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import tools.xor.util.ObjectCreator;
-import tools.xor.view.AggregateView;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
 
 public interface BusinessObject extends DataObject {
@@ -241,10 +238,10 @@ public interface BusinessObject extends DataObject {
 	 * Set the property of this object using the values from propertyResult. This method is mainly used from a query result.
 	 * @param propertyPath The path representing property whose value needs to be set
 	 * @param propertyResult The result from a query
-	 * @param queryPiece for the query
+	 * @param queryTree for the query
 	 * @throws Exception if property cannot be found
 	 */
-	void set(String propertyPath, Map<String, Object> propertyResult, QueryPiece queryPiece) throws Exception;
+	void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree) throws Exception;
 	
 	/**
 	 * Responsible for creating a new data object whose lifecycle is linked with this object.

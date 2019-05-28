@@ -173,12 +173,12 @@ public class QueryFragment implements Vertex
      * @param settings describing the result structure (SHARED or DISTINCT)
      * @return the updated position
      */
-    public int generateFields(int position, Settings settings, QueryPiece queryPiece, QueryTree queryTree) {
+    public int generateFields(int position, Settings settings, QueryTree queryTree, AggregateTree aggregateTree) {
         clearFields();
 
         // We should not create QueryField instances for fields that are only
         // referenced from functions
-        Set<String> attributePaths = new HashSet<>(queryTree.getView().getAttributes());
+        Set<String> attributePaths = new HashSet<>(aggregateTree.getView().getAttributes());
 
         for(String path: this.paths) {
             if(isUserAttribute(attributePaths, path)) {
@@ -199,7 +199,7 @@ public class QueryFragment implements Vertex
         ObjectResolver.Type type = settings.getResolverType();
         assert type != null : "Except a value for resolver type";
 
-        if(!queryPiece.getView().hasUserQuery()) {
+        if(!queryTree.getView().hasUserQuery()) {
             if (type == ObjectResolver.Type.SHARED) {
                 // add surrogate key
                 String idName = getEntityType().getIdentifierProperty().getName();
@@ -213,7 +213,7 @@ public class QueryFragment implements Vertex
                 }
             }
 
-            Iterator<IntraQuery<QueryFragment>> iter = queryPiece.getInEdges(this).iterator();
+            Iterator<IntraQuery<QueryFragment>> iter = queryTree.getInEdges(this).iterator();
 
             if (iter.hasNext()) {
                 IntraQuery<QueryFragment> incomingEdge = iter.next();
@@ -248,7 +248,7 @@ public class QueryFragment implements Vertex
                 }
             }
         } else {
-            QuerySupport qs = queryPiece.getQuerySupport();
+            QuerySupport qs = queryTree.getQuerySupport();
 
             if(qs != null && qs.getAugmenter() != null) {
                 Set<String> augmenterSet = new HashSet<>(qs.getAugmenter());

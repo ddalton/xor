@@ -154,9 +154,11 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public QueryTree getQueryTree (DataAccessService das, Type type, boolean narrow)
+    @Override public AggregateTree getAggregateTree (DataAccessService das,
+                                                     Type type,
+                                                     boolean narrow)
     {
-        return view.getQueryTree(das, type, narrow);
+        return view.getAggregateTree(das, type, narrow);
     }
 
     @Override public Class inferDomainClass ()

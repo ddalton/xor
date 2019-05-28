@@ -25,17 +25,16 @@ import tools.xor.service.PersistenceOrchestrator;
 public class QueryFromOQL implements QueryBuilderStrategy
 {
     private final View view;
-    private final QueryPiece queryPiece;
     private final QueryTree queryTree;
+    private final AggregateTree aggregateTree;
 
-    // TODO: construct QueryFields and set the QueryPiece with it
-    // Will use QueryPiece#generateFields but modified to handle augmenter
+    // Will use QueryTree#generateFields but modified to handle augmenter
 
-    public QueryFromOQL (View view, QueryPiece queryPiece, QueryTree queryTree)
+    public QueryFromOQL (View view, QueryTree queryTree, AggregateTree aggregateTree)
     {
         this.view = view;
-        this.queryPiece = queryPiece;
         this.queryTree = queryTree;
+        this.aggregateTree = aggregateTree;
     }
 
     @Override public Query construct (Settings settings)
@@ -59,7 +58,7 @@ public class QueryFromOQL implements QueryBuilderStrategy
             settings);
 
         // Initialized the selected columns
-        oqlQuery.deriveColumns(this.queryPiece, query, settings, this.queryTree, this.view);
+        oqlQuery.deriveColumns(this.queryTree, query, settings, this.aggregateTree, this.view);
 
         return query;
     }

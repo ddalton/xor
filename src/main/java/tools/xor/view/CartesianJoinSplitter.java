@@ -28,35 +28,35 @@ import java.util.List;
 
 public class CartesianJoinSplitter implements QuerySplitter
 {
-    private QueryTree queryTree;
+    private AggregateTree aggregateTree;
 
-    public CartesianJoinSplitter(QueryTree queryTree) {
-        this.queryTree = queryTree;
+    public CartesianJoinSplitter(AggregateTree aggregateTree) {
+        this.aggregateTree = aggregateTree;
     }
 
     /**
-     * 1. Loop through every QueryPiece
-     * 2. For each QueryPiece loop through every QueryFragment
+     * 1. Loop through every QueryTree
+     * 2. For each QueryTree, loop through every QueryFragment
      * 3. Rollup all the collections found in the descendants. At the end of this
      *    process, the root node will have a max of parallel collections in the tree.
      * 4. Do a BFS and if any node has more than 1 parallel collection, it represents a
-     *    CartesianJoin and the QueryPiece needs to be split into separate queries.
-     *    Randomly choose a collection to split and create a new QueryPiece out of it and
-     *    add it to the end of the list of QueryPieces to process.
+     *    CartesianJoin and the QueryTree needs to be split into separate queries.
+     *    Randomly choose a collection to split and create a new QueryTree out of it and
+     *    add it to the end of the list of QueryTree to process.
      */
     @Override public void execute ()
     {
-        Collection<QueryPiece> vertices = queryTree.getVertices();
+        Collection<QueryTree> vertices = aggregateTree.getVertices();
 
-        List<QueryPiece> pieces = new LinkedList<>(vertices);
+        List<QueryTree> pieces = new LinkedList<>(vertices);
         while(!pieces.isEmpty()) {
-            QueryPiece qp = pieces.remove(0);
-            QueryFragment root = (QueryFragment)qp.getRoot();
-            qp.computeCollectionCount(root);
+            QueryTree queryTree = pieces.remove(0);
+            QueryFragment root = (QueryFragment)queryTree.getRoot();
+            queryTree.computeCollectionCount(root);
 
             if(root.getParallelCollectionCount() > 1) {
                 // There is a minimum of one feasible split
-                List<QueryPiece> newQueries = processSplit(qp, root);
+                List<QueryTree> newQueries = processSplit(queryTree, root);
 
                 // processSplit splits at the first occurrences of a parallel collection
                 // The new queries could have further parallel collections so we need
@@ -69,23 +69,23 @@ public class CartesianJoinSplitter implements QuerySplitter
     /**
      * The way this splitter works is we create a clone of the Fragment where the split
      * needs to occur and populate it with the edge that is split from the original QueryFragment
-     * We then wrap it in a new QueryPiece and connect it with an InterQuery edge.
+     * We then wrap it in a new QueryTree and connect it with an InterQuery edge.
      *
-     * @param originalQP is the QueryPiece that needs to be further split into additional queries
-     * @param fragment is the root of the QueryPiece
-     * @return new queries split from the original QueryPiece
+     * @param originalQT is the QueryTree that needs to be further split into additional queries
+     * @param fragment is the root of the QueryTree
+     * @return new queries split from the original QueryTree
      */
-    private List<QueryPiece> processSplit(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> originalQP, QueryFragment fragment) {
+    private List<QueryTree> processSplit(QueryTree<QueryFragment, IntraQuery<QueryFragment>> originalQT, QueryFragment fragment) {
         // first check if there are simple collections
         // if so, put each in a separate query
 
-        List<QueryPiece> newQueries = new LinkedList<>();
+        List<QueryTree> newQueries = new LinkedList<>();
 
         if(fragment.getSimpleCollectionCount() > 0) {
             // Find the simple collections
             for(String simpleColl: fragment.getSimpleCollectionPaths()) {
-                QueryPiece<QueryFragment, IntraQuery<QueryFragment>> newQP = split(
-                    originalQP,
+                QueryTree<QueryFragment, IntraQuery<QueryFragment>> newQP = split(
+                    originalQT,
                     fragment,
                     null);
                 newQueries.add(newQP);
@@ -100,13 +100,13 @@ public class CartesianJoinSplitter implements QuerySplitter
             // in addition to the outgoing edge being a collection
 
             boolean encounteredCollection = false;
-            for(IntraQuery<QueryFragment> outgoing: originalQP.getOutEdges(fragment)) {
+            for(IntraQuery<QueryFragment> outgoing: originalQT.getOutEdges(fragment)) {
                 QueryFragment child = outgoing.getEnd();
                 if(outgoing.getProperty().isMany() || child.getParallelCollectionCount() > 0) {
                     if(encounteredCollection) {
                         // Split at this edge
-                        QueryPiece newQP = split(originalQP, fragment, outgoing);
-                        newQueries.add(newQP);
+                        QueryTree newQT = split(originalQT, fragment, outgoing);
+                        newQueries.add(newQT);
                     } else {
                         encounteredCollection = true;
                     }
@@ -117,25 +117,25 @@ public class CartesianJoinSplitter implements QuerySplitter
         return newQueries;
     }
 
-    private QueryPiece split(QueryPiece<QueryFragment, IntraQuery<QueryFragment>> originalQP, QueryFragment fragment, IntraQuery<QueryFragment> splitAtEdge) {
-        QueryFragment clone = originalQP.copyRoot(this.queryTree);
-        QueryPiece newQP = new QueryPiece(clone.getEntityType(), originalQP.getView());
-        newQP.addVertex(clone);
+    private QueryTree split(QueryTree<QueryFragment, IntraQuery<QueryFragment>> originalQT, QueryFragment fragment, IntraQuery<QueryFragment> splitAtEdge) {
+        QueryFragment clone = originalQT.copyRoot(this.aggregateTree);
+        QueryTree newQT = new QueryTree(clone.getEntityType(), originalQT.getView());
+        newQT.addVertex(clone);
 
-        // Split the original QueryPiece
+        // Split the original QueryTree
         if(splitAtEdge != null) {
             IntraQuery newEdge = new IntraQuery(splitAtEdge.getName(), clone, splitAtEdge.getEnd(), splitAtEdge.getProperty());
-            originalQP.split(splitAtEdge, newEdge, newQP);
+            originalQT.split(splitAtEdge, newEdge, newQT);
         }
 
-        addInterGraphEdge(originalQP, newQP, fragment, clone, splitAtEdge);
+        addInterGraphEdge(originalQT, newQT, fragment, clone, splitAtEdge);
 
-        return newQP;
+        return newQT;
     }
 
-    private void addInterGraphEdge(QueryPiece originalQP, QueryPiece newQP, QueryFragment original, QueryFragment clone, IntraQuery<QueryFragment> splitAtEdge) {
+    private void addInterGraphEdge(QueryTree originalQT, QueryTree newQT, QueryFragment original, QueryFragment clone, IntraQuery<QueryFragment> splitAtEdge) {
         // TODO: Ensure source fragment has id property to assist with reconstitution between the different query pieces
-        InterQuery edge = new InterQuery(splitAtEdge.getProperty().getName(), originalQP, newQP, original, clone);
-        queryTree.addEdge(edge, originalQP, newQP);
+        InterQuery edge = new InterQuery(splitAtEdge.getProperty().getName(), originalQT, newQT, original, clone);
+        aggregateTree.addEdge(edge, originalQT, newQT);
     }
 }

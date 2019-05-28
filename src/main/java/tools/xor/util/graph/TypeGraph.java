@@ -8,8 +8,6 @@ import tools.xor.Type;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
-import tools.xor.view.QueryPiece;
-import tools.xor.view.QueryTree;
 
 import java.util.List;
 import java.util.Map;
@@ -135,6 +133,18 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * @param shape of the type being enhanced
 	 */
 	void enhance(List<AssociationSetting> associations, Shape shape);
+
+	/**
+	 * Extend the scope of the graph by adding the property mentioned by the path attribute.
+	 * The path anchor is allowed to be controlled using the anchor state attribute.
+	 * Additionally any attributes that need initialization for an entity can be specified using
+	 * the initialize attribute.
+	 *
+	 * @param path that is added to the existing graph
+	 * @param anchor on which the path is based. Usually it is the root state.
+	 * @param initialize Applicable if the path represents an entity
+	 */
+	void extend(String path, V anchor, boolean initialize);
 
 	/**
 	 * Checks to types to see if all them support dynamic update. Even if a single concrete type

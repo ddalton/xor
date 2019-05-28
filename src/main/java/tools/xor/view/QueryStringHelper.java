@@ -126,7 +126,7 @@ public class QueryStringHelper
         return result.toString();
     }
 
-    public static List<Function> getQueryPieceFunctions(Settings settings, QueryPiece qp) {
+    public static List<Function> getQueryTreeFunctions (Settings settings, QueryTree qp) {
         // Consolidate the user supplied filters and the filters
         // defined on the view
         List<Function> temp = new LinkedList<>();
@@ -139,7 +139,7 @@ public class QueryStringHelper
         }
 
         // We populate only those filters for while all the attributes can be found in
-        // the QueryPiece
+        // the QueryTree
         List<Function> consolidatedFunctions = new LinkedList<>();
         for(Function function : temp) {
             if(function.normalize(qp, settings.getPersistenceOrchestrator())) {

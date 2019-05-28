@@ -64,7 +64,7 @@ public class State implements Vertex {
 		State result = new State(this.type, this.isStartState());
 		
 		if(this.attributes != null) {
-			result.attributes = new HashSet<String>(this.attributes);
+			result.attributes = new HashSet<>(this.attributes);
 		}
 
 		result.setFinishState(this.finishState);
@@ -76,7 +76,7 @@ public class State implements Vertex {
 
 	public void initDataTypes() {
 		if(attributes == null) {
-			attributes = new HashSet<String>();
+			attributes = new HashSet<>();
 		}
 		attributes.addAll(AbstractTypeNarrower.getDataTypes(this.type));
 	}

@@ -8,8 +8,6 @@ import tools.xor.Type;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
-import tools.xor.view.QueryPiece;
-import tools.xor.view.QueryTree;
 
 import java.util.Collection;
 import java.util.List;
@@ -117,6 +115,11 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 	@Override public void enhance (List<AssociationSetting> associations, Shape shape)
 	{
 		typeGraph.enhance(associations, shape);
+	}
+
+	@Override public void extend (String path, V anchor, boolean initialize)
+	{
+		typeGraph.extend(path, anchor, initialize);
 	}
 
 	@Override public boolean supportsDynamicUpdate ()

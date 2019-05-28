@@ -33,7 +33,6 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
 
 import java.util.Collection;
@@ -750,7 +749,7 @@ public abstract class AbstractBO implements BusinessObject {
 	}	
 
 	@Override
-	public void set(String propertyPath, Map<String, Object> propertyResult, QueryPiece queryPiece) throws Exception {
+	public void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree) throws Exception {
 
 		/*
 		  TODO: Needs to create a QueryType
@@ -780,7 +779,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 			Property property = current.getInstanceProperty(step);
 			//Property domainProperty = domainEntityType.getProperty(currentPath.toString());
-			Property domainProperty = queryPiece.getProperty(currentPath.toString());
+			Property domainProperty = queryTree.getProperty(currentPath.toString());
 			if(property == null) {
 				if(getType().isOpen()) {
 					((EntityType)getType()).setOpenProperty(

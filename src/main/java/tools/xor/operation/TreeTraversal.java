@@ -19,14 +19,6 @@
 
 package tools.xor.operation;
 
-import tools.xor.EntityType;
-import tools.xor.Settings;
-import tools.xor.view.Query;
-import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryPiece;
-
-import java.util.Map;
-
 /**
  * Operations that work on a QueryTree instance.
  * Uses BFS (Breadth First Search) to navigate and execute the queries from the QueryTree.

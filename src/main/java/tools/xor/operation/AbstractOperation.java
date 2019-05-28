@@ -21,14 +21,11 @@ package tools.xor.operation;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryPiece;
 
 import java.util.HashMap;
 import java.util.Map;

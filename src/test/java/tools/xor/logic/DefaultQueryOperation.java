@@ -54,13 +54,12 @@ import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.InterQuery;
-import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.CartesianJoinSplitter;
 import tools.xor.view.FragmentBuilder;
 import tools.xor.view.QueryBuilder;
-import tools.xor.view.QueryPiece;
 import tools.xor.view.QueryTree;
+import tools.xor.view.AggregateTree;
 import tools.xor.view.View;
 import tools.xor.view.expression.FunctionHandler;
 
@@ -1291,9 +1290,9 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 		Type task = das.getType(Task.class);
 
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
-		QueryPiece qp = queryTree.getRoot();
+		QueryTree qp = queryTree.getRoot();
 
 		//qp.exportToDOT("Complex.dot");
 
@@ -1307,7 +1306,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 		Type task = das.getType(Task.class);
 
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
 		CartesianJoinSplitter cjs = new CartesianJoinSplitter(queryTree);
 		cjs.execute();
@@ -1322,7 +1321,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		DataAccessService das = aggregateManager.getDAS();
 		Type task = das.getType(Task.class);
 
-		QueryTree<QueryPiece, InterQuery<QueryPiece>> queryTree = new QueryTree(view);
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
 
 		QueryBuilder builder = new QueryBuilder(queryTree);

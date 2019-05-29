@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JDBCQuery extends AbstractQuery
 {
@@ -27,6 +29,8 @@ public class JDBCQuery extends AbstractQuery
 	private NativeQuery nativeQuery;
 	private Map<String, BindParameter> paramMap = new HashMap<>();
 	private Map<String, Object> paramValues = new HashMap<>();
+
+	final static Pattern paramPattern = Pattern.compile( ":(\\w+)" );
 
 	public JDBCQuery(String sql, Connection connection, NativeQuery nativeQuery) {
 		super(sql);
@@ -37,6 +41,22 @@ public class JDBCQuery extends AbstractQuery
 
 		if(isNativeQuery()) {
 			initParamMap();
+		} else {
+			extractParameters();
+		}
+	}
+
+	// Extract the parameters and create them
+	private void extractParameters() {
+		final Matcher matcher = paramPattern.matcher(getQueryString());
+
+		int position = 1; // JDBC param number starts from 1
+		while (matcher.find()) {
+			//System.out.println("Full match: " + matcher1.group(0));
+			if(matcher.group(1) != null) {
+				String paramName = matcher.group(1);
+				paramMap.put(paramName, BindParameter.instance(position++, paramName));
+			}
 		}
 	}
 
@@ -160,10 +180,12 @@ public class JDBCQuery extends AbstractQuery
 				}
 				BindParameter pm = entry.getValue();
 
-				int timestampType = BindParameter.getType(pm.type);
-				if (timestampType == Types.TIMESTAMP
-					|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
-					pm.setDateFormat(settings.getDateFormat());
+				if(pm.type != null) {
+					int timestampType = BindParameter.getType(pm.type);
+					if (timestampType == Types.TIMESTAMP
+						|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
+						pm.setDateFormat(settings.getDateFormat());
+					}
 				}
 				pm.setValue(statement, paramValues.get(entry.getKey()));
 			}

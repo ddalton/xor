@@ -64,6 +64,29 @@ public class BindParameter
 	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
 	static final Map<String, Integer> typeMap = new HashMap<>();
 
+	static final JavaConverter defaultJavaConverter = new JavaConverter()
+	{
+		@Override public Object byJavaType (ResultSet rs, int columnIndex) throws SQLException
+		{
+			return rs.getObject(columnIndex);
+		}
+	};
+
+	/**
+	 * Create an instance of the BindParameter
+	 * @param position is a required field
+	 * @param name optional
+	 * @return
+	 */
+	public static BindParameter instance(int position, String name) {
+		BindParameter bp = new BindParameter();
+
+		bp.position = position;
+		bp.name = name;
+
+		return bp;
+	}
+
 	public BindParameter copy() {
 		BindParameter result = new BindParameter();
 		result.name = name;
@@ -120,10 +143,10 @@ public class BindParameter
 			String.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getString(parameterIndex);
+					return rs.getString(columnIndex);
 				}
 			});
 
@@ -131,10 +154,10 @@ public class BindParameter
 			BigDecimal.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getBigDecimal(parameterIndex);
+					return rs.getBigDecimal(columnIndex);
 				}
 			});
 
@@ -142,10 +165,10 @@ public class BindParameter
 			Boolean.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getBoolean(parameterIndex);
+					return rs.getBoolean(columnIndex);
 				}
 			});
 
@@ -153,10 +176,10 @@ public class BindParameter
 			Integer.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getInt(parameterIndex);
+					return rs.getInt(columnIndex);
 				}
 			});
 
@@ -164,10 +187,10 @@ public class BindParameter
 			Long.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getLong(parameterIndex);
+					return rs.getLong(columnIndex);
 				}
 			});
 
@@ -175,10 +198,10 @@ public class BindParameter
 			Float.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getFloat(parameterIndex);
+					return rs.getFloat(columnIndex);
 				}
 			});
 
@@ -186,10 +209,10 @@ public class BindParameter
 			Double.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getDouble(parameterIndex);
+					return rs.getDouble(columnIndex);
 				}
 			});
 
@@ -197,10 +220,10 @@ public class BindParameter
 			Byte[].class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getBytes(parameterIndex);
+					return rs.getBytes(columnIndex);
 				}
 			});
 
@@ -208,10 +231,10 @@ public class BindParameter
 			Date.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getDate(parameterIndex);
+					return rs.getDate(columnIndex);
 				}
 			});
 
@@ -219,10 +242,10 @@ public class BindParameter
 			Time.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getTime(parameterIndex);
+					return rs.getTime(columnIndex);
 				}
 			});
 
@@ -230,17 +253,23 @@ public class BindParameter
 			Timestamp.class,
 			new JavaConverter()
 			{
-				@Override public Object byJavaType (ResultSet rs, int parameterIndex) throws
+				@Override public Object byJavaType (ResultSet rs, int columnIndex) throws
 					SQLException
 				{
-					return rs.getTimestamp(parameterIndex);
+					return rs.getTimestamp(columnIndex);
 				}
 			});
 	}
 
 	public interface JavaConverter {
-		public Object byJavaType(ResultSet rs, int parameterIndex) throws
+		public Object byJavaType(ResultSet rs, int columnIndex) throws
 			SQLException;
+
+		default public void javaToSQL(PreparedStatement ps, int parameterIndex, Object value) throws
+			SQLException
+		{
+			ps.setObject(parameterIndex, value);
+		}
 	}
 
 	public interface SQLConverter {
@@ -878,16 +907,25 @@ public class BindParameter
 	}
 
 	public void setValue(PreparedStatement ps, Object value) {
-		int typeValue = getType(type);
-		SQLConverter converter = convertersBySQLType.get(typeValue);
-		try {
-			if(this.dateFormat != null) {
-				converter.setDataContext(this.dateFormat);
+		if(type != null && !"".equals(type)) {
+			int typeValue = getType(type);
+			SQLConverter converter = convertersBySQLType.get(typeValue);
+			try {
+				if (this.dateFormat != null) {
+					converter.setDataContext(this.dateFormat);
+				}
+				converter.javaToSQL(ps, position, value);
 			}
-			converter.javaToSQL(ps, position, value);
-		}
-		catch (SQLException e) {
-			throw ClassUtil.wrapRun(e);
+			catch (SQLException e) {
+				throw ClassUtil.wrapRun(e);
+			}
+		} else {
+			try {
+				defaultJavaConverter.javaToSQL(ps, position, value);
+			}
+			catch (SQLException e) {
+				throw ClassUtil.wrapRun(e);
+			}
 		}
 	}
 

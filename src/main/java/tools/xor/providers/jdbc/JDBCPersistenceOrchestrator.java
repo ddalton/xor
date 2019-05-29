@@ -250,7 +250,8 @@ public class JDBCPersistenceOrchestrator
 	@Override
 	public Object getCached(Class<?> persistentClass, Object id)
 	{
-		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
+		// Currently JDBC does not support caching
+		return null;
 	}
 
 	@Override public Query getQuery (String queryString, QueryType queryType, Object queryInput, Settings settings)

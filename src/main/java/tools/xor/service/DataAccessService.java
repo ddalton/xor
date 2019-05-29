@@ -81,6 +81,14 @@ public interface DataAccessService {
 	 * @return The Type object
 	 */
 	public Type getType(Class<?> clazz);
+
+	/**
+	 * Return the type based on the given clazz, falling back to the provided type
+	 * @param clazz the java class whose Type object we need. Usually this is the desired class.
+	 * @param type the type to fallback on
+	 * @return the type object
+	 */
+	public Type getType(Class<?> clazz, Type type);
 	
 	/**
 	 * Returns the External type for this class.

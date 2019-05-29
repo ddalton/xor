@@ -567,9 +567,11 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	private boolean hasRegex() {
-		for(String attrPath: this.attributeList) {
-			if (DFAtoRE.isRegex(attrPath)) {
-				return true;
+		if(this.attributeList != null) {
+			for (String attrPath : this.attributeList) {
+				if (DFAtoRE.isRegex(attrPath)) {
+					return true;
+				}
 			}
 		}
 

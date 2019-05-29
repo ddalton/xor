@@ -305,8 +305,8 @@ public abstract class JDBCDAS extends AbstractDataAccessService
          * @return
          */
         public String getPropertyName() {
-            if(referencedColumns.size() == 1) {
-                return referencedColumns.get(0);
+            if(referencingColumns.size() == 1) {
+                return referencingColumns.get(0);
             }
 
             return name;
@@ -411,6 +411,13 @@ public abstract class JDBCDAS extends AbstractDataAccessService
     }
 
     public abstract DataSource getDataSource();
+
+    @Override
+    public Type getType(Class<?> clazz, Type type) {
+        // The clazz is JSONObject, so it is better to use type as fallback
+        // as it is more specific
+        return type;
+    }
 
     @Override
     public Type getType(String name) {

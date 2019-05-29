@@ -1,13 +1,11 @@
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
 
-Depending on actual object the view scope differs? How is this implemented?
-
-    We use StateTree only for Query
-    findById should get entity from DB for JDBC and Read action
-
-     The data from the most specific type requested for a given primary key is used to
-     decide the type for that object
     
+Pending PlainJDBCTest cases
+===========================
+1. Inverse Collection test
+2. Entity filter test
+3. Inheritance test
 
 
 

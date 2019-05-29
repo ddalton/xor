@@ -166,6 +166,11 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		return getShape().getType(clazz);
 	}
 
+	@Override
+	public Type getType(Class<?> clazz, Type type) {
+		return clazz != null ? getType(clazz) : type;
+	}
+
 	/**
 	 * This is a performance intensive method. So we now define subtypes as and when they are
 	 * needed.

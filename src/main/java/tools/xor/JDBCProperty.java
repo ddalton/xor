@@ -115,7 +115,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     // Supported only for a single column
     public boolean isGenerated() {
 
-        if(this.columns.size() == 1) {
+        if(this.columns != null && this.columns.size() == 1) {
             return this.columns.get(0).isGenerated();
         }
 

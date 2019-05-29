@@ -19,6 +19,7 @@
 
 package tools.xor.view;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
@@ -363,7 +364,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		if(path == null || getRoot() == null) {
 			return null;
 		}
-		String anchorPath = (getRoot().getAncestorPath() == null) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);
+		String anchorPath = StringUtils.isEmpty(getRoot().getAncestorPath()) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);
 
 		// we first strip out the ancestor path from the root QueryTree
 		return path.startsWith(anchorPath) ? path.substring(anchorPath.length()) : path;

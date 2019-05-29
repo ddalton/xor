@@ -1381,8 +1381,7 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		try {
-			Class<?> narrowedClass = settings.getNarrowedClass();
-			Type targetType = narrowedClass != null ? getObjectCreator().getDAS().getType(settings.getNarrowedClass()) : settings.getEntityType();
+			Type targetType = getObjectCreator().getDAS().getType(settings.getNarrowedClass(), settings.getEntityType());
 			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, targetType));
 			
 			// Needed to hold references to open property created objects

@@ -64,6 +64,7 @@ public class JDBCType extends AbstractType {
     {
         // If the properties are already defined then return
         if (shape.getProperties(this) != null) {
+            setIdentifierProperty();
             return;
         }
 
@@ -90,13 +91,18 @@ public class JDBCType extends AbstractType {
                     (fkey == parentFK) ? JDBCProperty.PARENT : fkey.getPropertyName(),
                     columns,
                     propertyType,
-                    this);
+                    this,
+                    fkey);
 
                 shape.addProperty(property);
             }
         }
 
 
+        setIdentifierProperty();
+    }
+
+    private void setIdentifierProperty() {
         if(this.tableInfo.getPrimaryKeys() != null) {
             if(this.tableInfo.getPrimaryKeys().size() == 1) {
                 String propertyName = this.tableInfo.getPrimaryKeys().get(0);

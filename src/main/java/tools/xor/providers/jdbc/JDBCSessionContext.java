@@ -69,7 +69,7 @@ public class JDBCSessionContext implements CustomPersister
     @Override
     public void process (JSONObject object, EntityType entityType) {
 
-        EntityKey ek = null;
+        EntityKey ek;
         JDBCType type = (JDBCType) entityType;
         if(type.getIdentifierProperty() != null) {
             ek = new SurrogateEntityKey(object.get(type.getIdentifierProperty().getName()), type.getName());
@@ -85,14 +85,18 @@ public class JDBCSessionContext implements CustomPersister
         idToObjects.put(ek, object);
 
         for(Property property: type.getProperties()) {
-            if(!property.getType().isDataType()) {
-                JSONObject child = object.getJSONObject(property.getName());
-                process(child, (JDBCType)property.getType());
-            } else if(property.isMany() && !((ExtendedProperty)property).getElementType().isDataType()) {
-                JSONArray child = object.getJSONArray(property.getName());
-                JDBCType elementType = (JDBCType)((ExtendedProperty)property).getElementType();
-                for(int i = 0; i < child.length(); i++) {
-                    process(child.getJSONObject(i), elementType);
+            if(object.has(property.getName())) {
+                if (!property.getType().isDataType()) {
+                    JSONObject child = object.getJSONObject(property.getName());
+                    process(child, (JDBCType)property.getType());
+                }
+                else if (property.isMany()
+                    && !((ExtendedProperty)property).getElementType().isDataType()) {
+                    JSONArray child = object.getJSONArray(property.getName());
+                    JDBCType elementType = (JDBCType)((ExtendedProperty)property).getElementType();
+                    for (int i = 0; i < child.length(); i++) {
+                        process(child.getJSONObject(i), elementType);
+                    }
                 }
             }
         }

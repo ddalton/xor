@@ -48,7 +48,7 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
         if(Settings.doSQL(po)) {
             StringBuilder join = new StringBuilder();
             join.append(" LEFT OUTER JOIN ")
-                .append(getNormalizedName())
+                .append(property.getType().getName())
                 .append(" AS ")
                 .append(getEnd().getAlias())
                 .append(" ON (")

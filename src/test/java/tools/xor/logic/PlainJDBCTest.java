@@ -32,12 +32,14 @@ import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.view.AggregateView;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -122,5 +124,41 @@ public class PlainJDBCTest
 		List<?> toList = am.query(obj, settings);
 		assert(toList.size() == 1);
 		System.out.println("JSON string: " + json.toString());
+	}
+
+	@Test
+	public void queryEntity() {
+		DataAccessService das = am.getDAS();
+		das.addShape("_DEFAULT_");
+		Shape shape = das.getShape();
+
+		// create library
+		JSONObject json = new JSONObject();
+		json.put("ID", "1001");
+
+		AggregateView view = new AggregateView();
+		List<String> attributes = new ArrayList<>();
+		view.setAttributeList(attributes);
+		attributes.add("ID");
+		attributes.add("NAME");
+		attributes.add("EMAIL");
+		attributes.add("LIBRARY.ID");
+		attributes.add("LIBRARY.NAME");
+
+		Settings settings = new Settings();
+		JDBCType type = (JDBCType) das.getType("librarian");
+		settings.setEntityType(type);
+		settings.setView(view);
+		settings.init(shape);
+
+		List<?> toList = am.query(json, settings);
+		assert(toList.size() == 1);
+
+		json = (JSONObject)toList.get(0);
+		assert(json.getJSONObject("LIBRARY") != null);
+		assert(json.getString("NAME").equals("Jack Wayne"));
+
+		JSONObject library = json.getJSONObject("LIBRARY");
+		assert(library.getString("NAME").equals("British Library"));
 	}
 }

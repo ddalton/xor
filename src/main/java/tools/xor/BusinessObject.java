@@ -239,9 +239,10 @@ public interface BusinessObject extends DataObject {
 	 * @param propertyPath The path representing property whose value needs to be set
 	 * @param propertyResult The result from a query
 	 * @param queryTree for the query
+	 * @param visitor for helping with adding elements to their collection
 	 * @throws Exception if property cannot be found
 	 */
-	void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree) throws Exception;
+	void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree, CollectionAddVisitor visitor) throws Exception;
 	
 	/**
 	 * Responsible for creating a new data object whose lifecycle is linked with this object.

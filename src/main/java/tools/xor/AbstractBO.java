@@ -749,19 +749,7 @@ public abstract class AbstractBO implements BusinessObject {
 	}	
 
 	@Override
-	public void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree) throws Exception {
-
-		/*
-		  TODO: Needs to create a QueryType
-		if(domainEntityType.isOpen()) {
-			String propertyName = propertyPath.substring(propertyPath.indexOf(OpenType.DELIM)+1);
-			Property property = getType().getProperty(propertyName);
-			((ExtendedProperty)property).setValue(
-				this,
-				propertyResult.get(propertyPath));
-			return;
-		}
-		*/
+	public void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree, CollectionAddVisitor visitor) throws Exception {
 
 		// If we are setting a null value then nothing needs to be done
 		if( propertyResult.get(propertyPath) == null) {
@@ -926,7 +914,8 @@ public abstract class AbstractBO implements BusinessObject {
 					if(current.getInstance() instanceof JSONArray) {
 						// add it in the order we see it
 						JSONArray jsonArray = (JSONArray) current.getInstance();
-						jsonArray.put(elementInstance);
+						visitor.add(propertyPath, new CollectionAddVisitor.AddEvent(jsonArray, elementInstance), property);
+
 					} else {
 						List list = (List)current.getInstance();
 						int index = Integer.parseInt(indexValue.toString());

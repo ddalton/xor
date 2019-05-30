@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
+import tools.xor.CollectionAddVisitor;
 import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -212,7 +213,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			logger.error("Duplicate record identified, please enhance the view to distinguish this duplicate record, ");
 		}
 
-		// We find the least common prefex of all the changed paths
+		// We find the longest common prefix of all the changed paths
 		// and update all the properties rooted at the least common prefix
 		// We need to do this since we need to initialize all those fields even if they
 		// are not considered to be changed by checking the previous row.
@@ -224,13 +225,15 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			}
 		}
 
+		CollectionAddVisitor visitor = new CollectionAddVisitor();
 		for(String propertyPath: changed) {
 			// Set the value and create any intermediate objects if necessary
-			root.set(propertyPath, propertyResult, this);
+			root.set(propertyPath, propertyResult, this, visitor);
 
 			// Notify the queryTreeInvocation visitor
 			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
 		}
+		visitor.process(lcp);
 
 		return propertyResult;
 	}

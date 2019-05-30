@@ -325,7 +325,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 				} else {
 					logger.error(
-						"Unable to add unknown attribute to state graph: " + attribute
+						"Unable to add unknown attribute to state tree: " + attribute
 							+ " to state: "
 							+ current.getType() + ". Is it a sub-type attribute?");
 					return;

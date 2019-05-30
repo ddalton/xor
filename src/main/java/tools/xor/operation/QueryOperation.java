@@ -116,13 +116,14 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			// club all the results relevant to the same entity
 			// add an id attribute for the mail entity. Add an owner attribute for each collection property referenced.
 			// adjust the properties and for every new attribute added (id or owner) create a filler/dummy property column in the view
+			Map<String, Object> previous = null;
 			for(Object obj: records) {
 				BusinessObject newRootObject = queryTree.getRootObject(
 					obj,
 					(BusinessObject)callInfo.getOutput());
 
 				if(ClassUtil.getDimensionCount(obj) == 1) {
-					queryTree.resolveField(newRootObject, (Object[])obj, queryInvocation);
+					previous = queryTree.resolveField(newRootObject, (Object[])obj, previous, queryInvocation);
 					if(newRootObject.getContainer() == null && !uniqueList.containsKey(newRootObject)) // Only add root objects
 						uniqueList.put(newRootObject, null);
 				}

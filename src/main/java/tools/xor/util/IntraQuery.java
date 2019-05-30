@@ -48,7 +48,7 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
         if(Settings.doSQL(po)) {
             StringBuilder join = new StringBuilder();
             join.append(" LEFT OUTER JOIN ")
-                .append(property.getType().getName())
+                .append(getJoinTableName())
                 .append(" AS ")
                 .append(getEnd().getAlias())
                 .append(" ON (")
@@ -66,6 +66,14 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
             else {
                 return po.getOQLJoinFragment((IntraQuery<QueryFragment>)this);
             }
+        }
+    }
+
+    private String getJoinTableName() {
+        if(property.isMany()) {
+            return GraphUtil.getPropertyEntityType(property, null).getName();
+        } else {
+            return property.getType().getName();
         }
     }
 

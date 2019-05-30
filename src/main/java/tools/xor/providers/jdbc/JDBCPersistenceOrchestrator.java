@@ -104,7 +104,7 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public void clear(Set<Object> ids) {
-		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
+		// no-op
 	}
 	
 	@Override 

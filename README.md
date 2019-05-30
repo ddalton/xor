@@ -1,5 +1,13 @@
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
 
+Test failures due to QueryTree:203
+
+from
+		for(String propertyPath: propertyPaths) {
+to
+		for(String propertyPath: changed) {
+
+
     
 Pending PlainJDBCTest cases
 ===========================

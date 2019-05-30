@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class JDBCProperty extends AbstractProperty implements Cloneable
 {
-    public static final String INVERSE = "−1";
+    public static final String INVERSE = "-1";
     public static final String PARENT = "_PARENT_";
 
     private boolean    isMany;
@@ -268,6 +268,11 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
 
     @Override public boolean isList ()
     {
+        // Only list collection is supported
+        if(isMany()) {
+            return true;
+        }
+
         return false;
     }
 

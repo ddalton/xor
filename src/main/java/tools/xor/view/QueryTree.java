@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -146,8 +147,8 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return result;
 	}
 
-	public void resolveField(BusinessObject root, Object[] queryResultRow, QueryTreeInvocation queryInvocation) throws Exception {
-		Map<String, Object> propertyResult = new HashMap<String, Object>();
+	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) throws Exception {
+		Map<String, Object> propertyResult = new HashMap<>();
 		Set<String> propertyPaths = new HashSet<>();
 
 		// system generated query
@@ -178,13 +179,60 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			}
 		}
 
+		// Identify which objects have changed
+		Set<String> changed = new HashSet<>();
+		if(previousResult != null) {
+			for(Map.Entry<String, Object> entry: previousResult.entrySet()) {
+				// Meta fields (list index etc) should be skipped
+				if(!propertyPaths.contains(entry.getKey())) {
+					continue;
+				}
+				Object currentValue = propertyResult.get(entry.getKey());
+				Object previousValue = entry.getValue();
+
+				if(currentValue == previousValue) continue;
+
+				if(currentValue == null ^ previousValue == null) {
+					changed.add(entry.getKey());
+					continue;
+				}
+
+				if(currentValue != null && currentValue.equals(previousValue)) continue;
+
+				changed.add(entry.getKey());
+			}
+		} else {
+			changed = propertyPaths;
+		}
+
+		// We are probably adding duplicate entries in a collection
+		// to enable this select an additional column that distinguishes this duplicate value
+		// for e.g., a column representing a list index
+		if(changed.size() == 0) {
+			logger.error("Duplicate record identified, please enhance the view to distinguish this duplicate record, ");
+		}
+
+		// We find the least common prefex of all the changed paths
+		// and update all the properties rooted at the least common prefix
+		// We need to do this since we need to initialize all those fields even if they
+		// are not considered to be changed by checking the previous row.
+		String lcp = LCP.findLCP(new LinkedList(changed));
+		changed = new HashSet<>();
 		for(String propertyPath: propertyPaths) {
+			if(propertyPath.startsWith(lcp)) {
+				changed.add(propertyPath);
+			}
+		}
+
+		for(String propertyPath: changed) {
 			// Set the value and create any intermediate objects if necessary
 			root.set(propertyPath, propertyResult, this);
 
 			// Notify the queryTreeInvocation visitor
 			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
 		}
+
+		return propertyResult;
 	}
 
 	public String getName() {

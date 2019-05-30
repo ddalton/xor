@@ -19,6 +19,7 @@
 
 package tools.xor.logic;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -160,5 +161,39 @@ public class PlainJDBCTest
 
 		JSONObject library = json.getJSONObject("LIBRARY");
 		assert(library.getString("NAME").equals("British Library"));
+	}
+
+
+	@Test
+	public void queryCollection() {
+		DataAccessService das = am.getDAS();
+		das.addShape("_DEFAULT_");
+		Shape shape = das.getShape();
+
+		// create library
+		JSONObject json = new JSONObject();
+		json.put("ID", "L100");
+
+		AggregateView view = new AggregateView();
+		List<String> attributes = new ArrayList<>();
+		view.setAttributeList(attributes);
+		attributes.add("ID");
+		attributes.add("NAME");
+		attributes.add("LIBRARY-1.ID");
+		attributes.add("LIBRARY-1.NAME");
+		attributes.add("LIBRARY-1.EMAIL");
+
+		Settings settings = new Settings();
+		JDBCType type = (JDBCType) das.getType("library");
+		settings.setEntityType(type);
+		settings.setView(view);
+		settings.init(shape);
+
+		List<?> toList = am.query(json, settings);
+		assert(toList.size() == 1);
+		JSONObject library = (JSONObject)toList.get(0);
+		JSONArray librarians = library.getJSONArray("LIBRARY-1");
+		assert(librarians != null);
+		assert(librarians.length() == 2);
 	}
 }

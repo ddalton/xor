@@ -32,6 +32,7 @@ import org.json.JSONObject;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.ListType;
 import tools.xor.MutableJsonTypeMapper;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -94,7 +95,7 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 	public Object newInstance(Object from, BasicType type, Class<?> toClass, BusinessObject container,
 			Property containmentProperty) throws Exception {
 		
-		Object result = null;
+		Object result;
 		if(getUnchanged().contains(toClass) || (from != null && from instanceof Blob)) {
 			result = from;
 		} else if(toClass == JSONObject.class || type.getInstanceClass() == JSONObject.class) {

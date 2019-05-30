@@ -24,6 +24,7 @@ import org.json.JSONObject;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.MutableJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.UnchangedCreationStrategy;
 
 public class UnchangedTypeMapper extends AbstractTypeMapper
 {
@@ -73,7 +74,7 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     @Override
     public CreationStrategy getCreationStrategy(ObjectCreator oc)
     {
-        return new MutableJsonCreationStrategy(oc);
+        return new UnchangedCreationStrategy(oc);
     }
 
     @Override

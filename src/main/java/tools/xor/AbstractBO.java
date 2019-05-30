@@ -857,6 +857,7 @@ public abstract class AbstractBO implements BusinessObject {
 				} else if(!BusinessObject.class.isAssignableFrom(propertyDO.getClass())) {
 					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property);
 				}
+				((ExtendedProperty)property).setValue(current, ((BusinessObject)propertyDO).getInstance());
 				current = (BusinessObject) propertyDO;
 				Object elementDO = null;
 
@@ -901,7 +902,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 					if(elementInstance == null) {
 						if(idValue != null || naturalKeyValues.size() > 0)
-							elementDO = current.createDataObject(idValue, naturalKeyValues, (EntityType) elementType, null);							
+							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null);
 						else
 							return; // Does not have a collection element
 					} else
@@ -922,10 +923,17 @@ public abstract class AbstractBO implements BusinessObject {
 					map.put(keyValue, elementInstance);
 				} else if ( ((ExtendedProperty)property).isList() ) {
 					Object indexValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryFragment.LIST_INDEX_ATTRIBUTE);
-					List list = (List) current.getInstance();
-					int index = Integer.parseInt(indexValue.toString());
-					if(index >= list.size() || list.get(index) != elementInstance)
-						list.add(elementInstance);
+					if(current.getInstance() instanceof JSONArray) {
+						// add it in the order we see it
+						JSONArray jsonArray = (JSONArray) current.getInstance();
+						jsonArray.put(elementInstance);
+					} else {
+						List list = (List)current.getInstance();
+						int index = Integer.parseInt(indexValue.toString());
+						if (index >= list.size() || list.get(index) != elementInstance) {
+							list.add(elementInstance);
+						}
+					}
 				} else if ( ((ExtendedProperty)property).isSet() ) {
 					// Currently Immutable JSON is treated as a set, so we should check for this
 					if(current.getInstance() instanceof JSONArray) {

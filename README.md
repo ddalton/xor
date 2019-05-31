@@ -1,27 +1,22 @@
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
 
-Test failures due to QueryTree:203
-
-from
-		for(String propertyPath: propertyPaths) {
-to
-		for(String propertyPath: changed) {
-
 
     
 Pending PlainJDBCTest cases
 ===========================
-1. Inverse Collection test
-2. Entity filter test
-3. Inheritance test
-
+foreign key inverse relationship name
+1. Multi-column foreign key test
+2. Collection sort test
+3. Entity filter test
+4. Inheritance test
+5. Paging test
 
 
 
 XOR - Light weight ORM
-  XOR is a light weight ORM, that can work directly against a relational database.
-  It helps to quickly prototype a Single page application developed using javascript.
-
+  Provides OOTB Object model over a relational database.
+  Allows this object model to be easily consumed by a web app.
+  Useful for rapid prototyping (RAD).
 
   1. Develop the schema in an RDBMS with the necessary tables, indexes and foreign key constraints
   2. Configure XOR with this database schema
@@ -61,11 +56,8 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
    The advantage of #1 is that it reduces the number of round trips
    The advantage of #2 is that it can more effectively use the SQL cache.
 
-2) Querying -
-   Support querying using OQL
-   Create JDBCProvider to convert OQL to SQL queries
+2) A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
 
-3) A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
 
 0. Type narrowing of a property
    NarrowHandler(options)
@@ -127,11 +119,8 @@ QueryType {
 
 
 
-Vision
-=======
-Support CRUD automation over REST using JPA
-Allows developers to quickly add J2EE persistence to their UI development. Assists with RAD.
-Helps bootstrap J2EE development and business logic can slowly be exposed to users over time.
+Other uses
+==========
 
 1. Very fast object retrieval from an RDBMS using views, optimized for stored procedures
 2. Native JSON support. Directly interact using JSON and hence just a JS library.
@@ -147,5 +136,4 @@ Helps bootstrap J2EE development and business logic can slowly be exposed to use
 
 TODO:
 =====
-Refactor QueryTree to utilize StateTree data structure to store results.
 Test batching optimization based on BFS.

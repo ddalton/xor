@@ -68,19 +68,19 @@ public abstract class AbstractType implements EntityType {
 	
 	public static final int ALL = -1;
 	
-	private TypeMapper              typeMapper;   // Used to get the derivedClass from the referenceClass and vice versa
-	private ClassResolver           classResolver;
-	private boolean                 immutable;
+	private TypeMapper          typeMapper;   // Used to get the derivedClass from the referenceClass and vice versa
+	private ClassResolver       classResolver;
+	private boolean             immutable;
 
 	// Need to only contain type name, as the actual type should be resolved dynamically
 	protected String            rootEntityType;
 	protected Set<String>       subTypes;
 	protected Set<String>       childSubTypes;
-	private   String            superType;
 
-	private int                     order; //represents the topological sort order of the entity type
-	private List<String>            naturalKey;
-	private List<String>            expandedNaturalKey;
+	private   String            superType;
+	private   int               order; //represents the topological sort order of the entity type
+	private   List<String>      naturalKey;
+	protected List<String>      expandedNaturalKey;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	

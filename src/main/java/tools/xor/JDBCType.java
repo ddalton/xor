@@ -108,7 +108,28 @@ public class JDBCType extends AbstractType {
                 String propertyName = this.tableInfo.getPrimaryKeys().get(0);
                 this.id = getProperty(propertyName);
             } else {
-                String[] keys = this.tableInfo.getPrimaryKeys().stream().toArray(String[]::new);
+                // Possible to have multi-column foreign keys subsumed in the primary key
+                Set<String> primaryKeySet = new HashSet<>(this.tableInfo.getPrimaryKeys());
+                Set<String> foreignKeySet = new HashSet<>();
+
+                List<String> primaryKeyPropertyNames = new LinkedList<>();
+                for(JDBCDAS.ForeignKey fk: this.tableInfo.getForeignKeys()) {
+                    if(fk.getReferencingColumns().size() > 1) {
+                        if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
+                            primaryKeyPropertyNames.add(fk.getName());
+                            foreignKeySet.addAll(fk.getReferencingColumns());
+                        }
+                    }
+                }
+                if(primaryKeyPropertyNames.size() > 0) {
+                    // Subtract all the columns used up by the foreign keys
+                    primaryKeySet.removeAll(foreignKeySet);
+                    primaryKeyPropertyNames.addAll(primaryKeySet);
+                } else {
+                    primaryKeyPropertyNames.addAll(this.tableInfo.getPrimaryKeys());
+                }
+
+                String[] keys = primaryKeyPropertyNames.stream().toArray(String[]::new);
                 setNaturalKey(keys);
             }
         }
@@ -159,6 +180,20 @@ public class JDBCType extends AbstractType {
                 childSubTypes.add(type.getName());
             }
         }
+    }
+
+    @Override
+    public List<String> getExpandedNaturalKey() {
+        if(this.expandedNaturalKey == null) {
+            this.expandedNaturalKey = new ArrayList<>();
+
+            if( getNaturalKey() != null) {
+                for (String key : getNaturalKey()) {
+                    this.expandedNaturalKey.add(key);
+                }
+            }
+        }
+        return this.expandedNaturalKey;
     }
 
     @Override

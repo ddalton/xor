@@ -266,12 +266,6 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         }
     }
 
-    public static enum ForeignKeySide {
-        REFERENCED,
-        REFERENCING,
-        UNKNOWN
-    }
-
     public static enum ForeignKeyRule {
         CASCADE,
         RESTRICT,
@@ -281,9 +275,24 @@ public abstract class JDBCDAS extends AbstractDataAccessService
     }
 
     public static class ForeignKey {
+         /* Delimiter to get inverse relationship name
+          * Useful to rename relationships
+          * format:
+          *   contains 3 parts
+          *   <unique prefix>__<inverse relationship name>__<relationship name>
+          *
+          * unique prefix - A prefix to uniquely identify this foreign key. This part is required
+          * inverse relationship name - Represents the collection relationship name. This part is optional
+          * relationship name - Represents the user facing foreign key relationship name. This part is optional
+          *                     NOTE: all 3 parts are required for a multi-column foreign key relationship
+          */
+         private static final String DELIM = "__";
+
+        private String nameInDatabase; // original foreign key name
         private TableInfo referencingTable;      // table representing source of the relationship
         private TableInfo referencedTable;       // table representing target of the relationship
         private String name;                     // name of the foreign key.
+        private String inverseName;
         private List<String> referencingColumns;
         private List<String> referencedColumns;
         private ForeignKeyRule deleteRule;
@@ -293,6 +302,10 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
         public String getName() {
             return this.name;
+        }
+
+        public String getInverseRelationshipName() {
+            return this.inverseName;
         }
 
         /**
@@ -320,22 +333,21 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             return this.referencedTable;
         }
 
-        public ForeignKeySide getSide(JDBCType type) {
-            if(type.getTableName().equals(this.referencedTable)) {
-                return ForeignKeySide.REFERENCED;
-            } else if(type.getTableName().equals(this.referencingTable)) {
-                return ForeignKeySide.REFERENCING;
-            } else {
-                return ForeignKeySide.UNKNOWN;
-            }
-        }
-
         public ForeignKey(String name, TableInfo referencing, TableInfo referenced, ForeignKeyRule deleteRule, ForeignKeyRule updateRule) {
-            this.name = name;
+            this.nameInDatabase = name;
             this.referencingTable = referencing;
             this.referencedTable = referenced;
             this.deleteRule = deleteRule;
             this.updateRule = updateRule;
+
+            this.name = this.nameInDatabase;
+            if(this.nameInDatabase.indexOf(DELIM) != -1) {
+                this.inverseName = this.nameInDatabase.substring(this.nameInDatabase.indexOf(DELIM)+DELIM.length());
+                if(inverseName.indexOf(DELIM) != -1) {
+                    this.name = this.inverseName.substring(this.inverseName.indexOf(DELIM)+DELIM.length());
+                    this.inverseName = this.inverseName.substring(0, this.inverseName.indexOf(DELIM));
+                }
+            }
         }
 
         public List<String> getReferencingColumns() {

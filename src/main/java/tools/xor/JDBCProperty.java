@@ -207,20 +207,25 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     @Override public void initMappedBy (Shape shape)
     {
         if(this.foreignKey != null) {
-            JDBCDAS.ForeignKey parentFK = foreignKey.getReferencedTable().getParentFK();
+            JDBCDAS.ForeignKey parentFK = foreignKey.getReferencingTable().getParentFK();
 
             DataAccessService das = shape.getDAS();
             JDBCProperty inverse;
+
+            String inverseRelationshipName = this.foreignKey.getInverseRelationshipName();
+            if(inverseRelationshipName == null) {
+                inverseRelationshipName = getName() + INVERSE;
+            }
             if(this.foreignKey != parentFK) {
                 // create and link a new JDBCProperty this is the inverse
                 // and representing the collection
                 inverse = new JDBCProperty(
-                    getName() + INVERSE, das.getType(java.util.List.class),
+                    inverseRelationshipName, das.getType(java.util.List.class),
                     (EntityType)getType(), getContainingType());
             } else {
                 // the inverse is a ONE_TO_ONE relationship
                 inverse = new JDBCProperty(
-                    getName() + INVERSE, getContainingType(), (EntityType) getType());
+                    inverseRelationshipName, getContainingType(), (EntityType) getType());
             }
             shape.addProperty(inverse);
             inverse.setMappedBy(this, this.getName());

@@ -672,7 +672,11 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property) throws Exception {
-		Object propertyInstance = createInstance(objectCreator, id, naturalKeyValues, instanceType);
+		return createDataObject(id, naturalKeyValues, instanceType, property, null);
+	}
+
+	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property, String anchor) throws Exception {
+		Object propertyInstance = createInstance(objectCreator, id, naturalKeyValues, instanceType, false, anchor);
 		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, property == null ? null : this, property);
 
 		if(property != null)
@@ -682,11 +686,11 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 	
 	public static Object createInstance(ObjectCreator oc, Object id, Type instanceType) throws Exception {
-		return createInstance(oc, id, null, instanceType, false);
+		return createInstance(oc, id, null, instanceType, false, null);
 	}
 
 	public static Object createInstance(ObjectCreator oc, Object id, Map<String, Object> naturalKeyValues, Type instanceType) throws Exception {
-		return createInstance(oc, id, naturalKeyValues, instanceType, false);
+		return createInstance(oc, id, naturalKeyValues, instanceType, false, null);
 	}
 
 	/**
@@ -697,10 +701,11 @@ public abstract class AbstractBO implements BusinessObject {
 	 * @param naturalKeyValues business key
 	 * @param instanceType type of the object
 	 * @param isPatch true if the object is being created solely for the purpose of patching. This is an update optimization.
+	 * @param anchor needed to find objects if the natural key points to entities
 	 * @return new domain instance
 	 * @throws Exception during object creation
 	 */
-	public static Object createInstance(ObjectCreator oc, Object id, Map<String, Object> naturalKeyValues, Type instanceType, boolean isPatch) throws Exception {
+	public static Object createInstance(ObjectCreator oc, Object id, Map<String, Object> naturalKeyValues, Type instanceType, boolean isPatch, String anchor) throws Exception {
 		Object propertyInstance = null;
 		
 		// We will use the already loaded object in session if one is available
@@ -721,13 +726,41 @@ public abstract class AbstractBO implements BusinessObject {
 			} else {
 				propertyInstance = oc.createInstance(instanceType);
 			}
+
+			// For entity objects we also set the surrogate/natural key values
 			if(!instanceType.isDataType()) {
-				if(((EntityType)instanceType).getIdentifierProperty() != null ) {
-					((ExtendedProperty)((EntityType)instanceType).getIdentifierProperty()).setValue(oc.getSettings(), propertyInstance, id);
-				} 
-				if(((EntityType)instanceType).getNaturalKey() != null && naturalKeyValues != null) {
-					for(String key: ((EntityType)instanceType).getExpandedNaturalKey()) {
-						((ExtendedProperty)((EntityType)instanceType).getProperty(key)).setValue(oc.getSettings(), propertyInstance, naturalKeyValues.get(key));
+				EntityType entityType = (EntityType) instanceType;
+				if(entityType.getIdentifierProperty() != null ) {
+					((ExtendedProperty)entityType.getIdentifierProperty()).setValue(oc.getSettings(), propertyInstance, id);
+				}
+
+				if(entityType.getNaturalKey() != null && naturalKeyValues != null && naturalKeyValues.size() > 0) {
+
+					for(String key: entityType.getNaturalKey()) {
+						Type keyType = entityType.getProperty(key).getType();
+						if(!keyType.isDataType()) {
+							// First try to find entity using ObjectCreator#findEntity
+							// If the entity cannot be found then we create and set the instance
+							// Set the natural key if there is one
+							Map<String, Object> childNKV = new HashMap<String, Object>();
+							if(((EntityType)keyType).getNaturalKey() != null) {
+								String prefix = key + Settings.PATH_DELIMITER;
+
+								for(Map.Entry<String, Object> entry: naturalKeyValues.entrySet()) {
+									if(entry.getKey().startsWith(prefix)) {
+										childNKV.put(entry.getKey(), entry.getValue());
+									}
+								}
+								Object idValue = null;
+								if(((EntityType)keyType).getIdentifierProperty() != null) {
+									idValue = naturalKeyValues.get(prefix+((EntityType)keyType).getIdentifierProperty().getName());
+								}
+								BusinessObject childBO = oc.findEntity(idValue, childNKV, keyType, anchor + PATH_DELIMITER + key);
+								Object keyInstance = childBO != null ? childBO.getInstance() : createInstance(oc, idValue, childNKV, keyType, isPatch, anchor + PATH_DELIMITER + key);
+
+								((ExtendedProperty)entityType.getProperty(key)).setValue(oc.getSettings(), propertyInstance, keyInstance);
+							}
+						}
 					}
 				}
 			}
@@ -804,20 +837,15 @@ public abstract class AbstractBO implements BusinessObject {
 								Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
 								naturalKeyValues.put(key, keyValue);
 							}
-							// NOTE: if path is set then we get ObjectResolver.Type#DISTINCT objects
-							// else if path is null we get ObjectResolver.Type#SHARED objects
-							propertyDO = getByNaturalKey(naturalKeyValues, domainProperty.getType(), currentPath.toString());
 						}				
 					}
 					// Check if there is a data object with the given key
 					// Get the identifier value
 					Object idValue = null;
-					if(propertyDO == null && ((EntityType)property.getType()).getIdentifierProperty() != null) {
+					if(((EntityType)property.getType()).getIdentifierProperty() != null) {
 						idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
-						// NOTE: if path is set then we get ObjectResolver.Type#DISTINCT objects
-						// else if path is null we get ObjectResolver.Type#SHARED objects
-						propertyDO = getBySurrogateKey(idValue, domainProperty.getType(), currentPath.toString());
 					}
+					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), currentPath.toString());
 
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
@@ -861,16 +889,13 @@ public abstract class AbstractBO implements BusinessObject {
 						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
 						naturalKeyValues.put(key, keyValue);
 					}
-
-					// Get the element
-					elementDO = getByNaturalKey(naturalKeyValues, domainElementType, currentPath.toString());
-				}				
-				
-				Object idValue = null;
-				if(elementDO == null && ((EntityType) elementType).getIdentifierProperty() != null) {
-					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
-					elementDO = getBySurrogateKey(idValue, domainElementType, currentPath.toString());
 				}
+				Object idValue = null;
+				if(((EntityType) elementType).getIdentifierProperty() != null) {
+					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
+				}
+				// find the element
+				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, currentPath.toString());
 
 				// check flag to see if the containment should be set
 				if(elementDO != null && property.isContainment()) {
@@ -890,7 +915,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 					if(elementInstance == null) {
 						if(idValue != null || naturalKeyValues.size() > 0)
-							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null);
+							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null, currentPath.toString());
 						else
 							return; // Does not have a collection element
 					} else

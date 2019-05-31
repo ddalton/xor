@@ -202,8 +202,10 @@ public class QueryFragment implements Vertex
         if(!queryTree.getView().hasUserQuery()) {
             if (type == ObjectResolver.Type.SHARED) {
                 // add surrogate key
-                String idName = getEntityType().getIdentifierProperty().getName();
-                position += addField(new QueryField(idName, position, this, true)) ? 1 : 0;
+                if(getEntityType().getIdentifierProperty() != null) {
+                    String idName = getEntityType().getIdentifierProperty().getName();
+                    position += addField(new QueryField(idName, position, this, true)) ? 1 : 0;
+                }
 
                 // add USERKEY
                 if (getEntityType().getNaturalKey() != null) {

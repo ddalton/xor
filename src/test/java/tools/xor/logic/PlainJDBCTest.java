@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import tools.xor.FunctionType;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.service.AggregateManager;
@@ -57,27 +58,74 @@ public class PlainJDBCTest
 	public void init() throws SQLException, ClassNotFoundException, IOException
 	{
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
-			statement.execute("CREATE TABLE library (id VARCHAR(10) NOT NULL, name VARCHAR(50) NOT NULL, PRIMARY KEY(id))");
-			connection.commit();
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L100', 'British Library')");
-			connection.commit();
+			statement.execute("CREATE TABLE library "
+					               + "(id VARCHAR(10) NOT NULL, "
+					               + " name VARCHAR(50) NOT NULL, "
+					               + " PRIMARY KEY(id))");
 
-			statement.execute("CREATE TABLE librarian (id VARCHAR(10) NOT NULL, name VARCHAR(50) NOT NULL,"
-					+ "email VARCHAR(50) NOT NULL, library VARCHAR(10) NOT NULL, PRIMARY KEY (id), FOREIGN KEY(library) REFERENCES library(id))");
-			connection.commit();
-			statement.executeUpdate(
-				"INSERT INTO librarian (id, name, email, library) VALUES ('1001','Jack Wayne', 'jwayne@somewhere.com', 'L100')");
-			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1002','John Wayne', 'jowayne@somewhere.com', 'L100')");
+			// British libraries
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L100', 'British Library')");
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L110', 'Duke Humfrey’s Library')");
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L111', 'Liverpool Central Library')");
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L112', 'Signet Library')");
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L113', 'Bodlein Library')");
+
+			// UK libraries
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L201', 'Central Library')");
+			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L202', 'Library of Congress')");
+
+
+			statement.execute("CREATE TABLE librarian "
+					               + "(id VARCHAR(10) NOT NULL, "
+				                   + " name VARCHAR(50) NOT NULL,"
+					               + " email VARCHAR(50) NOT NULL, "
+					               + " library VARCHAR(10) NOT NULL, "
+					               + " PRIMARY KEY (id))");
+			statement.execute("ALTER TABLE librarian ADD CONSTRAINT FK1__librarians FOREIGN KEY(library) REFERENCES library(id)");
+			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1001','Thomas Bodley', 'tbodley@somewhere.com', 'L113')");
+			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1002','Lewis Carroll', 'lcarroll@somewhere.com', 'L100')");
+			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1003','Alison Bailey', 'abailey@somewhere.com', 'L100')");
+			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1004','Alasdair Ball', 'aball@somewhere.com', 'L100')");
+			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1010','Benjamin Franklin', 'bfranklin@somewhere.com', 'L202')");
+
+			// Create a many-to-many relationship between librarian and association
+			statement.execute(
+				"CREATE TABLE association "
+					+ "(id VARCHAR(10) NOT NULL, "
+					+ " name VARCHAR(250) NOT NULL,"
+					+ " state VARCHAR(50) NOT NULL, "
+					+ " PRIMARY KEY (id))");
+			statement.execute("CREATE TABLE librarianassociation "
+					+ "(librarian VARCHAR(10) NOT NULL, "
+					+ " association VARCHAR(10) NOT NULL)");
+			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK2__libraryassociations FOREIGN KEY(librarian) REFERENCES librarian(id)");
+			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK3__libraryassociations FOREIGN KEY(association) REFERENCES association(id)");
+
+			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALA','American Library Association', 'Illinois')");
+			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALISE','Association for Library and Information Science Education', 'Illinois')");
+			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ARLIS','Art Libraries Society of North America', 'Wisconsin')");
+			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('MLA','Medical Library Association', 'Illinois')");
+			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('AALL','American Association of Law Libraries', 'Illinois')");
+			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('CILIP','Chartered Institute of Library and Information Professionals', 'London')");
+
+			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','CILIP')");
+			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','ALISE')");
+			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1003','CILIP')");
+			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1004','CILIP')");
+
+
+			// TODO: Add address
+
 			connection.commit();
 		}
 	}
 
-
 	@After
 	public void destroy() throws SQLException, ClassNotFoundException, IOException {
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
+			statement.executeUpdate("DROP TABLE librarianassociation");
+			statement.executeUpdate("DROP TABLE association");
 			statement.executeUpdate("DROP TABLE librarian");
-			connection.commit();
 			statement.executeUpdate("DROP TABLE library");
 			connection.commit();
 		}
@@ -133,7 +181,6 @@ public class PlainJDBCTest
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
 
-		// create library
 		JSONObject json = new JSONObject();
 		json.put("ID", "1001");
 
@@ -157,15 +204,47 @@ public class PlainJDBCTest
 
 		json = (JSONObject)toList.get(0);
 		assert(json.getJSONObject("LIBRARY") != null);
-		assert(json.getString("NAME").equals("Jack Wayne"));
+		assert(json.getString("NAME").equals("Thomas Bodley"));
 
 		JSONObject library = json.getJSONObject("LIBRARY");
-		assert(library.getString("NAME").equals("British Library"));
+		assert(library.getString("NAME").equals("Bodlein Library"));
 	}
 
 
 	@Test
 	public void queryCollection() {
+		DataAccessService das = am.getDAS();
+		das.addShape("_DEFAULT_");
+		Shape shape = das.getShape();
+
+		JSONObject json = new JSONObject();
+		json.put("ID", "L100");
+
+		AggregateView view = new AggregateView();
+		List<String> attributes = new ArrayList<>();
+		view.setAttributeList(attributes);
+		attributes.add("ID");
+		attributes.add("NAME");
+		attributes.add("LIBRARIANS.ID");
+		attributes.add("LIBRARIANS.NAME");
+		attributes.add("LIBRARIANS.EMAIL");
+
+		Settings settings = new Settings();
+		JDBCType type = (JDBCType) das.getType("library");
+		settings.setEntityType(type);
+		settings.setView(view);
+		settings.init(shape);
+
+		List<?> toList = am.query(json, settings);
+		assert(toList.size() == 1);
+		JSONObject library = (JSONObject)toList.get(0);
+		JSONArray librarians = library.getJSONArray("LIBRARIANS");
+		assert(librarians != null);
+		assert(librarians.length() == 3);
+	}
+
+	@Test
+	public void queryManyToMany() {
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
@@ -179,21 +258,39 @@ public class PlainJDBCTest
 		view.setAttributeList(attributes);
 		attributes.add("ID");
 		attributes.add("NAME");
-		attributes.add("LIBRARY-1.ID");
-		attributes.add("LIBRARY-1.NAME");
-		attributes.add("LIBRARY-1.EMAIL");
+		attributes.add("LIBRARIANS.ID");
+		attributes.add("LIBRARIANS.NAME");
+		attributes.add("LIBRARIANS.EMAIL");
+		attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.ID");
+		attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.NAME");
 
 		Settings settings = new Settings();
 		JDBCType type = (JDBCType) das.getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
+		settings.addFunction(FunctionType.ASC, 1, "LIBRARIANS.NAME");
 
 		List<?> toList = am.query(json, settings);
 		assert(toList.size() == 1);
 		JSONObject library = (JSONObject)toList.get(0);
-		JSONArray librarians = library.getJSONArray("LIBRARY-1");
+		JSONArray librarians = library.getJSONArray("LIBRARIANS");
 		assert(librarians != null);
-		assert(librarians.length() == 2);
+		assert(librarians.length() == 3);
+
+		JSONObject aball = librarians.getJSONObject(0);
+		JSONObject abailey = librarians.getJSONObject(1);
+		JSONObject lcarroll = librarians.getJSONObject(2);
+
+		assert(aball.getString("NAME").equals("Alasdair Ball"));
+		assert(abailey.getString("NAME").equals("Alison Bailey"));
+		assert(lcarroll.getString("NAME").equals("Lewis Carroll"));
+
+		JSONArray las = lcarroll.getJSONArray("LIBRARYASSOCIATIONS");
+		assert(las.length() == 2);
+		JSONObject la = las.getJSONObject(1);
+
+		JSONObject assoc = la.getJSONObject("ASSOCIATION");
+		assert(assoc.getString("ID").equals("ALISE"));
 	}
 }

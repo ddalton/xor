@@ -230,7 +230,8 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 					input.getIdentifierValue(),
 					null,
 					entityType,
-					true);
+					true,
+					null);
 				if(entityType.getVersionProperty() != null ) {
 					((ExtendedProperty)entityType.getVersionProperty()).setValue(oc.getSettings(), instance, input.getVersionValue());
 				} else {

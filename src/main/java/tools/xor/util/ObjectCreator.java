@@ -20,6 +20,7 @@
 package tools.xor.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +51,7 @@ import tools.xor.NaturalEntityKey;
 import tools.xor.ProcessingStage;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.providers.jdbc.CustomPersister;
@@ -224,7 +226,40 @@ public class ObjectCreator {
 		*/
 
 		return entitiesByKey.get(key);
-	}	
+	}
+
+	/**
+	 * 	if anchor is set then we get ObjectResolver.Type#DISTINCT objects
+	 *  else if path is null we get ObjectResolver.Type#SHARED objects
+	 * @param idValue surrogate key value if present
+	 * @param naturalKeyValues natural key values if the entity does not have a surrogate key
+	 * @param type of the entity
+	 * @param anchor where this type is anchored. Different type shapes can be present at different
+	 *               anchors.
+	 * @return
+	 */
+	public BusinessObject findEntity(Object idValue, Map<String, Object> naturalKeyValues, Type type, String anchor) {
+
+		BusinessObject bo = null;
+
+		if(naturalKeyValues.size() > 0) {
+			bo = getByEntityKey(
+				new NaturalEntityKey(
+					naturalKeyValues,
+					type.getName(),
+					anchor), type);
+		}
+
+		if(bo != null) {
+			return bo;
+		}
+
+		if(idValue != null && ((EntityType)type).getIdentifierProperty() != null) {
+			bo = getByEntityKey(new SurrogateEntityKey(idValue, type.getName(), anchor), type);
+		}
+
+		return bo;
+	}
 
 	public Set<BusinessObject> 	getDataObjects() {
 		// Retrieve an Identity set
@@ -296,6 +331,10 @@ public class ObjectCreator {
 	}
 
 	public BusinessObject createDataObject(Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty) {
+		return createDataObject(targetInstance, targetType, container, containmentProperty, null);
+	}
+
+	public BusinessObject createDataObject(Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty, String anchor) {
 		BusinessObject result = null;
 		
 		if(container != null && containmentProperty == null && (container.getContainmentProperty() == null || !container.getContainmentProperty().isMany()) )
@@ -312,7 +351,7 @@ public class ObjectCreator {
 			if(BusinessObject.class.isAssignableFrom(targetInstance.getClass()))
 				throw new RuntimeException("targetInstance is a Data Object");
 			
-			result = (BusinessObject) getExistingDataObject(targetInstance);
+			result = getExistingDataObject(targetInstance);
 			if(result != null && (result.getContainmentProperty() == null || !result.getContainmentProperty().isContainment()) ) {
 				result.setContainer(container);
 				result.setContainmentProperty(containmentProperty);

@@ -265,7 +265,21 @@ public interface BusinessObject extends DataObject {
 	 * @return new BusinessObject
 	 * @throws Exception when creating the BusinessObject
 	 */
-	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property) throws Exception;	
+	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property) throws Exception;
+
+	/**
+	 * Create a new Data object given a Surrogate key and a natural key
+	 *
+	 * @param id surrogate key
+	 * @param naturalKeyValues natural key
+	 * @param instanceType Type of the object to be created
+	 * @param property The property where the created object will be set
+	 * @param anchor the path at which the object needs to be created. The scope for the same object can be
+	 *               different on different paths.
+	 * @return new BusinessObject
+	 * @throws Exception when creating the BusinessObject
+	 */
+	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property, String anchor) throws Exception;
 
 	/**
 	 * This method is used to create a new data object that has to be in the scope of the data object that creates it.

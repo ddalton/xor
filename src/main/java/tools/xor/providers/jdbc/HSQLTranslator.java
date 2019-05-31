@@ -143,7 +143,7 @@ public class HSQLTranslator extends DBTranslator
         table.setColumns(columns);
         tables.put(table.getName(), table);
 
-        if(primaryKeys != null) {
+        if(primaryKeys != null && primaryKeys.size() > 0) {
             table.setPrimaryKeys(primaryKeys);
         } else {
             // all the fields of the table become the primary key

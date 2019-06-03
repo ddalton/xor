@@ -247,9 +247,12 @@ public class Settings {
 	{
 		this.persistenceOrchestrator = persistenceOrchestrator;
 
-		if(this.persistenceOrchestrator instanceof JDBCPersistenceOrchestrator &&
-			getSessionContext() == null) {
-			setSessionContext(((JDBCPersistenceOrchestrator)this.persistenceOrchestrator).getSessionContext());
+		if(this.persistenceOrchestrator instanceof JDBCPersistenceOrchestrator) {
+			if(getSessionContext() == null) {
+				setSessionContext(((JDBCPersistenceOrchestrator)this.persistenceOrchestrator).getSessionContext());
+			} else {
+				((JDBCPersistenceOrchestrator)this.persistenceOrchestrator).setSessionContext((JDBCSessionContext)getSessionContext());
+			}
 
 			// Need this to be true for JDBCPersistenceOrchestrator
 			this.postFlush = true;

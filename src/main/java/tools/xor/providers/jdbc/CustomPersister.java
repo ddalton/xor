@@ -26,6 +26,7 @@ import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.action.Executable;
 import tools.xor.action.PropertyKey;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ObjectCreator;
 
 import java.util.List;
@@ -45,7 +46,7 @@ public interface CustomPersister
 
     void commit();
 
-    void flush ();
+    void flush (PersistenceOrchestrator po);
 
     void clear();
 

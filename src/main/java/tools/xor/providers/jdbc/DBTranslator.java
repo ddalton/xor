@@ -371,13 +371,14 @@ public abstract class DBTranslator
             }
 
             // foreign keys
-            if(!p.getType().isDataType()) {
+            if(!p.getType().isDataType() && p.getMappedBy() == null) {
                 JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
                 if(fkey == null) {
                     throw new RuntimeException("A TO_ONE relationship should have a foreign key");
+                } else {
+                    // get the referencing columns
+                    columnNames.addAll(fkey.getReferencingColumns());
                 }
-                // get the referencing columns
-                columnNames.addAll(fkey.getReferencingColumns());
             }
         }
         sqlstr.append(String.join(",", columnNames))
@@ -397,13 +398,14 @@ public abstract class DBTranslator
             }
 
             // foreign keys
-            if(!p.getType().isDataType()) {
-                List<String> keys = ((EntityType)p.getType()).getExpandedNaturalKey();
+            if(!p.getType().isDataType() && p.getMappedBy() == null) {
                 JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
-                List<JDBCDAS.ColumnInfo> referencingColumns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
-                for (int i = 0; i < keys.size(); i++) {
-                    String dataType = referencingColumns.get(i).getDataType();
-                    values.add(getConverter(dataType).toSQLLiteral(bo.get(keys.get(i))));
+                JSONObject entity = (JSONObject)bo.get(p);
+                List<JDBCDAS.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(fkey.getReferencedColumns());
+                for (int i = 0; i < referencedColumns.size(); i++) {
+                    String dataType = referencedColumns.get(i).getDataType();
+                    String columnName = referencedColumns.get(i).getName();
+                    values.add(getConverter(dataType).toSQLLiteral(entity.get(columnName)));
                 }
             }
         }

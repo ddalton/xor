@@ -1,26 +1,52 @@
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
 
 
-    
 Pending PlainJDBCTest cases
 ===========================
 foreign key inverse relationship name
-1. Multi-column foreign key test
-2. Collection sort test
-3. Entity filter test
-4. Inheritance test
-5. Paging test
+1. Deeply nested attribute. For e.g., a.b.c.d.e.f
+   Test how the join works in these cases
+   Make sure the Query auto-adds the join columns needed for reconstitution.
+2. Ensure that the absolute path is used to create the entity key and not relative path
+   Currently the tree split occurs from the root node. This is wasteful.
+   We need to split at the point where we need and adjust the anchor path to both relative and
+   absolute:
+   relative path - Needed for resolving objects for the new queries
+   absolute path - Needed for creating the entity keys to stich the results of the split queries together
 
+   The methods getRelativePath() and getAbsolutePath() need to replace the getFullPath()
+
+   Maybe create 2 split strategies:
+   1. At root
+        getRelativePath - will return the full path
+        getAbsolutePath - will return the full path
+   2. At fork
+        getRelativePath - will return the path from the QueryTree root
+        getAbsolutePath - will return the path from the AggregateTree root
+
+   Test both strategies and also the stitch functionality
+   Parallelizing them will be the next step
+
+   How do splits and query filters interact. Need to ensure the stitching filters out the object correctly.
+
+   Alias interquery flag??
+
+3. Multi-column foreign key test
+4. Entity filter test. Also need to test it in split scenario. See #2.
+5. Inheritance test
+6. Paging test
+7. Test same entity type but on different anchors and ensure it brings different shapes
+8. Batch test of UPDATE/INSERT/DELETE
+9. Version check or snapshot values check if version column not present.
+10. For troubleshooting turn off batching
 
 
 XOR - Light weight ORM
   Provides OOTB Object model over a relational database.
-  Allows this object model to be easily consumed by a web app.
-  Useful for rapid prototyping (RAD).
-
-  1. Develop the schema in an RDBMS with the necessary tables, indexes and foreign key constraints
-  2. Configure XOR with this database schema
-  3. Deploy it against a servlet container and expose a REST endpoint to it
+  Facilitates complex object queries and efficient object saves.
+  Useful for rapid prototyping (RAD) as a Java model is avoided.
+  i.e., development speed is accelerated by having a 2-tier development model but with a 3-tier
+  deployment model.
 
 HSQLDB testing -
 java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.util.DatabaseManagerSwing
@@ -77,63 +103,11 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
        taskDetails t2
     b) Alias test of a non-existing property e.g., root
 
-2. Test that uses 2 QueryPieces  (Subquery or IN clause) - QueryTreeInvocation.java
-   for e.g., Task + children
-   and another query for children (i.e., grand children)
-   Evaluate how 2 query pieces are evaluated and the objects reconsituted
-   - Alias interQuery flag set to true
-
-3. QueryTree reconstitution from View with children
+2. QueryTree reconstitution from View with children
    with children that are fragments and disjoint queries
    inline and named child views (fragments)
 
-4. SP multi query ordering
+3. SP multi query ordering
 
-5. include/skip functionality
+4. include/skip functionality
 
-
-parent
-QueryType {
-  basedOn: null
-  a: t1
-  b: t2
-  c: t3
-}
-
-split into ->
-
-QueryType {
- basedOn: t1
- a: t1
-}
-
-QueryType {
- basedOn: t2
- a: t2
-}
-
-QueryType {
- basedOn: t3
- a: t3
-}
-
-
-
-Other uses
-==========
-
-1. Very fast object retrieval from an RDBMS using views, optimized for stored procedures
-2. Native JSON support. Directly interact using JSON and hence just a JS library.
-3. Support for models with loops using the swizzler JS library
-4. Multiple query access methods:
-   1. Default - By navigation
-   2. OQL 
-   3. SQL
-   4. Stored procedure
-5. Support Excel import/export for Perf data population
-6. Shape support - type of versioning
-7. Loose coupling between persistence and JSON/External models - Model mirroring technology.
-
-TODO:
-=====
-Test batching optimization based on BFS.

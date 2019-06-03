@@ -28,14 +28,18 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import tools.xor.EntityType;
 import tools.xor.FunctionType;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.CustomPersister;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
+import javax.json.JsonObject;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
@@ -58,21 +62,42 @@ public class PlainJDBCTest
 	public void init() throws SQLException, ClassNotFoundException, IOException
 	{
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
+
+			statement.execute("CREATE TABLE address "
+					+ "(id VARCHAR(10) NOT NULL, "
+					+ " street VARCHAR(256) NOT NULL, "
+					+ " city VARCHAR(96) NOT NULL, "
+					+ " county_province VARCHAR(30), "
+					+ " zip_or_postcode VARCHAR(30) NOT NULL, "
+					+ " country VARCHAR(30) NOT NULL, "
+					+ " PRIMARY KEY(id))");
+
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A101', '96 Euston Rd', 'London', 'NW1 2DB', 'UK')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A102', 'University of Oxford, Broad St', 'Oxford', 'OX1 3BG', 'UK')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A103', 'William Brown St', 'Liverpool', 'L3 8EW', 'UK')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A104', 'Parliament Square', 'Edinburgh', 'EH1 1RF', 'UK')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A105', 'Broad St', 'Oxford', 'OX1 3BG', 'UK')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A106', '630 W. 5th Street', 'Los Angeles', '90071', 'USA')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A107', '101 Independence Ave SE', 'Washington', '20540', 'USA')");
+			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A108', 'Cromwell Rd.', 'London', 'SW7 5BD', 'UK')");
+
 			statement.execute("CREATE TABLE library "
 					               + "(id VARCHAR(10) NOT NULL, "
 					               + " name VARCHAR(50) NOT NULL, "
+					               + " address VARCHAR(10) NOT NULL, "
 					               + " PRIMARY KEY(id))");
+			statement.execute("ALTER TABLE library ADD CONSTRAINT FK_1__1_entity FOREIGN KEY(address) REFERENCES address(id)");
 
 			// British libraries
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L100', 'British Library')");
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L110', 'Duke Humfrey’s Library')");
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L111', 'Liverpool Central Library')");
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L112', 'Signet Library')");
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L113', 'Bodlein Library')");
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L100', 'British Library', 'A101')");
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L110', 'Duke Humfrey’s Library', 'A102')");
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L111', 'Liverpool Central Library', 'A103')");
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L112', 'Signet Library', 'A104')");
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L113', 'Bodlein Library', 'A105')");
 
-			// UK libraries
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L201', 'Central Library')");
-			statement.executeUpdate("INSERT INTO library (id, name) VALUES ('L202', 'Library of Congress')");
+			// US libraries
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L201', 'Central Library', 'A106')");
+			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L202', 'Library of Congress', 'A107')");
 
 
 			statement.execute("CREATE TABLE librarian "
@@ -81,7 +106,7 @@ public class PlainJDBCTest
 					               + " email VARCHAR(50) NOT NULL, "
 					               + " library VARCHAR(10) NOT NULL, "
 					               + " PRIMARY KEY (id))");
-			statement.execute("ALTER TABLE librarian ADD CONSTRAINT FK1__librarians FOREIGN KEY(library) REFERENCES library(id)");
+			statement.execute("ALTER TABLE librarian ADD CONSTRAINT FK_1__N_librarians FOREIGN KEY(library) REFERENCES library(id)");
 			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1001','Thomas Bodley', 'tbodley@somewhere.com', 'L113')");
 			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1002','Lewis Carroll', 'lcarroll@somewhere.com', 'L100')");
 			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1003','Alison Bailey', 'abailey@somewhere.com', 'L100')");
@@ -98,8 +123,8 @@ public class PlainJDBCTest
 			statement.execute("CREATE TABLE librarianassociation "
 					+ "(librarian VARCHAR(10) NOT NULL, "
 					+ " association VARCHAR(10) NOT NULL)");
-			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK2__libraryassociations FOREIGN KEY(librarian) REFERENCES librarian(id)");
-			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK3__libraryassociations FOREIGN KEY(association) REFERENCES association(id)");
+			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK2_1__N_libraryassociations FOREIGN KEY(librarian) REFERENCES librarian(id)");
+			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK3_1__N_libraryassociations FOREIGN KEY(association) REFERENCES association(id)");
 
 			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALA','American Library Association', 'Illinois')");
 			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALISE','Association for Library and Information Science Education', 'Illinois')");
@@ -113,9 +138,6 @@ public class PlainJDBCTest
 			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1003','CILIP')");
 			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1004','CILIP')");
 
-
-			// TODO: Add address
-
 			connection.commit();
 		}
 	}
@@ -127,6 +149,7 @@ public class PlainJDBCTest
 			statement.executeUpdate("DROP TABLE association");
 			statement.executeUpdate("DROP TABLE librarian");
 			statement.executeUpdate("DROP TABLE library");
+			statement.executeUpdate("DROP TABLE address");
 			connection.commit();
 		}
 	}
@@ -156,12 +179,19 @@ public class PlainJDBCTest
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
 
+		JSONObject address = new JSONObject().put("ID", "A108");
+
 		// create library
 		JSONObject json = new JSONObject();
 		json.put("ID", "L101");
 		json.put("NAME", "Natural History Museum");
+		json.put("ADDRESS", new JSONObject().put("ID", "A108"));
 
 		Settings settings = new Settings();
+		JDBCSessionContext context = new JDBCSessionContext();
+		context.process(address, (EntityType) das.getType("address"));
+		settings.setSessionContext(context);
+
 		JDBCType type = (JDBCType) das.getType("library");
 		settings.setEntityType(type);
 		settings.init(shape);
@@ -170,7 +200,7 @@ public class PlainJDBCTest
 		assert(obj != null);
 
 		//Object jsonObject = am.read(obj, settings);
-		List<?> toList = am.query(obj, settings);
+		List<?> toList = am.query(json, settings);
 		assert(toList.size() == 1);
 		System.out.println("JSON string: " + json.toString());
 	}

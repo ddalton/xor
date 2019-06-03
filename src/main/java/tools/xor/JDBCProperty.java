@@ -22,9 +22,11 @@ package tools.xor;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.view.QueryBuilder;
 
+import javax.persistence.metamodel.Attribute;
 import java.util.List;
 
 /**
@@ -58,6 +60,10 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
 
         this.columns = columns;
         this.foreignKey = foreignKey;
+
+        if(this.foreignKey != null) {
+            this.relType = this.foreignKey.getType();
+        }
 
         this.nullable = true;
         // Even if a single column in NOT NULL, then the nullage flag should be false
@@ -207,7 +213,6 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     @Override public void initMappedBy (Shape shape)
     {
         if(this.foreignKey != null) {
-            JDBCDAS.ForeignKey parentFK = foreignKey.getReferencingTable().getParentFK();
 
             DataAccessService das = shape.getDAS();
             JDBCProperty inverse;
@@ -216,7 +221,8 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
             if(inverseRelationshipName == null) {
                 inverseRelationshipName = getName() + INVERSE;
             }
-            if(this.foreignKey != parentFK) {
+
+            if(this.foreignKey.getType() == RelationshipType.TO_MANY) {
                 // create and link a new JDBCProperty this is the inverse
                 // and representing the collection
                 inverse = new JDBCProperty(
@@ -229,6 +235,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
             }
             shape.addProperty(inverse);
             inverse.setMappedBy(this, this.getName());
+            inverse.setNullable(true);
         }
     }
 
@@ -239,6 +246,10 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     @Override public boolean isNullable ()
     {
         return this.nullable;
+    }
+
+    public void setNullable(boolean value) {
+        this.nullable = value;
     }
 
     @Override public boolean isOpenContent ()
@@ -311,6 +322,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     @Override
     public void setValue(Settings settings, Object dataObject, Object propertyValue)
     {
+        propertyValue = ClassUtil.getInstance(propertyValue);
         this.jsonObjectProperty.setValue(settings, dataObject, propertyValue);
     }
 
@@ -340,6 +352,16 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         }
         catch (CloneNotSupportedException e) {
             e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    @Override
+    public Attribute.PersistentAttributeType getAssociationType() {
+        Attribute.PersistentAttributeType result = super.getAssociationType();
+        if(getRelationshipType() == RelationshipType.TO_ONE) {
+            result = Attribute.PersistentAttributeType.ONE_TO_ONE;
         }
 
         return result;

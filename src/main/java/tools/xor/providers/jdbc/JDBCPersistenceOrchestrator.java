@@ -10,6 +10,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.service.AbstractPersistenceOrchestrator;
@@ -51,6 +52,10 @@ public class JDBCPersistenceOrchestrator
 
 	public Object getSessionContext() {
 		return this.context;
+	}
+
+	public void setSessionContext(JDBCSessionContext context) {
+		this.context = context;
 	}
 
 	public JDBCPersistenceOrchestrator() {
@@ -124,7 +129,7 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public void flush() {
-		context.flush();
+		context.flush(this);
 	}
 
 	@Override
@@ -202,15 +207,10 @@ public class JDBCPersistenceOrchestrator
 			return null;
 		} else {
 			// The object with the given id is obtained from the JDBCSessionContext
-			// primary key is always represented using the natural key
-
 			EntityKey ek;
 			if (!(id instanceof EntityKey)) {
 				EntityType entityType = (EntityType)type;
-				ExtendedProperty identifierProperty = (ExtendedProperty)entityType.getIdentifierProperty();
-				Map<String, Object> key = new HashMap<>();
-				key.put(identifierProperty.getName(), id);
-				ek = new NaturalEntityKey(key, type.getName());
+				ek = new SurrogateEntityKey(id, type.getName());
 			}
 			else {
 				ek = (EntityKey)id;

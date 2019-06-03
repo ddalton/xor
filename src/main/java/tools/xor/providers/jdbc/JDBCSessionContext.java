@@ -14,7 +14,10 @@ import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.action.Executable;
 import tools.xor.action.PropertyKey;
+import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
@@ -57,7 +60,7 @@ public class JDBCSessionContext implements CustomPersister
     private Map<PropertyKey, List<Executable>> propertyActions = new Object2ObjectOpenHashMap<PropertyKey, List<Executable>>();
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
 
-    private final List insertBatch = new LinkedList<>();
+    private final List<String> insertBatch = new LinkedList<>();
 
     /**
      * This method is used to navigate the input object and map the
@@ -67,6 +70,8 @@ public class JDBCSessionContext implements CustomPersister
      * @param entityType of the object
      */
     @Override
+    // TODO: create a copy for optimistic concurrency check
+    // Since this object is used as modification
     public void process (JSONObject object, EntityType entityType) {
 
         EntityKey ek;
@@ -186,31 +191,46 @@ public class JDBCSessionContext implements CustomPersister
     }
 
     @Override
-    public void flush() {
+    public void flush(PersistenceOrchestrator po) {
         try {
-            int[] result = insertStatement.executeBatch();
+            if (!ApplicationConfiguration.config().containsKey(Constants.Config.BATCH_SKIP)
+                || !ApplicationConfiguration.config().getBoolean(Constants.Config.BATCH_SKIP)) {
+                int[] result = insertStatement.executeBatch();
 
-            if(result.length != insertBatch.size()) {
-                throw new RuntimeException("The number of insert SQLs do not match the number received by the database");
-            }
-
-            StringBuilder failedSqls = new StringBuilder();
-            for(int i = 0; i < result.length; i++) {
-                if(result[i] != 1) {
-                    failedSqls.append(insertBatch.get(i))
-                        .append("\n");
+                if (result.length != insertBatch.size()) {
+                    throw new RuntimeException(
+                        "The number of insert SQLs do not match the number received by the database");
                 }
-            }
 
-            if(failedSqls.length() > 0) {
-                throw new RuntimeException("The following SQLs have failed: \n " + failedSqls.toString());
+                StringBuilder failedSqls = new StringBuilder();
+                for (int i = 0; i < result.length; i++) {
+                    if (result[i] != 1) {
+                        failedSqls.append(insertBatch.get(i))
+                            .append("\n");
+                    }
+                }
+
+                if (failedSqls.length() > 0) {
+                    throw new RuntimeException(
+                        "The following SQLs have failed: \n " + failedSqls.toString());
+                }
+            } else {
+                JDBCPersistenceOrchestrator jdbcpo = (JDBCPersistenceOrchestrator) po;
+                try(Statement stmt = jdbcpo.getConnection().createStatement()) {
+                    for (String insertSQL : insertBatch) {
+                        System.out.println("INSERTING: " + insertSQL);
+                        stmt.executeUpdate(insertSQL);
+                    }
+                }
             }
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
         } finally {
             try {
-                this.insertStatement.close();
+                if(this.insertStatement != null) {
+                    this.insertStatement.close();
+                }
             }
             catch (SQLException e) {
                 throw ClassUtil.wrapRun(e);

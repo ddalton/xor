@@ -64,10 +64,10 @@ public class ObjectPersister {
 
 	public void process(Settings settings, Map<PropertyKey, List<Executable>> currentActions) {
 
-		if(settings.getSessionContext() instanceof CustomPersister) {
-			((CustomPersister) settings.getSessionContext()).addActions(currentActions);
-			return;
-		}
+//		if(settings.getSessionContext() instanceof CustomPersister) {
+//			((CustomPersister) settings.getSessionContext()).addActions(currentActions);
+//			return;
+//		}
 
 		// Process the uni-directional actions
 		Set<PropertyKey> uniDirKeys = new HashSet<PropertyKey>();

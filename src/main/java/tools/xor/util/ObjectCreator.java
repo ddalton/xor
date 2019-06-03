@@ -148,8 +148,25 @@ public class ObjectCreator {
 			return das.getType(clazz);
 		else 
 			return das.getExternalType(clazz);
-	}		
-	
+	}
+
+	/**
+	 * Convert it to type based on the java class
+	 * @param bo business object whose java class type we need to infer
+	 * @return type
+	 */
+	public Type getType(BusinessObject bo) {
+		// We have the same type for JDBC
+		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+			return bo.getType();
+		}
+
+		Object instance = ClassUtil.getInstance(bo);
+		ClassUtil.getUnEnhanced(instance.getClass());
+
+		return getType(ClassUtil.getUnEnhanced(instance.getClass()));
+	}
+
 	public Type getType(Class<?> inputClass, Type domainType) {
 		// We have the same type for JDBC
 		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
@@ -703,7 +720,7 @@ public class ObjectCreator {
 
 			Type targetType = null;
 			if(sourceInstance != null && typeMapper.isDomain( ClassUtil.getUnEnhanced(sourceInstance.getClass()))) {
-				Type domainType = getType(ClassUtil.getUnEnhanced(sourceInstance.getClass()));
+				Type domainType = getType((BusinessObject)ci.getInput());
 				if(typeMapper.isOpen(targetInstanceClass)) {
 					if(domainEntityType != null) {
 						domainType = domainEntityType;

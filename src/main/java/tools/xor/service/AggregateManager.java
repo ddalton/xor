@@ -387,10 +387,6 @@ public class AggregateManager implements Xor
 
 		checkPO(settings);
 
-		if(settings.getSessionContext() instanceof CustomPersister) {
-			((CustomPersister)settings.getSessionContext()).process((JSONObject) inputObject, (EntityType) settings.getEntityType());
-		}
-
 		if (settings.getAssociationStrategy() == null) {
 			settings.setAssociationStrategy(associationStrategy);
 		}

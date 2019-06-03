@@ -22,6 +22,7 @@ package tools.xor.providers.jdbc;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.JDBCType;
+import tools.xor.RelationshipType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
@@ -278,15 +279,20 @@ public abstract class JDBCDAS extends AbstractDataAccessService
          /* Delimiter to get inverse relationship name
           * Useful to rename relationships
           * format:
-          *   contains 3 parts
-          *   <unique prefix>__<inverse relationship name>__<relationship name>
+          *   Needs to format the below format if the name contains either _1__1_ or
+          *   _1__N_
+          *   <unique prefix>_1__1_<relationship name>__<inverse entity relationship name>
+          *   <unique prefix>_1__N_<relationship name>__<inverse collection relationship name>
           *
-          * unique prefix - A prefix to uniquely identify this foreign key. This part is required
-          * inverse relationship name - Represents the collection relationship name. This part is optional
-          * relationship name - Represents the user facing foreign key relationship name. This part is optional
-          *                     NOTE: all 3 parts are required for a multi-column foreign key relationship
+          * unique prefix - A prefix to uniquely identify this foreign key.
+          * relationship name - Represents the user facing foreign key relationship name.
+          * inverse relationship name - Represents the collection relationship name if _1__N_ else
+          *                     represents the entity relationship name (_1__1_)
+          * NOTE: all 3 parts are required for a multi-column foreign key relationship
           */
-         private static final String DELIM = "__";
+        private static final String DELIM = "__";
+        private static final String TO_ONE = "_1__1_";
+        private static final String TO_MANY = "_1__N_";
 
         private String nameInDatabase; // original foreign key name
         private TableInfo referencingTable;      // table representing source of the relationship
@@ -295,6 +301,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         private String inverseName;
         private List<String> referencingColumns;
         private List<String> referencedColumns;
+        private RelationshipType type = RelationshipType.TO_MANY; // default
         private ForeignKeyRule deleteRule;
         private ForeignKeyRule updateRule;
         private boolean inheritance;             // Does this foreign key model an inheritance
@@ -341,13 +348,27 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             this.updateRule = updateRule;
 
             this.name = this.nameInDatabase;
-            if(this.nameInDatabase.indexOf(DELIM) != -1) {
-                this.inverseName = this.nameInDatabase.substring(this.nameInDatabase.indexOf(DELIM)+DELIM.length());
-                if(inverseName.indexOf(DELIM) != -1) {
-                    this.name = this.inverseName.substring(this.inverseName.indexOf(DELIM)+DELIM.length());
-                    this.inverseName = this.inverseName.substring(0, this.inverseName.indexOf(DELIM));
+            if(this.nameInDatabase.indexOf(TO_ONE) != -1 || this.nameInDatabase.indexOf(TO_MANY) != -1) {
+                if(this.nameInDatabase.indexOf(TO_ONE) != -1) {
+                    this.type = RelationshipType.TO_ONE;
+                    parseNames(this.nameInDatabase.substring(this.nameInDatabase.indexOf(TO_ONE)+TO_ONE.length()));
+                } else {
+                    parseNames(this.nameInDatabase.substring(this.nameInDatabase.indexOf(TO_MANY)+TO_MANY.length()));
                 }
             }
+        }
+
+        private void parseNames(String fkname) {
+            if(fkname.indexOf(DELIM) != -1) {
+                this.name = fkname.substring(0, fkname.indexOf(DELIM));
+                this.inverseName = fkname.substring(fkname.indexOf(DELIM)+DELIM.length());
+            } else {
+                this.inverseName = fkname;
+            }
+        }
+
+        public RelationshipType getType() {
+            return this.type;
         }
 
         public List<String> getReferencingColumns() {

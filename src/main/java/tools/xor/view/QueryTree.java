@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.CollectionAddVisitor;
+import tools.xor.ReconstituteRecordVisitor;
 import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -38,11 +38,11 @@ import tools.xor.util.State;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.TreeOperations;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -185,9 +185,9 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		if(previousResult != null) {
 			for(Map.Entry<String, Object> entry: previousResult.entrySet()) {
 				// Meta fields (list index etc) should be skipped
-				if(!propertyPaths.contains(entry.getKey())) {
-					continue;
-				}
+				//if(!propertyPaths.contains(entry.getKey())) {
+				//	continue;
+				//}
 				Object currentValue = propertyResult.get(entry.getKey());
 				Object previousValue = entry.getValue();
 
@@ -217,7 +217,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		// and update all the properties rooted at the least common prefix
 		// We need to do this since we need to initialize all those fields even if they
 		// are not considered to be changed by checking the previous row.
-		String lcp = LCP.findLCP(new LinkedList(changed));
+		String lcp = getLCP(new LinkedList<>(changed));
 		changed = new HashSet<>();
 		for(String propertyPath: propertyPaths) {
 			if(propertyPath.startsWith(lcp)) {
@@ -225,17 +225,53 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			}
 		}
 
-		CollectionAddVisitor visitor = new CollectionAddVisitor();
+		ReconstituteRecordVisitor visitor = new ReconstituteRecordVisitor();
 		for(String propertyPath: changed) {
 			// Set the value and create any intermediate objects if necessary
-			root.set(propertyPath, propertyResult, this, visitor);
+			root.reconstitute(propertyPath, propertyResult, this, visitor);
 
 			// Notify the queryTreeInvocation visitor
 			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
 		}
+		lcp = getDeepestCollection(lcp);
 		visitor.process(lcp);
 
 		return propertyResult;
+	}
+
+	private String getDeepestCollection(String path) {
+		if(StringUtils.isEmpty(path)) {
+			return path;
+		}
+
+		FragmentAnchor fragmentAnchor = findFragment(path);
+		QueryFragment fragment = fragmentAnchor.fragment;
+		Collection<E> inEdges = getInEdges((V)fragment);
+		if(inEdges.size() == 1) {
+			E edge = inEdges.iterator().next();
+			while (edge != null && !edge.getProperty().isMany()) {
+				path = Settings.getAnchorName(path);
+				inEdges = getInEdges(edge.getStart());
+				if(inEdges.size() == 1) {
+					edge = inEdges.iterator().next();
+				} else {
+					edge = null;
+				}
+			}
+		}
+		return path;
+	}
+
+	private String getLCP(List<String> changed) {
+		if(changed.size() == 1) {
+			return Settings.getAnchorName(changed.get(0));
+		} else {
+			String result = LCP.findLCP(changed);
+			if(result.endsWith(Settings.PATH_DELIMITER)) {
+				result = result.substring(0, result.length()-Settings.PATH_DELIMITER.length());
+			}
+			return result;
+		}
 	}
 
 	public String getName() {

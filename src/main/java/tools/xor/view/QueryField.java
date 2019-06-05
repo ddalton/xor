@@ -65,6 +65,10 @@ public class QueryField implements Comparable<QueryField>
      * @return OQL query representation
      */
     public String getOQL(QueryCapability qc) {
+        if(qc == null) {
+            return getSQL();
+        }
+
         String result = fragment.getAlias() + Settings.PATH_DELIMITER + path;
 
         if(path.endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE))
@@ -92,6 +96,10 @@ public class QueryField implements Comparable<QueryField>
         String result = property.getSelectList(fragment.getAlias());
 
         return result;
+    }
+
+    public QueryFragment getQueryFragment() {
+        return this.fragment;
     }
 
     public int getPosition() {

@@ -86,17 +86,17 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedType(
 			das,
 			callInfo.getSettings());
-		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = callInfo.getSettings().getView().getAggregateTree(
+		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = callInfo.getSettings().getView().getAggregateTree(
 			das,
 			referenceType,
 			callInfo.getSettings().doNarrow());
 
 		// Construct the query based on the settings
-		QueryBuilder builder = new QueryBuilder(queryTree, this.entity);
+		QueryBuilder builder = new QueryBuilder(aggregateTree, this.entity);
 		builder.construct(callInfo.getSettings());
 
 		QueryDispatcher dispatcher = new SerialDispatcher();
-		dispatcher.execute(queryTree, this, callInfo);
+		dispatcher.execute(aggregateTree, this, callInfo);
 	}
 
 	@Override

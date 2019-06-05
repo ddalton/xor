@@ -60,6 +60,10 @@ public class JDBCType extends AbstractType {
         return this.tableInfo.getName();
     }
 
+    public List<String> getPrimaryKeys() {
+        return this.tableInfo.getPrimaryKeys();
+    }
+
     public void defineProperties (Shape shape)
     {
         // If the properties are already defined then return

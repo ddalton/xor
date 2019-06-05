@@ -195,7 +195,7 @@ public abstract class GraphTraversal extends AbstractOperation {
 							// Register the object
 							// If there are multiple input objects with the same key,
 							// then this step does the de-duplication
-							BusinessObject existing = target.getObjectCreator().register(target, callInfo.getInput(), true);
+							BusinessObject existing = target.getObjectCreator().register(target, callInfo.getInput(), true, null);
 							if(existing != target && existing instanceof MutableBO) {
 
 								// If the existing object is not a reference then it is the

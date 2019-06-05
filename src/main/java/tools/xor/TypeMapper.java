@@ -190,7 +190,11 @@ public interface TypeMapper {
 
 	public EntityKey getSurrogateKey(Object id, Type type);
 
+	public EntityKey getSurrogateKey(Object id, Type type, String anchor);
+
 	public List<EntityKey> getNaturalKey(BusinessObject ob);
+
+	public List<EntityKey> getNaturalKey(BusinessObject ob, String anchor);
 	
 	/**
 	 * Check to see if we are created external Business object(s)

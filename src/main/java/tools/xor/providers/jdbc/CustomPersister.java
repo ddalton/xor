@@ -42,8 +42,6 @@ public interface CustomPersister
 
     void deleteGraph(ObjectCreator objectCreator, Settings settings);
 
-    void addActions(Map<PropertyKey, List<Executable>> actions);
-
     void commit();
 
     void flush (PersistenceOrchestrator po);

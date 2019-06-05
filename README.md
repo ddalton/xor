@@ -1,6 +1,10 @@
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
 
 
+Issues in reconstituting an object -
+The collection object needs to be identified
+How to determine when to add an object to the collection?
+
 Pending PlainJDBCTest cases
 ===========================
 foreign key inverse relationship name

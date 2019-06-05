@@ -1528,6 +1528,13 @@ public class Settings {
 			return propertyPath;
 	}
 
+	public static String getAnchorName(String propertyPath) {
+		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
+			return propertyPath.substring(0, propertyPath.lastIndexOf(Settings.PATH_DELIMITER));
+		else
+			return propertyPath;
+	}
+
 	public static String getRootName(String propertyPath) {
 		if(propertyPath.indexOf(Settings.PATH_DELIMITER) != -1)
 			return propertyPath.substring(0, propertyPath.indexOf(Settings.PATH_DELIMITER));

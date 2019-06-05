@@ -19,8 +19,11 @@
 
 package tools.xor.view;
 
+import org.apache.commons.lang.StringUtils;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.JDBCProperty;
+import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.Vertex;
@@ -190,6 +193,21 @@ public class QueryFragment implements Vertex
                 queryFields.add(new QueryField(path, position++, this));
             }
         }
+        // Add queryFields for all the primary keys fields, if not already present
+        String anchorPath = StringUtils.isEmpty(getAncestorPath()) ? "" : (getAncestorPath() + Settings.PATH_DELIMITER);
+        if(entityType.getIdentifierProperty() != null) {
+            String idPath = anchorPath + entityType.getIdentifierProperty().getName();
+            if(!attributePaths.contains(idPath)) {
+                queryFields.add(new QueryField(entityType.getIdentifierProperty().getName(), position++, this, true));
+            }
+        } else if(entityType.getNaturalKey() != null) {
+            for(String key: entityType.getNaturalKey()) {
+                String keyPath = anchorPath + key;
+                if(!attributePaths.contains(keyPath)) {
+                    queryFields.add(new QueryField(key, position++, this, true));
+                }
+            }
+        }
 
         for(QueryField field: queryFields) {
             pathToFieldMap.put(field.getPath(), field);
@@ -340,5 +358,21 @@ public class QueryFragment implements Vertex
         }
 
         return null;
+    }
+
+    public List<String> getPrimaryKeyFieldNames() {
+        List<String> result = new LinkedList<>();
+
+        if(entityType.getIdentifierProperty() != null) {
+            result.add(entityType.getIdentifierProperty().getName());
+        } else {
+            if(entityType instanceof JDBCType) {
+                result.addAll(((JDBCType)entityType).getPrimaryKeys());
+            } else {
+                result.addAll(entityType.getExpandedNaturalKey());
+            }
+        }
+
+        return result;
     }
 }

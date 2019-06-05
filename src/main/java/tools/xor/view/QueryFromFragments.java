@@ -32,10 +32,13 @@ import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.AscHandler;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class QueryFromFragments implements QueryBuilderStrategy
 {
@@ -337,43 +340,116 @@ public class QueryFromFragments implements QueryBuilderStrategy
         }
     }
 
+    private List<String> getOrderClauses(QueryFragment queryFragment) {
+        List<String> orderClauses = new LinkedList<>();
+        for(String name: queryFragment.getPrimaryKeyFieldNames()) {
+            orderClauses.add(queryFragment.getAlias() + Settings.PATH_DELIMITER + name);
+        }
+
+        return orderClauses;
+    }
+
+    private void populateOrder(QueryFragment fragment, Map<String, List<String>> fragmentOrder) {
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree = this.queryTree;
+
+        if(queryTree.getParent(fragment) == null) {
+            // this is the root node
+            fragmentOrder.put(fragment.getAlias(), getOrderClauses(fragment));
+        }
+
+        boolean foundCollection = false;
+        for(IntraQuery<QueryFragment> outEdge: queryTree.getOutEdges(fragment)) {
+            if(outEdge.getProperty().isMany()) {
+                if(!outEdge.getEnd().getEntityType().isDataType()) {
+                    if(foundCollection) {
+                        throw new RuntimeException("Querying on parallel collections is not supported. Was this query processed through CartesianJoinSplitter?");
+                    }
+                    foundCollection = true;
+                    QueryFragment collectionElement = outEdge.getEnd();
+                    fragmentOrder.put(collectionElement.getAlias(), getOrderClauses(collectionElement));
+                    populateOrder(collectionElement, fragmentOrder);
+                }
+            }
+        }
+    }
+
     private String buildOrderClause(Settings settings, List<Function> consolidatedFunctions) {
 
-        StringBuilder result = new StringBuilder();
         PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
-        Map<Integer, String> orderClauses = new TreeMap<>();
-        QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
+        QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree = this.queryTree;
 
-        for(QueryField field: qp.getFields()) {
-            if(field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE) && !Settings.doSQL(po)) {
-                // TODO: we have to sort all the parent collection objects
+        // We need ORDER BY clauses for all collection properties so that they are
+        // clubbed together.
+        // Starting from the root to the most deeply nested.
+        // There is only one path since the query would have undergone CartesianJoin splitting.
+
+        // Map of the fragment alias to its primary key property names
+        Map<String, List<String>> fragmentOrder = new LinkedHashMap<>();
+
+        // Starting from the root we walk down the collection path
+        QueryFragment root = queryTree.getRoot();
+
+        // TODO: Run this through CartesionJoinSplitter for existing OQL tests
+        // TODO: so this check can be removed
+        if(Settings.doSQL(po)) {
+            populateOrder(root, fragmentOrder);
+        }
+
+        // At this point all the collections are by default sorted by their primary key
+        // values
+        // This is now overridden with the following
+
+        for (QueryField field : queryTree.getFields()) {
+            if (field.getPath().endsWith(QueryFragment.LIST_INDEX_ATTRIBUTE)) {
+                // We have to sort all the collection objects
                 // so this collection is clubbed together
-                String columnString = field.getOQL(po.getQueryCapability());
-                orderClauses.put(field.getAttributeLevel(), columnString);
+                List<String> indexOrder = new LinkedList<>();
+                String alias = field.getQueryFragment().getAlias();
+
+                indexOrder.add(field.getOQL(po.getQueryCapability()));
+                fragmentOrder.put(alias, indexOrder);
             }
         }
 
-        // filter order clauses
+            // filter order clauses
+        Map<String, List<String>> overridden = new HashMap<>();
+        for (Function function : consolidatedFunctions) {
+            if (function.isOrderBy()) {
+                String name = function.getNormalizedName();
+                if(name.indexOf(Settings.PATH_DELIMITER) != -1) {
+                    // The first part is the alias
+                    String alias = name.substring(0, name.indexOf(Settings.PATH_DELIMITER));
+                    List<String> orderClauses = new LinkedList<>();
+                    if(overridden.containsKey(alias)) {
+                        orderClauses = overridden.get(alias);
+                    } else {
+                        overridden.put(alias, orderClauses);
+                    }
+                    orderClauses.add(function.getQueryString());
+                }
+            }
+        }
+
+        // Override the default values where applicable
+        for(Map.Entry<String, List<String>> entry: overridden.entrySet()) {
+            if(fragmentOrder.containsKey(entry.getKey())) {
+                fragmentOrder.put(entry.getKey(), entry.getValue());
+            }
+        }
+
         StringBuilder filterOrderBy = new StringBuilder();
-        for(Function function : consolidatedFunctions) {
-            if(function.isOrderBy()) {
-                if(filterOrderBy.length() > 0)
-                    filterOrderBy.append(QueryBuilder.COMMA_DELIMITER);
-                filterOrderBy.append(function.getQueryString());
+        for(Map.Entry<String, List<String>> entry: fragmentOrder.entrySet()) {
+            if(filterOrderBy.length() > 0) {
+                filterOrderBy.append(QueryBuilder.COMMA_DELIMITER);
             }
+
+            String orderString = entry.getValue().stream().collect(Collectors.joining(QueryBuilder.COMMA_DELIMITER));
+            filterOrderBy.append(orderString);
+        }
+        if(filterOrderBy.length() > 0) {
+            filterOrderBy.insert(0, " ORDER BY ");
         }
 
-        // Append any ORDER BY clauses
-        if(orderClauses.size() > 0 || filterOrderBy.length() > 0) {
-            for(String indexColumn: orderClauses.values())
-                result.append( (result.length() > 0) ? QueryBuilder.COMMA_DELIMITER + indexColumn : indexColumn );
-
-            if(filterOrderBy.length() > 0)
-                result.append((result.length() > 0) ? QueryBuilder.COMMA_DELIMITER + filterOrderBy : filterOrderBy);
-
-            result.insert(0, " ORDER BY ");
-        }
-
-        return result.toString();
+        return filterOrderBy.toString();
     }
 }

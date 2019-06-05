@@ -196,24 +196,40 @@ public interface BusinessObject extends DataObject {
 	public EntityKey getSurrogateKey ();
 
 	/**
+	 * Returns the SurrogateEntityKey instance for this entity
+	 * @param anchor state tree path that determines the shape we are interested in
+	 * @return the surrogate entity key
+	 */
+	public EntityKey getSurrogateKey (String anchor);
+
+	/**
 	 * Returns the NaturalEntityKey instance for this entity
 	 * @return the natural entity key
 	 */
 	public List<EntityKey> getNaturalKey ();
 
 	/**
+	 * Returns the NaturalEntityKey instance for this entity
+	 * @param anchor state tree path that determines the shape we are interested in
+	 * @return the natural entity key
+	 */
+	public List<EntityKey> getNaturalKey (String anchor);
+
+	/**
 	 * Retrieves an entity by its id and entity type. This can be useful to find if there is a different
 	 * BusinessObject instance recorded in the ObjectCreator of this BusinessObject.
 	 * @param entity BusinessObject whose id and type are utilized in this API.
+	 * @param anchor state tree path that determines the shape we are interested in
 	 * @return BusinessObject
 	 */
-	public BusinessObject getEntity(BusinessObject entity);
+	public BusinessObject getEntity(BusinessObject entity, String anchor);
 
 	/**
 	 * Clear the record of this entity, i.e., removes the knowledge of this entity from the framework 
-	 * @param entity BusinessObject whose id and type are utilized in this API. 
+	 * @param entity BusinessObject whose id and type are utilized in this API.
+	 * @param anchor state tree path that determines the shape we are interested in
 	 */
-	public void removeEntity(BusinessObject entity);
+	public void removeEntity(BusinessObject entity, String anchor);
 	
 	/**
 	 * Executes the post logic methods on this object, i.e., invokes the methods that have the PostLogic annotation
@@ -242,7 +258,10 @@ public interface BusinessObject extends DataObject {
 	 * @param visitor for helping with adding elements to their collection
 	 * @throws Exception if property cannot be found
 	 */
-	void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree, CollectionAddVisitor visitor) throws Exception;
+	void reconstitute (String propertyPath,
+					   Map<String, Object> propertyResult,
+					   QueryTree queryTree,
+					   ReconstituteRecordVisitor visitor) throws Exception;
 	
 	/**
 	 * Responsible for creating a new data object whose lifecycle is linked with this object.

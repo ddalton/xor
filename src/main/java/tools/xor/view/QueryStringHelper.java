@@ -126,7 +126,7 @@ public class QueryStringHelper
         return result.toString();
     }
 
-    public static List<Function> getQueryTreeFunctions (Settings settings, QueryTree qp) {
+    public static List<Function> getQueryTreeFunctions (Settings settings, QueryTree queryTree) {
         // Consolidate the user supplied filters and the filters
         // defined on the view
         List<Function> temp = new LinkedList<>();
@@ -134,15 +134,15 @@ public class QueryStringHelper
             Function narrowedFunction = function.copy();
             temp.add(narrowedFunction);
         }
-        if(qp.getView() != null && qp.getView().getFunction() != null) {
-            temp.addAll(qp.getView().getFunction());
+        if(queryTree.getView() != null && queryTree.getView().getFunction() != null) {
+            temp.addAll(queryTree.getView().getFunction());
         }
 
         // We populate only those filters for while all the attributes can be found in
         // the QueryTree
         List<Function> consolidatedFunctions = new LinkedList<>();
         for(Function function : temp) {
-            if(function.normalize(qp, settings.getPersistenceOrchestrator())) {
+            if(function.normalize(queryTree, settings.getPersistenceOrchestrator())) {
                 consolidatedFunctions.add(function);
             }
         }

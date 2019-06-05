@@ -117,7 +117,7 @@ public class SetUpdateAction extends CollectionUpdateAction {
 				
 				// is out-of-sync
 				ObjectCreator ioc = lastAction.getInputObjectCreator();
-				BusinessObject sourceCollectionOwner = ioc.getRoot().getEntity(collectionOwner);
+				BusinessObject sourceCollectionOwner = ioc.getRoot().getEntity(collectionOwner, null);
 				if(sourceCollectionOwner != null && sourceCollectionOwner.isVisited()) // The owner is present in the input and was processed
 					throw new BidirOutOfSyncException(collectionOwner, lastAction.getKey().getProperty(), lastAction.getCollectionElement(), lastAction.getKey().getProperty().getOpposite());
 			}

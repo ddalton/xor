@@ -57,7 +57,6 @@ public class JDBCSessionContext implements CustomPersister
     private Connection connection;
     private Statement insertStatement;
 
-    private Map<PropertyKey, List<Executable>> propertyActions = new Object2ObjectOpenHashMap<PropertyKey, List<Executable>>();
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
 
     private final List<String> insertBatch = new LinkedList<>();
@@ -168,11 +167,6 @@ public class JDBCSessionContext implements CustomPersister
         // TODO
     }
 
-    @Override
-    public void addActions(Map<PropertyKey, List<Executable>> actions) {
-        this.propertyActions.putAll(actions);
-    }
-
     @Override public void commit ()
     {
         try {
@@ -239,7 +233,6 @@ public class JDBCSessionContext implements CustomPersister
     }
 
     public void clear() {
-        this.propertyActions = new Object2ObjectOpenHashMap<>();
         this.idToObjects = new HashMap<>();
     }
 

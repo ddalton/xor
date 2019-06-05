@@ -141,12 +141,12 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	
 	@Override
 	public EntityKey getEntityKey(Object id, Type type) {
-		return getEntityKey(id, type, null);
+		return getEntityKey(id, type, null, null);
 	}
 	
 	@Override
 	public EntityKey getEntityKey(Object id, BusinessObject bo) {
-		return getEntityKey(id, bo.getType(), bo);
+		return getEntityKey(id, bo.getType(), bo, null);
 	}	
 	
 	/**
@@ -158,9 +158,10 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	 * @param id optional identifier
 	 * @param type can be domain or external type
 	 * @param bo Must be an BusinessObject based on a domain EntityType if present
+	 * @param anchor state tree path that determines the shape that we are interested in fetching
 	 * @return EntityKey
 	 */
-	public EntityKey getEntityKey(Object id, Type type, BusinessObject bo) {
+	public EntityKey getEntityKey(Object id, Type type, BusinessObject bo, String anchor) {
 
 
 		if (bo == null) {
@@ -194,20 +195,24 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		// Helps with entity import from a different system
 		if(rootEntityType.getNaturalKey() != null && bo != null) {
 			try {
-				return NaturalKeyStrategy.getInstance().execute(bo, domainTypeName);
+				return NaturalKeyStrategy.getInstance().execute(bo, domainTypeName, anchor);
 			} catch (IllegalStateException ise) {
 				//Fall through to surrogate key, the natural key values are not populated;
 			}
 		}
 
 		if(!(id instanceof String) || !"".equals(id.toString().trim())) {
-			return new SurrogateEntityKey(id, domainTypeName);
+			return new SurrogateEntityKey(id, domainTypeName, anchor);
 		}
 		
 		return null;
 	}
 
 	public EntityKey getSurrogateKey(Object id, Type type) {
+		return getSurrogateKey(id, type, null);
+	}
+
+	public EntityKey getSurrogateKey(Object id, Type type, String anchor) {
 		if(id == null) {
 			return null;
 		}
@@ -219,7 +224,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		EntityType entityType = (EntityType) type;
 
 		if(!(id instanceof String) || !"".equals(id.toString().trim())) {
-			return new SurrogateEntityKey(id, getSurrogateKeyTypeName(entityType));
+			return new SurrogateEntityKey(id, getSurrogateKeyTypeName(entityType), anchor);
 		}
 
 		return null;
@@ -234,6 +239,10 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		return ((EntityType)type).getDomainType().getName();
 	}
 
+	public List<EntityKey> getNaturalKey(BusinessObject bo) {
+		return getNaturalKey(bo, null);
+	}
+
 	/**
 	 * Return a list of natural keys. There could be more than one if the supertype has
 	 * natural keys.
@@ -242,9 +251,10 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	 * @see tools.xor.operation.GraphTraversal#process
 	 *
 	 * @param bo business object
+	 * @param anchor path that determines the shape
 	 * @return list of all keys including the natural keys of its super types
 	 */
-	public List<EntityKey> getNaturalKey(BusinessObject bo) {
+	public List<EntityKey> getNaturalKey(BusinessObject bo, String anchor) {
 		List<EntityKey> result = new ArrayList<>();
 
 		if (bo == null || bo.getInstance() == null) {
@@ -276,9 +286,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		if(entityType != null && entityType.getNaturalKey() != null && bo != null) {
 			try {
 				EntityKey naturalEntityKey = NaturalKeyStrategy.getInstance().execute(
-					bo, getNaturalKeyTypeName(
-						entityType
-					));
+					bo, getNaturalKeyTypeName(entityType), anchor);
 				if(naturalEntityKey != null) {
 					result.add(naturalEntityKey);
 				}

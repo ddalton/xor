@@ -4,13 +4,18 @@ import org.json.JSONArray;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class CollectionAddVisitor
+/**
+ * Used to reconstitute the collection elements for all the changed fields in a record.
+ */
+public class ReconstituteRecordVisitor
 {
     Map<String, AddEvent> collectionEvents = new HashMap<>();
-    Set<Property> initialized = new HashSet<>();
 
     public static final class AddEvent {
         JSONArray collection;
@@ -30,15 +35,12 @@ public class CollectionAddVisitor
      * Add an event to mark the addition of an element to its collection
      * @param path full property path that triggered this addition
      * @param event that contains details on the element and its collection
-     * @param property that holds this collection. Useful for eliminating duplicate additions.
      */
-    public void add(String path, AddEvent event, Property property) {
-        if(initialized.contains(property)) {
+    public void add(String path, AddEvent event) {
+        if(collectionEvents.containsKey(path)) {
             return;
-        } else {
-            initialized.add(property);
         }
-        this.collectionEvents.put(path, event);
+        collectionEvents.put(path, event);
     }
 
     /**
@@ -48,6 +50,7 @@ public class CollectionAddVisitor
      * @param lcp longest common prefix
      */
     public void process(String lcp) {
+
         for(Map.Entry<String, AddEvent> entry: collectionEvents.entrySet()) {
             if(entry.getKey().startsWith(lcp)) {
                 entry.getValue().execute();

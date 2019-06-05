@@ -144,16 +144,26 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public EntityKey getSurrogateKey () {
-		return getObjectCreator().getTypeMapper().getSurrogateKey(getIdentifierValue(), getType());
+		return getSurrogateKey(null);
 	}
 
 	@Override
 	public List<EntityKey> getNaturalKey() {
-		return getObjectCreator().getTypeMapper().getNaturalKey(this);
+		return getNaturalKey(null);
 	}
 
 	@Override
-	public void removeEntity(BusinessObject entity) {
+	public List<EntityKey> getNaturalKey(String anchor) {
+		return getObjectCreator().getTypeMapper().getNaturalKey(this, anchor);
+	}
+
+	@Override
+	public EntityKey getSurrogateKey (String anchor) {
+		return getObjectCreator().getTypeMapper().getSurrogateKey(getIdentifierValue(), getType(), anchor);
+	}
+
+	@Override
+	public void removeEntity(BusinessObject entity, String anchor) {
 		/*
 		EntityKey entityKey = getObjectCreator().getTypeMapper().getEntityKey(
 			entity.getIdentifierValue(),
@@ -161,10 +171,10 @@ public abstract class AbstractBO implements BusinessObject {
 		getObjectCreator().removeByEntityKey(entityKey);
 		*/
 
-		EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(entity.getIdentifierValue(), entity.getType());
+		EntityKey surrogateKey = getObjectCreator().getTypeMapper().getSurrogateKey(entity.getIdentifierValue(), entity.getType(), anchor);
 		getObjectCreator().removeByEntityKey(surrogateKey);
 
-		List<EntityKey> naturalKeys = getObjectCreator().getTypeMapper().getNaturalKey(entity);
+		List<EntityKey> naturalKeys = getObjectCreator().getTypeMapper().getNaturalKey(entity, anchor);
 		for(EntityKey naturalKey: naturalKeys) {
 			getObjectCreator().removeByEntityKey(naturalKey);
 		}
@@ -175,9 +185,10 @@ public abstract class AbstractBO implements BusinessObject {
 	 * @param naturalKey derived from newEntity
 	 * @param newEntity used to check the existence of an entity based on its natural keys
 	 * @param existingEntity if any already registered
+	 * @param anchor state tree path that determines the shape of the entity
 	 * @return true if an existingEntity is found with the same natural key
 	 */
-	private boolean isValidEntity(EntityKey naturalKey, BusinessObject newEntity, BusinessObject existingEntity) {
+	private boolean isValidEntity(EntityKey naturalKey, BusinessObject newEntity, BusinessObject existingEntity, String anchor) {
 		boolean result = true;
 
 		if (existingEntity != newEntity) {
@@ -190,7 +201,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 				// Update the existing BO with the correct natural key mapping
 				if (existingNK != null && existingEntity != null) {
-					getObjectCreator().addByNaturalKey(existingEntity);
+					getObjectCreator().addByNaturalKey(existingEntity, anchor);
 				}
 
 				result = false;
@@ -201,7 +212,7 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public BusinessObject getEntity (BusinessObject entity)
+	public BusinessObject getEntity (BusinessObject entity, String anchor)
 	{
 		BusinessObject existingEntity = null;
 
@@ -209,7 +220,7 @@ public abstract class AbstractBO implements BusinessObject {
 		List<EntityKey> naturalKeys = entity.getNaturalKey();
 		for (EntityKey naturalKey: naturalKeys) {
 			existingEntity = getObjectCreator().getByEntityKey(naturalKey, entity.getType());
-			if(existingEntity != null && isValidEntity(naturalKey, entity, existingEntity)) {
+			if(existingEntity != null && isValidEntity(naturalKey, entity, existingEntity, anchor)) {
 				break;
 			}
 		}
@@ -224,14 +235,14 @@ public abstract class AbstractBO implements BusinessObject {
 
 					// If for some reason the id has changed
 					if (existingSK == null || !existingSK.equals(entityKey)) {
-						getObjectCreator().addBySurrogateKey(existingEntity);
+						getObjectCreator().addBySurrogateKey(existingEntity, anchor);
 
 						// The existing BO is mapped to the incorrect surrogate key
 						existingEntity = null;
 					}
 
 					// make sure it is found by its natural key
-					getObjectCreator().addByNaturalKey(existingEntity);
+					getObjectCreator().addByNaturalKey(existingEntity, anchor);
 				}
 			}
 		}
@@ -677,7 +688,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property, String anchor) throws Exception {
 		Object propertyInstance = createInstance(objectCreator, id, naturalKeyValues, instanceType, false, anchor);
-		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, property == null ? null : this, property);
+		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, property == null ? null : this, property, anchor);
 
 		if(property != null)
 			((ExtendedProperty)property).setValue(this, propertyInstance);
@@ -782,7 +793,10 @@ public abstract class AbstractBO implements BusinessObject {
 	}	
 
 	@Override
-	public void set(String propertyPath, Map<String, Object> propertyResult, QueryTree queryTree, CollectionAddVisitor visitor) throws Exception {
+	public void reconstitute (String propertyPath,
+							  Map<String, Object> propertyResult,
+							  QueryTree queryTree,
+							  ReconstituteRecordVisitor visitor) throws Exception {
 
 		// If we are setting a null value then nothing needs to be done
 		if( propertyResult.get(propertyPath) == null) {
@@ -939,7 +953,7 @@ public abstract class AbstractBO implements BusinessObject {
 					if(current.getInstance() instanceof JSONArray) {
 						// add it in the order we see it
 						JSONArray jsonArray = (JSONArray) current.getInstance();
-						visitor.add(propertyPath, new CollectionAddVisitor.AddEvent(jsonArray, elementInstance), property);
+						visitor.add(currentPath.toString(), new ReconstituteRecordVisitor.AddEvent(jsonArray, elementInstance));
 
 					} else {
 						List list = (List)current.getInstance();

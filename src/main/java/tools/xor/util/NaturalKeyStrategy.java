@@ -33,7 +33,7 @@ public class NaturalKeyStrategy implements EntityKeyStrategy {
 	}	
 
 	@Override
-	public EntityKey execute(BusinessObject bo, String domainEntityName) {
+	public EntityKey execute(BusinessObject bo, String domainEntityName, String anchor) {
 		
 		if( !(bo.getType() instanceof EntityType) ) {
 			throw new RuntimeException("The type " + bo.getType().getName() + " is not an entity type");
@@ -52,6 +52,6 @@ public class NaturalKeyStrategy implements EntityKeyStrategy {
 			naturalKey.put(key, keyValue);
 		}	
 	
-		return new NaturalEntityKey(naturalKey, domainEntityName);
+		return new NaturalEntityKey(naturalKey, domainEntityName, anchor);
 	}
 }

@@ -243,7 +243,7 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public QueryCapability getQueryCapability() {
-		throw new UnsupportedOperationException("This is not supported for the JDBC interface");
+		return null;
 	}
 
 

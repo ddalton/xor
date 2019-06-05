@@ -20,9 +20,9 @@ public class SurrogateKeyStrategy implements EntityKeyStrategy {
 	}	
 	
 	@Override
-	public EntityKey execute(BusinessObject bo, String domainEntityName) {
+	public EntityKey execute(BusinessObject bo, String domainEntityName, String anchor) {
 		Object keyValue = bo.getIdentifierValue();
 		
-		return new SurrogateEntityKey(keyValue, domainEntityName);
+		return new SurrogateEntityKey(keyValue, domainEntityName, anchor);
 	}
 }

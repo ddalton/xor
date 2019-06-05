@@ -185,22 +185,22 @@ public class ObjectCreator {
 		}
 	}
 
-	public void addByNaturalKey(BusinessObject entity) {
+	public void addByNaturalKey(BusinessObject entity, String anchor) {
 		if(naturalKeyRegistrations.containsKey(entity)) {
 			for(EntityKey ek: naturalKeyRegistrations.get(entity)) {
 				entitiesByKey.remove(ek);
 			}
 		}
 
-		List<EntityKey> naturalKeys = entity.getNaturalKey();
+		List<EntityKey> naturalKeys = entity.getNaturalKey(anchor);
 		for(EntityKey naturalKey: naturalKeys) {
 			entitiesByKey.put(naturalKey, entity);
 		}
 		naturalKeyRegistrations.put(entity, naturalKeys);
 	}
 
-	public void addBySurrogateKey(BusinessObject entity) {
-		EntityKey entityKey = entity.getSurrogateKey();
+	public void addBySurrogateKey(BusinessObject entity, String anchor) {
+		EntityKey entityKey = entity.getSurrogateKey(anchor);
 		if(entityKey != null) {
 			entitiesByKey.put(entityKey, entity);
 		}
@@ -376,7 +376,7 @@ public class ObjectCreator {
 		}
 
 		if(result == null) {
-			result = this.createDataObject(null, targetInstance, targetType, container, containmentProperty);
+			result = this.createDataObject(null, targetInstance, targetType, container, containmentProperty, anchor);
 		}
 
 		if(getSettings().getDetector() != null) {
@@ -397,9 +397,10 @@ public class ObjectCreator {
 	 * @param targetType the type of the instance
 	 * @param container the parent BusinessObject
 	 * @param containmentProperty the property referring to the target instance
+	 * @param anchor the path in the state tree graph where this object is created
 	 * @return the new BusinessObject
 	 */
-	private BusinessObject createDataObject(Object sourceBO, Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty) {
+	private BusinessObject createDataObject(Object sourceBO, Object targetInstance, Type targetType, BusinessObject container, Property containmentProperty, String anchor) {
 
 		Object sourceInstance = ClassUtil.getInstance(sourceBO);
 		BusinessObject dataObject = instanceDataObjectMap.get(targetInstance);
@@ -438,13 +439,14 @@ public class ObjectCreator {
 					if(pKey.getType() instanceof EntityType) {
 						Object keyInstance = ((AbstractProperty)pKey).query(targetInstance);
 						if(keyInstance != null) {
-							this.createDataObject(null, keyInstance, pKey.getType(), null, null);
+							String keyAnchor = anchor == null ? null : anchor + Settings.PATH_DELIMITER +pKey.getName();
+							this.createDataObject(null, keyInstance, pKey.getType(), null, null, keyAnchor);
 						}
 					}
 				}
 			}
 
-			dataObject = register(dataObject, sourceBO);
+			dataObject = register(dataObject, sourceBO, false, anchor);
 		}
 
 		if(sourceInstance != null) {
@@ -454,9 +456,14 @@ public class ObjectCreator {
 		return dataObject;
 	}
 
+	// anchor is not relevant for GraphTraversal
 	public void unregister(BusinessObject dataObject) {
+		unregister(dataObject, null);
+	}
+
+	public void unregister(BusinessObject dataObject, String anchor) {
 		instanceDataObjectMap.remove(dataObject.getInstance());
-		dataObject.removeEntity(dataObject);
+		dataObject.removeEntity(dataObject, null);
 	}
 	
 	public void updateInstance(BusinessObject existingBO, Object oldInstance) {
@@ -505,10 +512,6 @@ public class ObjectCreator {
 		getPersistenceOrchestrator().clear(objectsToClear);
 	}
 
-	public BusinessObject register (BusinessObject newDataObject, Object sourceBO) {
-		return register(newDataObject, sourceBO, false);
-	}
-
 	/**
 	 * Register the user provided object in the object creator cache. Used if the object is deemed shareable.
 	 * During registration the following issues are handled
@@ -519,9 +522,10 @@ public class ObjectCreator {
 	 * @param newDataObject to register
 	 * @param sourceBO source BusinessObject
 	 * @param naturalKeysPopulated flag to indicate if the natural key fields have already been populated in the newDataObject
+	 * @param anchor state tree path that determines the shape we are interested in
 	 * @return resolved BusinessObject
 	 */
-	public BusinessObject register (BusinessObject newDataObject, Object sourceBO, boolean naturalKeysPopulated) {
+	public BusinessObject register (BusinessObject newDataObject, Object sourceBO, boolean naturalKeysPopulated, String anchor) {
 		Object instance = newDataObject.getInstance();
 		if (instance == null)
 			throw new IllegalStateException("No persistent state found - possible data corruption");
@@ -555,7 +559,7 @@ public class ObjectCreator {
 
 		// If an existing persistent object is already present, check if it is of a more general type, if so it has to be replaced
 		// with the current object
-		BusinessObject existing = newDataObject.getEntity(newDataObject);
+		BusinessObject existing = newDataObject.getEntity(newDataObject, anchor);
 		BusinessObject result = newDataObject;
 		if (existing != newDataObject) {
 			if (existing != null) {
@@ -631,12 +635,12 @@ public class ObjectCreator {
 			recordIO(result.getInstance(), result);
 		}
 
-		addBySurrogateKey(result);
+		addBySurrogateKey(result, anchor);
 
 		// We delay natural key registration until they are assigned
 		if(naturalKeysPopulated) {
 			//result.register();
-			addByNaturalKey(result);
+			addByNaturalKey(result, anchor);
 		}
 
 		// Mark the BusinessObject as reference or actual object
@@ -762,7 +766,7 @@ public class ObjectCreator {
 					}
 					
 					if(targetInstance != null) {
-						result = createDataObject(sourceBO, targetInstance, targetType, container, containmentProperty);
+						result = createDataObject(sourceBO, targetInstance, targetType, container, containmentProperty, null);
 						result.setPersistent(true);
 					}
 				}
@@ -804,7 +808,8 @@ public class ObjectCreator {
 						targetInstance,
 						targetType,
 						container,
-						containmentProperty);
+						containmentProperty,
+						null);
 				}
 			}
 

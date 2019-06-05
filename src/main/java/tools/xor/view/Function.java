@@ -137,14 +137,19 @@ public class Function implements Comparable<Function> {
 		boolean all = true;
 
 		for(String path: functionHandler.getAttributes()) {
-			String oqlname = null;
+			String oqlname = queryTree.getOQLName(path, po);;
 
-			if(Settings.doSQL(po)) {
+			// For JDBC a property could resolve to multiple columns. Do we need to support
+			// this? or expect the user to provide the fully qualified path in the view
+			/*if(Settings.doSQL(po)) {
 				QueryField field = queryTree.findField(path);
-				oqlname = field.getSQL();
+				if(field != null) {
+					oqlname = field.getSQL();
+				}
 			} else {
 				oqlname = queryTree.getOQLName(path, po);
 			}
+			*/
 			if(oqlname != null) {
 				functionHandler.setNormalizedName(path, oqlname);
 			} else {
@@ -152,7 +157,7 @@ public class Function implements Comparable<Function> {
 			}
 		}
 
-		return all;
+		return true;
 	}
 
 	/**

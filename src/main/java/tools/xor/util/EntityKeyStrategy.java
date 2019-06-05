@@ -45,7 +45,8 @@ public interface EntityKeyStrategy {
 	 *  
 	 * @param bo the BusinessObject for which the EntityKey needs to be derived
 	 * @param domainEntityName the domain EntityType name for this business object under which it is registered
+	 * @param anchor state tree path that determines the shape that we are interested in
 	 * @return EntityKey.
 	 */
-	public EntityKey execute(BusinessObject bo, String domainEntityName);
+	public EntityKey execute(BusinessObject bo, String domainEntityName, String anchor);
 }

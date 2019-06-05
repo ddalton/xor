@@ -760,6 +760,12 @@ public class Settings {
 		return addFunction(null, type, 1, args);
 	}
 
+	public Function addFunction (String name, String arg) {
+		List<String> args = new LinkedList<>();
+		args.add(arg);
+		return addFunction(name, FunctionType.COMPARISON, 1, args);
+	}
+
 	public Function addFunction (String name, String arg1, String arg2) {
 		List<String> args = new LinkedList<>();
 		args.add(arg1);

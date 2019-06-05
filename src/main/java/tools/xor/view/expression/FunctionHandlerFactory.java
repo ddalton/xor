@@ -43,6 +43,8 @@ public class FunctionHandlerFactory
 			put(FunctionHandler.LT,      LtFunctionHandler.class);
 			put(FunctionHandler.NE,      NeFunctionHandler.class);
 			put(FunctionHandler.BETWEEN, BetweenFunctionHandler.class);
+			put(FunctionHandler.NULL,    NullFunctionHandler.class);
+			put(FunctionHandler.NOTNULL, NotNullFunctionHandler.class);
 		}
 	};
 

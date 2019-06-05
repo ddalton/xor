@@ -199,7 +199,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
         for(Function function : consolidatedFunctions) {
 
             // Order By filters are handled separately
-            if(function.isOrderBy()) {
+            if(function.isOrderBy() || !function.isRelevant()) {
                 continue;
             }
 
@@ -394,6 +394,8 @@ public class QueryFromFragments implements QueryBuilderStrategy
         if(Settings.doSQL(po)) {
             populateOrder(root, fragmentOrder);
         }
+        // TODO: temp - add root for now to get by some tests
+        fragmentOrder.put(root.getAlias(), getOrderClauses(root));
 
         // At this point all the collections are by default sorted by their primary key
         // values

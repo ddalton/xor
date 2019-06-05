@@ -67,4 +67,8 @@ public class UnmodifiableFunction extends Function
     {
         return function.compareTo(o);
     }
+
+    public boolean isRelevant() {
+        return function.isRelevant();
+    }
 }

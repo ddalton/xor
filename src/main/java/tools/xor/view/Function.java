@@ -102,6 +102,10 @@ public class Function implements Comparable<Function> {
 		return functionHandler != null ? functionHandler.getQueryString() : "";
 	}
 
+	public boolean isRelevant() {
+		return functionHandler.getNormalizedAttributeName() != null;
+	}
+
 	public String getNormalizedName() {
 		return functionHandler.getNormalizedAttributeName();
 	}

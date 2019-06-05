@@ -583,8 +583,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		List<?> result = aggregateService.query(null, settings);
 
-		// Contained objects are not included
-		assert(result.size() == 1);
+		// Return the task and its child
+		assert(result.size() == 2);
 	}
 
 	@Test public void updateSingleField() {

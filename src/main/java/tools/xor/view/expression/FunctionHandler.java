@@ -42,6 +42,8 @@ public abstract class FunctionHandler
 	public static final String LT = "LT";
 	public static final String NE = "NE";
 	public static final String BETWEEN = "BETWEEN";
+	public static final String NULL = "NULL";
+	public static final String NOTNULL = "NOTNULL";
 
 	protected List<String> parameterName = new ArrayList<String>();
 

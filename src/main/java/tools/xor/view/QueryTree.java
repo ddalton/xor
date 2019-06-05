@@ -485,7 +485,9 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 				return false;
 			}
 			String property = State.getNextAttr(path);
-			return fragment.getEntityType().getProperty(property) != null;
+			Property p = fragment.getEntityType().getProperty(property);
+
+			return p != null && !p.isMany();
 		}
 
 		public String getOQLName() {

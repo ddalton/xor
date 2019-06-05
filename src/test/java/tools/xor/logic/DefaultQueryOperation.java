@@ -985,6 +985,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		settings.setParam("name2", "PRIORITIZE_DEFECTS");
 		settings.setParam("name3", "FIX_DEFECTS");
 		settings.addFunction(FunctionHandler.NE, "name", "name3");
+		settings.addFunction(FunctionType.ASC, "name");
 		settings.setView(aggregateService.getView("TASKUNIONSET"));		
 		List<?> toList = aggregateService.query(new Task(), settings);
 
@@ -1002,13 +1003,17 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(Task.class.isAssignableFrom(obj2.getClass()));
 		
 		Task t1 = (Task) obj1;
-		Task t2 = (Task) obj2;		
-		
-		assert( (t1.getName().equals("DEFECTS") && t2.getName().equals("PRIORITIZE_DEFECTS")) ||
-				(t2.getName().equals("DEFECTS") && t1.getName().equals("PRIORITIZE_DEFECTS")) );
-		
+		Task t2 = (Task) obj2;
+
+		assert ((t1.getName().equals("DEFECTS") && t2.getName().equals("PRIORITIZE_DEFECTS")) ||
+			(t2.getName().equals("DEFECTS") && t1.getName().equals("PRIORITIZE_DEFECTS")));
+
 		Task d = t1.getName().equals("DEFECTS") ? t1 : t2;
-		assert(d.getTaskChildren() != null && d.getTaskChildren().size() == 2);
+		assert (d.getTaskChildren() != null && d.getTaskChildren().size() == 2);
+
+//		System.out.println("Task 1: " + t1.getName() + ", Task 2: " + t2.getName());
+//		assert (t1.getName().equals("DEFECTS") && t2.getName().equals("DEFECT 1"));
+//		assert(t1.getTaskChildren() != null && t1.getTaskChildren().size() == 2);
 	}		
 
 	public void queryTaskParallel() {
@@ -1050,7 +1055,9 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.setView(aggregateService.getView("TASKPARALLEL"));		
+		settings.setView(aggregateService.getView("TASKPARALLEL"));
+		settings.addFunction(FunctionHandler.NOTNULL, "taskChildren.id");
+		settings.addFunction(FunctionHandler.NOTNULL, "dependants.id");
 		List<?> toList = aggregateService.query(new Task(), settings);
 
 		assert(toList.size() == 1);

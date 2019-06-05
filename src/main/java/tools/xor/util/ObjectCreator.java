@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import tools.xor.AbstractBO;
 import tools.xor.AbstractProperty;
+import tools.xor.AbstractTypeMapper;
 import tools.xor.AggregateAction;
 import tools.xor.BasicType;
 import tools.xor.BusinessEdge;
@@ -272,7 +273,8 @@ public class ObjectCreator {
 		}
 
 		if(idValue != null && ((EntityType)type).getIdentifierProperty() != null) {
-			bo = getByEntityKey(new SurrogateEntityKey(idValue, type.getName(), anchor), type);
+			bo = getByEntityKey(new SurrogateEntityKey(idValue,
+				AbstractTypeMapper.getSurrogateKeyTypeName(type), anchor), type);
 		}
 
 		return bo;

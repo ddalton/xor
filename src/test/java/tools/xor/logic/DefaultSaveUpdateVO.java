@@ -28,6 +28,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
+import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.db.base.MetaEntity;
 import tools.xor.db.base.MetaEntityState;
@@ -46,6 +47,7 @@ import tools.xor.db.vo.common.ValueTypeVO;
 import tools.xor.db.vo.common.ValueVO;
 import tools.xor.db.vo.pm.TaskVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.view.expression.FunctionHandler;
 
 public class DefaultSaveUpdateVO extends AbstractDBTest {
 	private static final String TASK_NAME = "SETUP_DSL";
@@ -228,7 +230,8 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.setView(aggregateService.getView("TASKCHILDREN"));		
+		settings.setView(aggregateService.getView("TASKCHILDREN"));
+		settings.addFunction(FunctionHandler.NOTNULL, "taskChildren.id");
 		List<?> toList = aggregateService.query(userStory, settings);
 
 		assert(toList.size() == 1);		
@@ -268,7 +271,8 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.setView(aggregateService.getView("TASKSET"));		
+		settings.setView(aggregateService.getView("TASKSET"));
+		settings.addFunction(FunctionHandler.NOTNULL, "taskChildren.id");
 		List<?> toList = aggregateService.query(userStory, settings);
 
 		assert(toList.size() == 1);		
@@ -327,7 +331,9 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.setView(aggregateService.getView("TASKSET"));		
+		settings.setView(aggregateService.getView("TASKSET"));
+		settings.addFunction(FunctionHandler.NOTNULL, "taskChildren.id");
+		settings.addFunction(FunctionHandler.NOTNULL, "dependants.id");
 		List<?> toList = aggregateService.query(userStory, settings);
 
 		assert(toList.size() == 1);		

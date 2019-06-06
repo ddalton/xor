@@ -404,7 +404,6 @@ public class PlainJDBCTest
 		List<?> toList = am.query(json, settings);
 		assert(toList.size() == 1);
 		JSONObject library = (JSONObject)toList.get(0);
-		assert(library.getJSONObject("ADDRESS") == null);
 		//JSONArray librarians = library.getJSONArray("LIBRARIANS");
 		//assert(librarians != null);
 		//assert(librarians.length() == 3);

@@ -269,10 +269,12 @@ public interface BusinessObject extends DataObject {
 	 * @param id identifier
 	 * @param instanceType Type of the object to be created
 	 * @param property The property where the created object will be placed
+	 * @param anchor the path at which the object needs to be created. The scope for the same object can be
+	 *               different on different paths.
 	 * @return new BusinessObject 
 	 * @throws Exception when creating an instance
 	 */
-	public BusinessObject createDataObject(Object id, Type instanceType, Property property) throws Exception;
+	public BusinessObject createDataObject(Object id, Type instanceType, Property property, String anchor) throws Exception;
 	
 	/**
 	 * Create a new Data object given a Surrogate key and a natural key

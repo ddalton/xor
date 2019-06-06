@@ -217,7 +217,7 @@ public abstract class AbstractBO implements BusinessObject {
 		BusinessObject existingEntity = null;
 
 		// First retrieve by Natural Key
-		List<EntityKey> naturalKeys = entity.getNaturalKey();
+		List<EntityKey> naturalKeys = entity.getNaturalKey(anchor);
 		for (EntityKey naturalKey: naturalKeys) {
 			existingEntity = getObjectCreator().getByEntityKey(naturalKey, entity.getType());
 			if(existingEntity != null && isValidEntity(naturalKey, entity, existingEntity, anchor)) {
@@ -227,11 +227,11 @@ public abstract class AbstractBO implements BusinessObject {
 
 		// try using the surrogate key
 		if (existingEntity == null) {
-			EntityKey entityKey = entity.getSurrogateKey();
+			EntityKey entityKey = entity.getSurrogateKey(anchor);
 			if (entityKey != null) {
 				existingEntity = getObjectCreator().getByEntityKey(entityKey, entity.getType());
 				if(existingEntity != null) {
-					EntityKey existingSK = existingEntity.getSurrogateKey();
+					EntityKey existingSK = existingEntity.getSurrogateKey(anchor);
 
 					// If for some reason the id has changed
 					if (existingSK == null || !existingSK.equals(entityKey)) {
@@ -678,8 +678,8 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 	
 	@Override
-	public BusinessObject createDataObject(Object id, Type instanceType, Property property) throws Exception {
-		return this.createDataObject(id, null, instanceType, property);
+	public BusinessObject createDataObject(Object id, Type instanceType, Property property, String anchor) throws Exception {
+		return this.createDataObject(id, null, instanceType, property, anchor);
 	}
 
 	public BusinessObject createDataObject(Object id, Map<String, Object> naturalKeyValues, Type instanceType, Property property) throws Exception {
@@ -867,7 +867,7 @@ public abstract class AbstractBO implements BusinessObject {
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getType(narrowToType);
-						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property);
+						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, currentPath.toString());
 					}
 				}
 				if(property.isContainment()) {
@@ -883,9 +883,9 @@ public abstract class AbstractBO implements BusinessObject {
 
 				//System.out.println("propertyDO class: " + propertyDO.getClass() + ", property: " + property.getName());
 				if(propertyDO == null) { // create and set the collection/map object
-					propertyDO = current.createDataObject(null, property.getType(), property);
+					propertyDO = current.createDataObject(null, property.getType(), property, currentPath.toString());
 				} else if(!BusinessObject.class.isAssignableFrom(propertyDO.getClass())) {
-					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property);
+					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, currentPath.toString());
 				}
 				((ExtendedProperty)property).setValue(current, ((BusinessObject)propertyDO).getInstance());
 				current = (BusinessObject) propertyDO;
@@ -934,7 +934,7 @@ public abstract class AbstractBO implements BusinessObject {
 							return; // Does not have a collection element
 					} else
 						// create the data object using the instance
-						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null);
+						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null, currentPath.toString());
 
 					// check flag to see if the containment should be set
 					if(property.isContainment())

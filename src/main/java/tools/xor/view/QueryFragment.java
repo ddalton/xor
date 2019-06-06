@@ -198,13 +198,13 @@ public class QueryFragment implements Vertex
         if(entityType.getIdentifierProperty() != null) {
             String idPath = anchorPath + entityType.getIdentifierProperty().getName();
             if(!attributePaths.contains(idPath)) {
-                queryFields.add(new QueryField(entityType.getIdentifierProperty().getName(), position++, this, true));
+                position += addField(new QueryField(entityType.getIdentifierProperty().getName(), position++, this, true)) ? 1 : 0;
             }
         } else if(entityType.getNaturalKey() != null) {
             for(String key: entityType.getNaturalKey()) {
                 String keyPath = anchorPath + key;
                 if(!attributePaths.contains(keyPath)) {
-                    queryFields.add(new QueryField(key, position++, this, true));
+                    position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
                 }
             }
         }
@@ -218,21 +218,6 @@ public class QueryFragment implements Vertex
         assert type != null : "Except a value for resolver type";
 
         if(!queryTree.getView().hasUserQuery()) {
-            if (type == ObjectResolver.Type.SHARED) {
-                // add surrogate key
-                if(getEntityType().getIdentifierProperty() != null) {
-                    String idName = getEntityType().getIdentifierProperty().getName();
-                    position += addField(new QueryField(idName, position, this, true)) ? 1 : 0;
-                }
-
-                // add USERKEY
-                if (getEntityType().getNaturalKey() != null) {
-                    for (String key : getEntityType().getExpandedNaturalKey()) {
-                        position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
-                    }
-                }
-            }
-
             Iterator<IntraQuery<QueryFragment>> iter = queryTree.getInEdges(this).iterator();
 
             if (iter.hasNext()) {

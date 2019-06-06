@@ -586,7 +586,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	            // remove the edges incident on vertex with id 's"
 	            scc.remove(vertex);
 	            for(V v: scc) {
-	            	cfLogger.debug("Removing SCC mapping for vertex: " + v);
+	            	//cfLogger.debug("Removing SCC mapping for vertex: " + v);
 	            	sccById.remove(dg.getId(v));
 	            }
 	            
@@ -595,7 +595,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	            Stack<Set<V>> newSCC = sccFinder.generate(sccById.get(s));
 	            for(Set<V> vertices: newSCC) {
 	            	for(V v: vertices) {
-	            		cfLogger.debug("Adding SCC mapping for vertex: " + v);
+	            		//cfLogger.debug("Adding SCC mapping for vertex: " + v);
 	            		sccById.put(dg.getId(v), vertices);
 	            	}
 	            }

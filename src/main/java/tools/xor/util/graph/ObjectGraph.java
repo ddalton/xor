@@ -212,7 +212,8 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			for(E e: circuit) {
 				if(e.getProperty() == null 
 						|| e.getProperty().isContainment() 
-						|| !e.getProperty().isNullable()) {
+						|| !e.getProperty().isNullable()
+					    || e.getProperty().isMany()) {
 					continue;
 				}
 				edge = e;

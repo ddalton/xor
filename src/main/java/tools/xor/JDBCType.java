@@ -187,20 +187,6 @@ public class JDBCType extends AbstractType {
     }
 
     @Override
-    public List<String> getExpandedNaturalKey() {
-        if(this.expandedNaturalKey == null) {
-            this.expandedNaturalKey = new ArrayList<>();
-
-            if( getNaturalKey() != null) {
-                for (String key : getNaturalKey()) {
-                    this.expandedNaturalKey.add(key);
-                }
-            }
-        }
-        return this.expandedNaturalKey;
-    }
-
-    @Override
     public List<Type> getEmbeddableTypes() {
         return new ArrayList<Type>();
     }

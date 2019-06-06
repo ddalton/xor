@@ -1118,8 +1118,13 @@ public abstract class AbstractType implements EntityType {
 					if (!p.getType().isDataType() && p.getType() instanceof EntityType) {
 						// expand
 						EntityType entityType = (EntityType)p.getType();
-						for (String subKey : entityType.getExpandedNaturalKey()) {
-							this.expandedNaturalKey.add(key + Settings.PATH_DELIMITER + subKey);
+						if(entityType.getExpandedNaturalKey().size() > 0) {
+							for (String subKey : entityType.getExpandedNaturalKey()) {
+								this.expandedNaturalKey.add(key + Settings.PATH_DELIMITER + subKey);
+							}
+						} else {
+							String idName = entityType.getIdentifierProperty().getName();
+							this.expandedNaturalKey.add(key + Settings.PATH_DELIMITER + idName);
 						}
 					}
 					else {

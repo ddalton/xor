@@ -1501,12 +1501,14 @@ public abstract class AbstractBO implements BusinessObject {
 
 		// Check if id is the same - then they are equal
 		ExtendedProperty identifierProperty = (ExtendedProperty) ((EntityType)type).getIdentifierProperty();
-		Object thisId = identifierProperty.getValue(this);
-		Object otherId = identifierProperty.getValue(other);
+		if(identifierProperty != null) {
+			Object thisId = identifierProperty.getValue(this);
+			Object otherId = identifierProperty.getValue(other);
 
-		if(thisId != null) {
-			if(thisId.equals(otherId)) {
-				throw new RuntimeException("Cannot have two BusinessObjects with the same id.");
+			if(thisId != null) {
+				if(thisId.equals(otherId)) {
+					throw new RuntimeException("Cannot have two BusinessObjects with the same id.");
+				}
 			}
 		}
 

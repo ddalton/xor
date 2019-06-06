@@ -366,4 +366,47 @@ public class PlainJDBCTest
 		assert(librarians != null);
 		assert(librarians.length() == 3);
 	}
+
+	@Test
+	public void testDeeplyNested2() {
+		DataAccessService das = am.getDAS();
+		das.addShape("_DEFAULT_");
+		Shape shape = das.getShape();
+
+		// create library
+		JSONObject json = new JSONObject();
+		json.put("ID", "L100");
+
+
+		// Find all the librarians of a library and get the associations and the
+		// libraries involved with those associations, and get the country where those libraries
+		// are located
+		// So for British Library
+		AggregateView view = new AggregateView();
+		List<String> attributes = new ArrayList<>();
+		view.setAttributeList(attributes);
+		attributes.add("ID");
+		attributes.add("NAME");
+		attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.LIBRARYASSOCIATIONS.LIBRARIAN.LIBRARY.ADDRESS.COUNTRY");
+		//attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.ID");
+		//attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.NAME");
+
+		// This helps with object reconstitution. Without this, the query framework should
+		// add this to the query
+		//		attributes.add("LIBRARIANS.ID");
+
+		Settings settings = new Settings();
+		JDBCType type = (JDBCType) das.getType("library");
+		settings.setEntityType(type);
+		settings.setView(view);
+		settings.init(shape);
+
+		List<?> toList = am.query(json, settings);
+		assert(toList.size() == 1);
+		JSONObject library = (JSONObject)toList.get(0);
+		assert(library.getJSONObject("ADDRESS") == null);
+		//JSONArray librarians = library.getJSONArray("LIBRARIANS");
+		//assert(librarians != null);
+		//assert(librarians.length() == 3);
+	}
 }

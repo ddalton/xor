@@ -84,18 +84,6 @@ public class UnchangedCreationStrategy extends AbstractCreationStrategy {
     }
 
     @Override
-    public Object getNormalizedInstance(BusinessObject bo, Settings settings) {
-        ObjectGraph og = bo.getObjectCreator().getObjectGraph();
-        if(og == null) {
-            bo.getObjectCreator().setObjectGraph(bo);
-            og = bo.getObjectCreator().getObjectGraph();
-        }
-        og.spanningTreeWithEdgeSwizzling(bo);
-
-        return super.getNormalizedInstance(bo, settings);
-    }
-
-    @Override
     public boolean needsObjectGraph() {
         return true;
     }

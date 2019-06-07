@@ -54,7 +54,7 @@ public abstract class AbstractBO implements BusinessObject {
 	// Do we need to support this? Is this used?
 	// Seems like duplicate functionality to view (Probably needed to support collections)
 	// Should we move this to AggregateView? and support them in views?
-	public static final String PATH_DELIMITER = "/";
+	public static final String SDO_PATH_DELIMITER = "/";
 	public static final String INDEX_FROM_0   = ".";
 	public static final String INDEX_START    = "[";
 	public static final String INDEX_END      = "]";	
@@ -487,7 +487,7 @@ public abstract class AbstractBO implements BusinessObject {
 		if(path.equals(PATH_CONTAINER))
 			return getContainer();
 
-		if(path.equals(PATH_DELIMITER)) { // root
+		if(path.equals(SDO_PATH_DELIMITER)) { // root
 			DataObject result = this;
 			Map loopDetector = new IdentityHashMap<>();
 			loopDetector.put(this, null);
@@ -502,12 +502,13 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 
 		// multiple components
-		if(path.contains(PATH_DELIMITER)) {
-			if(path.startsWith(PATH_DELIMITER)) {
-				return ((DataObject)getPathObject("/")).get(path.substring(path.indexOf(PATH_DELIMITER)+1));
+		if(path.contains(SDO_PATH_DELIMITER)) {
+			if(path.startsWith(SDO_PATH_DELIMITER)) {
+				return ((DataObject)getPathObject("/")).get(path.substring(path.indexOf(
+						SDO_PATH_DELIMITER)+1));
 			} else {
-				String firstComponent = path.substring(0, path.indexOf(PATH_DELIMITER));
-				String remainingPath = path.substring(path.indexOf(PATH_DELIMITER)+1);
+				String firstComponent = path.substring(0, path.indexOf(SDO_PATH_DELIMITER));
+				String remainingPath = path.substring(path.indexOf(SDO_PATH_DELIMITER)+1);
 				
 				// Get the property name related to the first path component
 				Object anchor = getPathObject(firstComponent);
@@ -664,13 +665,13 @@ public abstract class AbstractBO implements BusinessObject {
 		if(path == null || "".equals(path))
 			throw new IllegalArgumentException("Path cannot be empty or null");
 
-		if(path.equals(PATH_CONTAINER) || path.equals(PATH_DELIMITER))
+		if(path.equals(PATH_CONTAINER) || path.equals(SDO_PATH_DELIMITER))
 			throw new IllegalArgumentException("Path should refer to a property");
 
 		// Get the container
 		AbstractBO container = this;
-		if(path.contains(PATH_DELIMITER)) { // find the correct container
-			String containerPath = path.substring(0, path.lastIndexOf(PATH_DELIMITER));
+		if(path.contains(SDO_PATH_DELIMITER)) { // find the correct container
+			String containerPath = path.substring(0, path.lastIndexOf(SDO_PATH_DELIMITER));
 			container = (AbstractBO) getPathObject(containerPath);
 		}	
 
@@ -738,46 +739,70 @@ public abstract class AbstractBO implements BusinessObject {
 				propertyInstance = oc.createInstance(instanceType);
 			}
 
-			// For entity objects we also set the surrogate/natural key values
 			if(!instanceType.isDataType()) {
-				EntityType entityType = (EntityType) instanceType;
-				if(entityType.getIdentifierProperty() != null ) {
-					((ExtendedProperty)entityType.getIdentifierProperty()).setValue(oc.getSettings(), propertyInstance, id);
-				}
-
-				if(entityType.getNaturalKey() != null && naturalKeyValues != null && naturalKeyValues.size() > 0) {
-
-					for(String key: entityType.getNaturalKey()) {
-						Type keyType = entityType.getProperty(key).getType();
-						if(!keyType.isDataType()) {
-							// First try to find entity using ObjectCreator#findEntity
-							// If the entity cannot be found then we create and set the instance
-							// Set the natural key if there is one
-							Map<String, Object> childNKV = new HashMap<String, Object>();
-							if(((EntityType)keyType).getNaturalKey() != null) {
-								String prefix = key + Settings.PATH_DELIMITER;
-
-								for(Map.Entry<String, Object> entry: naturalKeyValues.entrySet()) {
-									if(entry.getKey().startsWith(prefix)) {
-										childNKV.put(entry.getKey(), entry.getValue());
-									}
-								}
-								Object idValue = null;
-								if(((EntityType)keyType).getIdentifierProperty() != null) {
-									idValue = naturalKeyValues.get(prefix+((EntityType)keyType).getIdentifierProperty().getName());
-								}
-								BusinessObject childBO = oc.findEntity(idValue, childNKV, keyType, anchor + PATH_DELIMITER + key);
-								Object keyInstance = childBO != null ? childBO.getInstance() : createInstance(oc, idValue, childNKV, keyType, isPatch, anchor + PATH_DELIMITER + key);
-
-								((ExtendedProperty)entityType.getProperty(key)).setValue(oc.getSettings(), propertyInstance, keyInstance);
-							}
-						}
-					}
-				}
+				createInstance(
+					oc,
+					(EntityType)instanceType,
+					propertyInstance,
+					id,
+					naturalKeyValues,
+					isPatch,
+					anchor);
 			}
 		}
 		
 		return propertyInstance;
+	}
+
+	private static void createInstance(ObjectCreator oc, EntityType instanceType, Object instance, Object id, Map<String, Object> naturalKeyValues, boolean isPatch, String anchor) throws
+		Exception
+	{
+		// For entity objects we also set the surrogate/natural key values
+		EntityType entityType = instanceType;
+		if(entityType.getIdentifierProperty() != null ) {
+			((ExtendedProperty)entityType.getIdentifierProperty()).setValue(oc.getSettings(), instance, id);
+		}
+
+		if(entityType.getNaturalKey() != null && naturalKeyValues != null && naturalKeyValues.size() > 0) {
+
+			for(String key: entityType.getNaturalKey()) {
+				Type keyType = entityType.getProperty(key).getType();
+				if(!keyType.isDataType()) {
+					// First try to find entity using ObjectCreator#findEntity
+					// If the entity cannot be found then we create and set the instance
+					// Set the natural key if there is one
+					Object idValue = null;
+					Map<String, Object> childNKV = new HashMap<>();
+					String prefix = key + Settings.PATH_DELIMITER;
+					if(((EntityType)keyType).getIdentifierProperty() != null) {
+						String idKey = prefix + ((EntityType)keyType).getIdentifierProperty().getName();
+						idValue = naturalKeyValues.get(idKey);
+					} else if (((EntityType)keyType).getNaturalKey() != null) {
+						for(Map.Entry<String, Object> entry: naturalKeyValues.entrySet()) {
+							if(entry.getKey().startsWith(prefix)) {
+								childNKV.put(entry.getKey().substring(prefix.length()), entry.getValue());
+							}
+						}
+					}
+					String childAnchor = anchor + Settings.PATH_DELIMITER + key;
+					BusinessObject childBO = oc.findEntity(idValue, childNKV, keyType, getAnchor(childAnchor));
+					Object keyInstance = childBO != null ? childBO.getInstance() : createInstance(oc, idValue, childNKV, keyType, isPatch, getAnchor(childAnchor));
+					((ExtendedProperty)entityType.getProperty(key)).setValue(oc.getSettings(), instance, keyInstance);
+
+					// recurse
+					createInstance(
+						oc,
+						(EntityType)keyType,
+						keyInstance,
+						idValue,
+						childNKV,
+						isPatch,
+						getAnchor(anchor + Settings.PATH_DELIMITER + key));
+				} else {
+					((ExtendedProperty)entityType.getProperty(key)).setValue(oc.getSettings(), instance, naturalKeyValues.get(key));
+				}
+			}
+		}
 	}
 
 	@Override
@@ -807,6 +832,7 @@ public abstract class AbstractBO implements BusinessObject {
 		String[] pathSteps = propertyPath.split(Settings.PATH_DELIMITER_REGEX);
 		BusinessObject current = this;
 		StringBuilder currentPath = new StringBuilder("");
+
 		for(String step: pathSteps) {
 			if(currentPath.length() > 0)
 				currentPath.append(Settings.PATH_DELIMITER);
@@ -859,7 +885,7 @@ public abstract class AbstractBO implements BusinessObject {
 					if(((EntityType)property.getType()).getIdentifierProperty() != null) {
 						idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
 					}
-					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), currentPath.toString());
+					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), getAnchor(currentPath.toString()));
 
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
@@ -867,7 +893,7 @@ public abstract class AbstractBO implements BusinessObject {
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getType(narrowToType);
-						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, currentPath.toString());
+						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(currentPath.toString()));
 					}
 				}
 				if(property.isContainment()) {
@@ -883,9 +909,10 @@ public abstract class AbstractBO implements BusinessObject {
 
 				//System.out.println("propertyDO class: " + propertyDO.getClass() + ", property: " + property.getName());
 				if(propertyDO == null) { // create and set the collection/map object
-					propertyDO = current.createDataObject(null, property.getType(), property, currentPath.toString());
+					propertyDO = current.createDataObject(null, property.getType(), property, getAnchor(
+							currentPath.toString()));
 				} else if(!BusinessObject.class.isAssignableFrom(propertyDO.getClass())) {
-					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, currentPath.toString());
+					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, getAnchor(currentPath.toString()));
 				}
 				((ExtendedProperty)property).setValue(current, ((BusinessObject)propertyDO).getInstance());
 				current = (BusinessObject) propertyDO;
@@ -909,7 +936,7 @@ public abstract class AbstractBO implements BusinessObject {
 					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
 				}
 				// find the element
-				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, currentPath.toString());
+				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, getAnchor(currentPath.toString()));
 
 				// check flag to see if the containment should be set
 				if(elementDO != null && property.isContainment()) {
@@ -929,12 +956,13 @@ public abstract class AbstractBO implements BusinessObject {
 
 					if(elementInstance == null) {
 						if(idValue != null || naturalKeyValues.size() > 0)
-							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null, currentPath.toString());
+							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null, getAnchor(
+									currentPath.toString()));
 						else
 							return; // Does not have a collection element
 					} else
 						// create the data object using the instance
-						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null, currentPath.toString());
+						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null, getAnchor(currentPath.toString()));
 
 					// check flag to see if the containment should be set
 					if(property.isContainment())
@@ -991,12 +1019,16 @@ public abstract class AbstractBO implements BusinessObject {
 		return;
 	}
 
+	public static String getAnchor(String path) {
+		return path;
+	}
+
 	@Override
 	public Property getPropertyByPath(String path) {
 
 		// Get the container
 		AbstractBO container = (AbstractBO) getDeepestContainer(path);
-		String propertyPath = path.substring(path.lastIndexOf(PATH_DELIMITER)+1);
+		String propertyPath = path.substring(path.lastIndexOf(SDO_PATH_DELIMITER)+1);
 
 		// case 1: List element indexed from 0
 		if(propertyPath.contains(INDEX_FROM_0)) {
@@ -1023,15 +1055,15 @@ public abstract class AbstractBO implements BusinessObject {
 		if(path == null || "".equals(path))
 			throw new IllegalArgumentException("Path cannot be empty or null");
 
-		if(path.equals(PATH_CONTAINER) || path.equals(PATH_DELIMITER))
+		if(path.equals(PATH_CONTAINER) || path.equals(SDO_PATH_DELIMITER))
 			throw new IllegalArgumentException("Path should refer to a property");
 
 		// Get the container
 		AbstractBO container = this;
-		if(path.contains(PATH_DELIMITER)) { // find the correct container
-			String containerPath = path.substring(0, path.lastIndexOf(PATH_DELIMITER));
+		if(path.contains(SDO_PATH_DELIMITER)) { // find the correct container
+			String containerPath = path.substring(0, path.lastIndexOf(SDO_PATH_DELIMITER));
 			container = (AbstractBO) getPathObject(containerPath);
-			path = path.substring(path.lastIndexOf(PATH_DELIMITER)+1);
+			path = path.substring(path.lastIndexOf(SDO_PATH_DELIMITER)+1);
 			container.set(path, value);
 			return;
 		}
@@ -1320,7 +1352,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public DataObject getRootObject() {
-		return (DataObject) get(PATH_DELIMITER);
+		return (DataObject) get(SDO_PATH_DELIMITER);
 	}
 
 	@Override

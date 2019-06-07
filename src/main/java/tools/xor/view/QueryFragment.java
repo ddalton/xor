@@ -198,13 +198,14 @@ public class QueryFragment implements Vertex
         if(entityType.getIdentifierProperty() != null) {
             String idPath = anchorPath + entityType.getIdentifierProperty().getName();
             if(!attributePaths.contains(idPath)) {
-                position += addField(new QueryField(entityType.getIdentifierProperty().getName(), position++, this, true)) ? 1 : 0;
+                position += addField(new QueryField(entityType.getIdentifierProperty().getName(), position++, this, false)) ? 1 : 0;
             }
         } else if(entityType.getNaturalKey() != null) {
-            for(String key: entityType.getNaturalKey()) {
+            //for(String key: entityType.getNaturalKey()) {
+            for(String key: entityType.getExpandedNaturalKey()) {
                 String keyPath = anchorPath + key;
                 if(!attributePaths.contains(keyPath)) {
-                    position += addField(new QueryField(key, position++, this, true)) ? 1 : 0;
+                    position += addField(new QueryField(key, position++, this, false)) ? 1 : 0;
                 }
             }
         }

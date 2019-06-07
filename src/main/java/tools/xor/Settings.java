@@ -1351,7 +1351,7 @@ public class Settings {
 	}
 	
 	public static String convertToBOPath(String input) {
-		return input.replace(PATH_DELIMITER, AbstractBO.PATH_DELIMITER);
+		return input.replace(PATH_DELIMITER, AbstractBO.SDO_PATH_DELIMITER);
 	}
 	
 

@@ -34,9 +34,10 @@ public final class SurrogateEntityKey extends AbstractEntityKey {
 
 	public SurrogateEntityKey(Object surrogateKeyValue, String entityTypeName, String path) {
 		super(entityTypeName, path);
-		if ( surrogateKeyValue == null ) {
+		if ( surrogateKeyValue == null) {
 			throw new IllegalStateException( "null identifier" );
 		}
+
 		this.key = surrogateKeyValue;
 		this.hashCode = generateHashCode();
 	}
@@ -44,7 +45,7 @@ public final class SurrogateEntityKey extends AbstractEntityKey {
 	@Override
 	protected int generateHashCode ()
 	{
-		return (37 * super.generateHashCode()) + key.hashCode();
+		return (37 * super.generateHashCode()) + (key != null ? key.hashCode() : 0);
 	}
 	
 	@Override
@@ -54,8 +55,16 @@ public final class SurrogateEntityKey extends AbstractEntityKey {
 
 		SurrogateEntityKey otherKey = (SurrogateEntityKey) other;
 
-		// check they are of the same type
-		return super.equals(otherKey) && otherKey.key.equals(this.key);
+		if( this.key == null ^ otherKey.key == null) {
+			return false;
+		}
+
+		// If both keys are initialized then they should be equal
+		if (this.key != null && !this.key.equals(otherKey.key)) {
+			return false;
+		}
+
+		return super.equals(otherKey);
 	}
 
 	@Override
@@ -65,6 +74,6 @@ public final class SurrogateEntityKey extends AbstractEntityKey {
 
 	@Override
 	public String toString() {
-		return "SurrogateEntityKey[" + getEntityTypeName() + "," + key.toString() + "]";
+		return "SurrogateEntityKey[" + getEntityTypeName() + "," + (key==null ? "null":key.toString()) + "," + (getPath()==null?"null":getPath().toString()) + "]";
 	}
 }

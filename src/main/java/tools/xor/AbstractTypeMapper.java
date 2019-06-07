@@ -223,7 +223,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 
 		EntityType entityType = (EntityType) type;
 
-		if(!(id instanceof String) || !"".equals(id.toString().trim())) {
+		if(anchor != null || (id != null && !"".equals(id.toString().trim()))) {
 			return new SurrogateEntityKey(id, getSurrogateKeyTypeName(entityType), anchor);
 		}
 

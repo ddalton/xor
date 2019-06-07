@@ -369,6 +369,8 @@ public class QueryFromFragments implements QueryBuilderStrategy
                     fragmentOrder.put(collectionElement.getAlias(), getOrderClauses(collectionElement));
                     populateOrder(collectionElement, fragmentOrder);
                 }
+            } else {
+                populateOrder(outEdge.getEnd(), fragmentOrder);
             }
         }
     }

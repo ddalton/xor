@@ -26,6 +26,7 @@ import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.Shape;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -43,12 +44,14 @@ public class JDBCType extends AbstractType {
     private String name;
     private JDBCDAS.TableInfo tableInfo;
     private Property id;
+    private Map<String, String> pathToColumnMap;
 
     public JDBCType(String name, JDBCDAS.TableInfo tableInfo) {
         super();
 
         this.name = name;
         this.tableInfo = tableInfo;
+        this.pathToColumnMap = new HashMap<>();
     }
 
     @Override
@@ -106,9 +109,14 @@ public class JDBCType extends AbstractType {
         setIdentifierProperty();
     }
 
+    @Override
+    public void initEnd(Shape shape) {
+        setColumnMap();
+    }
+
     private void setIdentifierProperty() {
-        if(this.tableInfo.getPrimaryKeys() != null) {
-            if(this.tableInfo.getPrimaryKeys().size() == 1) {
+        if (this.tableInfo.getPrimaryKeys() != null) {
+            if (this.tableInfo.getPrimaryKeys().size() == 1) {
                 String propertyName = this.tableInfo.getPrimaryKeys().get(0);
                 this.id = getProperty(propertyName);
             } else {
@@ -118,11 +126,9 @@ public class JDBCType extends AbstractType {
 
                 List<String> primaryKeyPropertyNames = new LinkedList<>();
                 for(JDBCDAS.ForeignKey fk: this.tableInfo.getForeignKeys()) {
-                    if(fk.getReferencingColumns().size() > 1) {
-                        if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
-                            primaryKeyPropertyNames.add(fk.getName());
-                            foreignKeySet.addAll(fk.getReferencingColumns());
-                        }
+                    if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
+                        primaryKeyPropertyNames.add(fk.getPropertyName());
+                        foreignKeySet.addAll(fk.getReferencingColumns());
                     }
                 }
                 if(primaryKeyPropertyNames.size() > 0) {
@@ -136,6 +142,88 @@ public class JDBCType extends AbstractType {
                 String[] keys = primaryKeyPropertyNames.stream().toArray(String[]::new);
                 setNaturalKey(keys);
             }
+        }
+    }
+
+    private void setColumnMap() {
+        if(this.tableInfo.getPrimaryKeys() != null) {
+
+            Map<String, Map<String, String>> columnMap = new HashMap<>();
+            populateNestedKeyMap(columnMap, "");
+
+            // columnMap should be fully populated and every key has a single value
+            for(Map.Entry<String, Map<String, String>> entry: columnMap.entrySet()) {
+                this.pathToColumnMap.put(entry.getKey(), entry.getValue().values().iterator().next());
+            }
+
+            // Possible to have multi-column foreign keys subsumed in the primary key
+            Set<String> primaryKeySet = new HashSet<>(this.tableInfo.getPrimaryKeys());
+
+            if(this.tableInfo.getForeignKeys() != null) {
+                Set<String> foreignKeySet = new HashSet<>();
+                for (JDBCDAS.ForeignKey fk : this.tableInfo.getForeignKeys()) {
+                    if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
+                        foreignKeySet.addAll(fk.getReferencingColumns());
+                    }
+                }
+                if (foreignKeySet.size() > 0) {
+                    // Subtract all the columns used up by the foreign keys
+                    primaryKeySet.removeAll(foreignKeySet);
+                }
+            }
+
+            for(String simpleKey: primaryKeySet) {
+                this.pathToColumnMap.put(simpleKey, simpleKey);
+            }
+        }
+    }
+
+    public void populateNestedKeyMap(Map<String, Map<String, String>> columnMap, String prefix) {
+
+        Map<String, String> fkMap = new HashMap<>();
+        if(columnMap.containsKey(prefix)) {
+            fkMap = columnMap.get(prefix);
+        }
+
+        List<String> keys = new LinkedList<>();
+        if(getNaturalKey() != null) {
+            keys.addAll(getNaturalKey());
+        } else if(getIdentifierProperty() != null) {
+            keys.add(getIdentifierProperty().getName());
+        }
+
+        for(String propertyName: keys) {
+            JDBCProperty property = (JDBCProperty)getProperty(propertyName);
+
+            String childPrefix = (prefix.length() > 0 ? (prefix + Settings.PATH_DELIMITER) : "") + propertyName;
+            Map<String, String> childFkMap = new HashMap<>();
+            columnMap.put(childPrefix, childFkMap);
+            if(!property.getType().isDataType()) {
+                JDBCDAS.ForeignKey fk = property.getForeignKey();
+
+                for(int i = 0; i < fk.getReferencingColumns().size(); i++) {
+                    // We key by the column at the current depth
+                    // the value is the desired column and that does not change
+                    if(fkMap.containsKey(fk.getReferencingColumns().get(i))) {
+                        childFkMap.put(fk.getReferencedColumns().get(i),
+                            fkMap.get(fk.getReferencingColumns().get(i)));
+                    } else {
+                        childFkMap.put(fk.getReferencedColumns().get(i),
+                            fk.getReferencingColumns().get(i));
+                    }
+                }
+
+                ((JDBCType)property.getType()).populateNestedKeyMap(columnMap, childPrefix);
+            } else {
+                if(fkMap != null && fkMap.containsKey(propertyName)) {
+                    columnMap.put(childPrefix, fkMap);
+                } else {
+                    childFkMap.put(propertyName, propertyName);
+                }
+            }
+        }
+        if(columnMap.containsKey(prefix)) {
+            columnMap.remove(prefix);
         }
     }
 
@@ -284,4 +372,12 @@ public class JDBCType extends AbstractType {
         return true;
     }
 
+    public String getColumn (String path)
+    {
+        if(!path.contains(Settings.PATH_DELIMITER)) {
+            return path;
+        }
+
+        return this.pathToColumnMap.get(path);
+    }
 }

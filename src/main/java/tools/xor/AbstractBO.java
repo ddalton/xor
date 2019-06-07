@@ -815,7 +815,24 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 
 		return result;
-	}	
+	}
+
+	// Anchor uniquely identifies the shape of the object at the end of the anchor
+	// Collection objects are always considered as distinct shapes
+	private void addToAnchor(StringBuilder anchor, String step, Property property, Object collection) {
+
+		if(anchor.length() > 0) {
+			anchor.append(Settings.PATH_DELIMITER);
+		}
+
+		if(!property.isMany()) {
+			anchor.append(step);
+		} else {
+			// Each collection is considered to have a distinct shape
+			// as it can differ in the element list
+			anchor.append(System.identityHashCode(collection));
+		}
+	}
 
 	@Override
 	public void reconstitute (String propertyPath,
@@ -832,10 +849,12 @@ public abstract class AbstractBO implements BusinessObject {
 		String[] pathSteps = propertyPath.split(Settings.PATH_DELIMITER_REGEX);
 		BusinessObject current = this;
 		StringBuilder currentPath = new StringBuilder("");
+		StringBuilder anchor = new StringBuilder("");
 
 		for(String step: pathSteps) {
-			if(currentPath.length() > 0)
+			if(currentPath.length() > 0) {
 				currentPath.append(Settings.PATH_DELIMITER);
+			}
 			currentPath.append(step);
 
 			Property property = current.getInstanceProperty(step);
@@ -853,9 +872,12 @@ public abstract class AbstractBO implements BusinessObject {
 				}
 			}
 
+			addToAnchor(anchor, step, property, current.getInstance());
+
 			//Object propertyDO = current.get(property);
 			Object propertyDO = current.getDataObject(property);
-			if(!property.isMany()) { 
+			if(!property.isMany()) {
+
 				if(property.getType().isDataType() ) {
 					// Populate the field and return the data object
 					((ExtendedProperty)property).setValue(current, propertyResult.get(propertyPath));
@@ -885,7 +907,7 @@ public abstract class AbstractBO implements BusinessObject {
 					if(((EntityType)property.getType()).getIdentifierProperty() != null) {
 						idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
 					}
-					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), getAnchor(currentPath.toString()));
+					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), getAnchor(anchor.toString()));
 
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
@@ -893,7 +915,7 @@ public abstract class AbstractBO implements BusinessObject {
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getType(narrowToType);
-						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(currentPath.toString()));
+						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()));
 					}
 				}
 				if(property.isContainment()) {
@@ -910,9 +932,9 @@ public abstract class AbstractBO implements BusinessObject {
 				//System.out.println("propertyDO class: " + propertyDO.getClass() + ", property: " + property.getName());
 				if(propertyDO == null) { // create and set the collection/map object
 					propertyDO = current.createDataObject(null, property.getType(), property, getAnchor(
-							currentPath.toString()));
+							anchor.toString()));
 				} else if(!BusinessObject.class.isAssignableFrom(propertyDO.getClass())) {
-					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, getAnchor(currentPath.toString()));
+					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, getAnchor(anchor.toString()));
 				}
 				((ExtendedProperty)property).setValue(current, ((BusinessObject)propertyDO).getInstance());
 				current = (BusinessObject) propertyDO;
@@ -936,7 +958,7 @@ public abstract class AbstractBO implements BusinessObject {
 					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
 				}
 				// find the element
-				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, getAnchor(currentPath.toString()));
+				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, getAnchor(anchor.toString()));
 
 				// check flag to see if the containment should be set
 				if(elementDO != null && property.isContainment()) {
@@ -957,12 +979,12 @@ public abstract class AbstractBO implements BusinessObject {
 					if(elementInstance == null) {
 						if(idValue != null || naturalKeyValues.size() > 0)
 							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null, getAnchor(
-									currentPath.toString()));
+									anchor.toString()));
 						else
 							return; // Does not have a collection element
 					} else
 						// create the data object using the instance
-						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null, getAnchor(currentPath.toString()));
+						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null, getAnchor(anchor.toString()));
 
 					// check flag to see if the containment should be set
 					if(property.isContainment())

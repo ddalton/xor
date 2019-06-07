@@ -1,41 +1,9 @@
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
 
 
-Issues in reconstituting an object -
-The collection object needs to be identified
-How to determine when to add an object to the collection?
-
-
-Table 1 - a, b, c, d, e, f     Ent1
-
-a, b, c -> a1, b1, c1
-
-Table 2  a1, b1, c1           Ent2
-
-a1, b1 -> a2, b2
-
-Table 3 a2, b2             Ent3
-
-a2 -> a3
-
-Table 4 a3              Ent4
-
-
-
-Column a -> Ent1.Ent2.Ent3.Ent4.a3
-Column b -> Ent1.Ent2.Ent3..b2
-
-
-
 
 Pending PlainJDBCTest cases
 ===========================
-foreign key inverse relationship name
-1. Deeply nested attribute. For e.g., a.b.c.d.e.f
-   Test how the join works in these cases
-   Make sure the Query auto-adds the join columns needed for reconstitution.
-
-   TODO: added assert statements to PlainJDBCTest#testDeeplyNested2
 
 2. Ensure that the absolute path is used to create the entity key and not relative path
    Currently the tree split occurs from the root node. This is wasteful.

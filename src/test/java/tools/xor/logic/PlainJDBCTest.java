@@ -404,8 +404,72 @@ public class PlainJDBCTest
 		List<?> toList = am.query(json, settings);
 		assert(toList.size() == 1);
 		JSONObject library = (JSONObject)toList.get(0);
-		//JSONArray librarians = library.getJSONArray("LIBRARIANS");
-		//assert(librarians != null);
-		//assert(librarians.length() == 3);
+		JSONArray librarians = library.getJSONArray("LIBRARIANS");
+		assert(librarians != null);
+		assert(librarians.length() == 3);
+
+		// Get the first librarian
+		JSONObject lib1002 = librarians.getJSONObject(0);
+		assert(lib1002.getString("ID").equals("1002"));
+		JSONArray lib1002la = lib1002.getJSONArray("LIBRARYASSOCIATIONS");
+		assert(lib1002la != null);
+		assert(lib1002la.length() == 2);
+		JSONObject alise = lib1002la.getJSONObject(0);
+		JSONObject cilip = lib1002la.getJSONObject(1);
+		validateAlise(alise);
+		validateCilip(cilip);
+
+		// Get the second librarian
+		JSONObject lib1003 = librarians.getJSONObject(1);
+		assert(lib1003.getString("ID").equals("1003"));
+		JSONArray lib1003la = lib1003.getJSONArray("LIBRARYASSOCIATIONS");
+		assert(lib1003la != null);
+		assert(lib1003la.length() == 1);
+		cilip = lib1003la.getJSONObject(0);
+		validateCilip(cilip);
+
+		// Get the third librarian
+		JSONObject lib1004 = librarians.getJSONObject(2);
+		assert(lib1004.getString("ID").equals("1004"));
+		JSONArray lib1004la = lib1003.getJSONArray("LIBRARYASSOCIATIONS");
+		assert(lib1004la != null);
+		assert(lib1004la.length() == 1);
+		cilip = lib1004la.getJSONObject(0);
+		validateCilip(cilip);
+	}
+
+	private void validateAlise(JSONObject la) {
+		JSONObject assoc = la.getJSONObject("ASSOCIATION");
+		assert(assoc != null);
+		assert(assoc.getString("ID").equals("ALISE"));
+
+		JSONArray las = assoc.getJSONArray("LIBRARYASSOCIATIONS");
+		assert(las.length() == 1);
+		JSONObject libassoc = las.getJSONObject(0);
+		JSONObject librarian = libassoc.getJSONObject("LIBRARIAN");
+		assert(librarian.getString("ID").equals("1002"));
+
+		JSONObject library = librarian.getJSONObject("LIBRARY");
+		assert(library.getString("ID").equals("L100"));
+
+		JSONObject address = library.getJSONObject("ADDRESS");
+		assert(address.getString("COUNTRY").equals("UK"));
+	}
+
+	private void validateCilip(JSONObject la) {
+		JSONObject assoc = la.getJSONObject("ASSOCIATION");
+		assert(assoc != null);
+		assert(assoc.getString("ID").equals("CILIP"));
+
+		JSONArray las = assoc.getJSONArray("LIBRARYASSOCIATIONS");
+		assert(las.length() == 3);
+
+		JSONObject librarian1 = las.getJSONObject(0).getJSONObject("LIBRARIAN");
+		JSONObject librarian2 = las.getJSONObject(1).getJSONObject("LIBRARIAN");
+		JSONObject librarian3 = las.getJSONObject(2).getJSONObject("LIBRARIAN");
+
+		assert(librarian1.getString("ID").equals("1002"));
+		assert(librarian2.getString("ID").equals("1003"));
+		assert(librarian3.getString("ID").equals("1004"));
 	}
 }

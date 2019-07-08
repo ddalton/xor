@@ -32,14 +32,12 @@ import tools.xor.EntityType;
 import tools.xor.FunctionType;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
-import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
-import javax.json.JsonObject;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;

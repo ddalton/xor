@@ -19,7 +19,11 @@
 
 package tools.xor.view;
 
-public interface QuerySplitter
+/**
+ * Views that create cartesian joins need to be split
+ * so that the queries can be efficiently executed
+ */
+public interface SplitStrategy
 {
     void execute();
 }

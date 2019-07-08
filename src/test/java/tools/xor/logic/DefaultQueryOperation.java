@@ -55,7 +55,8 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.util.InterQuery;
 import tools.xor.view.AggregateView;
-import tools.xor.view.CartesianJoinSplitter;
+import tools.xor.view.SplitToAnchor;
+import tools.xor.view.SplitToRoot;
 import tools.xor.view.FragmentBuilder;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryTree;
@@ -1308,14 +1309,29 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(qp.getVertices().size() == 9);
 	}
 
-	public void querySplit() {
+	public void querySplitToRoot() {
 		View view = aggregateService.getView("COMPLEX");
 		DataAccessService das = aggregateManager.getDAS();
 		Type task = das.getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
-		CartesianJoinSplitter cjs = new CartesianJoinSplitter(queryTree);
+		SplitToRoot cjs = new SplitToRoot(queryTree);
+		cjs.execute();
+
+		//queryTree.exportToDOT("ComplexT.dot");
+
+		assert(queryTree.getVertices().size() == 2);
+	}
+
+	public void querySplitToAnchor() {
+		View view = aggregateService.getView("COMPLEX");
+		DataAccessService das = aggregateManager.getDAS();
+		Type task = das.getType(Task.class);
+
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
+		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		SplitToAnchor cjs = new SplitToAnchor(queryTree);
 		cjs.execute();
 
 		//queryTree.exportToDOT("ComplexT.dot");

@@ -26,11 +26,15 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-public class CartesianJoinSplitter implements QuerySplitter
+/**
+ * This strategy needs to be used if needing an OUTER JOIN type functionality
+ * i.e., if the join needs to be included in the result, irrespective of whether
+ */
+public class SplitToRoot implements SplitStrategy
 {
     private AggregateTree aggregateTree;
 
-    public CartesianJoinSplitter(AggregateTree aggregateTree) {
+    public SplitToRoot (AggregateTree aggregateTree) {
         this.aggregateTree = aggregateTree;
     }
 

@@ -22,6 +22,7 @@ package tools.xor.providers.jdbc;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.JDBCType;
+import tools.xor.Property;
 import tools.xor.RelationshipType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
@@ -304,6 +305,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         private RelationshipType type = RelationshipType.TO_MANY; // default
         private ForeignKeyRule deleteRule;
         private ForeignKeyRule updateRule;
+        private boolean composition;
         private boolean inheritance;             // Does this foreign key model an inheritance
                                                  //   relationship?
 
@@ -395,13 +397,31 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             return this.inheritance;
         }
 
+        public boolean isComposition() {
+            return this.composition;
+        }
+
         public void init() {
             if(this.referencingTable.getPrimaryKeys() != null && this.referencedTable.getPrimaryKeys() != null) {
                 if (this.referencingTable.getPrimaryKeys().equals(this.referencingColumns) &&
                     this.referencedTable.getPrimaryKeys().equals(this.referencedColumns)) {
+
+                    // @see initComposition() difference
                     this.inheritance = true;
                 }
             }
+        }
+
+        /**
+         * The primary key is the same between two tables, but they do not participate in
+         * a inheritance relationship.
+         * So the PK values just needs to be copied to the referencing table from the
+         * referenced table instead of it being generated.
+         */
+        public void makeComposition() {
+            this.setReferencingColumns(this.referencingTable.getPrimaryKeys());
+            this.setReferencedColumns(this.referencedTable.getPrimaryKeys());
+            this.composition = true;
         }
     }
 

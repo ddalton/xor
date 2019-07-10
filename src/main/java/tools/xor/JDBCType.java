@@ -63,6 +63,10 @@ public class JDBCType extends AbstractType {
         return this.tableInfo.getName();
     }
 
+    public JDBCDAS.TableInfo getTableInfo() {
+        return this.tableInfo;
+    }
+
     public List<String> getPrimaryKeys() {
         return this.tableInfo.getPrimaryKeys();
     }
@@ -296,7 +300,7 @@ public class JDBCType extends AbstractType {
 
     @Override
     public Property getProperty(String path) {
-        return getDAS().getShape().getProperty(this, path);
+        return getDAS().getShape().getProperty(this, path.toUpperCase());
     }
 
     @Override

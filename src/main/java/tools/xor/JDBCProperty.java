@@ -152,7 +152,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         // and referenced table is rightAlias and vice verse for the inverse
 
         JDBCDAS.ForeignKey fk = this.foreignKey;
-        boolean inverse = false;
+        boolean inverse = getMappedBy() != null ? true : false;
         if(fk == null) {
             if(getMappedBy() != null) {
                 fk = ((JDBCProperty)getMappedBy()).getForeignKey();
@@ -210,19 +210,23 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         return null;
     }
 
-    @Override public void initMappedBy (Shape shape)
+    @Override public void initMappedBy (Shape shape) {
+        initMappedBy(shape, this.foreignKey);
+    }
+
+    public void initMappedBy (Shape shape, JDBCDAS.ForeignKey fk)
     {
-        if(this.foreignKey != null) {
+        if(fk != null) {
 
             DataAccessService das = shape.getDAS();
             JDBCProperty inverse;
 
-            String inverseRelationshipName = this.foreignKey.getInverseRelationshipName();
+            String inverseRelationshipName = fk.getInverseRelationshipName();
             if(inverseRelationshipName == null) {
                 inverseRelationshipName = getName() + INVERSE;
             }
 
-            if(this.foreignKey.getType() == RelationshipType.TO_MANY) {
+            if(fk.getType() == RelationshipType.TO_MANY) {
                 // create and link a new JDBCProperty this is the inverse
                 // and representing the collection
                 inverse = new JDBCProperty(

@@ -385,4 +385,13 @@ public interface ExtendedProperty extends Property {
 	 * @param clazz the class to scan for business logic methods
 	 */
 	public void initLambdas(Class clazz);
+
+	/**
+	 * When persisting an object, should the referenced object of this property
+	 * have its id based on the owner
+	 *
+	 * @return true if the referenced object is a dependent object or a sub-object in an
+	 *   inheritance hierarchy
+	 */
+	public boolean doPropagateId();
 }

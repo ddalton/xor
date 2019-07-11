@@ -41,10 +41,12 @@ import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -335,13 +337,36 @@ public abstract class DBTranslator
         return result;
     }
 
-    public String getInsertSql(Settings settings, BusinessObject bo) {
+    /**
+     * Return 1 or more insert SQLs.
+     * Return more than 1 in case of an object participating in an inheritance hierarchy
+     *
+     * @param settings
+     * @param bo
+     * @return
+     */
+    public List<String> getInsertSql(Settings settings, BusinessObject bo)
+    {
+        JDBCType entityType = (JDBCType)bo.getType();
+
+        Stack<String> sqlStack = new Stack<>();
+        while(entityType != null) {
+            sqlStack.push(getInsertSql(settings, bo, entityType));
+
+            // Walk up the super-type
+            entityType = (JDBCType)entityType.getSuperType();
+        }
+
+        return new ArrayList<>(sqlStack);
+    }
+
+    public String getInsertSql(Settings settings, BusinessObject bo, JDBCType entityType) {
 
         StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(null, settings, null);
 
         // Check if the identifier column has been populated
-        JDBCType entityType = (JDBCType)bo.getType();
         ExtendedProperty identifierProperty = (ExtendedProperty) entityType.getIdentifierProperty();
+
         if(identifierProperty != null && !identifierProperty.isGenerated()) {
             Serializable id = (Serializable)identifierProperty.getValue(bo);
             if(id == null || "".equals(id.toString())) {
@@ -362,6 +387,14 @@ public abstract class DBTranslator
         List<String> columnNames = new LinkedList<>();
         for(Property p: entityType.getProperties()) {
             if(((ExtendedProperty)p).isGenerated()) {
+                continue;
+            }
+
+            if(bo.get(p) == null) {
+                continue;
+            }
+
+            if(!((ExtendedProperty)p).isUpdatable()) {
                 continue;
             }
 
@@ -391,6 +424,14 @@ public abstract class DBTranslator
                 continue;
             }
 
+            if(bo.get(p) == null) {
+                continue;
+            }
+
+            if(!((ExtendedProperty)p).isUpdatable()) {
+                continue;
+            }
+
             // simple type
             if(p.getType().isDataType() && !p.isMany()) {
                 JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
@@ -401,7 +442,8 @@ public abstract class DBTranslator
             if(!p.getType().isDataType() && p.getMappedBy() == null) {
                 JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
                 JSONObject entity = (JSONObject)bo.get(p);
-                List<JDBCDAS.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(fkey.getReferencedColumns());
+                List<JDBCDAS.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(
+                    fkey.getReferencedColumns());
                 for (int i = 0; i < referencedColumns.size(); i++) {
                     String dataType = referencedColumns.get(i).getDataType();
                     String columnName = referencedColumns.get(i).getName();

@@ -144,11 +144,16 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	public Shape getOrCreateShape (String name, Shape parent) {
 		Shape shape = shapes.get(name);
 		if(shape == null) {
-			shape = new Shape(name, shapes.get(DEFAULT_SHAPE), this);
+			shape = new Shape(name, parent, this);
 			shapes.put(name, shape);
 		}
 
 		return shape;
+	}
+
+	@Override
+	public void removeShape(String name) {
+		shapes.remove(name);
 	}
 
 	protected Shape getOrCreateShape (String name) {

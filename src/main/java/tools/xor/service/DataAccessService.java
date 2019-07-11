@@ -74,6 +74,12 @@ public interface DataAccessService {
 	 * @return the newly created shape
 	 */
 	public Shape getOrCreateShape (String name, Shape parent);
+
+	/**
+	 * Remove an existing shape
+	 * @param name of the shape
+	 */
+	public void removeShape(String name);
 	
 	/**
 	 * Return the type associated with a particular DataObject

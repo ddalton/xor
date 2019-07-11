@@ -19,6 +19,9 @@
 
 package tools.xor.logic;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,15 +30,18 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
+import tools.xor.Settings;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jdbc-test.xml" })
@@ -70,7 +76,7 @@ public class TwitterJDBCTest
         JDBCType entitiesUserType = (JDBCType) das.getType("entities_user");
         JDBCType userUrlType = (JDBCType) das.getType("user_url");
         JDBCType userDescType = (JDBCType) das.getType("user_description");
-        JDBCProperty userUrlPK = (JDBCProperty)userUrlType.getProperty("id_str");
+        JDBCProperty userUrlPK = (JDBCProperty)userUrlType.getProperty("ID_STR");
         JDBCDAS.ForeignKey fk = new JDBCDAS.ForeignKey("FK1_1__1_url", userUrlType.getTableInfo(), entitiesUserType.getTableInfo(),
             JDBCDAS.ForeignKeyRule.NO_ACTION,
             JDBCDAS.ForeignKeyRule.NO_ACTION);
@@ -79,7 +85,7 @@ public class TwitterJDBCTest
         entities.initMappedBy(das.getShape());
         userUrlType.addProperty(entities);
 
-        JDBCProperty userDescPK = (JDBCProperty)userDescType.getProperty("id_str");
+        JDBCProperty userDescPK = (JDBCProperty)userDescType.getProperty("ID_STR");
         fk = new JDBCDAS.ForeignKey("FK1_1__1_description", userDescType.getTableInfo(), entitiesUserType.getTableInfo(),
             JDBCDAS.ForeignKeyRule.NO_ACTION,
             JDBCDAS.ForeignKeyRule.NO_ACTION);
@@ -89,7 +95,7 @@ public class TwitterJDBCTest
         userDescType.addProperty(entities);
 
         JDBCType urlsType = (JDBCType) das.getType("urls");
-        JDBCProperty urlsPK = (JDBCProperty)urlsType.getProperty("id_str");
+        JDBCProperty urlsPK = (JDBCProperty)urlsType.getProperty("ID_STR");
         // Create a synthetic foreign key between urls and user_url
         fk = new JDBCDAS.ForeignKey("FK1_1__N_urls", urlsType.getTableInfo(), userUrlType.getTableInfo(),
             JDBCDAS.ForeignKeyRule.NO_ACTION,
@@ -128,7 +134,7 @@ public class TwitterJDBCTest
 
         JDBCType indicesType = (JDBCType) das.getType("indices");
         JDBCType hashtagsType = (JDBCType) das.getType("hashtags");
-        JDBCProperty indicesPK = (JDBCProperty)indicesType.getProperty("id_str");
+        JDBCProperty indicesPK = (JDBCProperty)indicesType.getProperty("ID_STR");
         fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), hashtagsType.getTableInfo(),
             JDBCDAS.ForeignKeyRule.NO_ACTION,
             JDBCDAS.ForeignKeyRule.NO_ACTION);
@@ -195,7 +201,7 @@ public class TwitterJDBCTest
                     + " ID_STR VARCHAR(20) NOT NULL, "
                     + " name VARCHAR(50) NOT NULL, "
                     + " screen_name VARCHAR(15) NOT NULL, "
-                    + " entities VARCHAR(20) NOT NULL, "
+                    + " entities VARCHAR(20), "
                     + " PRIMARY KEY(id_str))");
             statement.execute("ALTER TABLE user ADD CONSTRAINT FK1_1__1_user FOREIGN KEY(entities) REFERENCES entities_user(id_str)");
 
@@ -347,6 +353,98 @@ public class TwitterJDBCTest
 
             addAdditionalRelationships();
         }
+    }
+
+    @After
+    public void destroy() throws SQLException, ClassNotFoundException, IOException {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
+            statement.executeUpdate("DROP TABLE sizes");
+            statement.executeUpdate("DROP TABLE size");
+            statement.executeUpdate("DROP TABLE media");
+            statement.executeUpdate("DROP TABLE options");
+            statement.executeUpdate("DROP TABLE polls");
+            statement.executeUpdate("DROP TABLE symbols");
+            statement.executeUpdate("DROP TABLE user_mentions");
+            statement.executeUpdate("DROP TABLE urls");
+            statement.executeUpdate("DROP TABLE hashtags");
+            statement.executeUpdate("DROP TABLE indices");
+            statement.executeUpdate("DROP TABLE retweettweet");
+            statement.executeUpdate("DROP TABLE quotetweet");
+            statement.executeUpdate("DROP TABLE tweet");
+            statement.executeUpdate("DROP TABLE entities_tweet");
+            statement.executeUpdate("DROP TABLE user");
+            statement.executeUpdate("DROP TABLE user_description");
+            statement.executeUpdate("DROP TABLE user_url");
+            statement.executeUpdate("DROP TABLE entities_user");
+
+            connection.commit();
+        }
+
+        DataAccessService das = am.getDAS();
+        das.removeShape("_DEFAULT_");
+    }
+
+    @Test
+    public void testUrlCreate() {
+        DataAccessService das = am.getDAS();
+        Shape shape = das.getShape();
+
+        // TODO: ID should be propagated in a composition relationship
+        JSONObject url = new JSONObject().put("ID_STR", "1001");
+        JSONObject url1 = new JSONObject().put("ID_STR", "URL1");
+        url1.put("URL", "https://t.co/LinkToTweet");
+        url1.put("EXPANDED_URL", "https:\\/\\/twitter.com\\/OriginalTweeter\\/status\\/994281226797137920");
+        url1.put("DISPLAY_URL", "twitter.com\\/OriginalTweeter\\/status\\/994281226797137920");
+
+        JSONObject url2 = new JSONObject().put("ID_STR", "URL2");
+        url2.put("URL", "https://t.co/T9MBCHZWcD");
+        url2.put("EXPANDED_URL", "https://twitter.com/TwitterDev/status/1125490788736032770/photo/1");
+        url2.put("DISPLAY_URL", "pic.twitter.com/T9MBCHZWcD");
+
+        JSONArray urls = new JSONArray();
+        urls.put(url1);
+        urls.put(url2);
+        url.put("urls", urls);
+
+        // Create the urls object
+        JDBCType type = (JDBCType) das.getType("user_url");
+        Settings settings = new Settings();
+        settings.setEntityType(type);
+        settings.init(shape);
+        Object obj = am.create(url, settings);
+    }
+/*
+    @Test
+    public void testCompositionCreate() {
+        DataAccessService das = am.getDAS();
+        Shape shape = das.getShape();
+
+        // Create tweet object with entities populated
+        JSONObject user = new JSONObject().put("ID", 1001);
+        user.put("ID_STR", "1001");
+        user.put("NAME", "Tweet Tester");
+        user.put("SCREEN_NAME", "TweetTester");
+
+        // First create the user
+        JDBCType type = (JDBCType) das.getType("user");
+        Settings settings = new Settings();
+        settings.setEntityType(type);
+        settings.init(shape);
+        Object obj = am.create(user, settings);
+
+        assert(obj != null);
+
+        //Object jsonObject = am.read(obj, settings);
+        List<?> toList = am.query(user, settings);
+        assert(toList.size() == 1);
+        System.out.println("JSON string: " + user.toString());
+    }
+*/
+    @Test
+    public void testInheritanceCreate() {
+        // Create a quotetweet object
+        // 1. First create a tweet object
+        // 2. Create a quote tweet referencing the tweet created in step 1
     }
 
     @Test

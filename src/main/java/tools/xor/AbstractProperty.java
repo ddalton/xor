@@ -568,7 +568,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 			if (getElementType() != null) {
 				if (mapKey != null) {
-					positionProperty = (ExtendedProperty) ((EntityType) getElementType()).getProperty(
+					positionProperty = (ExtendedProperty) getElementType().getProperty(
 						mapKey.name());
 					if (positionProperty != null)
 						positionProperty.setMapKeyOf(this);
@@ -576,7 +576,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 				if (orderBy != null) {
 					String orderByPropertyName = orderBy.value().split("\\s+")[0];
-					positionProperty = (ExtendedProperty) ((EntityType) getElementType()).getProperty(
+					positionProperty = (ExtendedProperty) getElementType().getProperty(
 						orderByPropertyName);
 					logger.debug(
 						"initPositionProperty: orderBy is not null => " + getName()
@@ -1522,4 +1522,10 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 		return false;
 	}
+
+	@Override
+	public boolean doPropagateId() {
+		return false;
+	}
+
 }

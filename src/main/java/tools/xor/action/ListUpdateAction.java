@@ -139,27 +139,52 @@ public class ListUpdateAction extends CollectionUpdateAction {
 			return;
 
 		List inputList = extractList(input);
-		List outputList = (List) output.getInstance();
+		Object outputList = output.getInstance();
+		int outputListSize = getSize(outputList);
 
-		if(callInfo.getInputProperty() != null && callInfo.getInputProperty().getName().equals("Depts")) {
-			System.out.println("!!!!![BEFORE] Input size: " + inputList.size() + ", Output size: " + outputList.size());
-		}
-
-		// TODO: Need to truncate by natural or surrogate keys
-		if(outputList.size() > inputList.size()) { // truncate the remaining portion
+		if(outputListSize > inputList.size()) { // truncate the remaining portion
 			truncateToSize(outputList, inputList.size());
-		}
-
-		if(callInfo.getInputProperty() != null && callInfo.getInputProperty().getName().equals("Depts")) {
-			System.out.println("!!!!![AFTER] Input size: " + inputList.size() + ", Output size: " + outputList.size());
 		}
 	}
 
-	private void truncateToSize(List outputList, int toSize) {
-		assert(outputList.size() >= toSize);
+	private static int getSize(Object outputList) {
+		if(outputList instanceof List) {
+			return ((List)outputList).size();
+		} else if(outputList instanceof JSONArray) {
+			return ((JSONArray)outputList).length();
+		}
 
-		for(int i = outputList.size(); i > toSize; i--) 
-			outputList.remove(i-1);
+		return -1;
+	}
+
+	private static void addElement(Object outputList, Object element) {
+		if(outputList instanceof List) {
+			((List)outputList).add(element);
+		} else if(outputList instanceof JSONArray) {
+			((JSONArray)outputList).put(element);
+		}
+	}
+
+	private static void setElement(Object outputList, Object element, int position) {
+		if(outputList instanceof List) {
+			((List)outputList).set(position, element);
+		} else if(outputList instanceof JSONArray) {
+			((JSONArray)outputList).put(position, element);
+		}
+	}
+
+	private static void truncateToSize(Object outputObj, int toSize) {
+		if(outputObj instanceof List ) {
+			List outputList = (List) outputObj;
+			for (int i = outputList.size(); i > toSize; i--) {
+				outputList.remove(i - 1);
+			}
+		} else if(outputObj instanceof JSONArray) {
+			JSONArray outputArray = (JSONArray) outputObj;
+			for (int i = outputArray.length(); i > toSize; i--) {
+				outputArray.remove(i - 1);
+			}
+		}
 	}
 
 	public void linkElement(CallInfo next, String dynamicProperty, boolean isNew) throws Exception {
@@ -225,22 +250,21 @@ public class ListUpdateAction extends CollectionUpdateAction {
 			throw ClassUtil.wrapRun(e);
 		}
 
-		int listSize = ((java.util.List<Object>)collection).size();
+		int listSize = getSize(collection);
 		int position = Integer.parseInt(action.getPosition().toString());
 		if(listSize == position ) {
-			((java.util.List<Object>)collection).add(ClassUtil.getInstance(collectionElement));
+			addElement(collection, ClassUtil.getInstance(collectionElement));
 		} else if (listSize > position)
 		{
 			// replace the item at the postion
-			((java.util.List<Object>)collection).set(position, ClassUtil.getInstance(collectionElement));
+			setElement(collection, ClassUtil.getInstance(collectionElement), position);
 		} else {
 			throw new IllegalArgumentException(
 				"Trying to add a list element at the wrong position: " + action.getPosition() + ", list size: "
-					+ ((java.util.Collection<Object>)collection).size()
+					+ listSize
 					+ ". Check if the ORM is using a different API for populating this property - "
 					+ collectionProperty.getContainingType().getName() + "#" + collectionProperty.getName()
 			);
 		}
-
 	}		
 }

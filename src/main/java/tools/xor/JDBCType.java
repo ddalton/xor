@@ -299,11 +299,6 @@ public class JDBCType extends AbstractType {
     }
 
     @Override
-    public Property getProperty(String path) {
-        return getDAS().getShape().getProperty(this, path.toUpperCase());
-    }
-
-    @Override
     public void initPositionProperty(Shape shape) {}
 
     @Override

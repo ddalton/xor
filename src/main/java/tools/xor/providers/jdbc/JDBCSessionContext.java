@@ -1,6 +1,5 @@
 package tools.xor.providers.jdbc;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tools.xor.BusinessObject;
@@ -12,8 +11,6 @@ import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
-import tools.xor.action.Executable;
-import tools.xor.action.PropertyKey;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
@@ -138,22 +135,16 @@ public class JDBCSessionContext implements CustomPersister
             for (BusinessObject bo : objects) {
                 if (bo.getInstance() instanceof JSONObject) {
                     if (po.isTransient(bo)) {
-                        // create INSERT statement for this object
-                        String insertSql = DBTranslator.instance(connection).getInsertSql(settings, bo);
-                        insertStatement.addBatch(insertSql);
-                        insertBatch.add(insertSql);
+                        // create INSERT statements for this object
+                        for(String insertSql : DBTranslator.instance(connection).getInsertSql(settings, bo)) {
+                            insertStatement.addBatch(insertSql);
+                            insertBatch.add(insertSql);
+                        }
                     }
                 }
             }
 
-            //        Create
-            //            - Iterate through the BusinessObjects in the object creator
-            //            - If the object is a transient instance then it needs to be created.
-            //            NOTE: A transient instance might have a user provided id. If not, the id generator associated with its type needs to be used
-            //            - sort all the transient instances
-            //            - Create INSERT statements
-            //
-            //        Update/Delete
+            //  TODO:      Update/Delete
             //            - Update then delete
             //            - If a removed collection element does not have a surrogate/natural primary key then
             //                it will be removed based on all of its fields

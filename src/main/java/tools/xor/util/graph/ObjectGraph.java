@@ -395,7 +395,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			}
 			
 			if(v == null) {
-				throw new RuntimeException("Unable to find type " + vertex.getType().getName() 
+				logger.debug("Unable to find type " + vertex.getType().getName()
 						+ " for state graph rooted for type: " + sg.dumpState());
 			}
 			
@@ -415,16 +415,18 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	    public int compare(V a, V b) {
 	    	State aVertex = getState(a); 
 	    	State bVertex = getState(b);
-	    	
+
 	    	if(aVertex == null) {
 	    		
-	    		System.out.println("aVertex is null for type: " + a.getType().getName());
+	    		logger.debug("aVertex is null for type: " + a.getType().getName());
 	    		for(State s: sg.getVertices()) {
-	    			System.out.println("-- Type: " + s.getType().getName());
+	    			logger.debug("-- Type: " + s.getType().getName());
 	    		}
+				return 0;
 	    	}
 	    	if(bVertex == null) {
-	    		System.out.println("bVertex is null for type: " + b.getType().getName());
+	    		logger.debug("bVertex is null for type: " + b.getType().getName());
+				return 0;
 	    	}
 	    	
 	    	int aOrder;

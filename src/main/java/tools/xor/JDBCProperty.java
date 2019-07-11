@@ -193,7 +193,9 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
 
     @Override public boolean isContainment ()
     {
-        return foreignKey != null && foreignKey.isContainment();
+        return (foreignKey != null && foreignKey.isContainment()) ||
+            // If this is on the inverse property
+            (getMappedBy() != null && ((JDBCProperty)getMappedBy()).getForeignKey() != null && ((JDBCProperty)getMappedBy()).getForeignKey().isComposition());
     }
 
     public List<JDBCDAS.ColumnInfo> getColumns() {
@@ -230,6 +232,9 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
                 // create and link a new JDBCProperty this is the inverse
                 // and representing the collection
                 inverse = new JDBCProperty(
+                    // We cannot use Iterable since we don't know a suitable concrete implementation
+                    // for such an interface. So we resort to List.
+                    //inverseRelationshipName, das.getType(java.lang.Iterable.class),
                     inverseRelationshipName, das.getType(java.util.List.class),
                     (EntityType)getType(), getContainingType());
             } else {
@@ -369,5 +374,32 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         }
 
         return result;
+    }
+
+    @Override
+    public boolean doPropagateId() {
+        // Valid only if a foreign key exists between the primary key of the
+        // owner and dependant object
+        // This can happen in 2 cases:
+        // 1. Between a sub-type and super-type object in an inheritance hierarachy
+        // 2. A composition relationship
+
+        if(getMappedBy() != null && ((JDBCProperty)getMappedBy()).getForeignKey() != null) {
+            // Case 1 - Check inverse inheritance relationship
+            if(((JDBCProperty)getMappedBy()).getForeignKey().isInheritance()) {
+                return true;
+            }
+            // Case 2 - Check composition flag
+            else if(((JDBCProperty)getMappedBy()).getForeignKey().isComposition()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean isUpdatable() {
+        return !(getForeignKey() != null && (getForeignKey().isComposition() || getForeignKey().isInheritance()));
     }
 }

@@ -294,6 +294,8 @@ public abstract class AbstractBO implements BusinessObject {
 		Set<String> collectionKey = ((ExtendedProperty)property).getCollectionKey();
 		if( collectionKey != null ) {
 			return getKeyValue(collectionKey);
+		} else if ( ((ExtendedProperty)property).getPositionProperty() != null) {
+			return this.get(((ExtendedProperty)property).getPositionProperty());
 		} else { // fallback to id
 			/* NOTE: the passed in property may be of a subtype or a sibling type of the
 		     *  actual collection element object, so we cannot use the property type's identifier property

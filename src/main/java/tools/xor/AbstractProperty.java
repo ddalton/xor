@@ -600,6 +600,16 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	@Override
+	public void setIndexPositionProperty(Property property) {
+		this.positionProperty = (ExtendedProperty)property;
+
+		positionProperty.setIndexOf(this);
+		if (getKeyType() == null) {
+			keyType = positionProperty.getType();
+		}
+	}
+
+	@Override
 	public List<MethodInfo> getLambdas(Settings settings, String[] tags, Phase phase, ProcessingStage stage) {
 		List<MethodInfo> result = new LinkedList<MethodInfo>();
 

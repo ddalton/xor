@@ -349,9 +349,11 @@ public abstract class DBTranslator
     {
         JDBCType entityType = (JDBCType)bo.getType();
 
+        setIdentifier(settings, bo, entityType);
+
         Stack<String> sqlStack = new Stack<>();
         while(entityType != null) {
-            sqlStack.push(getInsertSql(settings, bo, entityType));
+            sqlStack.push(getInsertSql(bo, entityType));
 
             // Walk up the super-type
             entityType = (JDBCType)entityType.getSuperType();
@@ -360,25 +362,54 @@ public abstract class DBTranslator
         return new ArrayList<>(sqlStack);
     }
 
-    public String getInsertSql(Settings settings, BusinessObject bo, JDBCType entityType) {
+    private void setIdentifier(Settings settings, BusinessObject bo, JDBCType entityType) {
 
-        StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(null, settings, null);
+        // Check if the business object is a collection element
+        JDBCProperty containerProperty = null;
+        BusinessObject container = null;
+        if(bo.getContainmentProperty() == null) {
+            // Go to the parent if possible
+            if(bo.getContainer() != null) {
+                if (bo.getContainer() != null) {
+                    containerProperty = (JDBCProperty)bo.getContainer().getContainmentProperty();
+                    container = (BusinessObject)bo.getContainer().getContainer();
+                }
+            }
+        } else {
+            containerProperty = (JDBCProperty)bo.getContainmentProperty();
+            container = (BusinessObject)bo.getContainer();
+        }
 
-        // Check if the identifier column has been populated
-        ExtendedProperty identifierProperty = (ExtendedProperty) entityType.getIdentifierProperty();
+        // Case 1: This is not a containment object, so generate an id
+        if(!(container != null && containerProperty != null && containerProperty.doPropagateId())) {
+            StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(
+                null,
+                settings,
+                null);
 
-        if(identifierProperty != null && !identifierProperty.isGenerated()) {
-            Serializable id = (Serializable)identifierProperty.getValue(bo);
-            if(id == null || "".equals(id.toString())) {
-                Object value = ((BasicType)identifierProperty.getType()).generate(
-                    settings,
-                    identifierProperty,
-                    null,
-                    null,
-                    visitor);
-                bo.set(identifierProperty, value);
+            // Check if the identifier column has been populated
+            ExtendedProperty identifierProperty = (ExtendedProperty)entityType.getIdentifierProperty();
+
+            if (identifierProperty != null && !identifierProperty.isGenerated()) {
+                Serializable id = (Serializable)identifierProperty.getValue(bo);
+                if (id == null || "".equals(id.toString())) {
+                    Object value = ((BasicType)identifierProperty.getType()).generate(
+                        settings,
+                        identifierProperty,
+                        null,
+                        null,
+                        visitor);
+                    bo.set(identifierProperty, value);
+                }
             }
         }
+        // Case 2: Propagate the id
+        else {
+            containerProperty.propagateId(container, bo);
+        }
+    }
+
+    public String getInsertSql(BusinessObject bo, JDBCType entityType) {
 
         StringBuilder sqlstr = new StringBuilder();
         sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");

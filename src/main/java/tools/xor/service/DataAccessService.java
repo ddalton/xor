@@ -68,12 +68,12 @@ public interface DataAccessService {
 	public void addShape(String name);
 
 	/**
-	 * Return an existing shape with the provided name or create one if not present.
-	 * @param name of the shape
-	 * @param parent of the shape
-	 * @return the newly created shape
+	 * Build the Type and Property objects for the static API
+	 *
+	 * @param name of the Shape representing the type system
+	 * @param extension code to add new types/properties to the shape
 	 */
-	public Shape getOrCreateShape (String name, Shape parent);
+	public void addShape(String name, SchemaExtension extension);
 
 	/**
 	 * Remove an existing shape

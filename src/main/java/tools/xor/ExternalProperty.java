@@ -173,9 +173,12 @@ public class ExternalProperty extends AbstractProperty {
 				(getterMethod != null && AbstractType.isWrapperType(getterMethod.getReturnType()))
 			)
 			logger.info("Primitive type found: " + getContainingType().getInstanceClass().getName() + "::" + field.getName() + ", use a wrapper class instead.");
-		
-		if(domainProperty.getPositionProperty() != null)
-			positionProperty = (ExtendedProperty) getElementType().getProperty(domainProperty.getPositionProperty().getName());		
+
+		/* Not sure if this is needed for an external Type
+		if(domainProperty.getPositionProperty() != null) {
+			positionProperty = (ExtendedProperty)getElementType().getProperty(domainProperty.getPositionProperty().getName());
+		}
+		*/
 	}
 	
 	@Override

@@ -30,6 +30,7 @@ import tools.xor.TypeNarrower;
 import tools.xor.service.AbstractDataAccessService;
 import tools.xor.service.DASFactory;
 import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.PersistenceType;
@@ -421,6 +422,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         public void makeComposition() {
             this.setReferencingColumns(this.referencingTable.getPrimaryKeys());
             this.setReferencedColumns(this.referencedTable.getPrimaryKeys());
+
             this.composition = true;
         }
     }
@@ -478,7 +480,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         return getShape().getType(name.toUpperCase());
     }
 
-    @Override public void addShape (String name)
+    @Override public void addShape (String name, SchemaExtension extension)
     {
         Shape shape = getOrCreateShape(name);
 
@@ -500,7 +502,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         // This will end up defining the simple types
         defineProperties(shape);
 
-        postProcess(shape);
+        postProcess(shape, extension);
     }
 
     protected void defineProperties(Shape shape) {

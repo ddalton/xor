@@ -129,10 +129,12 @@ public class JDBCType extends AbstractType {
                 Set<String> foreignKeySet = new HashSet<>();
 
                 List<String> primaryKeyPropertyNames = new LinkedList<>();
-                for(JDBCDAS.ForeignKey fk: this.tableInfo.getForeignKeys()) {
-                    if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
-                        primaryKeyPropertyNames.add(fk.getPropertyName());
-                        foreignKeySet.addAll(fk.getReferencingColumns());
+                if(this.tableInfo.getForeignKeys() != null) {
+                    for (JDBCDAS.ForeignKey fk : this.tableInfo.getForeignKeys()) {
+                        if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
+                            primaryKeyPropertyNames.add(fk.getPropertyName());
+                            foreignKeySet.addAll(fk.getReferencingColumns());
+                        }
                     }
                 }
                 if(primaryKeyPropertyNames.size() > 0) {

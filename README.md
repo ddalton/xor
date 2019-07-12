@@ -5,6 +5,12 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 Pending PlainJDBCTest cases
 ===========================
 
+Example urlFirst.png 
+   - why are the inheritance edges in reverse
+   - No links between URLS and USER_URL
+   - No links to INDICES
+  
+
 0. Persistence - Handle inheritance
 
 1. Persistence - Handle composition

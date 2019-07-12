@@ -266,5 +266,9 @@ public class ListUpdateAction extends CollectionUpdateAction {
 					+ collectionProperty.getContainingType().getName() + "#" + collectionProperty.getName()
 			);
 		}
+
+		if(collectionProperty.getPositionProperty() != null) {
+			collectionElement.set(collectionProperty.getPositionProperty(), position);
+		}
 	}		
 }

@@ -222,6 +222,12 @@ public interface ExtendedProperty extends Property {
 	public Property getPositionProperty();
 
 	/**
+	 * Set the property that contains the index information for a collection element
+	 * This is applicable only if this property represents a collection property
+	 */
+	public void setIndexPositionProperty(Property property);
+
+	/**
 	 * Refers to the toMany property which has a map key tracked at this property
 	 * @param property toMany property
 	 */

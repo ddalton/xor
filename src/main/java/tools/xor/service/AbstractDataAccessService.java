@@ -78,6 +78,11 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	@Override
+	public void addShape(String name) {
+		this.addShape(name, null);
+	}
+
+	@Override
 	public Shape getShape() {
 		// Needs to be always present to allow user overrides
 		if(hasOverriddenShape()) {
@@ -138,9 +143,12 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		overriddenShape.remove();
 	}
 
-
-
-	@Override
+	/**
+	 * Return an existing shape with the provided name or create one if not present.
+	 * @param name of the shape
+	 * @param parent of the shape
+	 * @return the newly created shape
+	 */
 	public Shape getOrCreateShape (String name, Shape parent) {
 		Shape shape = shapes.get(name);
 		if(shape == null) {
@@ -244,9 +252,14 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
-	protected void postProcess(Shape shape) {
+	protected void postProcess(Shape shape, SchemaExtension extension) {
 
 		initPositionProperty(shape);
+
+		// Extend the schema if applicable
+		if(extension != null) {
+			extension.extend(shape);
+		}
 		
 		initExternal(shape);
 

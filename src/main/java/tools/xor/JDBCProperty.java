@@ -398,6 +398,27 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         return false;
     }
 
+    /**
+     * Copy the id values from the owner object to the dependant object
+     * @param owner business object
+     * @param dependant business object
+     */
+    public void propagateId(BusinessObject owner, BusinessObject dependant) {
+
+        if(EntityType.class.isAssignableFrom(dependant.getType().getClass())) {
+            EntityType dependantType = (EntityType) dependant.getType();
+            Property idProperty = dependantType.getIdentifierProperty();
+
+            if(idProperty == null) {
+                // get Property by name from referenced table column name
+                String name = ((JDBCProperty)getMappedBy()).getForeignKey().getReferencedColumns().get(0);
+                idProperty = dependantType.getProperty(name);
+            }
+
+            dependant.set(idProperty, owner.getIdentifierValue());
+        }
+    }
+
     @Override
     public boolean isUpdatable() {
         return !(getForeignKey() != null && (getForeignKey().isComposition() || getForeignKey().isInheritance()));

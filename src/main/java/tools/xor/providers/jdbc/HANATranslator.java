@@ -32,12 +32,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class HSQLTranslator extends DBTranslator
+public class HANATranslator extends DBTranslator
 {
-    private static final String FOREIGN_KEY_SQL = "SELECT FK_NAME, FKTABLE_NAME, PKTABLE_NAME, FKCOLUMN_NAME, PKCOLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM INFORMATION_SCHEMA.SYSTEM_CROSSREFERENCE WHERE FKTABLE_SCHEM = 'PUBLIC' ORDER BY FK_NAME, KEY_SEQ";
-    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DTD_IDENTIFIER, is_identity, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = 'PUBLIC'";
-    private static final String PRIMARY_KEY_SQL = "SELECT table_name, pk_name, column_name, key_seq FROM INFORMATION_SCHEMA.SYSTEM_PRIMARYKEYS WHERE table_schem = 'PUBLIC' ORDER BY pk_name, key_seq";
-    private static final String SEQUENCES_SQL = "SELECT sequence_name, data_type, maximum_value, minimum_value, increment, start_with, cycle_option  FROM information_schema.sequences";
+    private static final String FOREIGN_KEY_SQL = "SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM REFERENTIAL_CONSTRAINTS WHERE SCHEMA_NAME = CURRENT_USER ORDER BY CONSTRAINT_NAME, POSITION";
+    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DATA_TYPE_NAME, GENERATION_TYPE, LENGTH FROM TABLE_COLUMNS WHERE SCHEMA_NAME = CURRENT_USER";
+    private static final String PRIMARY_KEY_SQL = "SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, POSITION FROM CONSTRAINTS WHERE SCHEMA_NAME = CURRENT_USER ORDER BY CONSTRAINT_NAME, POSITION";
+    private static final String SEQUENCES_SQL = "SELECT sequence_name, max_value, min_value, increment_by, start_number, is_cycled  FROM sequences WHERE SCHEMA_NAME = CURRENT_USER";
 
     private Map<String, JDBCDAS.TableInfo> tableMap;
     private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
@@ -86,12 +86,9 @@ public class HSQLTranslator extends DBTranslator
                 }
 
                 String columnName = rs.getString(2);
-                Boolean nullable = "NO".equals(rs.getString(3)) ? false : true;
+                Boolean nullable = rs.getBoolean(3);
                 String columnType = rs.getString(4);
-                if(columnType.contains("(")) {
-                    columnType = columnType.substring(0, columnType.indexOf("("));
-                }
-                Boolean generated = "YES".equals(rs.getString(5)) ? true : false;
+                Boolean generated = (rs.getString(5) != null) ? true : false;
                 int length = rs.getInt(6);
                 if(!SQL_TO_JAVA_TYPE_MAP.containsKey(columnType)) {
                     throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
@@ -109,8 +106,8 @@ public class HSQLTranslator extends DBTranslator
 
         List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(result);
 
-            // Give a chance to add any additional business logic based relationships
-            // not captured by a database foreign key
+        // Give a chance to add any additional business logic based relationships
+        // not captured by a database foreign key
         foreignKeys = enhancer.process(foreignKeys);
         Map<String, List<JDBCDAS.ForeignKey>> fkMap = new HashMap<>();
         for(JDBCDAS.ForeignKey fk: foreignKeys) {
@@ -207,8 +204,9 @@ public class HSQLTranslator extends DBTranslator
                 }
 
                 if(fkey == null) {
-                    JDBCDAS.ForeignKeyRule deleteRule = getForeignKeyRule(rs.getInt(6));
-                    JDBCDAS.ForeignKeyRule updateRule = getForeignKeyRule(rs.getInt(7));
+                    JDBCDAS.ForeignKeyRule deleteRule = JDBCDAS.ForeignKeyRule.valueOf(rs.getString(
+                            6));
+                    JDBCDAS.ForeignKeyRule updateRule = JDBCDAS.ForeignKeyRule.valueOf(rs.getString(7));
                     JDBCDAS.TableInfo referencing = tableMap.get(rs.getString(2));
                     JDBCDAS.TableInfo referenced = tableMap.get(rs.getString(3));
                     fkey = new JDBCDAS.ForeignKey(rs.getString(1),
@@ -276,12 +274,12 @@ public class HSQLTranslator extends DBTranslator
             while(rs.next()) {
                 seq = new JDBCDAS.SequenceInfo(
                     rs.getString(1),
-                    rs.getString(2),
+                    "DECIMAL",
+                    rs.getLong(2),
                     rs.getLong(3),
-                    rs.getLong(4),
-                    rs.getInt(5),
-                    rs.getLong(6),
-                    rs.getBoolean(7));
+                    rs.getInt(4),
+                    rs.getLong(5),
+                    rs.getBoolean(6));
                 result.put(seq.getName(), seq);
             }
         }

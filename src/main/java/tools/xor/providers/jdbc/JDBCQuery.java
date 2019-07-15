@@ -37,19 +37,20 @@ public class JDBCQuery extends AbstractQuery
 		this.connection = connection;
 		this.nativeQuery = nativeQuery;
 
-		createPreparedStatement();
-
 		if(isNativeQuery()) {
 			initParamMap();
 		} else {
-			extractParameters();
+			setQueryString(extractParameters());
 		}
+
+		createPreparedStatement();
 	}
 
 	// Extract the parameters and create them
-	private void extractParameters() {
+	private String extractParameters() {
 		final Matcher matcher = paramPattern.matcher(getQueryString());
 
+		StringBuffer modifiedSQL = new StringBuffer();
 		int position = 1; // JDBC param number starts from 1
 		while (matcher.find()) {
 			//System.out.println("Full match: " + matcher1.group(0));
@@ -57,7 +58,11 @@ public class JDBCQuery extends AbstractQuery
 				String paramName = matcher.group(1);
 				paramMap.put(paramName, BindParameter.instance(position++, paramName));
 			}
+			matcher.appendReplacement(modifiedSQL, "?");
 		}
+		matcher.appendTail(modifiedSQL);
+
+		return modifiedSQL.toString();
 	}
 
 	private void createPreparedStatement() {

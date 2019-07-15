@@ -67,8 +67,13 @@ public class JDBCPersistenceOrchestrator
 
 	public Connection getConnection() {
 		if(context != null) {
-			if (context.getConnection() == null) {
-				context.setConnection(DataSourceUtils.getConnection(dataSource));
+			try {
+				if (context.getConnection() == null || context.getConnection().isClosed()) {
+                    context.setConnection(DataSourceUtils.getConnection(dataSource));
+                }
+			}
+			catch (SQLException e) {
+				throw ClassUtil.wrapRun(e);
 			}
 			return context.getConnection();
 		} else {

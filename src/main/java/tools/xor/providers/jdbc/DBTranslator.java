@@ -77,6 +77,7 @@ public abstract class DBTranslator
 
     static {
         translators.put("HSQL DATABASE ENGINE", new HSQLTranslator() );
+        translators.put("HDB", new HANATranslator() );
     }
 
     protected static final Map<String, Class> SQL_TO_JAVA_TYPE_MAP = new HashMap<>();

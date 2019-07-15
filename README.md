@@ -5,11 +5,12 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 Pending PlainJDBCTest cases
 ===========================
 
-Example urlFirst.png 
-   - why are the inheritance edges in reverse
-   - No links between URLS and USER_URL
-   - No links to INDICES
-  
+Why is HANA unit tests slower than HSQLDB
+
+Add Testcase for testing performance query 
+ - Create schema using OrgGroupUpdater#UsersNotInGroupQuery
+ - Populate data according to stats in HANAMON
+ - execute equivalent queries to find the correct one
 
 0. Persistence - Handle inheritance
 

@@ -1,7 +1,7 @@
 /**
  * XOR, empowering Model Driven Architecture in J2EE applications
  *
- * Copyright (c) 2012, Dilip Dalton
+ * Copyright (c) 2019, Dilip Dalton
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,11 @@ import tools.xor.EntityType;
 import tools.xor.FunctionType;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
@@ -70,15 +72,6 @@ public class PlainJDBCTest
 					+ " country VARCHAR(30) NOT NULL, "
 					+ " PRIMARY KEY(id))");
 
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A101', '96 Euston Rd', 'London', 'NW1 2DB', 'UK')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A102', 'University of Oxford, Broad St', 'Oxford', 'OX1 3BG', 'UK')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A103', 'William Brown St', 'Liverpool', 'L3 8EW', 'UK')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A104', 'Parliament Square', 'Edinburgh', 'EH1 1RF', 'UK')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A105', 'Broad St', 'Oxford', 'OX1 3BG', 'UK')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A106', '630 W. 5th Street', 'Los Angeles', '90071', 'USA')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A107', '101 Independence Ave SE', 'Washington', '20540', 'USA')");
-			statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A108', 'Cromwell Rd.', 'London', 'SW7 5BD', 'UK')");
-
 			statement.execute("CREATE TABLE library "
 					               + "(id VARCHAR(10) NOT NULL, "
 					               + " name VARCHAR(50) NOT NULL, "
@@ -86,30 +79,15 @@ public class PlainJDBCTest
 					               + " PRIMARY KEY(id))");
 			statement.execute("ALTER TABLE library ADD CONSTRAINT FK_1__1_entity FOREIGN KEY(address) REFERENCES address(id)");
 
-			// British libraries
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L100', 'British Library', 'A101')");
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L110', 'Duke Humfrey’s Library', 'A102')");
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L111', 'Liverpool Central Library', 'A103')");
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L112', 'Signet Library', 'A104')");
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L113', 'Bodlein Library', 'A105')");
-
-			// US libraries
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L201', 'Central Library', 'A106')");
-			statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L202', 'Library of Congress', 'A107')");
-
-
-			statement.execute("CREATE TABLE librarian "
-					               + "(id VARCHAR(10) NOT NULL, "
-				                   + " name VARCHAR(50) NOT NULL,"
-					               + " email VARCHAR(50) NOT NULL, "
-					               + " library VARCHAR(10) NOT NULL, "
-					               + " PRIMARY KEY (id))");
-			statement.execute("ALTER TABLE librarian ADD CONSTRAINT FK_1__N_librarians FOREIGN KEY(library) REFERENCES library(id)");
-			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1001','Thomas Bodley', 'tbodley@somewhere.com', 'L113')");
-			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1002','Lewis Carroll', 'lcarroll@somewhere.com', 'L100')");
-			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1003','Alison Bailey', 'abailey@somewhere.com', 'L100')");
-			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1004','Alasdair Ball', 'aball@somewhere.com', 'L100')");
-			statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1010','Benjamin Franklin', 'bfranklin@somewhere.com', 'L202')");
+			statement.execute(
+				"CREATE TABLE librarian "
+					+ "(id VARCHAR(10) NOT NULL, "
+					+ " name VARCHAR(50) NOT NULL,"
+					+ " email VARCHAR(50) NOT NULL, "
+					+ " library VARCHAR(10) NOT NULL, "
+					+ " PRIMARY KEY (id))");
+			statement.execute(
+				"ALTER TABLE librarian ADD CONSTRAINT FK_1__N_librarians FOREIGN KEY(library) REFERENCES library(id)");
 
 			// Create a many-to-many relationship between librarian and association
 			statement.execute(
@@ -124,24 +102,56 @@ public class PlainJDBCTest
 			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK2_1__N_libraryassociations FOREIGN KEY(librarian) REFERENCES librarian(id)");
 			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK3_1__N_libraryassociations FOREIGN KEY(association) REFERENCES association(id)");
 
-			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALA','American Library Association', 'Illinois')");
-			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALISE','Association for Library and Information Science Education', 'Illinois')");
-			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ARLIS','Art Libraries Society of North America', 'Wisconsin')");
-			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('MLA','Medical Library Association', 'Illinois')");
-			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('AALL','American Association of Law Libraries', 'Illinois')");
-			statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('CILIP','Chartered Institute of Library and Information Professionals', 'London')");
-
-			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','CILIP')");
-			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','ALISE')");
-			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1003','CILIP')");
-			statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1004','CILIP')");
+			populate(statement);
 
 			connection.commit();
 		}
 	}
 
+	protected void populate(Statement statement) throws SQLException
+	{
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A101', '96 Euston Rd', 'London', 'NW1 2DB', 'UK')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A102', 'University of Oxford, Broad St', 'Oxford', 'OX1 3BG', 'UK')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A103', 'William Brown St', 'Liverpool', 'L3 8EW', 'UK')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A104', 'Parliament Square', 'Edinburgh', 'EH1 1RF', 'UK')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A105', 'Broad St', 'Oxford', 'OX1 3BG', 'UK')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A106', '630 W. 5th Street', 'Los Angeles', '90071', 'USA')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A107', '101 Independence Ave SE', 'Washington', '20540', 'USA')");
+		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A108', 'Cromwell Rd.', 'London', 'SW7 5BD', 'UK')");
+
+		// British libraries
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L100', 'British Library', 'A101')");
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L110', 'Duke Humfrey’s Library', 'A102')");
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L111', 'Liverpool Central Library', 'A103')");
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L112', 'Signet Library', 'A104')");
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L113', 'Bodlein Library', 'A105')");
+
+		// US libraries
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L201', 'Central Library', 'A106')");
+		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L202', 'Library of Congress', 'A107')");
+
+		statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1001','Thomas Bodley', 'tbodley@somewhere.com', 'L113')");
+		statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1002','Lewis Carroll', 'lcarroll@somewhere.com', 'L100')");
+		statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1003','Alison Bailey', 'abailey@somewhere.com', 'L100')");
+		statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1004','Alasdair Ball', 'aball@somewhere.com', 'L100')");
+		statement.executeUpdate("INSERT INTO librarian (id, name, email, library) VALUES ('1010','Benjamin Franklin', 'bfranklin@somewhere.com', 'L202')");
+
+		statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALA','American Library Association', 'Illinois')");
+		statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ALISE','Association for Library and Information Science Education', 'Illinois')");
+		statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('ARLIS','Art Libraries Society of North America', 'Wisconsin')");
+		statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('MLA','Medical Library Association', 'Illinois')");
+		statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('AALL','American Association of Law Libraries', 'Illinois')");
+		statement.executeUpdate("INSERT INTO association (id, name, state) VALUES ('CILIP','Chartered Institute of Library and Information Professionals', 'London')");
+
+		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','CILIP')");
+		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','ALISE')");
+		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1003','CILIP')");
+		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1004','CILIP')");
+	}
+
 	@After
 	public void destroy() throws SQLException, ClassNotFoundException, IOException {
+
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
 			statement.executeUpdate("DROP TABLE librarianassociation");
 			statement.executeUpdate("DROP TABLE association");
@@ -201,6 +211,10 @@ public class PlainJDBCTest
 		List<?> toList = am.query(json, settings);
 		assert(toList.size() == 1);
 		System.out.println("JSON string: " + json.toString());
+
+		// Need to commit to release the locks on HANA
+		JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
+		((JDBCSessionContext)po.getSessionContext()).commit();
 	}
 
 	@Test

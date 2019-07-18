@@ -45,8 +45,8 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	}
 	
 	public static Set<String> getDataTypes(Type type) {
-		Set<String> result = new HashSet<String>();
-		
+		Set<String> result = new HashSet<>();
+
 		for(Property property: type.getProperties()) {
 			if( ((ExtendedProperty)property).isDataType()) {
 				result.add(property.getName());

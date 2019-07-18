@@ -98,14 +98,17 @@ public class JDBCType extends AbstractType {
             for (JDBCDAS.ForeignKey fkey : fkeys) {
                 Type propertyType = getDAS().getType(fkey.getReferencedTable().getName());
                 List<JDBCDAS.ColumnInfo> columns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
-                JDBCProperty property = new JDBCProperty(
-                    (fkey == parentFK) ? JDBCProperty.PARENT : fkey.getPropertyName(),
-                    columns,
-                    propertyType,
-                    this,
-                    fkey);
 
-                shape.addProperty(property);
+                if(fkey != parentFK) {
+                    JDBCProperty property = new JDBCProperty(
+                        (fkey == parentFK) ? JDBCProperty.PARENT : fkey.getPropertyName(),
+                        columns,
+                        propertyType,
+                        this,
+                        fkey);
+
+                    shape.addProperty(property);
+                }
             }
         }
 

@@ -24,6 +24,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.DFAtoRE.LiteralExpression;
 import tools.xor.util.DFAtoRE.TypedExpression;
@@ -51,7 +52,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	private static final Logger sgLogger = LogManager.getLogger(Constants.Log.STATE_GRAPH);
 
-	public  static final String EMPTY_EDGE = "";
+	public  static final String EMPTY_EDGE = DFAtoNFA.UNLABELLED;
 	private static final String ALL = "_all_";
 
 	private Type root; // aggregate rooted at this type
@@ -299,20 +300,58 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		// Previous call was using MatchType.TYPE so add the attributes from the vertex
 		if(result.size() == 0 || exactSet == null || exactSet.size() == 0) {
 			// Addresses scope extension using AssociationSetting with MatchType.ABSOLUTE_PATH
-			for (String simpleAttribute : vertex.getAttributes()) {
-				result.add(vertex.getType().getProperty(simpleAttribute));
-			}
+			collectProperties(result, (V)vertex);
 		}
 
 		// Addresses scope extension using AssociationSetting with MatchType.TYPE
-		for (Edge e : getOutEdges((V)vertex)) {
-			if (EMPTY_EDGE.equals(e.getName())) {
-				continue;
-			}
-			result.add(vertex.getType().getProperty(e.getName()));
-		}
+		collectEdges(result, (V)vertex);
 
 		return result;
+	}
+
+	protected void collectProperties(List<Property> properties, V vertex) {
+		while(vertex != null) {
+			V parent = null;
+			for (Edge e : getInEdges(vertex)) {
+
+				// If this is an inheritance edge, we should also collect
+				// the properties from the super-type
+				if (EMPTY_EDGE.equals(e.getName())) {
+					parent = (V)e.getStart();
+					break;
+				}
+			}
+
+			// For a state graph the vertex contains only direct properties
+			for (String simpleAttribute : vertex.getAttributes()) {
+				properties.add(vertex.getType().getProperty(simpleAttribute));
+			}
+
+			vertex = parent;
+		}
+	}
+
+	protected void collectEdges(List<Property> properties, V vertex) {
+		while(vertex != null) {
+			V parent = null;
+			for (Edge e : getOutEdges(vertex)) {
+
+				// skip inheritance edges
+				if (EMPTY_EDGE.equals(e.getName())) {
+					continue;
+				}
+				properties.add(vertex.getType().getProperty(e.getName()));
+			}
+
+			for (Edge e : getInEdges(vertex)) {
+				if (EMPTY_EDGE.equals(e.getName())) {
+					parent = (V)e.getStart();
+					break;
+				}
+			}
+
+			vertex = parent;
+		}
 	}
 	
 	@Override

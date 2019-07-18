@@ -28,6 +28,7 @@ public class JSONObjectProperty
     public static final String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
     public static final String ISO8601_FORMAT_TIME = "HH:mm:ss";
     public static final String ISO8601_FORMAT = ISO8601_FORMAT_DATE + "'T'" + ISO8601_FORMAT_TIME + ".SSSZ";
+    public static final String ANSI_FORMAT_DATETIME = ISO8601_FORMAT_DATE + " " + ISO8601_FORMAT_TIME;
 
     private volatile Converter converter;
     private final ExtendedProperty property;
@@ -320,6 +321,9 @@ public class JSONObjectProperty
                 }
             }
         );
+        convertersByClass.put(java.sql.Date.class, convertersByClass.get(Date.class));
+        convertersByClass.put(java.sql.Timestamp.class, convertersByClass.get(Date.class));
+        convertersByClass.put(java.sql.Time.class, convertersByClass.get(Date.class));
 
         /**
          * Invoking build() on a JsonObjectBuilder, retains only this property and clears out
@@ -477,6 +481,8 @@ public class JSONObjectProperty
                 convertersByClass.get(JSONObject.class).setExternal( settings, jsonObject, name, instanceObj);
             } else if (JSONArray.class.isAssignableFrom(instanceObj.getClass())) {
                 convertersByClass.get(JSONArray.class).setExternal( settings, jsonObject, name, instanceObj);
+            } else {
+                logger.error("setExternal - converter not found for java type: " + getDomainProperty().getType().getInstanceClass().getName());
             }
         }
     }

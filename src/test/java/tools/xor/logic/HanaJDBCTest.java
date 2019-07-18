@@ -19,20 +19,21 @@
 
 package tools.xor.logic;
 
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "classpath:/spring-hana-jdbc-test.xml" })
-public class HanaJDBCTest extends PlainJDBCTest
+//@RunWith(SpringJUnit4ClassRunner.class)
+//@ContextConfiguration(locations = { "classpath:/spring-hana-jdbc-test.xml" })
+//public class HanaJDBCTest extends PlainJDBCTest
+public class HanaJDBCTest
 {
+    @Test
+    public void dummyTest() {
+
+    }
+/*
     @Test
     public void jsonSelect() {
         super.jsonSelect();
@@ -66,5 +67,5 @@ public class HanaJDBCTest extends PlainJDBCTest
     @Test
     public void testDeeplyNested2() {
         super.testDeeplyNested2();
-    }
+    }*/
 }

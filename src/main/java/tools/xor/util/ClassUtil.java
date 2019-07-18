@@ -26,14 +26,16 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Access;
+import javax.sql.DataSource;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -43,6 +45,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
 
 import tools.xor.BusinessObject;
@@ -394,6 +399,22 @@ public class ClassUtil {
 				settings,
 				instance,
 				property.getValue(bo));
+		}
+	}
+
+	public static void executeScript(DataSource datasource, String path) throws SQLException
+	{
+		EncodedResource er = new EncodedResource(new ClassPathResource(path));
+		try (Connection connection = datasource.getConnection();) {
+			ScriptUtils.executeSqlScript(
+				connection,
+				er,
+				false,
+				false,
+				"--",
+				";",
+				"/*",
+				"*/");
 		}
 	}
 }

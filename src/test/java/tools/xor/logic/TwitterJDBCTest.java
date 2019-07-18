@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import tools.xor.AssociationSetting;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
@@ -44,6 +45,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -229,7 +231,7 @@ public class TwitterJDBCTest
             // Programmatically add the urls collection
 
             statement.execute("CREATE TABLE tweet "
-                    + "(created_at DATE NOT NULL, "
+                    + "(created_at TIMESTAMP NOT NULL, "
                     + " id INTEGER NOT NULL, "
                     + " ID_STR VARCHAR(20) NOT NULL, "
                     + " text VARCHAR(280) NOT NULL, "
@@ -251,7 +253,7 @@ public class TwitterJDBCTest
                     + " entities VARCHAR(20) NOT NULL, "
                     + " PRIMARY KEY(id_str))");
             statement.execute("ALTER TABLE tweet ADD CONSTRAINT FK1_1__1_tweet FOREIGN KEY(entities) REFERENCES entities_tweet(id_str)");
-            statement.execute("ALTER TABLE tweet ADD CONSTRAINT FK2_1__1_user FOREIGN KEY(user) REFERENCES user(id_str)");
+            statement.execute("ALTER TABLE tweet ADD CONSTRAINT FK2_1__N_tweets FOREIGN KEY(user) REFERENCES user(id_str)");
 
             // Inherits from tweet table
             statement.execute("CREATE TABLE quotetweet "
@@ -453,37 +455,69 @@ public class TwitterJDBCTest
         assert(urlsArray.length() == 2);
     }
 
-    @Test
-    public void testCompositionCreate() {
-        DataAccessService das = am.getDAS();
-        Shape shape = das.getShape();
-
+    private JSONObject getTweet(boolean isQuote, int id) {
         // Create tweet object with entities populated
         JSONObject user = new JSONObject().put("ID", 1001);
         user.put("ID_STR", "1001");
         user.put("NAME", "Tweet Tester");
         user.put("SCREEN_NAME", "TweetTester");
 
-        // First create the user
-        JDBCType type = (JDBCType) das.getType("user");
+        JSONObject tweet = new JSONObject().put("ID", id);
+        tweet.put("ID_STR", (new Integer(id)).toString());
+        tweet.put("CREATED_AT", new Date());
+        tweet.put("TEXT", "This is a sample tweet");
+        tweet.put("SOURCE", "http://www.test.com");
+        tweet.put("TRUNCATED", true);
+        tweet.put("USER", user);
+        tweet.put("IS_QUOTE_STATUS", isQuote);
+        tweet.put("REPLY_COUNT", 0);
+        tweet.put("RETWEET_COUNT", 0);
+        tweet.put("ENTITIES", new JSONObject());
+
+        return tweet;
+    }
+
+    @Test
+    public void testCompositionCreate() {
+        DataAccessService das = am.getDAS();
+        Shape shape = das.getShape();
+
+        JSONObject tweet = getTweet(false, 10001);
+        JDBCType type = (JDBCType) das.getType("tweet");
         Settings settings = new Settings();
         settings.setEntityType(type);
         settings.init(shape);
-        Object obj = am.create(user, settings);
+        Object obj = am.create(tweet, settings);
 
         assert(obj != null);
-
-        //Object jsonObject = am.read(obj, settings);
-        List<?> toList = am.query(user, settings);
-        assert(toList.size() == 1);
-        System.out.println("JSON string: " + user.toString());
     }
 
     @Test
     public void testInheritanceCreate() {
+        DataAccessService das = am.getDAS();
+        Shape shape = das.getShape();
+
         // Create a quotetweet object
         // 1. First create a tweet object
         // 2. Create a quote tweet referencing the tweet created in step 1
+
+        JSONObject quotedTweet = getTweet(false, 10001);
+        JSONObject quoteTweet = getTweet(true, 10002);
+        quoteTweet.put("TEXT", "This is a quote tweet");
+        quoteTweet.put("QUOTED_STATUS", quotedTweet);
+        quoteTweet.put("QUOTED_STATUS_ID", quotedTweet.get("ID"));
+        quoteTweet.put("QUOTED_STATUS_ID_STR", quotedTweet.get("ID_STR"));
+
+        JDBCType type = (JDBCType) das.getType("quotetweet");
+        Settings settings = new Settings();
+        settings.expand(new AssociationSetting("TWEET", true, false));
+        settings.setEntityType(type);
+        settings.init(shape);
+        Object obj = am.create(quoteTweet, settings);
+
+        // TODO: check the state graph
+
+        assert(obj != null);
     }
 
     @Test

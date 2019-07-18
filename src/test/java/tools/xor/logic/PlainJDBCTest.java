@@ -43,6 +43,7 @@ import tools.xor.view.AggregateView;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class PlainJDBCTest
 	@Before
 	public void init() throws SQLException, ClassNotFoundException, IOException
 	{
+		long time1 = System.nanoTime();
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
 
 			statement.execute("CREATE TABLE address "
@@ -100,16 +102,26 @@ public class PlainJDBCTest
 					+ "(librarian VARCHAR(10) NOT NULL, "
 					+ " association VARCHAR(10) NOT NULL)");
 			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK2_1__N_libraryassociations FOREIGN KEY(librarian) REFERENCES librarian(id)");
-			statement.execute("ALTER TABLE librarianassociation ADD CONSTRAINT FK3_1__N_libraryassociations FOREIGN KEY(association) REFERENCES association(id)");
+			statement.execute(
+				"ALTER TABLE librarianassociation ADD CONSTRAINT FK3_1__N_libraryassociations FOREIGN KEY(association) REFERENCES association(id)");
 
-			populate(statement);
+			long time2 = System.nanoTime();
+			System.out.println("[Create tables - " + ((time2 - time1) / 1000) + " μs");
+
+			populate(connection, statement);
+			long time3 = System.nanoTime();
+			System.out.println("[Populate tables - " + ((time3 - time2) / 1000) + " μs");
 
 			connection.commit();
+			long time4 = System.nanoTime();
+			System.out.println("[Commit seed data - " + ((time4 - time3) / 1000) + " μs");
 		}
 	}
 
-	protected void populate(Statement statement) throws SQLException
+	protected void populate(Connection connection, Statement statement) throws SQLException
 	{
+		/*
+		long timeA = System.nanoTime();
 		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A101', '96 Euston Rd', 'London', 'NW1 2DB', 'UK')");
 		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A102', 'University of Oxford, Broad St', 'Oxford', 'OX1 3BG', 'UK')");
 		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A103', 'William Brown St', 'Liverpool', 'L3 8EW', 'UK')");
@@ -119,8 +131,11 @@ public class PlainJDBCTest
 		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A107', '101 Independence Ave SE', 'Washington', '20540', 'USA')");
 		statement.executeUpdate("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A108', 'Cromwell Rd.', 'London', 'SW7 5BD', 'UK')");
 
+
 		// British libraries
 		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L100', 'British Library', 'A101')");
+		long timeB = System.nanoTime();
+		System.out.println("[Populate 2 (executeUpdate) - " + ((timeB - timeA) / 1000) + " μs");
 		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L110', 'Duke Humfrey’s Library', 'A102')");
 		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L111', 'Liverpool Central Library', 'A103')");
 		statement.executeUpdate("INSERT INTO library (id, name, address) VALUES ('L112', 'Signet Library', 'A104')");
@@ -147,11 +162,148 @@ public class PlainJDBCTest
 		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1002','ALISE')");
 		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1003','CILIP')");
 		statement.executeUpdate("INSERT INTO librarianassociation (librarian, association) VALUES ('1004','CILIP')");
+*/
+
+		/*
+		PreparedStatement ps = connection.prepareStatement("INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES(?, ?, ?, ?, ?)");
+		ps.setString(1, "A101");ps.setString(2, "96 Euston Rd");ps.setString(3, "London");ps.setString(4, "NW1 2DB");ps.setString(5, "UK");ps.addBatch();
+		ps.setString(1, "A102");ps.setString(2, "University of Oxford, Broad St");ps.setString(3, "Oxford");ps.setString(4, "OX1 3BG");ps.setString(5, "UK");ps.addBatch();
+		ps.setString(1, "A103");ps.setString(2, "William Brown St");ps.setString(3, "Liverpool");ps.setString(4, "L3 8EW");ps.setString(5, "UK");ps.addBatch();
+		ps.setString(1, "A104");ps.setString(2, "Parliament Square");ps.setString(3, "Edinburgh");ps.setString(4, "EH1 1RF");ps.setString(5, "UK");ps.addBatch();
+		ps.setString(1, "A105");ps.setString(2, "Broad St");ps.setString(3, "Oxford");ps.setString(4, "OX1 3BG");ps.setString(5, "UK");ps.addBatch();
+		ps.setString(1, "A106");ps.setString(2, "630 W. 5th Street");ps.setString(3, "Los Angeles");ps.setString(4, "90071");ps.setString(5, "USA");ps.addBatch();
+		ps.setString(1, "A107");ps.setString(2, "101 Independence Ave SE");ps.setString(3, "Washington");ps.setString(4, "20540");ps.setString(5, "USA");ps.addBatch();
+		ps.setString(1, "A108");ps.setString(2, "Cromwell Rd.");ps.setString(3, "London");ps.setString(4, "NW1 2DB");ps.setString(5, "UK");ps.addBatch();
+		ps.executeBatch();
+
+		ps = connection.prepareStatement("INSERT INTO library (id, name, address) VALUES(?, ?, ?)");
+		ps.setString(1, "L100");ps.setString(2, "British Library");ps.setString(3, "A101");ps.addBatch();
+		ps.setString(1, "L110");ps.setString(2, "Duke Humfrey’s Library");ps.setString(3, "A102");ps.addBatch();
+		ps.setString(1, "L111");ps.setString(2, "Liverpool Central Library");ps.setString(3, "A103");ps.addBatch();
+		ps.setString(1, "L112");ps.setString(2, "Signet Library");ps.setString(3, "A104");ps.addBatch();
+		ps.setString(1, "L113");ps.setString(2, "Bodlein Library");ps.setString(3, "A105");ps.addBatch();
+		ps.setString(1, "L201");ps.setString(2, "Central Library");ps.setString(3, "A106");ps.addBatch();
+		ps.setString(1, "L202");ps.setString(2, "Library of Congress");ps.setString(3, "A107");ps.addBatch();
+		ps.executeBatch();
+
+		ps = connection.prepareStatement("INSERT INTO librarian (id, name, email, library) VALUES(?, ?, ?, ?)");
+		ps.setString(1, "1001");ps.setString(2, "Thomas Bodley");ps.setString(3, "tbodley@somewhere.com");ps.setString(4, "L113");ps.addBatch();
+		ps.setString(1, "1002");ps.setString(2, "Lewis Carroll");ps.setString(3, "lcarroll@somewhere.com");ps.setString(4, "L100");ps.addBatch();
+		ps.setString(1, "1003");ps.setString(2, "Alison Bailey");ps.setString(3, "abailey@somewhere.com");ps.setString(4, "L100");ps.addBatch();
+		ps.setString(1, "1004");ps.setString(2, "Alasdair Ball");ps.setString(3, "aball@somewhere.com");ps.setString(4, "L100");ps.addBatch();
+		ps.setString(1, "1010");ps.setString(2, "Benjamin Franklin");ps.setString(3, "bfranklin@somewhere.com");ps.setString(4, "L202");ps.addBatch();
+		ps.executeBatch();
+
+		ps = connection.prepareStatement("INSERT INTO association (id, name, state) VALUES(?, ?, ?)");
+		ps.setString(1, "ALA");ps.setString(2, "American Library Association");ps.setString(3, "Illinois");ps.addBatch();
+		ps.setString(1, "ALISE");ps.setString(2, "Association for Library and Information Science Education");ps.setString(3, "Illinois");ps.addBatch();
+		ps.setString(1, "ARLIS");ps.setString(2, "Art Libraries Society of North America");ps.setString(3, "Wisconsin");ps.addBatch();
+		ps.setString(1, "MLA");ps.setString(2, "Medical Library Association");ps.setString(3, "Illinois");ps.addBatch();
+		ps.setString(1, "AALL");ps.setString(2, "American Association of Law Libraries");ps.setString(3, "Illinois");ps.addBatch();
+		ps.setString(1, "CILIP");ps.setString(2, "Chartered Institute of Library and Information Professionals");ps.setString(3, "London");ps.addBatch();
+		ps.executeBatch();
+
+		ps = connection.prepareStatement("INSERT INTO librarianassociation (librarian, association) VALUES(?, ?)");
+		ps.setString(1, "1002");ps.setString(2, "CILIP");ps.addBatch();
+		ps.setString(1, "1002");ps.setString(2, "ALISE");ps.addBatch();
+		ps.setString(1, "1003");ps.setString(2, "CILIP");ps.addBatch();
+		ps.setString(1, "1004");ps.setString(2, "CILIP");ps.addBatch();
+		ps.executeBatch();
+*/
+
+		// In HANA DB foreign keys affect insert performance.
+		// If possible add foreign keys (i.e., relationships) only at the meta level
+
+		long timeA = System.nanoTime();
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A101', '96 Euston Rd', 'London', 'NW1 2DB', 'UK')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A102', 'University of Oxford, Broad St', 'Oxford', 'OX1 3BG', 'UK')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A103', 'William Brown St', 'Liverpool', 'L3 8EW', 'UK')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A104', 'Parliament Square', 'Edinburgh', 'EH1 1RF', 'UK')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A105', 'Broad St', 'Oxford', 'OX1 3BG', 'UK')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A106', '630 W. 5th Street', 'Los Angeles', '90071', 'USA')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A107', '101 Independence Ave SE', 'Washington', '20540', 'USA')");
+		statement.addBatch(
+			"INSERT INTO address (id, street, city, zip_or_postcode, country) VALUES ('A108', 'Cromwell Rd.', 'London', 'SW7 5BD', 'UK')");
+		statement.executeBatch();
+
+		// British libraries
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L100', 'British Library', 'A101')");
+		long timeB = System.nanoTime();
+		System.out.println("[Populate 2 (no executeBatch) - " + ((timeB - timeA) / 1000) + " μs");
+		statement.executeBatch();
+		long timeC = System.nanoTime();
+		System.out.println("[Populate 2 (only executeBatch) - " + ((timeC - timeB) / 1000) + " μs");
+
+		long time1 = System.nanoTime();
+
+
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L110', 'Duke Humfrey’s Library', 'A102')");
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L111', 'Liverpool Central Library', 'A103')");
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L112', 'Signet Library', 'A104')");
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L113', 'Bodlein Library', 'A105')");
+
+		// US libraries
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L201', 'Central Library', 'A106')");
+		statement.addBatch(
+			"INSERT INTO library (id, name, address) VALUES ('L202', 'Library of Congress', 'A107')");
+
+		statement.addBatch(
+			"INSERT INTO librarian (id, name, email, library) VALUES ('1001','Thomas Bodley', 'tbodley@somewhere.com', 'L113')");
+		statement.addBatch(
+			"INSERT INTO librarian (id, name, email, library) VALUES ('1002','Lewis Carroll', 'lcarroll@somewhere.com', 'L100')");
+		statement.addBatch(
+			"INSERT INTO librarian (id, name, email, library) VALUES ('1003','Alison Bailey', 'abailey@somewhere.com', 'L100')");
+		statement.addBatch(
+			"INSERT INTO librarian (id, name, email, library) VALUES ('1004','Alasdair Ball', 'aball@somewhere.com', 'L100')");
+		statement.addBatch(
+			"INSERT INTO librarian (id, name, email, library) VALUES ('1010','Benjamin Franklin', 'bfranklin@somewhere.com', 'L202')");
+
+		statement.addBatch(
+			"INSERT INTO association (id, name, state) VALUES ('ALA','American Library Association', 'Illinois')");
+		statement.addBatch(
+			"INSERT INTO association (id, name, state) VALUES ('ALISE','Association for Library and Information Science Education', 'Illinois')");
+		statement.addBatch(
+			"INSERT INTO association (id, name, state) VALUES ('ARLIS','Art Libraries Society of North America', 'Wisconsin')");
+		statement.addBatch(
+			"INSERT INTO association (id, name, state) VALUES ('MLA','Medical Library Association', 'Illinois')");
+		statement.addBatch(
+			"INSERT INTO association (id, name, state) VALUES ('AALL','American Association of Law Libraries', 'Illinois')");
+		statement.addBatch(
+			"INSERT INTO association (id, name, state) VALUES ('CILIP','Chartered Institute of Library and Information Professionals', 'London')");
+
+		statement.addBatch(
+			"INSERT INTO librarianassociation (librarian, association) VALUES ('1002','CILIP')");
+		statement.addBatch(
+			"INSERT INTO librarianassociation (librarian, association) VALUES ('1002','ALISE')");
+		statement.addBatch(
+			"INSERT INTO librarianassociation (librarian, association) VALUES ('1003','CILIP')");
+		statement.addBatch("INSERT INTO librarianassociation (librarian, association) VALUES ('1004','CILIP')");
+
+		long time2 = System.nanoTime();
+		System.out.println("[Populate (no executeBatch) - " + ((time2 - time1) / 1000) + " μs");
+
+		statement.executeBatch();
+		long time3 = System.nanoTime();
+		System.out.println("[Populate (only executeBatch) - " + ((time3 - time2) / 1000) + " μs");
 	}
 
 	@After
 	public void destroy() throws SQLException, ClassNotFoundException, IOException {
 
+		long time1 = System.nanoTime();
 		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
 			statement.executeUpdate("DROP TABLE librarianassociation");
 			statement.executeUpdate("DROP TABLE association");
@@ -160,6 +312,8 @@ public class PlainJDBCTest
 			statement.executeUpdate("DROP TABLE address");
 			connection.commit();
 		}
+		long time2 = System.nanoTime();
+		System.out.println("[Drop tables - " + ((time2 - time1) / 1000) + " μs");
 	}
 
 	@Test

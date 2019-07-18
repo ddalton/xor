@@ -5,19 +5,19 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 Pending PlainJDBCTest cases
 ===========================
 
-Why is HANA unit tests slower than HSQLDB
+
+Add mappings for following in DBTranslator
+NCLOB
+SMALLDECIMAL
+SECONDDATE
+ST_POINT
 
 Add Testcase for testing performance query 
  - Create schema using OrgGroupUpdater#UsersNotInGroupQuery
  - Populate data according to stats in HANAMON
  - execute equivalent queries to find the correct one
 
-0. Persistence - Handle inheritance
 
-1. Persistence - Handle composition
-   - propagate id
-   - Handle collection index/position
- 
 2. Ensure that the absolute path is used to create the entity key and not relative path
    Currently the tree split occurs from the root node. This is wasteful.
    We need to split at the point where we need and adjust the anchor path to both relative and

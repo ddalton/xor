@@ -262,15 +262,19 @@ public class AggregatePropertyPaths {
 		Set<String> paths = new HashSet<>(enumerateRef(aggregateType));
 
 		if (aggregateType instanceof EntityType) {
-			for (Property property : aggregateType.getProperties()) {
-				if (isSimpleProperty(property) && !property.isNullable()) {
-					paths.add(property.getName());
+			EntityType entityType = (EntityType)aggregateType;
+			while(entityType != null) {
+				for (Property property : aggregateType.getProperties()) {
+					if (isSimpleProperty(property) && !property.isNullable()) {
+						paths.add(property.getName());
+					}
+					else if (!property.isNullable()) {
+						logger.warn(
+							"Not adding an required property that refers to an entity type, manually set the scope for: "
+								+ aggregateType.getName() + "#" + property.getName());
+					}
 				}
-				else if (!property.isNullable()) {
-					logger.warn(
-						"Not adding an required property that refers to an entity type, manually set the scope for: "
-							+ aggregateType.getName() + "#" + property.getName());
-				}
+				entityType = entityType.getSuperType();
 			}
 		}
 

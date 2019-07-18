@@ -444,17 +444,13 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	{
 		List<Property> result = new ArrayList<Property>();
 
+		// The vertex is SubtypeState and contains both direct and supertype properties
 		for (String simpleAttribute : vertex.getAttributes()) {
 			result.add(vertex.getType().getProperty(simpleAttribute));
 		}
 
 		// Addresses scope extension using AssociationSetting with MatchType.TYPE
-		for (Edge e : getOutEdges((V)vertex)) {
-			if (EMPTY_EDGE.equals(e.getName())) {
-				continue;
-			}
-			result.add(vertex.getType().getProperty(e.getName()));
-		}
+		collectEdges(result, (V)vertex);
 
 		return result;
 	}

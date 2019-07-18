@@ -213,6 +213,7 @@ public class JDBCSessionContext implements CustomPersister
             throw ClassUtil.wrapRun(e);
         } finally {
             try {
+                this.clear();
                 if(this.insertStatement != null) {
                     this.insertStatement.close();
                 }
@@ -225,6 +226,7 @@ public class JDBCSessionContext implements CustomPersister
 
     public void clear() {
         this.idToObjects = new HashMap<>();
+        this.insertBatch.clear();
     }
 
     @Override public boolean readFromDB ()

@@ -71,8 +71,13 @@ public class ListUpdateAction extends CollectionUpdateAction {
 		for(AddElementAction action: addActions) 
 			listOrderedActions.put(Integer.parseInt(action.getPosition().toString()), action);
 		// TODO: Handler conflicts
-		for(AddElementAction action: addByOppositeActions) 
-			listOrderedActions.put(Integer.parseInt(action.getPosition().toString()), action);		
+		for(AddElementAction action: addByOppositeActions) {
+			// If the element does have position information, then it cannot be part of a list
+			// as the ordering is not known
+			if(action.getPosition() != null) {
+				listOrderedActions.put(Integer.parseInt(action.getPosition().toString()), action);
+			}
+		}
 
 		for(AddElementAction action: listOrderedActions.values()) {
 			// Add the element to the List

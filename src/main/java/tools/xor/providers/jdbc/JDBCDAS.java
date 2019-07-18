@@ -261,6 +261,11 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             basicColumns.removeAll(fkColumns);
 
             List<ColumnInfo> result = new LinkedList<>();
+
+            // basic columns should always contain the identifier property
+            if(primaryKeys.size() == 1) {
+                basicColumns.addAll(primaryKeys);
+            }
             for(String basicCol: basicColumns) {
                 result.add(all.get(basicCol));
             }

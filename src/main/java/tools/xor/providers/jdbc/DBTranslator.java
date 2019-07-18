@@ -86,6 +86,7 @@ public abstract class DBTranslator
     static {
         SQL_TO_JAVA_TYPE_MAP.put("CHAR", java.lang.String.class);
         SQL_TO_JAVA_TYPE_MAP.put("VARCHAR", java.lang.String.class);
+        SQL_TO_JAVA_TYPE_MAP.put("NVARCHAR", java.lang.String.class);
         SQL_TO_JAVA_TYPE_MAP.put("LONGVARCHAR", java.lang.String.class);
         SQL_TO_JAVA_TYPE_MAP.put("NUMERIC", java.math.BigDecimal.class);
         SQL_TO_JAVA_TYPE_MAP.put("DECIMAL", java.math.BigDecimal.class);
@@ -123,6 +124,7 @@ public abstract class DBTranslator
         };
         convertersByDataType.put("CHAR", charConverter);
         convertersByDataType.put("VARCHAR", charConverter);
+        convertersByDataType.put("NVARCHAR", charConverter);
         convertersByDataType.put("LONGVARCHAR", charConverter);
         convertersByDataType.put("CLOB", charConverter);
 
@@ -270,7 +272,7 @@ public abstract class DBTranslator
                 {
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
-                        return "CAST (df.format(value) AS date)";
+                        return String.format("CAST ('%s' AS date)", df.format(value));
                     } else {
                         throw new RuntimeException("Unsupported value type for Date converter");
                     }
@@ -285,7 +287,7 @@ public abstract class DBTranslator
                 {
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
-                        return "CAST (df.format(value) AS time)";
+                        return String.format("CAST ('%s' AS time)", df.format(value));
                     } else {
                         throw new RuntimeException("Unsupported value type for Time converter");
                     }
@@ -295,12 +297,12 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "TIMESTAMP", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT);
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
                 @Override public String toSQLLiteral (Object value)
                 {
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
-                        return "CAST (df.format(value) AS datetime)";
+                        return String.format("CAST ('%s' AS datetime)", df.format(value));
                     } else {
                         throw new RuntimeException("Unsupported value type for Timestamp converter");
                     }
@@ -360,7 +362,12 @@ public abstract class DBTranslator
             entityType = (JDBCType)entityType.getSuperType();
         }
 
-        return new ArrayList<>(sqlStack);
+        List<String> result = new LinkedList<>();
+        while(!sqlStack.isEmpty()) {
+            result.add(sqlStack.pop());
+        }
+
+        return result;
     }
 
     private void setIdentifier(Settings settings, BusinessObject bo, JDBCType entityType) {

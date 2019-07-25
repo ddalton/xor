@@ -31,17 +31,19 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
-import sun.java2d.pipe.SpanShapeRenderer;
 import tools.xor.AbstractBO;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
+import tools.xor.DataGenerator;
+import tools.xor.DataImporter;
 import tools.xor.DefaultTypeMapper;
 import tools.xor.DefaultTypeNarrower;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.JDBCProperty;
 import tools.xor.MapperDirection;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -60,6 +62,8 @@ import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.exim.CSVExportImport;
 import tools.xor.service.exim.ExcelExportImport;
 import tools.xor.service.exim.ExportImport;
@@ -82,6 +86,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,6 +95,15 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class AggregateManager implements Xor
@@ -340,12 +354,30 @@ public class AggregateManager implements Xor
 	{
 		Object oldFlushMode;
 		BusinessObject businessObject;
+		boolean existingTransaction;
 		Settings settings;
 
 		FlushHandler (Settings settings)
 		{
 			this.settings = settings;
 			oldFlushMode = getPersistenceOrchestrator().disableAutoFlush();
+
+			if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+				JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) getPersistenceOrchestrator();
+				try {
+					CustomPersister cp = po.getSessionContext();
+					if(cp.getConnection() != null && !cp.getConnection().isClosed()) {
+                        existingTransaction = true;
+                    }
+
+					if(!existingTransaction) {
+                        po.getSessionContext().beginTransaction();
+                    }
+				}
+				catch (SQLException e) {
+					throw ClassUtil.wrapRun(e);
+				}
+			}
 		}
 
 		void register (BusinessObject bo)
@@ -369,6 +401,11 @@ public class AggregateManager implements Xor
 				if (settings.doPostFlush()) {
 					getPersistenceOrchestrator().flush();
 				}
+
+				if(!existingTransaction && getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+					JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) getPersistenceOrchestrator();
+					po.getSessionContext().commit();
+				}
 			}
 		}
 	}
@@ -376,9 +413,15 @@ public class AggregateManager implements Xor
 	public void checkPO(Settings settings) {
 
 		if (getPersistenceOrchestrator() == null) {
-			setPersistenceOrchestrator(dasFactory.getPersistenceOrchestrator(settings.getSessionContext()));
+			setPersistenceOrchestrator(dasFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
 		}
-		settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
+		if(settings != null) {
+			settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
+			if(settings.getSessionContext() != null && getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+				JDBCPersistenceOrchestrator po = ((JDBCPersistenceOrchestrator)getPersistenceOrchestrator());
+				po.getSessionContext().init((JDBCSessionContext)settings.getSessionContext());
+			}
+		}
 	}
 
 	private void checkAndSet (Settings settings, Object inputObject)
@@ -1461,7 +1504,7 @@ public class AggregateManager implements Xor
 				for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
 					Cell cell = row.getCell(entry.getValue());
 					Object cellValue = getCellValue(cell);
-					Property property = ((EntityType)settings.getEntityType()).getProperty(entry.getKey());
+					Property property = (settings.getEntityType()).getProperty(entry.getKey());
 					cellValue = ((SimpleType)property.getType()).unmarshall(cellValue.toString());
 					bo.set(entry.getKey(), cellValue);
 				}
@@ -1494,5 +1537,46 @@ public class AggregateManager implements Xor
 		}
 
 		return f;
-	}	
+	}
+
+	public void generate(String name, Settings settings) {
+
+		Shape shape = getDAS().getShape(name);
+		ExecutorService generators = Executors.newFixedThreadPool(10);
+		ExecutorService importers = Executors.newFixedThreadPool(10);
+
+		BlockingDeque<JSONObject> queue = new LinkedBlockingDeque<>(1000);
+		final CountDownLatch latch = new CountDownLatch(10);
+
+		// Create the generators
+		for(int i =0; i < 10; i++) {
+			generators.submit(new DataGenerator(queue, latch, shape, settings));
+		}
+		// Create the importers
+		List<Future> importJobs = new ArrayList<Future>();
+		for(int i =0; i < 10; i++) {
+			PersistenceOrchestrator po = getDasFactory().createPersistenceOrchestrator(settings.getSessionContext());
+			importJobs.add(importers.submit(new DataImporter(queue, po, shape, settings)));
+		}
+
+		// Once the generators have finished generating, mark the end
+		try {
+			latch.await();
+			queue.put(DataGenerator.END_MARKER);
+
+			// Wait for the import jobs to finish
+			for(Future importJob: importJobs) {
+				Object o = importJob.get();
+				if(o != DataGenerator.SUCCESS) {
+					logger.error(o.toString());
+				}
+			}
+		}
+		catch (InterruptedException e) {
+			throw ClassUtil.wrapRun(e);
+		}
+		catch (ExecutionException e) {
+			throw ClassUtil.wrapRun(e);
+		}
+	}
 }

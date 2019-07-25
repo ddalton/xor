@@ -42,6 +42,9 @@ import tools.xor.view.View;
  */
 public interface DataAccessService {
 
+	static final String DEFAULT_SHAPE = "_DEFAULT_";
+	static final String RELATIONAL_SHAPE = "_RELATIONAL_"; // no relationships, useful for data generation and import
+
 	/**
 	 * Returns the shape in the current session/thread. So it needs to be overridden by
 	 * subclasses.
@@ -52,6 +55,13 @@ public interface DataAccessService {
 	 * @return Shape of types
 	 */
 	public Shape getShape();
+
+	/**
+	 * Return a specified shape
+	 * @param name of the shape
+	 * @return shape object
+	 */
+	public Shape getShape(String name);
 
 	/**
 	 * Gets the Shape that created the type present in the argument

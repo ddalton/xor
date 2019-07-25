@@ -66,7 +66,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	protected TypeMapper        typeMapper;
 	protected DASFactory        dasFactory;
 
-	protected static final String DEFAULT_SHAPE = "_DEFAULT_";
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
 	private ThreadLocal<Shape> overriddenShape = new ThreadLocal<Shape>(); // temporarily overridden by user
 
@@ -90,6 +89,11 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 
 		return shapes.get(DEFAULT_SHAPE);
+	}
+
+	@Override
+	public Shape getShape(String name) {
+		return shapes.get(name);
 	}
 
 	@Override
@@ -238,7 +242,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	@Override
 	public List<Type> getTypes() {
-		return new ArrayList<Type>(getShape().getUniqueTypes());
+		return new ArrayList<>(getShape().getUniqueTypes());
 	}	
 
 	@Override

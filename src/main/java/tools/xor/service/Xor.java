@@ -172,4 +172,11 @@ public interface Xor {
 	 * @throws IOException  if an error was encoutered while operating the inputstream
 	 */
 	public Object importAggregate(String filePath, Settings settings) throws IOException;
+
+	/**
+	 * Generate data based on the shape
+	 * @param name of the shape
+	 * @param settings user settings
+	 */
+	public void generate(String name, Settings settings);
 }

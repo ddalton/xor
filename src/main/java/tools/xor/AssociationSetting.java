@@ -99,7 +99,7 @@ public final class AssociationSetting {
 			boolean result = false;
 			if(domainObject != null) {
 				EntityType instanceType = (EntityType)domainObject.getDomainType();
-				EntityType entityType = (EntityType)instanceType.getDAS().getType(entityName);
+				EntityType entityType = (EntityType)instanceType.getShape().getType(entityName);
 				result = entityType.isSameOrAncestorOf(instanceType);
 			}
 

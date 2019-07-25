@@ -66,7 +66,7 @@ public class OQLQuery extends QuerySupport
     public OQLQuery generateQuery (AggregateManager am, AggregateTree aggregateTree, QueryTree queryTree)
     {
 
-        am.setPersistenceOrchestrator(am.getDasFactory().getPersistenceOrchestrator(null));
+        am.setPersistenceOrchestrator(am.getDasFactory().createPersistenceOrchestrator(null));
 
         Settings settings = new Settings();
         am.checkPO(settings);

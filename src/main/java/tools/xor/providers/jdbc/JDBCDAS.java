@@ -22,7 +22,6 @@ package tools.xor.providers.jdbc;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.JDBCType;
-import tools.xor.Property;
 import tools.xor.RelationshipType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
@@ -263,7 +262,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             List<ColumnInfo> result = new LinkedList<>();
 
             // basic columns should always contain the identifier property
-            if(primaryKeys.size() == 1) {
+            if(primaryKeys != null && primaryKeys.size() == 1) {
                 basicColumns.addAll(primaryKeys);
             }
             for(String basicCol: basicColumns) {
@@ -444,7 +443,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
      */
     public TableInfo getTable(String tableName) {
         try(Connection c = getDataSource().getConnection()) {
-            return DBTranslator.instance(c).getTable(getAggregateManager().getForeignKeyEnhancer(), tableName);
+            return DBTranslator.instance(c).getTable(c, getAggregateManager().getForeignKeyEnhancer(), tableName);
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
@@ -453,7 +452,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
     public Map<String, List<String>> getPrimaryKeys() {
         try(Connection c = getDataSource().getConnection()) {
-            return DBTranslator.instance(c).getPrimaryKeys();
+            return DBTranslator.instance(c).getPrimaryKeys(c);
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
@@ -462,7 +461,22 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
     public List<TableInfo> getTables() {
         try(Connection c = getDataSource().getConnection()) {
-            List<TableInfo> tables = DBTranslator.instance(c).getTables(getAggregateManager().getForeignKeyEnhancer());
+            List<TableInfo> tables = DBTranslator.instance(c).getTables(c, getAggregateManager().getForeignKeyEnhancer());
+            return tables;
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+    }
+
+    public List<TableInfo> getRelationalTables() {
+        try(Connection c = getDataSource().getConnection()) {
+            List<TableInfo> tables = DBTranslator.instance(c).getTables(c, getAggregateManager().getForeignKeyEnhancer());
+
+            for(TableInfo table: tables) {
+                table.setForeignKeys(null);
+                table.setPrimaryKeys(null);
+            }
             return tables;
         }
         catch (SQLException e) {
@@ -489,12 +503,14 @@ public abstract class JDBCDAS extends AbstractDataAccessService
     {
         Shape shape = getOrCreateShape(name);
 
-        for(TableInfo table: getTables()){
+        List<TableInfo> tables = name.equals(RELATIONAL_SHAPE) ? getRelationalTables() : getTables();
+
+        for(TableInfo table: tables){
             JDBCType dataType = new JDBCType(table.getName(), table);
             shape.addType(dataType.getName(), dataType);
         }
 
-        for(TableInfo table: getTables()) {
+        for(TableInfo table: tables) {
             String parentName = table.getParentTable();
             if(parentName != null) {
                 JDBCType child = (JDBCType)shape.getType(table.getName());
@@ -545,10 +561,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
     @Override public PersistenceOrchestrator createPO (Object sessionContext, Object data)
     {
-        if(sessionContext == null) {
-            sessionContext = new JDBCSessionContext();
-        }
-        JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator(sessionContext, data);
+        JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
         po.setDataSource(getDataSource());
 
         return po;

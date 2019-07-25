@@ -404,12 +404,17 @@ public class ClassUtil {
 
 	public static void executeScript(DataSource datasource, String path) throws SQLException
 	{
+		executeScript(datasource, path, false);
+	}
+
+	public static void executeScript(DataSource datasource, String path, boolean continueOnError) throws SQLException
+	{
 		EncodedResource er = new EncodedResource(new ClassPathResource(path));
 		try (Connection connection = datasource.getConnection();) {
 			ScriptUtils.executeSqlScript(
 				connection,
 				er,
-				false,
+				continueOnError,
 				false,
 				"--",
 				";",

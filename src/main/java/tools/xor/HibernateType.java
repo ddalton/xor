@@ -104,7 +104,7 @@ public class HibernateType extends AbstractType {
 	}
 
 	public void setProperty(Shape shape) {
-		HibernateDAS dataAccessService = (HibernateDAS)getDAS();
+		HibernateDAS dataAccessService = (HibernateDAS)getShape().getDAS();
 		if(getProperties() == null) {
 			// populate the properties for this type
 			Iterator<?> propertyIterator = getPropertyIterator();
@@ -112,7 +112,7 @@ public class HibernateType extends AbstractType {
 				org.hibernate.mapping.Property hibernateProperty = (org.hibernate.mapping.Property) propertyIterator.next();
 				logger.debug("[" + getName() + "] hibernate property name: " + hibernateProperty.getName() + ", type name: " + hibernateProperty.getType().getReturnedClass());
 
-				Type propertyType = dataAccessService.getType(hibernateProperty.getType().getReturnedClass());
+				Type propertyType = shape.getType(hibernateProperty.getType().getReturnedClass());
 				HibernateProperty property = new HibernateProperty(hibernateProperty, propertyType, this, dataAccessService.getConfiguration());
 				property.init(shape);
 				shape.addProperty(property);
@@ -123,7 +123,7 @@ public class HibernateType extends AbstractType {
 				org.hibernate.mapping.Property idProperty = ((PersistentClass)hibernateClass).getIdentifierProperty();
 				if(idProperty != null) {
 					logger.debug("Hibernate Identifier attribute name: " + idProperty.getName());	
-					Type propertyType = dataAccessService.getType(idProperty.getType().getReturnedClass());
+					Type propertyType = shape.getType(idProperty.getType().getReturnedClass());
 					identifierProperty = new HibernateProperty(idProperty, propertyType, this, dataAccessService.getConfiguration());
 					shape.addProperty(identifierProperty);
 				}
@@ -131,7 +131,7 @@ public class HibernateType extends AbstractType {
 				org.hibernate.mapping.Property verProperty = ((PersistentClass)hibernateClass).getVersion();
 				if(verProperty != null) {
 					logger.debug("Hibernate version attribute name: " + verProperty.getName());	
-					Type propertyType = dataAccessService.getType(verProperty.getType().getReturnedClass());
+					Type propertyType = shape.getType(verProperty.getType().getReturnedClass());
 					versionProperty = new HibernateProperty(verProperty, propertyType, this, dataAccessService.getConfiguration());
 					shape.addProperty(versionProperty);
 				}				
@@ -178,7 +178,7 @@ public class HibernateType extends AbstractType {
 			while(declaredPropertyIterator.hasNext()) {
 				org.hibernate.mapping.Property declaredProperty = (org.hibernate.mapping.Property) declaredPropertyIterator.next();
 				logger.debug("[" + getName() + "] Hibernate declared property name: " + declaredProperty.getName());
-				result.add(getDAS().getShape().getProperty(this, declaredProperty.getName()));
+				result.add(getShape().getProperty(this, declaredProperty.getName()));
 			}
 		}
 

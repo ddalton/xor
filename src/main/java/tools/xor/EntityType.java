@@ -278,16 +278,17 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public void setSuperType(EntityType value);
 
 	/**
-	 * The DAS object is needed when doing lazy initializing on certain functionality
-	 * @param das DataAccessService for this type
+	 * set the shape to which this type belongs. It is an error to reassign a type from a
+	 * different shape.
+	 * @param shape instance
 	 */
-	public void setDAS(DataAccessService das);
+	public void setShape(Shape shape);
 
 	/**
-	 * Return the DAS object responsible for creating this type.
-	 * @return DataAccessService instance
+	 * Return the shape to which this type belongs
+	 * @return shape instance
 	 */
-	public DataAccessService getDAS();
+	public Shape getShape();
 
 	/**
 	 * Returns whether or not all a property represented by
@@ -351,4 +352,16 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @return subtypes containing that property definition
 	 */
 	public List<EntityType> findInSubtypes (String property);
+
+	/**
+	 * Return the entity specific settings related to data generation
+	 * @return
+	 */
+	public GeneratorSettings getGeneratorSettings();
+
+	/**
+	 * Set the generator settings for the entity
+	 * @param generatorSettings generator settings object
+	 */
+	public void setGeneratorSettings(GeneratorSettings generatorSettings);
 }

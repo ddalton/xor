@@ -888,16 +888,18 @@ public class ObjectCreator {
 	}
 	
 	public void persistGraph(Settings settings) {
-		if(settings.getSessionContext() instanceof CustomPersister) {
-			((CustomPersister)settings.getSessionContext()).persistGraph(this, settings);
+		if(settings.getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+			CustomPersister cp = ((JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator()).getSessionContext();
+			cp.persistGraph(this, settings);
 		} else {
 			objectGraph.persistGraph(this, settings);
 		}
 	}
 
 	public void deleteGraph(Settings settings) {
-		if(settings.getSessionContext() instanceof CustomPersister) {
-			((CustomPersister)settings.getSessionContext()).deleteGraph(this, settings);
+		if(settings.getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+			CustomPersister cp = ((JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator()).getSessionContext();
+			cp.deleteGraph(this, settings);
 		} else {
 			objectGraph.deleteGraph(this, settings);
 		}

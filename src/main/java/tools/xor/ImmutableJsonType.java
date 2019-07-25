@@ -62,7 +62,7 @@ public class ImmutableJsonType extends ExternalType {
 		// populate the properties for this type
 		for (Property domainProperty : shape.getProperties(domainType).values()) {
 			AbstractProperty abstractProperty = (AbstractProperty)domainProperty;
-			Class<?> externalClass = getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+			Class<?> externalClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 			if (externalClass == null)
 				throw new RuntimeException(
 					"The dynamic type is missing for the following domain class: "
@@ -74,7 +74,7 @@ public class ImmutableJsonType extends ExternalType {
 				elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
 			}
 			if (propertyType == null) {
-				Class<?> propertyClass = getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+				Class<?> propertyClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
 				logger.debug(
 					"Name: " + domainProperty.getName() + ", Domain class: "
 						+ domainProperty.getType().getInstanceClass().getName()

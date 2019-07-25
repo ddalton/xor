@@ -39,7 +39,6 @@ import java.util.Stack;
 
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import javax.swing.text.html.parser.Entity;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -54,7 +53,6 @@ import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LinkedChoices;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
@@ -95,7 +93,9 @@ public abstract class AbstractType implements EntityType {
 	private static final HashSet<Class<?>> WRAPPER_TYPES = getWrapperTypes();
 	private static final HashSet<Class<?>> BASIC_TYPES = getBasicTypes();
 
-	private DataAccessService das;
+	private Shape shape;
+
+	private GeneratorSettings generatorSettings;
 
 	public AbstractType() {
 		classResolver = new ClassResolver(this);
@@ -120,13 +120,15 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public void setDAS(DataAccessService das) {
-		this.das = das;
+	public Shape getShape() {
+		return this.shape;
 	}
 
 	@Override
-	public DataAccessService getDAS() {
-		return this.das;
+	public void setShape(Shape shape) {
+		assert(this.shape == null || this.shape == shape);
+
+		this.shape = shape;
 	}
 	
 	@Override
@@ -161,7 +163,7 @@ public abstract class AbstractType implements EntityType {
 		if(rootEntityType == null) {
 			return null;
 		}
-		return (EntityType)das.getType(this.rootEntityType);
+		return (EntityType)getShape().getType(this.rootEntityType);
 	}
 
 	private static boolean isInValid(Type type) {
@@ -289,9 +291,9 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		if(isDomainType()) {
-			return (EntityType)das.getType(superType);
+			return (EntityType)getShape().getType(superType);
 		} else {
-			return (EntityType)das.getExternalType(superType);
+			return (EntityType)getShape().getExternalType(superType);
 		}
 	}
 	
@@ -303,16 +305,16 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public Set<EntityType> getSubtypes() {
 		if(subTypes == null) {
-			List allTypes = das.getTypes();
-			if(das.getShape().getShapeStrategy() == Shape.ShapeStrategy.SHARED && das.getShape().getParent() != null) {
-				allTypes.addAll(das.getShape().getParent().getUniqueTypes());
+			List allTypes = new ArrayList<>(getShape().getUniqueTypes());
+			if(getShape().getShapeStrategy() == Shape.ShapeStrategy.SHARED && getShape().getParent() != null) {
+				allTypes.addAll(getShape().getParent().getUniqueTypes());
 			}
 			defineSubtypes(allTypes);
 		}
 
 		Set<EntityType> result = new HashSet<>();
 		for(String entityName: subTypes) {
-			result.add((EntityType)das.getType(entityName));
+			result.add((EntityType)getShape().getType(entityName));
 		}
 
 		return result;
@@ -328,7 +330,7 @@ public abstract class AbstractType implements EntityType {
 
 		Set<EntityType> result = new HashSet<>();
 		for(String entityName: childSubTypes) {
-			result.add((EntityType)das.getType(entityName));
+			result.add((EntityType)getShape().getType(entityName));
 		}
 		return result;
 	}
@@ -380,6 +382,16 @@ public abstract class AbstractType implements EntityType {
 		}
 		
 		return false;
+	}
+
+	@Override public GeneratorSettings getGeneratorSettings ()
+	{
+		return this.generatorSettings;
+	}
+
+	@Override public void setGeneratorSettings (GeneratorSettings generatorSettings)
+	{
+		this.generatorSettings = generatorSettings;
 	}
 
 	protected Method getPolymorphicSetterMethod (String property)
@@ -638,7 +650,7 @@ public abstract class AbstractType implements EntityType {
 		Class<?> instanceClass = getInstanceClass();	
 		Table table = null;
 		do {
-			table = (Table) getClassAnnotation(das, instanceClass, Table.class);
+			table = (Table) getClassAnnotation(getShape(), instanceClass, Table.class);
 			if(table != null && table.annotationType() == Table.class) {
 				break;
 			}
@@ -688,8 +700,8 @@ public abstract class AbstractType implements EntityType {
 		return classAnnotations.get(annotationClass.getName());
 	}	
 	
-	public Annotation getClassAnnotation(DataAccessService das, Class<?> targetClass, Class<?> annotationClass) {
-		Type type = das.getType(targetClass);
+	public Annotation getClassAnnotation(Shape shape, Class<?> targetClass, Class<?> annotationClass) {
+		Type type = shape.getType(targetClass);
 		if(type != null && EntityType.class.isAssignableFrom(type.getClass())) {
 			EntityType targetType = (EntityType) type;
 			return targetType.getClassAnnotation(annotationClass);
@@ -961,7 +973,7 @@ public abstract class AbstractType implements EntityType {
 
 	@Override
 	public List<Property> getProperties() {
-		Map<String, Property> propertyMap = getDAS().getShape().getProperties(this);
+		Map<String, Property> propertyMap = getShape().getProperties(this);
 		if(propertyMap == null) {
 			return null;
 		}
@@ -993,12 +1005,12 @@ public abstract class AbstractType implements EntityType {
 	 */
 	@Override
 	public void addProperty(Property property) {
-		getDAS().getShape().addProperty(property);
+		getShape().addProperty(property);
 	}
 
 	@Override
 	public void removeProperty(Property property) {
-		getDAS().getShape().removeProperty(property);
+		getShape().removeProperty(property);
 	}
 
 	@Override
@@ -1006,10 +1018,10 @@ public abstract class AbstractType implements EntityType {
 		int delim = path.indexOf(Settings.PATH_DELIMITER);
 
 		if(delim == -1) {
-			if(getDAS().getShape().getProperties(this) == null) {
+			if(getShape().getProperties(this) == null) {
 				throw new IllegalStateException("Properties not found for type: " + getName() + " with class: " + getInstanceClass().getName());
 			}
-			Property p = getDAS().getShape().getProperty(this, path);
+			Property p = getShape().getProperty(this, path);
 			return p == null || p.isNullable();
 		} else {
 			Property property = getProperty(path.substring(0, delim));
@@ -1034,9 +1046,9 @@ public abstract class AbstractType implements EntityType {
 			if(path.startsWith(Constants.XOR.IDREF)) {
 				path = path.substring(Constants.XOR.IDREF.length());
 			}
-			result = getDAS().getShape().getProperty(this, path);
+			result = getShape().getProperty(this, path);
 			
-			if(result == null && getDAS().getShape().getProperties(this) == null) {
+			if(result == null && getShape().getProperties(this) == null) {
 				throw new IllegalStateException("Properties not set for type: " + getName() + " with class: " + getInstanceClass().getName());
 			}				
 		} else {
@@ -1064,7 +1076,7 @@ public abstract class AbstractType implements EntityType {
 	
 	@Override
 	public Property getPropertyByAlias(String name) {
-		for(Property property: getDAS().getShape().getProperties(this).values()) {
+		for(Property property: getShape().getProperties(this).values()) {
 			if(property.getAliasNames().contains(name))
 				return property;
 		}
@@ -1298,7 +1310,7 @@ public abstract class AbstractType implements EntityType {
 		List<EntityType> result = new LinkedList<>();
 
 		// Ensure property is not present in the current type
-		assert(getDAS().getShape().getProperty(this, property) == null);
+		assert(getShape().getProperty(this, property) == null);
 
 		// We will do a BFS to get the result
 		Queue<EntityType> queue = new LinkedList<>();
@@ -1310,7 +1322,7 @@ public abstract class AbstractType implements EntityType {
 			// check if this type has the property. If it has it then
 			// add it to the result
 			// if not check its children by added them to the back of the queue
-			if(getDAS().getShape().getDeclaredProperty(childType, property) != null) {
+			if(getShape().getDeclaredProperty(childType, property) != null) {
 				result.add(childType);
 			} else {
 				queue.addAll(childType.getChildSubtypes());

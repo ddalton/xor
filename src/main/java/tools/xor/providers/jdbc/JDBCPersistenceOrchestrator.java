@@ -1,6 +1,5 @@
 package tools.xor.providers.jdbc;
 
-import org.hsqldb.SessionContext;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
@@ -45,40 +44,24 @@ public class JDBCPersistenceOrchestrator
 		return dataSource;
 	}
 
+	public JDBCSessionContext getSessionContext() {
+		return this.context;
+	}
+
 	public void setDataSource (DataSource dataSource)
 	{
 		this.dataSource = dataSource;
 	}
 
-	public Object getSessionContext() {
-		return this.context;
-	}
-
-	public void setSessionContext(JDBCSessionContext context) {
-		this.context = context;
-	}
-
 	public JDBCPersistenceOrchestrator() {
 	}
 
-	public JDBCPersistenceOrchestrator(Object sessionContext, Object data) {
-		this.context = (JDBCSessionContext) sessionContext;
+	public JDBCPersistenceOrchestrator(JDBCSessionContext context, Object data) {
+		this.context = new JDBCSessionContext(this, context);
 	}
 
-	public Connection getConnection() {
-		if(context != null) {
-			try {
-				if (context.getConnection() == null || context.getConnection().isClosed()) {
-                    context.setConnection(DataSourceUtils.getConnection(dataSource));
-                }
-			}
-			catch (SQLException e) {
-				throw ClassUtil.wrapRun(e);
-			}
-			return context.getConnection();
-		} else {
-			return DataSourceUtils.getConnection(dataSource);
-		}
+	public Connection getNewConnection () {
+		return DataSourceUtils.getConnection(dataSource);
 	}
 
 	/**
@@ -94,7 +77,7 @@ public class JDBCPersistenceOrchestrator
 	@Override protected void createStatement (StoredProcedure sp)
 	{
 		try {
-			Connection connection = getConnection();
+			Connection connection = context.getConnection();
 			if (sp.isImplicit()) {
 				sp.setStatement(connection.createStatement());
 			}
@@ -134,7 +117,7 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public void flush() {
-		context.flush(this);
+		context.flush();
 	}
 
 	@Override
@@ -214,7 +197,6 @@ public class JDBCPersistenceOrchestrator
 			// The object with the given id is obtained from the JDBCSessionContext
 			EntityKey ek;
 			if (!(id instanceof EntityKey)) {
-				EntityType entityType = (EntityType)type;
 				ek = new SurrogateEntityKey(id, type.getName());
 			}
 			else {
@@ -267,7 +249,7 @@ public class JDBCPersistenceOrchestrator
 		case SQL:
 			Connection connection = null;
 			if (!Query.isDeferred(queryString)) {
-				connection = getConnection();
+				connection = context.getConnection();
 			}
 			result = new JDBCQuery(queryString, connection, (NativeQuery) queryInput);
 			break;
@@ -280,7 +262,7 @@ public class JDBCPersistenceOrchestrator
 		case OQL:
 			connection = null;
 			if (!Query.isDeferred(queryString)) {
-				connection = getConnection();
+				connection = context.getConnection();
 			}
 			result = new JDBCQuery(queryString, connection, null);
 			break;
@@ -297,7 +279,7 @@ public class JDBCPersistenceOrchestrator
 		if(query instanceof JDBCQuery && Query.isDeferred(query.getQueryString())) {
 			String queryString = qti.getResolvedQuery(query);
 			if (queryType == QueryType.SQL) {
-				((JDBCQuery)query).setProviderQuery(queryString, getConnection());
+				((JDBCQuery)query).setProviderQuery(queryString, context.getConnection());
 			}
 		}
 	}
@@ -316,7 +298,7 @@ public class JDBCPersistenceOrchestrator
 	@Override public Blob createBlob ()
 	{
 		try {
-			return getConnection().createBlob();
+			return context.getConnection().createBlob();
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

@@ -22,6 +22,7 @@ package tools.xor.providers.jdbc;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -42,27 +43,27 @@ public class HSQLTranslator extends DBTranslator
     private Map<String, JDBCDAS.TableInfo> tableMap;
     private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
 
-    @Override public JDBCDAS.TableInfo getTable (ForeignKeyEnhancer enhancer, String tableName)
+    @Override public JDBCDAS.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
     {
         if(tableMap == null) {
-            getTables(enhancer);
+            getTables(connection, enhancer);
         }
 
         return tableMap.get(tableName);
     }
 
-    @Override public JDBCDAS.SequenceInfo getSequence (String sequenceName)
+    @Override public JDBCDAS.SequenceInfo getSequence (Connection connection, String sequenceName)
     {
         if(sequenceMap == null) {
-            getSequences();
+            getSequences(connection);
         }
 
         return sequenceMap.get(sequenceName);
     }
 
-    @Override public List<JDBCDAS.TableInfo> getTables (ForeignKeyEnhancer enhancer)
+    @Override public List<JDBCDAS.TableInfo> getTables (Connection connection, ForeignKeyEnhancer enhancer)
     {
-        Map<String, List<String>> primaryKeys = getPrimaryKeys();
+        Map<String, List<String>> primaryKeys = getPrimaryKeys(connection);
 
         Map<String, JDBCDAS.TableInfo> result = new HashMap<>();
         try (PreparedStatement ps = connection.prepareStatement(COLUMNS_SQL);
@@ -107,7 +108,7 @@ public class HSQLTranslator extends DBTranslator
             throw ClassUtil.wrapRun(e);
         }
 
-        List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(result);
+        List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(connection, result);
 
             // Give a chance to add any additional business logic based relationships
             // not captured by a database foreign key
@@ -150,7 +151,7 @@ public class HSQLTranslator extends DBTranslator
         }
     }
 
-    private void printResult(String sql) {
+    private void printResult(Connection connection, String sql) {
         try (PreparedStatement ps = connection.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
         ) {
@@ -182,7 +183,7 @@ public class HSQLTranslator extends DBTranslator
         }
     }
 
-    private List<JDBCDAS.ForeignKey> getForeignKeys (Map<String, JDBCDAS.TableInfo> tableMap)
+    private List<JDBCDAS.ForeignKey> getForeignKeys (Connection connection, Map<String, JDBCDAS.TableInfo> tableMap)
     {
         List<JDBCDAS.ForeignKey> result = new ArrayList<>();
 
@@ -230,7 +231,7 @@ public class HSQLTranslator extends DBTranslator
         return result;
     }
 
-    @Override public Map<String, List<String>> getPrimaryKeys ()
+    @Override public Map<String, List<String>> getPrimaryKeys (Connection connection)
     {
         Map<String, List<String>> result = new HashMap<>();
 
@@ -265,7 +266,7 @@ public class HSQLTranslator extends DBTranslator
         return result;
     }
 
-    @Override public List<JDBCDAS.SequenceInfo> getSequences ()
+    @Override public List<JDBCDAS.SequenceInfo> getSequences (Connection connection)
     {
         Map<String, JDBCDAS.SequenceInfo> result = new HashMap<>();
 

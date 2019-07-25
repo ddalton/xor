@@ -152,7 +152,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 	}
 
 	@Override
-	public PersistenceOrchestrator getPersistenceOrchestrator(Object sessionContext) {
+	public PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext) {
 		PersistenceOrchestrator result;
 
 		if(das.get(name) == null)

@@ -32,6 +32,7 @@ import tools.xor.EntityType;
 import tools.xor.FunctionType;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
@@ -324,6 +325,9 @@ public class PlainJDBCTest
 
 		// Rebuild the types
 		das.addShape("_DEFAULT_");
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		Settings settings = das.settings().json(jsonString).build();
 
@@ -333,6 +337,8 @@ public class PlainJDBCTest
 
 		List list = (List) result;
 		assert(list.size() == 2);
+
+		sc.close();
 	}
 
 	@Test
@@ -340,6 +346,10 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
+
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		JSONObject address = new JSONObject().put("ID", "A108");
 
@@ -350,7 +360,7 @@ public class PlainJDBCTest
 		json.put("ADDRESS", new JSONObject().put("ID", "A108"));
 
 		Settings settings = new Settings();
-		JDBCSessionContext context = new JDBCSessionContext();
+		JDBCSessionContext context = new JDBCSessionContext((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator(), null);
 		context.process(address, (EntityType) das.getType("address"));
 		settings.setSessionContext(context);
 
@@ -367,8 +377,7 @@ public class PlainJDBCTest
 		System.out.println("JSON string: " + json.toString());
 
 		// Need to commit to release the locks on HANA
-		JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
-		((JDBCSessionContext)po.getSessionContext()).commit();
+		sc.close();
 	}
 
 	@Test
@@ -376,6 +385,10 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
+
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		JSONObject json = new JSONObject();
 		json.put("ID", "1001");
@@ -404,6 +417,8 @@ public class PlainJDBCTest
 
 		JSONObject library = json.getJSONObject("LIBRARY");
 		assert(library.getString("NAME").equals("Bodlein Library"));
+
+		sc.close();
 	}
 
 
@@ -412,6 +427,10 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
+
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		JSONObject json = new JSONObject();
 		json.put("ID", "L100");
@@ -437,6 +456,8 @@ public class PlainJDBCTest
 		JSONArray librarians = library.getJSONArray("LIBRARIANS");
 		assert(librarians != null);
 		assert(librarians.length() == 3);
+
+		sc.close();
 	}
 
 	@Test
@@ -444,6 +465,10 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
+
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		// create library
 		JSONObject json = new JSONObject();
@@ -488,6 +513,8 @@ public class PlainJDBCTest
 
 		JSONObject assoc = la.getJSONObject("ASSOCIATION");
 		assert(assoc.getString("ID").equals("ALISE"));
+
+		sc.close();
 	}
 
 	@Test
@@ -495,6 +522,10 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
+
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		// create library
 		JSONObject json = new JSONObject();
@@ -531,6 +562,8 @@ public class PlainJDBCTest
 		JSONArray librarians = library.getJSONArray("LIBRARIANS");
 		assert(librarians != null);
 		assert(librarians.length() == 3);
+
+		sc.close();
 	}
 
 	@Test
@@ -538,6 +571,10 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		das.addShape("_DEFAULT_");
 		Shape shape = das.getShape();
+
+		am.checkPO(null);
+		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		sc.beginTransaction();
 
 		// create library
 		JSONObject json = new JSONObject();
@@ -602,6 +639,8 @@ public class PlainJDBCTest
 		assert(lib1004la.length() == 1);
 		cilip = lib1004la.getJSONObject(0);
 		validateCilip(cilip);
+
+		sc.close();
 	}
 
 	private void validateAlise(JSONObject la) {

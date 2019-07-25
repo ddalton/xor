@@ -139,7 +139,7 @@ public class Shape
         typeMap.put(className, type);
 
         if(EntityType.class.isAssignableFrom(type.getClass())) {
-            ((EntityType)type).setDAS(getDAS());
+            ((EntityType)type).setShape(this);
             String entityName = ((EntityType)type).getEntityName();
             if(entityName != null && !className.equals(entityName)) {
                 if(typeMap.containsKey(entityName)) {
@@ -191,7 +191,7 @@ public class Shape
         // create QueryType for all the embedded types
 
         EntityType result = new QueryType(rootType, propertyMap);
-        result.setDAS(this.das);
+        result.setShape(this);
 
         return result;
     }
@@ -289,7 +289,7 @@ public class Shape
             throw new RuntimeException("A type with the same name exists, please choose a different name for the open type: " + type.getName());
         }
 
-        type.setDAS(getDAS());
+        type.setShape(this);
         type.setProperty();
         addType(type.getName(), type);
 

@@ -116,7 +116,6 @@ public class JPAType extends AbstractType {
 			return;
 		}
 
-		JPADAS dataAccessService = (JPADAS)getDAS();
 		Iterator<?> attribIter = getPropertyIterator();
 		while (attribIter.hasNext()) {
 
@@ -125,7 +124,7 @@ public class JPAType extends AbstractType {
 				"[" + getName() + "] JPA Property name: " + attribute.getName() + ", type name: "
 					+ attribute.getJavaType());
 
-			Type propertyType = dataAccessService.getType(attribute.getJavaType());
+			Type propertyType = getShape().getType(attribute.getJavaType());
 			JPAProperty property = new JPAProperty(attribute, propertyType, this);
 			if (property.isIdentifier()) {
 				identifierProperty = property;
@@ -183,7 +182,7 @@ public class JPAType extends AbstractType {
 			while(attribIter.hasNext()) {
 				Attribute<?, ?> attribute = (Attribute<?, ?>) attribIter.next();
 				logger.debug("[" + getName() + "] JPA declared property name: " + attribute.getName());
-				result.add(getDAS().getShape().getProperty(this, attribute.getName()));
+				result.add(getShape().getProperty(this, attribute.getName()));
 			}
 		}
 

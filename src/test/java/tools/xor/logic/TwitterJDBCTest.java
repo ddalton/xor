@@ -33,6 +33,8 @@ import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.SchemaExtension;
@@ -409,6 +411,10 @@ public class TwitterJDBCTest
         DataAccessService das = am.getDAS();
         Shape shape = das.getShape();
 
+        am.checkPO(null);
+        JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+        sc.beginTransaction();
+
         // TODO: ID should be propagated in a composition relationship
         JSONObject url = new JSONObject().put("ID_STR", "1001");
         JSONObject url1 = new JSONObject().put("ID_STR", "URL1");
@@ -453,6 +459,7 @@ public class TwitterJDBCTest
         JSONArray urlsArray = userurl.getJSONArray("urls");
         assert(urlsArray != null);
         assert(urlsArray.length() == 2);
+        sc.close();
     }
 
     private JSONObject getTweet(boolean isQuote, int id) {

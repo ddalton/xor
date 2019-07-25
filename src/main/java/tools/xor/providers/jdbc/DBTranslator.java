@@ -22,26 +22,25 @@ package tools.xor.providers.jdbc;
 import org.json.JSONObject;
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
-import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.JSONObjectProperty;
-import tools.xor.MutableJsonProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.view.BindParameter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,8 +71,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class DBTranslator
 {
     private final static Map<String, DBTranslator> translators = new ConcurrentHashMap<>();
-
-    protected Connection connection;
 
     static {
         translators.put("HSQL DATABASE ENGINE", new HSQLTranslator() );
@@ -329,9 +326,6 @@ public abstract class DBTranslator
             if(result == null) {
                 throw new RuntimeException("Unable to find DBTranslator for product: " + productName);
             }
-
-            // Always initialized with the active connection
-            result.connection = conn;
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
@@ -370,7 +364,7 @@ public abstract class DBTranslator
         return result;
     }
 
-    private void setIdentifier(Settings settings, BusinessObject bo, JDBCType entityType) {
+    public void setIdentifier(Settings settings, BusinessObject bo, JDBCType entityType) {
 
         // Check if the business object is a collection element
         JDBCProperty containerProperty = null;
@@ -417,8 +411,7 @@ public abstract class DBTranslator
         }
     }
 
-    public String getInsertSql(BusinessObject bo, JDBCType entityType) {
-
+    public String getInsertSqlFragment(BusinessObject bo, JDBCType entityType, boolean isBindParameters) {
         StringBuilder sqlstr = new StringBuilder();
         sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
 
@@ -453,11 +446,24 @@ public abstract class DBTranslator
                 }
             }
         }
-        sqlstr.append(String.join(",", columnNames))
-            .append(") VALUES (");
 
+        if (isBindParameters) {
+            List<String> placeHolders = new LinkedList<>();
+            for(int i = 0; i < columnNames.size(); i++) {
+                placeHolders.add("?");
+            }
+        } else {
+            sqlstr.append(String.join(",", columnNames));
+        }
+        sqlstr.append(")");
+
+        return sqlstr.toString();
+    }
+
+    public String setValues(PreparedStatement ps, BusinessObject bo, JDBCType entityType) {
         // get the values
         List<String> values = new LinkedList<>();
+        int position = 1;
         for(Property p: entityType.getProperties()) {
             if(((ExtendedProperty)p).isGenerated()) {
                 continue;
@@ -475,6 +481,10 @@ public abstract class DBTranslator
             if(p.getType().isDataType() && !p.isMany()) {
                 JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
                 values.add(getConverter(col.getDataType()).toSQLLiteral(bo.get(col.getName())));
+
+                if(ps != null) {
+                    addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
+                }
             }
 
             // foreign keys
@@ -487,22 +497,47 @@ public abstract class DBTranslator
                     String dataType = referencedColumns.get(i).getDataType();
                     String columnName = referencedColumns.get(i).getName();
                     values.add(getConverter(dataType).toSQLLiteral(entity.get(columnName)));
+
+                    if(ps != null) {
+                        addBindParameter(ps, dataType, position++, entity.get(columnName));
+                    }
                 }
             }
         }
-        sqlstr.append(String.join(",", values))
-            .append(")");
+
+        if(ps == null) {
+            StringBuilder sqlstr = new StringBuilder("(");
+            sqlstr.append(String.join(",", values))
+                .append(")");
+
+            return sqlstr.toString();
+        } else {
+            return null;
+        }
+    }
+
+    private void addBindParameter(PreparedStatement ps, String type, int position, Object value) {
+        BindParameter bp = BindParameter.instance(position, null);
+        bp.setType(type);
+        bp.setValue(ps, value);
+    }
+
+    public String getInsertSql(BusinessObject bo, JDBCType entityType) {
+
+        StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(bo, entityType, false));
+        sqlstr.append(" VALUES ");
+        sqlstr.append(setValues(null, bo, entityType));
 
         return sqlstr.toString();
     }
 
-    public abstract JDBCDAS.TableInfo getTable(ForeignKeyEnhancer enhancer, String tableName);
+    public abstract JDBCDAS.TableInfo getTable(Connection connection, ForeignKeyEnhancer enhancer, String tableName);
 
-    public abstract List<JDBCDAS.TableInfo> getTables(ForeignKeyEnhancer enhancer);
+    public abstract List<JDBCDAS.TableInfo> getTables(Connection connection ,ForeignKeyEnhancer enhancer);
 
-    public abstract Map<String, List<String>> getPrimaryKeys();
+    public abstract Map<String, List<String>> getPrimaryKeys(Connection connection);
 
-    public abstract JDBCDAS.SequenceInfo getSequence (String sequenceName);
+    public abstract JDBCDAS.SequenceInfo getSequence (Connection connection, String sequenceName);
 
-    public abstract List<JDBCDAS.SequenceInfo> getSequences();
+    public abstract List<JDBCDAS.SequenceInfo> getSequences(Connection connection);
 }

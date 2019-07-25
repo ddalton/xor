@@ -26,7 +26,7 @@ public interface DASFactory {
 
 	AggregateManager getAggregateManager();
 	
-	PersistenceOrchestrator getPersistenceOrchestrator(Object sessionContext);
+	PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext);
 	
 	void injectDependencies(Object bean, String name);
 }

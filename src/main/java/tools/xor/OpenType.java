@@ -91,21 +91,21 @@ public class OpenType extends AbstractType {
 
 	@Override
 	public Property getProperty(String path) {
-		return getDAS().getShape().getProperty(this, path);
+		return getShape().getProperty(this, path);
 	}
 
 	public void setProperty() {
 
-		if(getDAS().getShape().getProperties(this) == null) {
+		if(getShape().getProperties(this) == null) {
 			for (String p : openProperties) {
 				String[] tokens = p.split(DELIM);
 				if (tokens.length != 2) {
 					throw new RuntimeException(
 						"The open property should be of the form <Class name>#<property name>");
 				}
-				Type t = getDAS().getType(tokens[0]);
+				Type t = getShape().getType(tokens[0]);
 				Property property = t.getProperty(tokens[1]);
-				getDAS().getShape().addProperty(this, property);
+				getShape().addProperty(this, property);
 			}
 		}
 	}

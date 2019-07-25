@@ -468,7 +468,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			for (PropertyAlias viewAlias : view.getViewAliases()) {
 				AggregateView childView = nameViewMap.get(viewAlias.getViewName());
 				if (childView != null) {
-					EntityType childEntityType = (EntityType)entityType.getDAS().getType(viewAlias.getTypeName());
+					EntityType childEntityType = (EntityType)entityType.getShape().getType(viewAlias.getTypeName());
 					QueryType queryType = new QueryType(childEntityType, null);
 					SubtypeState childRootState = new SubtypeState(queryType, false);
 					viewAliasStateMap.put(viewAlias, childRootState);

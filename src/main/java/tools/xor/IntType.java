@@ -62,7 +62,8 @@ public class IntType extends SimpleType {
 			return gen.getIntValue(visitor);
 		}
 
-		int range = getMax() - getMin();
+		// the range can overflow
+		long range = getMax() - getMin();
 		return getMin() + ((int)(Math.random() * range));
 	}		
 }

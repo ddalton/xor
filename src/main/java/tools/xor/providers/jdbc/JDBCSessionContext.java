@@ -330,6 +330,18 @@ public class JDBCSessionContext implements CustomPersister
         }
     }
 
+    @Override public void rollback ()
+    {
+        try {
+            connection.rollback();
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        } finally {
+            this.close();
+        }
+    }
+
     @Override
     public void flush() {
         try {

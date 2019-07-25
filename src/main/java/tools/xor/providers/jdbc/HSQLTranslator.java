@@ -94,10 +94,11 @@ public class HSQLTranslator extends DBTranslator
                 }
                 Boolean generated = "YES".equals(rs.getString(5)) ? true : false;
                 int length = rs.getInt(6);
-                if(!SQL_TO_JAVA_TYPE_MAP.containsKey(columnType)) {
+                if(getJavaClass(columnType) == null) {
                     throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
                 }
-                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType), columnType, generated, length);
+                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, getJavaClass(columnType), columnType,
+                    generated, length);
                 columns.add(ci);
             }
             if(table != null) {

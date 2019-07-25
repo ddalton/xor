@@ -62,7 +62,8 @@ public class ShortType extends SimpleType {
 			return gen.getShortValue(visitor);
 		}
 
-		short range = (short) (getMax() - getMin());
+		// The range can overflow, so we use int type
+		int range = (getMax() - getMin());
 		return (short) (getMin() + (Math.random() * range));
 	}	
 }

@@ -53,6 +53,8 @@ public interface CustomPersister
 
     void commit();
 
+    void rollback();
+
     void flush ();
 
     void clear();

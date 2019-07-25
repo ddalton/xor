@@ -19,6 +19,8 @@
 
 package tools.xor.providers.jdbc;
 
+import tools.xor.JSONObjectProperty;
+import tools.xor.UnsignedByteType;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 
@@ -27,11 +29,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HANATranslator extends DBTranslator
 {
@@ -42,6 +47,82 @@ public class HANATranslator extends DBTranslator
 
     private Map<String, JDBCDAS.TableInfo> tableMap;
     private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
+
+    protected static final Map<String, Class> HANA_SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
+    protected static final Map<String, JDBCtoSQLConverter> hanaConvertersByDataType = new ConcurrentHashMap<>();
+
+
+    static {
+        HANA_SQL_TO_JAVA_TYPE_MAP.put("TINYINT", UnsignedByteType.class);
+    }
+
+    @Override
+    protected Class getJavaClass(String sqlType) {
+        if(HANA_SQL_TO_JAVA_TYPE_MAP.containsKey(sqlType)) {
+            return HANA_SQL_TO_JAVA_TYPE_MAP.get(sqlType);
+        }
+
+        return super.getJavaClass(sqlType);
+    }
+
+    static {
+        hanaConvertersByDataType.put(
+            "DATE", new JDBCtoSQLConverter()
+            {
+                final String hanadateFmt = "YYYY-MM-DD";
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return String.format("TO_DATE('%s', '%s')", df.format(value), hanadateFmt);
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Date converter");
+                    }
+                }
+            });
+
+        hanaConvertersByDataType.put(
+            "TIME", new JDBCtoSQLConverter()
+            {
+                final String hanaTimeFmt = "HH24:MI:SS";
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return String.format("TO_TIME('%s', '%s')", df.format(value), hanaTimeFmt);
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Time converter");
+                    }
+                }
+            });
+
+        hanaConvertersByDataType.put(
+            "TIMESTAMP", new JDBCtoSQLConverter()
+            {
+                final String hanaTimestampFmt = "YYYY-MM-DD HH24:MI:SS";
+                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
+                @Override public String toSQLLiteral (Object value)
+                {
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return String.format("TO_TIMESTAMP('%s', '%s')", df.format(value), hanaTimestampFmt);
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Timestamp converter");
+                    }
+                }
+            });
+    }
+
+    @Override
+    protected JDBCtoSQLConverter getConverter(String dataType) {
+        if(hanaConvertersByDataType.containsKey(dataType)) {
+            return hanaConvertersByDataType.get(dataType);
+        }
+
+        return super.getConverter(dataType);
+    }
 
     @Override public JDBCDAS.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
     {
@@ -91,10 +172,11 @@ public class HANATranslator extends DBTranslator
                 String columnType = rs.getString(4);
                 Boolean generated = (rs.getString(5) != null) ? true : false;
                 int length = rs.getInt(6);
-                if(!SQL_TO_JAVA_TYPE_MAP.containsKey(columnType)) {
+                if(getJavaClass(columnType) == null) {
                     throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
                 }
-                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, SQL_TO_JAVA_TYPE_MAP.get(columnType), columnType, generated, length);
+                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, getJavaClass(
+                    columnType), columnType, generated, length);
                 columns.add(ci);
             }
             if(table != null) {

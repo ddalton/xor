@@ -89,8 +89,8 @@ public abstract class DBTranslator
         SQL_TO_JAVA_TYPE_MAP.put("DECIMAL", java.math.BigDecimal.class);
         SQL_TO_JAVA_TYPE_MAP.put("BIT", Boolean.class);
         SQL_TO_JAVA_TYPE_MAP.put("BOOLEAN", Boolean.class);
-        SQL_TO_JAVA_TYPE_MAP.put("TINYINT", Integer.class);
-        SQL_TO_JAVA_TYPE_MAP.put("SMALLINT", Integer.class);
+        SQL_TO_JAVA_TYPE_MAP.put("TINYINT", Byte.class);
+        SQL_TO_JAVA_TYPE_MAP.put("SMALLINT", Short.class);
         SQL_TO_JAVA_TYPE_MAP.put("INTEGER", Integer.class);
         SQL_TO_JAVA_TYPE_MAP.put("BIGINT", Long.class);
         SQL_TO_JAVA_TYPE_MAP.put("REAL", Float.class);
@@ -103,6 +103,10 @@ public abstract class DBTranslator
         SQL_TO_JAVA_TYPE_MAP.put("TIMESTAMP", java.sql.Timestamp.class);
         SQL_TO_JAVA_TYPE_MAP.put("BLOB", java.sql.Blob.class);
         SQL_TO_JAVA_TYPE_MAP.put("CLOB", java.sql.Clob.class);
+    }
+
+    protected Class getJavaClass (String sqlType) {
+        return SQL_TO_JAVA_TYPE_MAP.get(sqlType);
     }
 
     public interface JDBCtoSQLConverter {

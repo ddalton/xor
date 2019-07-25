@@ -22,11 +22,9 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
-import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
-import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 
@@ -54,60 +52,53 @@ public class DataImporter implements Callable
         this.po = (JDBCPersistenceOrchestrator)po;
     }
 
-    public Object call() throws InterruptedException
+    public Object call() throws InterruptedException, SQLException
     {
         Object result = DataGenerator.SUCCESS;
 
-        try {
-            // Begin a new transaction
-            po.getSessionContext().beginTransaction();
+        // Begin a new transaction
+        po.getSessionContext().beginTransaction();
 
-            int i = 1;
-            while (true) {
-                System.out.println("Data Importer: " + i);
-                JSONObject json = queue.take();
+        int i = 1;
+        while (true) {
+            System.out.println("Data Importer: " + i);
+            JSONObject json = queue.take();
 
-                if (json == DataGenerator.END_MARKER) {
-                    System.out.println("*****Found end marker");
-                    queue.put(DataGenerator.END_MARKER);
-                    break;
-                }
-
-                String entityName = json.getString(Constants.XOR.TYPE);
-                Type type = shape.getType(entityName);
-                BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
-                bo.setInstance(json);
-                po.getSessionContext().persist(bo, settings);
-
-                if (i++ % COMMIT_SIZE == 0) {
-                    // commit in batches
-                    commit();
-
-                    // Begin a new transaction
-                    po.getSessionContext().beginTransaction();
-                }
+            if (json == DataGenerator.END_MARKER) {
+                System.out.println("*****Found end marker");
+                queue.put(DataGenerator.END_MARKER);
+                break;
             }
 
-            // last commit
-            commit();
+            String entityName = json.getString(Constants.XOR.TYPE);
+            Type type = shape.getType(entityName);
+            BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
+            bo.setInstance(json);
+            po.getSessionContext().persist(bo, settings);
+
+            if (i++ % COMMIT_SIZE == 0) {
+                // commit in batches
+                commit();
+
+                // Begin a new transaction
+                po.getSessionContext().beginTransaction();
+            }
         }
-        catch (InterruptedException e) {
-            logger.info("Thread interrupted when processing json");
-            e.printStackTrace();
-        }
-        catch (SQLException e) {
-            e.printStackTrace();
-            result = ClassUtil.wrapRun(e);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+
+        // last commit
+        commit();
+
 
         return result;
     }
 
     private void commit() {
-        po.getSessionContext().flush();
-        po.getSessionContext().commit();
+        try {
+            po.getSessionContext().flush();
+            po.getSessionContext().commit();
+        } catch (Exception e) {
+            po.getSessionContext().rollback();
+            throw e;
+        }
     }
 }

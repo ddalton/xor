@@ -20,6 +20,7 @@
 package tools.xor.service;
 
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.poi.EncryptedDocumentException;
@@ -1539,8 +1540,8 @@ public class AggregateManager implements Xor
 		return f;
 	}
 
-	public void generate(String name, Settings settings) {
-
+	public void generate (String name, Settings settings)
+	{
 		Shape shape = getDAS().getShape(name);
 		ExecutorService generators = Executors.newFixedThreadPool(10);
 		ExecutorService importers = Executors.newFixedThreadPool(10);
@@ -1549,12 +1550,12 @@ public class AggregateManager implements Xor
 		final CountDownLatch latch = new CountDownLatch(10);
 
 		// Create the generators
-		for(int i =0; i < 10; i++) {
+		for (int i = 0; i < 10; i++) {
 			generators.submit(new DataGenerator(queue, latch, shape, settings));
 		}
 		// Create the importers
 		List<Future> importJobs = new ArrayList<Future>();
-		for(int i =0; i < 10; i++) {
+		for (int i = 0; i < 10; i++) {
 			PersistenceOrchestrator po = getDasFactory().createPersistenceOrchestrator(settings.getSessionContext());
 			importJobs.add(importers.submit(new DataImporter(queue, po, shape, settings)));
 		}
@@ -1563,20 +1564,19 @@ public class AggregateManager implements Xor
 		try {
 			latch.await();
 			queue.put(DataGenerator.END_MARKER);
-
-			// Wait for the import jobs to finish
-			for(Future importJob: importJobs) {
-				Object o = importJob.get();
-				if(o != DataGenerator.SUCCESS) {
-					logger.error(o.toString());
-				}
-			}
 		}
 		catch (InterruptedException e) {
 			throw ClassUtil.wrapRun(e);
 		}
-		catch (ExecutionException e) {
-			throw ClassUtil.wrapRun(e);
+
+		// Wait for the import jobs to finish
+		for (Future importJob : importJobs) {
+			try {
+				importJob.get();
+			}
+			catch (Exception e) {
+				logger.error(ExceptionUtils.getStackTrace(e));
+			}
 		}
 	}
 }

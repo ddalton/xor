@@ -62,7 +62,8 @@ public class ByteType extends SimpleType {
 			return gen.getByteValue(visitor);
 		}
 
-		byte range = (byte) (getMax() - getMin());
+		// The different can overflow, so we use the next higher type
+		short range = (short) (getMax() - getMin());
 		return (byte) (getMin() + (Math.random() * range));
 	}		
 }

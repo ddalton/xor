@@ -56,6 +56,8 @@ public class SimpleTypeFactory {
 			return new BooleanType(clazz);
 		} else if (byte.class == clazz || Byte.class == clazz) {
 			return new ByteType(clazz);
+		} else if (UnsignedByteType.class.isAssignableFrom(clazz)) {
+			return new UnsignedByteType(clazz);
 		} else if (short.class == clazz || Short.class == clazz) {
 			return new ShortType(clazz);			
 		} else if (char.class == clazz || Character.class == clazz) {

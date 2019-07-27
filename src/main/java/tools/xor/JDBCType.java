@@ -101,7 +101,7 @@ public class JDBCType extends AbstractType {
 
                 if(fkey != parentFK) {
                     JDBCProperty property = new JDBCProperty(
-                        (fkey == parentFK) ? JDBCProperty.PARENT : fkey.getPropertyName(),
+                        fkey.getPropertyName(),
                         columns,
                         propertyType,
                         this,

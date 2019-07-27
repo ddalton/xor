@@ -169,7 +169,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	protected Shape getOrCreateShape (String name) {
-		return getOrCreateShape(name, shapes.get(DEFAULT_SHAPE));
+		return getOrCreateShape(name, null);
 	}
 
 	@Override
@@ -316,8 +316,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				Settings settings = new Settings();
 				settings.setGraphFileName("ApplicationStateGraph" + shape.getName() + ".dot");
 				stateGraph.generateVisual(settings);
-
-				stateGraph.printEntityOrder();
 			}
 		}
 	}

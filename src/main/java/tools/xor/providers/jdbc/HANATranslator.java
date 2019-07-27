@@ -70,9 +70,9 @@ public class HANATranslator extends DBTranslator
             "DATE", new JDBCtoSQLConverter()
             {
                 final String hanadateFmt = "YYYY-MM-DD";
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
                 @Override public String toSQLLiteral (Object value)
                 {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
                         return String.format("TO_DATE('%s', '%s')", df.format(value), hanadateFmt);
@@ -86,9 +86,9 @@ public class HANATranslator extends DBTranslator
             "TIME", new JDBCtoSQLConverter()
             {
                 final String hanaTimeFmt = "HH24:MI:SS";
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
                 @Override public String toSQLLiteral (Object value)
                 {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
                         return String.format("TO_TIME('%s', '%s')", df.format(value), hanaTimeFmt);
@@ -102,9 +102,9 @@ public class HANATranslator extends DBTranslator
             "TIMESTAMP", new JDBCtoSQLConverter()
             {
                 final String hanaTimestampFmt = "YYYY-MM-DD HH24:MI:SS";
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
                 @Override public String toSQLLiteral (Object value)
                 {
+                    SimpleDateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
                         return String.format("TO_TIMESTAMP('%s', '%s')", df.format(value), hanaTimestampFmt);

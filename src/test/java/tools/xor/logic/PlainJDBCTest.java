@@ -32,6 +32,8 @@ import tools.xor.EntityType;
 import tools.xor.FunctionType;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
+import tools.xor.generator.Generator;
+import tools.xor.generator.RangePercent;
 import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
@@ -676,5 +678,19 @@ public class PlainJDBCTest
 		assert(librarian1.getString("ID").equals("1002"));
 		assert(librarian2.getString("ID").equals("1003"));
 		assert(librarian3.getString("ID").equals("1004"));
+	}
+
+	@Test
+	public void testRangePercent() {
+		Generator parentgen = new RangePercent(new String[] {"ID_[__]",
+															 "0,3:0.06",
+															 "4,15:0.18",
+															 "16,35:0.30",
+															 "36,85:0.36",
+															 "86,2576:1.00"
+		});
+
+		short val = parentgen.getShortValue(null);
+		System.out.println(val);
 	}
 }

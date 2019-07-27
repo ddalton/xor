@@ -36,10 +36,9 @@ import java.util.List;
 public class JDBCProperty extends AbstractProperty implements Cloneable
 {
     public static final String INVERSE = "-1";
-    public static final String PARENT = "_PARENT_";
 
     private boolean    isMany;
-    private boolean    isOwner;       // Should be true if there is cascade delete on inverse relationship
+    private boolean    isComposition;
     private boolean    nullable;
     private List<JDBCDAS.ColumnInfo> columns;
     private JDBCDAS.ForeignKey       foreignKey;
@@ -66,7 +65,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         }
 
         this.nullable = true;
-        // Even if a single column in NOT NULL, then the nullage flag should be false
+        // Even if a single column in NOT NULL, then the nullable flag should be false
         for(JDBCDAS.ColumnInfo ci: this.columns) {
             if(!ci.isNullable()) {
                 this.nullable = false;
@@ -187,15 +186,15 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         return this.isMany;
     }
 
-    public boolean isOwner() {
-        return this.isOwner;
-    }
-
     @Override public boolean isContainment ()
     {
-        return (foreignKey != null && foreignKey.isContainment()) ||
+        return isComposition || (foreignKey != null && foreignKey.isContainment()) ||
             // If this is on the inverse property
             (getMappedBy() != null && ((JDBCProperty)getMappedBy()).getForeignKey() != null && ((JDBCProperty)getMappedBy()).getForeignKey().isComposition());
+    }
+
+    public void setComposition(boolean value) {
+        this.isComposition = value;
     }
 
     public List<JDBCDAS.ColumnInfo> getColumns() {

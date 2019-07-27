@@ -548,6 +548,8 @@ public class BindParameter
 						}
 					} else if(value instanceof Date) {
 						date = (Date) value;
+					} else if(value instanceof java.util.Date) {
+						date = new Date(((java.util.Date)value).getTime());
 					} else {
 						throw new RuntimeException("Unsupported value type for Date converter");
 					}
@@ -747,6 +749,8 @@ public class BindParameter
 						time = Time.valueOf(value.toString());
 					} else if(value instanceof Time) {
 						time = (Time) value;
+					} else if(value instanceof java.util.Date) {
+						time = new Time(((java.util.Date)value).getTime());
 					} else {
 						throw new RuntimeException("Unsupported value type for Time converter");
 					}
@@ -792,7 +796,9 @@ public class BindParameter
 							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + JSONObjectProperty.ISO8601_FORMAT);
 						}
 					} else if(value instanceof Timestamp) {
-						timestamp = (Timestamp) value;
+						timestamp = (Timestamp)value;
+					} else if(value instanceof java.util.Date) {
+						timestamp = new Timestamp(((java.util.Date)value).getTime());
 					} else {
 						throw new RuntimeException("Unsupported value type for Timestamp converter");
 					}

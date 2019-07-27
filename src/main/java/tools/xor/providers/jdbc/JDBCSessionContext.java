@@ -27,10 +27,12 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -55,14 +57,16 @@ public class JDBCSessionContext implements CustomPersister
 {
     private Connection connection;
     private DBTranslator dbTranslator;
-    private Statement insertStatement;
     private JDBCPersistenceOrchestrator po;
+
+    private Statement insertStatement;
+    private Set<PreparedStatement> preparedStatements = new HashSet<>();
 
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
 
     private final List<String> insertBatch = new LinkedList<>();
 
-    private final static Map<String, PreparedStatement> statementCache = lruCache(1000);
+    private final Map<String, PreparedStatement> statementCache = lruCache(1000);
 
     public static <K,V> Map<K,V> lruCache(final int maxSize) {
         return new LinkedHashMap<K,V>(maxSize*4/3, 0.75f, true) {
@@ -202,13 +206,17 @@ public class JDBCSessionContext implements CustomPersister
 
     @Override public void persist (BusinessObject bo, Settings settings) throws SQLException
     {
-
-        createInsertStatement();
         try {
-            for (String insertSql : getDbTranslator().getInsertSql(settings, bo)) {
-                System.out.println(insertSql);
+            /*
+            createInsertStatement();
+            for (String insertSql : getInsertSql(settings, bo)) {
                 insertStatement.addBatch(insertSql);
                 insertBatch.add(insertSql);
+            }
+            */
+            for (PreparedStatement ps : getInsertPS(settings, bo)) {
+                ps.addBatch();
+                preparedStatements.add(ps);
             }
         }catch(Throwable t) {
             t.printStackTrace();
@@ -277,6 +285,7 @@ public class JDBCSessionContext implements CustomPersister
                 ps = statementCache.get(psSQL);
             } else {
                 ps = connection.prepareStatement(psSQL);
+                statementCache.put(psSQL, ps);
             }
         }
         catch (SQLException e) {
@@ -347,29 +356,39 @@ public class JDBCSessionContext implements CustomPersister
         try {
             if (!ApplicationConfiguration.config().containsKey(Constants.Config.BATCH_SKIP)
                 || !ApplicationConfiguration.config().getBoolean(Constants.Config.BATCH_SKIP)) {
-                int[] result = insertStatement.executeBatch();
 
-                if (result.length != insertBatch.size()) {
-                    throw new RuntimeException(
-                        "The number of insert SQLs do not match the number received by the database");
-                }
+                if(preparedStatements.size() > 0) {
+                    for(PreparedStatement ps: preparedStatements) {
+                        ps.executeBatch();
+                    }
+                } else if(insertStatement != null) {
+                    int[] result = insertStatement.executeBatch();
 
-                StringBuilder failedSqls = new StringBuilder();
-                for (int i = 0; i < result.length; i++) {
-                    if (result[i] != 1) {
-                        failedSqls.append(insertBatch.get(i))
-                            .append("\n");
+                    if (result.length != insertBatch.size()) {
+                        throw new RuntimeException(
+                            "The number of insert SQLs do not match the number received by the database");
+                    }
+
+                    StringBuilder failedSqls = new StringBuilder();
+                    for (int i = 0; i < result.length; i++) {
+                        if (result[i] != 1) {
+                            failedSqls.append(insertBatch.get(i))
+                                .append("\n");
+                        }
+                    }
+
+                    if (failedSqls.length() > 0) {
+                        throw new RuntimeException(
+                            "The following SQLs have failed: \n " + failedSqls.toString());
                     }
                 }
-
-                if (failedSqls.length() > 0) {
-                    throw new RuntimeException(
-                        "The following SQLs have failed: \n " + failedSqls.toString());
-                }
             } else {
+                if(preparedStatements != null) {
+                    throw new RuntimeException("Non batch execution is not supported. The batch.skip setting should be set to false.");
+                }
                 try(Statement stmt = getConnection().createStatement()) {
                     for (String insertSQL : insertBatch) {
-                        System.out.println("INSERTING: " + insertSQL);
+                        //System.out.println("INSERTING: " + insertSQL);
                         stmt.executeUpdate(insertSQL);
                     }
                 }
@@ -382,6 +401,11 @@ public class JDBCSessionContext implements CustomPersister
                 if(this.insertStatement != null) {
                     this.insertStatement.close();
                 }
+                if(preparedStatements != null) {
+                    for(PreparedStatement ps: preparedStatements) {
+                        ps.clearParameters();
+                    }
+                }
                 this.clear();
             }
             catch (SQLException e) {
@@ -393,6 +417,9 @@ public class JDBCSessionContext implements CustomPersister
     public void clear() {
         this.idToObjects = new HashMap<>();
         this.insertBatch.clear();
+        if(this.preparedStatements != null) {
+            this.preparedStatements.clear();
+        }
         this.statementCache.clear();
         this.insertStatement = null;
     }

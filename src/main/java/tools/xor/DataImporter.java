@@ -61,11 +61,9 @@ public class DataImporter implements Callable
 
         int i = 1;
         while (true) {
-            System.out.println("Data Importer: " + i);
             JSONObject json = queue.take();
 
             if (json == DataGenerator.END_MARKER) {
-                System.out.println("*****Found end marker");
                 queue.put(DataGenerator.END_MARKER);
                 break;
             }

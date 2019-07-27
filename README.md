@@ -17,6 +17,9 @@ Add Testcase for testing performance query
  - Populate data according to stats in HANAMON
  - execute equivalent queries to find the correct one
 
+1. Refactor to use JSONObject to represent view and not list of properties.
+   Allows for rich expression of the query.
+
 
 2. Ensure that the absolute path is used to create the entity key and not relative path
    Currently the tree split occurs from the root node. This is wasteful.
@@ -93,7 +96,6 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
    The advantage of #1 is that it reduces the number of round trips
    The advantage of #2 is that it can more effectively use the SQL cache.
 
-2) A special _PARENT_ property/relationship is created for foreign keys between the primary keys of 2 tables
 
 
 0. Type narrowing of a property

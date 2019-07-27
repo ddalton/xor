@@ -26,6 +26,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
+import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -35,7 +36,7 @@ import java.util.concurrent.CountDownLatch;
  * Generate JSONObject instances based on the GeneratorSettings for the Entity types in the shape.
  * Multiple instances of this class can be created.
  */
-public class DataGenerator implements Callable
+public class DataGenerator
 {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     public static final JSONObject END_MARKER = new JSONObject();
@@ -44,11 +45,11 @@ public class DataGenerator implements Callable
     private BlockingDeque<JSONObject> queue;
     private Shape shape;
     private Settings settings;
-    private CountDownLatch latch;
+    private List<String> types;
 
-    public DataGenerator (BlockingDeque<JSONObject> queue, CountDownLatch latch, Shape shape, Settings settings) {
+    public DataGenerator (BlockingDeque<JSONObject> queue, List<String> types, Shape shape, Settings settings) {
         this.queue = queue;
-        this.latch = latch;
+        this.types = types;
         this.shape = shape;
         this.settings = settings;
     }
@@ -56,16 +57,15 @@ public class DataGenerator implements Callable
     /**
      * Generate data for all entity types that have the generator settings set on them
      */
-    public Object call() {
+    public Object execute() {
         Object result = SUCCESS;
-        latch.countDown();
 
-        for(Type type: shape.getUniqueTypes()) {
+        for(String typename: types) {
+            Type type = shape.getType(typename);
             if(type instanceof EntityType && ((EntityType)type).getGeneratorSettings() != null) {
                 generateInstances((EntityType)type, settings);
             }
         }
-        latch.countDown();
 
         return result;
     }
@@ -77,19 +77,26 @@ public class DataGenerator implements Callable
         int counter = generatorSettings.getAndIncrement();
         StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(null, settings, null);
         while(generatorSettings.isValid(counter)) {
-            System.out.println("Data generator: " + counter);
             // Generate the JSONObject
             JSONObject json = new JSONObject();
             visitor.setContext(new Integer(counter));
-            for(Property p: entityType.getProperties()) {
-                if( ((ExtendedProperty) p).isDataType() && (((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
-                    json.put(p.getName(), ((BasicType)p.getType()).generate(
-                            settings,
-                            p,
-                            null,
-                            null,
-                            visitor));
+
+            EntityType currentType = entityType;
+            while(currentType != null) {
+                for (Property p : currentType.getProperties()) {
+                    if (((ExtendedProperty)p).isDataType() && (
+                        ((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
+                        json.put(
+                            p.getName(), ((BasicType)p.getType()).generate(
+                                settings,
+                                p,
+                                null,
+                                null,
+                                visitor));
+                    }
                 }
+
+                currentType = currentType.getSuperType();
             }
             json.put(Constants.XOR.TYPE, entityType.getName());
 

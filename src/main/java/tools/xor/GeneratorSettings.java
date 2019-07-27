@@ -24,11 +24,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GeneratorSettings
 {
     private final int count;
+    private final int start;
     private final AtomicInteger current;
 
     public GeneratorSettings(int count) {
+        this(count, 0);
+    }
+
+    public GeneratorSettings(int count, int start) {
         this.count = count;
-        this.current = new AtomicInteger(0);
+        this.start = start;
+        this.current = new AtomicInteger(start);
     }
 
     public int getAndIncrement() {
@@ -36,7 +42,7 @@ public class GeneratorSettings
     }
 
     public boolean isValid(int counter) {
-        if(counter < count) {
+        if(counter < count+start) {
             return true;
         }
 

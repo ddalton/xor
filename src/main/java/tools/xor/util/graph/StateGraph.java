@@ -790,16 +790,21 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 			sgLogger.debug(sb.toString());
 		}
-
-		if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
-			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
-			Settings settings = new Settings();
-			settings.setGraphFileName("ApplicationStateGraph_Topological" + (shape != null ? shape.getName() : "") + ".dot");
-			generateVisual(settings);
-		}
 		
 		// renumber the vertices
 		renumber(sorted);
+
+		if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
+			&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
+			if(getEdges().size() > 0) {
+				printEntityOrder();
+			}
+			Settings settings = new Settings();
+			settings.setGraphFileName(
+				"ApplicationStateGraph_Topological" + (shape != null ? shape.getName() : "")
+					+ ".dot");
+			generateVisual(settings);
+		}
 
 		restore();
 
@@ -836,7 +841,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		// Print in sorted order
-		System.out.println("******* TOPOLOGICAL ORDER *******");
+		System.out.println(String.format("******* TOPOLOGICAL ORDER [%s] *******", shape.getName()));
 		Set<Map.Entry<Integer, String>> entrySet = map.entrySet();
 		Iterator<Map.Entry<Integer, String>> iter = entrySet.iterator();
 		while(iter.hasNext()) {
@@ -852,7 +857,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			for (V state : getVertices()) {
 				if (!state.getType().isDataType()) {
 					for (Property p : shape.getProperties((EntityType)state.getType()).values()) {
-						Type propertyType = GraphUtil.getPropertyType(p, shape);
+						Type propertyType = GraphUtil.getPropertyEntityType(p, shape);
 						//sgLogger.debug("checking edge " + p.getName() + " of type " + propertyType.getName() );
 						if (states.containsKey(propertyType)) {
 							Edge<State> edge = new Edge<State>(

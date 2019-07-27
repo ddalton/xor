@@ -176,7 +176,8 @@ public interface Xor {
 	/**
 	 * Generate data based on the shape
 	 * @param name of the shape
+	 * @param types in topological order
 	 * @param settings user settings
 	 */
-	public void generate(String name, Settings settings);
+	public void generate(String name, List<String> types, Settings settings);
 }

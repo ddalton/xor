@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -268,9 +267,9 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "DATE", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
                 @Override public String toSQLLiteral (Object value)
                 {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
                         return String.format("CAST ('%s' AS date)", df.format(value));
@@ -283,9 +282,9 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "TIME", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
                 @Override public String toSQLLiteral (Object value)
                 {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
                         return String.format("CAST ('%s' AS time)", df.format(value));
@@ -298,9 +297,9 @@ public abstract class DBTranslator
         convertersByDataType.put(
             "TIMESTAMP", new JDBCtoSQLConverter()
             {
-                DateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
                 @Override public String toSQLLiteral (Object value)
                 {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
                     if(value == null) return "NULL";
                     if(value instanceof java.util.Date) {
                         return String.format("CAST ('%s' AS datetime)", df.format(value));
@@ -333,36 +332,6 @@ public abstract class DBTranslator
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
-        }
-
-        return result;
-    }
-
-    /**
-     * Return 1 or more insert SQLs.
-     * Return more than 1 in case of an object participating in an inheritance hierarchy
-     *
-     * @param settings
-     * @param bo
-     * @return
-     */
-    public List<String> getInsertSql(Settings settings, BusinessObject bo)
-    {
-        JDBCType entityType = (JDBCType)bo.getType();
-
-        setIdentifier(settings, bo, entityType);
-
-        Stack<String> sqlStack = new Stack<>();
-        while(entityType != null) {
-            sqlStack.push(getInsertSql(bo, entityType));
-
-            // Walk up the super-type
-            entityType = (JDBCType)entityType.getSuperType();
-        }
-
-        List<String> result = new LinkedList<>();
-        while(!sqlStack.isEmpty()) {
-            result.add(sqlStack.pop());
         }
 
         return result;
@@ -451,15 +420,18 @@ public abstract class DBTranslator
             }
         }
 
+        sqlstr.append(String.join(",", columnNames));
+        sqlstr.append(") VALUES ");
+
         if (isBindParameters) {
             List<String> placeHolders = new LinkedList<>();
             for(int i = 0; i < columnNames.size(); i++) {
                 placeHolders.add("?");
             }
-        } else {
-            sqlstr.append(String.join(",", columnNames));
+            sqlstr.append("(")
+                .append(String.join(",", placeHolders))
+                .append(")");
         }
-        sqlstr.append(")");
 
         return sqlstr.toString();
     }
@@ -529,7 +501,6 @@ public abstract class DBTranslator
     public String getInsertSql(BusinessObject bo, JDBCType entityType) {
 
         StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(bo, entityType, false));
-        sqlstr.append(" VALUES ");
         sqlstr.append(setValues(null, bo, entityType));
 
         return sqlstr.toString();

@@ -1540,19 +1540,17 @@ public class AggregateManager implements Xor
 		return f;
 	}
 
-	public void generate (String name, Settings settings)
+	@Override
+	public void generate (String name, List<String> types, Settings settings)
 	{
 		Shape shape = getDAS().getShape(name);
-		ExecutorService generators = Executors.newFixedThreadPool(10);
 		ExecutorService importers = Executors.newFixedThreadPool(10);
 
 		BlockingDeque<JSONObject> queue = new LinkedBlockingDeque<>(1000);
-		final CountDownLatch latch = new CountDownLatch(10);
 
-		// Create the generators
-		for (int i = 0; i < 10; i++) {
-			generators.submit(new DataGenerator(queue, latch, shape, settings));
-		}
+		// Generate the data
+		(new DataGenerator(queue, types, shape, settings)).execute();
+
 		// Create the importers
 		List<Future> importJobs = new ArrayList<Future>();
 		for (int i = 0; i < 10; i++) {
@@ -1562,7 +1560,6 @@ public class AggregateManager implements Xor
 
 		// Once the generators have finished generating, mark the end
 		try {
-			latch.await();
 			queue.put(DataGenerator.END_MARKER);
 		}
 		catch (InterruptedException e) {

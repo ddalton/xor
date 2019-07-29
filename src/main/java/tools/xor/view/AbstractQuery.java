@@ -34,6 +34,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
 
 public abstract class AbstractQuery implements Query {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -153,17 +154,18 @@ public abstract class AbstractQuery implements Query {
 
 	public static List extractResults(ResultSet rs) throws SQLException
 	{
+		DBTranslator translator = DBTranslator.getTranslator(rs.getStatement());
 		List result = new ArrayList();
 		while (rs.next()) {
 
-			Object[] row = extractRow(rs);
+			Object[] row = extractRow(rs, translator);
 			result.add(row);
 		}
 
 		return result;
 	}
 
-	public static Object[] extractRow(ResultSet rs) throws SQLException
+	public static Object[] extractRow(ResultSet rs, DBTranslator translator) throws SQLException
 	{
 		ResultSetMetaData rsmd = rs.getMetaData();
 		int columnCount = rsmd.getColumnCount();
@@ -172,6 +174,7 @@ public abstract class AbstractQuery implements Query {
 		for(int i = 0; i < columnCount; i++) {
 			// Get the value from the ResultSet, JDBC columnIndex starts from 1
 			row[i] = BindParameter.getValue(
+				translator,
 				rsmd.getColumnType(i + 1),
 				rs,
 				i + 1);

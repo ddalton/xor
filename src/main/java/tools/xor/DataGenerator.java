@@ -22,15 +22,15 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Generate JSONObject instances based on the GeneratorSettings for the Entity types in the shape.
@@ -62,7 +62,7 @@ public class DataGenerator
 
         for(String typename: types) {
             Type type = shape.getType(typename);
-            if(type instanceof EntityType && ((EntityType)type).getGeneratorSettings() != null) {
+            if(type instanceof EntityType && ((EntityType)type).getGenerators().size() > 0) {
                 generateInstances((EntityType)type, settings);
             }
         }
@@ -72,42 +72,60 @@ public class DataGenerator
 
     public void generateInstances(EntityType entityType, Settings settings)
     {
-        GeneratorSettings generatorSettings = entityType.getGeneratorSettings();
+        for(EntityGenerator generator : entityType.getGenerators()) {
+            StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(
+                null,
+                settings,
+                null);
 
-        int counter = generatorSettings.getAndIncrement();
-        StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(null, settings, null);
-        while(generatorSettings.isValid(counter)) {
-            // Generate the JSONObject
-            JSONObject json = new JSONObject();
-            visitor.setContext(new Integer(counter));
+            JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator();
+            JDBCSessionContext sc = po.getSessionContext();
+            sc.beginTransaction();
 
-            EntityType currentType = entityType;
-            while(currentType != null) {
-                for (Property p : currentType.getProperties()) {
-                    if (((ExtendedProperty)p).isDataType() && (
-                        ((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
-                        json.put(
-                            p.getName(), ((BasicType)p.getType()).generate(
-                                settings,
-                                p,
-                                null,
-                                null,
-                                visitor));
-                    }
+            generator.init(sc.getConnection(), visitor);
+            Iterator iter = (Iterator) generator;
+            while(iter.hasNext()) {
+                if(iter.next() == null) {
+                    break;
                 }
 
-                currentType = currentType.getSuperType();
+                generateObject(entityType, visitor);
             }
-            json.put(Constants.XOR.TYPE, entityType.getName());
 
-            try {
-                queue.put(json);
-            }catch(InterruptedException e) {
-                logger.info(
-                    "Thread interrupted when processing entity: " + entityType.getName()
-                        + " at count: " + entityType.getGeneratorSettings().getCounter());
+            // release the connection
+            sc.rollback();
+        }
+    }
+
+    private void generateObject(EntityType entityType, StateGraph.ObjectGenerationVisitor visitor) {
+        // Generate the JSONObject
+        JSONObject json = new JSONObject();
+
+        EntityType currentType = entityType;
+        while (currentType != null) {
+            for (Property p : currentType.getProperties()) {
+                if (((ExtendedProperty)p).isDataType() && (
+                    ((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
+                    json.put(
+                        p.getName(), ((BasicType)p.getType()).generate(
+                            settings,
+                            p,
+                            null,
+                            null,
+                            visitor));
+                }
             }
-            counter = generatorSettings.getAndIncrement();
+
+            currentType = currentType.getSuperType();
+        }
+        json.put(Constants.XOR.TYPE, entityType.getName());
+
+        try {
+            queue.put(json);
+        }
+        catch (InterruptedException e) {
+            logger.info(
+                "Thread interrupted when processing entity: " + entityType.getName());
         }
     }
 }

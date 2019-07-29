@@ -44,6 +44,7 @@ import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
@@ -1046,6 +1047,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.setEntityType(crossJoin);
 		AggregateView view = new AggregateView("CROSS");
+		view.setShape(new Shape("test", null, null));
 		settings.setView(view);
 		view.setAttributeList(new ArrayList<String>(properties));
 
@@ -1062,6 +1064,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	{
 		Settings settings = new Settings();
 		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.init(aggregateService.getDAS().getShape());
 
 		aggregateService.importCSV("bulk/", settings);
 

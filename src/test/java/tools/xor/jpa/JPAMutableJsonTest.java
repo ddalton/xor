@@ -574,6 +574,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 		Settings settings = new Settings();
 		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.init(aggregateService.getDAS().getShape());
 
 		aggregateService.importCSV("bulk/", settings);
 

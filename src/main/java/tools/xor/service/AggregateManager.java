@@ -1549,6 +1549,7 @@ public class AggregateManager implements Xor
 		BlockingDeque<JSONObject> queue = new LinkedBlockingDeque<>(1000);
 
 		// Generate the data
+		checkPO(settings);
 		(new DataGenerator(queue, types, shape, settings)).execute();
 
 		// Create the importers

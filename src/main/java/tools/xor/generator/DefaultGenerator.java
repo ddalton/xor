@@ -45,6 +45,8 @@ public class DefaultGenerator implements Generator
     public static final String THREAD_NO = "[THREAD_NO]";
     public static final String ENTITY_SIZE = "[ENTITY_SIZE]";
     public static final String VISITOR_CONTEXT = "[VISITOR_CONTEXT]";
+    public static final String GENERATOR = "[GENERATOR]";
+    public static final String QUERY_DATA = "QUERY_DATA.";
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     protected String[] values;

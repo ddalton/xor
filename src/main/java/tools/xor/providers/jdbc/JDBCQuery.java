@@ -177,6 +177,7 @@ public class JDBCQuery extends AbstractQuery
 								  Map<String, Object> paramValues,
 								  PreparedStatement statement)
 	{
+		DBTranslator translator = DBTranslator.getTranslator(statement);
 		if (paramMap != null) {
 			for (Map.Entry<String, BindParameter> entry : paramMap.entrySet()) {
 				if (!paramValues.containsKey(entry.getKey())) {
@@ -192,7 +193,7 @@ public class JDBCQuery extends AbstractQuery
 						pm.setDateFormat(settings.getDateFormat());
 					}
 				}
-				pm.setValue(statement, paramValues.get(entry.getKey()));
+				pm.setValue(statement, translator, paramValues.get(entry.getKey()));
 			}
 		}
 	}

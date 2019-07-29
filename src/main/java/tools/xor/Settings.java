@@ -431,6 +431,9 @@ public class Settings {
 		} else if(view.getName() == null || "".equals(view.getName().trim())) {
 			throw new IllegalStateException("A name for the AggregateView is required");
 		}
+		if(this.view.getShape() == null) {
+			this.view.setShape(shape);
+		}
 
 		if(hasExpandedAssociations() || hasPrunedAssociations()) {
 			// If the view is going to be modified make a copy of the built-in view
@@ -448,7 +451,7 @@ public class Settings {
 		if(entityType != null) {
 			TypeGraph sg = view.getTypeGraph((EntityType)entityType, this.scope);
 			if (hasExpandedAssociations()) {
-				sg.enhance(expandedAssociations, shape);
+				sg.enhance(expandedAssociations);
 			}
 			if (hasPrunedAssociations()) {
 				for (AssociationSetting as : prunedAssociations) {
@@ -457,11 +460,11 @@ public class Settings {
 					}
 				}
 				// remove this from the StateGraph
-				sg.prune(prunedAssociations, shape);
+				sg.prune(prunedAssociations);
 			}
 			if (hasReferences()) {
 				// Mark the appropriate states as references
-				sg.markReferences(references, shape);
+				sg.markReferences(references);
 			}
 		}
 

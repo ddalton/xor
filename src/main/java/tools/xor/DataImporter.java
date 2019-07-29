@@ -50,6 +50,8 @@ public class DataImporter implements Callable
         this.shape = shape;
         this.objectCreator = new ObjectCreator(settings, shape.getDAS(), settings.getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
         this.po = (JDBCPersistenceOrchestrator)po;
+
+        this.po.getSessionContext().setPsBatch(true);
     }
 
     public Object call() throws InterruptedException, SQLException

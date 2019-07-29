@@ -1,5 +1,7 @@
 package tools.xor.view;
 
+import tools.xor.providers.jdbc.DBTranslator;
+
 import javax.persistence.ParameterMode;
 import java.sql.PreparedStatement;
 
@@ -54,7 +56,7 @@ public class UnmodifiableBindParameter extends BindParameter
         raiseException();
     }
 
-    @Override public void setValue (PreparedStatement cs, Object value)
+    @Override public void setValue (PreparedStatement cs, DBTranslator translator, Object value)
     {
         raiseException();
     }

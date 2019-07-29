@@ -2,6 +2,7 @@ package tools.xor.service;
 
 import org.json.JSONObject;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AbstractQuery;
 import tools.xor.view.Query;
@@ -21,6 +22,7 @@ public abstract class AbstractEntityScroll implements EntityScroll
 
     private Statement statement;
     private ResultSet rs;
+    private DBTranslator translator;
 
     @Override public boolean hasNext ()
     {
@@ -31,6 +33,7 @@ public abstract class AbstractEntityScroll implements EntityScroll
                 this.statement.setFetchSize(getSettings().getBatchSize());
 
                 this.rs = this.statement.executeQuery(getSQLString());
+                this.translator = DBTranslator.getTranslator(this.statement);
             }
 
             return !this.rs.isAfterLast();
@@ -80,7 +83,7 @@ public abstract class AbstractEntityScroll implements EntityScroll
         JSONObject result = new JSONObject();
 
         try {
-            Object[] row = AbstractQuery.extractRow(rs);
+            Object[] row = AbstractQuery.extractRow(rs, translator);
 
             // set the values in the JSONObject
             for(int i = 0; i < row.length; i++) {

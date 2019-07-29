@@ -766,9 +766,9 @@ public class Shape
                     break;
                 }
             }
+            selected.setShape(this);
 
             selected = selected.copy();
-            selected.setShape(this);
             views.put(selected.getName(), selected);
         }
         denormalize();

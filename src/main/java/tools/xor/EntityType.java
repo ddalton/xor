@@ -357,11 +357,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Return the entity specific settings related to data generation
 	 * @return
 	 */
-	public GeneratorSettings getGeneratorSettings();
+	public List<EntityGenerator> getGenerators ();
 
 	/**
-	 * Set the generator settings for the entity
-	 * @param generatorSettings generator settings object
+	 * add the generator settings for the entity
+	 * @param generator generator settings object
 	 */
-	public void setGeneratorSettings(GeneratorSettings generatorSettings);
+	public void addGenerator(EntityGenerator generator);
 }

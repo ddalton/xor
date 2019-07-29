@@ -58,7 +58,7 @@ public class JDBCSessionContext implements CustomPersister
     private Connection connection;
     private DBTranslator dbTranslator;
     private JDBCPersistenceOrchestrator po;
-
+    private boolean psBatch = false; // use prepared statement batch if order does not matter
     private Statement insertStatement;
     private Set<PreparedStatement> preparedStatements = new HashSet<>();
 
@@ -81,6 +81,11 @@ public class JDBCSessionContext implements CustomPersister
         this.po = po;
 
         init(context);
+    }
+
+    public void setPsBatch (boolean psBatch)
+    {
+        this.psBatch = psBatch;
     }
 
     public void init(JDBCSessionContext context) {
@@ -207,16 +212,18 @@ public class JDBCSessionContext implements CustomPersister
     @Override public void persist (BusinessObject bo, Settings settings) throws SQLException
     {
         try {
-            /*
-            createInsertStatement();
-            for (String insertSql : getInsertSql(settings, bo)) {
-                insertStatement.addBatch(insertSql);
-                insertBatch.add(insertSql);
-            }
-            */
-            for (PreparedStatement ps : getInsertPS(settings, bo)) {
-                ps.addBatch();
-                preparedStatements.add(ps);
+            // If preparedStatement batching is not desired due to ordering reasons
+            if(!psBatch) {
+                createInsertStatement();
+                for (String insertSql : getInsertSql(settings, bo)) {
+                    insertStatement.addBatch(insertSql);
+                    insertBatch.add(insertSql);
+                }
+            } else {
+                for (PreparedStatement ps : getInsertPS(settings, bo)) {
+                    ps.addBatch();
+                    preparedStatements.add(ps);
+                }
             }
         }catch(Throwable t) {
             t.printStackTrace();
@@ -383,7 +390,7 @@ public class JDBCSessionContext implements CustomPersister
                     }
                 }
             } else {
-                if(preparedStatements != null) {
+                if(preparedStatements.size() > 0) {
                     throw new RuntimeException("Non batch execution is not supported. The batch.skip setting should be set to false.");
                 }
                 try(Statement stmt = getConnection().createStatement()) {

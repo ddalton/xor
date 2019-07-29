@@ -73,6 +73,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		super();
 		this.root = aggregateRoot;
 		this.shape = shape;
+
+		assert(this.shape != null) : "Shape cannot be null";
 	}
 	
 	public V getRootState() {
@@ -399,7 +401,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	@Override
-	public void prune (List<AssociationSetting> associations, Shape shape) {
+	public void prune (List<AssociationSetting> associations) {
 		for(AssociationSetting assoc: associations) {
 			if (assoc.getMatchType() == MatchType.TYPE) {
 				V state = states.get(shape.getType(assoc.getEntityName()));
@@ -419,7 +421,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	@Override
-	public void markReferences (List<String> references, Shape shape)
+	public void markReferences (List<String> references)
 	{
 		for (String referenceType : references) {
 			V state = states.get(shape.getType(referenceType));
@@ -448,7 +450,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	@Override
-	public void enhance (List<AssociationSetting> associations, Shape shape) {
+	public void enhance (List<AssociationSetting> associations) {
 
 		if(sgLogger.isDebugEnabled()) {
 			sgLogger.debug("Enhancing the state graph with associations/Types");
@@ -484,10 +486,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 
 		for(EntityType type: fullTypes) {
-			extend(type, shape, false);
+			extend(type, false);
 		}
 		for(EntityType type: exactTypes) {
-			extend(type, shape, true);
+			extend(type, true);
 		}
 
 		for (AssociationSetting assoc : associations) {
@@ -532,10 +534,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 *  Probably should be called before create(String path...)
 	 * 
 	 * @param additionalType to extend
-	 * @param shape of the type being extended
 	 * @param isExact true if extending only by an exact type
 	 */
-	public void extend(EntityType additionalType, Shape shape, boolean isExact) {
+	public void extend(EntityType additionalType, boolean isExact) {
 		if(this.states.containsKey(additionalType)) {
 			logger.warn("Already includes the type being extended: " + additionalType.getName());
 		}

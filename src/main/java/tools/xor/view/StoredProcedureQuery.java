@@ -38,6 +38,7 @@ import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.util.ClassUtil;
 
 /**
@@ -60,6 +61,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private StoredProcedure sp;
+	private DBTranslator translator;
 	private Map<String, BindParameter> paramMap = new HashMap<String, BindParameter>();
 	
 	// If a stored procedure is returning multiple results and an error occurs,
@@ -187,10 +189,19 @@ public class StoredProcedureQuery extends AbstractQuery {
 		return result.get(0);
 	}
 
+	private DBTranslator getTranslator() {
+		if(this.translator == null) {
+			this.translator = DBTranslator.getTranslator(sp.getStatement());
+		}
+
+		return this.translator;
+	}
+
 	@Override
 	public void setParameter(String name, Object value) {
+
 		BindParameter param = paramMap.get(name);
-		param.setValue((CallableStatement) sp.getStatement(), value);
+		param.setValue((CallableStatement) sp.getStatement(), getTranslator(), value);
 	}
 
 	@Override

@@ -95,7 +95,7 @@ public abstract class AbstractType implements EntityType {
 
 	private Shape shape;
 
-	private GeneratorSettings generatorSettings;
+	private final List<EntityGenerator> entityGenerators = new LinkedList<>();
 
 	public AbstractType() {
 		classResolver = new ClassResolver(this);
@@ -384,14 +384,14 @@ public abstract class AbstractType implements EntityType {
 		return false;
 	}
 
-	@Override public GeneratorSettings getGeneratorSettings ()
+	@Override public List<EntityGenerator> getGenerators ()
 	{
-		return this.generatorSettings;
+		return this.entityGenerators;
 	}
 
-	@Override public void setGeneratorSettings (GeneratorSettings generatorSettings)
+	@Override public void addGenerator (EntityGenerator generator)
 	{
-		this.generatorSettings = generatorSettings;
+		this.entityGenerators.add(generator);
 	}
 
 	protected Method getPolymorphicSetterMethod (String property)

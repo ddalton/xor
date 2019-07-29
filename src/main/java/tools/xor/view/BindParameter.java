@@ -2,6 +2,7 @@ package tools.xor.view;
 
 import tools.xor.JSONObjectProperty;
 import tools.xor.MutableJsonProperty;
+import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.util.ClassUtil;
 
 import javax.persistence.ParameterMode;
@@ -14,10 +15,12 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
+import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -912,10 +915,21 @@ public class BindParameter
 		return typeValue;
 	}
 
-	public void setValue(PreparedStatement ps, Object value) {
+	private SQLConverter getSQLConverter(DBTranslator translator, int typeValue) {
+		SQLConverter result = translator.getSQLConverter(typeValue);
+
+		if(result == null) {
+			result = convertersBySQLType.get(typeValue);
+		}
+
+		return result;
+	}
+
+	public void setValue(PreparedStatement ps, DBTranslator translator, Object value) {
 		if(type != null && !"".equals(type)) {
 			int typeValue = getType(type);
-			SQLConverter converter = convertersBySQLType.get(typeValue);
+
+			SQLConverter converter = getSQLConverter(translator, typeValue);
 			try {
 				if (this.dateFormat != null) {
 					converter.setDataContext(this.dateFormat);
@@ -944,9 +958,9 @@ public class BindParameter
 		}
 	}
 
-	static public Object getValue(int type, ResultSet rs, int parameterIndex) {
+	static public Object getValue(DBTranslator translator, int type, ResultSet rs, int parameterIndex) {
 		try {
-			return convertersBySQLType.get(type).sQLToJava(rs, parameterIndex);
+			return translator.getSQLConverter(type).sQLToJava(rs, parameterIndex);
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

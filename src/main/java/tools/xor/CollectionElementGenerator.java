@@ -87,6 +87,10 @@ public class CollectionElementGenerator extends DefaultGenerator implements Iter
         this.visitor = visitor;
     }
 
+    public int getCounter() {
+        return this.counter;
+    }
+
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {

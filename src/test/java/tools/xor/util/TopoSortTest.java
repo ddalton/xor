@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import tools.xor.AbstractDBTest.TypeTest;
 import tools.xor.Type;
+import tools.xor.service.Shape;
 import tools.xor.util.graph.StateGraph;
 
 /**
@@ -19,11 +20,13 @@ public class TopoSortTest {
 	@Test
 	public void test1() {
 
+		Shape shape = new Shape("Test", null, null);
+
 		Type root = new TypeTest("A");
 		State stateA = new State(root, false);	
 		State stateB = new State(new TypeTest("B"), false);
 		State stateC = new State(new TypeTest("C"), false);
-		StateGraph<State, Edge<State>> dg = new StateGraph<State, Edge<State>>(root, null);
+		StateGraph<State, Edge<State>> dg = new StateGraph<State, Edge<State>>(root, shape);
 		
 		dg.addVertex(stateA);
 		dg.addVertex(stateB);

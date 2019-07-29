@@ -107,19 +107,19 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.dumpState();
 	}
 
-	@Override public void prune (List<AssociationSetting> associations, Shape shape)
+	@Override public void prune (List<AssociationSetting> associations)
 	{
-		typeGraph.prune(associations, shape);
+		typeGraph.prune(associations);
 	}
 
-	@Override public void markReferences (List<String> references, Shape shape)
+	@Override public void markReferences (List<String> references)
 	{
-		typeGraph.markReferences(references, shape);
+		typeGraph.markReferences(references);
 	}
 
-	@Override public void enhance (List<AssociationSetting> associations, Shape shape)
+	@Override public void enhance (List<AssociationSetting> associations)
 	{
-		typeGraph.enhance(associations, shape);
+		typeGraph.enhance(associations);
 	}
 
 	@Override public void extend (String path, V anchor, boolean initialize)

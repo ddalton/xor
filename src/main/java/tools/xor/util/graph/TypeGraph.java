@@ -114,25 +114,22 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * This method is to prune the state graph of the given associations.
 	 *
 	 * @param associations to be deleted
-	 * @param shape of the type being pruned
 	 */
-	void prune (List<AssociationSetting> associations, Shape shape);
+	void prune (List<AssociationSetting> associations);
 
 	/**
 	 * Mark the types that need to be handled as references
 	 * @param references list of types
-	 * @param shape of the type
 	 */
-	void markReferences (List<String> references, Shape shape);
+	void markReferences (List<String> references);
 
 	/**
 	 * This method is to enhance the state graph since the states are reused across other state graph entities.
 	 * We cannot just rebuild a part of the state graph with new state graph if we don't account for the sharing.
 	 *
 	 * @param associations new properties e.g., open properties being added to the state graph
-	 * @param shape of the type being enhanced
 	 */
-	void enhance(List<AssociationSetting> associations, Shape shape);
+	void enhance(List<AssociationSetting> associations);
 
 	/**
 	 * Extend the scope of the graph by adding the property mentioned by the path attribute.

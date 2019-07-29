@@ -23,12 +23,15 @@ import tools.xor.JSONObjectProperty;
 import tools.xor.UnsignedByteType;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
+import tools.xor.view.BindParameter;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,10 +53,48 @@ public class HANATranslator extends DBTranslator
 
     protected static final Map<String, Class> HANA_SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
     protected static final Map<String, JDBCtoSQLConverter> hanaConvertersByDataType = new ConcurrentHashMap<>();
-
+    protected static final Map<Integer, BindParameter.SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
 
     static {
         HANA_SQL_TO_JAVA_TYPE_MAP.put("TINYINT", UnsignedByteType.class);
+    }
+
+    static {
+        convertersBySQLType.put(
+            Types.TINYINT,
+
+            new BindParameter.SQLConverter() {
+
+                @Override public void javaToSQL (PreparedStatement ps,
+                                                 int parameterIndex,
+                                                 Object value) throws SQLException
+                {
+                    Short result = null;
+                    if(value instanceof String) {
+                        result = Short.valueOf(value.toString());
+                    } else if(value instanceof Short) {
+                        result = (Short) value;
+                    } else if(value instanceof Number) {
+                        result = ((Number)value).shortValue();
+                    } else {
+                        throw new RuntimeException("Unsupported value type for TINYINT converter");
+                    }
+                    ps.setShort(parameterIndex, result);
+                }
+
+                @Override public Object sQLToJava (CallableStatement cs,
+                                                   int parameterIndex) throws SQLException
+                {
+                    return cs.getByte(parameterIndex);
+                }
+
+                @Override public Object sQLToJava (ResultSet rs,
+                                                   int parameterIndex) throws SQLException
+                {
+                    return rs.getByte(parameterIndex);
+                }
+            }
+        );
     }
 
     @Override
@@ -63,6 +104,14 @@ public class HANATranslator extends DBTranslator
         }
 
         return super.getJavaClass(sqlType);
+    }
+
+    public BindParameter.SQLConverter getSQLConverter(int type) {
+        if(convertersBySQLType.containsKey(type)) {
+            return convertersBySQLType.get(type);
+        }
+
+        return super.getSQLConverter(type);
     }
 
     static {

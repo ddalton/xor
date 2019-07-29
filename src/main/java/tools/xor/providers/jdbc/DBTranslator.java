@@ -39,6 +39,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -104,8 +105,17 @@ public abstract class DBTranslator
         SQL_TO_JAVA_TYPE_MAP.put("CLOB", java.sql.Clob.class);
     }
 
+    public static DBTranslator getTranslator(String name) {
+        return translators.get(name);
+    }
+
     protected Class getJavaClass (String sqlType) {
         return SQL_TO_JAVA_TYPE_MAP.get(sqlType);
+    }
+
+    public BindParameter.SQLConverter getSQLConverter(int type) {
+        // TODO: Move from BindParameter to here
+        return null;
     }
 
     public interface JDBCtoSQLConverter {
@@ -324,7 +334,7 @@ public abstract class DBTranslator
         try {
             DatabaseMetaData metadata = conn.getMetaData();
             String productName = metadata.getDatabaseProductName().toUpperCase();
-            result = translators.get(productName);
+            result = getTranslator(productName);
 
             if(result == null) {
                 throw new RuntimeException("Unable to find DBTranslator for product: " + productName);
@@ -335,6 +345,17 @@ public abstract class DBTranslator
         }
 
         return result;
+    }
+
+    public static DBTranslator getTranslator(Statement statement) {
+        try {
+            DatabaseMetaData metadata = statement.getConnection().getMetaData();
+            String productName = metadata.getDatabaseProductName().toUpperCase();
+            return DBTranslator.getTranslator(productName);
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
     }
 
     public void setIdentifier(Settings settings, BusinessObject bo, JDBCType entityType) {
@@ -495,7 +516,7 @@ public abstract class DBTranslator
     private void addBindParameter(PreparedStatement ps, String type, int position, Object value) {
         BindParameter bp = BindParameter.instance(position, null);
         bp.setType(type);
-        bp.setValue(ps, value);
+        bp.setValue(ps, this, value);
     }
 
     public String getInsertSql(BusinessObject bo, JDBCType entityType) {

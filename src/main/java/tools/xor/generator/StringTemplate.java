@@ -27,13 +27,22 @@ import java.util.Map;
 
 public class StringTemplate extends DefaultGenerator
 {
+    private Generator generator;
+
     public StringTemplate (String[] arguments)
     {
         super(arguments);
     }
 
+    public StringTemplate (Generator generator, String[] arguments)
+    {
+        super(arguments);
+
+        this.generator = generator;
+    }
+
     public static interface TokenEvaluator {
-        public String evaluate(String input, StateGraph.ObjectGenerationVisitor visitor);
+        public String evaluate(String input, Generator generator, StateGraph.ObjectGenerationVisitor visitor);
     }
 
     public static String[] getTokens() {
@@ -41,7 +50,8 @@ public class StringTemplate extends DefaultGenerator
             ENTITY_SIZE,
             THREAD_NO,
             GLOBAL_SEQ,
-            VISITOR_CONTEXT
+            VISITOR_CONTEXT,
+            GENERATOR
         };
     }
 
@@ -51,6 +61,7 @@ public class StringTemplate extends DefaultGenerator
             THREAD_NO, new TokenEvaluator()
             {
                 @Override public String evaluate (String input,
+                                                  Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
                     return input.replace(
@@ -63,6 +74,7 @@ public class StringTemplate extends DefaultGenerator
             ENTITY_SIZE, new TokenEvaluator()
             {
                 @Override public String evaluate (String input,
+                                                  Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
                     return visitor.getSettings() != null ? input.replace(
@@ -75,6 +87,7 @@ public class StringTemplate extends DefaultGenerator
             GLOBAL_SEQ, new TokenEvaluator()
             {
                 @Override public String evaluate (String input,
+                                                  Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
                     return visitor.getSettings() != null ? input.replace(
@@ -87,6 +100,7 @@ public class StringTemplate extends DefaultGenerator
             VISITOR_CONTEXT, new TokenEvaluator()
             {
                 @Override public String evaluate (String input,
+                                                  Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
                     return visitor.getContext() != null ? input.replace(
@@ -94,11 +108,24 @@ public class StringTemplate extends DefaultGenerator
                         visitor.getContext().toString()) : input;
                 }
             });
+
+        evaluators.put(
+            GENERATOR, new TokenEvaluator()
+            {
+                @Override public String evaluate (String input,
+                                                  Generator generator,
+                                                  StateGraph.ObjectGenerationVisitor visitor)
+                {
+                    return  generator != null ? input.replace(
+                        GENERATOR,
+                        generator.getStringValue(null, visitor)) : input;
+                }
+            });
     }
 
-    public static String resolve(String input, StateGraph.ObjectGenerationVisitor visitor) {
+    public static String resolve(String input, Generator generator, StateGraph.ObjectGenerationVisitor visitor) {
         for(String tokenName: getTokens()) {
-            input = evaluators.get(tokenName).evaluate(input, visitor);
+            input = evaluators.get(tokenName).evaluate(input, generator, visitor);
         }
 
         return input;
@@ -107,6 +134,6 @@ public class StringTemplate extends DefaultGenerator
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return resolve(getValues()[0], visitor);
+        return resolve(getValues()[0], this.generator, visitor);
     }
 }

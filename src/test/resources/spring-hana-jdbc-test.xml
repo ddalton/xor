@@ -45,6 +45,7 @@
 		<property name="username" value="${hana.connection.userName}" />
 		<property name="password" value="${hana.connection.password}" />
 		<property name="defaultAutoCommit" value="false"/>
+                <property name="maxActive" value="11" />
 	</bean>	
 
 	<bean id="transactionManager"

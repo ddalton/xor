@@ -1548,16 +1548,16 @@ public class AggregateManager implements Xor
 
 		BlockingDeque<JSONObject> queue = new LinkedBlockingDeque<>(1000);
 
-		// Generate the data
-		checkPO(settings);
-		(new DataGenerator(queue, types, shape, settings)).execute();
-
 		// Create the importers
 		List<Future> importJobs = new ArrayList<Future>();
 		for (int i = 0; i < 10; i++) {
 			PersistenceOrchestrator po = getDasFactory().createPersistenceOrchestrator(settings.getSessionContext());
 			importJobs.add(importers.submit(new DataImporter(queue, po, shape, settings)));
 		}
+
+		// Generate the data
+		checkPO(settings);
+		(new DataGenerator(queue, types, shape, settings)).execute();
 
 		// Once the generators have finished generating, mark the end
 		try {

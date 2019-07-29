@@ -72,6 +72,7 @@ public class QueryGenerator implements Iterator<Object[]>, EntityGenerator, Clos
             this.numCols = rsmd.getColumnCount();
 
             this.row = new Object[numCols + 1];
+            this.visitor.setContext(row);
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);

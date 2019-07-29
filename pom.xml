@@ -367,14 +367,6 @@
             <version>2.0.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>hana</groupId>
-            <artifactId>com.sap</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>/Users/i844711/jdbcdrivers/ngdbc-2.3.43.jar</systemPath>
-        </dependency>
-
     </dependencies>
 
     <properties>

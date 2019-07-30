@@ -402,6 +402,10 @@ public class JDBCSessionContext implements CustomPersister
             }
         }
         catch (SQLException e) {
+            for(String sql: insertBatch) {
+                System.out.println(sql);
+            }
+            System.out.println("======================");
             throw ClassUtil.wrapRun(e);
         } finally {
             try {

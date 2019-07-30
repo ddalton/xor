@@ -31,6 +31,8 @@ import tools.xor.util.ObjectCreator;
 import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 
 public class DataImporter implements Callable
 {
@@ -38,13 +40,13 @@ public class DataImporter implements Callable
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-    BlockingQueue<JSONObject> queue;
-    Settings settings;
-    Shape shape;
-    ObjectCreator objectCreator;
-    JDBCPersistenceOrchestrator po;
+    private ConcurrentLinkedQueue<JSONObject> queue;
+    private Settings settings;
+    private Shape shape;
+    private ObjectCreator objectCreator;
+    private JDBCPersistenceOrchestrator po;
 
-    public DataImporter(BlockingQueue<JSONObject> queue, PersistenceOrchestrator po, Shape shape, Settings settings) {
+    public DataImporter(ConcurrentLinkedQueue<JSONObject> queue, PersistenceOrchestrator po, Shape shape, Settings settings) {
         this.queue = queue;
         this.settings = settings;
         this.shape = shape;
@@ -63,10 +65,14 @@ public class DataImporter implements Callable
 
         int i = 1;
         while (true) {
-            JSONObject json = queue.take();
+            // Give a millisecond for the data to start flowing
+            while(queue.isEmpty()) {
+                Thread.sleep(1);
+            }
+
+            JSONObject json = queue.remove();
 
             if (json == DataGenerator.END_MARKER) {
-                queue.put(DataGenerator.END_MARKER);
                 break;
             }
 
@@ -87,7 +93,6 @@ public class DataImporter implements Callable
 
         // last commit
         commit();
-
 
         return result;
     }

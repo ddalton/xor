@@ -19,18 +19,29 @@
 
 package tools.xor;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
+import tools.xor.service.DASFactory;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Generate JSONObject instances based on the GeneratorSettings for the Entity types in the shape.
@@ -38,20 +49,23 @@ import java.util.concurrent.BlockingDeque;
  */
 public class DataGenerator
 {
+    public static final int IMPORTER_POOL_SIZE = 4;
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     public static final JSONObject END_MARKER = new JSONObject();
     public static final Object SUCCESS = new Object();
 
-    private BlockingDeque<JSONObject> queue;
     private Shape shape;
     private Settings settings;
     private List<String> types;
+    private DASFactory dasFactory;
+    private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
+    private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
 
-    public DataGenerator (BlockingDeque<JSONObject> queue, List<String> types, Shape shape, Settings settings) {
-        this.queue = queue;
+    public DataGenerator (List<String> types, Shape shape, Settings settings, DASFactory dasFactory) {
         this.types = types;
         this.shape = shape;
         this.settings = settings;
+        this.dasFactory = dasFactory;
     }
 
     /**
@@ -70,9 +84,25 @@ public class DataGenerator
         return result;
     }
 
+    private List<Future> createImportJobs() {
+        // Create the importers
+        List<Future> importJobs = new ArrayList<Future>();
+        for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
+            importerQueues[i] = new ConcurrentLinkedQueue();
+            PersistenceOrchestrator po = dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
+            importJobs.add(importers.submit(new DataImporter(importerQueues[i], po, shape, settings)));
+        }
+
+        return importJobs;
+    }
+
     public void generateInstances(EntityType entityType, Settings settings)
     {
         for(EntityGenerator generator : entityType.getGenerators()) {
+            System.out.println(String.format("Generating data for entity: %s", entityType.getName()));
+
+            List<Future> importJobs = createImportJobs();
+
             StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(
                 null,
                 settings,
@@ -84,20 +114,47 @@ public class DataGenerator
 
             generator.init(sc.getConnection(), visitor);
             Iterator iter = (Iterator) generator;
+            int jobNo = 0;
             while(iter.hasNext()) {
                 if(iter.next() == null) {
                     break;
                 }
 
-                generateObject(entityType, visitor);
+                generateObject(entityType, visitor, jobNo++%IMPORTER_POOL_SIZE);
             }
 
             // release the connection
             sc.rollback();
+
+            if(waitForJobs(importJobs)) {
+                break;
+            }
         }
     }
 
-    private void generateObject(EntityType entityType, StateGraph.ObjectGenerationVisitor visitor) {
+    private boolean waitForJobs(List<Future> importJobs) {
+
+        boolean encounteredError = false;
+
+        for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
+            importerQueues[i].offer(DataGenerator.END_MARKER);
+        }
+
+        // Wait for the import jobs to finish
+        for (Future importJob : importJobs) {
+            try {
+                importJob.get();
+            }
+            catch (Exception e) {
+                logger.error(ExceptionUtils.getStackTrace(e));
+                encounteredError = true;
+            }
+        }
+
+        return encounteredError;
+    }
+
+    private void generateObject(EntityType entityType, StateGraph.ObjectGenerationVisitor visitor, int jobNo) {
         // Generate the JSONObject
         JSONObject json = new JSONObject();
 
@@ -120,12 +177,6 @@ public class DataGenerator
         }
         json.put(Constants.XOR.TYPE, entityType.getName());
 
-        try {
-            queue.put(json);
-        }
-        catch (InterruptedException e) {
-            logger.info(
-                "Thread interrupted when processing entity: " + entityType.getName());
-        }
+        importerQueues[jobNo].offer(json);
     }
 }

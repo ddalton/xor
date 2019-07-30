@@ -61,7 +61,6 @@ public class JDBCPersistenceOrchestrator
 	}
 
 	public Connection getNewConnection () {
-		System.out.println("********* N E W    J D B C *******");
 		return DataSourceUtils.getConnection(dataSource);
 	}
 

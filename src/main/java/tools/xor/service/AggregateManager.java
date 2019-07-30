@@ -1544,37 +1544,9 @@ public class AggregateManager implements Xor
 	public void generate (String name, List<String> types, Settings settings)
 	{
 		Shape shape = getDAS().getShape(name);
-		ExecutorService importers = Executors.newFixedThreadPool(10);
-
-		BlockingDeque<JSONObject> queue = new LinkedBlockingDeque<>(1000);
-
-		// Create the importers
-		List<Future> importJobs = new ArrayList<Future>();
-		for (int i = 0; i < 10; i++) {
-			PersistenceOrchestrator po = getDasFactory().createPersistenceOrchestrator(settings.getSessionContext());
-			importJobs.add(importers.submit(new DataImporter(queue, po, shape, settings)));
-		}
 
 		// Generate the data
 		checkPO(settings);
-		(new DataGenerator(queue, types, shape, settings)).execute();
-
-		// Once the generators have finished generating, mark the end
-		try {
-			queue.put(DataGenerator.END_MARKER);
-		}
-		catch (InterruptedException e) {
-			throw ClassUtil.wrapRun(e);
-		}
-
-		// Wait for the import jobs to finish
-		for (Future importJob : importJobs) {
-			try {
-				importJob.get();
-			}
-			catch (Exception e) {
-				logger.error(ExceptionUtils.getStackTrace(e));
-			}
-		}
+		(new DataGenerator(types, shape, settings, getDasFactory())).execute();
 	}
 }

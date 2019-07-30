@@ -69,7 +69,7 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
         this.invocationCount = 0;
         this.value = currentValue;
 
-        elementGenerator.init(currentNode.size);
+        elementGenerator.init(currentNode.getSize());
     }
 
     @Override public boolean hasNext ()
@@ -85,7 +85,7 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
             if (this.value > currentNode.end) {
                 currentNode = currentNode.next;
             }
-            elementGenerator.init(currentNode.size);
+            elementGenerator.init(currentNode.getSize());
         }
         elementGenerator.next();
         invocationCount++;
@@ -118,17 +118,37 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
     private static class RangeNode {
         int start; // inclusive
         int end;   // inclusive
-        int size;
+        int sizemin;  // or sizemin
+        int sizemax = -1; // if it represents a range of sizes
         RangeNode next;
 
         public void parse(String text) {
+            if(text.indexOf(SIZE_DELIM) == -1) {
+                throw new RuntimeException(String.format("Unable to find size delimiter '%s' in input: %s", SIZE_DELIM, text));
+            }
             String rangeStr = text.substring(0, text.indexOf(SIZE_DELIM));
             String sizeStr = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length());
 
-            this.size = Integer.parseInt(sizeStr);
+            if(sizeStr.indexOf(RANGE_DELIM) == -1) {
+                this.sizemin = Integer.parseInt(sizeStr);
+            } else {
+                this.sizemin = new Integer(sizeStr.substring(0, sizeStr.indexOf(RANGE_DELIM)));
+                this.sizemax = new Integer(sizeStr.substring(sizeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+            }
 
+            if(rangeStr.indexOf(RANGE_DELIM) == -1) {
+                throw new RuntimeException(String.format("Unable to find range delimiter '%s' in input: %s", RANGE_DELIM, rangeStr));
+            }
             this.start = new Integer(rangeStr.substring(0, rangeStr.indexOf(RANGE_DELIM)));
-            this.end = new Integer(rangeStr.substring(text.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+            this.end = new Integer(rangeStr.substring(rangeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+        }
+
+        public int getSize() {
+            if(sizemax == -1) {
+                return sizemin;
+            }
+
+            return sizemin + ((int)(Math.random() * (sizemax-sizemin)));
         }
     }
 

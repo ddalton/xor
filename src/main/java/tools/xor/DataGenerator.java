@@ -35,13 +35,10 @@ import tools.xor.util.graph.StateGraph;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Generate JSONObject instances based on the GeneratorSettings for the Entity types in the shape.
@@ -50,6 +47,11 @@ import java.util.concurrent.LinkedBlockingDeque;
 public class DataGenerator
 {
     public static final int IMPORTER_POOL_SIZE = 4;
+
+    // Used for throttle control
+    public static final int HIGH_WATERMARK = 1500;
+    public static final int LOW_WATERMARK = 1000;
+
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     public static final JSONObject END_MARKER = new JSONObject();
     public static final Object SUCCESS = new Object();
@@ -60,6 +62,7 @@ public class DataGenerator
     private DASFactory dasFactory;
     private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
     private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
+    private boolean reachedHigh[] = new boolean[DataGenerator.IMPORTER_POOL_SIZE];
 
     public DataGenerator (List<String> types, Shape shape, Settings settings, DASFactory dasFactory) {
         this.types = types;
@@ -114,13 +117,39 @@ public class DataGenerator
 
             generator.init(sc.getConnection(), visitor);
             Iterator iter = (Iterator) generator;
-            int jobNo = 0;
+            int generationCount = 0;
             while(iter.hasNext()) {
+                int jobNo = generationCount%IMPORTER_POOL_SIZE;
+
                 if(iter.next() == null) {
                     break;
                 }
 
-                generateObject(entityType, visitor, jobNo++%IMPORTER_POOL_SIZE);
+                while(reachedHigh[jobNo]) {
+                    // pause until the importer drains down the queue below the low water mark
+                    try {
+                        Thread.sleep(1);
+                    }
+                    catch (InterruptedException e) {
+                        throw ClassUtil.wrapRun(e);
+                    }
+
+                    if(importerQueues[jobNo].size() <= LOW_WATERMARK) {
+                        // reset the flag once the queue capacity falls
+                        // below low watermark
+                        reachedHigh[jobNo] = false;
+                    }
+                }
+
+                generateObject(entityType, visitor, jobNo);
+
+                // Update the generation count
+                generationCount++;
+
+                // Check if the queue capacity has reached the high water mark
+                if(importerQueues[jobNo].size() >= HIGH_WATERMARK) {
+                    reachedHigh[jobNo] = true;
+                }
             }
 
             // release the connection

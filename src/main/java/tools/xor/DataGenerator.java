@@ -80,8 +80,8 @@ public class DataGenerator
         this.shape = shape;
         this.settings = settings;
         this.dasFactory = dasFactory;
-        //this.importMethod = ImportMethod.PREPARED_STATEMENT;
-        this.importMethod = ImportMethod.CSV;
+        this.importMethod = ImportMethod.PREPARED_STATEMENT;
+        //this.importMethod = ImportMethod.CSV;
     }
 
     /**
@@ -187,7 +187,7 @@ public class DataGenerator
                 int jobNo = generationCount%IMPORTER_POOL_SIZE;
 
                 if(iter.next() == null) {
-                    break;
+                    continue;
                 }
 
                 while(reachedHigh[jobNo]) {

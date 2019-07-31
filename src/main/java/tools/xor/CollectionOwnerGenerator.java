@@ -67,10 +67,15 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
         this.currentValue = currentNode.start;
         this.end = nodeList.get(nodeList.size()-1).end;
         this.invocationCount = 0;
-        this.value = currentValue;
+        setValue();
 
         elementGenerator.init(currentNode.getSize());
     }
+
+    private void setValue() {
+        this.value = currentValue++;
+    }
+
 
     @Override public boolean hasNext ()
     {
@@ -80,15 +85,18 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
     @Override public Integer next ()
     {
         if(!elementGenerator.hasNext()) {
-            this.value = currentValue++;
+            setValue();
 
             if (this.value > currentNode.end) {
                 currentNode = currentNode.next;
             }
             elementGenerator.init(currentNode.getSize());
         }
-        elementGenerator.next();
         invocationCount++;
+
+        if(elementGenerator.next() == null) {
+            return null;
+        }
 
         return this.value;
     }
@@ -104,15 +112,30 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
         RangeNode previous = null;
         for(int i = 1; i < values.length; i++) {
             RangeNode node = new RangeNode();
-            if(previous != null) {
-                previous.next = node;
-            }
-
-            nodeList.add(node);
             node.parse(values[i]);
+            addNode(previous, node);
 
             previous = node;
         }
+    }
+
+    private void addNode(RangeNode previous, RangeNode current) {
+        if(previous != null) {
+            // See if an empty node needs to be added
+            if(previous.end+1 < current.start) {
+                RangeNode empty = new RangeNode();
+                empty.start = previous.end+1;
+                empty.end = current.start-1;
+                nodeList.add(empty);
+
+                previous.next = empty;
+                empty.next = current;
+            } else {
+                previous.next = current;
+            }
+        }
+
+        nodeList.add(current);
     }
 
     private static class RangeNode {

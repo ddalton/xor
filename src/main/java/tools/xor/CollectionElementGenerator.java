@@ -67,6 +67,10 @@ public class CollectionElementGenerator extends DefaultGenerator implements Iter
 
     @Override public Integer next ()
     {
+        if(collectionSize == 0) {
+            return null;
+        }
+
         int startOfBlock = blockNo * blockSize;
         int offset = (int)(blockSize * Math.random());
         this.value = start + (startOfBlock + offset);
@@ -78,7 +82,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Iter
     public void init(int collectionSize) {
         this.collectionSize = collectionSize;
         this.blockNo = 0;
-        this.blockSize = (end-start+1)/collectionSize;
+        this.blockSize = collectionSize>0 ? (end-start+1)/collectionSize : 0;
         this.counter = 0;
     }
 

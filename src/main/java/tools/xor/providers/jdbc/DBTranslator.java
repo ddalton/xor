@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
+import tools.xor.ImmutableJsonProperty;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.JSONObjectProperty;
@@ -79,6 +80,7 @@ public abstract class DBTranslator
 
     protected static final Map<String, Class> SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
     protected static final Map<String, JDBCtoSQLConverter> convertersByDataType = new ConcurrentHashMap<>();
+    protected static final Map<String, JDBCtoSQLConverter> csvConvertersByDataType = new ConcurrentHashMap<>();
 
     static {
         SQL_TO_JAVA_TYPE_MAP.put("CHAR", java.lang.String.class);
@@ -320,6 +322,53 @@ public abstract class DBTranslator
             });
     }
 
+    static {
+        csvConvertersByDataType.put(
+            "DATE", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_DATE);
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return df.format(value);
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Date converter");
+                    }
+                }
+            });
+
+        csvConvertersByDataType.put(
+            "TIME", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT_TIME);
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return df.format(value);
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Time converter");
+                    }
+                }
+            });
+
+        csvConvertersByDataType.put(
+            "TIMESTAMP", new JDBCtoSQLConverter()
+            {
+                @Override public String toSQLLiteral (Object value)
+                {
+                    SimpleDateFormat df = new SimpleDateFormat(JSONObjectProperty.ANSI_FORMAT_DATETIME);
+                    if(value == null) return "NULL";
+                    if(value instanceof java.util.Date) {
+                        return df.format(value);
+                    } else {
+                        throw new RuntimeException("Unsupported value type for Timestamp converter");
+                    }
+                }
+            });
+    }
+
     /**
      * Can be overridden as necessary
      * @param dataType for which the appropriate converter is to be found
@@ -327,6 +376,14 @@ public abstract class DBTranslator
      */
     protected JDBCtoSQLConverter getConverter(String dataType) {
         return convertersByDataType.get(dataType);
+    }
+
+    protected JDBCtoSQLConverter getCSVConverter(String dataType) {
+        if(csvConvertersByDataType.containsKey(dataType)) {
+            return csvConvertersByDataType.get(dataType);
+        }
+
+        return getConverter(dataType);
     }
 
     public static DBTranslator instance(Connection conn) {
@@ -457,7 +514,7 @@ public abstract class DBTranslator
         return sqlstr.toString();
     }
 
-    public String setValues(PreparedStatement ps, BusinessObject bo, JDBCType entityType) {
+    public String setValues(PreparedStatement ps, BusinessObject bo, JDBCType entityType, boolean isCSV) {
         // get the values
         List<String> values = new LinkedList<>();
         int position = 1;
@@ -477,7 +534,8 @@ public abstract class DBTranslator
             // simple type
             if(p.getType().isDataType() && !p.isMany()) {
                 JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
-                values.add(getConverter(col.getDataType()).toSQLLiteral(bo.get(col.getName())));
+                JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
+                values.add(c.toSQLLiteral(bo.get(col.getName())));
 
                 if(ps != null) {
                     addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
@@ -493,7 +551,8 @@ public abstract class DBTranslator
                 for (int i = 0; i < referencedColumns.size(); i++) {
                     String dataType = referencedColumns.get(i).getDataType();
                     String columnName = referencedColumns.get(i).getName();
-                    values.add(getConverter(dataType).toSQLLiteral(entity.get(columnName)));
+                    JDBCtoSQLConverter c = isCSV ? getCSVConverter(dataType) : getConverter(dataType);
+                    values.add(c.toSQLLiteral(entity.get(columnName)));
 
                     if(ps != null) {
                         addBindParameter(ps, dataType, position++, entity.get(columnName));
@@ -503,9 +562,8 @@ public abstract class DBTranslator
         }
 
         if(ps == null) {
-            StringBuilder sqlstr = new StringBuilder("(");
-            sqlstr.append(String.join(",", values))
-                .append(")");
+            StringBuilder sqlstr = new StringBuilder();
+            sqlstr.append(String.join(",", values));
 
             return sqlstr.toString();
         } else {
@@ -522,10 +580,21 @@ public abstract class DBTranslator
     public String getInsertSql(BusinessObject bo, JDBCType entityType) {
 
         StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(bo, entityType, false));
-        sqlstr.append(setValues(null, bo, entityType));
+        sqlstr.append("(")
+            .append(setValues(null, bo, entityType, false))
+            .append(")");
 
         return sqlstr.toString();
     }
+
+    public String getCSV(BusinessObject bo, JDBCType entityType) {
+
+        StringBuilder sqlstr = new StringBuilder();
+        sqlstr.append(setValues(null, bo, entityType, true));
+
+        return sqlstr.toString();
+    }
+
 
     public abstract JDBCDAS.TableInfo getTable(Connection connection, ForeignKeyEnhancer enhancer, String tableName);
 

@@ -23,18 +23,27 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.DASFactory;
-import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,7 +55,7 @@ import java.util.concurrent.Future;
  */
 public class DataGenerator
 {
-    public static final int IMPORTER_POOL_SIZE = 4;
+    public static final int IMPORTER_POOL_SIZE = 1;
 
     // Used for throttle control
     public static final int HIGH_WATERMARK = 1500;
@@ -60,15 +69,44 @@ public class DataGenerator
     private Settings settings;
     private List<String> types;
     private DASFactory dasFactory;
+    private ImportMethod importMethod;
     private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
     private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
     private boolean reachedHigh[] = new boolean[DataGenerator.IMPORTER_POOL_SIZE];
+    private Map<String, List<Property>> generatedFields = new HashMap<>();
 
     public DataGenerator (List<String> types, Shape shape, Settings settings, DASFactory dasFactory) {
         this.types = types;
         this.shape = shape;
         this.settings = settings;
         this.dasFactory = dasFactory;
+        //this.importMethod = ImportMethod.PREPARED_STATEMENT;
+        this.importMethod = ImportMethod.CSV;
+    }
+
+    /**
+     * Get all the types and its supertypes
+     * @return set of the types to remove duplicates
+     */
+    private Set<EntityType> getFlattenedTypes() {
+        Set<EntityType> result = new HashSet<>();
+
+        for(String typename: types) {
+            Type type = shape.getType(typename);
+            if(hasGenerator(type)) {
+                EntityType entityType = (EntityType)type;
+                while(entityType != null) {
+                    result.add(entityType);
+                    entityType = entityType.getSuperType();
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private boolean hasGenerator(Type type) {
+        return type instanceof EntityType && ((EntityType)type).getGenerators().size() > 0;
     }
 
     /**
@@ -77,9 +115,15 @@ public class DataGenerator
     public Object execute() {
         Object result = SUCCESS;
 
+        if(importMethod == ImportMethod.CSV) {
+            for(EntityType entityType: getFlattenedTypes()) {
+                writeHeader(entityType);
+            }
+        }
+
         for(String typename: types) {
             Type type = shape.getType(typename);
-            if(type instanceof EntityType && ((EntityType)type).getGenerators().size() > 0) {
+            if(hasGenerator(type)) {
                 generateInstances((EntityType)type, settings);
             }
         }
@@ -87,12 +131,33 @@ public class DataGenerator
         return result;
     }
 
+    private void writeHeader(EntityType entityType) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(ClassUtil.getCSVFilename(entityType.getName())))) {
+            List<String> columnNames = new LinkedList<>();
+            for(Property p: getGeneratedFields(entityType)) {
+                columnNames.add(p.getName());
+            }
+
+            out.write(String.join(",", columnNames));
+            out.newLine();
+        }
+        catch (IOException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+    }
+
     private List<Future> createImportJobs() {
         // Create the importers
         List<Future> importJobs = new ArrayList<Future>();
         for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
             importerQueues[i] = new ConcurrentLinkedQueue();
-            PersistenceOrchestrator po = dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
+            JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
+            po.getSessionContext().setImportMethod(importMethod);
+            if(importMethod == ImportMethod.CSV && IMPORTER_POOL_SIZE > 1)
+            {
+                throw new RuntimeException("Writing to CSV can have only 1 importer job");
+            }
+
             importJobs.add(importers.submit(new DataImporter(importerQueues[i], po, shape, settings)));
         }
 
@@ -189,17 +254,14 @@ public class DataGenerator
 
         EntityType currentType = entityType;
         while (currentType != null) {
-            for (Property p : currentType.getProperties()) {
-                if (((ExtendedProperty)p).isDataType() && (
-                    ((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
-                    json.put(
-                        p.getName(), ((BasicType)p.getType()).generate(
-                            settings,
-                            p,
-                            null,
-                            null,
-                            visitor));
-                }
+            for(Property p: getGeneratedFields(currentType)) {
+                json.put(
+                    p.getName(), ((BasicType)p.getType()).generate(
+                        settings,
+                        p,
+                        null,
+                        null,
+                        visitor));
             }
 
             currentType = currentType.getSuperType();
@@ -207,5 +269,22 @@ public class DataGenerator
         json.put(Constants.XOR.TYPE, entityType.getName());
 
         importerQueues[jobNo].offer(json);
+    }
+
+    private List<Property> getGeneratedFields(EntityType entityType) {
+        List<Property> properties = generatedFields.get(entityType.getName());
+        if(properties == null) {
+            properties = new LinkedList<>();
+            generatedFields.put(entityType.getName(), properties);
+
+            for (Property p : entityType.getProperties()) {
+                if (((ExtendedProperty)p).isDataType() && (
+                    ((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
+                    properties.add(p);
+                }
+            }
+        }
+
+        return properties;
     }
 }

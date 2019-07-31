@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -356,7 +357,7 @@ public class Shape
         if(directProperties != null) {
             if(result != null) {
                 // We are modifying the result so make a copy
-                result = new HashMap<>(result);
+                result = new LinkedHashMap<>(result);
                 result.putAll(directProperties);
             } else {
                 result = directProperties;
@@ -441,14 +442,14 @@ public class Shape
         if(type.isDomainType()) {
             Map<String, Property> properties = domainProperties.get(type.getName());
             if (properties == null) {
-                properties = new HashMap<>();
+                properties = new LinkedHashMap<>();
                 domainProperties.put(type.getName(), properties);
             }
             properties.put(property.getName(), property);
         } else {
             Map<String, Property> properties = externalProperties.get(type.getName());
             if (properties == null) {
-                properties = new HashMap<>();
+                properties = new LinkedHashMap<>();
                 externalProperties.put(type.getName(), properties);
             }
             properties.put(property.getName(), property);

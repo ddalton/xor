@@ -78,7 +78,11 @@ public class ClassUtil {
 			return clazz.getSuperclass();
 
 		return clazz;
-	}	
+	}
+
+	public static String getCSVFilename(String entityName) {
+		return String.format("%s.csv", entityName);
+	}
 
 	public static boolean isEnhanced(Class<?> c) {
 		boolean result = false;

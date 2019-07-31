@@ -22,6 +22,7 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
@@ -52,8 +53,6 @@ public class DataImporter implements Callable
         this.shape = shape;
         this.objectCreator = new ObjectCreator(settings, shape.getDAS(), settings.getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
         this.po = (JDBCPersistenceOrchestrator)po;
-
-        this.po.getSessionContext().setPsBatch(true);
     }
 
     public Object call() throws InterruptedException, SQLException

@@ -1,3 +1,22 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2019, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
 package tools.xor.providers.jdbc;
 
 import org.json.JSONArray;
@@ -20,6 +39,9 @@ import tools.xor.util.State;
 import tools.xor.util.graph.ObjectGraph;
 import tools.xor.util.graph.TypeGraph;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -35,37 +57,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-/**
- * XOR, empowering Model Driven Architecture in J2EE applications
- *
- * Copyright (c) 2019, Dilip Dalton
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *
- * See the License for the specific language governing permissions and limitations
- * under the License.
- */
 public class JDBCSessionContext implements CustomPersister
 {
     private Connection connection;
     private DBTranslator dbTranslator;
     private JDBCPersistenceOrchestrator po;
-    private boolean psBatch = false; // use prepared statement batch if order does not matter
+    private ImportMethod importMethod = ImportMethod.LITERAL_SQL; // use prepared statement batch if order does not matter
     private Statement insertStatement;
     private Set<PreparedStatement> preparedStatements = new HashSet<>();
-
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
-
-    private final List<String> insertBatch = new LinkedList<>();
-
+    private final Map<String, List<String>> sqlByType = new HashMap<>();
+    private List<String> insertBatch = new LinkedList<>();
     private final Map<String, PreparedStatement> statementCache = lruCache(1000);
 
     public static <K,V> Map<K,V> lruCache(final int maxSize) {
@@ -83,9 +85,13 @@ public class JDBCSessionContext implements CustomPersister
         init(context);
     }
 
-    public void setPsBatch (boolean psBatch)
+    public ImportMethod getImportMethod() {
+        return this.importMethod;
+    }
+
+    public void setImportMethod (ImportMethod importMethod)
     {
-        this.psBatch = psBatch;
+        this.importMethod = importMethod;
     }
 
     public void init(JDBCSessionContext context) {
@@ -213,61 +219,74 @@ public class JDBCSessionContext implements CustomPersister
     {
         try {
             // If preparedStatement batching is not desired due to ordering reasons
-            if(!psBatch) {
+            switch(importMethod) {
+            case LITERAL_SQL:
                 createInsertStatement();
-                for (String insertSql : getInsertSql(settings, bo)) {
-                    insertStatement.addBatch(insertSql);
-                    insertBatch.add(insertSql);
+                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod)) {
+                    insertStatement.addBatch(entitySQL.sql);
+                    insertBatch.add(entitySQL.sql);
                 }
-            } else {
-                for (PreparedStatement ps : getInsertPS(settings, bo)) {
-                    ps.addBatch();
-                    preparedStatements.add(ps);
+                break;
+            case PREPARED_STATEMENT:
+                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod)) {
+                    entitySQL.ps.addBatch();
+                    preparedStatements.add(entitySQL.ps);
                 }
+                break;
+            case CSV:
+                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod)) {
+                    addSQL(entitySQL);
+                }
+                break;
             }
         }catch(Throwable t) {
             t.printStackTrace();
         }
     }
 
-    /**
+    private void addSQL(EntitySQL entitySQL) {
+        List<String> sqls = sqlByType.get(entitySQL.entityType.getName());
+        if(sqls == null) {
+            sqls = new LinkedList<>();
+            sqlByType.put(entitySQL.entityType.getName(), sqls);
+        }
+
+        sqls.add(entitySQL.sql);
+    }
+
+    private static class EntitySQL {
+        JDBCType entityType;
+        PreparedStatement ps;
+        String sql;
+
+        EntitySQL(JDBCType entityType, PreparedStatement ps, String sql) {
+            this.entityType = entityType;
+            this.ps = ps;
+            this.sql = sql;
+        }
+    }
+
+    /*
      * Return 1 or more insert SQLs.
      * Return more than 1 in case of an object participating in an inheritance hierarchy
-     *
-     * @param settings
-     * @param bo
-     * @return
      */
-    public List<String> getInsertSql(Settings settings, BusinessObject bo)
-    {
-        List<String> result = new LinkedList<>();
-        for(Object o: getInsertObjs(settings, bo, false)) {
-            result.add((String)o);
-        }
-
-        return result;
-    }
-
-    public List<PreparedStatement> getInsertPS(Settings settings, BusinessObject bo) {
-        List<PreparedStatement> result = new LinkedList<>();
-        for(Object o: getInsertObjs(settings, bo, true)) {
-            result.add((PreparedStatement)o);
-        }
-
-        return result;
-    }
-
-    private List<Object> getInsertObjs(Settings settings, BusinessObject bo, boolean isPreparedStatement) {
+    private List<EntitySQL> getInsertObjs(Settings settings, BusinessObject bo, ImportMethod importMethod) {
         JDBCType entityType = (JDBCType)bo.getType();
 
         getDbTranslator().setIdentifier(settings, bo, entityType);
 
         Stack sqlStack = new Stack<>();
         while(entityType != null) {
-            if(isPreparedStatement) {
-                sqlStack.push(getPreparedStatement(bo, entityType));
-            } else {
-                sqlStack.push(getDbTranslator().getInsertSql(bo, entityType));
+            switch(importMethod) {
+            case PREPARED_STATEMENT:
+                sqlStack.push(new EntitySQL(entityType, getPreparedStatement(bo, entityType), null));
+                break;
+            case LITERAL_SQL:
+                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(bo, entityType)));
+                break;
+            case CSV:
+                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getCSV(bo, entityType)));
+                break;
             }
 
             // Walk up the super-type
@@ -298,7 +317,7 @@ public class JDBCSessionContext implements CustomPersister
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
         }
-        getDbTranslator().setValues(ps, bo, entityType);
+        getDbTranslator().setValues(ps, bo, entityType, false);
 
         return ps;
     }
@@ -364,11 +383,14 @@ public class JDBCSessionContext implements CustomPersister
             if (!ApplicationConfiguration.config().containsKey(Constants.Config.BATCH_SKIP)
                 || !ApplicationConfiguration.config().getBoolean(Constants.Config.BATCH_SKIP)) {
 
-                if(preparedStatements.size() > 0) {
+                switch(importMethod) {
+                case PREPARED_STATEMENT:
+                    // TODO: Topological ordering of statements
                     for(PreparedStatement ps: preparedStatements) {
                         ps.executeBatch();
                     }
-                } else if(insertStatement != null) {
+                    break;
+                case LITERAL_SQL:
                     int[] result = insertStatement.executeBatch();
 
                     if (result.length != insertBatch.size()) {
@@ -388,24 +410,30 @@ public class JDBCSessionContext implements CustomPersister
                         throw new RuntimeException(
                             "The following SQLs have failed: \n " + failedSqls.toString());
                     }
+                    break;
+                case CSV:
+                    writeToFile();
+                    break;
                 }
             } else {
-                if(preparedStatements.size() > 0) {
+                switch(importMethod) {
+                case PREPARED_STATEMENT:
                     throw new RuntimeException("Non batch execution is not supported. The batch.skip setting should be set to false.");
-                }
-                try(Statement stmt = getConnection().createStatement()) {
-                    for (String insertSQL : insertBatch) {
-                        //System.out.println("INSERTING: " + insertSQL);
-                        stmt.executeUpdate(insertSQL);
+                case LITERAL_SQL:
+                    try(Statement stmt = getConnection().createStatement()) {
+                        for (String insertSQL : insertBatch) {
+                            //System.out.println("INSERTING: " + insertSQL);
+                            stmt.executeUpdate(insertSQL);
+                        }
                     }
+                    break;
+                case CSV:
+                    writeToFile();
+                    break;
                 }
             }
         }
         catch (SQLException e) {
-            for(String sql: insertBatch) {
-                System.out.println(sql);
-            }
-            System.out.println("======================");
             throw ClassUtil.wrapRun(e);
         } finally {
             try {
@@ -425,8 +453,24 @@ public class JDBCSessionContext implements CustomPersister
         }
     }
 
+    private void writeToFile() {
+        for(Map.Entry<String, List<String>> entry: sqlByType.entrySet()) {
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(ClassUtil.getCSVFilename(
+                entry.getKey()), true))) {
+                for(String sql: entry.getValue()) {
+                    out.write(sql);
+                    out.newLine();
+                }
+            }
+            catch (IOException e) {
+                throw ClassUtil.wrapRun(e);
+            }
+        }
+    }
+
     public void clear() {
         this.idToObjects = new HashMap<>();
+        this.sqlByType.clear();
         this.insertBatch.clear();
         if(this.preparedStatements != null) {
             this.preparedStatements.clear();

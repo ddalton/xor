@@ -22,6 +22,7 @@ package tools.xor.providers.jdbc;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tools.xor.BusinessObject;
+import tools.xor.DataGenerator;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -201,7 +202,7 @@ public class JDBCSessionContext implements CustomPersister
                 if (bo.getInstance() instanceof JSONObject) {
                     if (this.po.isTransient(bo)) {
                         // create INSERT statements for this object
-                        persist(bo, settings);
+                        persist(bo, settings, null);
                     }
                 }
             }
@@ -215,26 +216,26 @@ public class JDBCSessionContext implements CustomPersister
         }
     }
 
-    @Override public void persist (BusinessObject bo, Settings settings) throws SQLException
+    @Override public void persist (BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException
     {
         try {
             // If preparedStatement batching is not desired due to ordering reasons
             switch(importMethod) {
             case LITERAL_SQL:
                 createInsertStatement();
-                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod)) {
+                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     insertStatement.addBatch(entitySQL.sql);
                     insertBatch.add(entitySQL.sql);
                 }
                 break;
             case PREPARED_STATEMENT:
-                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod)) {
+                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     entitySQL.ps.addBatch();
                     preparedStatements.add(entitySQL.ps);
                 }
                 break;
             case CSV:
-                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod)) {
+                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     addSQL(entitySQL);
                 }
                 break;
@@ -270,7 +271,7 @@ public class JDBCSessionContext implements CustomPersister
      * Return 1 or more insert SQLs.
      * Return more than 1 in case of an object participating in an inheritance hierarchy
      */
-    private List<EntitySQL> getInsertObjs(Settings settings, BusinessObject bo, ImportMethod importMethod) {
+    private List<EntitySQL> getInsertObjs(Settings settings, BusinessObject bo, ImportMethod importMethod, DataGenerator dataGenerator) {
         JDBCType entityType = (JDBCType)bo.getType();
 
         getDbTranslator().setIdentifier(settings, bo, entityType);
@@ -279,13 +280,13 @@ public class JDBCSessionContext implements CustomPersister
         while(entityType != null) {
             switch(importMethod) {
             case PREPARED_STATEMENT:
-                sqlStack.push(new EntitySQL(entityType, getPreparedStatement(bo, entityType), null));
+                sqlStack.push(new EntitySQL(entityType, getPreparedStatement(bo, entityType, dataGenerator), null));
                 break;
             case LITERAL_SQL:
-                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(bo, entityType)));
+                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(bo, entityType, dataGenerator)));
                 break;
             case CSV:
-                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getCSV(bo, entityType)));
+                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getCSV(bo, entityType, dataGenerator)));
                 break;
             }
 
@@ -301,9 +302,9 @@ public class JDBCSessionContext implements CustomPersister
         return result;
     }
 
-    private PreparedStatement getPreparedStatement(BusinessObject bo, JDBCType entityType)
+    private PreparedStatement getPreparedStatement(BusinessObject bo, JDBCType entityType, DataGenerator dataGenerator)
     {
-        String psSQL = getDbTranslator().getInsertSqlFragment(bo, entityType, true);
+        String psSQL = getDbTranslator().getInsertSqlFragment(bo, entityType, true, dataGenerator);
 
         PreparedStatement ps = null;
         try {
@@ -317,7 +318,7 @@ public class JDBCSessionContext implements CustomPersister
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
         }
-        getDbTranslator().setValues(ps, bo, entityType, false);
+        getDbTranslator().setValues(ps, bo, entityType, false, dataGenerator);
 
         return ps;
     }

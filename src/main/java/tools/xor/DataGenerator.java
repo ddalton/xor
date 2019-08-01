@@ -80,8 +80,8 @@ public class DataGenerator
         this.shape = shape;
         this.settings = settings;
         this.dasFactory = dasFactory;
-        this.importMethod = ImportMethod.PREPARED_STATEMENT;
-        //this.importMethod = ImportMethod.CSV;
+        //this.importMethod = ImportMethod.PREPARED_STATEMENT;
+        this.importMethod = ImportMethod.CSV;
     }
 
     /**
@@ -158,7 +158,7 @@ public class DataGenerator
                 throw new RuntimeException("Writing to CSV can have only 1 importer job");
             }
 
-            importJobs.add(importers.submit(new DataImporter(importerQueues[i], po, shape, settings)));
+            importJobs.add(importers.submit(new DataImporter(this, importerQueues[i], po, shape, settings)));
         }
 
         return importJobs;
@@ -271,7 +271,7 @@ public class DataGenerator
         importerQueues[jobNo].offer(json);
     }
 
-    private List<Property> getGeneratedFields(EntityType entityType) {
+    public List<Property> getGeneratedFields(EntityType entityType) {
         List<Property> properties = generatedFields.get(entityType.getName());
         if(properties == null) {
             properties = new LinkedList<>();

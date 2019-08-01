@@ -46,13 +46,15 @@ public class DataImporter implements Callable
     private Shape shape;
     private ObjectCreator objectCreator;
     private JDBCPersistenceOrchestrator po;
+    private DataGenerator dataGenerator;
 
-    public DataImporter(ConcurrentLinkedQueue<JSONObject> queue, PersistenceOrchestrator po, Shape shape, Settings settings) {
+    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, PersistenceOrchestrator po, Shape shape, Settings settings) {
         this.queue = queue;
         this.settings = settings;
         this.shape = shape;
         this.objectCreator = new ObjectCreator(settings, shape.getDAS(), settings.getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
         this.po = (JDBCPersistenceOrchestrator)po;
+        this.dataGenerator = dataGenerator;
     }
 
     public Object call() throws InterruptedException, SQLException
@@ -79,7 +81,7 @@ public class DataImporter implements Callable
             Type type = shape.getType(entityName);
             BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
             bo.setInstance(json);
-            po.getSessionContext().persist(bo, settings);
+            po.getSessionContext().persist(bo, settings, dataGenerator);
 
             if (i++ % COMMIT_SIZE == 0) {
                 // commit in batches

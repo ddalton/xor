@@ -22,6 +22,8 @@ package tools.xor.providers.jdbc;
 import org.json.JSONObject;
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
+import tools.xor.DataGenerator;
+import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableJsonProperty;
 import tools.xor.JDBCProperty;
@@ -462,22 +464,39 @@ public abstract class DBTranslator
         }
     }
 
-    public String getInsertSqlFragment(BusinessObject bo, JDBCType entityType, boolean isBindParameters) {
+    private List<Property> getProperties(EntityType entityType, DataGenerator dataGenerator) {
+        List<Property> properties = entityType.getProperties();
+        if(dataGenerator != null) {
+            properties = dataGenerator.getGeneratedFields(entityType);
+        }
+
+        return properties;
+    }
+
+    private boolean shouldSkip(BusinessObject bo, Property p, DataGenerator dataGenerator) {
+        if(((ExtendedProperty)p).isGenerated()) {
+            return true;
+        }
+
+        if(bo.get(p) == null && dataGenerator == null) {
+            return true;
+        }
+
+        if(!((ExtendedProperty)p).isUpdatable()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public String getInsertSqlFragment(BusinessObject bo, JDBCType entityType, boolean isBindParameters, DataGenerator dataGenerator) {
         StringBuilder sqlstr = new StringBuilder();
         sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
 
         // iterate through the properties
         List<String> columnNames = new LinkedList<>();
-        for(Property p: entityType.getProperties()) {
-            if(((ExtendedProperty)p).isGenerated()) {
-                continue;
-            }
-
-            if(bo.get(p) == null) {
-                continue;
-            }
-
-            if(!((ExtendedProperty)p).isUpdatable()) {
+        for(Property p: getProperties(entityType, dataGenerator)) {
+            if(shouldSkip(bo, p, dataGenerator)) {
                 continue;
             }
 
@@ -514,20 +533,12 @@ public abstract class DBTranslator
         return sqlstr.toString();
     }
 
-    public String setValues(PreparedStatement ps, BusinessObject bo, JDBCType entityType, boolean isCSV) {
+    public String setValues(PreparedStatement ps, BusinessObject bo, JDBCType entityType, boolean isCSV, DataGenerator dataGenerator) {
         // get the values
         List<String> values = new LinkedList<>();
         int position = 1;
-        for(Property p: entityType.getProperties()) {
-            if(((ExtendedProperty)p).isGenerated()) {
-                continue;
-            }
-
-            if(bo.get(p) == null) {
-                continue;
-            }
-
-            if(!((ExtendedProperty)p).isUpdatable()) {
+        for(Property p: getProperties(entityType, dataGenerator)) {
+            if(shouldSkip(bo, p, dataGenerator)) {
                 continue;
             }
 
@@ -577,20 +588,20 @@ public abstract class DBTranslator
         bp.setValue(ps, this, value);
     }
 
-    public String getInsertSql(BusinessObject bo, JDBCType entityType) {
+    public String getInsertSql(BusinessObject bo, JDBCType entityType, DataGenerator dataGenerator) {
 
-        StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(bo, entityType, false));
+        StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(bo, entityType, false, dataGenerator));
         sqlstr.append("(")
-            .append(setValues(null, bo, entityType, false))
+            .append(setValues(null, bo, entityType, false, dataGenerator))
             .append(")");
 
         return sqlstr.toString();
     }
 
-    public String getCSV(BusinessObject bo, JDBCType entityType) {
+    public String getCSV(BusinessObject bo, JDBCType entityType, DataGenerator dataGenerator) {
 
         StringBuilder sqlstr = new StringBuilder();
-        sqlstr.append(setValues(null, bo, entityType, true));
+        sqlstr.append(setValues(null, bo, entityType, true, dataGenerator));
 
         return sqlstr.toString();
     }

@@ -21,6 +21,7 @@ package tools.xor.providers.jdbc;
 
 import org.json.JSONObject;
 import tools.xor.BusinessObject;
+import tools.xor.DataGenerator;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.JDBCType;
@@ -45,7 +46,7 @@ public interface CustomPersister
 
     void deleteGraph(ObjectCreator objectCreator, Settings settings);
 
-    void persist(BusinessObject bo, Settings settings) throws SQLException;
+    void persist(BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException;
 
     void beginTransaction();
 

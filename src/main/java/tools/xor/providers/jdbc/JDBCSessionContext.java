@@ -26,6 +26,7 @@ import tools.xor.DataGenerator;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.ImmutableBO;
 import tools.xor.JDBCType;
 import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
@@ -51,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,9 +66,10 @@ public class JDBCSessionContext implements CustomPersister
     private DBTranslator dbTranslator;
     private JDBCPersistenceOrchestrator po;
     private ImportMethod importMethod = ImportMethod.LITERAL_SQL; // use prepared statement batch if order does not matter
-    private Statement insertStatement;
-    private Set<PreparedStatement> preparedStatements = new HashSet<>();
+    private Statement statement;
+    private Set<PreparedStatement> preparedInsert = new HashSet<>();
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
+    private Map<JSONObject, JSONObject> snapshots = new HashMap<>();
     private final Map<String, List<String>> sqlByType = new HashMap<>();
     private List<String> insertBatch = new LinkedList<>();
     private final Map<String, PreparedStatement> statementCache = lruCache(1000);
@@ -109,9 +112,12 @@ public class JDBCSessionContext implements CustomPersister
      * @param entityType of the object
      */
     @Override
-    // TODO: create a copy for optimistic concurrency check
+    // The user should create a copy for optimistic concurrency check
     // Since this object is used as modification
     public void process (JSONObject object, EntityType entityType) {
+
+        String copy = object.toString();
+        JSONObject snapshot = new JSONObject(copy);
 
         EntityKey ek;
         JDBCType type = (JDBCType) entityType;
@@ -127,9 +133,12 @@ public class JDBCSessionContext implements CustomPersister
             throw new RuntimeException("Type " + type.getName() + " does not have a primary key");
         }
         idToObjects.put(ek, object);
+        snapshots.put(object, snapshot);
 
-        for(Property property: type.getProperties()) {
-            if(object.has(property.getName())) {
+        Iterator<String> iterator = object.keys();
+        while(iterator.hasNext()) {
+            Property property = type.getProperty(iterator.next());
+            if(property != null) {
                 if (!property.getType().isDataType()) {
                     JSONObject child = object.getJSONObject(property.getName());
                     process(child, (JDBCType)property.getType());
@@ -144,6 +153,11 @@ public class JDBCSessionContext implements CustomPersister
                 }
             }
         }
+    }
+
+    @Override
+    public Object getSnapshot(Object persistentInstance) {
+        return snapshots.get(persistentInstance);
     }
 
     @Override
@@ -182,17 +196,16 @@ public class JDBCSessionContext implements CustomPersister
         return dbTranslator;
     }
 
-    private void createInsertStatement() throws SQLException
+    private void createStatement () throws SQLException
     {
-        if(this.insertStatement == null) {
-            this.insertStatement = this.connection.createStatement();
+        if(this.statement == null) {
+            this.statement = this.connection.createStatement();
         }
     }
 
     @Override public void persistGraph (ObjectCreator objectCreator, Settings settings)
     {
         try {
-            createInsertStatement();
             List<BusinessObject> objects = new ArrayList<>(objectCreator.getDataObjects());
             EntityType entityType = (EntityType)settings.getEntityType();
             TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
@@ -200,38 +213,42 @@ public class JDBCSessionContext implements CustomPersister
 
             for (BusinessObject bo : objects) {
                 if (bo.getInstance() instanceof JSONObject) {
-                    if (this.po.isTransient(bo)) {
+                    Object persistentInstance = this.po.getEntity(bo);
+                    if (persistentInstance == null) {
                         // create INSERT statements for this object
-                        persist(bo, settings, null);
+                        create(bo, settings, null);
+                    } else {
+                        // update
+                        BusinessObject dbBO = new ImmutableBO(entityType, null, null, objectCreator);
+                        Object snapshotInstance = getSnapshot(persistentInstance);
+                        if(snapshotInstance != null) {
+                            dbBO.setInstance(snapshotInstance);
+                            update(bo, dbBO);
+                        }
                     }
                 }
             }
-
-            //  TODO:      Update/Delete
-            //            - Update then delete
-            //            - If a removed collection element does not have a surrogate/natural primary key then
-            //                it will be removed based on all of its fields
         } catch(SQLException exception) {
             throw ClassUtil.wrapRun(exception);
         }
     }
 
-    @Override public void persist (BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException
+    @Override public void create (BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException
     {
         try {
             // If preparedStatement batching is not desired due to ordering reasons
             switch(importMethod) {
             case LITERAL_SQL:
-                createInsertStatement();
+                createStatement();
                 for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
-                    insertStatement.addBatch(entitySQL.sql);
+                    statement.addBatch(entitySQL.sql);
                     insertBatch.add(entitySQL.sql);
                 }
                 break;
             case PREPARED_STATEMENT:
                 for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     entitySQL.ps.addBatch();
-                    preparedStatements.add(entitySQL.ps);
+                    preparedInsert.add(entitySQL.ps);
                 }
                 break;
             case CSV:
@@ -239,6 +256,32 @@ public class JDBCSessionContext implements CustomPersister
                     addSQL(entitySQL);
                 }
                 break;
+            }
+        }catch(Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    @Override
+    public void update (BusinessObject bo, BusinessObject dbBO) {
+        try {
+            // If preparedStatement batching is not desired due to ordering reasons
+            switch(importMethod) {
+            case LITERAL_SQL:
+                createStatement();
+                for (EntitySQL entitySQL : getUpdateObjs(bo, dbBO, importMethod)) {
+                    statement.addBatch(entitySQL.sql);
+                    insertBatch.add(entitySQL.sql);
+                }
+                break;
+            case PREPARED_STATEMENT:
+                for (EntitySQL entitySQL : getUpdateObjs(bo, dbBO, importMethod)) {
+                    entitySQL.ps.addBatch();
+                    preparedInsert.add(entitySQL.ps);
+                }
+                break;
+            case CSV:
+                throw new RuntimeException("CSV is not supported for update");
             }
         }catch(Throwable t) {
             t.printStackTrace();
@@ -280,13 +323,16 @@ public class JDBCSessionContext implements CustomPersister
         while(entityType != null) {
             switch(importMethod) {
             case PREPARED_STATEMENT:
-                sqlStack.push(new EntitySQL(entityType, getPreparedStatement(bo, entityType, dataGenerator), null));
+                sqlStack.push(new EntitySQL(entityType, getPreparedInsert(
+                        entityType,
+                        bo,
+                        dataGenerator), null));
                 break;
             case LITERAL_SQL:
-                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(bo, entityType, dataGenerator)));
+                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(entityType, bo, dataGenerator)));
                 break;
             case CSV:
-                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getCSV(bo, entityType, dataGenerator)));
+                sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getCSV(entityType, bo, dataGenerator)));
                 break;
             }
 
@@ -302,9 +348,48 @@ public class JDBCSessionContext implements CustomPersister
         return result;
     }
 
-    private PreparedStatement getPreparedStatement(BusinessObject bo, JDBCType entityType, DataGenerator dataGenerator)
+    private List<EntitySQL> getUpdateObjs(BusinessObject bo, BusinessObject dbBO, ImportMethod importMethod) {
+        JDBCType entityType = (JDBCType)bo.getType();
+
+        Stack sqlStack = new Stack<>();
+        while(entityType != null) {
+            switch (importMethod) {
+            case PREPARED_STATEMENT:
+                sqlStack.push(
+                    new EntitySQL(
+                        entityType,
+                        getPreparedUpdate(entityType, bo, dbBO),
+                        null));
+                break;
+            case LITERAL_SQL:
+                sqlStack.push(
+                    new EntitySQL(
+                        entityType,
+                        null,
+                        getDbTranslator().getUpdateSql(entityType, bo, dbBO)));
+                break;
+            case CSV:
+                throw new RuntimeException("CSV option not supported for update");
+            }
+
+            // Walk up the super-type
+            entityType = (JDBCType)entityType.getSuperType();
+        }
+
+        List result = new LinkedList<>();
+        while(!sqlStack.isEmpty()) {
+            result.add(sqlStack.pop());
+        }
+
+        return result;
+    }
+
+    private PreparedStatement getPreparedInsert (
+        JDBCType entityType,
+        BusinessObject bo,
+        DataGenerator dataGenerator)
     {
-        String psSQL = getDbTranslator().getInsertSqlFragment(bo, entityType, true, dataGenerator);
+        String psSQL = getDbTranslator().getInsertSqlFragment(entityType, bo, true, dataGenerator);
 
         PreparedStatement ps = null;
         try {
@@ -318,11 +403,31 @@ public class JDBCSessionContext implements CustomPersister
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
         }
-        getDbTranslator().setValues(ps, bo, entityType, false, dataGenerator);
+        getDbTranslator().setInsertValues(entityType, ps, bo, false, dataGenerator);
 
         return ps;
     }
 
+    private PreparedStatement getPreparedUpdate (JDBCType entityType, BusinessObject bo, BusinessObject dbBO)
+    {
+        String psSQL = getDbTranslator().getUpdateSqlFragment(entityType, bo, true);
+
+        PreparedStatement ps = null;
+        try {
+            if(statementCache.containsKey(psSQL)) {
+                ps = statementCache.get(psSQL);
+            } else {
+                ps = connection.prepareStatement(psSQL);
+                statementCache.put(psSQL, ps);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+        getDbTranslator().setUpdateValues(entityType, ps, bo, dbBO);
+
+        return ps;
+    }
 
     @Override public void deleteGraph (ObjectCreator objectCreator, Settings settings)
     {
@@ -387,29 +492,31 @@ public class JDBCSessionContext implements CustomPersister
                 switch(importMethod) {
                 case PREPARED_STATEMENT:
                     // TODO: Topological ordering of statements
-                    for(PreparedStatement ps: preparedStatements) {
+                    for(PreparedStatement ps: preparedInsert) {
                         ps.executeBatch();
                     }
                     break;
                 case LITERAL_SQL:
-                    int[] result = insertStatement.executeBatch();
+                    if(statement != null) {
+                        int[] result = statement.executeBatch();
 
-                    if (result.length != insertBatch.size()) {
-                        throw new RuntimeException(
-                            "The number of insert SQLs do not match the number received by the database");
-                    }
-
-                    StringBuilder failedSqls = new StringBuilder();
-                    for (int i = 0; i < result.length; i++) {
-                        if (result[i] != 1) {
-                            failedSqls.append(insertBatch.get(i))
-                                .append("\n");
+                        if (result.length != insertBatch.size()) {
+                            throw new RuntimeException(
+                                "The number of insert SQLs do not match the number received by the database");
                         }
-                    }
 
-                    if (failedSqls.length() > 0) {
-                        throw new RuntimeException(
-                            "The following SQLs have failed: \n " + failedSqls.toString());
+                        StringBuilder failedSqls = new StringBuilder();
+                        for (int i = 0; i < result.length; i++) {
+                            if (result[i] != 1) {
+                                failedSqls.append(insertBatch.get(i))
+                                    .append("\n");
+                            }
+                        }
+
+                        if (failedSqls.length() > 0) {
+                            throw new RuntimeException(
+                                "The following SQLs have failed: \n " + failedSqls.toString());
+                        }
                     }
                     break;
                 case CSV:
@@ -438,11 +545,11 @@ public class JDBCSessionContext implements CustomPersister
             throw ClassUtil.wrapRun(e);
         } finally {
             try {
-                if(this.insertStatement != null) {
-                    this.insertStatement.close();
+                if(this.statement != null) {
+                    this.statement.close();
                 }
-                if(preparedStatements != null) {
-                    for(PreparedStatement ps: preparedStatements) {
+                if(preparedInsert != null) {
+                    for(PreparedStatement ps: preparedInsert) {
                         ps.clearParameters();
                     }
                 }
@@ -471,13 +578,14 @@ public class JDBCSessionContext implements CustomPersister
 
     public void clear() {
         this.idToObjects = new HashMap<>();
+        this.snapshots = new HashMap<>();
         this.sqlByType.clear();
         this.insertBatch.clear();
-        if(this.preparedStatements != null) {
-            this.preparedStatements.clear();
+        if(this.preparedInsert != null) {
+            this.preparedInsert.clear();
         }
         this.statementCache.clear();
-        this.insertStatement = null;
+        this.statement = null;
     }
 
     @Override public boolean readFromDB ()

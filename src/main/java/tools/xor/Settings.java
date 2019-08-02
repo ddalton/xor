@@ -137,6 +137,8 @@ public class Settings {
 
 	protected View view;
 
+	protected Shape shape;
+
 	protected StateGraph.Scope scope = StateGraph.Scope.EDGE;
 
 	private AggregateAction action; // specifies the type of action being performed that involves data change in the database
@@ -392,6 +394,10 @@ public class Settings {
 	public List<AssociationSetting> getExpandedAssociations () {
 		return this.expandedAssociations;
 	}
+
+	public Shape getShape() {
+		return this.shape;
+	}
 	
 	public void init(Shape shape) {
 		init(this.view, null, shape);
@@ -420,6 +426,7 @@ public class Settings {
 
 	public void init(View aView, Map<String, String> queryParams, Shape shape) {
 
+		this.shape = shape;
 		this.view = aView;
 		if(this.view == null) {
 			if(entityType == null) {
@@ -449,7 +456,7 @@ public class Settings {
 		}
 
 		if(entityType != null) {
-			TypeGraph sg = view.getTypeGraph((EntityType)entityType, this.scope);
+			TypeGraph sg = getTypeGraph();
 			if (hasExpandedAssociations()) {
 				sg.enhance(expandedAssociations);
 			}
@@ -473,6 +480,10 @@ public class Settings {
 		this.userkeyOverrides = getUserkeyOverrides(queryParams);
 
 		initMutableAction(queryParams);
+	}
+
+	public TypeGraph getTypeGraph() {
+		return view.getTypeGraph(((EntityType)entityType), this.scope);
 	}
 
 	public boolean shouldPrune(String path) {

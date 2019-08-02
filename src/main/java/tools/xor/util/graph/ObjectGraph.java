@@ -385,6 +385,9 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			
 			if(EntityType.class.isAssignableFrom(vertex.getType().getClass())) {
 				EntityType superType = ((EntityType) vertex.getType()).getSuperType();
+				if(superType == null) {
+					throw new RuntimeException("Is the type from the correct shape?");
+				}
 				v = sg.getVertex(superType);
 				while(v == null) {
 					superType = superType.getSuperType();

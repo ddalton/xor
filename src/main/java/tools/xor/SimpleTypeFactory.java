@@ -20,6 +20,7 @@
 package tools.xor;
 
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -42,10 +43,10 @@ public class SimpleTypeFactory {
 	 * this is invoked only during startup.
 	 * 
 	 * @param clazz the java class
-	 * @param das the DataAccessService instance
+	 * @param shape of all the types
 	 * @return the Type instance
 	 */
-	public static SimpleType getType(Class<?> clazz, DataAccessService das) {
+	public static SimpleType getType(Class<?> clazz, Shape shape) {
 		if(String.class == clazz) {
 			return new StringType(clazz);	  
 		} else if (BigInteger.class == clazz) {
@@ -85,7 +86,7 @@ public class SimpleTypeFactory {
 		} else if(Blob.class.isAssignableFrom(clazz)) {
 			return new BlobType(clazz);
 		} else {
-			return new SimpleType(clazz, das);
+			return new SimpleType(clazz, shape);
 		}
 	}
 

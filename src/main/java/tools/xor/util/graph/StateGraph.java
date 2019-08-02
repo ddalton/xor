@@ -745,21 +745,21 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		// Go through all the types and reverse the cascaded relationships
 		for(V state: getVertices()) {
-			Collection<Property> properties = (shape == null) ?
-				state.getType().getProperties() :
-				((shape.getProperties((EntityType)state.getType()) != null) ?
-					shape.getProperties((EntityType)state.getType()).values() : null);
 
-			if( properties != null) {
-				for(Property p: properties) {
-					if(outTransitions.get(state) != null && outTransitions.get(state).containsKey(p.getName())) {
+			if(outTransitions.get(state) != null) {
+				Type type = state.getType();
+				Set<E> edges = new HashSet<>(outTransitions.get(state).values());
+				for(E edge: edges) {
+					if(edge.isUnlabelled()) {
+						continue;
+					}
+					Property p = type.getProperty(edge.getName());
 
-						// Foreign keys cannot typically be enforced on a containment
-						// relationship, especially on abstract entity types.
-						// So we will not consider their ordering unless they are required.
-						if(p.isNullable()) {
-							unlinkEdge(outTransitions.get(state).get(p.getName()));
-						}
+					// Foreign keys cannot typically be enforced on a containment
+					// relationship, especially on abstract entity types.
+					// So we will not consider their ordering unless they are required.
+					if(p != null && p.isNullable()) {
+						unlinkEdge(outTransitions.get(state).get(p.getName()));
 					}
 				}
 			}

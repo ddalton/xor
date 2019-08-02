@@ -22,7 +22,6 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
-import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
@@ -30,10 +29,8 @@ import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 
 import java.sql.SQLException;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 
 public class DataImporter implements Callable
 {
@@ -52,7 +49,7 @@ public class DataImporter implements Callable
         this.queue = queue;
         this.settings = settings;
         this.shape = shape;
-        this.objectCreator = new ObjectCreator(settings, shape.getDAS(), settings.getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+        this.objectCreator = new ObjectCreator(settings, shape, settings.getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
         this.po = (JDBCPersistenceOrchestrator)po;
         this.dataGenerator = dataGenerator;
     }
@@ -81,7 +78,7 @@ public class DataImporter implements Callable
             Type type = shape.getType(entityName);
             BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
             bo.setInstance(json);
-            po.getSessionContext().persist(bo, settings, dataGenerator);
+            po.getSessionContext().create(bo, settings, dataGenerator);
 
             if (i++ % COMMIT_SIZE == 0) {
                 // commit in batches

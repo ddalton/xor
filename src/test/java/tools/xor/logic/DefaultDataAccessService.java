@@ -25,16 +25,17 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 
+import java.util.ArrayList;
 
 public class DefaultDataAccessService {
 	@Autowired
 	protected AggregateManager aggregateManager;
 	
 	public void defineMeta() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataAccessService das = aggregateManager.getDAS();
 
 		// List the declared properties
-		for(Type type: das.getTypes()) {
+		for(Type type: das.getShape().getUniqueTypes()) {
 			type.getDeclaredProperties();
 		}			
 	}

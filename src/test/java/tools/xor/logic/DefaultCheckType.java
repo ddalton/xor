@@ -87,9 +87,9 @@ public class DefaultCheckType extends AbstractDBTest {
 		
 		// read the person object using a DataObject
 		settings = getSettings();
-		ObjectCreator oc = new ObjectCreator(settings, das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(settings, das.getShape(), aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		settings.expand(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
-		EntityType taskType = (EntityType) das.getType(Task.class);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		settings.setEntityType(taskType);
 		settings.init(das.getShape());
 		
@@ -118,9 +118,9 @@ public class DefaultCheckType extends AbstractDBTest {
 	protected void checkOrder() {
 		DataAccessService das = aggregateManager.getDAS();
 		
-		EntityType chapterT = (EntityType) das.getType(Chapter.class);
-		EntityType chapterTT = (EntityType) das.getType(ChapterType.class);
-		EntityType facetT = (EntityType) das.getType(Facet.class);
+		EntityType chapterT = (EntityType) das.getShape().getType(Chapter.class);
+		EntityType chapterTT = (EntityType) das.getShape().getType(ChapterType.class);
+		EntityType facetT = (EntityType) das.getShape().getType(Facet.class);
 		
 		assert(chapterT.getOrder() < chapterTT.getOrder());
 		assert(chapterTT.getOrder() < facetT.getOrder());
@@ -135,8 +135,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		task.setDisplayName("Setup DSL");
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		
-		EntityType taskType = (EntityType) das.getType(Task.class);
-		ObjectCreator oc = new ObjectCreator(new Settings(), das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
+		ObjectCreator oc = new ObjectCreator(new Settings(), das.getShape(), aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		
 		Property property = taskType.getProperty("name");
@@ -166,8 +166,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		task.setDisplayName("Setup DSL");
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		
-		EntityType taskType = (EntityType) das.getType(Task.class);
-		ObjectCreator oc = new ObjectCreator(new Settings(), das, aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
+		ObjectCreator oc = new ObjectCreator(new Settings(), das.getShape(), aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		
 		Property property = taskType.getProperty("name");
@@ -189,7 +189,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	
 	protected void generateSimple() {
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType addressType = (EntityType) das.getType(AddressEntity.class);
+		EntityType addressType = (EntityType) das.getShape().getType(AddressEntity.class);
 		
 		JSONObject address = (JSONObject) addressType.generate(new Settings(), null, null, null, new StateGraph.ObjectGenerationVisitor(new HashMap<JSONObject, State>(), new Settings(), null));
 		System.out.println("Address street: " + address.get("street"));

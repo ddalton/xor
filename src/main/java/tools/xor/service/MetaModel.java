@@ -45,14 +45,14 @@ public class MetaModel {
 	}
 
 	public List<String> getViewList() {
-		List<String> result = getDAS().getViewNames();
+		List<String> result = getDAS().getShape().getViewNames();
 		Collections.sort(result);
 		
 		return result;		
 	}
 
 	public List<String> getTypeList() {
-		List<Type> types = getDAS().getTypes();
+		List<Type> types = new ArrayList<>(getDAS().getShape().getUniqueTypes());
 		List<String> result = new ArrayList<String>(types.size());
 
 		for(Type type: types) {
@@ -84,7 +84,7 @@ public class MetaModel {
 	}
 
 	public List<String> getEntityProperties(String entityName) {
-		Type type = getDAS().getType(entityName);
+		Type type = getDAS().getShape().getType(entityName);
 
 		if( type == null || !(type instanceof EntityType)) {
 			throw new RuntimeException("The provided name is not an entity: " + entityName);
@@ -101,7 +101,7 @@ public class MetaModel {
 	}
 
 	public List<String> getExpandedNaturalKey(String entityName) {
-		Type type = getDAS().getType(entityName);
+		Type type = getDAS().getShape().getType(entityName);
 
 		if( type == null || !(type instanceof EntityType)) {
 			throw new RuntimeException("The provided name is not an entity: " + entityName);
@@ -111,12 +111,12 @@ public class MetaModel {
 	}
 
 	public List<String> getViewAttributes(String viewName) {
-		View view = getDAS().getView(viewName);
+		View view = getDAS().getShape().getView(viewName);
 		return view.getAttributeList();
 	}
 
 	public List<String> getAggregateAttributes(String aggregateName) {
-		Type type = getDAS().getType(aggregateName);
+		Type type = getDAS().getShape().getType(aggregateName);
 		List<String> paths = new ArrayList<String>();
 		paths.addAll(AggregatePropertyPaths.enumerateRegEx(type, getDAS().getShape()));
 		

@@ -43,7 +43,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	public void checkOneToMany() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty taskChildren = (ExtendedProperty) taskType.getProperty("taskChildren");
 		
 		assert(taskChildren != null);
@@ -56,7 +56,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	public void checkOneToOne() {
 		DataAccessService das = aggregateManager.getDAS(); 
 		
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty quote = (ExtendedProperty) taskType.getProperty("quote");
 		
 		assert(quote != null);
@@ -69,7 +69,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	public void checkManyToMany() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Project.class);
+		Type taskType = das.getShape().getType(Project.class);
 		ExtendedProperty managers = (ExtendedProperty) taskType.getProperty("managers");
 		
 		assert(managers != null);
@@ -80,7 +80,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	public void checkManyToOne() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type employee = das.getType(Employee.class);
+		Type employee = das.getShape().getType(Employee.class);
 		ExtendedProperty createdBy = (ExtendedProperty) employee.getProperty("createdBy");
 		
 		assert(createdBy != null);

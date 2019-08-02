@@ -487,16 +487,10 @@ public abstract class JDBCDAS extends AbstractDataAccessService
     public abstract DataSource getDataSource();
 
     @Override
-    public Type getType(Class<?> clazz, Type type) {
+    public Type getType(Shape shape, Class<?> clazz, Type type) {
         // The clazz is JSONObject, so it is better to use type as fallback
         // as it is more specific
         return type;
-    }
-
-    @Override
-    public Type getType(String name) {
-        // We ignore case
-        return getShape().getType(name.toUpperCase());
     }
 
     @Override public void addShape (String name, SchemaExtension extension)
@@ -549,12 +543,12 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         return PersistenceType.JDBC;
     }
 
-    @Override public void populateNarrowedClass (Class<?> entityClass, TypeNarrower typeNarrower)
+    @Override public void populateNarrowedClass (Shape shape, Class<?> entityClass, TypeNarrower typeNarrower)
     {
         // do nothing
     }
 
-    @Override public Class<?> getNarrowedClass (Class<?> entityClass, String viewName)
+    @Override public Class<?> getNarrowedClass (Shape shape, Class<?> entityClass, String viewName)
     {
         return entityClass;
     }

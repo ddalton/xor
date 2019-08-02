@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import tools.xor.exception.MultipleClassForPropertyException;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
 public abstract class AbstractTypeNarrower implements TypeNarrower {
@@ -64,10 +65,12 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	public Class<?> narrow(Object entity, String viewName) {
 		Class<?> entityClass = ClassUtil.getUnEnhanced(entity.getClass());
 				
-		getAggregateManager().getDAS().refresh(this);
-		getAggregateManager().getDAS().populateNarrowedClass(entityClass, this);		
+		getAggregateManager().getDAS().getShape().refresh(this);
 
-		return getAggregateManager().getDAS().getNarrowedClass(entityClass, viewName);
+		Shape shape = getAggregateManager().getDAS().getShape();
+		getAggregateManager().getDAS().populateNarrowedClass(shape, entityClass, this);
+
+		return getAggregateManager().getDAS().getNarrowedClass(shape, entityClass, viewName);
 	}
 
 	/**
@@ -84,7 +87,7 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 		if(typeMapper.isExternal(entityClass))
 			referenceClass = typeMapper.toDomain(entityClass);
 
-		entityType = das.getType(referenceClass);
+		entityType = das.getShape().getType(referenceClass);
 		if(SimpleType.class.isAssignableFrom(entityType.getClass()))
 			return entityType.getInstanceClass();
 

@@ -81,9 +81,9 @@ public class TwitterJDBCTest
                 // urls 1:N from user_description to urls
                 // urls 1:N from entities_tweet to urls
 
-                JDBCType entitiesUserType = (JDBCType) das.getType("entities_user");
-                JDBCType userUrlType = (JDBCType) das.getType("user_url");
-                JDBCType userDescType = (JDBCType) das.getType("user_description");
+                JDBCType entitiesUserType = (JDBCType) shape.getType("entities_user");
+                JDBCType userUrlType = (JDBCType) shape.getType("user_url");
+                JDBCType userDescType = (JDBCType) shape.getType("user_description");
                 JDBCProperty userUrlPK = (JDBCProperty)userUrlType.getProperty("ID_STR");
                 JDBCDAS.ForeignKey fk = new JDBCDAS.ForeignKey("FK1_1__1_url", userUrlType.getTableInfo(), entitiesUserType.getTableInfo(),
                     JDBCDAS.ForeignKeyRule.NO_ACTION,
@@ -102,7 +102,7 @@ public class TwitterJDBCTest
                 entities.initMappedBy(das.getShape());
                 userDescType.addProperty(entities);
 
-                JDBCType urlsType = (JDBCType) das.getType("urls");
+                JDBCType urlsType = (JDBCType) shape.getType("urls");
                 JDBCProperty urlsPK = (JDBCProperty)urlsType.getProperty("ID_STR");
                 // Create a synthetic foreign key between urls and user_url
                 fk = new JDBCDAS.ForeignKey("FK1_1__N_urls", urlsType.getTableInfo(), userUrlType.getTableInfo(),
@@ -122,7 +122,7 @@ public class TwitterJDBCTest
                 JDBCProperty userdesc = new JDBCProperty("userdesc", urlsPK.getColumns(), userDescType, urlsType, fk);
                 userdesc.initMappedBy(das.getShape());
 
-                JDBCType entitiesTweetType = (JDBCType) das.getType("entities_tweet");
+                JDBCType entitiesTweetType = (JDBCType) shape.getType("entities_tweet");
                 // Create a synthetic foreign key between urls and entities_tweet
                 fk = new JDBCDAS.ForeignKey("FK3_1__N_urls", urlsType.getTableInfo(), entitiesTweetType.getTableInfo(),
                     JDBCDAS.ForeignKeyRule.NO_ACTION,
@@ -142,8 +142,8 @@ public class TwitterJDBCTest
                 // indices 1:N from symbols to indices
                 // indices 1:N from media to indices
 
-                JDBCType indicesType = (JDBCType) das.getType("indices");
-                JDBCType hashtagsType = (JDBCType) das.getType("hashtags");
+                JDBCType indicesType = (JDBCType) shape.getType("indices");
+                JDBCType hashtagsType = (JDBCType) shape.getType("hashtags");
                 JDBCProperty indicesPK = (JDBCProperty)indicesType.getProperty("ID_STR");
                 fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), hashtagsType.getTableInfo(),
                     JDBCDAS.ForeignKeyRule.NO_ACTION,
@@ -159,7 +159,7 @@ public class TwitterJDBCTest
                 JDBCProperty urls = new JDBCProperty("urls", indicesPK.getColumns(), urlsType, indicesType, fk);
                 urls.initMappedBy(das.getShape());
 
-                JDBCType mentionsType = (JDBCType) das.getType("user_mentions");
+                JDBCType mentionsType = (JDBCType) shape.getType("user_mentions");
                 fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), mentionsType.getTableInfo(),
                     JDBCDAS.ForeignKeyRule.NO_ACTION,
                     JDBCDAS.ForeignKeyRule.NO_ACTION);
@@ -167,7 +167,7 @@ public class TwitterJDBCTest
                 JDBCProperty user_mentions = new JDBCProperty("user_mentions", indicesPK.getColumns(), mentionsType, indicesType, fk);
                 user_mentions.initMappedBy(das.getShape());
 
-                JDBCType symbolsType = (JDBCType) das.getType("symbols");
+                JDBCType symbolsType = (JDBCType) shape.getType("symbols");
                 fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), symbolsType.getTableInfo(),
                     JDBCDAS.ForeignKeyRule.NO_ACTION,
                     JDBCDAS.ForeignKeyRule.NO_ACTION);
@@ -175,7 +175,7 @@ public class TwitterJDBCTest
                 JDBCProperty symbols = new JDBCProperty("symbols", indicesPK.getColumns(), symbolsType, indicesType, fk);
                 symbols.initMappedBy(das.getShape());
 
-                JDBCType mediaType = (JDBCType) das.getType("media");
+                JDBCType mediaType = (JDBCType) shape.getType("media");
                 fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), mediaType.getTableInfo(),
                     JDBCDAS.ForeignKeyRule.NO_ACTION,
                     JDBCDAS.ForeignKeyRule.NO_ACTION);
@@ -433,7 +433,7 @@ public class TwitterJDBCTest
         url.put("urls", urls);
 
         // Create the urls object
-        JDBCType type = (JDBCType) das.getType("user_url");
+        JDBCType type = (JDBCType) shape.getType("user_url");
         Settings settings = new Settings();
         settings.setEntityType(type);
         settings.init(shape);
@@ -490,7 +490,7 @@ public class TwitterJDBCTest
         Shape shape = das.getShape();
 
         JSONObject tweet = getTweet(false, 10001);
-        JDBCType type = (JDBCType) das.getType("tweet");
+        JDBCType type = (JDBCType) shape.getType("tweet");
         Settings settings = new Settings();
         settings.setEntityType(type);
         settings.init(shape);
@@ -515,7 +515,7 @@ public class TwitterJDBCTest
         quoteTweet.put("QUOTED_STATUS_ID", quotedTweet.get("ID"));
         quoteTweet.put("QUOTED_STATUS_ID_STR", quotedTweet.get("ID_STR"));
 
-        JDBCType type = (JDBCType) das.getType("quotetweet");
+        JDBCType type = (JDBCType) shape.getType("quotetweet");
         Settings settings = new Settings();
         settings.expand(new AssociationSetting("TWEET", true, false));
         settings.setEntityType(type);

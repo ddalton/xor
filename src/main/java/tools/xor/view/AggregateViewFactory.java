@@ -152,7 +152,7 @@ public class AggregateViewFactory {
 	public void generateQueries(AggregateManager am) {
 		
 		// The views have the paths populated
-		List<View> views = am.getDAS().getViews();
+		List<View> views = am.getDAS().getShape().getViews();
 		
 		// Categorize the views by package
 		Map<String, AggregateViews> viewsByPackage = new HashMap<String, AggregateViews>();		
@@ -171,7 +171,7 @@ public class AggregateViewFactory {
 				continue;
 			}
 
-			Type type = am.getDAS().getType(av.getTypeName());
+			Type type = am.getDAS().getShape().getType(av.getTypeName());
 			groupByPackage(type, av, viewsByPackage);
 			
 			QueryKey viewKey = new QueryKey(type, av.getName(), false);

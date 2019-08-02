@@ -76,9 +76,9 @@ public class DataObjectList {
 				Class elementClass = MutableJsonTypeMapper.getEntityClass((JSONObject)element);
 
 				if(fallbackET.isDomainType()) {
-					type = dataObject.getObjectCreator().getDAS().getType(elementClass);
+					type = dataObject.getObjectCreator().getShape().getType(elementClass);
 				} else {
-					type = dataObject.getObjectCreator().getDAS().getExternalType(elementClass);
+					type = dataObject.getObjectCreator().getShape().getExternalType(elementClass);
 				}
 			}
 			catch (Exception e) {

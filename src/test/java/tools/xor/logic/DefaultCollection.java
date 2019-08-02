@@ -37,7 +37,7 @@ public class DefaultCollection {
 	public void checkSet() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		Property children = taskType.getProperty("taskChildren");
 		
 		assert(((ExtendedProperty)children).isSet() == true);
@@ -48,7 +48,7 @@ public class DefaultCollection {
 	public void checkList() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		Property dependencies = taskType.getProperty("dependants");
 		
 		assert(((ExtendedProperty)dependencies).isSet() == false);
@@ -59,7 +59,7 @@ public class DefaultCollection {
 	public void checkMap() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type prjType = das.getType(Project.class);
+		Type prjType = das.getShape().getType(Project.class);
 		Property subProjects = prjType.getProperty("subProjects");
 		
 		assert(((ExtendedProperty)subProjects).isSet() == false);

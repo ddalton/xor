@@ -161,7 +161,7 @@ public class ExternalType extends AbstractType {
 
 		for(Type baseType: domainType.getBaseTypes()) {
 			Class<?> externalClass = getTypeMapper().toExternal(baseType.getInstanceClass());
-			Type externalType = dataAccessService.getType(externalClass);
+			Type externalType = getShape().getType(externalClass);
 
 			baseTypes.add(externalType);
 		}

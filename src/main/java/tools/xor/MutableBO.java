@@ -85,7 +85,7 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
@@ -115,7 +115,7 @@ public class MutableBO extends AbstractBO {
 		Date a = new Date();
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
@@ -152,7 +152,7 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		DeleteOperation operation = new DeleteOperation();
@@ -179,14 +179,14 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
 		callInfo.setOutputObjectCreator(oc);
 		CloneOperation operation = new CloneOperation();
 		callInfo.setOperation(operation);
 		BusinessObject target = null;
 		
 		try {
-			target = operation.createTarget(callInfo, (EntityType) settings.getEntityType());
+			target = operation.createTarget(callInfo, settings.getEntityType());
 			oc.setObjectGraph(target);
 			callInfo.setOutput(target);
 			settings.setPersist(true);

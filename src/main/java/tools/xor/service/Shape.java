@@ -222,14 +222,25 @@ public class Shape
      * @return type instance
      */
     public Type getType(String name) {
+        Type result = null;
+
         if(this.shapeStrategy == ShapeStrategy.COPY) {
-            return types.get(name);
+            result = getTypeCaseInsensitive(name);
         } else if(this.shapeStrategy == ShapeStrategy.SHARED) {
-            if(types.containsKey(name)) {
-                return types.get(name);
-            } else if(parent != null) {
+            result = getTypeCaseInsensitive(name);
+            if(result == null && parent != null) {
                 return parent.getType(name);
             }
+        }
+
+        return result;
+    }
+
+    private Type getTypeCaseInsensitive(String name) {
+        if(types.containsKey(name)) {
+            return types.get(name);
+        } else if(types.containsKey(name.toUpperCase())) {
+            return types.get(name.toUpperCase());
         }
 
         return null;
@@ -243,15 +254,25 @@ public class Shape
      * @return external type instance
      */
     public Type getExternalType(String name) {
+        Type result = null;
 
         if(this.shapeStrategy == ShapeStrategy.COPY) {
-            return externalTypes.get(name);
+            result = getExternalTypeCaseInsensitive(name);
         } else if(this.shapeStrategy == ShapeStrategy.SHARED) {
-            if(externalTypes.containsKey(name)) {
-                return externalTypes.get(name);
-            } else if(parent != null) {
+            result = getExternalTypeCaseInsensitive(name);
+            if(result == null && parent != null) {
                 return parent.getExternalType(name);
             }
+        }
+
+        return result;
+    }
+
+    private Type getExternalTypeCaseInsensitive(String name) {
+        if(externalTypes.containsKey(name)) {
+            return externalTypes.get(name);
+        } else if(externalTypes.containsKey(name.toUpperCase())) {
+            return externalTypes.get(name.toUpperCase());
         }
 
         return null;
@@ -264,7 +285,7 @@ public class Shape
         // create a Type object for this class
         if(result == null) {
             //result = new SimpleType(clazz);
-            result = SimpleTypeFactory.getType(clazz, getDAS());
+            result = SimpleTypeFactory.getType(clazz, this);
 
             addType(clazz.getName(), result);
         }
@@ -278,7 +299,7 @@ public class Shape
         // create a Type object for this class
         if (result == null) {
             //result = new SimpleType(clazz);
-            result = SimpleTypeFactory.getType(clazz, getDAS());
+            result = SimpleTypeFactory.getType(clazz, this);
             addExternalType(clazz.getName(), result);
         }
 

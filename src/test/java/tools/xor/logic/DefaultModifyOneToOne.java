@@ -41,14 +41,14 @@ public class DefaultModifyOneToOne extends AbstractDBTest {
 	protected void checkBidirMapping() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		EntityType projectType = (EntityType) das.getType(Project.class);
+		EntityType projectType = (EntityType) das.getShape().getType(Project.class);
 		ExtendedProperty fs = (ExtendedProperty) projectType.getProperty("financialSummary");
 		
 		assert(fs != null);
 		assert(fs.getMappedBy() != null);
 		assert(fs.getAssociationType() == PersistentAttributeType.ONE_TO_ONE);
 		
-		EntityType fsType = (EntityType) das.getType(FinancialSummary.class);
+		EntityType fsType = (EntityType) das.getShape().getType(FinancialSummary.class);
 		ExtendedProperty project = (ExtendedProperty) fsType.getProperty("project");
 		
 		assert(project != null);
@@ -59,12 +59,12 @@ public class DefaultModifyOneToOne extends AbstractDBTest {
 	protected void checkSingleMapping() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		EntityType personType = (EntityType) das.getType(Person.class);
+		EntityType personType = (EntityType) das.getShape().getType(Person.class);
 		ExtendedProperty address = (ExtendedProperty) personType.getProperty("address");
 		
 		assert(address == null);
 		
-		EntityType addressType = (EntityType) das.getType(AddressEntity.class);
+		EntityType addressType = (EntityType) das.getShape().getType(AddressEntity.class);
 		ExtendedProperty person = (ExtendedProperty) addressType.getProperty("person");
 		
 		assert(person != null);

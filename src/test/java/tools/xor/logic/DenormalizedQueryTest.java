@@ -55,7 +55,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Person.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Person.class));
 		settings.setDenormalized(true);
 		settings.setView(aggregateService.getView("BASICINFO"));
 		
@@ -76,7 +76,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Person.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Person.class));
 		settings.setDenormalized(true);
 		settings.setView(aggregateService.getView("BASICINFO"));
 		
@@ -97,7 +97,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Person.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Person.class));
 		settings.setDenormalized(true);
 		settings.setView(aggregateService.getView("BASICINFO_NATIVE"));
 		
@@ -136,7 +136,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 
 		// query the task object
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
 		settings.setDenormalized(true);		
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		
@@ -147,7 +147,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 	public void updateTaskChildren() throws IOException
 	{
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 
 		FileInputStream is = new FileInputStream("queryTaskChildren.xlsx");

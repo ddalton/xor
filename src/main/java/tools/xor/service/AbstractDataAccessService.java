@@ -173,19 +173,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	@Override
-	public void addOpenType(OpenType type) {
-		getShape().addOpenType(type);
-	}
-	
-	@Override
-	public Type getType(Class<?> clazz) {
-
-		return getShape().getType(clazz);
-	}
-
-	@Override
-	public Type getType(Class<?> clazz, Type type) {
-		return clazz != null ? getType(clazz) : type;
+	public Type getType(Shape shape, Class<?> clazz, Type type) {
+		return clazz != null ? shape.getType(clazz) : type;
 	}
 
 	/**
@@ -221,29 +210,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	@Override
-	public Type getExternalType(Class<?> clazz) {
-		return getShape().getExternalType(clazz);
-	}
-
-	@Override
-	public Type getType(String name) {
-		return getShape().getType(name);
-	}
-
-	@Override
-	public Type getExternalType(String name) {
-		return getShape().getExternalType(name);
-	}	
-
-	@Override
 	public TypeMapper getTypeMapper() {
 		return typeMapper;
-	}	
-
-	@Override
-	public List<Type> getTypes() {
-		return new ArrayList<>(getShape().getUniqueTypes());
-	}	
+	}
 
 	@Override
 	public void postProcess(Object newInstance, boolean autoWire) {
@@ -321,36 +290,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 	
 	@Override
-	public List<String> getViewNames() {
-		return getShape().getViewNames();
-	}	
-	
-	@Override
-	public View getView(String viewName) {
-		return getShape().getView(viewName);
-	}	
-	
-	@Override
-	public List<View> getViews() {
-		return getShape().getViews();
-	}
-	
-	@Override
-	public View getView(EntityType type) {
-		return getShape().getView(type);
-	}
-
-	@Override
-	public void addView(AggregateView view) {
-		getShape().addView(view);
-	}
-	
-	@Override
-	public View getBaseView(EntityType type) {
-		return getShape().getBaseView(type);
-	}
-	
-	@Override
 	public void sync(Map<String, List<AggregateView>> avVersions) {
 		AggregateManager am = getAggregateManager();
 		for(Shape shape: shapes.values()) {
@@ -359,18 +298,13 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	@Override
-	public void refresh(TypeNarrower typeNarrower) {
-		getShape().refresh(typeNarrower);
-	}
-
-	@Override
-	public Class<?> getNarrowedClass(Class<?> entityClass, String viewName) {
-		return getShape().getNarrowedClass(entityClass, viewName);
+	public Class<?> getNarrowedClass(Shape shape, Class<?> entityClass, String viewName) {
+		return shape.getNarrowedClass(entityClass, viewName);
 	}	
 	
 	@Override
-	public void populateNarrowedClass(Class<?> superClass, TypeNarrower typeNarrower) {
-		getShape().populateNarrowedClass(superClass, typeNarrower);
+	public void populateNarrowedClass(Shape shape, Class<?> superClass, TypeNarrower typeNarrower) {
+		shape.populateNarrowedClass(superClass, typeNarrower);
 	}
 
 	/**
@@ -380,7 +314,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 		for(Type type: shape.getUniqueTypes()) {
 			if(EntityType.class.isAssignableFrom(type.getClass())) {
-				getView((EntityType) type);
+				shape.getView((EntityType)type);
 			}
 		}
 	}
@@ -395,26 +329,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	protected void initExternal (Shape shape) {
 		shape.deriveExternal();
-	}
-
-	@Override
-	public void addProperty (Property openProperty) {
-		getShape().addProperty(openProperty);
-	}
-
-	@Override
-	public void removeProperty (Property openProperty) {
-		getShape().removeProperty(openProperty);
-	}
-
-	@Override
-	public void addOpenProperty (Property openProperty) {
-		getShape().addOpenProperty(openProperty);
-	}
-
-	@Override
-	public void removeOpenProperty (Property openProperty) {
-		getShape().removeOpenProperty(openProperty);
 	}
 
 	public QueryTransformer getQueryBuilder() {
@@ -437,7 +351,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 				String incomingProperty = row.getCell(2) == null ? null :
 					row.getCell(2).getStringCellValue();
 
-				EntityType entityType = (EntityType)getType(entityTypeName);
+				EntityType entityType = (EntityType)getShape().getType(entityTypeName);
 				Sheet entitySheet = wb.getSheet(sheetName);
 				processDomainValues(entityType, entitySheet, incomingProperty);
 			}

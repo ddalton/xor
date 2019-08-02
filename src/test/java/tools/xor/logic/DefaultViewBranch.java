@@ -43,7 +43,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	public void testCreateBranches1() {	
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);		
+		Type taskType = das.getShape().getType(Task.class);
 		View view = aggregateManager.getView("TASKCHILDREN");
 		
 		// change to accept entity type
@@ -60,7 +60,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	public void testCreateBranches2() {	
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);		
+		Type taskType = das.getShape().getType(Task.class);
 		View view = aggregateManager.getView("TASKSET");
 		
 		// change to accept entity type
@@ -77,8 +77,8 @@ public class DefaultViewBranch extends AbstractDBTest {
 	public void testTaskFull() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);	
-		View view = das.getView((EntityType) taskType);
+		Type taskType = das.getShape().getType(Task.class);
+		View view = das.getShape().getView((EntityType) taskType);
 		
 		AggregateTree viewBranch = view.getAggregateTree(das, taskType, false);
 		assert(viewBranch != null);

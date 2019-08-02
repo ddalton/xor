@@ -130,7 +130,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			if(entityName != null) {
 				// This is padded with space based on the largest type name if a CASE statement is used
 				entityName = entityName.trim();
-				type = entity.getObjectCreator().getDAS().getType(entityName);
+				type = entity.getObjectCreator().getDAS().getShape().getType(entityName);
 			}
 
 			// find and create data object

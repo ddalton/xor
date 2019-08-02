@@ -124,9 +124,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	@Test
 	public void checkOpenField() throws JSONException {
 		DataAccessService das = aggregateService.getDAS();
-		EntityType taskType = (EntityType) das.getType(Task.class);
-		Property openProperty = new JPAProperty("ItemList", das.getType(Object.class), taskType);
-		das.addOpenProperty(openProperty);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
+		Property openProperty = new JPAProperty("ItemList", das.getShape().getType(Object.class), taskType);
+		das.getShape().addOpenProperty(openProperty);
 
 		super.checkOpenField();
 	}
@@ -152,11 +152,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	}	
 	
 	private void setupOpenField(DataAccessService das) {
-		EntityType taskType = (EntityType) das.getType(Task.class);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		if(taskType.getProperty("subTaskObj") == null) {
-			ExtendedProperty openProperty = new JPAProperty("subTaskObj", das.getType(Task.class), taskType, RelationshipType.TO_ONE, null);
+			ExtendedProperty openProperty = new JPAProperty("subTaskObj", das.getShape().getType(Task.class), taskType, RelationshipType.TO_ONE, null);
 			openProperty.addKeyMapping(new String[]{"subTask"}, new String[]{"id"});
-			das.addOpenProperty(openProperty);
+			das.getShape().addOpenProperty(openProperty);
 		}
 	}
 	
@@ -197,11 +197,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			return;
 		}
 		
-		EntityType stype = (EntityType) aggregateManager.getDAS().getType(S.class);
+		EntityType stype = (EntityType) aggregateManager.getDAS().getShape().getType(S.class);
 		stype.setNaturalKey(new String[]{"supplierNo"});
-		EntityType ptype = (EntityType) aggregateManager.getDAS().getType(P.class);
+		EntityType ptype = (EntityType) aggregateManager.getDAS().getShape().getType(P.class);
 		ptype.setNaturalKey(new String[]{"partNo"});	
-		EntityType sptype = (EntityType) aggregateManager.getDAS().getType(SP.class);
+		EntityType sptype = (EntityType) aggregateManager.getDAS().getShape().getType(SP.class);
 		sptype.setNaturalKey(new String[]{"supplierNo", "partNo"});		
 
 		S1 = new tools.xor.db.sp.S("S1", "Smith", 20, "London");
@@ -259,11 +259,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	
 	private void createSPProperty() {
         DataAccessService das = aggregateService.getDAS();		
-        EntityType partType = (EntityType) das.getType(P.class);
+        EntityType partType = (EntityType) das.getShape().getType(P.class);
         if(partType.getProperty("supplierParts") == null) {
-            ExtendedProperty openProperty = new JPAProperty("supplierParts", das.getType(Set.class), partType, RelationshipType.TO_MANY, (EntityType) das.getType(SP.class));
+            ExtendedProperty openProperty = new JPAProperty("supplierParts", das.getShape().getType(Set.class), partType, RelationshipType.TO_MANY, (EntityType) das.getShape().getType(SP.class));
             openProperty.addKeyMapping(new String[]{"partNo"}, new String[]{"partNo"});
-            das.addOpenProperty(openProperty);
+            das.getShape().addOpenProperty(openProperty);
         }		
 	}
 	
@@ -375,10 +375,10 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void checkReferenceSemantics () throws JSONException
 	{
 		DataAccessService das = aggregateService.getDAS();
-		EntityType taskType = (EntityType) das.getType(Task.class);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		Property openProperty = taskType.getProperty("ItemList");
 		if(openProperty != null) {
-			das.removeOpenProperty(openProperty);
+			das.getShape().removeOpenProperty(openProperty);
 		}
 
 		super.checkReferenceSemantics();
@@ -421,9 +421,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// Read the task object using the built-in basic view
 		DataAccessService das = aggregateService.getDAS();
-		EntityType taskType = (EntityType)das.getType(Task.class);
+		EntityType taskType = (EntityType)das.getShape().getType(Task.class);
 		Settings settings = new Settings();
-		settings.setView(das.getBaseView(taskType));
+		settings.setView(das.getShape().getBaseView(taskType));
 
 		JSONObject json = new JSONObject();
 		json.put("id", task.getId());
@@ -436,7 +436,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// Now let us get the aggregate view
 		//settings.setView(das.getView(taskType));
 
-		View view = das.getView(taskType);
+		View view = das.getShape().getView(taskType);
 		settings = new Settings();
 		settings.setView(view);
 		System.out.println("********Entity view******");
@@ -455,8 +455,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// First create a natural key for Task based on name
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType externalTask = (EntityType)das.getExternalType(Task.class);
-		EntityType domainTask = (EntityType)das.getType(Task.class);
+		EntityType externalTask = (EntityType)das.getShape().getExternalType(Task.class);
+		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
 		String[] key = { "name" };
 		externalTask.setNaturalKey(key);
 		domainTask.setNaturalKey(key);
@@ -510,8 +510,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// First create a natural key for Task based on name
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType externalTask = (EntityType)das.getExternalType(Task.class);
-		EntityType domainTask = (EntityType)das.getType(Task.class);
+		EntityType externalTask = (EntityType)das.getShape().getExternalType(Task.class);
+		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
 		String[] key = { "name" };
 		externalTask.setNaturalKey(key);
 		domainTask.setNaturalKey(key);
@@ -573,14 +573,14 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void queryEntity() throws Exception
 	{
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
 		settings.init(aggregateService.getDAS().getShape());
 
 		aggregateService.importCSV("bulk/", settings);
 
 		// query the task object
 		settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		List<?> result = aggregateService.query(null, settings);
 

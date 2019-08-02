@@ -1296,7 +1296,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	public void validateComplex() {
 		View view = aggregateService.getView("COMPLEX");
 		DataAccessService das = aggregateManager.getDAS();
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
@@ -1312,7 +1312,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	public void querySplitToRoot() {
 		View view = aggregateService.getView("COMPLEX");
 		DataAccessService das = aggregateManager.getDAS();
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
@@ -1327,7 +1327,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	public void querySplitToAnchor() {
 		View view = aggregateService.getView("COMPLEX");
 		DataAccessService das = aggregateManager.getDAS();
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);
@@ -1342,7 +1342,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	public void oqlQuery() {
 		View view = aggregateService.getView("COMPLEX");
 		DataAccessService das = aggregateManager.getDAS();
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
 		new FragmentBuilder(das, queryTree).build((EntityType)task);

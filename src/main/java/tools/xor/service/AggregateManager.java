@@ -461,7 +461,7 @@ public class AggregateManager implements Xor
 				throw new RuntimeException(
 					"Unable to identify the type on which to perform the operation. Need to explicitly specify the domain type.");
 			}
-			settings.setEntityType(das.getType(domainClass.getName()));
+			settings.setEntityType(das.getShape().getType(domainClass.getName()));
 			settings.init(das.getShape()); // populate the view from the type if necessary
 			owLogger.debug("Operation on Entity Type: " + settings.getEntityType().getName());
 			if (owLogger.isTraceEnabled()) {
@@ -532,12 +532,12 @@ public class AggregateManager implements Xor
 		try {
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				das,
+				getShape(settings),
 				getPersistenceOrchestrator(),
 				MapperDirection.DOMAINTODOMAIN);
 			BusinessObject from = oc.createDataObject(
 				entity,
-				das.getType(entity.getClass()),
+				oc.getShape().getType(entity.getClass()),
 				null,
 				null);
 			oc.setRoot(from);
@@ -604,7 +604,7 @@ public class AggregateManager implements Xor
 			direction = direction.toDomain();
 		}
 
-		ObjectCreator oc = new ObjectCreator(settings, das, getPersistenceOrchestrator(), direction);
+		ObjectCreator oc = new ObjectCreator(settings, getShape(settings), getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);
 
 		Type fromType = settings.getEntityType();
@@ -644,7 +644,7 @@ public class AggregateManager implements Xor
 	 */
 	public View getView (String viewName)
 	{
-		return getDAS().getView(viewName);
+		return getDAS().getShape().getView(viewName);
 	}
 
 	@Override
@@ -659,7 +659,7 @@ public class AggregateManager implements Xor
 		try {
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				getDAS(),
+				getShape(settings),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
 
@@ -690,7 +690,7 @@ public class AggregateManager implements Xor
 
 		ObjectCreator oc = new ObjectCreator(
 			settings,
-			getDAS(),
+			getShape(settings),
 			getPersistenceOrchestrator(),
 			MapperDirection.EXTERNALTODOMAIN);
 
@@ -709,7 +709,7 @@ public class AggregateManager implements Xor
 		Type type = null;
 		// Collection type is used for bulk import/batching
 		if(entity instanceof Collection) {
-			type = getDAS().getType(entity.getClass());
+			type = oc.getType(entity.getClass());
 		} else {
 			type = oc.getType(entity.getClass(), settings.getEntityType());
 		}
@@ -729,7 +729,7 @@ public class AggregateManager implements Xor
 				throw new IllegalArgumentException("The entity class needs to be provided");
 			}
 			else {
-				EntityType entityType = (EntityType)getDAS().getType(settings.getEntityClass());
+				EntityType entityType = (EntityType)getShape(settings).getType(settings.getEntityClass());
 				if (entityType != null) {
 					entity = ClassUtil.newInstance(settings.getEntityClass());
 					isWrapper = true;
@@ -749,7 +749,7 @@ public class AggregateManager implements Xor
 
 		ObjectCreator oc = new ObjectCreator(
 			settings,
-			getDAS(),
+			getShape(settings),
 			getPersistenceOrchestrator(),
 			MapperDirection.DOMAINTOEXTERNAL);
 		oc.setReadOnly(true);
@@ -800,7 +800,7 @@ public class AggregateManager implements Xor
 
 		ObjectCreator oc = new ObjectCreator(
 			settings,
-			getDAS(),
+			getShape(settings),
 			getPersistenceOrchestrator(),
 			MapperDirection.DOMAINTOEXTERNAL);
 		oc.setReadOnly(true);
@@ -980,7 +980,7 @@ public class AggregateManager implements Xor
 		try {
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				getDAS(),
+				getShape(settings),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
 
@@ -1118,7 +1118,7 @@ public class AggregateManager implements Xor
 		try {
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				getDAS(),
+				getShape(settings),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
 
@@ -1172,12 +1172,20 @@ public class AggregateManager implements Xor
 		}
 	}
 
+	private Shape getShape(Settings settings) {
+		if(settings.getShape() == null) {
+			return getDAS().getShape();
+		}
+
+		return settings.getShape();
+	}
+
 	private void attach(Object entity, Object snapshot, Settings settings) {
 
 		// attach it to the persistence layer
 		ObjectCreator oc = new ObjectCreator(
 			settings,
-			getDAS(),
+			getShape(settings),
 			getPersistenceOrchestrator(),
 			MapperDirection.EXTERNALTODOMAIN);
 
@@ -1459,7 +1467,7 @@ public class AggregateManager implements Xor
 			// Create an object creator for the target root
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				getDAS(),
+				getShape(settings),
 				getPersistenceOrchestrator(),
 				MapperDirection.EXTERNALTODOMAIN);
 

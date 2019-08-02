@@ -84,7 +84,7 @@ public class DefaultBackPointer extends AbstractDBTest {
 	{
 		ObjectCreator oc = new ObjectCreator(
 			new Settings(),
-			aggregateService.getDAS(),
+			aggregateService.getDAS().getShape(),
 			aggregateService.getPersistenceOrchestrator(),
 			MapperDirection.EXTERNALTOEXTERNAL);
 		MutableBO dataObject = (MutableBO)oc.createDataObject(

@@ -30,9 +30,9 @@ public class DefaultTopoSortTest {
 	public void testCategoryOrder() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type chapterType = das.getType(Chapter.class);
-		Type categoryType = das.getType(MetaEntityType.class);
-		Type FacetType = das.getType(Facet.class);
+		Type chapterType = das.getShape().getType(Chapter.class);
+		Type categoryType = das.getShape().getType(MetaEntityType.class);
+		Type FacetType = das.getShape().getType(Facet.class);
 		
 		State task = new State(chapterType, false);	
 		State category = new State(categoryType, false);

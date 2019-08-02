@@ -27,8 +27,10 @@ import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.QueryOperation;
 import tools.xor.operation.ReadOperation;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.Edge;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
@@ -40,8 +42,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 public abstract class AbstractBO implements BusinessObject {
@@ -396,8 +400,8 @@ public abstract class AbstractBO implements BusinessObject {
 			if(getSettings().doNarrow()) {
 				if (getInstanceClassName() != null) {
 					Type narrowedType = ((EntityType)type).isDomainType() ?
-						getObjectCreator().getDAS().getType(getInstanceClassName()) :
-						getObjectCreator().getDAS().getExternalType(getInstanceClassName());
+						getObjectCreator().getDAS().getShape().getType(getInstanceClassName()) :
+						getObjectCreator().getDAS().getShape().getExternalType(getInstanceClassName());
 					if (narrowedType != null) {
 						type = narrowedType;
 					}
@@ -916,7 +920,8 @@ public abstract class AbstractBO implements BusinessObject {
 						String narrowToType = (String) propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryFragment.ENTITY_TYPE_ATTRIBUTE);
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
-							objectType = (EntityType) getObjectCreator().getDAS().getType(narrowToType);
+							objectType = (EntityType) getObjectCreator().getDAS().getShape().getType(
+								narrowToType);
 						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()));
 					}
 				}
@@ -1299,8 +1304,8 @@ public abstract class AbstractBO implements BusinessObject {
 			String namespaceURI, String typeName) {
 		try {
 			Class<?> javaClass = Class.forName(namespaceURI + typeName);
-			DataAccessService das = ((BusinessObject)getRootObject()).getObjectCreator().getDAS();
-			Type type = das.getType(javaClass);
+			Shape shape = ((BusinessObject)getRootObject()).getObjectCreator().getShape();
+			Type type = shape.getType(javaClass);
 
 			Property property = getType().getProperty(propertyName);		
 			return createDataObject(property, type);
@@ -1315,10 +1320,10 @@ public abstract class AbstractBO implements BusinessObject {
 
 		try {
 			Class<?> javaClass = Class.forName(namespaceURI + typeName);
-			DataAccessService das = ((BusinessObject)getRootObject()).getObjectCreator().getDAS();
-			Type type = das.getType(javaClass);
+			Shape shape = ((BusinessObject)getRootObject()).getObjectCreator().getShape();
+			Type type = shape.getType(javaClass);
 
-			Property property = (Property) getType().getProperties().get(propertyIndex);			
+			Property property = getType().getProperties().get(propertyIndex);
 			return createDataObject(property, type);
 		} catch (ClassNotFoundException e) {
 			throw ClassUtil.wrapRun(e);
@@ -1393,7 +1398,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 		ObjectCreator oc = new ObjectCreator(
 			settings,
-			getObjectCreator().getDAS(),
+			getObjectCreator().getShape(),
 			getObjectCreator().getPersistenceOrchestrator(),
 			MapperDirection.DOMAINTODOMAIN);
 		return oc.createTarget(callInfo);
@@ -1409,7 +1414,7 @@ public abstract class AbstractBO implements BusinessObject {
 		callInfo.setSettings(settings);		
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTOEXTERNAL);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTOEXTERNAL);
 		oc.setReadOnly(true);
 		
 		callInfo.setOutputObjectCreator(oc);
@@ -1460,8 +1465,9 @@ public abstract class AbstractBO implements BusinessObject {
 		MapperDirection direction = MapperDirection.EXTERNALTOEXTERNAL;
 		if(settings.doBaseline()) // We need to return a domain object
 			direction = direction.toDomain();
-		
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDAS(), getObjectCreator().getPersistenceOrchestrator(), direction);
+
+		Shape shape = getObjectCreator().getShape();
+		ObjectCreator oc = new ObjectCreator(settings, shape, getObjectCreator().getPersistenceOrchestrator(), direction);
 		oc.setReadOnly(true);
 		oc.setShare(true);
 		
@@ -1473,7 +1479,7 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		try {
-			Type targetType = getObjectCreator().getDAS().getType(settings.getNarrowedClass(), settings.getEntityType());
+			Type targetType = getObjectCreator().getDAS().getType(shape, settings.getNarrowedClass(), settings.getEntityType());
 			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, targetType));
 			
 			// Needed to hold references to open property created objects
@@ -1624,14 +1630,14 @@ public abstract class AbstractBO implements BusinessObject {
 		if(getType().isOpen()) {
 			return ((EntityType)getType()).getDomainType();
 		}
-		return getObjectCreator().getDAS().getType(
+		return getObjectCreator().getShape().getType(
 			getObjectCreator().getTypeMapper().toDomain(
 				getType().getInstanceClass()));
 	}
 
 	@Override
 	public Type getExternalType() {
-		return getObjectCreator().getDAS().getType(getObjectCreator().getTypeMapper().toExternal(getType().getInstanceClass()));
+		return getObjectCreator().getShape().getType(getObjectCreator().getTypeMapper().toExternal(getType().getInstanceClass()));
 	}
 
 	@Override
@@ -1706,7 +1712,8 @@ public abstract class AbstractBO implements BusinessObject {
 		TypeGraph sg = null;
 		if(settings != null && settings.getView() != null) {
 			// Need to get the StateGraph from the domain type
-			sg = settings.getView().getTypeGraph(((EntityType)entityType).getDomainType());
+			sg = settings.getTypeGraph();
+			//sg = settings.getView().getTypeGraph(((EntityType)entityType).getDomainType());
 			rootState = sg.getRootState();
 		}
 		createWrapper(settings, this, null, rootState, sg);
@@ -1771,22 +1778,45 @@ public abstract class AbstractBO implements BusinessObject {
 				child.setContainmentProperty(parent.getContainmentProperty());
 			}
 
-			if(sg != null && support != null) {
-				// Is this property in view? yes then process it else skip it
-				if (sg.getOutEdge(state, support.getName()) != null) {
-					createWrapper(
-						settings,
-						child, support,
-						(State)sg.getOutEdge(state, support.getName()).getStart(), sg);
+			if(sg != null) {
+				if(support != null) {
+					// Is this property in view? yes then process it else skip it
+					if (sg.getOutEdge(state, support.getName()) != null) {
+						createWrapper(
+							settings,
+							child, support,
+							(State)sg.getOutEdge(state, support.getName()).getEnd(), sg);
+					}
+					else {
+						return;
+					}
 				} else {
-					return;
+					createWrapper(settings, child, null, state, sg);
 				}
 			} else {
 				createWrapper(settings, child, null, null, null);
 			}
 		}
 
-		for(Property property: parent.getType().getProperties()) {
+		if(support != null && support.isMany()) {
+			return;
+		}
+
+		List<Property> properties = new LinkedList<>();
+		if(sg != null && state != null) {
+			for(Object outEdge: sg.getOutEdges(state)) {
+				if(!((Edge)outEdge).isUnlabelled()) {
+					Property p = parent.getType().getProperty(((Edge)outEdge).getName());
+					if(p != null) {
+						properties.add(p);
+					}
+				}
+			}
+		} else {
+			properties = parent.getType().getProperties();
+		}
+
+		for(Property property: properties) {
 			if(!((ExtendedProperty) property).isDataType()) {
 
 				// Is this property in view? yes, process it else skip it
@@ -1831,7 +1861,7 @@ public abstract class AbstractBO implements BusinessObject {
 						createWrapper(
 							settings,
 							child, property,
-							(State)sg.getOutEdge(state, property.getName()).getStart(), sg);
+							(State)sg.getOutEdge(state, property.getName()).getEnd(), sg);
 					} else {
 						continue;
 					}

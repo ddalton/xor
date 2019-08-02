@@ -40,13 +40,17 @@ public interface CustomPersister
 {
     void process(JSONObject object, EntityType type);
 
+    Object getSnapshot(Object persistentInstance);
+
     Object getEntity(EntityKey key);
 
     void persistGraph(ObjectCreator objectCreator, Settings settings);
 
     void deleteGraph(ObjectCreator objectCreator, Settings settings);
 
-    void persist(BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException;
+    void create (BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException;
+
+    void update (BusinessObject bo, BusinessObject dbBO);
 
     void beginTransaction();
 

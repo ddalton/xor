@@ -62,6 +62,11 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.getOutEdge(vertex, name);
 	}
 
+	@Override public Collection<E> getOutEdges (V vertex)
+	{
+		return typeGraph.getOutEdges(vertex);
+	}
+
 	public void addVertex(V vertex) {
 		raiseException();
 	}

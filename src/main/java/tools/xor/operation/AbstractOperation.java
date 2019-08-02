@@ -28,6 +28,7 @@ import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public abstract class AbstractOperation implements Operation {
@@ -44,6 +45,9 @@ public abstract class AbstractOperation implements Operation {
 	@Override
 	public BusinessObject createTarget(CallInfo ci, Object targetInstance, Type domainType) {
 		targetInstance = ClassUtil.getInstance(targetInstance);
+		if(targetInstance == null && ci.isBulkInput()) {
+			targetInstance = new LinkedList<>();
+		}
 		BusinessObject target = ci.getOutputObjectCreator().createTarget(ci, targetInstance, domainType);
 
 		return target;

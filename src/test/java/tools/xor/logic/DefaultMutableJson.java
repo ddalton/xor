@@ -1042,7 +1042,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		properties.add(tools.xor.db.sp.P.class.getName() + OpenType.DELIM + "partNo");
 		properties.add(tools.xor.db.sp.S.class.getName() + OpenType.DELIM + "supplierNo");
 		OpenType crossJoin = new OpenType("crossjoin", properties);
-		aggregateManager.getDAS().addOpenType(crossJoin);
+		aggregateManager.getDAS().getShape().addOpenType(crossJoin);
 
 		Settings settings = new Settings();
 		settings.setEntityType(crossJoin);
@@ -1063,14 +1063,14 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	public void importCSV() throws Exception
 	{
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
 		settings.init(aggregateService.getDAS().getShape());
 
 		aggregateService.importCSV("bulk/", settings);
 
 		// query the task object
 		settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getType(Task.class));
+		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
 		settings.setDenormalized(true);
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		List<?> result = aggregateService.query(null, settings);
@@ -1082,7 +1082,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	protected void generateMediumSizedEntity() throws IOException
 	{
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType taskType = (EntityType) das.getType(Task.class);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
 		settings.expand(new AssociationSetting(Person.class));
@@ -1114,7 +1114,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		InputStream inputStream = new FileInputStream("DomainValues.xlsx");
 		das.initGenerators(inputStream);
 
-		EntityType taskType = (EntityType) das.getType(Task.class);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
 		settings.expand(new AssociationSetting(Person.class));
@@ -1164,10 +1164,10 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		json2.put("ownedBy", person); // Should share the person reference - check
 
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType personType = (EntityType) das.getType(Person.class);
+		EntityType personType = (EntityType) das.getShape().getType(Person.class);
 		personType.setNaturalKey(new String[] { "userName"});
 		Settings settings = new Settings();
-		EntityType taskType = (EntityType) das.getType(Task.class);
+		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		settings.setEntityType(taskType);
 		settings.expand(new AssociationSetting(Person.class));
 		settings.init(das.getShape());
@@ -1198,8 +1198,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	protected void generatePicture() {
 		DataAccessService das = aggregateService.getDAS();
-		EntityType personType = (EntityType) das.getType(Person.class);
-		View view = das.getBaseView(personType).copy();
+		EntityType personType = (EntityType) das.getShape().getType(Person.class);
+		View view = das.getShape().getBaseView(personType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.setEntityType(personType);
@@ -1261,8 +1261,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	public void testEmployeeType() {
 		DataAccessService das = aggregateService.getDAS();
-		EntityType employeeType = (EntityType)das.getType(Employee.class);
-		View view = das.getView(employeeType).copy();
+		EntityType employeeType = (EntityType)das.getShape().getType(Employee.class);
+		View view = das.getShape().getView(employeeType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.setEntityType(employeeType);
@@ -1279,8 +1279,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		try {
 			DataAccessService das = aggregateService.getDAS();
 
-			EntityType employeeType = (EntityType)das.getType(Employee.class);
-			View view = das.getBaseView(employeeType).copy();
+			EntityType employeeType = (EntityType)das.getShape().getType(Employee.class);
+			View view = das.getShape().getBaseView(employeeType).copy();
 			Settings settings = new Settings();
 			settings.setView(view);
 			settings.setEntityType(employeeType);
@@ -1363,8 +1363,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		//InputStream inputStream = new FileInputStream("CoursesValues.xlsx");
 		//das.initGenerators(inputStream);
 
-		EntityType taskType = (EntityType)das.getType(Task.class);
-		View view = das.getView(taskType).copy();
+		EntityType taskType = (EntityType)das.getShape().getType(Task.class);
+		View view = das.getShape().getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.expand(new AssociationSetting(Person.class));
@@ -1386,8 +1386,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	{
 		DataAccessService das = aggregateManager.getDAS();
 
-		EntityType deptType = (EntityType)das.getType(Department.class);
-		View view = das.getView(deptType).copy();
+		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
+		View view = das.getShape().getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.expand(new AssociationSetting(Employee.class));
@@ -1411,8 +1411,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	public void readDifferentPersonViews() {
 		DataAccessService das = aggregateManager.getDAS();
 
-		EntityType deptType = (EntityType)das.getType(Department.class);
-		View view = das.getView(deptType).copy();
+		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
+		View view = das.getShape().getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.expand(new AssociationSetting(Employee.class));
@@ -1451,8 +1451,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	public void readEmployeeNumber() {
 		DataAccessService das = aggregateManager.getDAS();
 
-		EntityType deptType = (EntityType)das.getType(Department.class);
-		View view = das.getView(deptType).copy();
+		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
+		View view = das.getShape().getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.expand(new AssociationSetting(Employee.class));
@@ -1508,8 +1508,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	{
 		DataAccessService das = aggregateManager.getDAS();
 
-		EntityType deptType = (EntityType)das.getType(Department.class);
-		View view = das.getView(deptType).copy();
+		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
+		View view = das.getShape().getView(deptType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.expand(new AssociationSetting(Employee.class));
@@ -1538,8 +1538,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		InputStream inputStream = new FileInputStream("BoundedPerson.xlsx");
 		das.initGenerators(inputStream);
 
-		EntityType taskType = (EntityType)das.getType(Task.class);
-		View view = das.getView(taskType).copy();
+		EntityType taskType = (EntityType)das.getShape().getType(Task.class);
+		View view = das.getShape().getView(taskType).copy();
 		Settings settings = new Settings();
 		settings.setView(view);
 		settings.expand(new AssociationSetting(Person.class));
@@ -1562,8 +1562,8 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		// First create a natural key for Task based on name
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType externalTask = (EntityType)das.getExternalType(Task.class);
-		EntityType domainTask = (EntityType)das.getType(Task.class);
+		EntityType externalTask = (EntityType)das.getShape().getExternalType(Task.class);
+		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
 		String[] key = { "name" };
 		externalTask.setNaturalKey(key);
 		domainTask.setNaturalKey(key);

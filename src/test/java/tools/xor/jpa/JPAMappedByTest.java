@@ -112,7 +112,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 		d.setHead(h);
 
 		DataAccessService das = aggregateManager.getDAS();
-		Type deptType = das.getType(Department.class);
+		Type deptType = das.getShape().getType(Department.class);
 		Settings settings = new Settings();
 		settings.setPostFlush(true);
 		settings.setEntityType(deptType);

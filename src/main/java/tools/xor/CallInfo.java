@@ -290,7 +290,7 @@ public class CallInfo {
 	private void checkView()
 	{
 		if(settings.getView() == null) {
-			throw new RuntimeException("Ensure that settings.init() is called");
+			throw new RuntimeException("View is not set in settings. Ensure that settings.init() is called");
 		}
 	}
 
@@ -334,7 +334,7 @@ public class CallInfo {
 			if (settings.getAction() == AggregateAction.READ) {
 				Object obj = ClassUtil.getInstance(getInput());
 				if (obj != null) {
-					EntityType instanceType = (EntityType)getInputObjectCreator().getDAS().getType(
+					EntityType instanceType = (EntityType)getInputObjectCreator().getShape().getType(
 						obj.getClass());
 					state = ((StateTree.SubtypeState)state).findState(instanceType);
 				}

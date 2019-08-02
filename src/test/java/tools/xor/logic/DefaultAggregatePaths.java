@@ -63,8 +63,8 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void checkDirPath() {
 		DataAccessService das = aggregateManager.getDAS();
 
-		Type dir = das.getType(Directory.class);
-		View view = aggregateManager.getDAS().getView((EntityType) dir);
+		Type dir = das.getShape().getType(Directory.class);
+		View view = aggregateManager.getDAS().getShape().getView((EntityType) dir);
 
 		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(dir, das.getShape());
 		System.out.println("********* Directory model paths **********");
@@ -81,7 +81,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void checkPaths() {	
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type person = das.getType(Person.class);
+		Type person = das.getShape().getType(Person.class);
 		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(person, das.getShape());
 
 		assert(paths.size() > 0);
@@ -104,7 +104,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void checkBasePaths() {	
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 		Set<String> paths = AggregatePropertyPaths.enumerateBase(task);
 
 		assert(paths.size() > 0);
@@ -116,8 +116,8 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void checkStateGraph() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type task = das.getType(Task.class);
-		View view = aggregateManager.getDAS().getView((EntityType) task);
+		Type task = das.getShape().getType(Task.class);
+		View view = aggregateManager.getDAS().getShape().getView((EntityType) task);
 		List<Property> properties = view.getTypeGraph((EntityType)task).next(task, null, null);
 		
 		List<String> propertyNames = new ArrayList<String>();
@@ -134,7 +134,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void checkCyclicPaths() {	
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(task, das.getShape());
 
 		assert(paths.size() > 0);
@@ -154,7 +154,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 			path.startsWith("(auditTask.|taskChildren.|dependants.)*(")
 				);
 		
-		Type patent = das.getType(Patent.class);
+		Type patent = das.getShape().getType(Patent.class);
 		paths = AggregatePropertyPaths.enumerateRegEx(patent, das.getShape());
 		// Print the paths
 		Level oldLevel = logger.getLevel();
@@ -547,7 +547,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void testDFATask() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 		
 		DFAtoRE re = new DFAtoRE(task, das.getShape());
 		Map<State, Expression> regEx = re.getRegEx();
@@ -625,7 +625,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void generateStateInheritanceGraph() {
 		Settings settings = new Settings();
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType taskType = (EntityType)das.getType(Task.class);
+		EntityType taskType = (EntityType)das.getShape().getType(Task.class);
 
 		settings.setEntityType(taskType);
 		settings.expand(new AssociationSetting(Person.class));
@@ -638,7 +638,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void generateStatePersonGraph() {
 		Settings settings = new Settings();
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType personType = (EntityType)das.getType(Person.class);
+		EntityType personType = (EntityType)das.getShape().getType(Person.class);
 
 		settings.setEntityType(personType);
 		settings.init(das.getShape());
@@ -650,7 +650,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	public void checkPersonSubTypes() {
 
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType personType = (EntityType)das.getType(Person.class);
+		EntityType personType = (EntityType)das.getShape().getType(Person.class);
 
 		Set<EntityType> personSubTypes = personType.getSubtypes();
 		assert(personSubTypes != null && personSubTypes.size() == 4);
@@ -658,7 +658,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		assert(personChildSubTypes != null && personChildSubTypes.size() == 3);
 
 
-		EntityType employeeType = (EntityType)das.getType(Employee.class);
+		EntityType employeeType = (EntityType)das.getShape().getType(Employee.class);
 
 		Set<EntityType> employeeSubTypes = employeeType.getSubtypes();
 		assert(employeeSubTypes != null && employeeSubTypes.size() == 1);

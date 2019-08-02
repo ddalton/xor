@@ -36,7 +36,7 @@ public class DefaultIdVersion {
 	public void checkId() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		Property id = taskType.getProperty("id");
 		
 		assert(((EntityType)taskType).getIdentifierProperty() != null);
@@ -48,7 +48,7 @@ public class DefaultIdVersion {
 	public void checkVersion() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		Property version = taskType.getProperty("version");
 		
 		assert(((EntityType)taskType).getVersionProperty() != null);

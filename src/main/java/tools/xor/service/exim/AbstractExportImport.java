@@ -80,7 +80,7 @@ public abstract class AbstractExportImport implements ExportImport
                     "<property> format: "
                     + entityInfo);
         }
-        return am.getDAS().getType(tokens[0]);
+        return am.getDAS().getShape().getType(tokens[0]);
     }
 
     protected Property getProperty (String entityInfo)

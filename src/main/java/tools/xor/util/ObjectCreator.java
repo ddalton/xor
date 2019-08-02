@@ -59,6 +59,7 @@ import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.Shape;
 import tools.xor.util.graph.ObjectGraph;
 
 /**
@@ -85,6 +86,7 @@ public class ObjectCreator {
 
 
 	private DataAccessService              das;
+	private Shape                          shape;
 	private PersistenceOrchestrator        persistenceOrchestrator;
 	private TypeMapper                     typeMapper;
 	private boolean                        share; // when registering if another object with the same id and type is found, it will be returned
@@ -94,9 +96,10 @@ public class ObjectCreator {
 	private BusinessObject                 root; // represents the root object
 	private Settings                       settings; // the criteria under which this instance operates
 
-	public ObjectCreator(Settings settings, DataAccessService das, PersistenceOrchestrator po, MapperDirection direction) {
+	public ObjectCreator(Settings settings, Shape shape, PersistenceOrchestrator po, MapperDirection direction) {
 		this.settings = settings;
-		this.das = das;
+		this.shape = shape;
+		this.das = shape.getDAS();
 		this.persistenceOrchestrator = po;
 		this.typeMapper = das.getTypeMapper().newInstance(direction);
 		this.creationStrategy = this.typeMapper.getCreationStrategy(this);
@@ -135,6 +138,10 @@ public class ObjectCreator {
 		return this.creationStrategy;
 	}
 
+	public Shape getShape() {
+		return this.shape;
+	}
+
 	public DataAccessService getDAS() {
 		return das;
 	} 
@@ -146,9 +153,9 @@ public class ObjectCreator {
 	public Type getType(Class<?> clazz) {
 		clazz = ClassUtil.getUnEnhanced(clazz);
 		if(typeMapper.isDomain(clazz))
-			return das.getType(clazz);
+			return shape.getType(clazz);
 		else 
-			return das.getExternalType(clazz);
+			return shape.getExternalType(clazz);
 	}
 
 	/**
@@ -176,12 +183,12 @@ public class ObjectCreator {
 
 		inputClass = ClassUtil.getUnEnhanced(inputClass);
 		if(typeMapper.isDomain(inputClass)) {
-			return das.getType(inputClass);
+			return shape.getType(inputClass);
 		} else { 
 			if(domainType != null && domainType instanceof EntityType) {
-				return das.getExternalType(typeMapper.getExternalTypeName(inputClass, domainType));
+				return shape.getExternalType(typeMapper.getExternalTypeName(inputClass, domainType));
 			} else {
-				return das.getExternalType(inputClass);
+				return shape.getExternalType(inputClass);
 			}
 		}
 	}
@@ -421,7 +428,7 @@ public class ObjectCreator {
 		} else {
 			// coerce type to the correct shape
 			if(targetType instanceof EntityType && ((EntityType)targetType).isDomainType() ) {
-				targetType = das.getType(targetType.getName());
+				targetType = shape.getType(targetType.getName());
 			}
 			dataObject = new MutableBO(targetType,
 					container,

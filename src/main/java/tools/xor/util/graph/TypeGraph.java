@@ -9,6 +9,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,13 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * @return the edge if present, or null
 	 */
 	public E getOutEdge(V vertex, String name);
+
+	/**
+	 * Get the outgoing edges of a vertex
+	 * @param vertex object
+	 * @return collection of outgoing edges
+	 */
+	public Collection<E> getOutEdges(V vertex);
 
 	/**
 	 * Add a new vertex to the graph

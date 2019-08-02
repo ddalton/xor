@@ -44,6 +44,7 @@ public class JDBCType extends AbstractType {
     private String name;
     private JDBCDAS.TableInfo tableInfo;
     private Property id;
+    private Property version;
     private Map<String, String> pathToColumnMap;
 
     public JDBCType(String name, JDBCDAS.TableInfo tableInfo) {
@@ -366,9 +367,17 @@ public class JDBCType extends AbstractType {
         return true;
     }
 
+    public void setIdentifierProperty(String name) {
+        this.id = getShape().getProperty(this, name);
+    }
+
+    public void setVersionProperty(String name) {
+        this.version = getShape().getProperty(this, name);
+    }
+
     @Override
     public Property getVersionProperty() {
-        return null;
+        return this.version;
     }
 
     @Override

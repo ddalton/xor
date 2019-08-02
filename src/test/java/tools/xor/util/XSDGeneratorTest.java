@@ -52,7 +52,7 @@ public class XSDGeneratorTest {
 	public void testHeader() throws Exception {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type personType = das.getType(Person.class);
+		Type personType = das.getShape().getType(Person.class);
 		logger.info("Task XSD document: " + (new XSDGenerator()).generate(new XSDVisitor(), personType));
 	}
 
@@ -60,7 +60,7 @@ public class XSDGeneratorTest {
 	public void testTask() throws Exception {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		logger.info("Task XSD document: " + (new XSDGenerator()).generate(new XSDVisitor(), taskType));
 	}
 

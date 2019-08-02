@@ -363,10 +363,10 @@ public class PlainJDBCTest
 
 		Settings settings = new Settings();
 		JDBCSessionContext context = new JDBCSessionContext((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator(), null);
-		context.process(address, (EntityType) das.getType("address"));
+		context.process(address, (EntityType) das.getShape().getType("address"));
 		settings.setSessionContext(context);
 
-		JDBCType type = (JDBCType) das.getType("library");
+		JDBCType type = (JDBCType) das.getShape().getType("library");
 		settings.setEntityType(type);
 		settings.init(shape);
 		Object obj = am.create(json, settings);
@@ -405,7 +405,7 @@ public class PlainJDBCTest
 		attributes.add("LIBRARY.NAME");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getType("librarian");
+		JDBCType type = (JDBCType) das.getShape().getType("librarian");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -447,7 +447,7 @@ public class PlainJDBCTest
 		attributes.add("LIBRARIANS.EMAIL");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getType("library");
+		JDBCType type = (JDBCType) das.getShape().getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -488,7 +488,7 @@ public class PlainJDBCTest
 		attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.NAME");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getType("library");
+		JDBCType type = (JDBCType) das.getShape().getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -552,7 +552,7 @@ public class PlainJDBCTest
 //		attributes.add("LIBRARIANS.ID");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getType("library");
+		JDBCType type = (JDBCType) das.getShape().getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -601,7 +601,7 @@ public class PlainJDBCTest
 		//		attributes.add("LIBRARIANS.ID");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getType("library");
+		JDBCType type = (JDBCType) das.getShape().getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);

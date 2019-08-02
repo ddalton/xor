@@ -42,6 +42,6 @@ public class TestDynamicTypeNarrower extends AbstractTypeNarrower {
 				return CitationVO.class;
 		}
 		
-		return getAggregateManager().getDAS().getNarrowedClass(entityClass, viewName);
+		return getAggregateManager().getDAS().getNarrowedClass(getAggregateManager().getDAS().getShape(), entityClass, viewName);
 	}
 }

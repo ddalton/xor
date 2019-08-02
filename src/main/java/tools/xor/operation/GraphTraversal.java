@@ -69,52 +69,57 @@ public abstract class GraphTraversal extends AbstractOperation {
 	public void execute(CallInfo callInfo) {
 		
 		// Create new objects
-		if(supportsCreate(callInfo)) {
-			owLogger.debug("Processing state: " + ProcessingStage.CREATE);
-			this.process(callInfo.setStage(ProcessingStage.CREATE)); 
-			callInfo.clearVisitedOutputs();			
-		}
-
-		// Step 1: Create the update actions
-		if(supportsUpdate(callInfo)) {
-			setVisited(callInfo, true);
-			owLogger.debug("Processing state: " + ProcessingStage.UPDATE);
-			this.process(callInfo.setStage(ProcessingStage.UPDATE));
-			callInfo.clearVisitedOutputs();			
-			
-			// Step 2: Execute the actions
-			if(callInfo.getOutputRoot().getObjectPersister() != null) {
-				callInfo.getOutputRoot().getObjectPersister().processActions(callInfo.getSettings());
+		try {
+			if (supportsCreate(callInfo)) {
+				owLogger.debug("Processing state: " + ProcessingStage.CREATE);
+				this.process(callInfo.setStage(ProcessingStage.CREATE));
+				callInfo.clearVisitedOutputs();
 			}
-		}
 
-		// Remove the dummy root node
-		if(callInfo.isBulkInput()) {
-			callInfo.getOutputObjectCreator().unregister((BusinessObject)callInfo.getInput());
-			callInfo.getOutputObjectCreator().unregister((BusinessObject)callInfo.getOutput());
-		}
-		
-		// Now we can persist the objects as all the links are set
-		// This might be necessary if the deferred and post logic actions if any
-		// are dependent on the identifier of newly created objects
-		if(callInfo.getSettings().doPersist()) {
-			persist(callInfo);
-		}
-		
-		// Process the open property actions that were deferred
-		if(callInfo.getOutputRoot().getObjectPersister() != null) {
-			callInfo.getOutputRoot().getObjectPersister().processOpenPropertyActions(callInfo.getSettings());
-		}
+			// Step 1: Create the update actions
+			if (supportsUpdate(callInfo)) {
+				setVisited(callInfo, true);
+				owLogger.debug("Processing state: " + ProcessingStage.UPDATE);
+				this.process(callInfo.setStage(ProcessingStage.UPDATE));
+				callInfo.clearVisitedOutputs();
 
-		// Process post actions
-		// Enable only if necessary for performance reasons
-		if(supportsPostLogic(callInfo)) {
-			owLogger.debug("Processing state: " + ProcessingStage.POSTLOGIC);
-			this.process(callInfo.setStage(ProcessingStage.POSTLOGIC));
-			callInfo.clearVisitedOutputs();	
-		}
+				// Step 2: Execute the actions
+				if (callInfo.getOutputRoot().getObjectPersister() != null) {
+					callInfo.getOutputRoot().getObjectPersister().processActions(callInfo.getSettings());
+				}
+			}
 
-		setResult(callInfo.getOutput());
+			// Remove the dummy root node
+			if (callInfo.isBulkInput()) {
+				callInfo.getOutputObjectCreator().unregister((BusinessObject)callInfo.getInput());
+				callInfo.getOutputObjectCreator().unregister((BusinessObject)callInfo.getOutput());
+			}
+
+			// Now we can persist the objects as all the links are set
+			// This might be necessary if the deferred and post logic actions if any
+			// are dependent on the identifier of newly created objects
+			if (callInfo.getSettings().doPersist()) {
+				persist(callInfo);
+			}
+
+			// Process the open property actions that were deferred
+			if (callInfo.getOutputRoot().getObjectPersister() != null) {
+				callInfo.getOutputRoot().getObjectPersister().processOpenPropertyActions(callInfo.getSettings());
+			}
+
+			// Process post actions
+			// Enable only if necessary for performance reasons
+			if (supportsPostLogic(callInfo)) {
+				owLogger.debug("Processing state: " + ProcessingStage.POSTLOGIC);
+				this.process(callInfo.setStage(ProcessingStage.POSTLOGIC));
+				callInfo.clearVisitedOutputs();
+			}
+
+			setResult(callInfo.getOutput());
+		} catch(Exception e) {
+			owLogger.error(e.getMessage());
+			throw e;
+		}
 	}
 	
 	protected void persist(CallInfo callInfo) {

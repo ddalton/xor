@@ -29,6 +29,7 @@ import org.json.JSONObject;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
@@ -43,16 +44,16 @@ public class SimpleType implements BasicType {
 
 	private Class<?> instanceClass;
 	private ClassResolver classResolver;
-	private DataAccessService das;
+	private Shape shape;
 
 	public SimpleType(Class<?> clazz) {
 		this(clazz, null);
 	}
 
-	public SimpleType(Class<?> clazz, DataAccessService das) {
+	public SimpleType(Class<?> clazz, Shape shape) {
 		this.instanceClass = clazz;
 		classResolver = new ClassResolver(this);
-		this.das = das;
+		this.shape = shape;
 	}
 
 	@Override
@@ -109,9 +110,9 @@ public class SimpleType implements BasicType {
 	@Override public boolean isDataType (Object object)
 	{
 		Type instanceType = null;
-		if (object != null && das != null) {
+		if (object != null && shape != null) {
 			object = ClassUtil.getInstance(object);
-			instanceType = das.getType(object.getClass());
+			instanceType = shape.getType(object.getClass());
 		}
 		if(instanceType != null) {
 			return instanceType.isDataType();

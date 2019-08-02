@@ -259,7 +259,7 @@ public class MigrateOperation extends GraphTraversal
         // include subtypes
         Set<String> allEntities = new HashSet<>();
         for(String entityName: entities) {
-            Type type = this.target.getDAS().getType(entityName);
+            Type type = this.target.getDAS().getShape().getType(entityName);
             if (!(type instanceof EntityType)) {
                 throw new RuntimeException(
                     "The type " + type.getName() + " needs to represent an entity");
@@ -300,7 +300,7 @@ public class MigrateOperation extends GraphTraversal
         List<Settings> result = new ArrayList<>();
 
         for(String entityName: getEntities(entities)) {
-            Type type = this.target.getDAS().getType(entityName);
+            Type type = this.target.getDAS().getShape().getType(entityName);
 
             // If a subtype is not an EntityType we just skip it
             if (!(type instanceof EntityType)) {
@@ -370,7 +370,7 @@ public class MigrateOperation extends GraphTraversal
         // processed first. So we need to process them in reverse order.
         Map<Integer, EntityType> sorted = new TreeMap<Integer, EntityType>(Collections.reverseOrder());
         for(String entityName: getEntities(entities)) {
-            Type type = this.target.getDAS().getType(entityName);
+            Type type = this.target.getDAS().getShape().getType(entityName);
 
             // If a subtype is not an EntityType we just skip it
             if (!(type instanceof EntityType)) {

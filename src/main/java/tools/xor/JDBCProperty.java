@@ -219,7 +219,6 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     {
         if(fk != null) {
 
-            DataAccessService das = shape.getDAS();
             JDBCProperty inverse;
 
             String inverseRelationshipName = fk.getInverseRelationshipName();
@@ -234,7 +233,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
                     // We cannot use Iterable since we don't know a suitable concrete implementation
                     // for such an interface. So we resort to List.
                     //inverseRelationshipName, das.getType(java.lang.Iterable.class),
-                    inverseRelationshipName, das.getType(java.util.List.class),
+                    inverseRelationshipName, shape.getType(java.util.List.class),
                     (EntityType)getType(), getContainingType());
             } else {
                 // the inverse is a ONE_TO_ONE relationship

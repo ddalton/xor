@@ -69,7 +69,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			return settings.getEntityType();
 		}
 
-		return das.getType(typeMapper.toDomain(settings.getNarrowedClass()));
+		return das.getShape().getType(typeMapper.toDomain(settings.getNarrowedClass()));
 	}
 
 	protected void validate() {

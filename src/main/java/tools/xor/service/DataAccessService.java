@@ -33,7 +33,6 @@ import tools.xor.TypeNarrower;
 import tools.xor.util.PersistenceType;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
-import tools.xor.view.View;
 
 /**
  * 
@@ -90,49 +89,17 @@ public interface DataAccessService {
 	 * @param name of the shape
 	 */
 	public void removeShape(String name);
-	
-	/**
-	 * Return the type associated with a particular DataObject
-	 * @param clazz The java class whose Type object we need
-	 * @return The Type object
-	 */
-	public Type getType(Class<?> clazz);
 
 	/**
 	 * Return the type based on the given clazz, falling back to the provided type
+	 * for the default shape.
+	 *
+	 * @param shape of the type system
 	 * @param clazz the java class whose Type object we need. Usually this is the desired class.
 	 * @param type the type to fallback on
 	 * @return the type object
 	 */
-	public Type getType(Class<?> clazz, Type type);
-	
-	/**
-	 * Returns the External type for this class.
-	 * 
-	 * @param clazz java class
-	 * @return external type
-	 */
-	public Type getExternalType(Class<?> clazz);		
-	
-	/**
-	 * Get the type first by looking for the class name and then fall-back to the entity name
-	 * @param name class or entity name
-	 * @return Type
-	 */
-	public Type getType(String name);
-
-	/**
-	 * Return the External type with the specific name
-	 * @param name type name
-	 * @return external type
-	 */
-	public Type getExternalType(String name);
-	
-	/**
-	 * Return all the types managed by this service
-	 * @return list of types
-	 */
-	public List<Type> getTypes();
+	public Type getType(Shape shape, Class<?> clazz, Type type);
 	
 	/**
 	 * This method uses the persistence mechanism to do any post-processing activity
@@ -173,19 +140,14 @@ public interface DataAccessService {
 	public void sync(Map<String, List<AggregateView>> avVersions);
 
 	/**
-	 * Refresh the view mapping with the entity based on the
-	 * attributes referenced in the view
-	 * @param typeNarrower instance
-	 */
-	public void refresh(TypeNarrower typeNarrower);
-
-	/**
 	 * Populate the view mapping with the entity based on the
 	 * attributes referenced in the view
+	 *
+	 * @param shape of the type system
 	 * @param entityClass by which the views need to be grouped
 	 * @param typeNarrower instance
 	 */
-	public void populateNarrowedClass(Class<?> entityClass,
+	public void populateNarrowedClass(Shape shape, Class<?> entityClass,
 			TypeNarrower typeNarrower);
 
 	/**
@@ -193,56 +155,13 @@ public interface DataAccessService {
 	 * actual class. This is a heuristic algorithm and if the
 	 * desired class is not found, then the user should override it
 	 * manually.
-	 * 
+	 *
+	 * @param shape of the type system
 	 * @param entityClass super class
 	 * @param viewName potentially contains attributes from sub classes
 	 * @return narrowed class
 	 */
-	public Class<?> getNarrowedClass(Class<?> entityClass, String viewName);
-
-	/**
-	 * Get the view meta of the given view name
-	 * @param viewName view name
-	 * @return AggregateView object
-	 */
-	public View getView(String viewName);
-
-	/**
-	 * Get the default view for the aggregate rooted at entityType
-	 * This contains all the attributes of the aggregate
-	 * @param entityType type
-	 * @return AggregateView object
-	 */
-	public View getView(EntityType entityType);
-
-	/**
-	 * Add a view programmatically.
-	 * @param view object
-	 */
-	public void addView(AggregateView view);
-	
-
-	/**
-	 * Get a list of all the default generated views
-	 * @return list of views
-	 */
-	public List<View> getViews();
-	
-	/**
-	 * Get the default view of just the base properties of the 
-	 * aggregate rooted at entityType, i.e., the direct properties of
-	 * the entityType
-	 * 
-	 * @param entityType type
-	 * @return AggregateView object
-	 */
-	public View getBaseView(EntityType entityType);
-
-	/**
-	 * Get a list of all the views in the system
-	 * @return list of all view names
-	 */
-	public List<String> getViewNames();
+	public Class<?> getNarrowedClass(Shape shape, Class<?> entityClass, String viewName);
 
 	/**
 	 * Creates the PersistenceOrchestrator appropriate for this
@@ -253,40 +172,6 @@ public interface DataAccessService {
 	 * @return PersistenceOrchestrator object
 	 */
 	public PersistenceOrchestrator createPO(Object sessionContext, Object data);
-
-	/**
-	 * Used to extend the property for a type. e.g., add a new open property
-	 * @param property an open property
-	 */
-	public void addProperty (Property property);
-
-	/**
-	 * Mainly used to remove open properties. Useful from a JUnit test perspective.
-	 * @param property an open property
-	 */
-	public void removeProperty (Property property);
-
-	/**
-	 * Similar to addProperty, but property adds the properly to both domain and
-	 * external models
-	 *
-	 * @param openProperty to be added
-	 */
-	public void addOpenProperty (Property openProperty);
-
-	/**
-	 * Similar to removeProperty but properly removes from both domain and
-	 * external models.
-	 *
-	 * @param openProperty to be removed
-	 */
-	public void removeOpenProperty (Property openProperty);
-
-	/**
-	 * Can be used to add all open types. For e.g., types specific to a view, such as a cross join
-	 * @param type the provided meta type
-	 */
-	public void addOpenType(OpenType type);
 
 	/**
 	 * Initialize the generators needed for data generating from an Excel file

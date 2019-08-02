@@ -51,7 +51,7 @@ public class DefaultMappedBy {
 	public void checkOneToMany() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty taskChildren = (ExtendedProperty) taskType.getProperty("taskChildren");
 		ExtendedProperty parent = (ExtendedProperty) taskType.getProperty("taskParent");
 
@@ -74,10 +74,10 @@ public class DefaultMappedBy {
 	public void checkOneToOne() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Task.class);
+		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty quote = (ExtendedProperty) taskType.getProperty("quote");
 
-		Type quoteType = das.getType(Quote.class);
+		Type quoteType = das.getShape().getType(Quote.class);
 		ExtendedProperty task = (ExtendedProperty) quoteType.getProperty("task");
 
 		assert(task != null);
@@ -99,10 +99,10 @@ public class DefaultMappedBy {
 	public void checkManyToMany() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type taskType = das.getType(Project.class);
+		Type taskType = das.getShape().getType(Project.class);
 		ExtendedProperty managers = (ExtendedProperty) taskType.getProperty("managers");
 
-		Type quoteType = das.getType(Manager.class);
+		Type quoteType = das.getShape().getType(Manager.class);
 		ExtendedProperty projects = (ExtendedProperty) quoteType.getProperty("projects");
 
 		assert(managers != null);
@@ -124,10 +124,10 @@ public class DefaultMappedBy {
 	public void checkOneToOneEmbedded() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type employee = das.getType(Employee.class);
+		Type employee = das.getShape().getType(Employee.class);
 		ExtendedProperty parkingSpot = (ExtendedProperty) employee.getProperty("location.parkingSpot");
 
-		Type parkingType = das.getType(ParkingSpot.class);
+		Type parkingType = das.getShape().getType(ParkingSpot.class);
 		ExtendedProperty assignedTo = (ExtendedProperty) parkingType.getProperty("assignedTo");
 
 		assert(parkingSpot != null);
@@ -145,7 +145,7 @@ public class DefaultMappedBy {
 
 	public void checkImmutable() {
 		DataAccessService das = aggregateManager.getDAS(); 
-		EntityType metaEntityState = (EntityType) das.getType(MetaEntityState.class);
+		EntityType metaEntityState = (EntityType) das.getShape().getType(MetaEntityState.class);
 		Annotation annotation = metaEntityState.getClassAnnotation(XorEntity.class);
 		
 		boolean value = false;
@@ -159,7 +159,7 @@ public class DefaultMappedBy {
 	public void checkListIndex() {
 		DataAccessService das = aggregateManager.getDAS(); 
 
-		Type task = das.getType(Task.class);
+		Type task = das.getShape().getType(Task.class);
 		ExtendedProperty dependants = (ExtendedProperty) task.getProperty("dependants");
 		
 		assert(dependants.getPositionProperty() != null);

@@ -25,7 +25,6 @@ import tools.xor.BusinessObject;
 import tools.xor.DataGenerator;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.ImmutableJsonProperty;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.JSONObjectProperty;
@@ -46,6 +45,7 @@ import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -489,7 +489,80 @@ public abstract class DBTranslator
         return false;
     }
 
-    public String getInsertSqlFragment(BusinessObject bo, JDBCType entityType, boolean isBindParameters, DataGenerator dataGenerator) {
+    /**
+     * Gets a list of all the properties
+     * @param entityType containing the properties, can be a supertype
+     * @param bo for which the relevant properties need to be extracted
+     * @return properties to udate
+     */
+    private List<Property> getPropertiesToUpdate(JDBCType entityType, BusinessObject bo) {
+
+        // Excludes the identifier
+        // add version property at end if type supports this property
+
+        Property identifier = entityType.getIdentifierProperty();
+        Property version = entityType.getVersionProperty();
+
+        if(identifier == null) {
+            throw new RuntimeException("Only update of entities containing identifier property is currently supported");
+        }
+
+        List<Property> result = new LinkedList<>();
+
+        // Needed for performance optimization for objects containing a large number of fields in the type
+        JSONObject jsonObject = (JSONObject)bo.getInstance();
+        Iterator<String> propertyNames = jsonObject.keys();
+        Map<String, Property> directProperties = entityType.getShape().getDirectProperties(entityType);
+        while(propertyNames.hasNext()) {
+            Property property = directProperties.get(propertyNames.next());
+            if(property == null) {
+                continue;
+            }
+
+            if(property == identifier || (version != null && property == version)) {
+                continue;
+            }
+            result.add(property);
+        }
+        if(version != null) {
+            result.add(version);
+        }
+
+        return result;
+    }
+
+    /**
+     * Generate an update statement that works with optimistic concurrency control and no
+     * @param bo Object containing the values to be updated
+     * @param isBindParameters false if a literal SQL fragment needs to be produced
+     * @return sql string without values
+     *
+     * For example:
+     *   UPDATE user SET name = "<new_value" WHERE name = "<old_value>" and id = "<id>"
+     */
+    public String getUpdateSqlFragment(JDBCType entityType, BusinessObject bo, boolean isBindParameters)
+    {
+        StringBuilder sqlstr = new StringBuilder("UPDATE ");
+        sqlstr.append(bo.getType().getName()).append(" SET ");
+
+        if(isBindParameters) {
+
+            List<Property> properties = getPropertiesToUpdate(entityType, bo);
+            List<String> propToSet = new LinkedList<>();
+            for(Property p: properties) {
+                propToSet.add(p.getName() + " = ?");
+            }
+            sqlstr.append(String.join(",", propToSet));
+
+            sqlstr.append(" WHERE ").append(String.join(",", propToSet));
+            Property identifier = entityType.getIdentifierProperty();
+            sqlstr.append(String.format(", %s = ?", identifier.getName()));
+        }
+
+        return sqlstr.toString();
+    }
+
+    public String getInsertSqlFragment(JDBCType entityType, BusinessObject bo, boolean isBindParameters, DataGenerator dataGenerator) {
         StringBuilder sqlstr = new StringBuilder();
         sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
 
@@ -533,7 +606,11 @@ public abstract class DBTranslator
         return sqlstr.toString();
     }
 
-    public String setValues(PreparedStatement ps, BusinessObject bo, JDBCType entityType, boolean isCSV, DataGenerator dataGenerator) {
+    public String setInsertValues (JDBCType entityType,
+                                   PreparedStatement ps,
+                                   BusinessObject bo,
+                                   boolean isCSV,
+                                   DataGenerator dataGenerator) {
         // get the values
         List<String> values = new LinkedList<>();
         int position = 1;
@@ -542,39 +619,100 @@ public abstract class DBTranslator
                 continue;
             }
 
-            // simple type
-            if(p.getType().isDataType() && !p.isMany()) {
-                JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
-                JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
-                values.add(c.toSQLLiteral(bo.get(col.getName())));
-
-                if(ps != null) {
-                    addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
-                }
-            }
-
-            // foreign keys
-            if(!p.getType().isDataType() && p.getMappedBy() == null) {
-                JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
-                JSONObject entity = (JSONObject)bo.get(p);
-                List<JDBCDAS.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(
-                    fkey.getReferencedColumns());
-                for (int i = 0; i < referencedColumns.size(); i++) {
-                    String dataType = referencedColumns.get(i).getDataType();
-                    String columnName = referencedColumns.get(i).getName();
-                    JDBCtoSQLConverter c = isCSV ? getCSVConverter(dataType) : getConverter(dataType);
-                    values.add(c.toSQLLiteral(entity.get(columnName)));
-
-                    if(ps != null) {
-                        addBindParameter(ps, dataType, position++, entity.get(columnName));
-                    }
-                }
-            }
+            position = setValue(ps, values, p, bo, position, isCSV);
         }
 
         if(ps == null) {
             StringBuilder sqlstr = new StringBuilder();
             sqlstr.append(String.join(",", values));
+
+            return sqlstr.toString();
+        } else {
+            return null;
+        }
+    }
+
+    private int setValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV) {
+        return setValue(ps, values, p, bo, position, isCSV, false);
+    }
+
+    private int setValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV, boolean isUpdate) {
+        // simple type
+        if(p.getType().isDataType() && !p.isMany()) {
+            JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
+            JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
+            values.add(getColumnString(bo.get(col.getName()), isUpdate, col.getName(), c));
+
+            if(ps != null) {
+                addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
+            }
+        }
+
+        // foreign keys
+        if(!p.getType().isDataType() && p.getMappedBy() == null) {
+            JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
+            JSONObject entity = (JSONObject)bo.get(p);
+            List<JDBCDAS.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(
+                fkey.getReferencedColumns());
+            for (int i = 0; i < referencedColumns.size(); i++) {
+                String dataType = referencedColumns.get(i).getDataType();
+                JDBCDAS.ColumnInfo col = referencedColumns.get(i);
+                JDBCtoSQLConverter c = isCSV ? getCSVConverter(dataType) : getConverter(dataType);
+                values.add(getColumnString(entity.get(col.getName()), isUpdate, col.getName(), c));
+
+                if(ps != null) {
+                    addBindParameter(ps, dataType, position++, entity.get(col.getName()));
+                }
+            }
+        }
+
+        return position;
+    }
+
+    private String getColumnString(Object value, boolean isUpdate, String columnName, JDBCtoSQLConverter c) {
+        if(isUpdate) {
+            return String.format(
+                    "%s = %s",
+                    columnName,
+                    c.toSQLLiteral(value));
+        } else {
+            return c.toSQLLiteral(value);
+        }
+    }
+
+    public String setUpdateValues (JDBCType entityType,
+                                   PreparedStatement ps,
+                                   BusinessObject bo,
+                                   BusinessObject dbBO) {
+        // set modified values
+        Property version = entityType.getVersionProperty();
+        if(version != null) {
+            if(bo.get(version.getName()) == null) {
+                throw new RuntimeException("Version is a required field for update");
+            }
+            // Ensure we increment this value in the modified object
+            bo.set(version.getName(), Integer.valueOf(bo.get(version.getName()).toString()) + 1);
+        }
+        List<String> modifiedValues = new LinkedList<>();
+        int position = 1;
+        for(Property p: getPropertiesToUpdate(entityType, bo)) {
+            position = setValue(ps, modifiedValues, p, bo, position, false, true);
+        }
+
+        // set original values in the WHERE predicate list
+        List<String> originalValues = new LinkedList<>();
+        List<Property> persistentBOproperties = getPropertiesToUpdate(entityType, dbBO);
+        persistentBOproperties.add(entityType.getIdentifierProperty());
+        for(Property p: persistentBOproperties) {
+            position = setValue(ps, originalValues, p, dbBO, position, false, true);
+        }
+
+
+        if(ps == null) {
+            StringBuilder sqlstr = new StringBuilder();
+            sqlstr.append(String.join(", ", modifiedValues))
+                .append(" WHERE ")
+                .append(String.join(" AND ", originalValues));
 
             return sqlstr.toString();
         } else {
@@ -588,24 +726,31 @@ public abstract class DBTranslator
         bp.setValue(ps, this, value);
     }
 
-    public String getInsertSql(BusinessObject bo, JDBCType entityType, DataGenerator dataGenerator) {
+    public String getInsertSql(JDBCType entityType, BusinessObject bo, DataGenerator dataGenerator) {
 
-        StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(bo, entityType, false, dataGenerator));
+        StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(entityType, bo, false, dataGenerator));
         sqlstr.append("(")
-            .append(setValues(null, bo, entityType, false, dataGenerator))
+            .append(setInsertValues(entityType, null, bo, false, dataGenerator))
             .append(")");
 
         return sqlstr.toString();
     }
 
-    public String getCSV(BusinessObject bo, JDBCType entityType, DataGenerator dataGenerator) {
+    public String getCSV(JDBCType entityType, BusinessObject bo, DataGenerator dataGenerator) {
 
         StringBuilder sqlstr = new StringBuilder();
-        sqlstr.append(setValues(null, bo, entityType, true, dataGenerator));
+        sqlstr.append(setInsertValues(entityType, null, bo, true, dataGenerator));
 
         return sqlstr.toString();
     }
 
+    public String getUpdateSql(JDBCType entityType, BusinessObject bo, BusinessObject dbBO) {
+
+        StringBuilder sqlstr = new StringBuilder(getUpdateSqlFragment(entityType, bo, false));
+        sqlstr.append(setUpdateValues(entityType, null, bo, dbBO));
+
+        return sqlstr.toString();
+    }
 
     public abstract JDBCDAS.TableInfo getTable(Connection connection, ForeignKeyEnhancer enhancer, String tableName);
 

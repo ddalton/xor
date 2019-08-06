@@ -554,9 +554,9 @@ public abstract class DBTranslator
             }
             sqlstr.append(String.join(",", propToSet));
 
-            sqlstr.append(" WHERE ").append(String.join(",", propToSet));
+            sqlstr.append(" WHERE ").append(String.join(" AND ", propToSet));
             Property identifier = entityType.getIdentifierProperty();
-            sqlstr.append(String.format(", %s = ?", identifier.getName()));
+            sqlstr.append(String.format(" AND %s = ?", identifier.getName()));
         }
 
         return sqlstr.toString();

@@ -80,8 +80,8 @@ public class DataGenerator
         this.shape = shape;
         this.settings = settings;
         this.dasFactory = dasFactory;
-        //this.importMethod = ImportMethod.PREPARED_STATEMENT;
-        this.importMethod = ImportMethod.CSV;
+        this.importMethod = ImportMethod.PREPARED_STATEMENT;
+        //this.importMethod = ImportMethod.CSV;
     }
 
     /**

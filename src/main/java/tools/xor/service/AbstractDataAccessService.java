@@ -68,6 +68,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
 	private ThreadLocal<Shape> overriddenShape = new ThreadLocal<Shape>(); // temporarily overridden by user
+	private StateGraph<State, Edge<State>> orderedGraph;
 
 	public AbstractDataAccessService(DASFactory factory, TypeMapper typeMapper) {
 		this.dasFactory = factory;
@@ -258,35 +259,40 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	protected void initOrder(Shape shape) {
 		// State graph of all the entity types in topological order
 		// Entity state graph is most likely a forest, so there is no root state
-		StateGraph<State, Edge<State>> stateGraph = new StateGraph<State, Edge<State>>(null, shape);
+		this.orderedGraph = new StateGraph<>(null, shape);
 		for(Type type: shape.getUniqueTypes()) {
 			if(EntityType.class.isAssignableFrom(type.getClass())) {
-				stateGraph.addVertex(new State(type, false));
+				orderedGraph.addVertex(new State(type, false));
 			}
 		}
 
-		stateGraph.populateEdges(shape);
-		DFAtoNFA.processInheritance(stateGraph, false);
+		orderedGraph.populateEdges(shape);
+		DFAtoNFA.processInheritance(orderedGraph, false);
 
 		if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
 			|| !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
 			try {
-				stateGraph.toposort(shape);
+				orderedGraph.toposort(shape);
 			}
 			catch (RuntimeException re) {
 				throw re;
 			}
 
-			stateGraph.orderTypes();
+			orderedGraph.orderTypes();
 
 			// Print out the graph if so configured
 			if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
 				&& ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
 				Settings settings = new Settings();
 				settings.setGraphFileName("ApplicationStateGraph" + shape.getName() + ".dot");
-				stateGraph.generateVisual(settings);
+				orderedGraph.generateVisual(settings);
 			}
 		}
+	}
+
+	@Override
+	public StateGraph<State, Edge<State>> getOrderedGraph() {
+		return this.orderedGraph;
 	}
 	
 	@Override

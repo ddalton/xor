@@ -33,7 +33,8 @@ import java.util.Set;
  */
 public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.AutonomousEdge<V>> extends StateGraph<V, E> implements Tree<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
-	
+
+	// TODO: support mapping between path and state
 	private V rootState;
 	
 	public StateTree(Type aggregateRoot, Shape shape, State rootState) {

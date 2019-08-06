@@ -83,6 +83,10 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 	public V getVertex(Type t) {
 		return typeGraph.getVertex(t);
 	}
+
+	public V getVertex(String name) {
+		return typeGraph.getVertex(name);
+	}
 	
 	public TypeGraph<V, E> getFullStateGraph() {
 		typeGraph.getFullStateGraph();

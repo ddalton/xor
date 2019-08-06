@@ -1,6 +1,10 @@
+Create 1 graph for topo sorting and use it everywhere needed -
+The shape can be obtained from the type
+- sort the PreparedStatement using the topo ordered state graph
+- modify StateTree to model paths and types
+
+
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
-
-
 
 Pending PlainJDBCTest cases
 ===========================
@@ -11,11 +15,6 @@ NCLOB
 SMALLDECIMAL
 SECONDDATE
 ST_POINT
-
-Add Testcase for testing performance query 
- - Create schema using OrgGroupUpdater#UsersNotInGroupQuery
- - Populate data according to stats in HANAMON
- - execute equivalent queries to find the correct one
 
 1. Refactor to use JSONObject to represent view and not list of properties.
    Allows for rich expression of the query.

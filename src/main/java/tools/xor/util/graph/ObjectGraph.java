@@ -12,6 +12,7 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ListType;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -369,9 +370,13 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		return dataObject;
 	}
 	
-	public static class StateComparator<V extends BusinessObject> implements Comparator<V> {
+	public static class StateComparator<V extends StateComparator.TypedObject> implements Comparator<V> {
 		TypeGraph<State, Edge<State>> sg;
 		private boolean areTypesOrdered;
+
+		public interface TypedObject {
+			Type getType();
+		}
 		
 		public StateComparator(TypeGraph<State, Edge<State>> sg) {
 			this.sg = sg;
@@ -406,7 +411,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		}
 		
 		private State getState(V vertex) {
-			 State v = sg.getVertex(vertex.getType());
+			 State v = sg.getVertex(vertex.getType().getName());
 			 if(v == null) {
 				 v = getByAncestorType(vertex);
 			 }

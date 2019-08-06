@@ -22,10 +22,13 @@ package tools.xor;
 import java.util.List;
 import java.util.Map;
 
+import org.hsqldb.lib.ObjectComparator;
 import tools.xor.util.ObjectCreator;
+import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.QueryTree;
 
-public interface BusinessObject extends DataObject {
+public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.TypedObject
+{
 
 	/**
 	 * Return the ObjectCreator instance responsible for tracking the java object - DataObject instance mappings

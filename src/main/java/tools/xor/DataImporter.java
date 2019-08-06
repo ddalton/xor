@@ -97,11 +97,12 @@ public class DataImporter implements Callable
 
     private void commit() {
         try {
-            po.getSessionContext().flush();
             po.getSessionContext().commit();
         } catch (Exception e) {
             po.getSessionContext().rollback();
             throw e;
+        } finally {
+            po.getSessionContext().close();
         }
     }
 }

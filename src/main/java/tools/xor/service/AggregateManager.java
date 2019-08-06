@@ -406,6 +406,7 @@ public class AggregateManager implements Xor
 				if(!existingTransaction && getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
 					JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) getPersistenceOrchestrator();
 					po.getSessionContext().commit();
+					po.getSessionContext().close();
 				}
 			}
 		}

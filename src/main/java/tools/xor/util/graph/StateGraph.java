@@ -56,7 +56,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	private static final String ALL = "_all_";
 
 	private Type root; // aggregate rooted at this type
-	private Map<Type, V> states = new HashMap<Type, V>();
+	private Map<Type, V> states = new HashMap<>();
+	private Map<String, V> statesByName = new HashMap<>(); // Needed for topological sorting by a different shape
 	private Map<V, Map<String, E>> outTransitions = new HashMap<V, Map<String, E>>(); 
 	//private Map<Type, List<Property>> attrByType = new HashMap<Type, List<Property>>();
 	private Map<Type, Map<String, List<Property>>> attrByType = new HashMap<Type, Map<String, List<Property>>>();
@@ -163,6 +164,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		super.addVertex(vertex);
 		this.states.put(vertex.getType(), vertex);
+		this.statesByName.put(vertex.getType().getName(), vertex);
 	}
 
 	@Override
@@ -173,16 +175,25 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		super.removeVertex(vertex);
 		this.states.remove(vertex.getType());
+		this.statesByName.remove(vertex.getType().getName(), vertex);
 	}
-	
+
+	@Override
 	public void addEdge(E edge) {
 		addEdge(edge, edge.getStart(), edge.getEnd());
 	}
 
+	@Override
 	public V getVertex(Type t) {
 		return states.get(t);
 	}
-	
+
+	@Override
+	public V getVertex(String name) {
+		return statesByName.get(name);
+	}
+
+	@Override
 	public StateGraph<V, E> getFullStateGraph() {
 
 		for(State state: states.values()) {
@@ -191,7 +202,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		
 		return this;
 	}
-	
+
+	@Override
 	public StateGraph<V, E> copy() {
 		return copy(null);
 	}
@@ -205,6 +217,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	 * @param mergeStates map of states to be merged. Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
 	 * @return merged graph
 	 */
+	@Override
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
 		
 		StateGraph<V, E> result = new StateGraph<V, E>(this.root, this.shape);
@@ -236,12 +249,14 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return result;
 	}
 
+	@Override
 	public List<Property> next(Type type, String propertyPath, Set<String> exactSet) {
 		State state = getVertex(type);
 
 		return next(state, propertyPath, exactSet);
 	}
 
+	@Override
 	public List<Property> next(State state, String propertyPath, Set<String> exactSet) {
 		Type type = state.getType();
 

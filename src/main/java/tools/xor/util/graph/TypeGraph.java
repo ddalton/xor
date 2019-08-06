@@ -71,6 +71,15 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	public V getVertex(Type type);
 
 	/**
+	 * Get a vertex by name.
+	 * This is useful if a graph from another shape is needed for topological sorting.
+	 *
+	 * @param name  of the vertex
+	 * @return vertex
+	 */
+	public V getVertex(String name);
+
+	/**
 	 * Initialize all the vertices with the simple attributes
 	 * @return the current graph
 	 */

@@ -30,7 +30,10 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.TypeNarrower;
+import tools.xor.util.Edge;
 import tools.xor.util.PersistenceType;
+import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
 
@@ -184,4 +187,12 @@ public interface DataAccessService {
 	 * @return SettingsBuilder object
 	 */
 	public Settings.SettingsBuilder settings();
+
+	/**
+	 * If the shape was configured to created a topological ordering
+	 * then this graph is accessed using this method
+	 *
+	 * @return topological ordering of the shape
+	 */
+	public StateGraph<State, Edge<State>> getOrderedGraph();
 }

@@ -32,6 +32,8 @@ import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
+import tools.xor.Type;
+import tools.xor.service.DataAccessService;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -57,22 +59,52 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class JDBCSessionContext implements CustomPersister
 {
     private Connection connection;
     private DBTranslator dbTranslator;
     private JDBCPersistenceOrchestrator po;
-    private ImportMethod importMethod = ImportMethod.LITERAL_SQL; // use prepared statement batch if order does not matter
+    private ImportMethod importMethod = ImportMethod.PREPARED_STATEMENT; // use prepared statement batch if order does not matter
     private Statement statement;
-    private Set<PreparedStatement> preparedInsert = new HashSet<>();
+    //private Set<PreparedStatement> preparedInsert = new HashSet<>();
+    private Map<PSKey, PreparedStatement> preparedInsert = new HashMap<>();
+    private Map<PSKey, PreparedStatement> preparedUpdate = new HashMap<>();
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
     private Map<JSONObject, JSONObject> snapshots = new HashMap<>();
     private final Map<String, List<String>> sqlByType = new HashMap<>();
-    private List<String> insertBatch = new LinkedList<>();
+    private List<String> literalSQLs = new LinkedList<>();
     private final Map<String, PreparedStatement> statementCache = lruCache(1000);
+
+    private static class PSKey implements ObjectGraph.StateComparator.TypedObject {
+        private final Type type;
+
+        @Override public Type getType ()
+        {
+            return this.type;
+        }
+
+        PSKey(JDBCType type) {
+            this.type = type;
+        }
+
+        @Override
+        public int hashCode() {
+            return type.getName().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if( !(other instanceof PSKey)) {
+                return false;
+            }
+
+            return type.getName().equals(((PSKey)other).getType().getName());
+        }
+    }
 
     public static <K,V> Map<K,V> lruCache(final int maxSize) {
         return new LinkedHashMap<K,V>(maxSize*4/3, 0.75f, true) {
@@ -190,6 +222,7 @@ public class JDBCSessionContext implements CustomPersister
         } finally {
             if(!enclosingTransaction) {
                 commit();
+                close();
             }
         }
 
@@ -242,13 +275,13 @@ public class JDBCSessionContext implements CustomPersister
                 createStatement();
                 for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     statement.addBatch(entitySQL.sql);
-                    insertBatch.add(entitySQL.sql);
+                    literalSQLs.add(entitySQL.sql);
                 }
                 break;
             case PREPARED_STATEMENT:
                 for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     entitySQL.ps.addBatch();
-                    preparedInsert.add(entitySQL.ps);
+                    preparedInsert.put(new PSKey(entitySQL.entityType), entitySQL.ps);
                 }
                 break;
             case CSV:
@@ -271,13 +304,13 @@ public class JDBCSessionContext implements CustomPersister
                 createStatement();
                 for (EntitySQL entitySQL : getUpdateObjs(bo, dbBO, importMethod)) {
                     statement.addBatch(entitySQL.sql);
-                    insertBatch.add(entitySQL.sql);
+                    literalSQLs.add(entitySQL.sql);
                 }
                 break;
             case PREPARED_STATEMENT:
                 for (EntitySQL entitySQL : getUpdateObjs(bo, dbBO, importMethod)) {
                     entitySQL.ps.addBatch();
-                    preparedInsert.add(entitySQL.ps);
+                    preparedUpdate.put(new PSKey(entitySQL.entityType), entitySQL.ps);
                 }
                 break;
             case CSV:
@@ -462,12 +495,11 @@ public class JDBCSessionContext implements CustomPersister
     @Override public void commit ()
     {
         try {
+            flush();
             connection.commit();
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
-        } finally {
-            this.close();
         }
     }
 
@@ -478,9 +510,25 @@ public class JDBCSessionContext implements CustomPersister
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
-        } finally {
-            this.close();
         }
+    }
+
+    private Map<PSKey, PreparedStatement> getSortedMap(Map<PSKey, PreparedStatement> input) {
+        if(input.size() == 0) {
+            return input;
+        }
+
+        DataAccessService das = ((EntityType)input.keySet().iterator().next().getType()).getShape().getDAS();
+
+        // Get the default shape sorted graph
+        TypeGraph<State, Edge<State>> defaultOrdering = das.getOrderedGraph();
+
+        Map<PSKey, PreparedStatement> result = new TreeMap<>(new ObjectGraph.StateComparator(defaultOrdering));
+        for(Map.Entry<PSKey, PreparedStatement> entry: input.entrySet()) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        return result;
     }
 
     @Override
@@ -491,8 +539,14 @@ public class JDBCSessionContext implements CustomPersister
 
                 switch(importMethod) {
                 case PREPARED_STATEMENT:
-                    // TODO: Topological ordering of statements
-                    for(PreparedStatement ps: preparedInsert) {
+                    this.preparedInsert = getSortedMap(this.preparedInsert);
+                    this.preparedUpdate = getSortedMap(this.preparedUpdate);
+
+                    for(PreparedStatement ps: preparedInsert.values()) {
+                        ps.executeBatch();
+                    }
+
+                    for(PreparedStatement ps: preparedUpdate.values()) {
                         ps.executeBatch();
                     }
                     break;
@@ -500,7 +554,7 @@ public class JDBCSessionContext implements CustomPersister
                     if(statement != null) {
                         int[] result = statement.executeBatch();
 
-                        if (result.length != insertBatch.size()) {
+                        if (result.length != literalSQLs.size()) {
                             throw new RuntimeException(
                                 "The number of insert SQLs do not match the number received by the database");
                         }
@@ -508,7 +562,7 @@ public class JDBCSessionContext implements CustomPersister
                         StringBuilder failedSqls = new StringBuilder();
                         for (int i = 0; i < result.length; i++) {
                             if (result[i] != 1) {
-                                failedSqls.append(insertBatch.get(i))
+                                failedSqls.append(literalSQLs.get(i))
                                     .append("\n");
                             }
                         }
@@ -529,7 +583,7 @@ public class JDBCSessionContext implements CustomPersister
                     throw new RuntimeException("Non batch execution is not supported. The batch.skip setting should be set to false.");
                 case LITERAL_SQL:
                     try(Statement stmt = getConnection().createStatement()) {
-                        for (String insertSQL : insertBatch) {
+                        for (String insertSQL : literalSQLs) {
                             //System.out.println("INSERTING: " + insertSQL);
                             stmt.executeUpdate(insertSQL);
                         }
@@ -549,9 +603,10 @@ public class JDBCSessionContext implements CustomPersister
                     this.statement.close();
                 }
                 if(preparedInsert != null) {
-                    for(PreparedStatement ps: preparedInsert) {
-                        ps.clearParameters();
-                    }
+                    preparedInsert.clear();
+                }
+                if(preparedUpdate != null) {
+                    preparedUpdate.clear();
                 }
                 this.clear();
             }
@@ -580,9 +635,12 @@ public class JDBCSessionContext implements CustomPersister
         this.idToObjects = new HashMap<>();
         this.snapshots = new HashMap<>();
         this.sqlByType.clear();
-        this.insertBatch.clear();
+        this.literalSQLs.clear();
         if(this.preparedInsert != null) {
             this.preparedInsert.clear();
+        }
+        if(this.preparedUpdate != null) {
+            this.preparedUpdate.clear();
         }
         this.statementCache.clear();
         this.statement = null;

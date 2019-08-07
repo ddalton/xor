@@ -57,4 +57,10 @@ public interface Graph<V, E> {
 	 * @param vertex to remove
 	 */
 	void removeVertex(V vertex);
+
+	/**
+	 * Return the roots in the graph, i.e., all the trees of a forest.
+	 * @return roots of the forest
+	 */
+	Collection<V> getRoots();
 }

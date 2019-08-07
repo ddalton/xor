@@ -1,7 +1,6 @@
 Create 1 graph for topo sorting and use it everywhere needed -
 The shape can be obtained from the type
 - sort the PreparedStatement using the topo ordered state graph
-- modify StateTree to model paths and types
 
 
 Fix narrow call by replacing it with the ability to resolve the object based on the subtypes and join condition
@@ -49,9 +48,7 @@ ST_POINT
 5. Inheritance test
 6. Paging test
 7. Test same entity type but on different anchors and ensure it brings different shapes
-8. Batch test of UPDATE/INSERT/DELETE
-9. Version check or snapshot values check if version column not present.
-10. For troubleshooting turn off batching
+8. modify StateTree to model paths and types
 
 
 XOR - Light weight ORM

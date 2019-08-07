@@ -69,14 +69,18 @@ public class QueryBuilder
      * We do it in a BFS traversal.
      */
     public void construct(Settings settings) {
+
+        // run through the cartesian join splitter
+        (new SplitToRoot(aggregateTree)).execute();
+
         List<QueryTree> queries = new LinkedList<>();
-        queries.add(aggregateTree.getRoot());
+        queries.addAll(aggregateTree.getRoots());
 
         while(!queries.isEmpty()) {
             QueryTree queryTree = queries.remove(0);
             queries.addAll(this.aggregateTree.getChildren(queryTree));
 
-            // construct the query and set it one the qp
+            // construct the query and set it on the qp
             construct(settings, queryTree);
         }
     }

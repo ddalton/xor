@@ -742,7 +742,7 @@ public class Settings {
 
 		if(entity != null) {
 			if(getView().getRegexAttributes() == null) {
-				narrowedClass = typeNarrower.narrow(entity, getView().getName());
+				narrowedClass = typeNarrower.narrow(getShape(), entity, getView().getName());
 				if (narrowedClass == null) {
 					throw new IllegalArgumentException(
 						"The entityClass is not applicable for this view. Check if the entity object for the correct class was passed in.");

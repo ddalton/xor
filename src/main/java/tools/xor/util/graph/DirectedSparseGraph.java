@@ -317,6 +317,18 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	}
 
 	@Override
+	public Collection<V> getRoots() {
+		List<V> result = new LinkedList<>();
+		for(V vertex: getVertices()) {
+			if(getInEdges(vertex).size() == 0) {
+				result.add(vertex);
+			}
+		}
+
+		return result;
+	}
+
+	@Override
 	public Collection<E> getInEdges(V vertex) {
 		Collection<E> result = inEdges.get(vertex);
 		return result == null ? new HashSet<E>() : new HashSet<>(result);

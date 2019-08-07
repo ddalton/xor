@@ -187,12 +187,4 @@ public interface DataAccessService {
 	 * @return SettingsBuilder object
 	 */
 	public Settings.SettingsBuilder settings();
-
-	/**
-	 * If the shape was configured to created a topological ordering
-	 * then this graph is accessed using this method
-	 *
-	 * @return topological ordering of the shape
-	 */
-	public StateGraph<State, Edge<State>> getOrderedGraph();
 }

@@ -117,6 +117,10 @@ public class QueryFragment implements Vertex
         }
     }
 
+    public boolean containsPath(String path) {
+        return paths.contains(path) || simpleCollectionPaths.contains(path);
+    }
+
     public void addPath(String path) {
         this.paths.add(stripAncestor(path));
     }

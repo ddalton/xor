@@ -56,6 +56,8 @@ import java.util.List;
 @ContextConfiguration(locations = { "classpath:/spring-jdbc-test.xml" })
 public class PlainJDBCTest
 {
+	private static final String SHAPE_NAME = "PlainJDBC";
+
 	@Autowired
 	protected AggregateManager am;
 
@@ -118,6 +120,9 @@ public class PlainJDBCTest
 			connection.commit();
 			long time4 = System.nanoTime();
 			System.out.println("[Commit seed data - " + ((time4 - time3) / 1000) + " μs");
+
+			// build the shape
+			am.getDAS().addShape(SHAPE_NAME);
 		}
 	}
 
@@ -317,6 +322,8 @@ public class PlainJDBCTest
 		}
 		long time2 = System.nanoTime();
 		System.out.println("[Drop tables - " + ((time2 - time1) / 1000) + " μs");
+
+		am.getDAS().removeShape(SHAPE_NAME);
 	}
 
 	@Test
@@ -325,8 +332,6 @@ public class PlainJDBCTest
 
 		DataAccessService das = am.getDAS();
 
-		// Rebuild the types
-		das.addShape("_DEFAULT_");
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
@@ -346,8 +351,7 @@ public class PlainJDBCTest
 	@Test
 	public void selectView() {
 		DataAccessService das = am.getDAS();
-		das.addShape("_DEFAULT_");
-		Shape shape = das.getShape();
+		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -363,10 +367,10 @@ public class PlainJDBCTest
 
 		Settings settings = new Settings();
 		JDBCSessionContext context = new JDBCSessionContext((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator(), null);
-		context.process(address, (EntityType) das.getShape().getType("address"));
+		context.process(address, (EntityType) shape.getType("address"));
 		settings.setSessionContext(context);
 
-		JDBCType type = (JDBCType) das.getShape().getType("library");
+		JDBCType type = (JDBCType) shape.getType("library");
 		settings.setEntityType(type);
 		settings.init(shape);
 		Object obj = am.create(json, settings);
@@ -385,8 +389,7 @@ public class PlainJDBCTest
 	@Test
 	public void queryEntity() {
 		DataAccessService das = am.getDAS();
-		das.addShape("_DEFAULT_");
-		Shape shape = das.getShape();
+		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -405,7 +408,7 @@ public class PlainJDBCTest
 		attributes.add("LIBRARY.NAME");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getShape().getType("librarian");
+		JDBCType type = (JDBCType) shape.getType("librarian");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -427,8 +430,7 @@ public class PlainJDBCTest
 	@Test
 	public void queryCollection() {
 		DataAccessService das = am.getDAS();
-		das.addShape("_DEFAULT_");
-		Shape shape = das.getShape();
+		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -447,7 +449,7 @@ public class PlainJDBCTest
 		attributes.add("LIBRARIANS.EMAIL");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getShape().getType("library");
+		JDBCType type = (JDBCType) shape.getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -465,8 +467,7 @@ public class PlainJDBCTest
 	@Test
 	public void queryManyToMany() {
 		DataAccessService das = am.getDAS();
-		das.addShape("_DEFAULT_");
-		Shape shape = das.getShape();
+		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -488,7 +489,7 @@ public class PlainJDBCTest
 		attributes.add("LIBRARIANS.LIBRARYASSOCIATIONS.ASSOCIATION.NAME");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getShape().getType("library");
+		JDBCType type = (JDBCType) shape.getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -522,8 +523,7 @@ public class PlainJDBCTest
 	@Test
 	public void testDeeplyNested() {
 		DataAccessService das = am.getDAS();
-		das.addShape("_DEFAULT_");
-		Shape shape = das.getShape();
+		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -552,7 +552,7 @@ public class PlainJDBCTest
 //		attributes.add("LIBRARIANS.ID");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getShape().getType("library");
+		JDBCType type = (JDBCType) shape.getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);
@@ -571,8 +571,7 @@ public class PlainJDBCTest
 	@Test
 	public void testDeeplyNested2() {
 		DataAccessService das = am.getDAS();
-		das.addShape("_DEFAULT_");
-		Shape shape = das.getShape();
+		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.checkPO(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -601,7 +600,7 @@ public class PlainJDBCTest
 		//		attributes.add("LIBRARIANS.ID");
 
 		Settings settings = new Settings();
-		JDBCType type = (JDBCType) das.getShape().getType("library");
+		JDBCType type = (JDBCType) shape.getType("library");
 		settings.setEntityType(type);
 		settings.setView(view);
 		settings.init(shape);

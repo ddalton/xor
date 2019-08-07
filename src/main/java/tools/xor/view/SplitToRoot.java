@@ -33,6 +33,7 @@ import java.util.List;
 public class SplitToRoot implements SplitStrategy
 {
     private AggregateTree aggregateTree;
+    private List<AggregateTree> queryTrees;
 
     public SplitToRoot (AggregateTree aggregateTree) {
         this.aggregateTree = aggregateTree;
@@ -132,14 +133,9 @@ public class SplitToRoot implements SplitStrategy
             originalQT.split(splitAtEdge, newEdge, newQT);
         }
 
-        addInterGraphEdge(originalQT, newQT, fragment, clone, splitAtEdge);
+        // The aggregateTree is now a forest
+        aggregateTree.addVertex(newQT);
 
         return newQT;
-    }
-
-    private void addInterGraphEdge(QueryTree originalQT, QueryTree newQT, QueryFragment original, QueryFragment clone, IntraQuery<QueryFragment> splitAtEdge) {
-        // TODO: Ensure source fragment has id property to assist with reconstitution between the different query pieces
-        InterQuery edge = new InterQuery(splitAtEdge.getProperty().getName(), originalQT, newQT, original, clone);
-        aggregateTree.addEdge(edge, originalQT, newQT);
     }
 }

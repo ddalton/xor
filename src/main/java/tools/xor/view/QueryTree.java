@@ -38,6 +38,7 @@ import tools.xor.util.State;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.TreeOperations;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -245,20 +246,24 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		}
 
 		FragmentAnchor fragmentAnchor = findFragment(path);
-		QueryFragment fragment = fragmentAnchor.fragment;
-		Collection<E> inEdges = getInEdges((V)fragment);
-		if(inEdges.size() == 1) {
-			E edge = inEdges.iterator().next();
-			while (edge != null && !edge.getProperty().isMany()) {
-				path = Settings.getAnchorName(path);
-				inEdges = getInEdges(edge.getStart());
-				if(inEdges.size() == 1) {
-					edge = inEdges.iterator().next();
-				} else {
-					edge = null;
+		if(fragmentAnchor != null) {
+			QueryFragment fragment = fragmentAnchor.fragment;
+			Collection<E> inEdges = getInEdges((V)fragment);
+			if (inEdges.size() == 1) {
+				E edge = inEdges.iterator().next();
+				while (edge != null && !edge.getProperty().isMany()) {
+					path = Settings.getAnchorName(path);
+					inEdges = getInEdges(edge.getStart());
+					if (inEdges.size() == 1) {
+						edge = inEdges.iterator().next();
+					}
+					else {
+						edge = null;
+					}
 				}
 			}
 		}
+
 		return path;
 	}
 
@@ -334,7 +339,11 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	 */
 	public QueryFragment copyRoot(AggregateTree aggregateTree) {
 		QueryFragment root = getRoot();
-		return new QueryFragment(root.getEntityType(), aggregateTree.nextAlias(), null);
+		QueryFragment copy = new QueryFragment(root.getEntityType(), aggregateTree.nextAlias(), null);
+		copy.paths = new ArrayList<>(root.paths);
+		copy.simpleCollectionPaths = new ArrayList<>(root.simpleCollectionPaths);
+
+		return copy;
 	}
 
 	private void clearFields() {
@@ -515,7 +524,11 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		}
 
 		if(nextFragment == null) {
-			return new FragmentAnchor(vertex, path);
+			if(vertex.containsPath(path)) {
+				return new FragmentAnchor(vertex, path);
+			} else {
+				return null;
+			}
 		} else {
 			return findFragment(nextFragment, State.getRemaining(path));
 		}
@@ -559,6 +572,9 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			QueryField field = findField(path);
 			if(field == null) {
 				FragmentAnchor anchor = findFragment(path);
+				if(anchor == null) {
+					return null;
+				}
 				if(anchor.isValidPath()) {
 					return anchor.getOQLName();
 				}

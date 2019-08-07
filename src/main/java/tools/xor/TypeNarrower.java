@@ -20,12 +20,13 @@
 package tools.xor;
 
 import tools.xor.service.AggregateManager;
+import tools.xor.service.Shape;
 
 public interface TypeNarrower {
 
-	public Class<?> narrow(Class<?> superClass, String propertyName);
+	public Class<?> narrow(Shape shape, Class<?> superClass, String propertyName);
 
-	public Class<?> narrow(Object entity, String viewName);
+	public Class<?> narrow(Shape shape, Object entity, String viewName);
 	
 	public void setAggregateManager(AggregateManager aggregateManager);
 	

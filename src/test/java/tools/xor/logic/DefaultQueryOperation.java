@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -754,12 +755,16 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		settings.setPreFlush(true);
 		List<?> toList = aggregateService.query(master, settings);
 
-		assert(toList.size() == 1);		
+		assert(toList.size() == 3);
 
-		Object obj = toList.get(0);
-		assert(Project.class.isAssignableFrom(obj.getClass()));
+		Project project = null;
+		for(int i = 0; i < toList.size(); i++) {
+			project = (Project) toList.get(i);
+			if(project.getSubProjects().size() > 0) {
+				break;
+			}
+		}
 
-		Project project = (Project) obj;
 		assert(project.getSubProjects() != null && project.getSubProjects().size() == 2);
 		assert(project.getSubProjects().get("SETUP_NETWORK").getName().equals("SETUP_NETWORK"));
 		assert(project.getSubProjects().get("SETUP_TELEPHONE").getName().equals("SETUP_TELEPHONE"));
@@ -1319,9 +1324,22 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		SplitToRoot cjs = new SplitToRoot(queryTree);
 		cjs.execute();
 
-		//queryTree.exportToDOT("ComplexT.dot");
+		queryTree.exportToDOT("ComplexR.dot");
 
 		assert(queryTree.getVertices().size() == 2);
+	}
+
+	public void querySplitToRootNoSplit() {
+		View view = aggregateService.getView("TASKGRANDCHILDREN");
+		DataAccessService das = aggregateManager.getDAS();
+		Type task = das.getShape().getType(Task.class);
+
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
+		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		SplitToRoot cjs = new SplitToRoot(queryTree);
+		cjs.execute();
+
+		assert(queryTree.getVertices().size() == 1);
 	}
 
 	public void querySplitToAnchor() {
@@ -1334,9 +1352,134 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		SplitToAnchor cjs = new SplitToAnchor(queryTree);
 		cjs.execute();
 
-		//queryTree.exportToDOT("ComplexT.dot");
+		queryTree.exportToDOT("ComplexT.dot");
 
 		assert(queryTree.getVertices().size() == 2);
+	}
+
+	public void querySplitToAnchorNoSplit() {
+		View view = aggregateService.getView("TASKGRANDCHILDREN");
+		DataAccessService das = aggregateManager.getDAS();
+		Type task = das.getShape().getType(Task.class);
+
+		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
+		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		SplitToAnchor cjs = new SplitToAnchor(queryTree);
+		cjs.execute();
+
+		assert(queryTree.getVertices().size() == 1);
+	}
+
+	private Task createParallelCollectionData() {
+		// Create a task
+		Task master = new Task();
+		master.setName("INFRASTRUCTURE");
+		master.setDisplayName("Infrastructure");
+		master.setDescription("Project to setup the new infrastructure");
+
+		// Create 2 dependents
+		Task A = new Task();
+		A.setName("SETUP_NETWORK");
+		A.setDisplayName("Setup network");
+		A.setDescription("Project to lay the network cables and connect to routers");
+
+		Task B = new Task();
+		B.setName("SETUP_TELEPHONE");
+		B.setDisplayName("Setup telephone");
+		B.setDescription("Setup the telephone at each employee desk");
+		List<Task> dep = new LinkedList<>();
+		dep.add(A);
+		dep.add(B);
+		master.setDependants(dep);
+
+		// Children for SETUP_NETWORK
+		Task d1 = new Task();
+		d1.setName("LAY_CABLES");
+		d1.setDisplayName("Lay network cables");
+		d1.setDescription("install the network cables in the lab");
+		Task d2 = new Task();
+		d2.setName("CONFIGURE_WIRELESS");
+		d2.setDisplayName("Configure wireless routers");
+		d2.setDescription("Configure the network to allow devices to attach wirelessly");
+		Set<Task> c = new HashSet<Task>();
+		c.add(d1);
+		c.add(d2);
+		A.setTaskChildren(c);
+
+		// Children for SETUP_TELEPHONE
+		d1 = new Task();
+		d1.setName("ORDER_CONNECTION");
+		d1.setDisplayName("Order connection");
+		d1.setDescription("Order connection from the telephone provider");
+		d2 = new Task();
+		d2.setName("SETUP_SOFTWARE");
+		d2.setDisplayName("Setup telephone software");
+		d2.setDescription("Configure the telephone network");
+		c = new HashSet<>();
+		c.add(d1);
+		c.add(d2);
+		B.setTaskChildren(c);
+
+		// Create children for root task
+		Task c1 = new Task();
+		c1.setName("PROCURE_HARDWARE");
+		c1.setDisplayName("Procure hardware");
+		c1.setDescription("Procure all the necessary hardware");
+		Task c2 = new Task();
+		c2.setName("PROCURE_SOFTWARE");
+		c2.setDisplayName("Procure software");
+		c2.setDescription("Procure all the necessary software");
+		Task c3 = new Task();
+		c3.setName("HIRE_WORKERS");
+		c3.setDisplayName("Hire workers");
+		c3.setDescription("Interview and hire workers");
+		c = new HashSet<>();
+		c.add(c1);
+		c.add(c2);
+		c.add(c3);
+		master.setTaskChildren(c);
+
+		// Set up tasks for PROCURE_HARDWARE
+		Task c11 = new Task();
+		c11.setName("RFP");
+		c11.setDisplayName("Issue RFP");
+		c11.setDescription("Issue RFP for hardware procurement");
+		Task c12 = new Task();
+		c12.setName("SIGN_CONTRACT");
+		c12.setDisplayName("Sign contract");
+		c12.setDescription("Sign the contract to procure the hardware");
+		c = new HashSet<>();
+		c.add(c11);
+		c.add(c12);
+		c1.setTaskChildren(c);
+
+		// Set up tasks for PROCURE_SOFTWARE
+		Task c21 = new Task();
+		c11.setName("INSTALL");
+		c11.setDisplayName("Install software");
+		c11.setDescription("Install the software");
+		c = new HashSet<>();
+		c.add(c21);
+		c2.setTaskChildren(c);
+
+		// Set up tasks for HIRE_WORKERS
+		Task c31 = new Task();
+		c31.setName("PHONE_SCREEN");
+		c31.setDisplayName("Phone screening");
+		c31.setDescription("Phone screen the candidates");
+		Task c32 = new Task();
+		c32.setName("FACE_TO_FACE");
+		c32.setDisplayName("In-person interviews");
+		c32.setDescription("Conduct in-person interviews");
+		c = new HashSet<>();
+		c.add(c31);
+		c.add(c32);
+		c3.setTaskChildren(c);
+
+		Settings createSettings = getSettings();
+		master = (Task) aggregateService.create(master, createSettings);
+
+		return master;
 	}
 
 	public void oqlQuery() {

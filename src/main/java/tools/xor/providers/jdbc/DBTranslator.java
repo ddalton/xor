@@ -562,6 +562,37 @@ public abstract class DBTranslator
         return sqlstr.toString();
     }
 
+    private List<Property> getPropertiesForDelete(JDBCType entityType, BusinessObject bo) {
+        JSONObject jsonObject = (JSONObject)bo.getInstance();
+        Iterator iter = jsonObject.keys();
+
+        List<Property> result = new LinkedList<>();
+        while(iter.hasNext()) {
+            String propertyName = (String)iter.next();
+            Property p = entityType.getProperty(propertyName);
+
+            if(p != null) {
+                result.add(p);
+            }
+        }
+
+        return result;
+    }
+
+    public String getDeleteSqlFragment(JDBCType entityType, BusinessObject bo) {
+        StringBuilder sqlstr = new StringBuilder();
+        sqlstr.append("DELETE FROM " + entityType.getTableName() + " WHERE ");
+
+        List<Property> properties = getPropertiesForDelete(entityType, bo);
+        List<String> propToSet = new LinkedList<>();
+        for(Property p: properties) {
+            propToSet.add(p.getName() + " = ?");
+        }
+        sqlstr.append(String.join(" AND ", propToSet));
+
+        return sqlstr.toString();
+    }
+
     public String getInsertSqlFragment(JDBCType entityType, BusinessObject bo, boolean isBindParameters, DataGenerator dataGenerator) {
         StringBuilder sqlstr = new StringBuilder();
         sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
@@ -604,6 +635,15 @@ public abstract class DBTranslator
         }
 
         return sqlstr.toString();
+    }
+
+    public void setDeletePredicate(JDBCType entityType,
+                                   PreparedStatement ps,
+                                   BusinessObject bo) {
+        int position = 1;
+        for(Property p: getPropertiesForDelete(entityType, bo)) {
+            position = setValue(ps, new LinkedList<>(), p, bo, position, false);
+        }
     }
 
     public String setInsertValues (JDBCType entityType,

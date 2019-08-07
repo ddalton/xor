@@ -275,13 +275,22 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 		settings.addFunction(FunctionHandler.NOTNULL, "taskChildren.id");
 		List<?> toList = aggregateService.query(userStory, settings);
 
-		assert(toList.size() == 1);		
+		assert(toList.size() == 3);
 
-		Object obj = toList.get(0);
-		assert(TaskVO.class.isAssignableFrom(obj.getClass()));
+		int userStoryIndex = 0;
+		for(int i = 0; i < toList.size(); i++) {
+			TaskVO task = (TaskVO) toList.get(i);
+			if(task.getTaskChildren() != null) {
+				assert(task.getTaskChildren().size() == 2);
+				userStoryIndex = i;
+				break;
+			}
+		}
 
-		TaskVO root = (TaskVO) obj;
-		assert(root.getTaskChildren() != null && root.getTaskChildren().size() == 2);
+		TaskVO child1 = (TaskVO) toList.get((userStoryIndex+1)%3);
+		TaskVO child2 = (TaskVO) toList.get((userStoryIndex+2)%3);
+		assert(child1.getTaskChildren() == null);
+		assert(child2.getTaskChildren() == null);
 	}	
 
 	public void queryTaskSetWithDep() {

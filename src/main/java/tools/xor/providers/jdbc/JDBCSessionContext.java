@@ -34,6 +34,7 @@ import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -73,6 +74,7 @@ public class JDBCSessionContext implements CustomPersister
     //private Set<PreparedStatement> preparedInsert = new HashSet<>();
     private Map<PSKey, PreparedStatement> preparedInsert = new HashMap<>();
     private Map<PSKey, PreparedStatement> preparedUpdate = new HashMap<>();
+    private Map<PSKey, PreparedStatement> preparedDelete = new HashMap<>();
     private Map<EntityKey, JSONObject> idToObjects = new HashMap<>();
     private Map<JSONObject, JSONObject> snapshots = new HashMap<>();
     private final Map<String, List<String>> sqlByType = new HashMap<>();
@@ -417,6 +419,46 @@ public class JDBCSessionContext implements CustomPersister
         return result;
     }
 
+    private List<EntitySQL> getDeleteObjs(BusinessObject bo) {
+        JDBCType entityType = (JDBCType)bo.getType();
+        List<EntitySQL> result = new LinkedList<>();
+
+        while(entityType != null) {
+            result.add(new EntitySQL(
+                entityType,
+                getPreparedDelete(entityType, bo),
+                null));
+
+            // Walk up the super-type
+            entityType = (JDBCType)entityType.getSuperType();
+        }
+
+        return result;
+    }
+
+    private PreparedStatement getPreparedDelete (
+        JDBCType entityType,
+        BusinessObject bo)
+    {
+        String psSQL = getDbTranslator().getDeleteSqlFragment(entityType, bo);
+
+        PreparedStatement ps = null;
+        try {
+            if(statementCache.containsKey(psSQL)) {
+                ps = statementCache.get(psSQL);
+            } else {
+                ps = connection.prepareStatement(psSQL);
+                statementCache.put(psSQL, ps);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+        getDbTranslator().setDeletePredicate(entityType, ps, bo);
+
+        return ps;
+    }
+
     private PreparedStatement getPreparedInsert (
         JDBCType entityType,
         BusinessObject bo,
@@ -464,7 +506,28 @@ public class JDBCSessionContext implements CustomPersister
 
     @Override public void deleteGraph (ObjectCreator objectCreator, Settings settings)
     {
-        // TODO
+        List<BusinessObject> objects = new ArrayList<>(objectCreator.getDataObjects());
+        EntityType entityType = (EntityType)settings.getEntityType();
+        TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
+        Collections.sort(objects, new ObjectGraph.StateComparator(sg));
+        Collections.reverse(objects);
+
+        for (BusinessObject bo : objects) {
+            delete(bo);
+        }
+    }
+
+    @Override
+    public void delete (BusinessObject bo) {
+        try {
+            for (EntitySQL entitySQL : getDeleteObjs(bo)) {
+                entitySQL.ps.addBatch();
+                preparedDelete.put(new PSKey(entitySQL.entityType), entitySQL.ps);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
     }
 
     @Override public void beginTransaction()
@@ -513,19 +576,23 @@ public class JDBCSessionContext implements CustomPersister
         }
     }
 
-    private Map<PSKey, PreparedStatement> getSortedMap(Map<PSKey, PreparedStatement> input) {
+    private Map<PSKey, PreparedStatement> getSortedMap(Map<PSKey, PreparedStatement> input, boolean reverse) {
         if(input.size() == 0) {
             return input;
         }
 
-        DataAccessService das = ((EntityType)input.keySet().iterator().next().getType()).getShape().getDAS();
+        // Get the shape that is responsible for ordering the entities
+        // TODO: this needs to be configurable
+        Shape shape = ((EntityType)input.keySet().iterator().next().getType()).getShape();
+        TypeGraph<State, Edge<State>> defaultOrdering = shape.getOrderedGraph();
 
-        // Get the default shape sorted graph
-        TypeGraph<State, Edge<State>> defaultOrdering = das.getOrderedGraph();
-
-        Map<PSKey, PreparedStatement> result = new TreeMap<>(new ObjectGraph.StateComparator(defaultOrdering));
+        TreeMap<PSKey, PreparedStatement> result = new TreeMap<>(new ObjectGraph.StateComparator(defaultOrdering));
         for(Map.Entry<PSKey, PreparedStatement> entry: input.entrySet()) {
             result.put(entry.getKey(), entry.getValue());
+        }
+
+        if(reverse) {
+            return result.descendingMap();
         }
 
         return result;
@@ -539,14 +606,19 @@ public class JDBCSessionContext implements CustomPersister
 
                 switch(importMethod) {
                 case PREPARED_STATEMENT:
-                    this.preparedInsert = getSortedMap(this.preparedInsert);
-                    this.preparedUpdate = getSortedMap(this.preparedUpdate);
+                    this.preparedInsert = getSortedMap(this.preparedInsert, false);
+                    this.preparedUpdate = getSortedMap(this.preparedUpdate, false);
+                    this.preparedDelete = getSortedMap(this.preparedDelete, true);
 
                     for(PreparedStatement ps: preparedInsert.values()) {
                         ps.executeBatch();
                     }
 
                     for(PreparedStatement ps: preparedUpdate.values()) {
+                        ps.executeBatch();
+                    }
+
+                    for(PreparedStatement ps: preparedDelete.values()) {
                         ps.executeBatch();
                     }
                     break;
@@ -608,6 +680,9 @@ public class JDBCSessionContext implements CustomPersister
                 if(preparedUpdate != null) {
                     preparedUpdate.clear();
                 }
+                if(preparedDelete != null) {
+                    preparedDelete.clear();
+                }
                 this.clear();
             }
             catch (SQLException e) {
@@ -637,10 +712,13 @@ public class JDBCSessionContext implements CustomPersister
         this.sqlByType.clear();
         this.literalSQLs.clear();
         if(this.preparedInsert != null) {
-            this.preparedInsert.clear();
+            this.preparedInsert = new HashMap<>();
         }
         if(this.preparedUpdate != null) {
-            this.preparedUpdate.clear();
+            this.preparedUpdate = new HashMap<>();
+        }
+        if(this.preparedDelete != null) {
+            this.preparedDelete = new HashMap<>();
         }
         this.statementCache.clear();
         this.statement = null;

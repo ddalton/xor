@@ -130,9 +130,12 @@ public class FragmentBuilder
     public void build(EntityType entityType)
     {
         View view = aggregateTree.getView();
-        QueryTree queryTree = new QueryTree(entityType, view);
 
-        build(queryTree);
+        QueryTree queryTree = new QueryTree(entityType, view);
+        // If the view has direct attributes or no children then build a query for this view
+        if(view.getAttributeList().size() > 0 || (view.getChildren() == null || view.getChildren().size() == 0)) {
+            build(queryTree);
+        }
 
         if (view.getChildren() != null) {
             for (View childView : view.getChildren()) {

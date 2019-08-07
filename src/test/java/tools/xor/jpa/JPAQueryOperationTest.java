@@ -165,8 +165,18 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	}
 
 	@Test
+	public void querySplitToRootNoSplit() {
+		super.querySplitToRootNoSplit();
+	}
+
+	@Test
 	public void querySplitToAnchor() {
 		super.querySplitToAnchor();
+	}
+
+	@Test
+	public void querySplitToAnchorNoSplit() {
+		super.querySplitToAnchorNoSplit();
 	}
 
 	@Test

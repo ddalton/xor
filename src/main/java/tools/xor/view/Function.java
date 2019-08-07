@@ -161,7 +161,7 @@ public class Function implements Comparable<Function> {
 			}
 		}
 
-		return true;
+		return all;
 	}
 
 	/**

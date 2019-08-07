@@ -52,6 +52,8 @@ public interface CustomPersister
 
     void update (BusinessObject bo, BusinessObject dbBO);
 
+    void delete (BusinessObject bo);
+
     void beginTransaction();
 
     void close();

@@ -76,6 +76,11 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		typeGraph.removeVertex(vertex);
 	}
 
+	@Override public Collection<V> getRoots ()
+	{
+		return typeGraph.getRoots();
+	}
+
 	public void addEdge(E edge) {
 		addEdge(edge, edge.getStart(), edge.getEnd());
 	}

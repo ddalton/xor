@@ -35,9 +35,13 @@ import tools.xor.Type;
 import tools.xor.TypeNarrower;
 import tools.xor.exception.MultipleClassForPropertyException;
 import tools.xor.util.AggregatePropertyPaths;
+import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.Constants;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
+import tools.xor.util.State;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.DirectedSparseGraph;
@@ -72,6 +76,7 @@ public class Shape
     protected Map<String, View> views = new ConcurrentHashMap<String, View>();
     protected Map<String, Map<String, Property>> domainProperties = new ConcurrentHashMap<>();
     protected Map<String, Map<String, Property>> externalProperties = new ConcurrentHashMap<>();
+    protected StateGraph<State, Edge<State>> orderedGraph;
 
     // This functionality helps to get the correct narrowed class (subtype) based on the properties
     // defined by the view
@@ -868,7 +873,7 @@ public class Shape
             return;
 
         // Re-build in case the view has changed
-        narrowedClassByView.put(superClass, new HashMap<String, Class<?>>());
+        narrowedClassByView.put(superClass, new HashMap<>());
 
         // do the population for all views
         Map<String, Class<?>> byViews = narrowedClassByView.get(superClass);
@@ -880,7 +885,7 @@ public class Shape
                 String propertyName = Settings.getRootName(propertyPath);
                 Class<?> potentialNarrowedClass = null;
                 try {
-                    potentialNarrowedClass = typeNarrower.narrow(superClass, propertyName);
+                    potentialNarrowedClass = typeNarrower.narrow(this, superClass, propertyName);
                     if(potentialNarrowedClass == null)
                         continue nextView; // This view property does not exist for this superClass or its sub-classes
 
@@ -974,5 +979,49 @@ public class Shape
             }
             eligibleClass.put(entry.getKey(), Boolean.FALSE);
         }
+    }
+
+    public void createOrderedGraph() {
+        // State graph of all the entity types in topological order
+        // Entity state graph is most likely a forest, so there is no root state
+        this.orderedGraph = new StateGraph<>(null, this);
+        for(Type type: getUniqueTypes()) {
+            if(EntityType.class.isAssignableFrom(type.getClass())) {
+                orderedGraph.addVertex(new State(type, false));
+            }
+        }
+
+        orderedGraph.populateEdges(this);
+        DFAtoNFA.processInheritance(orderedGraph, false);
+
+        if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
+            || !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {
+            try {
+                orderedGraph.toposort(this);
+            }
+            catch (RuntimeException re) {
+                throw re;
+            }
+
+            orderedGraph.orderTypes();
+
+            // Print out the graph if so configured
+            if (ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_VISUAL)
+                && ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_VISUAL)) {
+                Settings settings = new Settings();
+                settings.setGraphFileName("ApplicationStateGraph" + this.getName() + ".dot");
+                orderedGraph.generateVisual(settings);
+            }
+        }
+    }
+
+    /**
+     * If the shape was configured to created a topological ordering
+     * then this graph is accessed using this method
+     *
+     * @return topological ordering of the shape
+     */
+    public StateGraph<State, Edge<State>> getOrderedGraph() {
+        return this.orderedGraph;
     }
 }

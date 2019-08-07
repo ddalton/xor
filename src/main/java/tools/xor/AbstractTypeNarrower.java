@@ -62,12 +62,10 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	 * to provide custom behavior.
 	 */
 	@Override
-	public Class<?> narrow(Object entity, String viewName) {
+	public Class<?> narrow(Shape shape, Object entity, String viewName) {
 		Class<?> entityClass = ClassUtil.getUnEnhanced(entity.getClass());
 				
-		getAggregateManager().getDAS().getShape().refresh(this);
-
-		Shape shape = getAggregateManager().getDAS().getShape();
+		shape.refresh(this);
 		getAggregateManager().getDAS().populateNarrowedClass(shape, entityClass, this);
 
 		return getAggregateManager().getDAS().getNarrowedClass(shape, entityClass, viewName);
@@ -77,7 +75,8 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	 * This method provides static type narrowing. Subclasses generally don't override
 	 * this method.
 	 */
-	public Class<?> narrow(Class<?> entityClass, String propertyName) {
+	@Override
+	public Class<?> narrow(Shape shape, Class<?> entityClass, String propertyName) {
 		Type entityType = null;
 
 		TypeMapper typeMapper = aggregateManager.getTypeMapper();
@@ -87,7 +86,7 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 		if(typeMapper.isExternal(entityClass))
 			referenceClass = typeMapper.toDomain(entityClass);
 
-		entityType = das.getShape().getType(referenceClass);
+		entityType = shape.getType(referenceClass);
 		if(SimpleType.class.isAssignableFrom(entityType.getClass()))
 			return entityType.getInstanceClass();
 

@@ -34,13 +34,12 @@ public class SerialDispatcher implements QueryDispatcher
 {
     @Override public void execute (AggregateTree<QueryTree, InterQuery<QueryTree>> at, ObjectResolver resolver, CallInfo callInfo)
     {
-        QueryTree queryTree = at.getRoot();
         List<QueryTree> queries = new LinkedList<>();
-        queries.add(queryTree);
+        queries.addAll(at.getRoots());
 
         QueryTreeInvocation queryInvocation = new QueryTreeInvocation();
         while(!queries.isEmpty()) {
-            queryTree = queries.remove(0);
+            QueryTree queryTree = queries.remove(0);
 
             Query query = queryTree.prepare(callInfo, resolver);
             if(query != null) {

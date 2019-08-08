@@ -1476,10 +1476,28 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		c.add(c32);
 		c3.setTaskChildren(c);
 
-		Settings createSettings = getSettings();
+		Settings createSettings = new Settings();
 		master = (Task) aggregateService.create(master, createSettings);
 
 		return master;
+	}
+
+	public void querySplitToAnchorParallel() {
+		View view = aggregateService.getView("PARALLEL_QUERY");
+		view = view.copy();
+		DataAccessService das = aggregateManager.getDAS();
+
+		// We use splitToAnchor strategy
+		view.setSplitToRoot(false);
+
+		Settings settings = new Settings();
+		settings.setView(view);
+		settings.init(das.getShape());
+		Task t = (Task)aggregateService.create(createParallelCollectionData(), settings);
+		assert(t != null);
+
+		// Now let us query the task and see if the parallel collections strategy works
+		List<?> toList = aggregateService.query(t, settings);
 	}
 
 	public void oqlQuery() {

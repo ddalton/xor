@@ -281,6 +281,8 @@ public class JDBCPersistenceOrchestrator
 			if (queryType == QueryType.SQL) {
 				((JDBCQuery)query).setProviderQuery(queryString, context.getConnection());
 			}
+
+			super.evaluateDeferred(query, queryType, qti);
 		}
 	}
 

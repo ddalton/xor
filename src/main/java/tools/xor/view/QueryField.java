@@ -103,6 +103,10 @@ public class QueryField implements Comparable<QueryField>
         return position;
     }
 
+    public void setPosition(int value) {
+        this.position = value;
+    }
+
     public String getPath() {
         return this.path;
     }

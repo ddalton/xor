@@ -38,7 +38,9 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.View;
 
@@ -377,5 +379,12 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 				StateGraph.setKeyValue(json, surrogateKeyPath, idMap.get(sourceSurrogateId));
 			}
 		}
+	}
+
+	@Override
+	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
+		// Any subclass specific logic is overridden
+		
+		qti.initInList(query);
 	}
 }

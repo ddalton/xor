@@ -102,9 +102,6 @@ public class FragmentBuilder
             QueryFragment targetFragment = childPiece.getRoot();
 
             addInterQueryEdge(parent, childPiece, sourceFragment, targetFragment);
-        } else {
-            // The QueryTree is a forest
-            this.aggregateTree.addVertex(childPiece);
         }
 
         if(childView.getChildren() != null) {

@@ -282,6 +282,8 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 					queryString,
 					getSessionFactory().getCurrentSession().createSQLQuery(queryString));
 			}
+
+			super.evaluateDeferred(query, queryType, qti);
 		}
 	}
 	

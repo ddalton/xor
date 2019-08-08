@@ -341,4 +341,21 @@ public interface View {
 	 * @return true if a user specified OQL/SQL/SP is present
 	 */
 	boolean hasUserQuery ();
+
+	/**
+	 * When processing views with parallel collections, should the strategy by either:
+	 * 1. Split to root
+	 * 2. Split to anchor
+	 *
+	 * The default is split to root and this can be changed by setSplitToRoot() method.
+	 * @return
+	 */
+	boolean isSplitToRoot();
+
+	/**
+	 * Choose either between the splitToRoot or splitToAnchor strategies for breaking down
+	 * the views.
+	 * @param value true to use the splitToRoot strategy
+	 */
+	public void setSplitToRoot(boolean value);
 }

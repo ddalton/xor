@@ -180,6 +180,11 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	}
 
 	@Test
+	public void querySplitToAnchorParallel() {
+		super.querySplitToAnchorParallel();
+	}
+
+	@Test
 	public void oqlQuery() {
 		super.oqlQuery();
 	}

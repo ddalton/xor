@@ -21,9 +21,12 @@ package tools.xor.view;
 
 import tools.xor.util.InterQuery;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * Used to hold temporary results during the execution of a QueryTree
@@ -31,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class QueryTreeInvocation
 {
     private static final int MAX_INLIST_SIZE = 999;
+    private static final int OFFSET = 1;
 
     private Map<InterQuery, Set> parentIdList; // Return the ids needed for a consuming Query
                                            // Can be userkey, if it is not composite, else
@@ -82,34 +86,53 @@ public class QueryTreeInvocation
         String oqlString = queryTree.getQuery().getQueryString();
         if (joinType == InterQuery.JoinType.INLIST) {
 
+            Set inlistvalues = idList.get(queryTree.getQuery());
+
             // This is simple replace
             oqlString = oqlString.replaceFirst(
-                Query.INTERQUERY_JOIN_PLACEHOLDER,
-                getParentInListBindString(idList.get(queryTree.getQuery()).size(), queryTree.getQuery()));
+                Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
+                getParentInListBindString(inlistvalues.size(), queryTree.getQuery()));
         }
         else {
             oqlString = oqlString.replaceFirst(
-                Query.INTERQUERY_JOIN_PLACEHOLDER,
+                Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
                 resolvedQuery.get(edge.getStart()));
 
         }
         resolvedQuery.put(queryTree.getQuery(), oqlString);
     }
 
+    public void initInList(Query query) {
+        if(idList.containsKey(query)) {
+            Set inlistvalues = idList.get(query);
+
+            // Set the parameters for the IN list
+            Iterator iter = inlistvalues.iterator();
+            int start = OFFSET;
+            while(iter.hasNext()) {
+                query.setParameter(QueryFragment.PARENT_INLIST + start++, iter.next());
+            }
+        }
+    }
+
     private String getParentInListBindString(int count, Query query) {
         StringBuilder result = new StringBuilder();
 
+        // We always give a name for the parameter since we are building the query
+        /*
         if(query.isSQL()) {
             while(count-- > 1) {
                 result.append("?, ");
             }
             result.append("?");
-        } else if(query.isOQL()) {
-            int i = 1;
+        } else
+        */
+        if(query.isOQL() || query.isSQL()) {
+            int i = OFFSET;
             for(; i < count; i++) {
-                result.append(QueryFragment.PARENT_INLIST + i).append(", ");
+                result.append(":").append(QueryFragment.PARENT_INLIST + i).append(", ");
             }
-            result.append(QueryFragment.PARENT_INLIST + i);
+            result.append(":").append(QueryFragment.PARENT_INLIST + i);
         } else {
             throw new RuntimeException("Cannot call getParentInListBindString on a Stored Procedure");
         }
@@ -141,6 +164,7 @@ public class QueryTreeInvocation
 
         public QueryVisitor(InterQuery<QueryTree> outgoingEdge) {
             this.outgoingEdge = outgoingEdge;
+            this.ids = new HashSet<>();
         }
 
         public void addId(Object id) {

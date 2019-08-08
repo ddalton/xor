@@ -229,6 +229,8 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 					queryString,
 					getEntityManager().createNativeQuery(queryString));
 			}
+
+			super.evaluateDeferred(query, queryType, qti);
 		}
 	}
 	

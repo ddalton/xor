@@ -263,4 +263,14 @@ public class UnmodifiableView implements View
     public boolean hasUserQuery() {
         return view.hasUserQuery();
     }
+
+    @Override public boolean isSplitToRoot ()
+    {
+        return view.isSplitToRoot();
+    }
+
+    @Override public void setSplitToRoot (boolean value)
+    {
+        raiseException();
+    }
 }

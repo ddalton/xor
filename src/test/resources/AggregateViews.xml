@@ -461,4 +461,14 @@
 		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]</attributeList>
 		<attributeList>assignedTo.name</attributeList>
 	</aggregateView>		
+	<aggregateView>
+		<name>PARALLEL_QUERY</name>
+		<attributeList>taskChildren.[TASKCHILDREN]</attributeList>							
+		<attributeList>[VERYBASIC]</attributeList>
+		<attributeList>project.name</attributeList>
+		<attributeList>dependants.[VERYBASIC]</attributeList>
+		<attributeList>dependants.taskChildren.[VERYBASIC]</attributeList>
+		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]</attributeList>
+		<attributeList>assignedTo.name</attributeList>
+	</aggregateView>		
 </AggregateViews>

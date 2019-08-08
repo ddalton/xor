@@ -80,6 +80,29 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		this.query = query;
 	}
 
+	public QueryTree copy() {
+		QueryTree<V, E> result = new QueryTree<>((EntityType)this.aggregateType, this.view);
+		result.setName(this.name);
+
+		Map<V, V> oldNew = new HashMap<>();
+		for(V fragment: getVertices()) {
+			V fragmentCopy = (V)fragment.copy();
+			oldNew.put(fragment, fragmentCopy);
+
+			result.addVertex(fragmentCopy);
+		}
+
+		for(E edge: getEdges()) {
+			V startCopy = oldNew.get(edge.getStart());
+			V endCopy = oldNew.get(edge.getEnd());
+
+			E edgeCopy = (E)new IntraQuery<>(edge.getName(), startCopy, endCopy, edge.getProperty());
+			result.addEdge(edgeCopy, startCopy, endCopy);
+		}
+
+		return result;
+	}
+
 	public List<String> getSelectedColumns() {
 		List<String> result = new LinkedList<>();
 		for(QueryField field: fields) {
@@ -346,11 +369,6 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return copy;
 	}
 
-	private void clearFields() {
-		this.fields = new LinkedList<>();
-		this.attributeToFieldMap = new HashMap<>();
-	}
-
 	/**
 	 * First generate the QueryFields for a fragment
 	 * NOTE: If there are custom OQL, native SQL or stored procedure queries
@@ -372,10 +390,9 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	 * @param aggregateTree to get the view containing the custom query
 	 */
 	public void generateFields(Settings settings, AggregateTree aggregateTree) {
-		clearFields();
 
 		// We can have the fields in any position, but we need to know what the position is
-		int position = START_POS;
+		int position = getPosition();
 		for(QueryFragment fragment: getVertices()) {
 			position = fragment.generateFields(position, settings, this, aggregateTree);
 		}
@@ -424,19 +441,25 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 		// Generate the id fields if it does not exist for each outgoing edge
 		for(Object edge: aggregateTree.getOutEdges(this)) {
-			InterQuery outgoing = (InterQuery) edge;
+			InterQuery<QueryTree> outgoing = (InterQuery) edge;
 
-			// check that the source fragment of the edge has the id field
-			QueryFragment source = outgoing.getSource();
-			// find the position at which to add this field
-			int position = (fields.size() > 0) ? fields.get(fields.size()-1).getPosition()+1 : START_POS;
-			QueryField newField = source.checkAndAddId(position);
+			// Ensure both ends of the Interquery have the id field to help with reconstitution
+			QueryTree parentTree = outgoing.getStart();
+			parentTree.checkAndAddId(outgoing.getSource());
 
-			if(newField != null) {
-				fields.add(newField);
-			}
+			QueryTree childTree = outgoing.getEnd();
+			childTree.checkAndAddId(outgoing.getTarget());
 		}
 	}
+
+	private int getPosition() {
+		return (fields.size() > 0) ? fields.get(fields.size()-1).getPosition()+1 : START_POS;
+	}
+
+	private void checkAndAddId(QueryFragment fragment) {
+		fragment.checkAndAddId();
+	}
+
 
 	public List<E> getOpenContentJoins() {
 		List<E> result = new LinkedList<>();
@@ -510,7 +533,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 	private FragmentAnchor findFragment(V vertex, String path) {
 
-		if(path == null) {
+		if(StringUtils.isEmpty(path) ) {
 			return new FragmentAnchor(vertex, path);
 		}
 

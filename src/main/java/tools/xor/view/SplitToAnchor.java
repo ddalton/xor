@@ -149,6 +149,7 @@ public class SplitToAnchor implements SplitStrategy
     private QueryTree split(QueryTree<QueryFragment, IntraQuery<QueryFragment>> originalQT, QueryFragment anchor, IntraQuery<QueryFragment> splitAtEdge) {
         String ancestorPath = originalQT.getPathToRoot(anchor);
         QueryFragment clone = new QueryFragment(anchor.getEntityType(), aggregateTree.nextAlias(), ancestorPath);
+
         QueryTree newQT = new QueryTree(clone.getEntityType(), originalQT.getView());
         newQT.addVertex(clone);
 
@@ -164,7 +165,6 @@ public class SplitToAnchor implements SplitStrategy
     }
 
     private void addInterGraphEdge(QueryTree originalQT, QueryTree newQT, QueryFragment original, QueryFragment clone, IntraQuery<QueryFragment> splitAtEdge) {
-        // TODO: Ensure source fragment has id property to assist with reconstitution between the different query pieces
         InterQuery edge = new InterQuery(splitAtEdge.getProperty().getName(), originalQT, newQT, original, clone);
         aggregateTree.addEdge(edge, originalQT, newQT);
     }

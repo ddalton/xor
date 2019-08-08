@@ -155,6 +155,9 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	private Map<String, Pattern> regexAttributes;
 
 	@XmlTransient
+	private boolean isSplitToRoot = true;
+
+	@XmlTransient
 	private Shape shape; // The Shape with which this view is associated
 	
 	@XmlTransient
@@ -404,16 +407,24 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	private AggregateTree getAggregateTree (DataAccessService das, QueryKey viewKey) {
-		if(queryCache.containsKey(viewKey)) {
-			return queryCache.get(viewKey);
+		if(!queryCache.containsKey(viewKey)) {
+
+			// Build the QueryTree
+			AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(this);
+			new FragmentBuilder(das, aggregateTree).build((EntityType)viewKey.type);
+
+			// run through the cartesian join splitter
+			if (isSplitToRoot()) {
+				(new SplitToRoot(aggregateTree)).execute();
+			}
+			else {
+				(new SplitToAnchor(aggregateTree)).execute();
+			}
+
+			queryCache.put(viewKey, aggregateTree);
 		}
 
-		// Build the QueryTree
-		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(this);
-		new FragmentBuilder(das, aggregateTree).build((EntityType)viewKey.type);
-		queryCache.put(viewKey, aggregateTree);
-
-		return aggregateTree;
+		return queryCache.get(viewKey).copy();
 	}
 
 	@Override
@@ -468,6 +479,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		result.setName(name);
 		result.setTypeName(typeName);
 		result.setExpanded(expanded);
+		result.setSplitToRoot(isSplitToRoot());
 		if(attributeList != null) {
 			result.setAttributeList(new ArrayList<>(attributeList));
 		}
@@ -981,5 +993,15 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 
 	public Set<PropertyAlias> getViewAliases() {
 		return new HashSet(viewAliasMap.values());
+	}
+
+	@Override public boolean isSplitToRoot ()
+	{
+		return this.isSplitToRoot;
+	}
+
+	@Override public void setSplitToRoot (boolean value)
+	{
+		this.isSplitToRoot = value;
 	}
 }

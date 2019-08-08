@@ -87,8 +87,17 @@ public class QueryFragment implements Vertex
         this.ancestorPath = ancestorPath;
         this.paths = new LinkedList<>();
         this.simpleCollectionPaths = new LinkedList<>();
+        this.queryFields = new LinkedList<>();
+        this.pathToFieldMap = new HashMap<>();
+    }
 
-        clearFields();
+    public QueryFragment copy() {
+        QueryFragment result = new QueryFragment(this.entityType, this.alias, this.ancestorPath);
+
+        result.paths.addAll(this.paths);
+        result.simpleCollectionPaths.addAll(this.simpleCollectionPaths);
+
+        return result;
     }
 
     public int getSimpleCollectionCount() {
@@ -159,11 +168,6 @@ public class QueryFragment implements Vertex
         return Collections.unmodifiableList(this.queryFields);
     }
 
-    private void clearFields() {
-        this.queryFields = new LinkedList<>();
-        this.pathToFieldMap = new HashMap<>();
-    }
-
     public String getFullPath(String path) {
         return (ancestorPath == null || "".equals(ancestorPath)) ? path : (ancestorPath + Settings.PATH_DELIMITER) + path;
     }
@@ -181,7 +185,12 @@ public class QueryFragment implements Vertex
      * @return the updated position
      */
     public int generateFields(int position, Settings settings, QueryTree queryTree, AggregateTree aggregateTree) {
-        clearFields();
+
+        // Number all the existing fields if any (for e.g., created as part of InterQuery initialization
+        // to help with reconstitution)
+        for(QueryField field: queryFields) {
+            field.setPosition(position++);
+        }
 
         // We should not create QueryField instances for fields that are only
         // referenced from functions
@@ -189,12 +198,12 @@ public class QueryFragment implements Vertex
 
         for(String path: this.paths) {
             if(isUserAttribute(attributePaths, path)) {
-                queryFields.add(new QueryField(path, position++, this));
+                position += addField(new QueryField(path, position, this)) ? 1 : 0;
             }
         }
         for(String path: this.simpleCollectionPaths) {
             if(isUserAttribute(attributePaths, path)) {
-                queryFields.add(new QueryField(path, position++, this));
+                position += addField(new QueryField(path, position, this)) ? 1 : 0;
             }
         }
         // Add queryFields for all the primary keys fields, if not already present
@@ -202,20 +211,16 @@ public class QueryFragment implements Vertex
         if(entityType.getIdentifierProperty() != null) {
             String idPath = anchorPath + entityType.getIdentifierProperty().getName();
             if(!attributePaths.contains(idPath)) {
-                position += addField(new QueryField(entityType.getIdentifierProperty().getName(), position++, this, false)) ? 1 : 0;
+                position += addField(new QueryField(entityType.getIdentifierProperty().getName(), position, this, false)) ? 1 : 0;
             }
         } else if(entityType.getNaturalKey() != null) {
             //for(String key: entityType.getNaturalKey()) {
             for(String key: entityType.getExpandedNaturalKey()) {
                 String keyPath = anchorPath + key;
                 if(!attributePaths.contains(keyPath)) {
-                    position += addField(new QueryField(key, position++, this, false)) ? 1 : 0;
+                    position += addField(new QueryField(key, position, this, false)) ? 1 : 0;
                 }
             }
-        }
-
-        for(QueryField field: queryFields) {
-            pathToFieldMap.put(field.getPath(), field);
         }
 
         // Add the id if we need to share the object in the result
@@ -234,7 +239,7 @@ public class QueryFragment implements Vertex
                         position += addField(
                             new QueryField(
                                 LIST_INDEX_ATTRIBUTE,
-                                position++,
+                                position,
                                 this,
                                 true)) ? 1 : 0;
                     }
@@ -243,14 +248,14 @@ public class QueryFragment implements Vertex
                         position += addField(
                             new QueryField(
                                 MAP_KEY_ATTRIBUTE,
-                                position++,
+                                position,
                                 this,
                                 true)) ? 1 : 0;
                     }
                     // add COLLECTION_USERKEY
                     if (property.getCollectionKey() != null) {
                         for (String key : property.getCollectionKey()) {
-                            position += addField(new QueryField(key, position++, this, true)) ?
+                            position += addField(new QueryField(key, position, this, true)) ?
                                 1 :
                                 0;
                         }
@@ -277,7 +282,7 @@ public class QueryFragment implements Vertex
                     position += addField(
                         new QueryField(
                             MAP_KEY_ATTRIBUTE,
-                            position++,
+                            position,
                             this,
                             true)) ? 1 : 0;
                 }
@@ -286,7 +291,7 @@ public class QueryFragment implements Vertex
                     position += addField(
                         new QueryField(
                             ENTITY_TYPE_ATTRIBUTE,
-                            position++,
+                            position,
                             this,
                             true)) ? 1 : 0;
                 }
@@ -295,7 +300,7 @@ public class QueryFragment implements Vertex
                     position += addField(
                         new QueryField(
                             getEntityType().getIdentifierProperty().getName(),
-                            position++,
+                            position,
                             this,
                             true)) ? 1 : 0;
                 }
@@ -336,15 +341,17 @@ public class QueryFragment implements Vertex
 
     /**
      * Add the identifier property if it is not present
-     * @param atPosition
      * @return field that was added else return null
      */
-    public QueryField checkAndAddId (int atPosition)
+    public QueryField checkAndAddId ()
     {
         String idPropertyName = getEntityType().getIdentifierProperty().getName();
-        QueryField newField = new QueryField(idPropertyName, atPosition, this, true);
-        if(addField(newField)) {
-            return newField;
+        if(!paths.contains(idPropertyName)) {
+            // The position will be set at the time of field generation
+            QueryField newField = new QueryField(idPropertyName, -1, this, true);
+            if (addField(newField)) {
+                return newField;
+            }
         }
 
         return null;

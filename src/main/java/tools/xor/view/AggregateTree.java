@@ -22,8 +22,10 @@ package tools.xor.view;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -34,6 +36,7 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
+import tools.xor.util.IntraQuery;
 import tools.xor.util.graph.TreeOperations;
 
 /**
@@ -114,6 +117,30 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 	public void setType (ObjectResolver.Type type)
 	{
 		this.type = type;
+	}
+
+	public AggregateTree<V, E> copy() {
+		AggregateTree<V, E> result = new AggregateTree(this.view);
+
+		Map<V, V> oldNew = new HashMap<>();
+		for(V queryTree: getVertices()) {
+			V queryTreeCopy = (V)queryTree.copy();
+			oldNew.put(queryTree, queryTreeCopy);
+
+			result.addVertex(queryTreeCopy);
+		}
+
+		for(E edge: getEdges()) {
+			V startCopy = oldNew.get(edge.getStart());
+			V endCopy = oldNew.get(edge.getEnd());
+			QueryFragment sourceCopy = startCopy.findFragment(edge.getSource().getAncestorPath()).fragment;
+			QueryFragment targetCopy = endCopy.findFragment(edge.getTarget().getAncestorPath()).fragment;
+
+			E edgeCopy = (E)new InterQuery(edge.getName(), startCopy, endCopy, sourceCopy, targetCopy);
+			result.addEdge(edgeCopy, startCopy, endCopy);
+		}
+
+		return result;
 	}
 
 	public List<AggregateView> extractViews(AggregateManager am) {

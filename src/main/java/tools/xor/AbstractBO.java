@@ -730,7 +730,7 @@ public abstract class AbstractBO implements BusinessObject {
 		// This is done only for the query operation that retrieves managed objects
 		if(instanceType == null)
 			logger.error("!!!!! instanceType is null for object id: " + id);
-		if(oc.isReadOnly() && oc.getTypeMapper().isDomain(instanceType.getInstanceClass())) {
+		if(oc.isReadOnly() && oc.getTypeMapper().isDomain(instanceType.getInstanceClass()) && !instanceType.isDataType()) {
 			propertyInstance = oc.getPersistenceOrchestrator().getCached(instanceType.getInstanceClass(), id);
 			
 			if(propertyInstance != null) {

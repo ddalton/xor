@@ -69,8 +69,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 
 		assert(queryTree != null);
 
-		QueryTree root = (QueryTree)queryTree.getRoot();
-		assert(root.getOutEdges(root.getRoot()).size() == 2);
+		assert(queryTree.getRoots().size() == 2);
 	}	
 	
 	//@Test

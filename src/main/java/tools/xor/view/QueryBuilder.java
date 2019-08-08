@@ -70,9 +70,6 @@ public class QueryBuilder
      */
     public void construct(Settings settings) {
 
-        // run through the cartesian join splitter
-        (new SplitToRoot(aggregateTree)).execute();
-
         List<QueryTree> queries = new LinkedList<>();
         queries.addAll(aggregateTree.getRoots());
 

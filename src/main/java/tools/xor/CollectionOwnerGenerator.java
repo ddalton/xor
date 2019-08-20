@@ -38,14 +38,12 @@ import java.util.List;
  * 10001,15000:5-10
  *
  * In the above example a collection owner with id 9000 will have a collection containing 2 elements
+ * NOTE: A negative collection will result in the owner being set as null
  *
  */
-public class CollectionOwnerGenerator extends DefaultGenerator implements Iterator<Integer>, EntityGenerator
+public class CollectionOwnerGenerator extends DefaultGenerator implements EntityGenerator, Iterator<Integer>
 {
-    private static final String RANGE_DELIM = ",";
-    private static final String SIZE_DELIM = ":";
-
-    private final CollectionElementGenerator elementGenerator;
+    private final ElementGenerator elementGenerator;
     private StateGraph.ObjectGenerationVisitor visitor;
     private int currentValue;
     private RangeNode currentNode;
@@ -55,21 +53,22 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
     private List<RangeNode> nodeList;
     private int value;
 
-    public CollectionOwnerGenerator(String[] arguments, CollectionElementGenerator elementGenerator) {
+    public CollectionOwnerGenerator(String[] arguments, ElementGenerator elementGenerator) {
         super(arguments);
 
         this.max = Integer.parseInt(values[0]);
 
         this.elementGenerator = elementGenerator;
-        buildNodes();
+        this.nodeList = new ArrayList<>(values.length-1);
+        buildNodes(nodeList, 1);
 
         this.currentNode = nodeList.get(0);
-        this.currentValue = currentNode.start;
-        this.end = nodeList.get(nodeList.size()-1).end;
+        this.currentValue = currentNode.getStart();
+        this.end = nodeList.get(nodeList.size()-1).getEnd();
         this.invocationCount = 0;
         setValue();
 
-        elementGenerator.init(currentNode.getSize());
+        elementGenerator.nextOwner(this.value, currentNode.getSize());
     }
 
     private void setValue() {
@@ -87,10 +86,10 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
         if(!elementGenerator.hasNext()) {
             setValue();
 
-            if (this.value > currentNode.end) {
-                currentNode = currentNode.next;
+            if (this.value > currentNode.getEnd()) {
+                currentNode = currentNode.getNext();
             }
-            elementGenerator.init(currentNode.getSize());
+            elementGenerator.nextOwner(this.value, currentNode.getSize());
         }
         invocationCount++;
 
@@ -104,75 +103,6 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Iterat
     @Override public void init (Connection connection, StateGraph.ObjectGenerationVisitor visitor)
     {
         this.visitor = visitor;
-    }
-
-    private void buildNodes() {
-        nodeList = new ArrayList<>(values.length-1);
-
-        RangeNode previous = null;
-        for(int i = 1; i < values.length; i++) {
-            RangeNode node = new RangeNode();
-            node.parse(values[i]);
-            addNode(previous, node);
-
-            previous = node;
-        }
-    }
-
-    private void addNode(RangeNode previous, RangeNode current) {
-        if(previous != null) {
-            // See if an empty node needs to be added
-            if(previous.end+1 < current.start) {
-                RangeNode empty = new RangeNode();
-                empty.start = previous.end+1;
-                empty.end = current.start-1;
-                nodeList.add(empty);
-
-                previous.next = empty;
-                empty.next = current;
-            } else {
-                previous.next = current;
-            }
-        }
-
-        nodeList.add(current);
-    }
-
-    private static class RangeNode {
-        int start; // inclusive
-        int end;   // inclusive
-        int sizemin;  // or sizemin
-        int sizemax = -1; // if it represents a range of sizes
-        RangeNode next;
-
-        public void parse(String text) {
-            if(text.indexOf(SIZE_DELIM) == -1) {
-                throw new RuntimeException(String.format("Unable to find size delimiter '%s' in input: %s", SIZE_DELIM, text));
-            }
-            String rangeStr = text.substring(0, text.indexOf(SIZE_DELIM));
-            String sizeStr = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length());
-
-            if(sizeStr.indexOf(RANGE_DELIM) == -1) {
-                this.sizemin = Integer.parseInt(sizeStr);
-            } else {
-                this.sizemin = new Integer(sizeStr.substring(0, sizeStr.indexOf(RANGE_DELIM)));
-                this.sizemax = new Integer(sizeStr.substring(sizeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
-            }
-
-            if(rangeStr.indexOf(RANGE_DELIM) == -1) {
-                throw new RuntimeException(String.format("Unable to find range delimiter '%s' in input: %s", RANGE_DELIM, rangeStr));
-            }
-            this.start = new Integer(rangeStr.substring(0, rangeStr.indexOf(RANGE_DELIM)));
-            this.end = new Integer(rangeStr.substring(rangeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
-        }
-
-        public int getSize() {
-            if(sizemax == -1) {
-                return sizemin;
-            }
-
-            return sizemin + ((int)(Math.random() * (sizemax-sizemin)));
-        }
     }
 
     @Override

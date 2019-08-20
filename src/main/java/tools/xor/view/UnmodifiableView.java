@@ -1,5 +1,6 @@
 package tools.xor.view;
 
+import org.json.JSONObject;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Settings;
@@ -129,6 +130,14 @@ public class UnmodifiableView implements View
         return Collections.unmodifiableList(view.getAttributeList());
     }
 
+    @Override public JSONObject getJson() {
+        if(view.getJson() != null) {
+            return new JSONObject(view.getJson().toString());
+        } else {
+            return null;
+        }
+    }
+
     @Override public void setAttributeList (List<String> attributeList)
     {
         raiseException();
@@ -186,9 +195,14 @@ public class UnmodifiableView implements View
         view.expand();
     }
 
-    @Override public List<String> getExpandedList (List<String> input)
+    @Override public void expand(List<String> expanding) {
+        view.expand(expanding);
+    }
+
+    @Override
+    public List<String> getExpandedList(List<String> input, List<String> expanding)
     {
-        return view.getExpandedList(input);
+        return view.getExpandedList(input, expanding);
     }
 
     @Override

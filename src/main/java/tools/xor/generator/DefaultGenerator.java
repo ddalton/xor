@@ -412,4 +412,87 @@ public class DefaultGenerator implements Generator
     public void init (StateGraph.ObjectGenerationVisitor visitor) {
         // overridden by subclasses
     }
+
+    private static final String RANGE_DELIM = ",";
+    private static final String SIZE_DELIM = ":";
+
+    public static class RangeNode {
+        int start; // inclusive
+        int end;   // inclusive
+        int sizemin;  // or sizemin
+        int sizemax = -1; // if it represents a range of sizes
+        RangeNode next;
+
+        public void parse(String text) {
+            if(text.indexOf(SIZE_DELIM) == -1) {
+                throw new RuntimeException(String.format("Unable to find size delimiter '%s' in input: %s", SIZE_DELIM, text));
+            }
+            String rangeStr = text.substring(0, text.indexOf(SIZE_DELIM));
+            String sizeStr = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length());
+
+            if(sizeStr.indexOf(RANGE_DELIM) == -1) {
+                this.sizemin = Integer.parseInt(sizeStr);
+            } else {
+                this.sizemin = new Integer(sizeStr.substring(0, sizeStr.indexOf(RANGE_DELIM)));
+                this.sizemax = new Integer(sizeStr.substring(sizeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+            }
+
+            if(rangeStr.indexOf(RANGE_DELIM) == -1) {
+                throw new RuntimeException(String.format("Unable to find range delimiter '%s' in input: %s", RANGE_DELIM, rangeStr));
+            }
+            this.start = new Integer(rangeStr.substring(0, rangeStr.indexOf(RANGE_DELIM)));
+            this.end = new Integer(rangeStr.substring(rangeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+        }
+
+        public int getStart() {
+            return this.start;
+        }
+
+        public int getEnd() {
+            return this.end;
+        }
+
+        public RangeNode getNext() {
+            return this.next;
+        }
+
+        public int getSize() {
+            if(sizemax == -1) {
+                return sizemin;
+            }
+
+            return sizemin + ((int)(Math.random() * (sizemax-sizemin)));
+        }
+    }
+
+    public void buildNodes(List<RangeNode> nodeList, int offset) {
+
+        RangeNode previous = null;
+        for(int i = offset; i < values.length; i++) {
+            RangeNode node = new RangeNode();
+            node.parse(values[i]);
+            addNode(previous, node, nodeList);
+
+            previous = node;
+        }
+    }
+
+    private void addNode(RangeNode previous, RangeNode current, List<RangeNode> nodeList) {
+        if(previous != null) {
+            // See if an empty node needs to be added
+            if(previous.end+1 < current.start) {
+                RangeNode empty = new RangeNode();
+                empty.start = previous.end+1;
+                empty.end = current.start-1;
+                nodeList.add(empty);
+
+                previous.next = empty;
+                empty.next = current;
+            } else {
+                previous.next = current;
+            }
+        }
+
+        nodeList.add(current);
+    }
 }

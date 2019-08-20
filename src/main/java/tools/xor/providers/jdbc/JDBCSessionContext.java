@@ -19,6 +19,8 @@
 
 package tools.xor.providers.jdbc;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tools.xor.BusinessObject;
@@ -66,7 +68,8 @@ import java.util.stream.Collectors;
 
 public class JDBCSessionContext implements CustomPersister
 {
-    private Connection connection;
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
     private DBTranslator dbTranslator;
     private JDBCPersistenceOrchestrator po;
     private ImportMethod importMethod = ImportMethod.PREPARED_STATEMENT; // use prepared statement batch if order does not matter
@@ -80,6 +83,25 @@ public class JDBCSessionContext implements CustomPersister
     private final Map<String, List<String>> sqlByType = new HashMap<>();
     private List<String> literalSQLs = new LinkedList<>();
     private final Map<String, PreparedStatement> statementCache = lruCache(1000);
+    private Stack<ConnectionHolder> connections = new Stack<>();
+
+    private static class ConnectionHolder {
+        private final boolean owner;
+        private final Connection connection;
+
+        public Connection getConnection() {
+            return this.connection;
+        }
+
+        public ConnectionHolder(Connection c, boolean owner) {
+            this.connection = c;
+            this.owner = owner;
+        }
+
+        public boolean isOwner() {
+            return this.owner;
+        }
+    }
 
     private static class PSKey implements ObjectGraph.StateComparator.TypedObject {
         private final Type type;
@@ -150,8 +172,7 @@ public class JDBCSessionContext implements CustomPersister
     // Since this object is used as modification
     public void process (JSONObject object, EntityType entityType) {
 
-        String copy = object.toString();
-        JSONObject snapshot = new JSONObject(copy);
+        JSONObject snapshot = ClassUtil.copyJson(object);
 
         EntityKey ek;
         JDBCType type = (JDBCType) entityType;
@@ -204,28 +225,22 @@ public class JDBCSessionContext implements CustomPersister
      * @return
      */
     @Override public Connection getConnection() {
-        return this.connection;
+
+        if(connections.size() > 0 ) {
+            return connections.peek().getConnection();
+        }
+        return null;
     }
 
     private DBTranslator getDbTranslator() {
-        boolean enclosingTransaction = true;
         try {
-            if(connection == null || connection.isClosed()) {
-                beginTransaction();
-                enclosingTransaction = false;
-            }
+            beginTransaction();
 
             if (this.dbTranslator == null) {
-                this.dbTranslator = DBTranslator.instance(connection);
+                this.dbTranslator = DBTranslator.instance(getConnection());
             }
-        }
-        catch (SQLException e) {
-            throw ClassUtil.wrapRun(e);
         } finally {
-            if(!enclosingTransaction) {
-                commit();
-                close();
-            }
+            close();
         }
 
         return dbTranslator;
@@ -234,7 +249,7 @@ public class JDBCSessionContext implements CustomPersister
     private void createStatement () throws SQLException
     {
         if(this.statement == null) {
-            this.statement = this.connection.createStatement();
+            this.statement = getConnection().createStatement();
         }
     }
 
@@ -284,6 +299,10 @@ public class JDBCSessionContext implements CustomPersister
                 for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
                     entitySQL.ps.addBatch();
                     preparedInsert.put(new PSKey(entitySQL.entityType), entitySQL.ps);
+
+                    if(logger.isDebugEnabled()) {
+                        logger.debug(entitySQL.sql);
+                    }
                 }
                 break;
             case CSV:
@@ -358,10 +377,14 @@ public class JDBCSessionContext implements CustomPersister
         while(entityType != null) {
             switch(importMethod) {
             case PREPARED_STATEMENT:
+                String literalSQL = null;
+                if(logger.isDebugEnabled()) {
+                    literalSQL = getDbTranslator().getInsertSql(entityType, bo, dataGenerator);
+                }
                 sqlStack.push(new EntitySQL(entityType, getPreparedInsert(
                         entityType,
                         bo,
-                        dataGenerator), null));
+                        dataGenerator), literalSQL));
                 break;
             case LITERAL_SQL:
                 sqlStack.push(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(entityType, bo, dataGenerator)));
@@ -447,7 +470,7 @@ public class JDBCSessionContext implements CustomPersister
             if(statementCache.containsKey(psSQL)) {
                 ps = statementCache.get(psSQL);
             } else {
-                ps = connection.prepareStatement(psSQL);
+                ps = getConnection().prepareStatement(psSQL);
                 statementCache.put(psSQL, ps);
             }
         }
@@ -471,7 +494,7 @@ public class JDBCSessionContext implements CustomPersister
             if(statementCache.containsKey(psSQL)) {
                 ps = statementCache.get(psSQL);
             } else {
-                ps = connection.prepareStatement(psSQL);
+                ps = getConnection().prepareStatement(psSQL);
                 statementCache.put(psSQL, ps);
             }
         }
@@ -492,7 +515,7 @@ public class JDBCSessionContext implements CustomPersister
             if(statementCache.containsKey(psSQL)) {
                 ps = statementCache.get(psSQL);
             } else {
-                ps = connection.prepareStatement(psSQL);
+                ps = getConnection().prepareStatement(psSQL);
                 statementCache.put(psSQL, ps);
             }
         }
@@ -532,22 +555,23 @@ public class JDBCSessionContext implements CustomPersister
 
     @Override public void beginTransaction()
     {
-        try {
-            if(this.connection != null && !this.connection.isClosed()) {
-                throw new RuntimeException("Cannot start a new transaction when there is an existing transaction");
-            }
-            this.connection = po.getNewConnection();
-        }
-        catch (SQLException e) {
-            throw ClassUtil.wrapRun(e);
+        if(connections.size() == 0) {
+            connections.push(new ConnectionHolder(po.getNewConnection(), true));
+        } else {
+            connections.push(new ConnectionHolder(getConnection(), false));
         }
     }
 
     @Override public void close()
     {
+        if(connections.size() == 0) {
+            throw new RuntimeException("Calling close() on a non-existing transaction");
+        }
+
+        ConnectionHolder holder = connections.pop();
         try {
-            if(connection != null && !connection.isClosed()) {
-                connection.close();
+            if(holder.isOwner()) {
+                holder.getConnection().close();
             }
         }
         catch (SQLException e) {
@@ -559,7 +583,14 @@ public class JDBCSessionContext implements CustomPersister
     {
         try {
             flush();
-            connection.commit();
+
+            if(connections.size() == 0) {
+                throw new RuntimeException("Calling commit() on a non-existing transaction");
+            }
+
+            if(connections.peek().isOwner()) {
+                getConnection().commit();
+            }
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
@@ -569,7 +600,14 @@ public class JDBCSessionContext implements CustomPersister
     @Override public void rollback ()
     {
         try {
-            connection.rollback();
+            if(connections.size() == 0) {
+                throw new RuntimeException("Calling rollback() on a non-existing transaction");
+            }
+
+            if(connections.peek().isOwner()) {
+                getConnection().rollback();
+            }
+
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);

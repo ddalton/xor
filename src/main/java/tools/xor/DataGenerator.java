@@ -80,8 +80,7 @@ public class DataGenerator
         this.shape = shape;
         this.settings = settings;
         this.dasFactory = dasFactory;
-        this.importMethod = ImportMethod.PREPARED_STATEMENT;
-        //this.importMethod = ImportMethod.CSV;
+        this.importMethod = settings.getImportMethod();
     }
 
     /**
@@ -121,10 +120,12 @@ public class DataGenerator
             }
         }
 
+        Set<String> processed = new HashSet<>();
         for(String typename: types) {
             Type type = shape.getType(typename);
             if(hasGenerator(type)) {
                 generateInstances((EntityType)type, settings);
+                processed.add(typename);
             }
         }
 
@@ -219,6 +220,7 @@ public class DataGenerator
 
             // release the connection
             sc.rollback();
+            sc.close();
 
             if(waitForJobs(importJobs)) {
                 break;

@@ -55,7 +55,7 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 	public abstract Configuration getConfiguration();
 
 	@Override
-	public void addShape(String name, SchemaExtension extension) {
+	public Shape addShape(String name, SchemaExtension extension) {
 		Shape shape = getOrCreateShape(name);
 
 		Configuration conf = getConfiguration();
@@ -81,6 +81,8 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 		defineProperties(shape);
 		
 		postProcess(shape, extension);
+
+		return shape;
 	}
 
 	protected void defineTypes(PersistentClass classMapping, Shape shape) {

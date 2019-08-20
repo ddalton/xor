@@ -51,6 +51,7 @@ import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.View;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -71,7 +72,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class DefaultMutableJson extends AbstractDBTest {
-	@Autowired
+	@Resource(name = "aggregateManager")
 	protected AggregateManager aggregateService;
 	
 	protected void checkStringField() throws JSONException {
@@ -1076,6 +1077,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		List<?> result = aggregateService.query(null, settings);
 
 		// Includes header row
+		System.out.println("!!!SIZE: " + result.size());
 		assert(result.size() == 3);
 	}
 

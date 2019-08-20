@@ -116,9 +116,15 @@ public class StringTemplate extends DefaultGenerator
                                                   Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return  generator != null ? input.replace(
-                        GENERATOR,
-                        generator.getStringValue(null, visitor)) : input;
+                    String value = null;
+                    if(generator != null && input.contains(GENERATOR)) {
+                        value = generator.getStringValue(null, visitor);
+                        if (value == null) {
+                            return null;
+                        }
+                    }
+
+                    return generator != null ? input.replace(GENERATOR, value) : input;
                 }
             });
     }

@@ -493,7 +493,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         return type;
     }
 
-    @Override public void addShape (String name, SchemaExtension extension)
+    @Override public Shape addShape (String name, SchemaExtension extension)
     {
         Shape shape = getOrCreateShape(name);
 
@@ -518,6 +518,8 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         defineProperties(shape);
 
         postProcess(shape, extension);
+
+        return shape;
     }
 
     protected void defineProperties(Shape shape) {

@@ -22,11 +22,15 @@ package tools.xor.jpa;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -39,24 +43,38 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
+import tools.xor.CollectionElementGenerator;
+import tools.xor.CounterGenerator;
+import tools.xor.ToOneGenerator;
+import tools.xor.CollectionOwnerGenerator;
+import tools.xor.ElementGenerator;
+import tools.xor.EntityGenerator;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.JDBCType;
 import tools.xor.JPAProperty;
 import tools.xor.Property;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
-import tools.xor.db.pm.Project;
+import tools.xor.SlidingElementGenerator;
 import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
 import tools.xor.db.sp.P;
 import tools.xor.db.sp.S;
 import tools.xor.db.sp.SP;
+import tools.xor.generator.ElementPositionGenerator;
+import tools.xor.generator.Generator;
+import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultMutableJson;
+import tools.xor.providers.jdbc.ImportMethod;
+import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCSessionContext;
+import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.Edge;
-import tools.xor.util.State;
-import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.View;
 
@@ -68,6 +86,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 	@PersistenceContext
 	EntityManager entityManager;
+
+	@Resource(name = "amJDBC")
+	protected AggregateManager amJDBC;	// Useful for generating data using JDBC
 	
 	S S1 = null;	
 	
@@ -622,5 +643,126 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		assert(json != null);
 		assert(json.getString("description").equals(NEW_DESC));
+	}
+
+	@Test
+	public void copyJSONObject() {
+		JSONObject o1 = new JSONObject();
+		o1.put("name", "Object 1");
+		o1.put("desc", "Test object copy");
+
+		JSONObject o2 = new JSONObject();
+		o2.put("name", "Object 2");
+		o2.put("desc", "Test copy of nested object");
+
+		o1.put("nested", o2);
+		o1.put("self", o1);
+
+		JSONObject copy = ClassUtil.copyJson(o1);
+		assert(copy.get("self") == copy);
+
+		o2 = copy.getJSONObject("nested");
+		assert(o2.get("name").equals("Object 2"));
+		assert(o2 != o1.getJSONObject("nested"));
+	}
+
+	@Test
+	public void testSubquery() {
+		// create 2 parallel collections with > 1000 elements each
+		// for example:
+		// task with 1500 children
+		// task with 1500 dependents
+		// use the generator to do this
+
+		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		if(shape == null) {
+			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+		}
+
+
+		JDBCType task = (JDBCType)shape.getType("TASK");
+
+		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "1",
+												  "1,500:0",
+												  "501,2000:4",
+												  "2001,4500:0"
+		});
+		CounterGenerator gensettings = new CounterGenerator(4500);
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+
+		ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+		Generator parentgen = new StringTemplate(toonegen, new String[] {"ID_[GENERATOR]"});
+		taskparent.setGenerator(parentgen);
+		Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+		ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+		rootid.setGenerator(rootidgen);
+		Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+		ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+		namep.setGenerator(namegen);
+
+		// Dependants
+		JDBCType taskTask = (JDBCType)shape.getType("TASK_TASK");
+		CollectionElementGenerator cegen = new SlidingElementGenerator(new String[] { "1501", "4500"});
+		String[] collectionSizes = new String[] { "3000",
+										 "1,1500:2"
+		};
+		CollectionOwnerGenerator cogen = new CollectionOwnerGenerator(collectionSizes, cegen);
+		taskTask.addGenerator(cogen);
+		ExtendedProperty uuid = (ExtendedProperty)taskTask.getProperty("TASK_UUID");
+		Generator uuidgen = new StringTemplate(cogen, new String[] {"ID_[GENERATOR]"});
+		uuid.setGenerator(uuidgen);
+		ExtendedProperty dep = (ExtendedProperty)taskTask.getProperty("DEPENDANTS_UUID");
+		Generator depgen = new StringTemplate(cegen, new String[] {"ID_[GENERATOR]"});
+		dep.setGenerator(depgen);
+		ExtendedProperty index = (ExtendedProperty)taskTask.getProperty("DEP_SEQ");
+		index.setGenerator(new ElementPositionGenerator(cegen));
+
+		String[] types = new String[] {
+			"TASK",
+			"TASK_TASK",
+		};
+
+		Settings settings = new Settings();
+		//settings.setImportMethod(ImportMethod.CSV);
+		amJDBC.checkPO(settings);
+		JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+		JDBCSessionContext sc = po.getSessionContext();
+		sc.beginTransaction();
+
+		try {
+			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+
+			/*
+			View view = aggregateService.getView("PARALLEL_QUERY");
+			view = view.copy();
+			DataAccessService das = aggregateManager.getDAS();
+			Shape ormShape = das.getShape();
+
+			// We use splitToAnchor strategy
+			view.setSplitToRoot(false);
+
+			settings = new Settings();
+			settings.setView(view);
+			settings.setEntityType(ormShape.getType("TASK"));
+			settings.init(ormShape);
+
+			// Now let us query the task and see if the parallel collections strategy works
+			List<?> toList = aggregateService.query(null, settings);
+	*/
+		} finally {
+
+			try (Statement stmt = sc.getConnection().createStatement()) {
+				stmt.execute("DELETE from TASK_TASK");
+				stmt.execute("DELETE from TASK");
+				sc.getConnection().commit();
+			}
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
+			sc.rollback();
+
+			// We don't close because Spring takes care of it
+		}
 	}
 }

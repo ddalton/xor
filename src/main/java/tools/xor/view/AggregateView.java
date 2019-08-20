@@ -22,6 +22,7 @@ package tools.xor.view;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import org.json.JSONObject;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
@@ -113,7 +115,18 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	public static final String REGEX = "_REGEX_";
 
 	protected String            name;
+
+	// A dotted notation list of attributes representing the view scope
 	protected List<String>      attributeList;
+
+	// Alternative representation using a richer format, i.e., JSON
+	protected String            jsonString;
+
+	// A JSONObject of the jsonString
+	// With be built either from attributeList or jsonString
+	// jsonString has richer information and is the recommended approach
+	@XmlTransient
+	protected JSONObject        json;
 
 	protected String            typeName; // represents the root entity type
 	
@@ -378,6 +391,11 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	@Override
+	public JSONObject getJson() {
+		return this.json;
+	}
+
+	@Override
 	public List<String> getAttributeList() {
 		return attributeList;
 	}
@@ -479,6 +497,10 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		result.setName(name);
 		result.setTypeName(typeName);
 		result.setExpanded(expanded);
+		result.jsonString = jsonString;
+		if(jsonString != null) {
+			result.json = new JSONObject(jsonString);
+		}
 		result.setSplitToRoot(isSplitToRoot());
 		if(attributeList != null) {
 			result.setAttributeList(new ArrayList<>(attributeList));
@@ -572,8 +594,97 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return false;
 	}
 
+	// Extract JSON from the attributes list
+	public JSONObject extractJSON(List<String> expanding)
+	{
+		JSONObject result = new JSONObject();
+
+		if(jsonString != null && attributeList != null) {
+			throw new RuntimeException("Cannot configure view with both json and path representation. Choose one.");
+		}
+
+		if(jsonString != null) {
+			result = new JSONObject(jsonString);
+		} else if(attributeList != null) {
+			extractJSON(result, attributeList);
+		}
+
+		expand(result, expanding);
+
+		return result;
+	}
+
+	// TODO: make private
+	public static void extractJSON(JSONObject json, List<String> attributes) {
+		for(String path: attributes) {
+			String remaining = State.getRemaining(path);
+			String field = State.getNextAttr(path);
+
+			// create intermediate objects if needed
+			JSONObject owner = json;
+			while(remaining != null) {
+				if(!owner.has(field)) {
+					owner.put(field, new JSONObject());
+				}
+				owner = owner.getJSONObject(field);
+				field = State.getNextAttr(remaining);
+				remaining = State.getRemaining(remaining);
+			}
+			owner.put(field, "");
+		}
+	}
+
+	private void expand(JSONObject owner, List<String> expanding) {
+		List<String> toRemove = new LinkedList<>();
+		Map<String, Object> toAdd = new HashMap<>();
+
+		Iterator iter = owner.keys();
+		while(iter.hasNext()) {
+			String key = (String)iter.next();
+			Object child = owner.get(key);
+			if(child instanceof JSONObject) {
+				expand((JSONObject) child, expanding);
+			} else {
+				JSONObject reference = null;
+				if (getViewReference(key) != null) {
+					View view = getView(getShape(), key);
+					if(view != null) {
+						view.expand(expanding);
+						reference = view.getJson();
+					}
+				}
+
+				if(reference != null) {
+					// remove the view reference field
+					toRemove.add(key);
+
+					// merge the reference object with the owner
+					Iterator childIter = reference.keys();
+					while(childIter.hasNext()) {
+						String childKey = (String)childIter.next();
+						toAdd.put(childKey, reference.get(childKey));
+					}
+				}
+
+			}
+		}
+
+		for(String key: toRemove) {
+			owner.remove(key);
+		}
+
+		for(Map.Entry<String, Object> entry: toAdd.entrySet()) {
+			owner.put(entry.getKey(), entry.getValue());
+		}
+	}
+
 	@Override
 	public void expand() {
+		this.expand(new LinkedList<>());
+	}
+
+	@Override
+	public void expand(List<String> expanding) {
 
 		if(getChildren() != null) {
 			for(AggregateView child: getChildren()) {
@@ -588,6 +699,14 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		if(isExpanded()) {
 			return;
 		}
+
+		if(expanding.contains(getName())) {
+			throw new RuntimeException("Cyclic view reference detected: " + String.join(" -> ", expanding));
+		} else {
+			expanding.add(getName());
+		}
+
+		this.json = extractJSON(expanding);
 		
 		// First expand the children
 		if(children != null) {
@@ -597,7 +716,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		}
 		
 		// Find and substitute the view references
-		attributeList = getExpandedList(getAttributeList());
+		attributeList = getExpandedList(getAttributeList(), expanding);
 
 		// Get the RegEx attributes
 		Map<String, Pattern> regexMap = new HashMap<>();
@@ -632,14 +751,14 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	}
 
 	@Override
-	public List<String> getExpandedList(List<String> input) {
+	public List<String> getExpandedList(List<String> input, List<String> expanding) {
 		// Find and substitute the view references
 		List<String> newList = new ArrayList<>();
 
 		if(input != null) {
 			for (String attribute : input) {
 				if (getViewReference(attribute) != null) {
-					newList.addAll(expand(attribute));
+					newList.addAll(expand(getShape(), attribute, expanding));
 				}
 				else {
 					newList.add(attribute);
@@ -663,20 +782,28 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		return functionAttributes;
 	}
 
-	private List<String> expand(String attribute) {
+	private static View getView(Shape shape, String attribute) {
 		if(attribute.matches(VIEW_REFERENCE_MULTIPLE_REGEX)) {
 			throw new IllegalStateException("Cannot refer to more than one view in an attribute: " + attribute);
 		}
 		String viewName = getViewReference(attribute);
-		View view = getShape().getView(viewName);
+		View view = shape.getView(viewName);
+
+		return view;
+	}
+
+	private static List<String> expand(Shape shape, String attribute, List<String> expanding) {
+		View view = getView(shape, attribute);
 
 		// Attributes might be referring to a RegEx expression
 		if(view == null) {
-			return this.attributeList;
+			List<String> unchanged = new LinkedList<>();
+			unchanged.add(attribute);
+			return unchanged;
 		}
 
 		if(!view.isExpanded()) {
-			view.expand();
+			view.expand(expanding);
 		}
 		
 		String prefix = attribute.substring(0, attribute.indexOf(VIEW_REFERENCE_START));

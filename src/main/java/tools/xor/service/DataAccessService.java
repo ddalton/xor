@@ -74,18 +74,22 @@ public interface DataAccessService {
 
 	/**
 	 * Build the Type and Property objects for the static API
+	 * Rebuilds an existing shape.
 	 *
 	 * @param name of the Shape represting the type system
+	 * @return shape that was added
 	 */
-	public void addShape(String name);
+	public Shape addShape(String name);
 
 	/**
 	 * Build the Type and Property objects for the static API
+	 * Rebuilds an existing shape.
 	 *
 	 * @param name of the Shape representing the type system
 	 * @param extension code to add new types/properties to the shape
+	 * @return shape that was added
 	 */
-	public void addShape(String name, SchemaExtension extension);
+	public Shape addShape(String name, SchemaExtension extension);
 
 	/**
 	 * Remove an existing shape

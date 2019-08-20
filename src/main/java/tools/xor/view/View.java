@@ -54,6 +54,7 @@ package tools.xor.view;
  *
  */
 
+import org.json.JSONObject;
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Settings;
@@ -171,6 +172,15 @@ public interface View {
 	public List<String> getAttributeList();
 
 	/**
+	 * Get the view contents using JSON representation
+	 * Every time this method is invoked a copy is created. So this needs to be called
+	 * sparingly.
+	 *
+	 * @return json representation
+	 */
+	public JSONObject getJson();
+
+	/**
 	 * Set the attributes that form the scope of this view.
 	 * Additionally a view scope might be extended using the StateGraph in case of
 	 * cyclic relationships, @see StateGraph.
@@ -254,13 +264,20 @@ public interface View {
 	public void expand();
 
 	/**
+	 * Same as expand above but with an argument for cyclic detection.
+	 * @param expanding list of views seen so far
+	 */
+	public void expand(List<String> expanding);
+
+	/**
 	 * Returns the attributes in expanded form, i.e., after the view references are
 	 * resolved.
 	 *
 	 * @param input attributes
+	 * @param expanding views seen so far to help with cyclic detection
 	 * @return expanded attributes
 	 */
-	public List<String> getExpandedList(List<String> input);
+	public List<String> getExpandedList(List<String> input, List<String> expanding);
 
 	/**
 	 * Return the attributes referenced from within functions

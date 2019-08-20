@@ -51,7 +51,7 @@ public abstract class JPADAS extends AbstractDataAccessService {
 	public abstract EntityManagerFactory getEmf();	
 
 	@Override
-	public void addShape(String name, SchemaExtension extension) {
+	public Shape addShape(String name, SchemaExtension extension) {
 		Shape shape = getOrCreateShape(name);
 
 		Metamodel metaModel = getEmf().getMetamodel();
@@ -74,6 +74,8 @@ public abstract class JPADAS extends AbstractDataAccessService {
 		defineProperties(shape);
 		
 		postProcess(shape, extension);
+
+		return shape;
 	}
 
 	protected void defineTypes(EntityType<?> classMapping, Shape shape) {

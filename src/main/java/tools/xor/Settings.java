@@ -58,6 +58,7 @@ import tools.xor.core.EmptyInterceptor;
 import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
+import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.PersistenceOrchestrator;
@@ -207,6 +208,8 @@ public class Settings {
 	// User provided data that is efficiently obtained
 	private PrefetchCache prefetchCache;
 
+	private ImportMethod importMethod = ImportMethod.PREPARED_STATEMENT;
+
 	// Settings related to data generation
 	private EntitySize entitySize = EntitySize.MEDIUM;
 	private float sparseness = 1.0f;
@@ -256,6 +259,15 @@ public class Settings {
 			// Needed for id to be copied
 			this.baseline = true;
 		}
+	}
+
+	public ImportMethod getImportMethod() {
+		return this.importMethod;
+	}
+
+	public void setImportMethod (ImportMethod importMethod)
+	{
+		this.importMethod = importMethod;
 	}
 
 	public boolean isShouldCreate(Type type) {

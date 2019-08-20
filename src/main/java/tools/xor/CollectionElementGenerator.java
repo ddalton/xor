@@ -40,7 +40,7 @@ import java.util.Iterator;
  * If this restriction is not needed, then the calculation can be more efficient.
  *
  */
-public class CollectionElementGenerator extends DefaultGenerator implements Iterator<Integer>, EntityGenerator
+public class CollectionElementGenerator extends DefaultGenerator implements EntityGenerator, ElementGenerator
 {
     private StateGraph.ObjectGenerationVisitor visitor;
     private int start;
@@ -57,7 +57,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Iter
         this.start = Integer.valueOf(values[0]);
         this.end = Integer.valueOf(values[1]);
 
-        init(1);
+        nextOwner(-1, 1);
     }
 
     @Override public boolean hasNext ()
@@ -71,15 +71,20 @@ public class CollectionElementGenerator extends DefaultGenerator implements Iter
             return null;
         }
 
-        int startOfBlock = blockNo * blockSize;
-        int offset = (int)(blockSize * Math.random());
-        this.value = start + (startOfBlock + offset);
+        updateValue();
 
         counter++;
         return value;
     }
 
-    public void init(int collectionSize) {
+    protected void updateValue() {
+        int startOfBlock = blockNo * blockSize;
+        int offset = (int)(blockSize * Math.random());
+        this.value = start + (startOfBlock + offset);
+    }
+
+    @Override
+    public void nextOwner (int ownerId, int collectionSize) {
         this.collectionSize = collectionSize;
         this.blockNo = 0;
         this.blockSize = collectionSize>0 ? (end-start+1)/collectionSize : 0;
@@ -93,6 +98,25 @@ public class CollectionElementGenerator extends DefaultGenerator implements Iter
 
     public int getCounter() {
         return this.counter;
+    }
+
+    protected void setStart(int value) {
+        if(start > end) {
+            throw new RuntimeException(String.format("Start '%d' value cannot be greater than end value: %d", start, end));
+        }
+        this.start = value;
+    }
+
+    protected int getValue() {
+        return this.value;
+    }
+
+    protected void setValue(int val) {
+        this.value = val;
+    }
+
+    protected int getStart() {
+        return this.start;
     }
 
     @Override

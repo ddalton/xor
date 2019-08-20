@@ -49,6 +49,21 @@
 	
 	<!-- Association Strategy between aggregates -->
 	<bean id="associationStrategy" class="tools.xor.custom.TestAssociationStrategy" />
+
+	<!-- JDBC -->
+	<bean id="amJDBC"
+		  class="tools.xor.service.AggregateManager">
+		<property name="typeMapper" ref="uctm" />
+		<property name="dasFactory" ref="jdbcdas" />
+		<property name="persistenceType" value="JDBC" />
+	</bean>
+
+	<bean id="jdbcdas"
+		  class="tools.xor.service.SpringDASFactory">
+		<property name="name" value="jdbcdas" />
+	</bean>
+
+	<bean id="uctm" class="tools.xor.UnchangedTypeMapper"/>
 	
 
 	<!-- DataSource -->

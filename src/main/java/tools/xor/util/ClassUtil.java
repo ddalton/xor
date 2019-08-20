@@ -30,19 +30,25 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Access;
 import javax.sql.DataSource;
 
+import jdk.nashorn.internal.runtime.JSONListAdapter;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.io.ClassPathResource;
@@ -425,5 +431,39 @@ public class ClassUtil {
 				"/*",
 				"*/");
 		}
+	}
+
+	public static JSONObject copyJson(JSONObject original) {
+		return (JSONObject) copyValue(original, new HashMap<>());
+	}
+
+	private static Object copyValue(Object originalValue, Map<JSONObject, JSONObject> sharedObjects) {
+		Object copyValue = originalValue;
+
+		if(originalValue instanceof JSONObject) {
+			if(sharedObjects.containsKey(originalValue)) {
+				copyValue = sharedObjects.get(originalValue);
+			} else {
+				copyValue = new JSONObject();
+				sharedObjects.put((JSONObject) originalValue, (JSONObject) copyValue);
+
+				Iterator keys = ((JSONObject)originalValue).keys();
+				while(keys.hasNext()) {
+					String key = (String)keys.next();
+					Object value = ((JSONObject)originalValue).get(key);
+
+					((JSONObject)copyValue).put(key, copyValue(value, sharedObjects));
+				}
+			}
+		} else if(originalValue instanceof JSONArray) {
+			JSONArray copyArray = new JSONArray();
+			for(int i = 0; i < ((JSONArray)originalValue).length(); i++) {
+				copyArray.put(i, copyValue(((JSONArray)originalValue).get(i), sharedObjects));
+			}
+		} else if(originalValue instanceof Date) {
+			copyValue =  new Date(((Date)originalValue).getTime());
+		}
+
+		return copyValue;
 	}
 }

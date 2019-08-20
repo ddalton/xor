@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.ObjectCreator;
 
@@ -34,7 +35,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DataImporter implements Callable
 {
-    private static final int COMMIT_SIZE = 1000;
+    private static int COMMIT_SIZE;
+
+    static {
+        if (ApplicationConfiguration.config().containsKey(Constants.Config.BATCH_COMMIT_SIZE)) {
+            COMMIT_SIZE = ApplicationConfiguration.config().getInt(Constants.Config.BATCH_COMMIT_SIZE);
+        }
+        else {
+            COMMIT_SIZE = 1000;
+        }
+    }
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 

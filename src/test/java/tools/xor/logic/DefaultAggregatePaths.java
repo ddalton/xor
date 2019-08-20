@@ -20,6 +20,7 @@
 package tools.xor.logic;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +28,7 @@ import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -51,6 +53,7 @@ import tools.xor.util.DFAtoRE.Expression;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
+import tools.xor.view.AggregateView;
 import tools.xor.view.View;
 
 public class DefaultAggregatePaths extends AbstractDBTest {
@@ -664,5 +667,26 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		assert(employeeSubTypes != null && employeeSubTypes.size() == 1);
 		Set<EntityType> employeeChildSubTypes = employeeType.getChildSubtypes();
 		assert(employeeChildSubTypes != null && employeeChildSubTypes.size() == 1);
+	}
+
+	public void checkJSON() {
+		String[] paths = new String[] {
+			"taskChildren.[TASKCHILDREN]",
+			"[VERYBASIC]",
+			"project.name",
+			"dependants.[VERYBASIC]",
+			"dependants.taskChildren.[VERYBASIC]",
+			"dependants.taskChildren.auditTask.[VERYBASIC]",
+			"assignedTo.name"
+		};
+		List attrs = Arrays.asList(paths);
+
+		JSONObject json = new JSONObject();
+		AggregateView.extractJSON(json, attrs);
+
+		System.out.println("JSON: " + json);
+
+		View view = aggregateManager.getView("PARALLEL_QUERY");
+		System.out.println("PARALLEL_QUERY View Json: " + view.getJson().toString());
 	}
 }

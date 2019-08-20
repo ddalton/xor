@@ -77,8 +77,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	}
 
 	@Override
-	public void addShape(String name) {
-		this.addShape(name, null);
+	public Shape addShape(String name) {
+		return this.addShape(name, null);
 	}
 
 	@Override

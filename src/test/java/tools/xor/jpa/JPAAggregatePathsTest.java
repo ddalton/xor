@@ -85,4 +85,9 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	public void checkPersonSubTypes() {
 		super.checkPersonSubTypes();
 	}
+
+	@Test
+	public void checkJSON() {
+		super.checkJSON();
+	}
 }

@@ -63,6 +63,7 @@ public class Constants {
 		public static final String MIGRATE_FILTER_PARTITION = "migrate.filter.partition";
 		public static final String INCLUDE_SUBCLASS = "include.subclass";
 		public static final String BATCH_SKIP = "batch.skip";
+		public static final String BATCH_COMMIT_SIZE = "batch.commit.size";
 	}
   
   

@@ -20,6 +20,7 @@
 
 package tools.xor;
 
+import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 
 import java.sql.Connection;
@@ -27,4 +28,8 @@ import java.sql.Connection;
 public interface EntityGenerator
 {
     void init(Connection connection, StateGraph.ObjectGenerationVisitor visitor);
+
+    public void processVisitors();
+
+    void addVisit(DefaultGenerator.GeneratorVisit visit);
 }

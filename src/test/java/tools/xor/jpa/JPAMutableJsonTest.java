@@ -34,6 +34,7 @@ import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -62,8 +63,10 @@ import tools.xor.db.pm.Task;
 import tools.xor.db.sp.P;
 import tools.xor.db.sp.S;
 import tools.xor.db.sp.SP;
+import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.ElementPositionGenerator;
 import tools.xor.generator.Generator;
+import tools.xor.generator.GeneratorRecipient;
 import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultMutableJson;
 import tools.xor.providers.jdbc.ImportMethod;
@@ -682,17 +685,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		JDBCType task = (JDBCType)shape.getType("TASK");
 
-		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "1",
-												  "1,500:0",
-												  "501,2000:4",
-												  "2001,4500:0"
-		});
-		CounterGenerator gensettings = new CounterGenerator(4500);
-		gensettings.addListener(toonegen);
-		task.addGenerator(gensettings);
-
 		ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
-		Generator parentgen = new StringTemplate(toonegen, new String[] {"ID_[GENERATOR]"});
+		Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
 		taskparent.setGenerator(parentgen);
 		Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
 		ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
@@ -700,6 +694,29 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
 		ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
 		namep.setGenerator(namegen);
+
+		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "1",
+																	"1,500:0",
+																	"501,2000:2", // 1501 - 2000 represent grand children
+																	"2001,4500:0"
+		});
+		CounterGenerator gensettings = new CounterGenerator(4500);
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+			(GeneratorRecipient)parentgen));
+
+		// add a couple of children for the dependent tasks from 1501 - 2000
+		gensettings = new CounterGenerator(1000, 5001);
+		toonegen = new ToOneGenerator(new String[] { "1501",
+													 "5001,6000:2"
+		});
+		// Add the generator visitor
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+				(GeneratorRecipient)parentgen));
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+
 
 		// Dependants
 		JDBCType taskTask = (JDBCType)shape.getType("TASK_TASK");
@@ -710,13 +727,15 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		CollectionOwnerGenerator cogen = new CollectionOwnerGenerator(collectionSizes, cegen);
 		taskTask.addGenerator(cogen);
 		ExtendedProperty uuid = (ExtendedProperty)taskTask.getProperty("TASK_UUID");
-		Generator uuidgen = new StringTemplate(cogen, new String[] {"ID_[GENERATOR]"});
+		Generator uuidgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
 		uuid.setGenerator(uuidgen);
 		ExtendedProperty dep = (ExtendedProperty)taskTask.getProperty("DEPENDANTS_UUID");
-		Generator depgen = new StringTemplate(cegen, new String[] {"ID_[GENERATOR]"});
+		Generator depgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
 		dep.setGenerator(depgen);
 		ExtendedProperty index = (ExtendedProperty)taskTask.getProperty("DEP_SEQ");
 		index.setGenerator(new ElementPositionGenerator(cegen));
+		cogen.addVisit(new DefaultGenerator.GeneratorVisit(cogen, (GeneratorRecipient)uuidgen));
+		cogen.addVisit(new DefaultGenerator.GeneratorVisit(cegen, (GeneratorRecipient)depgen));
 
 		String[] types = new String[] {
 			"TASK",
@@ -733,7 +752,6 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		try {
 			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
 
-			/*
 			View view = aggregateService.getView("PARALLEL_QUERY");
 			view = view.copy();
 			DataAccessService das = aggregateManager.getDAS();
@@ -744,12 +762,35 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 			settings = new Settings();
 			settings.setView(view);
-			settings.setEntityType(ormShape.getType("TASK"));
+			settings.setEntityType(ormShape.getType("Task"));
 			settings.init(ormShape);
 
 			// Now let us query the task and see if the parallel collections strategy works
 			List<?> toList = aggregateService.query(null, settings);
-	*/
+
+			assert(toList != null);
+			assert(toList.size() == 5500);
+			JSONObject json = (JSONObject)toList.get(1);
+
+			assert(json.has("id"));
+			assert(json.has("name"));
+			assert(json.has("taskChildren"));
+			assert(json.has("dependants"));
+
+			JSONArray dependants = json.getJSONArray("dependants");
+			JSONArray children = json.getJSONArray("taskChildren");
+
+			assert(dependants.length() == 2);
+			assert(children.length() == 2);
+
+			JSONObject dependant = dependants.getJSONObject(0);
+			assert(dependant.has("taskChildren"));
+			assert(dependant.getJSONArray("taskChildren").length() == 2);
+
+			JSONObject child = children.getJSONObject(0);
+			assert(child.has("taskChildren"));
+			assert(child.getJSONArray("taskChildren").length() == 2);
+
 		} finally {
 
 			try (Statement stmt = sc.getConnection().createStatement()) {

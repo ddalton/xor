@@ -68,39 +68,46 @@ public class DataImporter implements Callable
     {
         Object result = DataGenerator.SUCCESS;
 
-        // Begin a new transaction
-        po.getSessionContext().beginTransaction();
+        try {
+            // Begin a new transaction
+            po.getSessionContext().beginTransaction();
 
-        int i = 1;
-        while (true) {
-            // Give a millisecond for the data to start flowing
-            while(queue.isEmpty()) {
-                Thread.sleep(1);
+            int i = 1;
+            while (true) {
+                // Give a millisecond for the data to start flowing
+                while (queue.isEmpty()) {
+                    Thread.sleep(1);
+                }
+
+                JSONObject json = queue.remove();
+
+                if (json == DataGenerator.END_MARKER) {
+                    break;
+                }
+
+                String entityName = json.getString(Constants.XOR.TYPE);
+                Type type = shape.getType(entityName);
+                BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
+                bo.setInstance(json);
+                po.getSessionContext().create(bo, settings, dataGenerator);
+
+                if (i++ % COMMIT_SIZE == 0) {
+                    // commit in batches
+                    commit();
+
+                    // Begin a new transaction
+                    po.getSessionContext().beginTransaction();
+                }
             }
 
-            JSONObject json = queue.remove();
-
-            if (json == DataGenerator.END_MARKER) {
-                break;
-            }
-
-            String entityName = json.getString(Constants.XOR.TYPE);
-            Type type = shape.getType(entityName);
-            BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
-            bo.setInstance(json);
-            po.getSessionContext().create(bo, settings, dataGenerator);
-
-            if (i++ % COMMIT_SIZE == 0) {
-                // commit in batches
-                commit();
-
-                // Begin a new transaction
-                po.getSessionContext().beginTransaction();
-            }
+            // last commit
+            commit();
+        } catch(Exception e) {
+            // if we are here and if the queue is not empty then we empty the
+            // queue, so the generator is not kept waiting
+            e.printStackTrace();
+            throw e;
         }
-
-        // last commit
-        commit();
 
         return result;
     }

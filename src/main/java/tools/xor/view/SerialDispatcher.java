@@ -23,6 +23,7 @@ import tools.xor.CallInfo;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.InterQuery;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class SerialDispatcher implements QueryDispatcher
         List<QueryTree> queries = new LinkedList<>();
         queries.addAll(at.getRoots());
 
-        QueryTreeInvocation queryInvocation = new QueryTreeInvocation();
+        QueryTreeInvocation queryInvocation = new QueryTreeInvocation(queries);
         while(!queries.isEmpty()) {
             QueryTree queryTree = queries.remove(0);
 

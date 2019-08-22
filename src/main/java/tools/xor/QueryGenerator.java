@@ -19,6 +19,7 @@
 
 package tools.xor;
 
+import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
@@ -30,6 +31,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class QueryGenerator implements Iterator<Object[]>, EntityGenerator, Closeable
 {
@@ -43,6 +46,7 @@ public class QueryGenerator implements Iterator<Object[]>, EntityGenerator, Clos
     private Object[] row;
     private int fetchSize = 1000;
     private StateGraph.ObjectGenerationVisitor visitor;
+    private List<DefaultGenerator.GeneratorVisit> visits;
 
     public QueryGenerator (String sql,
                            int max)
@@ -118,6 +122,22 @@ public class QueryGenerator implements Iterator<Object[]>, EntityGenerator, Clos
         }
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
+        }
+    }
+
+    public void addVisit(DefaultGenerator.GeneratorVisit visit) {
+        if(this.visits == null) {
+            this.visits = new LinkedList<>();
+        }
+
+        this.visits.add(visit);
+    }
+
+    public void processVisitors() {
+        if(this.visits != null) {
+            for (DefaultGenerator.GeneratorVisit visit : visits) {
+                visit.getRecipient().accept(visit.getGenerator());
+            }
         }
     }
 }

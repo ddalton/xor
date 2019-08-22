@@ -25,7 +25,7 @@ import tools.xor.util.graph.StateGraph;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StringTemplate extends DefaultGenerator
+public class StringTemplate extends DefaultGenerator implements GeneratorRecipient
 {
     private Generator generator;
 
@@ -34,10 +34,8 @@ public class StringTemplate extends DefaultGenerator
         super(arguments);
     }
 
-    public StringTemplate (Generator generator, String[] arguments)
+    @Override public void accept (Generator generator)
     {
-        super(arguments);
-
         this.generator = generator;
     }
 

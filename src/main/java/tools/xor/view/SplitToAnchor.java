@@ -130,8 +130,10 @@ public class SplitToAnchor implements SplitStrategy
 
             boolean encounteredCollection = false;
             for(IntraQuery<QueryFragment> outgoing: originalQT.getOutEdges(anchor)) {
+                // TODO: split all the nodes that have a collection anchored under that node
                 QueryFragment child = outgoing.getEnd();
                 if(outgoing.getProperty().isMany() || child.getParallelCollectionCount() > 0) {
+                    /*
                     if(encounteredCollection) {
                         // Split at this edge
                         QueryTree newQT = split(originalQT, anchor, outgoing);
@@ -139,6 +141,10 @@ public class SplitToAnchor implements SplitStrategy
                     } else {
                         encounteredCollection = true;
                     }
+                    */
+                    // Split at this edge
+                    QueryTree newQT = split(originalQT, anchor, outgoing);
+                    newQueries.add(newQT);
                 }
             }
         }

@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 public class DefaultGenerator implements Generator
@@ -57,6 +58,7 @@ public class DefaultGenerator implements Generator
     // -1    The collection element does not have any FixedSet generator
     // > 0   Size of the fixed set collection
     private Integer fixedFanOut;
+    private List<GeneratorVisit> visits;
 
     public DefaultGenerator (String[] arguments)
     {
@@ -494,5 +496,39 @@ public class DefaultGenerator implements Generator
         }
 
         nodeList.add(current);
+    }
+
+    public static class GeneratorVisit {
+        Generator generator;
+        GeneratorRecipient recipient;
+
+        public GeneratorVisit(Generator gen, GeneratorRecipient recipient) {
+            this.generator = gen;
+            this.recipient = recipient;
+        }
+
+        public GeneratorRecipient getRecipient() {
+            return this.recipient;
+        }
+
+        public Generator getGenerator() {
+            return this.generator;
+        }
+    }
+
+    public void addVisit(GeneratorVisit visit) {
+        if(this.visits == null) {
+            this.visits = new LinkedList<>();
+        }
+
+        this.visits.add(visit);
+    }
+
+    public void processVisitors() {
+        if(this.visits != null) {
+            for (GeneratorVisit visit : visits) {
+                visit.recipient.accept(visit.generator);
+            }
+        }
     }
 }

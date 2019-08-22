@@ -1354,7 +1354,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		queryTree.exportToDOT("ComplexT.dot");
 
-		assert(queryTree.getVertices().size() == 2);
+		assert(queryTree.getVertices().size() == 3);
 	}
 
 	public void querySplitToAnchorNoSplit() {

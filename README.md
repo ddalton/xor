@@ -1,8 +1,5 @@
-a. Test subquery - JPAMutableJsonTest#testSubquery
 b. EntityKey (id and Type). If Type api is used, it should always be based on root concrete type.
 c. Subtype querying and json/state enhancement
-
-
 
 
 6. Paging test - tokens and parallel collections
@@ -29,7 +26,6 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 
 2. Test subquery
    Add limit and next token functionality to the QueryTree
-   Test both strategies and also the stitch functionality
    Parallelizing them will be the next step
 
    How do splits and query filters interact. Need to ensure the stitching filters out the object correctly.
@@ -42,13 +38,8 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 7. Test same entity type but on different anchors and ensure it brings different shapes
 
 
-XOR - ORM for the cloud - Scalable ORM
-
 HSQLDB testing -
 java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.util.DatabaseManagerSwing
-
-0. Testing enhancement - The below feature assists with testing various data models without 
-     an explicit Java model hierarchy 
 
    Details
    =======

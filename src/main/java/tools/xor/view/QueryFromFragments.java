@@ -74,8 +74,6 @@ public class QueryFromFragments implements QueryBuilderStrategy
             vb.debug("OQL of view [" + this.queryTree.getView().getName() + "] => " + oql.toString());
         }
 
-        System.out.println("QUERY:::: " + oql.toString());
-
         Query query = settings.getPersistenceOrchestrator().getQuery(
             oql.toString(),
             PersistenceOrchestrator.QueryType.OQL,

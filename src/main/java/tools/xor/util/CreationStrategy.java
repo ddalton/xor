@@ -61,7 +61,9 @@ public interface CreationStrategy {
 	public Object patchInstance(EntityType entityType);
 	
 	/**
-	 * Give a chance for the creation strategy to do any final conversion on the root object
+	 * Give a chance for the creation strategy to do any final conversion on the root object.
+	 * This can be expensive so invoke only if necessary.
+	 *
 	 * @param bo BusinessObject
 	 * @param settings user specfied settings
 	 * @return normalized instance

@@ -44,10 +44,12 @@ import java.util.List;
  */
 public class ToOneGenerator extends DefaultGenerator implements IteratorListener
 {
+    private static final int COUNTER_INIT = -1;
+
     private int start;
     private RangeNode currentNode;
     private List<RangeNode> nodeList;
-    private int counter = 0;
+    private int counter = COUNTER_INIT;
     private int value;
 
     public ToOneGenerator (String[] arguments) {
@@ -65,11 +67,11 @@ public class ToOneGenerator extends DefaultGenerator implements IteratorListener
     {
         if (sourceId > currentNode.getEnd()) {
             currentNode = currentNode.getNext();
-            counter = 0;
+            counter = COUNTER_INIT;
         }
 
         if(currentNode.getSize() > 0) {
-            if (counter++ == currentNode.getSize()) {
+            if (counter++ == currentNode.getSize()-1) {
                 counter = 0;
                 value++;
             }

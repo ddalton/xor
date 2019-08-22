@@ -91,6 +91,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -1230,7 +1231,9 @@ public class AggregateManager implements Xor
 		for (Object obj : dataObjects) {
 			firstObject = firstObject == null ? obj : firstObject;
 			if (!settings.isDenormalized()) {
-				result.add(((BusinessObject)obj).getNormalizedInstance(settings));
+				// We don't normalize the instance as it can have a performance impact
+				// do it only if absolutely necessary
+				result.add(((BusinessObject)obj).getInstance());
 			}
 			else {
 				result.add(obj);

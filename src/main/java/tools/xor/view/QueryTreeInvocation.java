@@ -23,6 +23,7 @@ import tools.xor.util.InterQuery;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +37,7 @@ public class QueryTreeInvocation
     private static final int MAX_INLIST_SIZE = 999;
     private static final int OFFSET = 1;
 
-    private Map<InterQuery, Set> parentIdList; // Return the ids needed for a consuming Query
+    private Map<QueryTree, Set> parentIdList; // Return the ids needed for a consuming Query
                                            // Can be userkey, if it is not composite, else
                                            // subquery is the only option supported for composite key.
 
@@ -51,13 +52,18 @@ public class QueryTreeInvocation
     private Map<InterQuery, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
     private Map<String, QueryVisitor> visitorsByPath;
 
-    public QueryTreeInvocation() {
+    public QueryTreeInvocation(List<QueryTree> rootQueries) {
         // These fields will concurrently be updated/accessed if using ParallelDispatcher
         this.parentIdList = new ConcurrentHashMap<>();
         this.resolvedQuery = new ConcurrentHashMap<>();
         this.idList = new ConcurrentHashMap<>();
         this.visitors = new ConcurrentHashMap<>();
         this.visitorsByPath = new ConcurrentHashMap<>();
+
+        // Initialize with the root queries
+        for(QueryTree queryTree: rootQueries) {
+            resolvedQuery.put(queryTree.getQuery(), queryTree.getQuery().getQueryString());
+        }
     }
 
     /**
@@ -68,19 +74,13 @@ public class QueryTreeInvocation
     public void resolveQuery(AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree, InterQuery<QueryTree> edge) {
 
         QueryTree queryTree = edge.getEnd();
-        QueryTree current = queryTree;
         InterQuery parentEdge = edge;
-        InterQuery.JoinType joinType = null;
-        while (parentEdge != null) {
-            joinType = getJoinType(parentEdge);
-            if (joinType == InterQuery.JoinType.INLIST) {
-                break;
-            }
-            current = aggregateTree.getParent(current);
-            parentEdge = aggregateTree.getInEdges(current).iterator().next();
-        }
+
+        // since query is resolved in a BFS manner, we only need to join with the immediate parent
+        InterQuery.JoinType joinType = getJoinType(parentEdge);
+
         if(parentEdge != null) {
-            idList.put(queryTree.getQuery(), parentIdList.get(parentEdge));
+            idList.put(queryTree.getQuery(), parentIdList.get(parentEdge.getStart()));
         }
 
         String oqlString = queryTree.getQuery().getQueryString();
@@ -96,10 +96,21 @@ public class QueryTreeInvocation
         else {
             oqlString = oqlString.replaceFirst(
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
-                resolvedQuery.get(edge.getStart()));
+                deriveSubquery(edge, resolvedQuery.get(edge.getStart().getQuery())));
 
         }
         resolvedQuery.put(queryTree.getQuery(), oqlString);
+    }
+
+    private String deriveSubquery(InterQuery edge, String oql) {
+        // We need to select only the parent id from the original parent oql
+        // So we first split the query around the FROM clause
+        // then prepend the select clause for the parent id
+
+        StringBuilder subquery = new StringBuilder("SELECT ");
+        subquery.append(edge.getSource().getId()).append(oql.substring(oql.indexOf(" FROM ")));
+
+        return subquery.toString();
     }
 
     public void initInList(Query query) {
@@ -143,11 +154,11 @@ public class QueryTreeInvocation
     private InterQuery.JoinType getJoinType(InterQuery edge) {
         InterQuery.JoinType joinType = InterQuery.JoinType.INLIST;
 
-        if(!parentIdList.containsKey(edge)) {
+        if(!parentIdList.containsKey(edge.getStart())) {
             throw new RuntimeException("Child query can only be invoked after parent query has returned");
         }
 
-        if(parentIdList.get(edge).size() > MAX_INLIST_SIZE) {
+        if(parentIdList.get(edge.getStart()).size() > MAX_INLIST_SIZE) {
             joinType = InterQuery.JoinType.SUBQUERY;
         }
 
@@ -191,7 +202,7 @@ public class QueryTreeInvocation
         // Loop through each outgoing edge and process the results
         for(InterQuery outgoing: at.getOutEdges(qt)) {
             QueryVisitor visitor = visitors.get(outgoing);
-            parentIdList.put(outgoing, visitor.ids);
+            parentIdList.put((QueryTree)outgoing.getStart(), visitor.ids);
 
             // Now we no longer need this visitor as it has been processed
             visitors.remove(outgoing);

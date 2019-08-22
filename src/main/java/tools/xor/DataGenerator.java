@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -71,9 +72,11 @@ public class DataGenerator
     private DASFactory dasFactory;
     private ImportMethod importMethod;
     private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
+    private Map<String, List<Property>> generatedFields = new HashMap<>();
+
+    // DataGenerator and DataImporter communication data structures
     private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
     private boolean reachedHigh[] = new boolean[DataGenerator.IMPORTER_POOL_SIZE];
-    private Map<String, List<Property>> generatedFields = new HashMap<>();
 
     public DataGenerator (List<String> types, Shape shape, Settings settings, DASFactory dasFactory) {
         this.types = types;
@@ -147,11 +150,19 @@ public class DataGenerator
         }
     }
 
+    private void initQueues() {
+        for(int i = 0; i < IMPORTER_POOL_SIZE; i++) {
+            importerQueues[i] = new ConcurrentLinkedQueue();;
+            reachedHigh[i] = false;
+        }
+    }
+
     private List<Future> createImportJobs() {
+        initQueues();
+
         // Create the importers
         List<Future> importJobs = new ArrayList<Future>();
         for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
-            importerQueues[i] = new ConcurrentLinkedQueue();
             JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
             po.getSessionContext().setImportMethod(importMethod);
             if(importMethod == ImportMethod.CSV && IMPORTER_POOL_SIZE > 1)
@@ -182,6 +193,8 @@ public class DataGenerator
             sc.beginTransaction();
 
             generator.init(sc.getConnection(), visitor);
+            generator.processVisitors();
+
             Iterator iter = (Iterator) generator;
             int generationCount = 0;
             while(iter.hasNext()) {
@@ -194,6 +207,16 @@ public class DataGenerator
                 while(reachedHigh[jobNo]) {
                     // pause until the importer drains down the queue below the low water mark
                     try {
+                        // First check if the importer ran into an exception
+                        if(importJobs.get(jobNo).isDone()) {
+                            try {
+                                importJobs.get(jobNo).get();
+                            }
+                            catch (ExecutionException e) {
+                                // If an exception occurred we stop right away
+                                throw ClassUtil.wrapRun(e);
+                            }
+                        }
                         Thread.sleep(1);
                     }
                     catch (InterruptedException e) {

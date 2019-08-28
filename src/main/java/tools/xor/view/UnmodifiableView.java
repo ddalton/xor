@@ -7,6 +7,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
@@ -132,7 +133,7 @@ public class UnmodifiableView implements View
 
     @Override public JSONObject getJson() {
         if(view.getJson() != null) {
-            return new JSONObject(view.getJson().toString());
+            return ClassUtil.copyJson(view.getJson());
         } else {
             return null;
         }

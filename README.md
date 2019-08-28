@@ -1,3 +1,6 @@
+Test inheritance join queries
+and the TREAT operator
+
 b. EntityKey (id and Type). If Type api is used, it should always be based on root concrete type.
 c. Subtype querying and json/state enhancement
 
@@ -57,7 +60,7 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
 1. Process ALIAS and NARROW functions - See JSON representation
   How is an alias field processed? Add a property to an open type
   StateTree#extend
-    a) Alias test of an existing property e.g., ALIASEXISTING
+    a) Alias test of an existing property e.g., 
        taskDetails t1
        taskDetails t2
     b) Alias test of a non-existing property e.g., root

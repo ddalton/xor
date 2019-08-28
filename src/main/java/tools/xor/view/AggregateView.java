@@ -51,6 +51,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
 import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
@@ -199,7 +200,12 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	
 	public AggregateView(String viewName) {
 		setName(viewName);
-	}		
+	}
+
+	public static enum Format {
+		PATHS,
+		JSON
+	};
 
 	/**
 	 * No-args constructor required for Unmarshalling purpose and also internally by the framework. 
@@ -498,8 +504,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		result.setTypeName(typeName);
 		result.setExpanded(expanded);
 		result.jsonString = jsonString;
-		if(jsonString != null) {
-			result.json = new JSONObject(jsonString);
+		if(json != null) {
+			result.json = ClassUtil.copyJson(json);
 		}
 		result.setSplitToRoot(isSplitToRoot());
 		if(attributeList != null) {
@@ -1001,7 +1007,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 	/**
 	 * propertyName - optional. If the propertyName is not provided then it represents an alias on the root object
 	 * alias - required
-	 * typeName - alias type, can be a sub type of the type of propertyName
+	 * typeName - alias type, can be a subtype of the type of propertyName
 	 * viewName - optional, represents the properties added to the alias
 	 */
 	public static class PropertyAlias {

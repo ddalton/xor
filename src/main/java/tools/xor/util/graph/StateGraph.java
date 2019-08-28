@@ -88,44 +88,58 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	@Override
 	public void addEdge(E edge, V start, V end) {
-		if(edge.getStart() != start) {
-			if(edge.getEnd() == start) {
-				logger.debug("Adding a reversed edge");
-			} else {
-				throw new IllegalStateException("Transition object start is not the same as given start");
+		// There could be multiple edges with name UNLABELLED, so we have to
+		// use the superclass implementation to support that
+		if(!edge.getName().equals(DFAtoNFA.UNLABELLED)) {
+			if (edge.getStart() != start) {
+				if (edge.getEnd() == start) {
+					logger.debug("Adding a reversed edge");
+				}
+				else {
+					throw new IllegalStateException(
+						"Transition object start is not the same as given start");
+				}
 			}
-		}
-		if(edge.getEnd() != end) {
-			if(edge.getStart() == end) {
-				logger.debug("Adding a reversed edge");
-			} else {
-				throw new IllegalStateException("Transition object end is not the same as given end");
+			if (edge.getEnd() != end) {
+				if (edge.getStart() == end) {
+					logger.debug("Adding a reversed edge");
+				}
+				else {
+					throw new IllegalStateException(
+						"Transition object end is not the same as given end");
+				}
 			}
+
+			Map<String, E> outLinks = outTransitions.get(start);
+			if (outLinks == null) {
+				outLinks = new HashMap<>();
+				outTransitions.put(start, outLinks);
+			}
+			outLinks.put(edge.getName(), edge);
 		}
-		
-		Map<String, E> outLinks = outTransitions.get(start);
-		if(outLinks == null) {
-			outLinks = new HashMap<String, E>();
-			outTransitions.put(start, outLinks);
-		}
-		outLinks.put(edge.getName(), edge);
 		
 		super.addEdge(edge, start, end);
 	}
 
 	@Override
 	public void removeEdge(E edge) {
-		Map<String, E> outLinks = outTransitions.get(edge.getStart());
-		if(outLinks == null) {
-			throw new IllegalStateException("Unable to find outTransition entry for edge");
+		if(!edge.getName().equals(DFAtoNFA.UNLABELLED)) {
+			Map<String, E> outLinks = outTransitions.get(edge.getStart());
+			if (outLinks == null) {
+				throw new IllegalStateException("Unable to find outTransition entry for edge");
+			}
+			outLinks.remove(edge.getName());
 		}
-		outLinks.remove(edge.getName());
 
 		super.removeEdge(edge);
 	}
 
 	@Override
 	public E getOutEdge(V vertex, String name) {
+		if(DFAtoNFA.UNLABELLED.equals(name)) {
+			throw new RuntimeException("Cannot get an inheritance edge as it does not have a name");
+		}
+
 		if(!outTransitions.containsKey(vertex)) {
 			// vertex is not in scope
 			return null;
@@ -765,9 +779,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				Type type = state.getType();
 				Set<E> edges = new HashSet<>(outTransitions.get(state).values());
 				for(E edge: edges) {
-					if(edge.isUnlabelled()) {
-						continue;
-					}
 					Property p = type.getProperty(edge.getName());
 
 					// Foreign keys cannot typically be enforced on a containment

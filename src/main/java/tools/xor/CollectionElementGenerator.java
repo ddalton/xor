@@ -120,6 +120,12 @@ public class CollectionElementGenerator extends DefaultGenerator implements Enti
     }
 
     @Override
+    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return this.value;
+    }
+
+    @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
         return String.valueOf(this.value);

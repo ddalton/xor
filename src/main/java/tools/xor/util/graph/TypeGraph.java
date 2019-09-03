@@ -188,4 +188,10 @@ public interface TypeGraph<V extends State, E extends Edge<V>> extends Graph<V, 
 	 * @return true if the path is found in the graph, false otherwise
 	 */
 	public boolean hasPath(String path);
+
+	/**
+	 * Export the graph in DOT format
+	 * @param filename of the DOT file
+	 */
+	public void exportToDOT(String filename);
 }

@@ -19,6 +19,10 @@
 
 package tools.xor.service;
 
+import tools.xor.util.IntraQuery;
+import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTree;
+
 public interface QueryCapability {
 	   
     /**
@@ -56,4 +60,12 @@ public interface QueryCapability {
      * @return surrogate mechanism value
      */
     public String getSurrogateValueMechanism(String queryAlias, String idFragment);
+
+    /**
+     * Gets the downcast clause supported by the OQL
+     * @param queryTree to which the joinedge belongs
+     * @param joinEdge representing the inheritance edge to the child
+     * @return downcast OQL clause
+     */
+    String getDowncastClause (QueryTree queryTree, IntraQuery<QueryFragment> joinEdge);
 }

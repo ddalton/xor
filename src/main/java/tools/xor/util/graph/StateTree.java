@@ -216,7 +216,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				return descendants.get(entityType.getName());
 			}
 
-			return this;
+			return getTypeName().equals(entityType.getName()) ? this : null;
 		}
 
 		public Set<String> getAttributes() {
@@ -450,7 +450,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 	private boolean foundSubtype(EntityType subType, String remaining, JSONObject json, AggregateView.Format format) {
 		if(format == AggregateView.Format.PATHS) {
-			return remaining != null && subType.getProperty(remaining) == null;
+			return remaining == null || (remaining != null && subType.getProperty(remaining) != null);
 		} else {
 			// check the json
 			if(json == null) {
@@ -501,8 +501,11 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				}
 
 				if(subtypeStates.size() > 1) {
-					throw new RuntimeException("Found multiple subtypes for attribute: " + attribute + " in state: "
-							+ current.getType().getName());
+					throw new RuntimeException(
+						String.format(
+							"Found multiple subtypes for attribute: %s in state: %s. This needs to be fixed by using aliases",
+							attribute,
+							current.getType().getName()));
 				}
 
 				// add an edge where required

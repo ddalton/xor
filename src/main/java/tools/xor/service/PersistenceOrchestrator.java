@@ -30,6 +30,7 @@ import tools.xor.operation.MigrateOperation;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTree;
 import tools.xor.view.QueryTreeInvocation;
 
 import java.sql.Blob;
@@ -270,10 +271,11 @@ public interface PersistenceOrchestrator {
 
     /**
      * Retrieve provider specific OQL join fragment
+     * @param queryTree to which this edge belongs
      * @param joinEdge representing the associated property being retrieved
      * @return join fragment
      */
-    public String getOQLJoinFragment(IntraQuery<QueryFragment> joinEdge);
+    public String getOQLJoinFragment(QueryTree queryTree, IntraQuery<QueryFragment> joinEdge);
 
     /**
      * Provider specific construct to control polymorphic object retrieval

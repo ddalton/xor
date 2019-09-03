@@ -116,7 +116,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
         children.addAll(sortJoins(qp.getOutEdges(qp.getRoot())));
         while(!children.isEmpty()) {
             IntraQuery<QueryFragment> child = children.remove(0);
-            OQL.append(child.getJoinClause(po));
+            OQL.append(child.getJoinClause(qp, po));
 
             // Keep processing this child
             children.addAll(0, qp.getOutEdges(child.getEnd()));

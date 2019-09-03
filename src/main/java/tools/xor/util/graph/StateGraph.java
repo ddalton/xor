@@ -1424,18 +1424,20 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				// Check for required entity types, as this affects stategraph scope
 				// Simple required types do not have to be listed here
 				StringBuilder requiredEntities = new StringBuilder();
-				for (Property property : entityType.getProperties()) {
-					if (!property.isNullable()) {
-						Type requiredEntityType = GraphUtil.getPropertyEntityType(
-							property,
-							getShape());
-						if (requiredEntityType instanceof EntityType) {
-							if (requiredEntities.length() > 0) {
-								requiredEntities.append("\\n");
+				if(entityType.getProperties() != null) {
+					for (Property property : entityType.getProperties()) {
+						if (!property.isNullable()) {
+							Type requiredEntityType = GraphUtil.getPropertyEntityType(
+								property,
+								getShape());
+							if (requiredEntityType instanceof EntityType) {
+								if (requiredEntities.length() > 0) {
+									requiredEntities.append("\\n");
+								}
+								requiredEntities.append(
+									property.getName() + " : " + Settings.getBaseName(
+										requiredEntityType.getName()));
 							}
-							requiredEntities.append(
-								property.getName() + " : " + Settings.getBaseName(
-									requiredEntityType.getName()));
 						}
 					}
 				}

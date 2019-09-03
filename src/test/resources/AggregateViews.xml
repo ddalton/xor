@@ -42,7 +42,12 @@
 		<name>TECHNICIANINFO</name>
 		<attributeList>[BASICINFO]</attributeList>		
 		<attributeList>skill</attributeList>					
-	</aggregateView>	
+	</aggregateView>
+	<aggregateView>
+		<name>TASKSKILL</name>
+		<attributeList>ownedBy.[TECHNICIANINFO]</attributeList>
+		<attributeList>name</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>CONSULTANTINFO</name>
 		<attributeList>[BASICINFO]</attributeList>

@@ -330,6 +330,9 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	{
 		int maxParallelCount = 0;
 		int maxSimpleCount = 0;
+
+		// Includes inheritance edges, so subtypes are
+		// considered as children
 		for(V fragment: getChildren(node)) {
 			computeCollectionCount(fragment);
 
@@ -340,7 +343,9 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			// First look at the incoming edge to the child fragment
 			IntraQuery incoming = getInEdges(fragment).iterator().next();
 			int fragmentParallel = 0;
-			if(incoming.getProperty().isMany()) {
+
+			// inheritance edge do hot have a property
+			if(incoming.getProperty() != null && incoming.getProperty().isMany()) {
 				fragmentParallel = 1;
 			}
 			if(fragment.getParallelCollectionCount() > fragmentParallel) {
@@ -465,7 +470,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		List<E> result = new LinkedList<>();
 
 		for(E joinEdge: getEdges()) {
-			if(joinEdge.getProperty().isOpenContent()) {
+			if(joinEdge.getProperty() != null && joinEdge.getProperty().isOpenContent()) {
 				result.add(joinEdge);
 			}
 		}

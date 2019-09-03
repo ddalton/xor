@@ -40,6 +40,7 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTree;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.View;
@@ -275,8 +276,17 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	}
 
 	@Override
-	public String getOQLJoinFragment(IntraQuery<QueryFragment> joinEdge) {
-		return " LEFT OUTER JOIN " + joinEdge.getNormalizedName() + " AS " + joinEdge.getEnd().getAlias();
+	public String getOQLJoinFragment(QueryTree queryTree, IntraQuery<QueryFragment> joinEdge) {
+		// If this is an inheritance edge, then we need to do a downcast to the
+		// actual type.
+		String joinClause = null;
+		if(joinEdge.getProperty() == null) {
+			joinClause = getQueryCapability().getDowncastClause(queryTree, joinEdge);
+		} else {
+			joinClause = joinEdge.getNormalizedName() + " AS ";
+		}
+
+		return " LEFT OUTER JOIN " + joinClause + joinEdge.getEnd().getAlias();
 	}
 
 	@Override

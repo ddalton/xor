@@ -25,6 +25,9 @@ import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTree;
+
+import java.util.Collection;
 
 public class IntraQuery<V extends QueryFragment> extends Edge<V>
 {
@@ -42,7 +45,7 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
         return property;
     }
 
-    public String getJoinClause(PersistenceOrchestrator po) {
+    public String getJoinClause(QueryTree queryTree, PersistenceOrchestrator po) {
         String className = getEnd().getEntityType().getEntityName();
 
         if(Settings.doSQL(po)) {
@@ -59,12 +62,12 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
             // If the join edge represents an open content, that means that relationship is
             // not captured by the ORM and the join condition has to be explicitly
             // specified in the WHERE clause of the OQL
-            if (property.isOpenContent()) {
+            if (property != null && property.isOpenContent()) {
                 return QueryBuilder.COMMA_DELIMITER + className + QueryBuilder.AS_CLAUSE
                     + getEnd().getAlias();
             }
             else {
-                return po.getOQLJoinFragment((IntraQuery<QueryFragment>)this);
+                return po.getOQLJoinFragment(queryTree, (IntraQuery<QueryFragment>)this);
             }
         }
     }
@@ -75,6 +78,33 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
         } else {
             return property.getType().getName();
         }
+    }
+
+    public IntraQuery getAssociationEdge(QueryTree queryTree) {
+        IntraQuery result = this;
+
+        if(getProperty() == null) {
+            QueryFragment parent = getParentFragment(queryTree, getStart());
+            Collection<IntraQuery> inEdges = queryTree.getInEdges(parent);
+            if (inEdges.size() == 1) {
+                return inEdges.iterator().next();
+            }
+        }
+
+        return result;
+    }
+
+    private QueryFragment getParentFragment(QueryTree queryTree, QueryFragment child)
+    {
+        Collection<IntraQuery> inEdges = queryTree.getInEdges(child);
+        if (inEdges.size() == 1) {
+            IntraQuery incomingEdge = inEdges.iterator().next();
+            if(incomingEdge.getProperty() == null) {
+                return getParentFragment(queryTree, (QueryFragment)incomingEdge.getStart());
+            }
+        }
+
+        return child;
     }
 
     public String getNormalizedName() {

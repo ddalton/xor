@@ -65,7 +65,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public String getName() {
-        return name;
+        return basedOn.getName() + " ["+name+"]";
     }
 
     @Override
@@ -197,4 +197,8 @@ public class QueryType extends AbstractType {
         return false;
     }
 
+    @Override
+    public List<EntityType> findInSubtypes (String property) {
+        return this.basedOn.findInSubtypes(property);
+    }
 }

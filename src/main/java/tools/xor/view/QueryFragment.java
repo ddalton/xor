@@ -233,7 +233,7 @@ public class QueryFragment implements Vertex
             if (iter.hasNext()) {
                 IntraQuery<QueryFragment> incomingEdge = iter.next();
                 ExtendedProperty property = (ExtendedProperty)incomingEdge.getProperty();
-                if (incomingEdge.getProperty().isMany() && !Settings.doSQL(settings.getPersistenceOrchestrator())) {
+                if (property != null && property.isMany() && !Settings.doSQL(settings.getPersistenceOrchestrator())) {
                     if (property.isList()) {
                         // add INDEX
                         position += addField(
@@ -327,6 +327,7 @@ public class QueryFragment implements Vertex
         return pathToFieldMap.get(idPropertyName);
     }
 
+    // TODO: skip fields that are in the parent QueryFragment in an inheritance hierarchy
     private boolean addField(QueryField field) {
         boolean added = false;
 

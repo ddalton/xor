@@ -21,7 +21,7 @@ package tools.xor;
 
 import java.util.Iterator;
 
-public interface ElementGenerator extends Iterator
+public interface ElementGenerator extends Iterator<Integer>
 {
     void nextOwner (int ownerId, int collectionSize);
 }

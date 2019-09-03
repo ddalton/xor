@@ -19,6 +19,17 @@
 
 package tools.xor.service;
 
+import tools.xor.util.IntraQuery;
+import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTree;
+
 public class JPAQueryCapability extends AbstractQueryCapability {
 
+    @Override public String getDowncastClause (QueryTree queryTree, IntraQuery<QueryFragment> joinEdge)
+    {
+        // We need to get the association edge that points to the root of the inheritance hierarchy
+        IntraQuery<QueryFragment> association = joinEdge.getAssociationEdge(queryTree);
+
+        return String.format("TREAT(%s AS %s) ", association.getNormalizedName(), joinEdge.getEnd().getEntityType().getName());
+    }
 }

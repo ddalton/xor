@@ -336,7 +336,12 @@ public class CallInfo {
 				if (obj != null) {
 					EntityType instanceType = (EntityType)getInputObjectCreator().getShape().getType(
 						obj.getClass());
-					state = ((StateTree.SubtypeState)state).findState(instanceType);
+
+					// Downcast if possible
+					State subtypeState = ((StateTree.SubtypeState)state).findState(instanceType);
+					if(subtypeState != null) {
+						state = subtypeState;
+					}
 				}
 			}
 

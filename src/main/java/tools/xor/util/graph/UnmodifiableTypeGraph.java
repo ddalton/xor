@@ -161,6 +161,11 @@ public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implement
 		return typeGraph.hasPath(path);
 	}
 
+	@Override public void exportToDOT (String filename)
+	{
+		typeGraph.exportToDOT(filename);
+	}
+
 	@Override public V getParent (V node)
 	{
 		if(typeGraph instanceof Tree) {

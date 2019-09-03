@@ -27,15 +27,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
 import tools.xor.EntityType;
 import tools.xor.Settings;
+import tools.xor.Type;
 import tools.xor.db.base.ChapterType;
 import tools.xor.db.base.Facet;
 import tools.xor.db.base.MetaEntityState;
 import tools.xor.db.base.MetaEntityType;
 import tools.xor.db.base.Technician;
 import tools.xor.db.common.Property;
+import tools.xor.db.pm.Task;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.db.vo.base.TechnicianVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.InterQuery;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.TypeGraph;
+import tools.xor.view.AggregateTree;
+import tools.xor.view.FragmentBuilder;
+import tools.xor.view.QueryTree;
+import tools.xor.view.View;
 
 public class DefaultQueryInheritance extends AbstractDBTest {
 	@Autowired
@@ -78,4 +87,56 @@ public class DefaultQueryInheritance extends AbstractDBTest {
 		assert(result.getDescription().equals(DESCRIPTION));
 		assert(result.getSkill().equals(SKILL));
 	}
+
+	/*
+	 *
+     *               owner
+     *  T A S K  ————————————————> P E R S O N
+     *                                  ^
+     *                                  |
+     *                                  |
+     *                         T E C H N I C I A N — skill
+     *
+     *
+     *  Should produce the following query:
+     *  SELECT p.skill FROM task t left join TREAT(t.owner AS Technician) p
+	 *
+	 */
+	 public void queryTaskSkill() {
+
+		 // create person
+		 Technician technician = new Technician();
+		 technician.setName(NAME);
+		 technician.setDisplayName(DISPLAY_NAME);
+		 technician.setDescription(DESCRIPTION);
+		 technician.setUserName(USER_NAME);
+		 technician.setSkill(SKILL);
+		 technician = (Technician) aggregateManager.create(technician, new Settings());
+
+		 // create task
+		 Task task = new Task();
+		 task.setName("ROOT");
+		 task.setDisplayName("Setup DSL");
+		 task.setDescription("Setup high-speed broadband internet using DSL technology");
+		 task.setOwnedBy(technician);
+		 Settings settings = new Settings();
+		 settings.doPostFlush();
+		 task = (Task) aggregateManager.create(task, new Settings());
+
+		 // Now read the task object
+		 settings = new Settings();
+		 View view = aggregateManager.getView("TASKSKILL");
+
+		 Type taskType = aggregateManager.getDAS().getShape().getType(Task.class);
+		 TypeGraph tg = view.getTypeGraph((EntityType)taskType, StateGraph.Scope.EDGE);
+
+		 // TODO: why does technician not show up
+		 tg.exportToDOT("TaskSkill.dot");
+
+
+		 settings.setView(view);
+		 List<?> toList = aggregateManager.query(task, settings);
+
+		 assert(toList.size() == 1);
+	 }
 }

@@ -38,5 +38,9 @@ public class JPAQueryInheritanceTest extends DefaultQueryInheritance {
 	public void queryTechnician() {
 		super.queryTechnician();
 	}
-	
+
+	@Test
+	public void queryTaskSkill() {
+		super.queryTaskSkill();
+	}
 }

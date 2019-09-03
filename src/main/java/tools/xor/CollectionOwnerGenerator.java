@@ -41,7 +41,7 @@ import java.util.List;
  * NOTE: A negative collection will result in the owner being set as null
  *
  */
-public class CollectionOwnerGenerator extends DefaultGenerator implements EntityGenerator, Iterator<Integer>
+public class CollectionOwnerGenerator extends DefaultGenerator implements EntityGenerator, ElementGenerator
 {
     private final ElementGenerator elementGenerator;
     private StateGraph.ObjectGenerationVisitor visitor;
@@ -62,13 +62,7 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
         this.nodeList = new ArrayList<>(values.length-1);
         buildNodes(nodeList, 1);
 
-        this.currentNode = nodeList.get(0);
-        this.currentValue = currentNode.getStart();
-        this.end = nodeList.get(nodeList.size()-1).getEnd();
-        this.invocationCount = 0;
-        setValue();
-
-        elementGenerator.nextOwner(this.value, currentNode.getSize());
+        nextOwner(-1, 1);
     }
 
     private void setValue() {
@@ -78,7 +72,7 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
 
     @Override public boolean hasNext ()
     {
-        return (currentValue < end || elementGenerator.hasNext()) && invocationCount < max;
+        return (currentValue <= end || elementGenerator.hasNext()) && invocationCount < max;
     }
 
     @Override public Integer next ()
@@ -109,5 +103,25 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
         return String.valueOf(this.value);
+    }
+
+    @Override
+    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return this.value;
+    }
+
+    @Override public void nextOwner (int ownerId, int collectionSize)
+    {
+        this.currentNode = nodeList.get(0);
+        this.currentValue = currentNode.getStart();
+        this.end = nodeList.get(nodeList.size()-1).getEnd();
+        this.invocationCount = 0;
+        setValue();
+        elementGenerator.nextOwner(this.value, currentNode.getSize());
+    }
+
+    public int getInvocationCount() {
+        return this.invocationCount;
     }
 }

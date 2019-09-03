@@ -52,6 +52,11 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
     private int invocationCount;
     private List<RangeNode> nodeList;
     private int value;
+    private int collectionSize;
+    private int counter;
+    private int offset;
+
+    private static final int COLLECTION_SIZE = 1;
 
     public CollectionOwnerGenerator(String[] arguments, ElementGenerator elementGenerator) {
         super(arguments);
@@ -62,7 +67,7 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
         this.nodeList = new ArrayList<>(values.length-1);
         buildNodes(nodeList, 1);
 
-        nextOwner(-1, 1);
+        nextOwner(-1, 0, COLLECTION_SIZE);
     }
 
     private void setValue() {
@@ -72,18 +77,33 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
 
     @Override public boolean hasNext ()
     {
-        return (currentValue <= end || elementGenerator.hasNext()) && invocationCount < max;
+        //if(((currentValue <= end || elementGenerator.hasNext() || counter != collectionSize-1) && invocationCount < max) == false) {
+        //    System.out.println(String.format("currentValue: %d, end: %d, counter: %d, collectionSize: %d, invocationCount: %d, max: %d", currentValue, end, counter, collectionSize, invocationCount, max));
+        //}
+
+        return (currentValue <= end || elementGenerator.hasNext() || counter != collectionSize-1) && invocationCount < max;
     }
 
     @Override public Integer next ()
     {
         if(!elementGenerator.hasNext()) {
-            setValue();
 
-            if (this.value > currentNode.getEnd()) {
-                currentNode = currentNode.getNext();
+            if(counter++ == collectionSize-1) {
+                setValue();
+
+                if (this.value > currentNode.getEnd()) {
+                    currentNode = currentNode.getNext();
+                }
+
+                // reset for next value
+                counter = 0;
             }
-            elementGenerator.nextOwner(this.value, currentNode.getSize());
+            this.offset = this.value * this.counter * currentNode.getSize();
+            elementGenerator.nextOwner(this.value, this.counter, currentNode.getSize());
+
+            //if(elementGenerator instanceof CollectionElementGenerator) {
+            //    System.out.println(String.format("value: %d, counter: %d, size: %d, currentValue: %d", this.value, this.counter, currentNode.getSize(), currentValue));
+            //}
         }
         invocationCount++;
 
@@ -102,26 +122,37 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return String.valueOf(this.value);
+        return String.valueOf(this.value + this.offset);
     }
 
     @Override
     public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return this.value;
+        return this.value + this.offset;
     }
 
-    @Override public void nextOwner (int ownerId, int collectionSize)
+    @Override public void nextOwner (int ownerId, int index, int collectionSize)
     {
+        this.collectionSize = collectionSize;
+        this.counter = 0;
+
         this.currentNode = nodeList.get(0);
         this.currentValue = currentNode.getStart();
         this.end = nodeList.get(nodeList.size()-1).getEnd();
         this.invocationCount = 0;
         setValue();
-        elementGenerator.nextOwner(this.value, currentNode.getSize());
+        elementGenerator.nextOwner(this.value, this.counter, currentNode.getSize());
+    }
+
+    public int getOffset() {
+        return this.offset;
     }
 
     public int getInvocationCount() {
         return this.invocationCount;
+    }
+
+    public int getCounter() {
+        return this.counter;
     }
 }

@@ -23,5 +23,7 @@ import java.util.Iterator;
 
 public interface ElementGenerator extends Iterator<Integer>
 {
-    void nextOwner (int ownerId, int collectionSize);
+    void nextOwner (int ownerId, int counter, int collectionSize);
+
+    int getCounter();
 }

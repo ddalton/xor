@@ -57,7 +57,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Enti
         this.start = Integer.valueOf(values[0]);
         this.end = Integer.valueOf(values[1]);
 
-        nextOwner(-1, 1);
+        nextOwner(-1, 0, 1);
     }
 
     @Override public boolean hasNext ()
@@ -84,7 +84,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Enti
     }
 
     @Override
-    public void nextOwner (int ownerId, int collectionSize) {
+    public void nextOwner (int ownerId, int counter, int collectionSize) {
         this.collectionSize = collectionSize;
         this.blockNo = 0;
         this.blockSize = collectionSize>0 ? (end-start+1)/collectionSize : 0;

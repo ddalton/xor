@@ -119,11 +119,8 @@ public class QueryFragment implements Vertex
     }
 
     private String stripAncestor(String path) {
-        if(ancestorPath != null && !"".equals(ancestorPath) && path.startsWith(ancestorPath)) {
-            return path.substring(ancestorPath.length()+Settings.PATH_DELIMITER.length());
-        } else {
-            return path;
-        }
+        String anchorPath = getAnchorPath();
+        return path.substring(anchorPath.length());
     }
 
     public boolean containsPath(String path) {
@@ -131,7 +128,12 @@ public class QueryFragment implements Vertex
     }
 
     public void addPath(String path) {
+        this.paths.add(path);
+    }
+
+    public void addFullPath(String path) {
         this.paths.add(stripAncestor(path));
+        this.paths.add(path);
     }
 
     public void addSimpleCollectionPath (String path) {
@@ -169,11 +171,22 @@ public class QueryFragment implements Vertex
     }
 
     public String getFullPath(String path) {
-        return (ancestorPath == null || "".equals(ancestorPath)) ? path : (ancestorPath + Settings.PATH_DELIMITER) + path;
+        return getAnchorPath() + path;
     }
 
     private boolean isUserAttribute(Set<String> attributePaths, String path) {
         return attributePaths.contains(getFullPath(path));
+    }
+
+    public String getAnchorPath() {
+        String anchorPath = getAncestorPath();
+        if(StringUtils.isEmpty(anchorPath)) {
+            anchorPath = "";
+        } else if(!anchorPath.endsWith(Settings.PATH_DELIMITER)) {
+            anchorPath += Settings.PATH_DELIMITER;
+        }
+
+        return anchorPath;
     }
 
     /**
@@ -207,7 +220,7 @@ public class QueryFragment implements Vertex
             }
         }
         // Add queryFields for all the primary keys fields, if not already present
-        String anchorPath = StringUtils.isEmpty(getAncestorPath()) ? "" : (getAncestorPath() + Settings.PATH_DELIMITER);
+        String anchorPath = getAnchorPath();
         if(entityType.getIdentifierProperty() != null) {
             String idPath = anchorPath + entityType.getIdentifierProperty().getName();
             if(!attributePaths.contains(idPath)) {

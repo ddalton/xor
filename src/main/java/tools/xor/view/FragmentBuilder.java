@@ -174,6 +174,12 @@ public class FragmentBuilder
         // Add the fragments
         Map<State, QueryFragment> stateToFragmentMap = new HashMap<>();
         Map<String, QueryFragment> pathToFragmentMap = new HashMap<>();
+
+        // TODO: Since this is a tree data structure, we can do a BFS traversal
+        // through the tree
+        // That was we can avoid adding duplicate attributes from the subtypes, if it has
+        // already been selected on the supertype
+        // Only the id property needs to be duplicated both on the supertype and subtype
         for(State state: st.getVertices()) {
 
             QueryType qt = (QueryType)state.getType();
@@ -185,23 +191,30 @@ public class FragmentBuilder
 
             // collect them to later add them in the correct order
             for(String attr: state.getAttributes()) {
-                pathToFragmentMap.put(fragment.getFullPath(attr), fragment);
+                if(!view.hasUserQuery()) {
+                    fragment.addPath(attr);
+                } else {
+                    pathToFragmentMap.put(fragment.getFullPath(attr), fragment);
+                }
             }
 
             queryTree.addVertex(fragment);
         }
 
-        // Add the attributes in the correct order
-        for(String path: paths) {
-            if(pathToFragmentMap.containsKey(path)) {
-                QueryFragment qf = pathToFragmentMap.remove(path);
-                qf.addPath(path);
+        // We need to fetch the columns in the order specified by the user query
+        if(view.hasUserQuery()) {
+            // Add the attributes in the correct order
+            for (String path : paths) {
+                if (pathToFragmentMap.containsKey(path)) {
+                    QueryFragment qf = pathToFragmentMap.remove(path);
+                    qf.addFullPath(path);
+                }
             }
-        }
-        // Add the remaining attributes - order is irrelevant
-        for(String path: new HashSet<>(pathToFragmentMap.keySet())) {
-            QueryFragment qf = pathToFragmentMap.remove(path);
-            qf.addPath(path);
+            // Add the remaining attributes - order is irrelevant
+            for (String path : new HashSet<>(pathToFragmentMap.keySet())) {
+                QueryFragment qf = pathToFragmentMap.remove(path);
+                qf.addFullPath(path);
+            }
         }
 
         // Add the edges

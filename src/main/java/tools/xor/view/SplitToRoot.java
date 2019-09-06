@@ -32,8 +32,7 @@ import java.util.List;
  */
 public class SplitToRoot implements SplitStrategy
 {
-    private AggregateTree aggregateTree;
-    private List<AggregateTree> queryTrees;
+    private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
 
     public SplitToRoot (AggregateTree aggregateTree) {
         this.aggregateTree = aggregateTree;
@@ -55,7 +54,14 @@ public class SplitToRoot implements SplitStrategy
 
         List<QueryTree> pieces = new LinkedList<>(vertices);
         while(!pieces.isEmpty()) {
-            QueryTree queryTree = pieces.remove(0);
+            QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree = pieces.remove(0);
+
+            for(QueryFragment fragment: queryTree.getVertices()) {
+                if(queryTree.getSubtypes(fragment).size() > 0) {
+                    throw new RuntimeException("SplitToRoot not supported for fields on subtypes, use SplitToAnchor instead.");
+                }
+            }
+
             QueryFragment root = (QueryFragment)queryTree.getRoot();
             queryTree.computeCollectionCount(root);
 

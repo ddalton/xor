@@ -74,10 +74,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class DBTranslator
 {
     private final static Map<String, DBTranslator> translators = new ConcurrentHashMap<>();
+    private final static Map<String, DBType> dbTypeByProductName = new ConcurrentHashMap<>();
+
+    private static final String HANA_PRODUCT_NAME = "HDB";
+    private static final String HSQLDB_PRODUCT_NAME = "HSQL DATABASE ENGINE";
 
     static {
-        translators.put("HSQL DATABASE ENGINE", new HSQLTranslator() );
-        translators.put("HDB", new HANATranslator() );
+        translators.put(HANA_PRODUCT_NAME, new HANATranslator() );
+        translators.put(HSQLDB_PRODUCT_NAME, new HSQLTranslator() );
+
+        dbTypeByProductName.put(HANA_PRODUCT_NAME, DBType.HANA);
+        dbTypeByProductName.put(HSQLDB_PRODUCT_NAME, DBType.HSQLDB);
     }
 
     protected static final Map<String, Class> SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
@@ -404,6 +411,17 @@ public abstract class DBTranslator
         }
 
         return result;
+    }
+
+    public static DBType getDBType(Connection conn) {
+        try {
+            DatabaseMetaData metadata = conn.getMetaData();
+            String productName = metadata.getDatabaseProductName().toUpperCase();
+            return dbTypeByProductName.get(productName);
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
     }
 
     public static DBTranslator getTranslator(Statement statement) {

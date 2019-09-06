@@ -47,6 +47,25 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         return (inEdges.size() == 1) ? inEdges.iterator().next().getStart(): null;
     }
 
+    public V getsuperType(V node) {
+        return getSupertype(this, node);
+    }
+
+    public static <V extends Vertex, E extends Edge<V>, T extends Tree & DirectedGraph<V, E>> V getSupertype(T tree, V node) {
+        Collection<E> inEdges = tree.getInEdges(node);
+
+        assert inEdges.size() <= 1 : "A tree can have at most one incoming edge";
+
+        Edge<V> incoming = (inEdges.size() == 1) ? inEdges.iterator().next() : null;
+
+        // check if it is an inheritance edge
+        if(incoming != null && incoming.isUnlabelled()) {
+            return incoming.getStart();
+        }
+
+        return null;
+    }
+
     @Override
     public void addEdge(E edge, V start, V end) {
         assert getInEdges(end).size() == 0 : "A node in a tree can have at most one incoming edge";
@@ -70,6 +89,7 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         List<V> vertices = new LinkedList<>();
         List<V> verticesToRemove = new LinkedList<>();
 
+        // mark the vertex and all its descendants from the tree
         vertices.add(splitAtEdge.getEnd());
         while(!vertices.isEmpty()) {
             V vertex = vertices.remove(0);
@@ -81,9 +101,11 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         // The vertices can only be added to the target after they are first
         // removed from the source, due to the constraint on Tree having one incoming edge
         List<E> edgesToAdd = new LinkedList<>();
-        edgesToAdd.add(newEdge);
+        if(newEdge != null) {
+            edgesToAdd.add(newEdge);
+        }
         for(V vertex: verticesToRemove) {
-            if(vertex == newEdge.getEnd()) {
+            if(vertex == splitAtEdge.getEnd()) {
                 continue;
             }
             edgesToAdd.add(tree.getInEdges(vertex).iterator().next());
@@ -113,6 +135,23 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         List<V> result = new LinkedList();
         for(Edge<V> edge: outEdges) {
             result.add(edge.getEnd());
+        }
+
+        return result;
+    }
+
+    public List<V> getSubtypes(V node) {
+        return getSubtypes(this, node);
+    }
+
+    public static <V extends Vertex, E extends Edge<V>, T extends Tree & DirectedGraph<V, E>> List<V> getSubtypes(T tree, V node) {
+        Collection<E> outEdges = tree.getOutEdges(node);
+
+        List<V> result = new LinkedList();
+        for(Edge<V> edge: outEdges) {
+            if(edge.isUnlabelled()) {
+                result.add(edge.getEnd());
+            }
         }
 
         return result;

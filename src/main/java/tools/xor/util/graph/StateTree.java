@@ -171,6 +171,10 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				type = ((QueryType) type).getBasedOn();
 			}
 
+			if(type.isAbstract()) {
+				throw new RuntimeException("Abstract types cannot be queried, specify the desired concrete type");
+			}
+
 			EntityType childType = (EntityType) descendantState.getType();
 			if(childType instanceof QueryType) {
 				childType = ((QueryType) childType).getBasedOn();
@@ -632,5 +636,25 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	public QueryType createQueryType() {
 		// We need to augment the state tree with aliases
 		return null;
+	}
+
+	@Override
+	public StateGraph<V, E> copy() {
+		return copy(null);
+	}
+
+	/**
+	 *
+	 * @param mergeStates map of states to be merged. Needs to be the original states map and not a copy, since it is needed to properly remove duplicates
+	 * @return merged graph
+	 */
+	@Override
+	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
+
+		StateTree<V, E> result = new StateTree<V, E>(getAggregateRoot(), getShape(), this.rootState);
+
+		copyData(result, mergeStates);
+
+		return result;
 	}
 }

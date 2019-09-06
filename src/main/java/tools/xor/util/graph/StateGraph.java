@@ -82,6 +82,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		return states.get(root);
 	}
 
+	protected Type getAggregateRoot() {
+		return this.root;
+	}
+
 	protected Shape getShape () {
 		return this.shape;
 	}
@@ -90,7 +94,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	public void addEdge(E edge, V start, V end) {
 		// There could be multiple edges with name UNLABELLED, so we have to
 		// use the superclass implementation to support that
-		if(!edge.getName().equals(DFAtoNFA.UNLABELLED)) {
+		if(!edge.isUnlabelled()) {
 			if (edge.getStart() != start) {
 				if (edge.getEnd() == start) {
 					logger.debug("Adding a reversed edge");
@@ -123,7 +127,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 	@Override
 	public void removeEdge(E edge) {
-		if(!edge.getName().equals(DFAtoNFA.UNLABELLED)) {
+		if(!edge.isUnlabelled()) {
 			Map<String, E> outLinks = outTransitions.get(edge.getStart());
 			if (outLinks == null) {
 				throw new IllegalStateException("Unable to find outTransition entry for edge");
@@ -236,6 +240,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		
 		StateGraph<V, E> result = new StateGraph<V, E>(this.root, this.shape);
 		
+		copyData(result, mergeStates);
+
+		return result;
+	}
+
+	protected void copyData(StateGraph<V, E> result, Map<Type, V> mergeStates) {
 		Map<V, V> oldNew = new HashMap<V, V>();
 		for(V v: getVertices()) {
 			V newState = (V) v.copy();
@@ -245,7 +255,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				}
 			}
 			oldNew.put(v, newState);
-			
+
 			// A graph may not have any edges, so let us add the
 			// vertices here
 			result.addVertex(newState);
@@ -259,8 +269,6 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					oldNew.get(edge.getEnd()),
 					edge.isQualified()));
 		}
-
-		return result;
 	}
 
 	@Override

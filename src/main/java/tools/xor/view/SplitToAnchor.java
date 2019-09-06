@@ -37,7 +37,7 @@ import java.util.Stack;
  */
 public class SplitToAnchor implements SplitStrategy
 {
-    private AggregateTree aggregateTree;
+    private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
 
     public SplitToAnchor (AggregateTree aggregateTree) {
         this.aggregateTree = aggregateTree;
@@ -68,7 +68,12 @@ public class SplitToAnchor implements SplitStrategy
      */
     @Override public void execute ()
     {
-        QueryTree queryTree = (QueryTree)aggregateTree.getRoot();
+        for(QueryTree queryTree: aggregateTree.getVertices()) {
+            processQueryTree(queryTree);
+        }
+    }
+
+    private void processQueryTree(QueryTree queryTree) {
         queryTree.computeCollectionCount((QueryFragment)queryTree.getRoot());
 
         Stack<QueryFragment> processing = new Stack<>();
@@ -152,7 +157,7 @@ public class SplitToAnchor implements SplitStrategy
         return newQueries;
     }
 
-    private QueryTree split(QueryTree<QueryFragment, IntraQuery<QueryFragment>> originalQT, QueryFragment anchor, IntraQuery<QueryFragment> splitAtEdge) {
+    public QueryTree split(QueryTree<QueryFragment, IntraQuery<QueryFragment>> originalQT, QueryFragment anchor, IntraQuery<QueryFragment> splitAtEdge) {
         String ancestorPath = originalQT.getPathToRoot(anchor);
         QueryFragment clone = new QueryFragment(anchor.getEntityType(), aggregateTree.nextAlias(), ancestorPath);
 

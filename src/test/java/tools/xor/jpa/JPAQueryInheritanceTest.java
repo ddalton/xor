@@ -26,13 +26,20 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
+import tools.xor.Settings;
 import tools.xor.logic.DefaultQueryInheritance;
+import tools.xor.service.JPAPersistenceOrchestrator;
+import tools.xor.service.PersistenceOrchestrator;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-VO-jpa-test.xml" })
 @TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAQueryInheritanceTest extends DefaultQueryInheritance {
+
 
 	@Test
 	public void queryTechnician() {
@@ -43,4 +50,20 @@ public class JPAQueryInheritanceTest extends DefaultQueryInheritance {
 	public void queryTaskSkill() {
 		super.queryTaskSkill();
 	}
+
+	/*
+	@Test
+	public void testInheritanceOQL() {
+		aggregateManager.checkPO(new Settings());
+
+		JPAPersistenceOrchestrator po = (JPAPersistenceOrchestrator)aggregateManager.getPersistenceOrchestrator();
+		EntityManager em = po.getEntityManager();
+
+		//Query query = em.createQuery("SELECT _XOR_0.id, _XOR_0.name, _XOR_0.displayName, _XOR_0.description, _XOR_0.iconUrl, _XOR_0.detailedDescription, _XOR_1.name, _XOR_1.id, _XOR_2.id FROM tools.xor.db.pm.Task AS _XOR_1  LEFT OUTER JOIN _XOR_1.ownedBy AS _XOR_0 LEFT OUTER JOIN TREAT(_XOR_1.ownedBy AS tools.xor.db.base.Technician) _XOR_2");
+		Query query = em.createQuery("SELECT _XOR_0.id, _XOR_0.name, _XOR_0.displayName, _XOR_0.description, _XOR_0.iconUrl, _XOR_0.detailedDescription, _XOR_1.name, _XOR_1.id FROM tools.xor.db.pm.Task AS _XOR_1  LEFT OUTER JOIN TREAT(_XOR_1.ownedBy AS tools.xor.db.base.Technician) _XOR_0");
+		//Query query = em.createQuery("SELECT _XOR_0.id, _XOR_0.name, _XOR_0.displayName, _XOR_0.description, _XOR_0.iconUrl, _XOR_0.detailedDescription, _XOR_1.name, _XOR_1.id FROM tools.xor.db.pm.Task AS _XOR_1  LEFT OUTER JOIN _XOR_1.ownedBy AS _XOR_0 ORDER BY _XOR_1.id");
+
+		query.getResultList();
+	}
+	*/
 }

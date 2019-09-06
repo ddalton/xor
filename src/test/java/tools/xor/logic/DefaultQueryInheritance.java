@@ -128,11 +128,12 @@ public class DefaultQueryInheritance extends AbstractDBTest {
 		 View view = aggregateManager.getView("TASKSKILL");
 
 		 Type taskType = aggregateManager.getDAS().getShape().getType(Task.class);
+		 view = view.copy();
+		 view.setSplitToRoot(false);
 		 TypeGraph tg = view.getTypeGraph((EntityType)taskType, StateGraph.Scope.EDGE);
 
 		 // TODO: why does technician not show up
 		 tg.exportToDOT("TaskSkill.dot");
-
 
 		 settings.setView(view);
 		 List<?> toList = aggregateManager.query(task, settings);

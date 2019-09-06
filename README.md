@@ -1,39 +1,18 @@
-Test inheritance join queries
-skill property is not being selected in the OQL
-Add DowncastSplitter - for OQL split also by downcast states
+the stitch functionality needs to work on same objects but on differnt paths.
+So path should include container unique id - How???
+1. We enhance ancestorpath to contain type information to handle subtypes
+2. We support simpleancestorpath for backwards compatibility
+3. We perform stitching by key objects based on ancestorpath. The same key on the ancestor path might have multiple values, if the path represents
+   collections on different parts of the graph and contain the same objects.
 
-select person1_.UUID as col_0_0_, person1_.name as col_1_0_, person1_.displayName as col_2_0_, person1_.description as col_3_0_, person1_.iconUrl as col_4_0_, person1_.detailedDescription as col_5_0_, task0_.name as col_6_0_, task0_.UUID as col_7_0_, person2_.UUID as col_8_0_ 
-from Task task0_ left outer join Person person1_ on task0_.ownedBy_UUID=person1_.UUID inner join Technician person1_1_ on person1_.UUID=person1_1_.UUID left outer join Person person2_ on task0_.ownedBy_UUID=person2_.UUID inner join Technician person2_1_ on person2_.UUID=person2_1_.UUID 
-where task0_.UUID=? order by task0_.UUID
--- Check above query on a HANA database and after running test case - 
-mvn test -Dtest=JPAQueryInheritanceTest#queryTaskSkill
+Now where are these temporary results saved? to be used later for stitching
 
-Check why the above query returns 0 rows
+Implement BFSTraversal for FragmentBuilder:178
 
-Debug inheritance and parallel collection count
-Test this for JDBC po
-
-print the StateGraph
-Unable to add unknown attribute to state graph: skill to state: OT3LFDWNPJ9POEPX 
-Unable to add unknown attribute to state graph: skill to state: FFAWOR8ZEQ3U2QUM 
-
-and the TREAT operator
-
-                    owner
-       T A S K  ————————————————> P E R S O N
-                                       ^
-                                       |
-                                       |
-                              T E C H N I C I A N — skill
-
-
-
-SELECT p.skill FROM task t left join TREAT(t.owner AS Technician) p 
-
-for this query to be created, “skill” attribute needs to be identified as being anchored on Technician
-
-StateGraph - have a new method on SubtypeState. Get state based on attribute:
-getState(String name)
+ancestorPath - should have subtype information
+      for e.g.,    a|com.Type1:b|c|d|e
+              owner|Technician:skill
+QueryTree#findFragment - Needs to also take in type to get the subtype
 
 
 

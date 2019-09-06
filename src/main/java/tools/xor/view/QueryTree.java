@@ -488,7 +488,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		if(path == null || getRoot() == null) {
 			return null;
 		}
-		String anchorPath = StringUtils.isEmpty(getRoot().getAncestorPath()) ? "" : (getRoot().getAncestorPath() + Settings.PATH_DELIMITER);
+		String anchorPath = getRoot().getAnchorPath();
 
 		// we first strip out the ancestor path from the root QueryTree
 		return path.startsWith(anchorPath) ? path.substring(anchorPath.length()) : path;
@@ -501,6 +501,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 	/**
 	 * Find the closest fragment at which this path is anchored
+	 * TODO: How does it find subtype nodes? We need to additionally provide type
 	 * @param path for which we want to find the fragment
 	 * @return fragment
 	 */

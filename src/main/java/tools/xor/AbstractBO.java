@@ -55,9 +55,8 @@ public abstract class AbstractBO implements BusinessObject {
 	public static final String CURRENT = ".";
 
 	// SDO Path related constants
-	// Do we need to support this? Is this used?
-	// Seems like duplicate functionality to view (Probably needed to support collections)
-	// Should we move this to AggregateView? and support them in views?
+    // This delimiter is used when entity name for downcast properties need to be provided
+	// since the entity name usually contains Settings.PATH_DELIMITER, we use this instead
 	public static final String SDO_PATH_DELIMITER = "/";
 	public static final String INDEX_FROM_0   = ".";
 	public static final String INDEX_START    = "[";

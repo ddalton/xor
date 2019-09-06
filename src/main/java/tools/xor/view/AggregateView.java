@@ -437,12 +437,17 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(this);
 			new FragmentBuilder(das, aggregateTree).build((EntityType)viewKey.type);
 
-			// run through the cartesian join splitter
-			if (isSplitToRoot()) {
-				(new SplitToRoot(aggregateTree)).execute();
-			}
-			else {
-				(new SplitToAnchor(aggregateTree)).execute();
+			// Perform the split only if user query is not specified
+			if(!hasUserQuery()) {
+
+				// run through the cartesian join splitter
+				if (isSplitToRoot()) {
+					(new SplitToRoot(aggregateTree)).execute();
+				}
+				else {
+					(new SplitToAnchor(aggregateTree)).execute();
+					(new SplitSubtype(aggregateTree)).execute();
+				}
 			}
 
 			queryCache.put(viewKey, aggregateTree);
@@ -548,7 +553,8 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 		if(exactAttributes != null) {
 			result.exactAttributes = new HashSet(exactAttributes);
 		}
-		
+
+		// NOTE: If a copy is taken and the values changed then the state graph could become invalidated
 		if(stateGraph != null) {
 			for(Map.Entry<String, StateGraph<State, Edge<State>>> entry: stateGraph.entrySet()) {
 				result.stateGraph.put(entry.getKey(), entry.getValue().copy());

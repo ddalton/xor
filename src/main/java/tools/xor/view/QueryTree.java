@@ -249,16 +249,16 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			}
 		}
 
-		ReconstituteRecordVisitor visitor = new ReconstituteRecordVisitor();
+		ReconstituteRecordVisitor collectionReconstitutor = new ReconstituteRecordVisitor();
 		for(String propertyPath: changed) {
 			// Set the value and create any intermediate objects if necessary
-			root.reconstitute(propertyPath, propertyResult, this, visitor);
+			root.reconstitute(propertyPath, propertyResult, this, collectionReconstitutor, queryInvocation);
 
 			// Notify the queryTreeInvocation visitor
 			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
 		}
 		lcp = getDeepestCollection(lcp);
-		visitor.process(lcp);
+		collectionReconstitutor.process(lcp);
 
 		return propertyResult;
 	}

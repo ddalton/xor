@@ -90,6 +90,12 @@ public class DefaultMappedBy {
 		assert(task.getMappedBy() == null);
 
 		assert(quote.getMappedBy() == task);
+
+		System.out.println("Quote: " + quote.getName());
+		System.out.println("Task mapOf: " + task.getMapOf().getName());
+
+		System.out.println("Quoto id: " + System.identityHashCode(quote));
+		System.out.println("Task mapOf id: " + System.identityHashCode(task.getMapOf()));
 		assert(task.getMapOf() == quote);		
 	}
 

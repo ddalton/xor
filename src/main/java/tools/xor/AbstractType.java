@@ -75,7 +75,8 @@ public abstract class AbstractType implements EntityType {
 	protected Set<String>       subTypes;
 	protected Set<String>       childSubTypes;
 
-	private   String            superType;
+	private   String            superTypeName;
+	private   EntityType        superType;
 	private   int               order; //represents the topological sort order of the entity type
 	private   List<String>      naturalKey;
 	protected List<String>      expandedNaturalKey;
@@ -286,20 +287,25 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public EntityType getSuperType() {
 
-		if(this.superType == null) {
+		if(this.superTypeName == null) {
 			return null;
 		}
 
-		if(isDomainType()) {
-			return (EntityType)getShape().getType(superType);
-		} else {
-			return (EntityType)getShape().getExternalType(superType);
+		if(superType == null) {
+			if (isDomainType()) {
+				superType = (EntityType)getShape().getType(superTypeName);
+			}
+			else {
+				superType = (EntityType)getShape().getExternalType(superTypeName);
+			}
 		}
+
+		return superType;
 	}
 	
 	@Override
 	public void setSuperType(EntityType value) {
-		this.superType = value.getEntityName();
+		this.superTypeName = value.getEntityName();
 	}	
 	
 	@Override
@@ -969,7 +975,26 @@ public abstract class AbstractType implements EntityType {
 
 	public void setClassResolver(ClassResolver classResolver) {
 		this.classResolver = classResolver;
-	}	
+	}
+
+	protected boolean isSuperTypeProperty(String name) {
+		// Property is present in the supertype, so we do not add it here
+		if(superType != null && superType.getProperty(name) != null) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public List <Property> getDeclaredProperties() {
+		Map<String, Property> propertyMap = getShape().getProperties(this);
+		if(propertyMap == null) {
+			return null;
+		}
+
+		return new ArrayList<>(propertyMap.values());
+	}
 
 	@Override
 	public List<Property> getProperties() {
@@ -977,6 +1002,23 @@ public abstract class AbstractType implements EntityType {
 		if(propertyMap == null) {
 			return null;
 		}
+
+		// Make the map mutable since we need to add to it
+		propertyMap = new HashMap<>(propertyMap);
+
+		EntityType parentType = getSuperType();
+		while(parentType != null) {
+			Map<String, Property> parentProperties = getShape().getProperties(parentType);
+			for(Map.Entry<String, Property> entry: parentProperties.entrySet()) {
+				if(!propertyMap.containsKey(entry.getKey())) {
+					propertyMap.put(entry.getKey(), entry.getValue());
+				}
+			}
+
+			// Walk up the super types
+			parentType = parentType.getSuperType();
+		}
+
 		return new ArrayList<>(propertyMap.values());
 	}
 

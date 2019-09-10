@@ -36,6 +36,7 @@ import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
+import tools.xor.view.QueryTreeInvocation;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -843,7 +844,8 @@ public abstract class AbstractBO implements BusinessObject {
 	public void reconstitute (String propertyPath,
 							  Map<String, Object> propertyResult,
 							  QueryTree queryTree,
-							  ReconstituteRecordVisitor visitor) throws Exception {
+							  ReconstituteRecordVisitor visitor,
+							  QueryTreeInvocation qti) throws Exception {
 
 		// If we are setting a null value then nothing needs to be done
 		if( propertyResult.get(propertyPath) == null) {
@@ -921,7 +923,9 @@ public abstract class AbstractBO implements BusinessObject {
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getShape().getType(
 								narrowToType);
-						propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()));
+
+						propertyDO = createQueryObject(null, current, propertyPath, idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()), qti);
+						//propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()));
 					}
 				}
 				if(property.isContainment()) {
@@ -936,12 +940,16 @@ public abstract class AbstractBO implements BusinessObject {
 			} else  {
 
 				//System.out.println("propertyDO class: " + propertyDO.getClass() + ", property: " + property.getName());
+				propertyDO = createQueryObject(propertyDO, current, propertyPath, null, null, property.getType(), property, getAnchor(anchor.toString()), qti);
+				/*
 				if(propertyDO == null) { // create and set the collection/map object
 					propertyDO = current.createDataObject(null, property.getType(), property, getAnchor(
 							anchor.toString()));
 				} else if(!BusinessObject.class.isAssignableFrom(propertyDO.getClass())) {
 					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, getAnchor(anchor.toString()));
 				}
+				*/
+
 				((ExtendedProperty)property).setValue(current, ((BusinessObject)propertyDO).getInstance());
 				current = (BusinessObject) propertyDO;
 				Object elementDO = null;
@@ -983,14 +991,25 @@ public abstract class AbstractBO implements BusinessObject {
 					} 
 
 					if(elementInstance == null) {
-						if(idValue != null || naturalKeyValues.size() > 0)
-							elementDO = current.createDataObject(idValue, naturalKeyValues, elementType, null, getAnchor(
-									anchor.toString()));
-						else
+						if(idValue != null || naturalKeyValues.size() > 0) {
+							/*elementDO = current.createDataObject(
+								idValue, naturalKeyValues, elementType, null, getAnchor(
+									anchor.toString()));*/
+							elementDO = createQueryObject(elementInstance, current, propertyPath, idValue, naturalKeyValues, elementType, null, getAnchor(anchor.toString()), qti);
+						} else {
 							return; // Does not have a collection element
-					} else
+						}
+					} else {
 						// create the data object using the instance
-						elementDO = objectCreator.createDataObject(elementInstance, elementType, current, null, getAnchor(anchor.toString()));
+						elementDO = createQueryObject(elementInstance, current, propertyPath, idValue, naturalKeyValues, elementType, null, getAnchor(anchor.toString()), qti);
+						/*
+						elementDO = objectCreator.createDataObject(
+							elementInstance,
+							elementType,
+							current,
+							null,
+							getAnchor(anchor.toString()));*/
+					}
 
 					// check flag to see if the containment should be set
 					if(property.isContainment())
@@ -1045,6 +1064,31 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 
 		return;
+	}
+
+	private BusinessObject createQueryObject(Object instance,
+											 BusinessObject bo,
+											 String queryPath,
+											 Object idValue,
+											 Map<String, Object> naturalKeyValues,
+											 Type type,
+											 Property property,
+											 String anchorPath,
+											 QueryTreeInvocation qti) throws Exception
+	{
+		BusinessObject queryObject = null;
+
+		if(instance == null) {
+			queryObject = bo.createDataObject(idValue, naturalKeyValues, type, property, anchorPath);
+		} else if(!BusinessObject.class.isAssignableFrom(instance.getClass())) {
+			queryObject = objectCreator.createDataObject(instance, type, bo, property, anchorPath);
+		} else {
+			queryObject = (BusinessObject)instance;
+		}
+
+		qti.visit(queryPath, queryObject);
+
+		return queryObject;
 	}
 
 	public static String getAnchor(String path) {

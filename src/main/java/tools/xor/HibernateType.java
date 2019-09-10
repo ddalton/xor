@@ -106,19 +106,10 @@ public class HibernateType extends AbstractType {
 	public void setProperty(Shape shape) {
 		HibernateDAS dataAccessService = (HibernateDAS)getShape().getDAS();
 		if(getProperties() == null) {
-			// populate the properties for this type
-			Iterator<?> propertyIterator = getPropertyIterator();
-			while(propertyIterator.hasNext()) {
-				org.hibernate.mapping.Property hibernateProperty = (org.hibernate.mapping.Property) propertyIterator.next();
-				logger.debug("[" + getName() + "] hibernate property name: " + hibernateProperty.getName() + ", type name: " + hibernateProperty.getType().getReturnedClass());
-
-				Type propertyType = shape.getType(hibernateProperty.getType().getReturnedClass());
-				HibernateProperty property = new HibernateProperty(hibernateProperty, propertyType, this, dataAccessService.getConfiguration());
-				property.init(shape);
-				shape.addProperty(property);
-			}		
 
 			// Components don't have identifiers
+			// Create separate properties for id and version columns even if they are present in the super type
+			String versionName = null;
 			if(!hibernateType.isComponentType()) {
 				org.hibernate.mapping.Property idProperty = ((PersistentClass)hibernateClass).getIdentifierProperty();
 				if(idProperty != null) {
@@ -127,14 +118,41 @@ public class HibernateType extends AbstractType {
 					identifierProperty = new HibernateProperty(idProperty, propertyType, this, dataAccessService.getConfiguration());
 					shape.addProperty(identifierProperty);
 				}
-				
+
 				org.hibernate.mapping.Property verProperty = ((PersistentClass)hibernateClass).getVersion();
 				if(verProperty != null) {
-					logger.debug("Hibernate version attribute name: " + verProperty.getName());	
-					Type propertyType = shape.getType(verProperty.getType().getReturnedClass());
-					versionProperty = new HibernateProperty(verProperty, propertyType, this, dataAccessService.getConfiguration());
-					shape.addProperty(versionProperty);
-				}				
+					versionName = verProperty.getName();
+				}
+			}
+
+			// populate the properties for this type
+			Iterator<?> propertyIterator = getPropertyIterator();
+			HibernateType superType = (HibernateType)getSuperType();
+			// Ensure that the properties has been populated for the supertype
+			if(superType != null) {
+				superType.setProperty(shape);
+			}
+
+			while(propertyIterator.hasNext()) {
+				org.hibernate.mapping.Property hibernateProperty = (org.hibernate.mapping.Property) propertyIterator.next();
+				logger.debug("[" + getName() + "] hibernate property name: " + hibernateProperty.getName() + ", type name: " + hibernateProperty.getType().getReturnedClass());
+
+				// Property is present in the supertype, so we do not add it here
+				String propertyName = hibernateProperty.getName();
+				if(isSuperTypeProperty(propertyName)) {
+					if(!propertyName.equals(versionName)) {
+						continue;
+					}
+				}
+
+				Type propertyType = shape.getType(hibernateProperty.getType().getReturnedClass());
+				HibernateProperty property = new HibernateProperty(hibernateProperty, propertyType, this, dataAccessService.getConfiguration());
+				property.init(shape);
+				shape.addProperty(property);
+			}
+
+			if(versionName != null) {
+				versionProperty = (HibernateProperty)getProperty(versionName);
 			}
 		} 		
 	}

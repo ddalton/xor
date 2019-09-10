@@ -67,6 +67,9 @@ public class QueryBuilder
     /**
      * Constructs the OQL query for each QueryTree and populates it with it.
      * We do it in a BFS traversal.
+     *
+     * Query construction is done after the QueryTree(s) have been created,
+     * including the necessary splits.
      */
     public void construct(Settings settings) {
 

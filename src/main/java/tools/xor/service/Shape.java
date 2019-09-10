@@ -992,7 +992,7 @@ public class Shape
         }
 
         orderedGraph.populateEdges(this);
-        DFAtoNFA.processInheritance(orderedGraph, false);
+        DFAtoNFA.processInheritance(orderedGraph, DFAtoNFA.TypeCategory.ALL);
 
         if (!ApplicationConfiguration.config().containsKey(Constants.Config.TOPO_SKIP)
             || !ApplicationConfiguration.config().getBoolean(Constants.Config.TOPO_SKIP)) {

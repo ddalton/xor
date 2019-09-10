@@ -1,3 +1,12 @@
+Create PriorityTask to test the stitching functionality
+Test case
+=========
+  1. Create some taskChildren of type Task
+  2. Create some taskChildren of type Task and PriorityTask
+  3. Create a view that selects properties form the children and grandchildren Task
+     and some properties from the grandchildren PriorityTask
+  4. Fix the QueryOperation#processRecords method for stitching 
+
 the stitch functionality needs to work on same objects but on differnt paths.
 So path should include container unique id - How???
 1. We enhance ancestorpath to contain type information to handle subtypes

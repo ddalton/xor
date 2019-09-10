@@ -302,7 +302,7 @@ public class DataGenerator
             properties = new LinkedList<>();
             generatedFields.put(entityType.getName(), properties);
 
-            for (Property p : entityType.getProperties()) {
+            for (Property p : entityType.getDeclaredProperties()) {
                 if (((ExtendedProperty)p).isDataType() && (
                     ((ExtendedProperty)p).getGenerator() != null || !p.isNullable())) {
                     properties.add(p);

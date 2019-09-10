@@ -41,7 +41,6 @@ import tools.xor.util.graph.TypeGraph;
 
 public class CallInfo {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
-	
 	private static final int START_DEPTH = 0;	
 
 	private Object           input;
@@ -315,6 +314,7 @@ public class CallInfo {
 
 		EntityType entityType = (EntityType)settings.getEntityType();
 		TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType(), settings.getScope());
+
 		if(logger.isDebugEnabled()) {
 			logger.debug("Type: " + getOutputRoot().getType().getName() + ", view: " 
 					+ settings.getView().getName() 

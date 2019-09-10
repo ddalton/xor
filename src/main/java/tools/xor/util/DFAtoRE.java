@@ -63,11 +63,13 @@ public class DFAtoRE {
 
 	public DFAtoRE(Type aggregateType, Shape shape) {
 		this.aggregateType = aggregateType;
-		this.stateGraph = new StateGraph<State, Edge<State>>(this.aggregateType, shape);
+		this.stateGraph = new StateGraph<>(this.aggregateType, shape);
+
 		buildDFA(shape);
+
 		this.stateGraphExact = this.stateGraph.copy();
-		DFAtoNFA.processInheritance(this.stateGraphExact, true);
-		DFAtoNFA.processInheritance(this.stateGraph, false);
+		DFAtoNFA.processInheritance(this.stateGraphExact, DFAtoNFA.TypeCategory.SUPERTYPES);
+		DFAtoNFA.processInheritance(this.stateGraph, DFAtoNFA.TypeCategory.ALL);
 
 		solve();
 	}
@@ -773,7 +775,7 @@ public class DFAtoRE {
 		}
 
 		// Have the supertypes added by default
-		DFAtoNFA.processInheritance(constrainedGraph, true);
+		DFAtoNFA.processInheritance(constrainedGraph, DFAtoNFA.TypeCategory.SUPERTYPES);
 
 		return constrainedGraph;
 	}

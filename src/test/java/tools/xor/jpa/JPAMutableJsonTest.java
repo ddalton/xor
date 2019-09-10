@@ -694,6 +694,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
 		ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
 		namep.setGenerator(namegen);
+		ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+		Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+		dtype.setGenerator(dtypegen);
 
 		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "1",
 																	"1,500:0",
@@ -720,9 +723,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// Dependants
 		JDBCType taskTask = (JDBCType)shape.getType("TASK_TASK");
-		CollectionElementGenerator cegen = new SlidingElementGenerator(new String[] { "1501", "4500"});
+		CollectionElementGenerator cegen = new SlidingElementGenerator(new String[] { "1500", "4499"});
 		String[] collectionSizes = new String[] { "3000",
-										 "1,1500:2"
+										 "1,1499:2"
 		};
 		CollectionOwnerGenerator cogen = new CollectionOwnerGenerator(collectionSizes, cegen);
 		taskTask.addGenerator(cogen);

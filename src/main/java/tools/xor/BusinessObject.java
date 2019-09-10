@@ -26,6 +26,7 @@ import org.hsqldb.lib.ObjectComparator;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.QueryTree;
+import tools.xor.view.QueryTreeInvocation;
 
 public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.TypedObject
 {
@@ -259,12 +260,14 @@ public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.
 	 * @param propertyResult The result from a query
 	 * @param queryTree for the query
 	 * @param visitor for helping with adding elements to their collection
+	 * @param queryInvocation holds intermediate results from the parent queries to help with stitching
 	 * @throws Exception if property cannot be found
 	 */
 	void reconstitute (String propertyPath,
 					   Map<String, Object> propertyResult,
 					   QueryTree queryTree,
-					   ReconstituteRecordVisitor visitor) throws Exception;
+					   ReconstituteRecordVisitor visitor,
+					   QueryTreeInvocation queryInvocation) throws Exception;
 	
 	/**
 	 * Responsible for creating a new data object whose lifecycle is linked with this object.

@@ -90,7 +90,14 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Returns the property that refers to the version of the entity
 	 * @return Property object
 	 */
-	public Property getVersionProperty();	
+	public Property getVersionProperty();
+
+	/**
+	 * Gets the list of properties that are directly on this type, i.e.,
+	 * it does not include properties not defined on its supertypes
+	 * @return list of properties
+	 */
+	List /*Property*/<Property> getDeclaredProperties();
 	
 	/**
 	 * Used to get access to the Domain type from external types

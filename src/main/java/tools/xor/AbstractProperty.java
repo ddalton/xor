@@ -304,6 +304,13 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}	
 
 	public void setMapOf(Property property) {
+		/*
+		if(getName().equals("task") && property.getName().equals("quote")) {
+			System.out.println("Containing type for task property: " + getContainingType().getName());
+			System.out.println("Containing type for quote property: " + property.getContainingType().getName());
+			(new Exception()).printStackTrace();
+		}
+		*/
 		this.mapOf = property;
 	}	
 

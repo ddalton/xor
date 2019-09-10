@@ -116,6 +116,12 @@ public class JPAType extends AbstractType {
 			return;
 		}
 
+		JPAType superType = (JPAType)getSuperType();
+		// Ensure that the properties has been populated for the supertype
+		if(superType != null) {
+			superType.defineProperties(shape);
+		}
+
 		Iterator<?> attribIter = getPropertyIterator();
 		while (attribIter.hasNext()) {
 
@@ -126,6 +132,13 @@ public class JPAType extends AbstractType {
 
 			Type propertyType = getShape().getType(attribute.getJavaType());
 			JPAProperty property = new JPAProperty(attribute, propertyType, this);
+
+			if(isSuperTypeProperty(attribute.getName())) {
+				if(!(property.isIdentifier() || property.isVersion())) {
+					continue;
+				}
+			}
+
 			if (property.isIdentifier()) {
 				identifierProperty = property;
 				logger.debug("JPA Identifier attribute name: " + identifierProperty.getName());

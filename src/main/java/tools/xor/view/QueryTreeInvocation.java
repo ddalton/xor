@@ -19,10 +19,12 @@
 
 package tools.xor.view;
 
+import tools.xor.BusinessObject;
 import tools.xor.util.InterQuery;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,16 +40,20 @@ public class QueryTreeInvocation
     private static final int OFFSET = 1;
 
     private Map<QueryTree, Set> parentIdList; // Return the ids needed for a consuming Query
-                                           // Can be userkey, if it is not composite, else
-                                           // subquery is the only option supported for composite key.
+                                              // Can be userkey, if it is not composite, else
+                                              // subquery is the only option supported for composite key.
 
     private Map<Query, String> resolvedQuery; // The Query.INTERQUERY_JOIN_PLACEHOLDER is replaced with
                                               // the appropriate query string
 
-    private Map<Query, Set> idList; // ids needed for the QueryFragment.PARENT_INLIST parameter
-                                     // If a query does not have an entry here after resolveQuery
-                                     // has been processed, that means it is a SUBQUERY join till
-                                     // the root node
+    private Map<Query, Set> idList;           // ids needed for the QueryFragment.PARENT_INLIST parameter
+                                              // If a query does not have an entry here after resolveQuery
+                                              // has been processed, that means it is a SUBQUERY join till
+                                              // the root node
+
+    private Map<String, List<BusinessObject>> objectsByPath; // Used for stitching child objects
+                                                             // The parent objects are obtained by getting
+                                                             // the full path from the source fragment of the InterQuery edge
 
     private Map<InterQuery, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
     private Map<String, QueryVisitor> visitorsByPath;
@@ -59,6 +65,7 @@ public class QueryTreeInvocation
         this.idList = new ConcurrentHashMap<>();
         this.visitors = new ConcurrentHashMap<>();
         this.visitorsByPath = new ConcurrentHashMap<>();
+        this.objectsByPath = new ConcurrentHashMap<>();
 
         // Initialize with the root queries
         for(QueryTree queryTree: rootQueries) {
@@ -207,5 +214,15 @@ public class QueryTreeInvocation
             // Now we no longer need this visitor as it has been processed
             visitors.remove(outgoing);
         }
+    }
+
+    public void visit(String path, BusinessObject bo) {
+        List<BusinessObject> bos = objectsByPath.get(path);
+        if(bos == null) {
+            bos = new LinkedList<>();
+            objectsByPath.put(path, bos);
+        }
+
+        bos.add(bo);
     }
 }

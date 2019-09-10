@@ -40,15 +40,21 @@ public class DFAtoNFA {
 
 	public static final String UNLABELLED = "";
 
+	public enum TypeCategory {
+		SUBTYPES,
+		SUPERTYPES,
+		ALL
+	}
+
 	/**
 	 * Add subtypes and supertypes to the stategraph.
 	 * This method does not add any edges between these subtype and supertype states and
 	 * the existing graph.
 	 *
 	 * @param stateGraph to be extended with subtypes and supertypes
-	 * @param excludeSubtypes true if the subtypes do not need to be populated
+	 * @param typeCategory selectively add subtypes or supertypes or both
 	 */
-	public static void processInheritance(StateGraph<State, Edge<State>> stateGraph, boolean excludeSubtypes) {
+	public static void processInheritance(StateGraph<State, Edge<State>> stateGraph, TypeCategory typeCategory) {
 		Map<EntityType, State> entityTypeMap = new HashMap<EntityType, State>();
 		// maintain a stack of inheritance states to process
 		for(State state: stateGraph.getVertices()) {
@@ -57,17 +63,19 @@ public class DFAtoNFA {
 			}
 		}
 
-		// Add subtypes
 		Collection<EntityType> entities = new HashSet(entityTypeMap.keySet());
-		if(!excludeSubtypes) {
+		if(typeCategory == TypeCategory.SUBTYPES || typeCategory == TypeCategory.ALL) {
+			// Add subtypes
 			for (EntityType entityType : entities) {
 				addSubTypes(entityType, stateGraph, entityTypeMap);
 			}
 		}
 
-		// Add supertypes
-		for(EntityType entityType:  entities) {
-			addSuperTypes(entityType, stateGraph, entityTypeMap);
+		if(typeCategory == TypeCategory.SUPERTYPES || typeCategory == TypeCategory.ALL) {
+			// Add supertypes
+			for (EntityType entityType : entities) {
+				addSuperTypes(entityType, stateGraph, entityTypeMap);
+			}
 		}
 	}
 

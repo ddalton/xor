@@ -56,7 +56,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 
 	private List<Object> result = new ArrayList<Object>();
 	private BusinessObject   entity;
-	Map<BusinessObject, Object> uniqueList = new LinkedHashMap<BusinessObject, Object>();
+	Map<BusinessObject, Object> uniqueList = new LinkedHashMap<>();
 
 	public BusinessObject getEntity() {
 		return entity;
@@ -118,14 +118,21 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			// adjust the properties and for every new attribute added (id or owner) create a filler/dummy property column in the view
 			Map<String, Object> previous = null;
 			for(Object obj: records) {
-				BusinessObject newRootObject = queryTree.getRootObject(
+				// TODO: For child queries the root/anchor object should be the parent object
+				// TODO: for that query edge
+				// TODO: The parent id is the root id of the child query tree
+				// TODO: Use this id to get the parent objects (anchor objects) from the
+				// TODO: QueryTreeInvocation
+				BusinessObject anchorObject = queryTree.getRootObject(
 					obj,
 					(BusinessObject)callInfo.getOutput());
 
 				if(ClassUtil.getDimensionCount(obj) == 1) {
-					previous = queryTree.resolveField(newRootObject, (Object[])obj, previous, queryInvocation);
-					if(newRootObject.getContainer() == null && !uniqueList.containsKey(newRootObject)) // Only add root objects
-						uniqueList.put(newRootObject, null);
+					previous = queryTree.resolveField(anchorObject, (Object[])obj, previous, queryInvocation);
+
+					// TODO: Do this only for the root query
+					if(anchorObject.getContainer() == null && !uniqueList.containsKey(anchorObject)) // Only add root objects
+						uniqueList.put(anchorObject, null);
 				}
 			}
 		} catch (Exception e) {

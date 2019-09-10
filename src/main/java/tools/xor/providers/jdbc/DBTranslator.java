@@ -483,7 +483,7 @@ public abstract class DBTranslator
     }
 
     private List<Property> getProperties(EntityType entityType, DataGenerator dataGenerator) {
-        List<Property> properties = entityType.getProperties();
+        List<Property> properties = entityType.getDeclaredProperties();
         if(dataGenerator != null) {
             properties = dataGenerator.getGeneratedFields(entityType);
         }

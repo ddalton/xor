@@ -328,11 +328,6 @@ public class JDBCType extends AbstractType {
     }
 
     @Override
-    public List<Property> getDeclaredProperties() {
-        return getProperties();
-    }
-
-    @Override
     public List<?> getAliasNames() {
         return new ArrayList<String>();
     }

@@ -22,7 +22,10 @@ package tools.xor.view;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,6 +46,8 @@ public class SplitSubtype implements SplitStrategy
         for(QueryTree queryTree: aggregateTree.getVertices()) {
             processQueryTree(queryTree);
         }
+
+        aggregateTree.exportToDOT("priorityType_split.dot");
     }
 
     private void processQueryTree(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree) {
@@ -54,7 +59,10 @@ public class SplitSubtype implements SplitStrategy
         // NOTE: We do not support QueryFragment on abstract types
 
         Set<QueryFragment> processed = new HashSet<>();
-        for(QueryFragment fragment: queryTree.getVertices()) {
+
+        // We create a new collection to protect from concurrent modification
+        List<QueryFragment> vertices = new LinkedList<>(queryTree.getVertices());
+        for(QueryFragment fragment: vertices) {
             if(processed.contains(fragment)) {
                 continue;
             }

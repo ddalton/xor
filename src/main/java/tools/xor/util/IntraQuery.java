@@ -45,6 +45,16 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
         return property;
     }
 
+    @Override
+    public String getDisplayName ()
+    {
+        //if(DFAtoNFA.UNLABELLED.equals(getName())) {
+        //    return DFAtoRE.LiteralExpression.EPSILON;
+        //}
+
+        return super.getDisplayName();
+    }
+
     public String getJoinClause(QueryTree queryTree, PersistenceOrchestrator po) {
         String className = getEnd().getEntityType().getEntityName();
 

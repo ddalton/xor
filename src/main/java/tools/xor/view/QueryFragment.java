@@ -148,6 +148,10 @@ public class QueryFragment implements Vertex
         return getAlias();
     }
 
+    @Override public String getDisplayName() {
+        return getAlias() + " [" + this.entityType.getName() + "]";
+    }
+
     public List<String> getPaths() {
         return Collections.unmodifiableList(this.paths);
     }

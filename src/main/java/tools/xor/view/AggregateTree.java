@@ -35,6 +35,7 @@ import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.util.graph.TreeOperations;
@@ -241,8 +242,13 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 		for(E edge: getEdges()) {
 
 			StringBuilder result = new StringBuilder("  " + edge.getSource() + " -> " + edge.getTarget());
-			result.append("[label=").append(edge.getName()).append(",penwidth=3,color=\"#8B4513\"]\n");
 
+			String label = edge.getDisplayName();
+			if(DFAtoNFA.UNLABELLED.equals(label)) {
+				result.append("[dir=back, arrowtail=empty,penwidth=3,color=\"#8B4513\"]\n");
+			} else {
+				result.append("[label=").append(edge.getDisplayName()).append(",penwidth=3,color=\"#8B4513\"]\n");
+			}
 
 			writer.write(result.toString());
 		}

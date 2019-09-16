@@ -316,7 +316,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 	protected String getLabel (V vertex)
 	{
-		StringBuilder content = new StringBuilder(vertex.toString() + "\\n");
+		StringBuilder content = new StringBuilder(vertex.getDisplayName() + "\\n");
 		for (String path : vertex.getPaths()) {
 			content.append(Settings.getBaseName(path) + "\\l");
 		}
@@ -484,11 +484,13 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	 * @param path absolute path of the AggregateTree
 	 * @return path relative to the QueryTree
 	 */
-	private String makeRelative(String path) {
-		if(path == null || getRoot() == null) {
+	public String makeRelative(String path) {
+		V root = getRoot();
+
+		if(path == null || root == null) {
 			return null;
 		}
-		String anchorPath = getRoot().getAnchorPath();
+		String anchorPath = root.getAnchorPath();
 
 		// we first strip out the ancestor path from the root QueryTree
 		return path.startsWith(anchorPath) ? path.substring(anchorPath.length()) : path;

@@ -44,6 +44,11 @@ public class Edge<V extends Vertex>
         return name;
     }
 
+    public String getDisplayName ()
+    {
+        return getName();
+    }
+
     public boolean isQualified ()
     {
         return qualified;

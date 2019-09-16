@@ -23,4 +23,7 @@ public interface Vertex {
 
 	public String getName();
 
+	default public String getDisplayName() {
+		return getName();
+	}
 }

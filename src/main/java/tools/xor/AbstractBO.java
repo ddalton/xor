@@ -852,6 +852,9 @@ public abstract class AbstractBO implements BusinessObject {
 			return;
 		}
 
+		// adjust for ancestor path in child queries
+		propertyPath = queryTree.makeRelative(propertyPath);
+
 		// Since this builds the path for objects already persisted, the identifier value will not be null
 		String[] pathSteps = propertyPath.split(Settings.PATH_DELIMITER_REGEX);
 		BusinessObject current = this;

@@ -20,6 +20,7 @@
 package tools.xor.util.graph;
 
 import tools.xor.Settings;
+import tools.xor.util.DFAtoNFA;
 import tools.xor.util.Edge;
 import tools.xor.util.Vertex;
 
@@ -274,7 +275,7 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
     }
 
     protected String getLabel(V vertex) {
-        return vertex.toString();
+        return vertex.getDisplayName();
     }
 
     protected void writeDOTVertices(BufferedWriter writer) throws IOException
@@ -312,7 +313,13 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         for(E edge: getEdges()) {
 
             StringBuilder result = new StringBuilder("  " + edge.getStart() + " -> " + edge.getEnd());
-            result.append("[label=").append(edge.getName()).append("]\n");
+
+            String label = edge.getDisplayName();
+            if(DFAtoNFA.UNLABELLED.equals(label)) {
+                result.append("[dir=back, arrowtail=empty, weight=2]\n");
+            } else {
+                result.append("[label=").append(edge.getDisplayName()).append("]\n");
+            }
 
 
             writer.write(result.toString());

@@ -19,21 +19,6 @@
 
 package tools.xor.jpa;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,13 +32,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
-
 import tools.xor.CollectionElementGenerator;
-import tools.xor.CounterGenerator;
-import tools.xor.ToOneGenerator;
 import tools.xor.CollectionOwnerGenerator;
-import tools.xor.ElementGenerator;
-import tools.xor.EntityGenerator;
+import tools.xor.CounterGenerator;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.JDBCType;
@@ -62,6 +43,8 @@ import tools.xor.Property;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.SlidingElementGenerator;
+import tools.xor.ToOneGenerator;
+import tools.xor.Type;
 import tools.xor.db.pm.PriorityTask;
 import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
@@ -86,6 +69,20 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.view.AggregateView;
 import tools.xor.view.View;
+
+import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })
@@ -936,6 +933,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
 		Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
 		dtype.setGenerator(dtypegen);
+		ExtendedProperty priority = (ExtendedProperty)task.getProperty("PRIORITY");
+		Generator pgen = new DefaultGenerator(new String[] {"0", "0"});
+		priority.setGenerator(pgen);
 
 		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
 																	"0,0:0", // root task
@@ -960,20 +960,57 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		task.addGenerator(gensettings);
 		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
 				(GeneratorRecipient)parentgen));
-		Generator priogen = new DefaultGenerator(new String[] {"PriorityTask"});
-		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(priogen, dtype));
+		Generator priotypegen = new DefaultGenerator(new String[] {"PriorityTask"});
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(priotypegen, dtype));
+		Generator priogen = new DefaultGenerator(new String[] {"2", "5"});
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(priogen, priority));
 
 		String[] types = new String[] {
 			"TASK"
 		};
 
 		Settings settings = new Settings();
-		settings.setImportMethod(ImportMethod.CSV);
+		//settings.setImportMethod(ImportMethod.CSV);
 		Transaction tx = amJDBC.createTransaction(settings);
 		tx.begin();
 		try {
 			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+
+			List<String> paths = new ArrayList<>();
+			paths.add("id");
+			paths.add("name");
+			paths.add("taskChildren.id");
+			paths.add("taskChildren.name");
+			paths.add("taskChildren.description");
+			paths.add("taskChildren.taskChildren.id");
+			paths.add("taskChildren.taskChildren.name");
+			paths.add("taskChildren.taskChildren.description");
+			paths.add("taskChildren.taskChildren.priority");
+			AggregateView priorityView = new AggregateView("PRIORITYTASK");
+			priorityView.setAttributeList(paths);
+			priorityView.setSplitToRoot(false);
+			settings = new Settings();
+			settings.setView(priorityView);
+
+			shape = aggregateService.getDAS().getShape();
+			Type type = shape.getType(Task.class);
+			settings.setEntityType(type);
+			settings.init(shape);
+
+			List<?> result = aggregateService.query(null, settings);
+
 		} finally {
+
+			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCSessionContext sc = po.getSessionContext();
+
+			try (Statement stmt = sc.getConnection().createStatement()) {
+				stmt.execute("DELETE from TASK");
+				sc.getConnection().commit();
+			}
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
 			tx.rollback();
 			// We don't close as the connection belongs to Spring
 		}

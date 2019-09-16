@@ -1510,7 +1510,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 
 			// Inheritance edge
-			if(edge.getName() == null || "".equals(edge.getName())) {
+			if(edge.getName() == null || DFAtoNFA.UNLABELLED.equals(edge.getName())) {
 				result.append("dir=back, arrowtail=empty, weight=2");
 			}
 			// Aggregation edge

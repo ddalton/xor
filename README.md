@@ -1,6 +1,7 @@
 Create PriorityTask to test the stitching functionality
 Test case
 =========
+  Add a new test case to JPAMutableJsonTest
   1. Create some taskChildren of type Task
   2. Create some taskChildren of type Task and PriorityTask
   3. Create a view that selects properties form the children and grandchildren Task

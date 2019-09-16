@@ -34,11 +34,12 @@ import java.util.List;
  * Negative values represent a null parent.
  *
  * For example:
- * 1,500:0
- * 501,2000:2
+ * 1           - start owner id (value)
+ * 1,500:0     - children range with no parents
+ * 501,2000:2  - children range with a parent having at most 2 children
  *
- * The owners with id from 1-500 have a null value generated.
- * The onwer with id 501 and 502 will have a value with the same id
+ * The elements with id from 1-500 have a null value generated.
+ * The elements with id 501 and 502 will have a value with the same id, i.e., 2 children
  *
  *
  */
@@ -51,6 +52,7 @@ public class ToOneGenerator extends DefaultGenerator implements IteratorListener
     private List<RangeNode> nodeList;
     private int counter = COUNTER_INIT;
     private int value;
+    private boolean started;
 
     public ToOneGenerator (String[] arguments) {
         super(arguments);
@@ -65,16 +67,23 @@ public class ToOneGenerator extends DefaultGenerator implements IteratorListener
 
     @Override public void handleEvent (int sourceId, StateGraph.ObjectGenerationVisitor visitor)
     {
+        // Finished with current block?
         if (sourceId > currentNode.getEnd()) {
             currentNode = currentNode.getNext();
             counter = COUNTER_INIT;
         }
 
-        if(currentNode.getSize() > 0) {
-            if (counter++ == currentNode.getSize()-1) {
-                counter = 0;
+        if(currentNode.getSize() > 0 && started) {
+            if (counter == COUNTER_INIT || counter++ == currentNode.getSize()-1) {
                 value++;
+                counter = 0;
             }
+        }
+
+        // We have been called atleast once
+        if(currentNode.getSize() > 0 && !started) {
+            started = true;
+            counter++;
         }
     }
 

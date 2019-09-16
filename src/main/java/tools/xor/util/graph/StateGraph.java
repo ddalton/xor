@@ -891,7 +891,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		try {
 			for (V state : getVertices()) {
 				if (!state.getType().isDataType()) {
-					for (Property p : shape.getProperties((EntityType)state.getType()).values()) {
+					for (Property p : (state.getType()).getProperties()) {
 						Type propertyType = GraphUtil.getPropertyEntityType(p, shape);
 						//sgLogger.debug("checking edge " + p.getName() + " of type " + propertyType.getName() );
 						if (states.containsKey(propertyType)) {

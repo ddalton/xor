@@ -371,4 +371,9 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param generator generator settings object
 	 */
 	public void addGenerator(EntityGenerator generator);
+
+	/**
+	 * Clear the generators set on this type
+	 */
+	public void clearGenerators();
 }

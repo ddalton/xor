@@ -69,6 +69,8 @@ public class JDBCQuery extends AbstractQuery
 		try {
 			if(connection != null) {
 				this.preparedStatement = connection.prepareStatement(getQueryString());
+			} else {
+				throw new RuntimeException("Need a JDBC connection");
 			}
 		}
 		catch (SQLException e) {

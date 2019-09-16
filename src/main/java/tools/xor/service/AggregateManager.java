@@ -413,16 +413,33 @@ public class AggregateManager implements Xor
 		}
 	}
 
+	public Transaction createTransaction(Settings settings) {
+		checkPO(settings);
+
+		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)getPersistenceOrchestrator();
+			JDBCSessionContext sc = po.getSessionContext();
+			return new JDBCTransaction(sc);
+		} else {
+			throw new UnsupportedOperationException("beginTransaction is supported only on JDBC provider");
+		}
+	}
+
 	public void checkPO(Settings settings) {
 
 		if (getPersistenceOrchestrator() == null) {
 			setPersistenceOrchestrator(dasFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
 		}
 		if(settings != null) {
-			settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
-			if(settings.getSessionContext() != null && getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-				JDBCPersistenceOrchestrator po = ((JDBCPersistenceOrchestrator)getPersistenceOrchestrator());
-				po.getSessionContext().init((JDBCSessionContext)settings.getSessionContext());
+			if(settings.getPersistenceOrchestrator() == null) {
+				settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
+				if (settings.getSessionContext() != null
+					&& getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+					JDBCPersistenceOrchestrator po = ((JDBCPersistenceOrchestrator)getPersistenceOrchestrator());
+					po.getSessionContext().init((JDBCSessionContext)settings.getSessionContext());
+				}
+			} else if(settings.getPersistenceOrchestrator() != getPersistenceOrchestrator()) {
+				throw new IllegalStateException("PersistenceOrchestrator in settings is different from AggregateManager!");
 			}
 		}
 	}

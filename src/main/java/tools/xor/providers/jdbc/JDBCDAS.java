@@ -475,7 +475,6 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
             for(TableInfo table: tables) {
                 table.setForeignKeys(null);
-                table.setPrimaryKeys(null);
             }
             return tables;
         }

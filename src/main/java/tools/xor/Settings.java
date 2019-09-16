@@ -754,6 +754,9 @@ public class Settings {
 
 		if(entity != null) {
 			if(getView().getRegexAttributes() == null) {
+				if(getShape() == null) {
+					throw new RuntimeException("Shape needs to be provided in settings!");
+				}
 				narrowedClass = typeNarrower.narrow(getShape(), entity, getView().getName());
 				if (narrowedClass == null) {
 					throw new IllegalArgumentException(

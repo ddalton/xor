@@ -28,8 +28,10 @@ import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 import tools.xor.AbstractProperty.LambdaResult;
 import tools.xor.event.PropertyEvent;
 import tools.xor.generator.Generator;
+import tools.xor.generator.GeneratorRecipient;
 
-public interface ExtendedProperty extends Property {
+public interface ExtendedProperty extends Property, GeneratorRecipient
+{
 
 	/**
 	 * Create a new property that is same as the current property

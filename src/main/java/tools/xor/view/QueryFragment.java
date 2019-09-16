@@ -378,7 +378,9 @@ public class QueryFragment implements Vertex
             result.add(entityType.getIdentifierProperty().getName());
         } else {
             if(entityType instanceof JDBCType) {
-                result.addAll(((JDBCType)entityType).getPrimaryKeys());
+                if(((JDBCType)entityType).getPrimaryKeys() != null) {
+                    result.addAll(((JDBCType)entityType).getPrimaryKeys());
+                }
             } else {
                 result.addAll(entityType.getExpandedNaturalKey());
             }

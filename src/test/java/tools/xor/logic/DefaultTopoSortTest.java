@@ -5,6 +5,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Chapter;
 import tools.xor.db.base.Facet;

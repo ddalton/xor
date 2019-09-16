@@ -1545,4 +1545,8 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		return false;
 	}
 
+	@Override
+	public void accept (Generator generator) {
+		setGenerator(generator);
+	}
 }

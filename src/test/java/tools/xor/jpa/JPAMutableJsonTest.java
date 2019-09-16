@@ -37,7 +37,11 @@ import javax.persistence.PersistenceContext;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -58,6 +62,7 @@ import tools.xor.Property;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
 import tools.xor.SlidingElementGenerator;
+import tools.xor.db.pm.PriorityTask;
 import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
 import tools.xor.db.sp.P;
@@ -76,6 +81,7 @@ import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.service.Transaction;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.view.AggregateView;
@@ -93,7 +99,14 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	@Resource(name = "amJDBC")
 	protected AggregateManager amJDBC;	// Useful for generating data using JDBC
 	
-	S S1 = null;	
+	S S1 = null;
+
+	@Rule
+	public TestRule watcher = new TestWatcher() {
+		protected void starting(Description description) {
+			System.out.println("@@@ Starting test: " + description.getMethodName());
+		}
+	};
 	
 	@Test
 	public void checkStringField() throws JSONException {
@@ -684,6 +697,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 
 		JDBCType task = (JDBCType)shape.getType("TASK");
+		task.clearGenerators();
 
 		ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
 		Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
@@ -747,10 +761,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		Settings settings = new Settings();
 		//settings.setImportMethod(ImportMethod.CSV);
-		amJDBC.checkPO(settings);
-		JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
-		JDBCSessionContext sc = po.getSessionContext();
-		sc.beginTransaction();
+		Transaction tx = amJDBC.createTransaction(settings);
+		tx.begin();
 
 		try {
 			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
@@ -796,6 +808,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		} finally {
 
+			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCSessionContext sc = po.getSessionContext();
+
 			try (Statement stmt = sc.getConnection().createStatement()) {
 				stmt.execute("DELETE from TASK_TASK");
 				stmt.execute("DELETE from TASK");
@@ -804,9 +819,163 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			catch (SQLException e) {
 				e.printStackTrace();
 			}
-			sc.rollback();
+			tx.rollback();
 
 			// We don't close because Spring takes care of it
+		}
+	}
+
+	//@Test
+	public void testPriorityTask() {
+		// Create a prioritytask and
+		// extract the value of the DTYPE column using the RELATIONAL_SHAPE
+
+		// Create the aggregate root entity
+		Task task = new PriorityTask();
+		task.setName("PTASK");
+		task.setDisplayName("PriorityTask");
+		task.setDescription("Test of PriorityTask descriminator");
+		entityManager.persist(task);
+		entityManager.flush();
+
+
+		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		if(shape == null) {
+			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+		}
+		JDBCType pTask = (JDBCType)shape.getType("TASK");
+
+		JSONObject queryTask = new JSONObject();
+		queryTask.put("UUID", task.getId());
+
+		// Get a few properties
+		// check reference
+		List<String> paths = new ArrayList<>();
+		paths.add("UUID");
+		paths.add("DTYPE");
+		paths.add("DESCRIPTION");
+		AggregateView refView = new AggregateView("DTYPE");
+		refView.setAttributeList(paths);
+		Settings settings = new Settings();
+		settings.setView(refView);
+
+		settings.setEntityType(pTask);
+		settings.init(shape);
+
+		Transaction tx = amJDBC.createTransaction(settings);
+		tx.begin();
+		try {
+			List result = amJDBC.query(queryTask, settings);
+
+			assert(result != null);
+			assert(result.size() == 1);
+			JSONObject json = (JSONObject)result.get(0);
+			assert(json.get("DTYPE").equals("PriorityTask"));
+		} finally {
+			tx.rollback();
+		}
+	}
+
+	/*
+
+	               taskChildren                    taskChildren
+	    Task  - - - - - - - - - - - -  Task - - - - - - - - - - - - - -  Task
+	                                                                      /\
+	                                                                      |
+	                                                                      |
+	                                                                      |
+
+	                                                                 PriorityTask
+
+	    View:
+
+	    id
+	    name
+	    taskChildren.id
+	    taskChildren.name
+	    taskChildren.description
+	    taskChildren.taskChildren.id
+	    taskChildren.taskChildren.name
+	    taskChildren.taskChildren.description
+	    taskChildren.taskChildren.priority
+
+	    Print the state graph to see how it looks
+
+	    We should get 2 queries
+
+	    We first populate the data as following:
+	    Root task
+	    4 child tasks
+	    Will create 10 grandchildren Tasks
+	    Will create 4 grandchildren Priority tasks - this will be populated separately
+
+	    We test the query stitching functionality in this test
+	    Also, the data from the grandchildren priority task needs to be successfully retrieved.
+
+	 */
+	@Test
+	public void testSubtypeSubquery() {
+		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		if(shape == null) {
+			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+		}
+
+
+		JDBCType task = (JDBCType)shape.getType("TASK");
+		task.clearGenerators();
+
+		ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+		Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
+		taskparent.setGenerator(parentgen);
+		Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+		ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+		rootid.setGenerator(rootidgen);
+		Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+		ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+		namep.setGenerator(namegen);
+		ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+		Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+		dtype.setGenerator(dtypegen);
+
+		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
+																	"0,0:0", // root task
+																	"1,4:4", // 4 children
+																	"5,8:2", // 2 children with 2 grand children
+																	"9,14:3" // 2 children with 3 grand children
+		});
+
+		CounterGenerator gensettings = new CounterGenerator(15);
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+				(GeneratorRecipient)parentgen));
+
+
+		// Now add priority task grand children
+		toonegen = new ToOneGenerator(new String[] { "1",
+													 "15,17:1" // 3 children with 1 PriorityTask grand child
+		});
+		gensettings = new CounterGenerator(3, 15);
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+				(GeneratorRecipient)parentgen));
+		Generator priogen = new DefaultGenerator(new String[] {"PriorityTask"});
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(priogen, dtype));
+
+		String[] types = new String[] {
+			"TASK"
+		};
+
+		Settings settings = new Settings();
+		settings.setImportMethod(ImportMethod.CSV);
+		Transaction tx = amJDBC.createTransaction(settings);
+		tx.begin();
+		try {
+			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+		} finally {
+			tx.rollback();
+			// We don't close as the connection belongs to Spring
 		}
 	}
 }

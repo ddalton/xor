@@ -232,15 +232,15 @@ public class JDBCSessionContext implements CustomPersister
         return null;
     }
 
-    private DBTranslator getDbTranslator() {
-        try {
+    private DBTranslator getDbTranslator ()
+    {
+        if (this.dbTranslator == null) {
             beginTransaction();
-
-            if (this.dbTranslator == null) {
+            try {
                 this.dbTranslator = DBTranslator.instance(getConnection());
+            } finally {
+                close();
             }
-        } finally {
-            close();
         }
 
         return dbTranslator;
@@ -555,6 +555,23 @@ public class JDBCSessionContext implements CustomPersister
 
     @Override public void beginTransaction()
     {
+        // check if the connections are valid
+        while(!connections.isEmpty()) {
+            ConnectionHolder holder = connections.peek();
+
+            try {
+                if (holder.getConnection().isClosed()) {
+                    // this connection is no longer valid, so we get rid of it
+                    connections.pop();
+                } else {
+                    // We have a valid connection
+                    break;
+                }
+            } catch (SQLException exception) {
+                break;
+            }
+        }
+
         if(connections.size() == 0) {
             connections.push(new ConnectionHolder(po.getNewConnection(), true));
         } else {

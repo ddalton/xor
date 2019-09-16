@@ -400,6 +400,10 @@ public abstract class AbstractType implements EntityType {
 		this.entityGenerators.add(generator);
 	}
 
+	@Override public void clearGenerators() {
+		this.entityGenerators.clear();
+	}
+
 	protected Method getPolymorphicSetterMethod (String property)
 	{
 		Class<?> instanceClass = getInstanceClass();

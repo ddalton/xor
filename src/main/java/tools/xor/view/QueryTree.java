@@ -137,16 +137,17 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		}
 	}	
 
-	public BusinessObject getRootObject (Object obj, BusinessObject entity) throws Exception {
-		BusinessObject result = null;
+	public List<BusinessObject> getRootObjects (Object obj, BusinessObject entity, QueryTreeInvocation queryInvocation) throws Exception {
+		List<BusinessObject> duplicates = null;
 
 		if(ClassUtil.getDimensionCount(obj) == 1) {
 			Object[] queryRow = (Object[])obj;
 
 			Object idValue = null;
+			String anchorPath = getRoot().getAnchorPath();
 			if(((EntityType)this.aggregateType).getIdentifierProperty() != null) {
 				String idPropertyName = ((EntityType)this.aggregateType).getIdentifierProperty().getName();
-				idValue = getQueryValue(queryRow, idPropertyName);
+				idValue = getQueryValue(queryRow, anchorPath+idPropertyName);
 			}
 
 			String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
@@ -159,17 +160,26 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 			// find and create data object
 			if(idValue != null) {
-				result = entity.getBySurrogateKey(idValue, this.aggregateType);
+				//result = entity.getBySurrogateKey(idValue, this.aggregateType);
+
+				duplicates = queryInvocation.getDuplicates(
+					anchorPath,
+					idValue,
+					this.aggregateType);
 			}
-			if(result == null) {
+			if(duplicates == null) {
+				duplicates = new LinkedList<>();
 				if(logger.isDebugEnabled()) {
 					logger.debug("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
 				}
-				result = entity.createDataObject(idValue, type);
+				BusinessObject newObject = entity.createDataObject(idValue, type);
+				duplicates.add(newObject);
+
+				queryInvocation.visit(anchorPath, newObject);
 			}
 		}
 
-		return result;
+		return duplicates;
 	}
 
 	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) throws Exception {

@@ -338,7 +338,14 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param entityType is a descendant type
 	 * @return true if ancestor false otherwise
 	 */
-	public boolean isSameOrAncestorOf (EntityType entityType);
+	public boolean isSameOrSupertypeOf (EntityType entityType);
+
+	/**
+	 * Check if the current type is a descendant of the given type
+	 * @param entityType given type
+	 * @return true if the current type is a subtype
+	 */
+	public boolean isSubtypeOf (EntityType entityType);
 
 	/**
 	 * Returns the list of the descendant sub types starting from the child

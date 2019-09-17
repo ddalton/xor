@@ -998,6 +998,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			settings.init(shape);
 
 			List<?> result = aggregateService.query(null, settings);
+			assert(result != null);
 
 		} finally {
 

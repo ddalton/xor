@@ -122,7 +122,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			// check if any of the subtypes is a supertype to the current state
 			for(SubtypeState sts: superType.children) {
 				EntityType childType = ((QueryType)sts.getType()).getBasedOn();
-				if( childType.isSameOrAncestorOf(childType) ) {
+				if( childType.isSameOrSupertypeOf(childType) ) {
 					setSupertype(sts, tg);
 
 					// The current state needs to be added in the correct place in
@@ -136,7 +136,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 			Set<SubtypeState> removedTypes = new HashSet<>();
 			for(SubtypeState sts: superType.children) {
 				EntityType childType = ((QueryType)sts.getType()).getBasedOn();
-				if( entityType.isSameOrAncestorOf(childType) ) {
+				if( entityType.isSameOrSupertypeOf(childType) ) {
 					sts.supertype = this;
 					children.add(sts);
 					removedTypes.add(sts);
@@ -184,7 +184,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				return false;
 			}
 
-			if(type.isSameOrAncestorOf(childType)) {
+			if(type.isSameOrSupertypeOf(childType)) {
 				descendantState.setSupertype(this, tg);
 			} else {
 				throw new RuntimeException("Trying to add a subtype to a state that is not a supertype");

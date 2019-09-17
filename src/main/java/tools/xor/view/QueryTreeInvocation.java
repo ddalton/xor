@@ -20,6 +20,10 @@
 package tools.xor.view;
 
 import tools.xor.BusinessObject;
+import tools.xor.EntityKey;
+import tools.xor.EntityType;
+import tools.xor.SurrogateEntityKey;
+import tools.xor.Type;
 import tools.xor.util.InterQuery;
 
 import java.util.HashSet;
@@ -55,6 +59,8 @@ public class QueryTreeInvocation
                                                              // The parent objects are obtained by getting
                                                              // the full path from the source fragment of the InterQuery edge
 
+    private Map<EntityKey, List<BusinessObject>> queryObjects;
+
     private Map<InterQuery, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
     private Map<String, QueryVisitor> visitorsByPath;
 
@@ -66,6 +72,7 @@ public class QueryTreeInvocation
         this.visitors = new ConcurrentHashMap<>();
         this.visitorsByPath = new ConcurrentHashMap<>();
         this.objectsByPath = new ConcurrentHashMap<>();
+        this.queryObjects = new ConcurrentHashMap<>();
 
         // Initialize with the root queries
         for(QueryTree queryTree: rootQueries) {
@@ -217,12 +224,33 @@ public class QueryTreeInvocation
     }
 
     public void visit(String path, BusinessObject bo) {
+        path = QueryFragment.extractAnchorPath(path);
+
         List<BusinessObject> bos = objectsByPath.get(path);
         if(bos == null) {
             bos = new LinkedList<>();
             objectsByPath.put(path, bos);
         }
-
         bos.add(bo);
+
+        Object id = bo.getIdentifierValue();
+        // Currently we only support tracking objects with surrogate key
+        if(id != null) {
+            Type type = ((EntityType)bo.getType()).getRootEntityType();
+            EntityKey key = new SurrogateEntityKey(id, type.getName(), path);
+            List<BusinessObject> duplicates = queryObjects.get(key);
+            if (duplicates == null) {
+                duplicates = new LinkedList<>();
+                queryObjects.put(key, duplicates);
+            }
+            duplicates.add(bo);
+        }
+    }
+
+    public List<BusinessObject> getDuplicates(String path, Object idValue, Type type) {
+        type = ((EntityType)type).getRootEntityType();
+        EntityKey key = new SurrogateEntityKey(idValue, type.getName(), path);
+
+        return queryObjects.get(key);
     }
 }

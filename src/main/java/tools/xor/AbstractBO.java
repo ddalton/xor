@@ -31,6 +31,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
+import tools.xor.util.IntraQuery;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.TypeGraph;
@@ -841,19 +842,20 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public void reconstitute (String propertyPath,
+	public void reconstitute (String fullPropertyPath,
 							  Map<String, Object> propertyResult,
 							  QueryTree queryTree,
 							  ReconstituteRecordVisitor visitor,
 							  QueryTreeInvocation qti) throws Exception {
 
 		// If we are setting a null value then nothing needs to be done
-		if( propertyResult.get(propertyPath) == null) {
+		if( propertyResult.get(fullPropertyPath) == null) {
 			return;
 		}
 
 		// adjust for ancestor path in child queries
-		propertyPath = queryTree.makeRelative(propertyPath);
+		String propertyPath = queryTree.makeRelative(fullPropertyPath);
+		String anchorPath = ((QueryFragment)queryTree.getRoot()).getAnchorPath();
 
 		// Since this builds the path for objects already persisted, the identifier value will not be null
 		String[] pathSteps = propertyPath.split(Settings.PATH_DELIMITER_REGEX);
@@ -865,9 +867,20 @@ public abstract class AbstractBO implements BusinessObject {
 			if(currentPath.length() > 0) {
 				currentPath.append(Settings.PATH_DELIMITER);
 			}
+			QueryTree.FragmentAnchor anchorFragment = queryTree.findFragment(currentPath.toString());
 			currentPath.append(step);
 
 			Property property = current.getInstanceProperty(step);
+			if (property == null && anchorFragment != null) {
+				EntityType type = anchorFragment.fragment.getEntityType();
+				// We need the external type
+				type = (EntityType)type.getShape().getExternalType(type.getName());
+				if(type.isSubtypeOf((EntityType)current.getType())) {
+					current.downcast(type);
+					property = current.getInstanceProperty(step);
+				}
+			}
+
 			//Property domainProperty = domainEntityType.getProperty(currentPath.toString());
 			Property domainProperty = queryTree.getProperty(currentPath.toString());
 			if(property == null) {
@@ -875,7 +888,7 @@ public abstract class AbstractBO implements BusinessObject {
 					((EntityType)getType()).setOpenProperty(
 						this.getInstance(),
 						propertyPath,
-						propertyResult.get(propertyPath));
+						propertyResult.get(fullPropertyPath));
 					return;
 				} else {
 					throw new RuntimeException("Unable to resolve property: " + propertyPath);
@@ -890,7 +903,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 				if(property.getType().isDataType() ) {
 					// Populate the field and return the data object
-					((ExtendedProperty)property).setValue(current, propertyResult.get(propertyPath));
+					((ExtendedProperty)property).setValue(current, propertyResult.get(fullPropertyPath));
 					return;
 				}
 
@@ -906,7 +919,7 @@ public abstract class AbstractBO implements BusinessObject {
 						Collection<String> naturalKey = ((EntityType)property.getType()).getExpandedNaturalKey();
 						if(naturalKey != null) {
 							for(String key: naturalKey) {
-								Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
+								Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + key);
 								naturalKeyValues.put(key, keyValue);
 							}
 						}				
@@ -915,19 +928,19 @@ public abstract class AbstractBO implements BusinessObject {
 					// Get the identifier value
 					Object idValue = null;
 					if(((EntityType)property.getType()).getIdentifierProperty() != null) {
-						idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
+						idValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
 					}
 					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), getAnchor(anchor.toString()));
 
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
-						String narrowToType = (String) propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryFragment.ENTITY_TYPE_ATTRIBUTE);
+						String narrowToType = (String) propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.ENTITY_TYPE_ATTRIBUTE);
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
 							objectType = (EntityType) getObjectCreator().getDAS().getShape().getType(
 								narrowToType);
 
-						propertyDO = createQueryObject(null, current, propertyPath, idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()), qti);
+						propertyDO = createQueryObject(null, current, fullPropertyPath, idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()), qti);
 						//propertyDO = current.createDataObject(idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()));
 					}
 				}
@@ -943,7 +956,7 @@ public abstract class AbstractBO implements BusinessObject {
 			} else  {
 
 				//System.out.println("propertyDO class: " + propertyDO.getClass() + ", property: " + property.getName());
-				propertyDO = createQueryObject(propertyDO, current, propertyPath, null, null, property.getType(), property, getAnchor(anchor.toString()), qti);
+				propertyDO = createQueryObject(propertyDO, current, fullPropertyPath, null, null, property.getType(), property, getAnchor(anchor.toString()), qti);
 				/*
 				if(propertyDO == null) { // create and set the collection/map object
 					propertyDO = current.createDataObject(null, property.getType(), property, getAnchor(
@@ -966,13 +979,13 @@ public abstract class AbstractBO implements BusinessObject {
 				if(((EntityType)elementType).getNaturalKey() != null) {
 					Collection<String> naturalKey = ((EntityType)elementType).getExpandedNaturalKey();
 					for(String key: naturalKey) {
-						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + key);
+						Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + key);
 						naturalKeyValues.put(key, keyValue);
 					}
 				}
 				Object idValue = null;
 				if(((EntityType) elementType).getIdentifierProperty() != null) {
-					idValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
+					idValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
 				}
 				// find the element
 				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, getAnchor(anchor.toString()));
@@ -988,7 +1001,7 @@ public abstract class AbstractBO implements BusinessObject {
 					Object elementInstance = null;
 
 					if( ((ExtendedProperty)property).isMap() ) {
-						Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
+						Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
 						Map map = (Map) current.getInstance();
 						elementInstance = map.get(keyValue);
 					} 
@@ -998,13 +1011,13 @@ public abstract class AbstractBO implements BusinessObject {
 							/*elementDO = current.createDataObject(
 								idValue, naturalKeyValues, elementType, null, getAnchor(
 									anchor.toString()));*/
-							elementDO = createQueryObject(elementInstance, current, propertyPath, idValue, naturalKeyValues, elementType, null, getAnchor(anchor.toString()), qti);
+							elementDO = createQueryObject(elementInstance, current, fullPropertyPath, idValue, naturalKeyValues, elementType, null, getAnchor(anchor.toString()), qti);
 						} else {
 							return; // Does not have a collection element
 						}
 					} else {
 						// create the data object using the instance
-						elementDO = createQueryObject(elementInstance, current, propertyPath, idValue, naturalKeyValues, elementType, null, getAnchor(anchor.toString()), qti);
+						elementDO = createQueryObject(elementInstance, current, fullPropertyPath, idValue, naturalKeyValues, elementType, null, getAnchor(anchor.toString()), qti);
 						/*
 						elementDO = objectCreator.createDataObject(
 							elementInstance,
@@ -1023,11 +1036,11 @@ public abstract class AbstractBO implements BusinessObject {
 				Object elementInstance = ((BusinessObject)elementDO).getInstance();				
 				if( ((ExtendedProperty)property).isMap() ) {
 					// If this is a map, get the key
-					Object keyValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
+					Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
 					Map map = (Map) current.getInstance();
 					map.put(keyValue, elementInstance);
 				} else if ( ((ExtendedProperty)property).isList() ) {
-					Object indexValue = propertyResult.get(currentPath + Settings.PATH_DELIMITER + QueryFragment.LIST_INDEX_ATTRIBUTE);
+					Object indexValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.LIST_INDEX_ATTRIBUTE);
 					if(current.getInstance() instanceof JSONArray) {
 						// add it in the order we see it
 						JSONArray jsonArray = (JSONArray) current.getInstance();
@@ -1079,17 +1092,18 @@ public abstract class AbstractBO implements BusinessObject {
 											 String anchorPath,
 											 QueryTreeInvocation qti) throws Exception
 	{
-		BusinessObject queryObject = null;
+		BusinessObject queryObject;
 
 		if(instance == null) {
 			queryObject = bo.createDataObject(idValue, naturalKeyValues, type, property, anchorPath);
+			if(property == null || !property.isMany()) {
+				qti.visit(queryPath, queryObject);
+			}
 		} else if(!BusinessObject.class.isAssignableFrom(instance.getClass())) {
 			queryObject = objectCreator.createDataObject(instance, type, bo, property, anchorPath);
 		} else {
 			queryObject = (BusinessObject)instance;
 		}
-
-		qti.visit(queryPath, queryObject);
 
 		return queryObject;
 	}
@@ -1806,12 +1820,18 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 	}
 
+	@Override
 	public boolean isReference () {
 		if (this.instance != null && this.instance instanceof JSONObject && ((JSONObject)this.instance).has(Constants.XOR.KEYREF)) {
 			return (((JSONObject)this.instance).getBoolean(Constants.XOR.KEYREF));
 		}
 
 		return false;
+	}
+
+	@Override
+	public void downcast(EntityType subType) {
+		this.type = subType;
 	}
 	
 	protected void createWrapper(Settings settings, BusinessObject parent, Property support, State state, TypeGraph sg) {

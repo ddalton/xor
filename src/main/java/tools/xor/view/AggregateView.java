@@ -930,7 +930,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 			type = (EntityType)shape.getType(typeName);
 
 			if(entityType != null) {
-				assert type.isSameOrAncestorOf(entityType) :
+				assert type.isSameOrSupertypeOf(entityType) :
 					"EntityType should be of the same type as " + typeName;
 			} else {
 				entityType = type;
@@ -949,7 +949,7 @@ public class AggregateView implements Comparable<AggregateView>, Vertex, View {
 				if(entityType == null) {
 					throw new RuntimeException("The given type should be an entityType: " + typeName);
 				}
-				if (!type.isSameOrAncestorOf(entityType)) {
+				if (!type.isSameOrSupertypeOf(entityType)) {
 					throw new RuntimeException(
 						"The view type " + type.getName()
 							+ " should either be the same or a supertype of the given type: "

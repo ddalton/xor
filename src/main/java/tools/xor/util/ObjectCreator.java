@@ -20,7 +20,6 @@
 package tools.xor.util;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -606,7 +605,7 @@ public class ObjectCreator {
 							}
 						}
 					}
-					else if (existingRootType.isSameOrAncestorOf(newRootType)) {
+					else if (existingRootType.isSameOrSupertypeOf(newRootType)) {
 						swizzle = true;
 					}
 					else {

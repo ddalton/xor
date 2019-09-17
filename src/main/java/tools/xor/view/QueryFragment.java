@@ -182,6 +182,15 @@ public class QueryFragment implements Vertex
         return attributePaths.contains(getFullPath(path));
     }
 
+    public static String extractAnchorPath(String path) {
+        if(StringUtils.isEmpty(path)) {
+            return path;
+        }
+        assert(path.contains(Settings.PATH_DELIMITER));
+
+        return path.substring(0, path.lastIndexOf(Settings.PATH_DELIMITER)+1);
+    }
+
     public String getAnchorPath() {
         String anchorPath = getAncestorPath();
         if(StringUtils.isEmpty(anchorPath)) {

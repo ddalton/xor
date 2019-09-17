@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.hsqldb.lib.ObjectComparator;
+import tools.xor.util.IntraQuery;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.ObjectGraph;
+import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
 import tools.xor.view.QueryTreeInvocation;
 
@@ -256,14 +258,14 @@ public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.
 
 	/**
 	 * Set the property of this object using the values from propertyResult. This method is mainly used from a query result.
-	 * @param propertyPath The path representing property whose value needs to be set
+	 * @param fullPropertyPath The path representing property whose value needs to be set
 	 * @param propertyResult The result from a query
 	 * @param queryTree for the query
 	 * @param visitor for helping with adding elements to their collection
 	 * @param queryInvocation holds intermediate results from the parent queries to help with stitching
 	 * @throws Exception if property cannot be found
 	 */
-	void reconstitute (String propertyPath,
+	void reconstitute (String fullPropertyPath,
 					   Map<String, Object> propertyResult,
 					   QueryTree queryTree,
 					   ReconstituteRecordVisitor visitor,
@@ -487,4 +489,10 @@ public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.
 	 * @return true if this is a reference association object
 	 */
 	public boolean isReference ();
+
+	/**
+	 * Change the type of the object by downcasting the type.
+	 * @param type subtype of the current type
+	 */
+	public void downcast(EntityType type);
 }

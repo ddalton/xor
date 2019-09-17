@@ -1322,7 +1322,7 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public boolean isSameOrAncestorOf (EntityType entityType) {
+	public boolean isSameOrSupertypeOf (EntityType entityType) {
 		EntityType parent = entityType;
 		while(parent != null) {
 			if(parent == this) {
@@ -1332,6 +1332,16 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean isSubtypeOf (EntityType entityType) {
+		EntityType superType = getSuperType();
+		if(superType == null) {
+			return false;
+		}
+
+		return entityType.isSameOrSupertypeOf(superType);
 	}
 
 	@Override

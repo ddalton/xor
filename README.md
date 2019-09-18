@@ -1,29 +1,9 @@
-Create PriorityTask to test the stitching functionality
-Test case
-=========
-  Add a new test case to JPAMutableJsonTest
-  1. Create some taskChildren of type Task
-  2. Create some taskChildren of type Task and PriorityTask
-  3. Create a view that selects properties form the children and grandchildren Task
-     and some properties from the grandchildren PriorityTask
-  4. Fix the QueryOperation#processRecords method for stitching 
-
-the stitch functionality needs to work on same objects but on differnt paths.
-So path should include container unique id - How???
-1. We enhance ancestorpath to contain type information to handle subtypes
-2. We support simpleancestorpath for backwards compatibility
-3. We perform stitching by key objects based on ancestorpath. The same key on the ancestor path might have multiple values, if the path represents
-   collections on different parts of the graph and contain the same objects.
-
-Now where are these temporary results saved? to be used later for stitching
-
-Implement BFSTraversal for FragmentBuilder:178
-
-ancestorPath - should have subtype information
-      for e.g.,    a|com.Type1:b|c|d|e
-              owner|Technician:skill
-QueryTree#findFragment - Needs to also take in type to get the subtype
-
+1. Finish assertion of test - PriorityTask
+2. do the PriorityTask test with POJO JPA entity object - test pre-order reconstitution
+3. Dpulicate child entries - new test
+4. Doubly nested child query tet
+5. TO_ONE child query test
+6. root object downcast
 
 
 

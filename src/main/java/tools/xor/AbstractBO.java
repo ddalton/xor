@@ -867,29 +867,33 @@ public abstract class AbstractBO implements BusinessObject {
 			if(currentPath.length() > 0) {
 				currentPath.append(Settings.PATH_DELIMITER);
 			}
-			QueryTree.FragmentAnchor anchorFragment = queryTree.findFragment(currentPath.toString());
 			currentPath.append(step);
-
 			Property property = current.getInstanceProperty(step);
-			if (property == null && anchorFragment != null) {
-				EntityType type = anchorFragment.fragment.getEntityType();
-				// We need the external type
-				type = (EntityType)type.getShape().getExternalType(type.getName());
-				if(type.isSubtypeOf((EntityType)current.getType())) {
-					current.downcast(type);
-					property = current.getInstanceProperty(step);
-				}
-			}
 
 			//Property domainProperty = domainEntityType.getProperty(currentPath.toString());
 			Property domainProperty = queryTree.getProperty(currentPath.toString());
 			if(property == null) {
 				if(getType().isOpen()) {
-					((EntityType)getType()).setOpenProperty(
-						this.getInstance(),
-						propertyPath,
-						propertyResult.get(fullPropertyPath));
-					return;
+					QueryTree.FragmentAnchor anchorFragment = queryTree.findFragment(currentPath.toString());
+					if (anchorFragment != null) {
+						EntityType type = anchorFragment.fragment.getEntityType();
+						// We need the external type
+						type = (EntityType)type.getShape().getExternalType(type.getName());
+						if(type.isSubtypeOf((EntityType)current.getType())) {
+							current.downcast(type);
+							property = current.getInstanceProperty(step);
+						}
+					}
+
+					// This is not driven by meta-data
+					if(property == null) {
+						((EntityType)getType()).setOpenProperty(
+							this.getInstance(),
+							propertyPath,
+							propertyResult.get(fullPropertyPath));
+						return;
+					}
+
 				} else {
 					throw new RuntimeException("Unable to resolve property: " + propertyPath);
 				}

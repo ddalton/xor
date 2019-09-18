@@ -19,6 +19,7 @@
 
 package tools.xor.view;
 
+import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.Settings;
 
@@ -51,14 +52,12 @@ public interface ObjectResolver
     void preProcess(QueryTree queryTree, Settings settings);
 
     /**
-     * Takes the result from the query and reconstitutes the object
+     * Notify the resolver of the reconstituted object
      *
-     * @param records results from the query
-     * @param queryTree containing the query
-     * @param callInfo details on the user request
-     * @param queryInvocation contains details on the query to be used by dependent queries
+     * @param businessObject reconstituted object
+     * @param isRoot true if the object is created from a root query tree
      */
-    void processRecords(List records, QueryTree queryTree, CallInfo callInfo, QueryTreeInvocation queryInvocation);
+    void notify(BusinessObject businessObject, boolean isRoot);
 
     /**
      * Extract the root entities and return to the user.

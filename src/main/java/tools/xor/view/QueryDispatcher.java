@@ -19,10 +19,13 @@
 
 package tools.xor.view;
 
-import tools.xor.CallInfo;
-import tools.xor.util.InterQuery;
-
 public interface QueryDispatcher
 {
-    void execute(AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree, ObjectResolver resolver, CallInfo callInfo);
+    /**
+     * The execution and reconstitution of the results proceeds as follows:
+     * 1. A BFS traversal of the AggregateTree to execute the queries
+     * 2. The query results are saved in the QueryTreeInvocation object
+     * 3. The results are reconstituted in a pre-order DFS traversal of the AggregateTree
+     */
+    void execute();
 }

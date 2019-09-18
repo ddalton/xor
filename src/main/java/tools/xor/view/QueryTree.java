@@ -162,6 +162,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			if(idValue != null) {
 				//result = entity.getBySurrogateKey(idValue, this.aggregateType);
 
+				// TODO: Can these duplicates be downcast to the correct subtype
 				duplicates = queryInvocation.getDuplicates(
 					anchorPath,
 					idValue,
@@ -182,7 +183,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return duplicates;
 	}
 
-	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) throws Exception {
+	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) {
 		Map<String, Object> propertyResult = new HashMap<>();
 		Set<String> propertyPaths = new HashSet<>();
 
@@ -259,21 +260,18 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			}
 		}
 
-		ReconstituteRecordVisitor collectionReconstitutor = new ReconstituteRecordVisitor();
-		for(String propertyPath: changed) {
-			// Set the value and create any intermediate objects if necessary
-			root.reconstitute(propertyPath, propertyResult, this, collectionReconstitutor, queryInvocation);
+		// Record this result to be used later on for reconstitution
+		queryInvocation.addRecordDelta(this, changed, propertyResult, lcp, queryResultRow);
 
-			// Notify the queryTreeInvocation visitor
+		for(String propertyPath: changed) {
+			// Notify the queryTreeInvocation visitor of the changed values
 			queryInvocation.visit(propertyPath, propertyResult.get(propertyPath));
 		}
-		lcp = getDeepestCollection(lcp);
-		collectionReconstitutor.process(lcp);
 
 		return propertyResult;
 	}
 
-	private String getDeepestCollection(String path) {
+	public String getDeepestCollection(String path) {
 		if(StringUtils.isEmpty(path)) {
 			return path;
 		}

@@ -61,6 +61,8 @@ public class QueryTreeInvocation
 
     private Map<EntityKey, List<BusinessObject>> queryObjects;
 
+    private Map<QueryTree, List<RecordDelta>> recordDeltas;
+
     private Map<InterQuery, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
     private Map<String, QueryVisitor> visitorsByPath;
 
@@ -73,10 +75,41 @@ public class QueryTreeInvocation
         this.visitorsByPath = new ConcurrentHashMap<>();
         this.objectsByPath = new ConcurrentHashMap<>();
         this.queryObjects = new ConcurrentHashMap<>();
+        this.recordDeltas = new ConcurrentHashMap<>();
 
         // Initialize with the root queries
         for(QueryTree queryTree: rootQueries) {
             resolvedQuery.put(queryTree.getQuery(), queryTree.getQuery().getQueryString());
+        }
+    }
+
+    public static class RecordDelta {
+        private Set<String> changed; // the fields that have new information
+        private Map<String, Object> propertyResult; // information from result set keyed by full path
+        private String lcp;
+        private Object[] record;
+
+        public RecordDelta(Set<String> changed, Map<String, Object> propertyResult, String lcp, Object[] record) {
+            this.changed = changed;
+            this.propertyResult = propertyResult;
+            this.lcp = lcp;
+            this.record = record;
+        }
+
+        public Set<String> getChanged() {
+            return this.changed;
+        }
+
+        public Map<String, Object> getPropertyResult() {
+            return this.propertyResult;
+        }
+
+        public String getLCP() {
+            return this.lcp;
+        }
+
+        public Object[] getRecord() {
+            return this.record;
         }
     }
 
@@ -252,5 +285,18 @@ public class QueryTreeInvocation
         EntityKey key = new SurrogateEntityKey(idValue, type.getName(), path);
 
         return queryObjects.get(key);
+    }
+
+    public void addRecordDelta(QueryTree queryTree, Set<String> changed, Map<String, Object> propertyResult, String lcp, Object[] record) {
+        List<RecordDelta> deltas = recordDeltas.get(queryTree);
+        if(deltas == null) {
+            deltas = new LinkedList<>();
+            recordDeltas.put(queryTree, deltas);
+        }
+        deltas.add(new RecordDelta(changed, propertyResult, lcp, record));
+    }
+
+    public List<RecordDelta> getRecordDeltas(QueryTree queryTree) {
+        return this.recordDeltas.get(queryTree);
     }
 }

@@ -95,8 +95,8 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		QueryBuilder builder = new QueryBuilder(aggregateTree, this.entity);
 		builder.construct(callInfo.getSettings());
 
-		QueryDispatcher dispatcher = new SerialDispatcher();
-		dispatcher.execute(aggregateTree, this, callInfo);
+		QueryDispatcher dispatcher = new SerialDispatcher(aggregateTree, this, callInfo);
+		dispatcher.execute();
 	}
 
 	@Override
@@ -110,44 +110,15 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	}
 
 	@Override
-	public void processRecords(List records, QueryTree queryTree, CallInfo callInfo, QueryTreeInvocation queryInvocation) {
-		
-		try {
-			// club all the results relevant to the same entity
-			// add an id attribute for the mail entity. Add an owner attribute for each collection property referenced.
-			// adjust the properties and for every new attribute added (id or owner) create a filler/dummy property column in the view
-			Map<String, Object> previous = null;
-			for(Object obj: records) {
-				if(ClassUtil.getDimensionCount(obj) == 1) {
-					// TODO: For child queries the root/anchor object should be the parent object
-					// TODO: for that query edge
-					// TODO: The parent id is the root id of the child query tree
-					// TODO: Use this id to get the parent objects (anchor objects) from the
-					// TODO: QueryTreeInvocation
-					List<BusinessObject> anchorObjects = queryTree.getRootObjects(
-						obj,
-						(BusinessObject)callInfo.getOutput(),
-						queryInvocation);
-					for(BusinessObject anchorObject: anchorObjects) {
-
-						previous = queryTree.resolveField(
-							anchorObject,
-							(Object[])obj,
-							previous,
-							queryInvocation);
-
-						// TODO: get the list with empty path
-						if (anchorObject.getContainer() == null && !uniqueList.containsKey(
-							anchorObject)) {
-							// Only add root objects
-							uniqueList.put(anchorObject, null);
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
-		}		
+	public void notify (BusinessObject anchorObject,
+								boolean isRoot)
+	{
+		if (isRoot && anchorObject.getContainer() == null
+			&& !uniqueList.containsKey(
+			anchorObject)) {
+			// Only add root objects
+			uniqueList.put(anchorObject, null);
+		}
 	}
 
 	@Override

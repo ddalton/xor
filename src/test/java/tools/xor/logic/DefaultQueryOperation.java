@@ -65,8 +65,10 @@ import tools.xor.view.AggregateTree;
 import tools.xor.view.View;
 import tools.xor.view.expression.FunctionHandler;
 
+import javax.annotation.Resource;
+
 public class DefaultQueryOperation extends AbstractDBTest {
-	@Autowired
+	@Resource(name = "aggregateManager")
 	protected AggregateManager aggregateService;
 
 	@Autowired

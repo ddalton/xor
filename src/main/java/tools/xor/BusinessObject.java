@@ -322,6 +322,19 @@ public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.
 	public BusinessObject createDataObject(Object id, Type instanceType) throws Exception;
 
 	/**
+	 * This method is used to create a new data object that has to be in the scope of the data object that creates it.
+	 * But its lifecycle is not linked with this object.
+	 *
+	 * @param id identifier
+	 * @param instanceType Type of the object to be created
+	 * @param anchor path at which this object is anchored. Two objects with the same id are considered different
+	 *               if they are anchored on different paths
+	 * @return new BusinessObject
+	 * @throws Exception when creating an instance
+	 */
+	public BusinessObject createDataObject(Object id, Type instanceType, String anchor) throws Exception;
+
+	/**
 	 * Used to set the container for a data object. This method is useful when the data object was created before its container.
 	 * @param value the parent object
 	 */

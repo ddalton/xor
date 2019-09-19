@@ -1,18 +1,10 @@
-1. Finish assertion of test - PriorityTask
-2. do the PriorityTask test with POJO JPA entity object - test pre-order reconstitution
-3. Dpulicate child entries - new test
-4. Doubly nested child query tet
-5. TO_ONE child query test
-6. root object downcast
-
-
-
-
-b. EntityKey (id and Type). If Type api is used, it should always be based on root concrete type.
-c. Subtype querying and json/state enhancement
-
-
-6. Paging test - tokens and parallel collections
+1. Dpulicate child entries - new test
+2. Doubly nested child query tet
+3. TO_ONE child query test
+4. root object downcast
+5. Parallel dispatcher implementation
+6. Subtype querying and json/state enhancement
+7. Paging test - tokens and parallel collections
 
 Benchmarks
 ==========
@@ -44,7 +36,6 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 
 3. Multi-column foreign key test
 4. Entity filter test. Also need to test it in split scenario. See #2.
-5. Inheritance test - see #1 (JSON representation)
 7. Test same entity type but on different anchors and ensure it brings different shapes
 
 

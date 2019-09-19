@@ -999,6 +999,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 			List<?> result = aggregateService.query(null, settings);
 			assert(result != null);
+			assert(result.size() == 18);
+			JSONObject root = (JSONObject)result.get(0);
+			assert(root.has("taskChildren"));
+			JSONArray children = root.getJSONArray("taskChildren");
+			assert(children.length() == 4);
 
 		} finally {
 

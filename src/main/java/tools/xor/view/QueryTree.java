@@ -137,11 +137,11 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		}
 	}	
 
-	public List<BusinessObject> getRootObjects (Object obj, BusinessObject entity, QueryTreeInvocation queryInvocation) throws Exception {
-		List<BusinessObject> duplicates = null;
+	public BusinessObject getRootObject (Object record, BusinessObject entity, QueryTreeInvocation queryInvocation) throws Exception {
+		BusinessObject rootObject = null;
 
-		if(ClassUtil.getDimensionCount(obj) == 1) {
-			Object[] queryRow = (Object[])obj;
+		if(ClassUtil.getDimensionCount(record) == 1) {
+			Object[] queryRow = (Object[])record;
 
 			Object idValue = null;
 			String anchorPath = getRoot().getAnchorPath();
@@ -150,6 +150,12 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 				idValue = getQueryValue(queryRow, anchorPath+idPropertyName);
 			}
 
+			Type type = ((EntityType)this.aggregateType).getShape().getExternalType(this.aggregateType.getName());
+			String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
+			if(entityName != null) {
+				type = ((EntityType)this.aggregateType).getShape().getExternalType(entityName.trim());
+			}
+			/*
 			String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
 			Type type = entity.getType();
 			if(entityName != null) {
@@ -157,30 +163,29 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 				entityName = entityName.trim();
 				type = entity.getObjectCreator().getDAS().getShape().getType(entityName);
 			}
+			*/
 
 			// find and create data object
 			if(idValue != null) {
 				//result = entity.getBySurrogateKey(idValue, this.aggregateType);
 
-				// TODO: Can these duplicates be downcast to the correct subtype
-				duplicates = queryInvocation.getDuplicates(
+				// They are downcast based on the type
+				rootObject = queryInvocation.getQueryObject(
 					anchorPath,
 					idValue,
-					this.aggregateType);
+					type);
 			}
-			if(duplicates == null) {
-				duplicates = new LinkedList<>();
+			if(rootObject == null) {
 				if(logger.isDebugEnabled()) {
-					logger.debug("Creating instance with id: " + idValue + " and type: " + entity.getType().getName() + ", entityName: |" + entityName + "|");
+					logger.debug("Creating instance with id: " + idValue + " and type: " + type.getName() + ", entityName: |" + entityName + "|");
 				}
-				BusinessObject newObject = entity.createDataObject(idValue, type);
-				duplicates.add(newObject);
+				rootObject = entity.createDataObject(idValue, type, anchorPath);
 
-				queryInvocation.visit(anchorPath, newObject);
+				queryInvocation.visit(anchorPath, rootObject);
 			}
 		}
 
-		return duplicates;
+		return rootObject;
 	}
 
 	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) {

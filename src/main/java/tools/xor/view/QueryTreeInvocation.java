@@ -59,7 +59,7 @@ public class QueryTreeInvocation
                                                              // The parent objects are obtained by getting
                                                              // the full path from the source fragment of the InterQuery edge
 
-    private Map<EntityKey, List<BusinessObject>> queryObjects;
+    private Map<EntityKey, BusinessObject> queryObjects; // Unique object per id and path
 
     private Map<QueryTree, List<RecordDelta>> recordDeltas;
 
@@ -271,16 +271,19 @@ public class QueryTreeInvocation
         if(id != null) {
             Type type = ((EntityType)bo.getType()).getRootEntityType();
             EntityKey key = new SurrogateEntityKey(id, type.getName(), path);
-            List<BusinessObject> duplicates = queryObjects.get(key);
-            if (duplicates == null) {
-                duplicates = new LinkedList<>();
-                queryObjects.put(key, duplicates);
-            }
-            duplicates.add(bo);
+            BusinessObject existing = queryObjects.get(key);
+            assert(existing == null);
+            queryObjects.put(key, bo);
         }
     }
 
-    public List<BusinessObject> getDuplicates(String path, Object idValue, Type type) {
+    /*
+    public BusinessObject findQueryObject(EntityKey key) {
+        return queryObjects.get(key);
+    }
+    */
+
+    public BusinessObject getQueryObject(String path, Object idValue, Type type) {
         type = ((EntityType)type).getRootEntityType();
         EntityKey key = new SurrogateEntityKey(idValue, type.getName(), path);
 

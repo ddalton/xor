@@ -812,16 +812,20 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 	}
 
-	@Override
-	public BusinessObject createDataObject(Object id, Type instanceType) throws Exception {
+	public BusinessObject createDataObject(Object id, Type instanceType, String anchor) throws Exception {
 		Object propertyInstance = createInstance(objectCreator, id, instanceType);
-		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, null, null);
+		BusinessObject result = objectCreator.createDataObject(propertyInstance, instanceType, null, null, anchor);
 
 		if(getSettings().getDetector() != null) {
 			getSettings().getDetector().notifyCreate(id, result, propertyInstance);
 		}
 
 		return result;
+	}
+
+	@Override
+	public BusinessObject createDataObject(Object id, Type instanceType) throws Exception {
+		return createDataObject(id, instanceType, null);
 	}
 
 	// Anchor uniquely identifies the shape of the object at the end of the anchor
@@ -934,7 +938,8 @@ public abstract class AbstractBO implements BusinessObject {
 					if(((EntityType)property.getType()).getIdentifierProperty() != null) {
 						idValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + ((EntityType)property.getType()).getIdentifierProperty().getName());
 					}
-					propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), getAnchor(anchor.toString()));
+					//propertyDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainProperty.getType(), getAnchor(anchor.toString()));
+					propertyDO = findQueryObject(fullPropertyPath, idValue, domainProperty.getType(), qti);
 
 					if(propertyDO == null) { // create and set the instance object
 						// check if we are narrowing
@@ -992,7 +997,8 @@ public abstract class AbstractBO implements BusinessObject {
 					idValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + ((EntityType) elementType).getIdentifierProperty().getName());
 				}
 				// find the element
-				elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, getAnchor(anchor.toString()));
+				//elementDO = getObjectCreator().findEntity(idValue, naturalKeyValues, domainElementType, getAnchor(anchor.toString()));
+				elementDO = findQueryObject(fullPropertyPath, idValue, domainElementType, qti);
 
 				// check flag to see if the containment should be set
 				if(elementDO != null && property.isContainment()) {
@@ -1085,6 +1091,21 @@ public abstract class AbstractBO implements BusinessObject {
 
 		return;
 	}
+
+	/*
+	 * TODO: Currently supports only id. Need to support Natural key retrieval.
+	 */
+	private BusinessObject findQueryObject(String fullPath, Object idValue, Type type, QueryTreeInvocation queryTreeInvocation) {
+		BusinessObject bo = null;
+
+		String anchorPath = QueryFragment.extractAnchorPath(fullPath);
+		if (idValue != null && ((EntityType)type).getIdentifierProperty() != null) {
+			bo = queryTreeInvocation.getQueryObject(anchorPath, idValue, type);
+		}
+
+		return bo;
+	}
+
 
 	private BusinessObject createQueryObject(Object instance,
 											 BusinessObject bo,

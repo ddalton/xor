@@ -130,30 +130,27 @@ public class SerialDispatcher implements QueryDispatcher
         // Process the results
         for (QueryTreeInvocation.RecordDelta delta : recordDeltas) {
             Object[] record = delta.getRecord();
-            List<BusinessObject> anchorObjects = queryTree.getRootObjects(
+            BusinessObject anchorObject = queryTree.getRootObject(
                 record,
                 (BusinessObject)callInfo.getOutput(),
                 queryInvocation);
 
             Map<String, Object> propertyResult = delta.getPropertyResult();
-            for (BusinessObject anchorObject : anchorObjects) {
-
-                ReconstituteRecordVisitor collectionReconstitutor = new ReconstituteRecordVisitor();
-                for (String propertyPath : delta.getChanged()) {
-                    // Set the value and create any intermediate objects if necessary
-                    anchorObject.reconstitute(
-                        propertyPath,
-                        propertyResult,
-                        queryTree,
-                        collectionReconstitutor,
-                        queryInvocation);
-                }
-                String lcp = queryTree.getDeepestCollection(delta.getLCP());
-                collectionReconstitutor.process(lcp);
-
-                // Notify the resolver of the object
-                resolver.notify(anchorObject, isRoot);
+            ReconstituteRecordVisitor collectionReconstitutor = new ReconstituteRecordVisitor();
+            for (String propertyPath : delta.getChanged()) {
+                // Set the value and create any intermediate objects if necessary
+                anchorObject.reconstitute(
+                    propertyPath,
+                    propertyResult,
+                    queryTree,
+                    collectionReconstitutor,
+                    queryInvocation);
             }
+            String lcp = queryTree.getDeepestCollection(delta.getLCP());
+            collectionReconstitutor.process(lcp);
+
+            // Notify the resolver of the object
+            resolver.notify(anchorObject, isRoot);
         }
     }
 }

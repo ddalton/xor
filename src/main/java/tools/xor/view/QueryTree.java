@@ -64,6 +64,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	private List<QueryField> fields = new LinkedList<>();
 	private Map<String, QueryField> attributeToFieldMap = new HashMap<>();
 	private Query     query;          // Query representing this QueryTree
+	private QueryHandle handle;       // Handle to the details needed to construct the Query object
 	private String    selectString;
 	private View      view; // view associated with this QueryTree, needed for functions
 
@@ -78,6 +79,22 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 	public void setQuery(Query query) {
 		this.query = query;
+	}
+
+	public void setQueryHandle(QueryHandle handle) {
+		this.handle = handle;
+	}
+
+	public Query createQuery(PersistenceOrchestrator po) {
+		if(this.query != null) {
+			return query;
+		}
+
+		if(this.handle != null) {
+			this.query = this.handle.create(po);
+		}
+
+		return this.query;
 	}
 
 	public QueryTree copy() {

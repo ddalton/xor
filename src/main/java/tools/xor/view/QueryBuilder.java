@@ -124,7 +124,7 @@ public class QueryBuilder
 
         QueryBuilderStrategy strategy = getBuilderStrategy(queryTree, null, this, this.aggregateTree);
 
-        Query query = strategy.construct(settings);
-        queryTree.setQuery(query);
+        QueryHandle handle = strategy.construct(settings);
+        queryTree.setQueryHandle(handle);
     }
 }

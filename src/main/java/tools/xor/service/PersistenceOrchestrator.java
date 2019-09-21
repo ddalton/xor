@@ -193,10 +193,9 @@ public interface PersistenceOrchestrator {
 	 * @param queryString typically the SQL string
 	 * @param queryType the type of query
 	 * @param queryInput representing the type of Query object
-     * @param settings additional settings
 	 * @return Query object
 	 */
-	public Query getQuery(String queryString, QueryType queryType, Object queryInput, Settings settings);
+	public Query getQuery(String queryString, QueryType queryType, Object queryInput);
 
     /**
      * Create the provider specific query object if the query entails deferred construction
@@ -313,4 +312,10 @@ public interface PersistenceOrchestrator {
      * @return map of source and migrated surrogate ids
      */
     public Map<String, String> findMigratedSurrogateIds(Set<String> sourceSurrogateIds);
+
+    /**
+     * We need an active JDBC connection for queries. But we do not need any
+     * transaction overhead
+     */
+    public void initForQuery();
 }

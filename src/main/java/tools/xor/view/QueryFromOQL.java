@@ -37,7 +37,7 @@ public class QueryFromOQL implements QueryBuilderStrategy
         this.aggregateTree = aggregateTree;
     }
 
-    @Override public Query construct (Settings settings)
+    @Override public QueryHandle construct (Settings settings)
     {
         /* We first need to build the SQL from the following
          *   selectClause
@@ -51,15 +51,14 @@ public class QueryFromOQL implements QueryBuilderStrategy
                 settings,
                 oqlQuery.getFunction()));
 
-        Query query = settings.getPersistenceOrchestrator().getQuery(
+        QueryHandle handle = new QueryHandle(
             queryString.toString(),
             PersistenceOrchestrator.QueryType.OQL,
-            oqlQuery,
-            settings);
+            oqlQuery);
 
         // Initialized the selected columns
-        oqlQuery.deriveColumns(this.queryTree, query, settings, this.aggregateTree, this.view);
+        oqlQuery.deriveColumns(this.queryTree, handle, settings, this.aggregateTree, this.view);
 
-        return query;
+        return handle;
     }
 }

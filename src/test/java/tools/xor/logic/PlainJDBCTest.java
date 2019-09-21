@@ -19,6 +19,7 @@
 
 package tools.xor.logic;
 
+import org.apache.commons.dbcp.BasicDataSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
@@ -34,19 +35,16 @@ import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.generator.Generator;
 import tools.xor.generator.RangePercent;
-import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
-import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -63,6 +61,18 @@ public class PlainJDBCTest
 
 	@Autowired
 	protected DataSource dataSource;
+
+	private void printDatasource() {
+
+		BasicDataSource bds = (BasicDataSource) dataSource;
+
+		System.out.println("**************** DATASOURCE ***************");
+		System.out.println("Max Active: " + bds.getMaxActive());
+		System.out.println("Max Idle: " + bds.getMaxIdle());
+		System.out.println("Min Idle: " + bds.getMinIdle());
+		System.out.println("Num Active: " + bds.getNumActive());
+		System.out.println("Num Idle: " + bds.getNumIdle());
+	}
 
 	@Before
 	public void init() throws SQLException, ClassNotFoundException, IOException
@@ -332,7 +342,7 @@ public class PlainJDBCTest
 
 		DataAccessService das = am.getDAS();
 
-		am.checkPO(null);
+		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 
@@ -353,7 +363,7 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.checkPO(null);
+		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 
@@ -391,7 +401,7 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.checkPO(null);
+		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 
@@ -432,7 +442,8 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.checkPO(null);
+		am.dbInit(null);
+
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 
@@ -469,7 +480,7 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.checkPO(null);
+		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 
@@ -525,7 +536,7 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.checkPO(null);
+		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 
@@ -573,7 +584,7 @@ public class PlainJDBCTest
 		DataAccessService das = am.getDAS();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.checkPO(null);
+		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
 		sc.beginTransaction();
 

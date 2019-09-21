@@ -241,7 +241,7 @@ public class JDBCPersistenceOrchestrator
 		return null;
 	}
 
-	@Override public Query getQuery (String queryString, QueryType queryType, Object queryInput, Settings settings)
+	@Override public Query getQuery (String queryString, QueryType queryType, Object queryInput)
 	{
 		Query result;
 		switch(queryType) {
@@ -305,5 +305,10 @@ public class JDBCPersistenceOrchestrator
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);
 		}
+	}
+
+	@Override
+	public void initForQuery() {
+		context.readOnlyTransaction();
 	}
 }

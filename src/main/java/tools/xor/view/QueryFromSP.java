@@ -35,21 +35,20 @@ public class QueryFromSP implements QueryBuilderStrategy
         this.aggregateTree = aggregateTree;
     }
 
-    @Override public Query construct(Settings settings)
+    @Override public QueryHandle construct(Settings settings)
     {
         StoredProcedure querySP = view.getStoredProcedure(settings.getAction());
 
-        Query query = null;
+        QueryHandle handle = null;
         if(querySP != null) {
-            query = settings.getPersistenceOrchestrator().getQuery(
+            handle = new QueryHandle(
                 querySP.getName(),
                 PersistenceOrchestrator.QueryType.SP,
-                querySP,
-                settings);
+                querySP);
 
-            querySP.deriveColumns(this.queryTree, query, settings, this.aggregateTree, this.view);
+            querySP.deriveColumns(this.queryTree, handle, settings, this.aggregateTree, this.view);
         }
 
-        return query;
+        return handle;
     }
 }

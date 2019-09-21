@@ -49,12 +49,12 @@ public abstract class QuerySupport
         return result;
     }
 
-    public void deriveColumns(QueryTree qp, Query query, Settings settings, AggregateTree queryTree, View view) {
-        if(qp != null && !qp.getAggregateType().isOpen()) {
-            qp.generateFields(settings, queryTree);
-            query.setColumns(qp.getSelectedColumns());
+    public void deriveColumns(QueryTree queryTree, QueryHandle handle, Settings settings, AggregateTree aggregateTree, View view) {
+        if(queryTree != null && !queryTree.getAggregateType().isOpen()) {
+            queryTree.generateFields(settings, aggregateTree);
+            handle.setColumns(queryTree.getSelectedColumns());
         } else {
-            query.setColumns(getColumns(view));
+            handle.setColumns(getColumns(view));
         }
     }
 

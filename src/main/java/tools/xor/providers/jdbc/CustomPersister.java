@@ -56,6 +56,12 @@ public interface CustomPersister
 
     void beginTransaction();
 
+    /**
+     * We create a new transaction if there is none, else we join the existing transaction
+     * This is only used for read-only queries
+     */
+    void readOnlyTransaction();
+
     void close();
 
     void commit();

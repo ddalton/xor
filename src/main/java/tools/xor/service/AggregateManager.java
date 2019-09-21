@@ -20,7 +20,6 @@
 package tools.xor.service;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.poi.EncryptedDocumentException;
@@ -38,13 +37,11 @@ import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
 import tools.xor.DataGenerator;
-import tools.xor.DataImporter;
 import tools.xor.DefaultTypeMapper;
 import tools.xor.DefaultTypeNarrower;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.JDBCProperty;
 import tools.xor.MapperDirection;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -91,21 +88,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class AggregateManager implements Xor
@@ -414,7 +401,7 @@ public class AggregateManager implements Xor
 	}
 
 	public Transaction createTransaction(Settings settings) {
-		checkPO(settings);
+		dbInit(settings);
 
 		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
 			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)getPersistenceOrchestrator();
@@ -425,14 +412,15 @@ public class AggregateManager implements Xor
 		}
 	}
 
-	public void checkPO(Settings settings) {
+	public void dbInit (Settings settings) {
 
 		if (getPersistenceOrchestrator() == null) {
 			setPersistenceOrchestrator(dasFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
 		}
 		if(settings != null) {
 			if(settings.getPersistenceOrchestrator() == null) {
-				settings.setPersistenceOrchestrator(getPersistenceOrchestrator());
+				settings.setAggregateManager(this);
+				settings.initPersistenceOrchestrator(getPersistenceOrchestrator());
 				if (settings.getSessionContext() != null
 					&& getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
 					JDBCPersistenceOrchestrator po = ((JDBCPersistenceOrchestrator)getPersistenceOrchestrator());
@@ -448,7 +436,7 @@ public class AggregateManager implements Xor
 	{
 		Class<?> inputObjectClass = getEntityClass(inputObject, settings);
 
-		checkPO(settings);
+		dbInit(settings);
 
 		if (settings.getAssociationStrategy() == null) {
 			settings.setAssociationStrategy(associationStrategy);
@@ -593,7 +581,7 @@ public class AggregateManager implements Xor
 
 	@Override
 	public Object dml(Settings settings) {
-		checkPO(settings);
+		dbInit(settings);
 
 		AbstractOperation operation = null;
 		if(settings.getAction() == AggregateAction.READ) {
@@ -1060,7 +1048,7 @@ public class AggregateManager implements Xor
 			throw new IllegalArgumentException("Source database needs to be provided");
 		}
 
-		checkPO(settings);
+		dbInit(settings);
 		MigrateOperation operation = getPersistenceOrchestrator().getMigrateOperation(
 			source,
 			this,
@@ -1575,7 +1563,7 @@ public class AggregateManager implements Xor
 		Shape shape = getDAS().getShape(name);
 
 		// Generate the data
-		checkPO(settings);
+		dbInit(settings);
 		(new DataGenerator(types, shape, settings, getDasFactory())).execute();
 	}
 }

@@ -88,14 +88,17 @@ public class JDBCSessionContext implements CustomPersister
     private static class ConnectionHolder {
         private final boolean owner;
         private final Connection connection;
+        private final boolean readOnly; // If this is true, then there are no modifications and
+                                        // it does not have to be committed
 
         public Connection getConnection() {
             return this.connection;
         }
 
-        public ConnectionHolder(Connection c, boolean owner) {
+        public ConnectionHolder(Connection c, boolean owner, boolean readOnly) {
             this.connection = c;
             this.owner = owner;
+            this.readOnly = readOnly;
         }
 
         public boolean isOwner() {
@@ -553,7 +556,11 @@ public class JDBCSessionContext implements CustomPersister
         }
     }
 
-    @Override public void beginTransaction()
+    @Override public void beginTransaction() {
+        beginTransaction(false);
+    }
+
+    public void beginTransaction(boolean readOnly)
     {
         // check if the connections are valid
         while(!connections.isEmpty()) {
@@ -573,9 +580,15 @@ public class JDBCSessionContext implements CustomPersister
         }
 
         if(connections.size() == 0) {
-            connections.push(new ConnectionHolder(po.getNewConnection(), true));
+            connections.push(new ConnectionHolder(po.getNewConnection(), true, readOnly));
         } else {
-            connections.push(new ConnectionHolder(getConnection(), false));
+            connections.push(new ConnectionHolder(getConnection(), false, readOnly));
+        }
+    }
+
+    @Override public void readOnlyTransaction() {
+        if(connections.size() == 0) {
+            beginTransaction(true);
         }
     }
 

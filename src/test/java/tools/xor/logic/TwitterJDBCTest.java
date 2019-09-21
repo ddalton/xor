@@ -411,7 +411,7 @@ public class TwitterJDBCTest
         DataAccessService das = am.getDAS();
         Shape shape = das.getShape();
 
-        am.checkPO(null);
+        am.dbInit(null);
         JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
         sc.beginTransaction();
 

@@ -40,7 +40,6 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.EntityScroll;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
@@ -115,7 +114,7 @@ public class MigrateOperation extends GraphTraversal
                 // This requires building the appropriate OQL/SQL
                 // Build a JSON object out of this result for each row
                 // and put it in the queue
-                target.checkPO(settings);
+                target.dbInit(settings);
                 EntityScroll<JSONObject> entityCursor = getEntityScroll();
                 while (entityCursor.hasNext()) {
                     JSONObject jsonObject = entityCursor.next();
@@ -167,7 +166,7 @@ public class MigrateOperation extends GraphTraversal
 
                 try {
                     // Ensure the PersistenceOrchestrator is initialized
-                    target.checkPO(settings);
+                    target.dbInit(settings);
 
                     // Create a batch of objects from the queue
                     List<JSONObject> batch = new ArrayList<>(CONSUMER_BATCH_SIZE);

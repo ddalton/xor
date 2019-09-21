@@ -1,10 +1,21 @@
-1. Dpulicate child entries - new test
-2. Doubly nested child query tet
-3. TO_ONE child query test
-4. root object downcast
-5. Parallel dispatcher implementation
+Hung on -
+ mvn test -Dtest=JPAQueryOperationTest.java#listPatents
+
+
+
+0. Parallel dispatcher implementation
+   a) use aliases to create a wide fan-out aggregatetree
+   b) use inheritance to create a wide fan-out aggregate tree
+1. Explore replacing IN (<subquery>) with EXISTS (<correlated_subquery>)
+   also remove any unnecessary tables from the join in the subquery,
+   unless it participates in the critical path or has a predicate clause
+2. Duplicate child entries - new test
+3. Doubly nested child query tet
+4. TO_ONE child query test
+5. root object downcast
 6. Subtype querying and json/state enhancement
 7. Paging test - tokens and parallel collections
+8. Collection of embedded objects
 
 Benchmarks
 ==========
@@ -28,11 +39,7 @@ Fix narrow call by replacing it with the ability to resolve the object based on 
 
 2. Test subquery
    Add limit and next token functionality to the QueryTree
-   Parallelizing them will be the next step
-
    How do splits and query filters interact. Need to ensure the stitching filters out the object correctly.
-
-   Alias interquery flag?? - see #1 (JSON representation)
 
 3. Multi-column foreign key test
 4. Entity filter test. Also need to test it in split scenario. See #2.

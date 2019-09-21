@@ -93,7 +93,7 @@ public class HanaPerf1Test
     @Before
     public void setup() throws SQLException
     {
-        am.checkPO(new Settings());
+        am.dbInit(new Settings());
         JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
         JDBCSessionContext sc = po.getSessionContext();
         sc.beginTransaction();
@@ -621,7 +621,7 @@ public class HanaPerf1Test
     public void testQuery1() {
 
         if(importMethod == ImportMethod.PREPARED_STATEMENT) {
-            am.checkPO(new Settings());
+            am.dbInit(new Settings());
             JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
             JDBCSessionContext sc = po.getSessionContext();
             sc.beginTransaction();
@@ -674,7 +674,7 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         settings.setView(view);
         settings.init(shape);
 
-        am.checkPO(settings);
+        am.dbInit(settings);
 
         JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
         JDBCSessionContext sc = po.getSessionContext();
@@ -741,7 +741,7 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         settings.setView(view);
         settings.init(shape);
 
-        am.checkPO(settings);
+        am.dbInit(settings);
 
         JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
         JDBCSessionContext sc = po.getSessionContext();

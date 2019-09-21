@@ -1512,7 +1512,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 		QueryBuilder builder = new QueryBuilder(queryTree);
 		Settings settings = new Settings();
-		aggregateManager.checkPO(settings);
+		aggregateManager.dbInit(settings);
 		builder.construct(settings);
 	}
 }

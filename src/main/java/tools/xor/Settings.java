@@ -61,6 +61,7 @@ import tools.xor.custom.DetailStrategy;
 import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
+import tools.xor.service.AggregateManager;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
@@ -129,7 +130,7 @@ public class Settings {
 		this.dateFormat = dateFormat;
 	}
 
-	protected PersistenceOrchestrator persistenceOrchestrator;
+	protected AggregateManager aggregateManager;
 	
 	protected boolean supportsPostLogic;
 	
@@ -243,15 +244,25 @@ public class Settings {
 		return collectionSparseness.containsKey(rootedAt);
 	}
 
-	public PersistenceOrchestrator getPersistenceOrchestrator ()
-	{
-		return this.persistenceOrchestrator;
+	public AggregateManager getAggregateManager() {
+		return this.aggregateManager;
 	}
 
-	public void setPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
+	public PersistenceOrchestrator getPersistenceOrchestrator ()
 	{
-		this.persistenceOrchestrator = persistenceOrchestrator;
-		if(this.persistenceOrchestrator instanceof JDBCPersistenceOrchestrator) {
+		return this.aggregateManager == null ? null : this.aggregateManager.getPersistenceOrchestrator();
+	}
+
+	public void setAggregateManager(AggregateManager aggregateManager) {
+		this.aggregateManager = aggregateManager;
+	}
+
+	/*
+	 * we need to get the persistence orchestrator specific to that thread
+	 */
+	public void initPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
+	{
+		if(persistenceOrchestrator instanceof JDBCPersistenceOrchestrator) {
 
 			// Need this to be true for JDBCPersistenceOrchestrator
 			this.postFlush = true;

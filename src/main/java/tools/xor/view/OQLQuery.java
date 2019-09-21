@@ -69,7 +69,7 @@ public class OQLQuery extends QuerySupport
         am.setPersistenceOrchestrator(am.getDasFactory().createPersistenceOrchestrator(null));
 
         Settings settings = new Settings();
-        am.checkPO(settings);
+        am.dbInit(settings);
 
         QueryBuilder qb = new QueryBuilder(aggregateTree);
         qb.construct(settings, queryTree);

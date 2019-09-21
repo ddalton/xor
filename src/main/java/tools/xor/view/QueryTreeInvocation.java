@@ -78,9 +78,9 @@ public class QueryTreeInvocation
         this.recordDeltas = new ConcurrentHashMap<>();
 
         // Initialize with the root queries
-        for(QueryTree queryTree: rootQueries) {
-            resolvedQuery.put(queryTree.getQuery(), queryTree.getQuery().getQueryString());
-        }
+        //for(QueryTree queryTree: rootQueries) {
+        //    resolvedQuery.put(queryTree.getQuery(), queryTree.getQuery().getQueryString());
+        //}
     }
 
     public static class RecordDelta {
@@ -118,7 +118,7 @@ public class QueryTreeInvocation
      *
      * @param edge for which the query string needs to be updated for the edge end
      */
-    public void resolveQuery(AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree, InterQuery<QueryTree> edge) {
+    public void resolveQuery(InterQuery<QueryTree> edge) {
 
         QueryTree queryTree = edge.getEnd();
         InterQuery parentEdge = edge;
@@ -143,7 +143,7 @@ public class QueryTreeInvocation
         else {
             oqlString = oqlString.replaceFirst(
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
-                deriveSubquery(edge, resolvedQuery.get(edge.getStart().getQuery())));
+                deriveSubquery(edge, getResolvedQuery(edge.getStart().getQuery())));
 
         }
         resolvedQuery.put(queryTree.getQuery(), oqlString);
@@ -213,6 +213,9 @@ public class QueryTreeInvocation
     }
 
     public String getResolvedQuery(Query query) {
+        if(!resolvedQuery.containsKey(query)) {
+            return query.getQueryString();
+        }
         return resolvedQuery.get(query);
     }
 

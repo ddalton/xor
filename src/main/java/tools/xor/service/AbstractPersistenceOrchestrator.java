@@ -397,4 +397,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 		
 		qti.initInList(query);
 	}
+
+	@Override
+	public void initForQuery() {}
 }

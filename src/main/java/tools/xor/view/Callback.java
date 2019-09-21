@@ -19,15 +19,7 @@
 
 package tools.xor.view;
 
-import tools.xor.Settings;
-
-public interface QueryBuilderStrategy
+public interface Callback
 {
-    /**
-     * Return the corresponding Query object
-     *
-     * @param settings needed for user specified functions
-     * @return QueryHandle object
-     */
-    QueryHandle construct(Settings settings);
+    public void complete(QueryTree queryTree, QueryTreeInvocation queryTreeInvocation);
 }

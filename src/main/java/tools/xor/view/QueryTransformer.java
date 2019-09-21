@@ -261,7 +261,7 @@ public class QueryTransformer
 		QueryBuilder qb = new QueryBuilder(aggregateTree);
 		qb.construct(settings);
 
-		return aggregateTree.getRoot().getQuery();
+		return aggregateTree.getRoot().createQuery(settings.getPersistenceOrchestrator());
 	}
 
 	public static Query getUserQuery(View view, Settings settings) {
@@ -273,7 +273,7 @@ public class QueryTransformer
 
 		QueryBuilderStrategy strategy = QueryBuilder.getBuilderStrategy(null, view, null, null);
 		if(strategy != null) {
-			return strategy.construct(settings);
+			return strategy.construct(settings).create(settings.getPersistenceOrchestrator());
 		}
 
 		return null;

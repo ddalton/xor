@@ -29,6 +29,7 @@ import tools.xor.service.DataAccessService;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.view.ObjectResolver;
+import tools.xor.view.ParallelDispatcher;
 import tools.xor.view.Query;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryDispatcher;
@@ -93,9 +94,12 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 
 		// Construct the query based on the settings
 		QueryBuilder builder = new QueryBuilder(aggregateTree, this.entity);
+
+		// TODO: move into dispatcher, so the query object is created from the correct persistence orchestrator
 		builder.construct(callInfo.getSettings());
 
 		QueryDispatcher dispatcher = new SerialDispatcher(aggregateTree, this, callInfo);
+		//QueryDispatcher dispatcher = new ParallelDispatcher(aggregateTree, this, callInfo);
 		dispatcher.execute();
 	}
 

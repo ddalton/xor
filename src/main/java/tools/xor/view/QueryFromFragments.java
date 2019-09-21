@@ -51,7 +51,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
         this.builder = builder;
     }
 
-    @Override public Query construct(Settings settings)
+    @Override public QueryHandle construct(Settings settings)
     {
         // Generate the fields if needed
         this.queryTree.generateFields(settings, builder.getAggregateTree());
@@ -74,16 +74,14 @@ public class QueryFromFragments implements QueryBuilderStrategy
             vb.debug("OQL of view [" + this.queryTree.getView().getName() + "] => " + oql.toString());
         }
 
-        Query query = settings.getPersistenceOrchestrator().getQuery(
-            oql.toString(),
+        QueryHandle handle = new QueryHandle(oql.toString(),
             PersistenceOrchestrator.QueryType.OQL,
-            null,
-            settings);
+            null);
 
         // Initialized the selected columns
-        query.setColumns(this.queryTree.getSelectedColumns());
+        handle.setColumns(this.queryTree.getSelectedColumns());
 
-        return query;
+        return handle;
     }
 
     private String constructOQL(Settings settings) {

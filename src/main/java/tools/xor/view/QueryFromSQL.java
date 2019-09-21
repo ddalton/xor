@@ -38,7 +38,7 @@ public class QueryFromSQL implements QueryBuilderStrategy
         this.aggregateTree = aggregateTree;
     }
 
-    @Override public Query construct (Settings settings)
+    @Override public QueryHandle construct (Settings settings)
     {
         /* We first need to build the SQL from the following
          *   selectClause
@@ -55,17 +55,16 @@ public class QueryFromSQL implements QueryBuilderStrategy
                 nativeQuery.getParameterList(),
                 relevantParams));
 
-        Query query = settings.getPersistenceOrchestrator().getQuery(
+        QueryHandle handle = new QueryHandle(
             queryString.toString(),
             PersistenceOrchestrator.QueryType.SQL,
-            nativeQuery,
-            settings);
+            nativeQuery);
 
-        query.updateParamMap(relevantParams);
+        handle.setParams(relevantParams);
 
         // Initialized the selected columns
-        nativeQuery.deriveColumns(this.queryTree, query, settings, this.aggregateTree, this.view);
+        nativeQuery.deriveColumns(this.queryTree, handle, settings, this.aggregateTree, this.view);
 
-        return query;
+        return handle;
     }
 }

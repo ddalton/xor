@@ -25,6 +25,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -47,6 +49,7 @@ import tools.xor.db.vo.common.ValueTypeVO;
 import tools.xor.db.vo.common.ValueVO;
 import tools.xor.db.vo.pm.TaskVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ClassUtil;
 import tools.xor.view.expression.FunctionHandler;
 
 public class DefaultSaveUpdateVO extends AbstractDBTest {
@@ -54,6 +57,16 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 
 	@Autowired
 	protected AggregateManager aggregateService;
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 
 	private MetaEntityStateVO getState(String artifactState) {
 		MetaEntityState metaEntityState = new MetaEntityState();

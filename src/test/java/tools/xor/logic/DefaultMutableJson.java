@@ -23,6 +23,8 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
 import tools.xor.AggregateAction;
@@ -45,6 +47,7 @@ import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
@@ -74,6 +77,16 @@ import java.util.Set;
 public abstract class DefaultMutableJson extends AbstractDBTest {
 	@Resource(name = "aggregateManager")
 	protected AggregateManager aggregateService;
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 	
 	protected void checkStringField() throws JSONException {
 		// create person

@@ -21,6 +21,8 @@ package tools.xor.logic;
 
 import java.util.List;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -29,6 +31,7 @@ import tools.xor.db.base.Person;
 import tools.xor.db.base.Technician;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ClassUtil;
 
 public class DefaultQueryOneToOne extends AbstractDBTest {
 	
@@ -36,6 +39,16 @@ public class DefaultQueryOneToOne extends AbstractDBTest {
 	protected AggregateManager aggregateService;	
 	
 	private static final String TASK_NAME = "SETUP_DSL";
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 	
 	protected void query() {
 		// create person

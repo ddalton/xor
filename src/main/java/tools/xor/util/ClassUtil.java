@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.Access;
 import javax.sql.DataSource;
@@ -69,7 +70,9 @@ public class ClassUtil {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	private static final String JAVASSIST_STARTWITH = "org.javassist.tmp.";
-	private static final String JAVASSIST_INDEXOF = "_$$_javassist_";	
+	private static final String JAVASSIST_INDEXOF = "_$$_javassist_";
+
+	private static AtomicBoolean parallelDispatch = new AtomicBoolean(true);
 
 	private static boolean isJavassistEnhanced(Class<?> c) {
 		String className = c.getName();
@@ -77,6 +80,14 @@ public class ClassUtil {
 		// pattern found in javassist ProxyFactory
 		return className.startsWith(JAVASSIST_STARTWITH)
 				|| className.indexOf(JAVASSIST_INDEXOF) != -1;
+	}
+
+	public static void setParallelDispatch(boolean value) {
+		parallelDispatch.set(value);
+	}
+
+	public static boolean doParallelDispatch() {
+		return parallelDispatch.get();
 	}
 
 	public static Class<?> getUnEnhanced(Class<?> clazz) {

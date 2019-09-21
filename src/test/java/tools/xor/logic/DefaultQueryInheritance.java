@@ -21,6 +21,7 @@ package tools.xor.logic;
 
 import java.util.List;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -38,6 +39,7 @@ import tools.xor.db.pm.Task;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.db.vo.base.TechnicianVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
@@ -48,7 +50,17 @@ import tools.xor.view.View;
 
 public class DefaultQueryInheritance extends AbstractDBTest {
 	@Autowired
-	protected AggregateManager aggregateManager;	
+	protected AggregateManager aggregateManager;
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 
 	final String NAME = "GEORGE_HADE";
 	final String DISPLAY_NAME = "George Hade";

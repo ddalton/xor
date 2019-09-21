@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -33,10 +35,21 @@ import tools.xor.db.base.Consultant;
 import tools.xor.db.vo.base.ConsultantVO;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ClassUtil;
 
 public class DefaultPatch extends AbstractDBTest {
 	@Autowired
-	protected AggregateManager aggregateManager;	
+	protected AggregateManager aggregateManager;
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 
 	final String NAME = "GEORGE_HADE";
 	final String DISPLAY_NAME = "George Hade";

@@ -66,6 +66,7 @@
 		<property name="url" value="${test.connection.url}" />		
 		<property name="username" value="${test.connection.userName}" />
 		<property name="password" value="${test.connection.password}" />
+		<property name="maxActive" value="20" />
 	</bean>	
 	
 	<!-- Initialize DataSource with a stored procedure -->

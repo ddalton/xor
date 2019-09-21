@@ -407,6 +407,12 @@ public class AggregateManager implements Xor
 			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)getPersistenceOrchestrator();
 			JDBCSessionContext sc = po.getSessionContext();
 			return new JDBCTransaction(sc);
+		} else if (getPersistenceOrchestrator() instanceof JPAPersistenceXMLPO) {
+			JPAPersistenceXMLPO jpaPO = (JPAPersistenceXMLPO) getPersistenceOrchestrator();
+			return new JPAManualTransaction(jpaPO.getEntityManager().getTransaction());
+		} else if (getPersistenceOrchestrator() instanceof JPASpringPO) {
+			JPASpringPO jpaPO = (JPASpringPO) getPersistenceOrchestrator();
+			return new JPATransaction(jpaPO.getTxManager());
 		} else {
 			throw new UnsupportedOperationException("beginTransaction is supported only on JDBC provider");
 		}

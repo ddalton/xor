@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -54,6 +56,7 @@ import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.view.AggregateView;
 import tools.xor.view.SplitToAnchor;
@@ -82,7 +85,17 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	final String NAME = "GEORGE_WASHINGTON";
 	final String DISPLAY_NAME = "George Washington";
 	final String DESCRIPTION = "First President of the United States of America";
-	final String USER_NAME = "gwashington";	
+	final String USER_NAME = "gwashington";
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 
 	private ValueType getValueType(String type) {
 		ValueType valueType = new ValueType();

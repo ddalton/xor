@@ -1,14 +1,11 @@
-Hung on -
- mvn test -Dtest=JPAQueryOperationTest.java#listPatents
-
-
-
 0. Parallel dispatcher implementation
    a) use aliases to create a wide fan-out aggregatetree
    b) use inheritance to create a wide fan-out aggregate tree
+   Test with JPA and ensure it is committed
 1. Explore replacing IN (<subquery>) with EXISTS (<correlated_subquery>)
    also remove any unnecessary tables from the join in the subquery,
    unless it participates in the critical path or has a predicate clause
+   Supports multi-column 
 2. Duplicate child entries - new test
 3. Doubly nested child query tet
 4. TO_ONE child query test

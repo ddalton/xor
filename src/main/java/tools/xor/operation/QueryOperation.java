@@ -94,12 +94,9 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 
 		// Construct the query based on the settings
 		QueryBuilder builder = new QueryBuilder(aggregateTree, this.entity);
-
-		// TODO: move into dispatcher, so the query object is created from the correct persistence orchestrator
 		builder.construct(callInfo.getSettings());
 
-		QueryDispatcher dispatcher = new SerialDispatcher(aggregateTree, this, callInfo);
-		//QueryDispatcher dispatcher = new ParallelDispatcher(aggregateTree, this, callInfo);
+		QueryDispatcher dispatcher = ClassUtil.doParallelDispatch() ? new ParallelDispatcher(aggregateTree, this, callInfo) : new SerialDispatcher(aggregateTree, this, callInfo);
 		dispatcher.execute();
 	}
 

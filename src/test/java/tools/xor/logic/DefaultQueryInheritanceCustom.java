@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -40,11 +42,22 @@ import tools.xor.db.vo.base.MetaEntityTypeVO;
 import tools.xor.db.vo.base.MetaEntityVO;
 import tools.xor.db.vo.base.PatentVO;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ClassUtil;
 import tools.xor.view.expression.FunctionHandler;
 
 public class DefaultQueryInheritanceCustom extends AbstractDBTest {
 	@Autowired
-	protected AggregateManager aggregateService;	
+	protected AggregateManager aggregateService;
+
+	@BeforeClass
+	public static void executeOnceBeforeAll() {
+		ClassUtil.setParallelDispatch(false);
+	}
+
+	@AfterClass
+	public static void executeOnceAfterAll() {
+		ClassUtil.setParallelDispatch(true);
+	}
 	
 	private MetaEntityState getState(String state) {
 		MetaEntityState entityState = new MetaEntityState();

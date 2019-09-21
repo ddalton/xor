@@ -19,6 +19,8 @@
 
 package tools.xor.service;
 
+import org.springframework.orm.jpa.JpaTransactionManager;
+
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -31,6 +33,9 @@ public class JPASpringPO extends JPAPersistenceOrchestrator {
 	
     @Inject
     EntityManagerFactory entityManagerFactory;
+
+    @Inject
+    JpaTransactionManager txManager;
     
     public JPASpringPO() {
     	super();
@@ -49,4 +54,8 @@ public class JPASpringPO extends JPAPersistenceOrchestrator {
     protected EntityManagerFactory getEntityManagerFactory() {
 		return entityManagerFactory;
 	}
+
+    public JpaTransactionManager getTxManager() {
+        return txManager;
+    }
 }

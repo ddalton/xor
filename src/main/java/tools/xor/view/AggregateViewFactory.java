@@ -196,8 +196,8 @@ public class AggregateViewFactory {
 			if(regexAttributes != null && regexAttributes.size() > 0) {
 				// Create a new Aggregate view based on the recursive attributes
 				AggregateView regexView = new AggregateView();
-				regexView.setName(type.getName() + AggregateView.REGEX);
-				regexView.setAttributeList(new ArrayList<String>(regexAttributes.keySet()));
+				regexView.setName(type.getName() + TraversalView.REGEX);
+				regexView.setAttributeList(new ArrayList<>(regexAttributes.keySet()));
 				parallelViews.add(regexView);
 			}
 			

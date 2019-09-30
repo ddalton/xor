@@ -43,6 +43,10 @@ public class UnmodifiableFunction extends Function
         return function.getQueryString();
     }
 
+    public boolean isOnlyOnRoot() {
+        return function.isOnlyOnRoot();
+    }
+
     public String getNormalizedName ()
     {
         return function.getNormalizedName();

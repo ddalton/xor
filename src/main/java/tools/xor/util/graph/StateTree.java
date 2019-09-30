@@ -16,7 +16,8 @@ import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
 import tools.xor.view.AggregateView;
-import tools.xor.view.AggregateView.PropertyAlias;
+import tools.xor.view.TraversalView;
+import tools.xor.view.TraversalView.PropertyAlias;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -246,7 +247,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	 * @param entityType fallback
 	 * @return Type graph for the view
 	 */
-	public static StateGraph build(AggregateView view, EntityType entityType) {
+	public static StateGraph build(TraversalView view, EntityType entityType) {
 		if(entityType == null && view.getTypeName() != null) {
 			entityType = (EntityType)view.getShape().getType(view.getTypeName());
 		}
@@ -254,7 +255,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		// Scan through all the child views and build a map between a root state and its
 		// view and between the view name and the state.
 		Map<PropertyAlias, State> viewAliasStateMap = new HashMap<>();
-		Map<String, AggregateView> nameViewMap = new HashMap<>();
+		Map<String, TraversalView> nameViewMap = new HashMap<>();
 
 		// Allow it to host aliases
 		QueryType queryType = new QueryType(entityType, null);
@@ -277,13 +278,13 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	}
 
 	// populates both the simple and relationship attributes in a State
-	private void linkEdges(Map<PropertyAlias, State> viewAliasStateMap, Map<String, AggregateView> nameViewMap, AggregateView.Format format) {
+	private void linkEdges(Map<PropertyAlias, State> viewAliasStateMap, Map<String, TraversalView> nameViewMap, AggregateView.Format format) {
 		// Iterate through each view and add the edges by each attribute path
 		for(PropertyAlias pa: viewAliasStateMap.keySet()) {
 
 			V current = (V)viewAliasStateMap.get(pa);
 
-			AggregateView view = nameViewMap.get(pa.getViewName());
+			TraversalView view = nameViewMap.get(pa.getViewName());
 			if(view.getAttributeList() == null) {
 				throw new RuntimeException("View does not have any attributes set");
 			}
@@ -331,7 +332,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	 * @param current root state of the path. The path is relative.
 	 * @param viewAliasStateMap map between view name and the root state
 	 */
-	private void extend (AggregateView view, String processed, String path, JSONObject json, AggregateView.Format format, V current, Map<PropertyAlias, State> viewAliasStateMap)
+	private void extend (TraversalView view, String processed, String path, JSONObject json, AggregateView.Format format, V current, Map<PropertyAlias, State> viewAliasStateMap)
 	{
 		String attribute = null;
 		if(format == AggregateView.Format.PATHS) {
@@ -605,17 +606,17 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	}
 
 	private static void buildMaps (Map<PropertyAlias, State> viewAliasStateMap,
-								   Map<String, AggregateView> nameViewMap,
-								   AggregateView view,
+								   Map<String, TraversalView> nameViewMap,
+								   TraversalView view,
 								   EntityType entityType)
 	{
 		if(view.getChildren() != null) {
-			for (AggregateView child : view.getChildren()) {
+			for (TraversalView child : view.getChildren()) {
 				nameViewMap.put(child.getName(), child);
 			}
 
 			for (PropertyAlias viewAlias : view.getViewAliases()) {
-				AggregateView childView = nameViewMap.get(viewAlias.getViewName());
+				TraversalView childView = nameViewMap.get(viewAlias.getViewName());
 				if (childView != null) {
 					EntityType childEntityType = (EntityType)entityType.getShape().getType(viewAlias.getTypeName());
 					QueryType queryType = new QueryType(childEntityType, null);

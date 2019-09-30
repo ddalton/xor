@@ -39,6 +39,7 @@ import tools.xor.Type;
 import tools.xor.service.Shape;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
+import tools.xor.view.TraversalView;
 
 /**
  * Uses Brzozowski algebraic method to convert a Deterministic Finite Automata to a regular expression.
@@ -748,7 +749,7 @@ public class DFAtoRE {
 	 * @return true if the path refers to a RegEx
 	 */
 	public static boolean isRegex(String attrPath) {
-		return AggregateView.REGEX_STRING_MATCHER.matcher(attrPath).find();
+		return TraversalView.REGEX_STRING_MATCHER.matcher(attrPath).find();
 	}
 
 	/**
@@ -759,7 +760,7 @@ public class DFAtoRE {
 	 * @param type of entity
 	 * @return state graph instance
 	 */
-	public static StateGraph<State, Edge<State>> build(AggregateView aggregateView, Type type) {
+	public static StateGraph<State, Edge<State>> build(TraversalView aggregateView, Type type) {
 		if(aggregateView == null) {
 			return null;
 		}

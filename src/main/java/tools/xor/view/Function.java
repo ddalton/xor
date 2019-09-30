@@ -46,6 +46,9 @@ public class Function implements Comparable<Function> {
 	@XmlAttribute
 	protected String name; // Used in comparison and custom functions
 
+	@XmlAttribute
+	protected boolean onlyOnRoot; // This is only applicable for root queries
+
 	@XmlAttribute(required = true)
 	protected FunctionType type;
 
@@ -100,6 +103,10 @@ public class Function implements Comparable<Function> {
 
 	public String getQueryString() {
 		return functionHandler != null ? functionHandler.getQueryString() : "";
+	}
+
+	public boolean isOnlyOnRoot() {
+		return onlyOnRoot;
 	}
 
 	public boolean isRelevant() {

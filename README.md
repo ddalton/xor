@@ -1,7 +1,45 @@
+Test for mix SQL and OQL queries in a view reference and view
+MAJOR REFACTORING:
+    Refactor AggregateView ->
+    1. AggregateView - Needed for query operation.
+                   Pretty much everything from AggregateView including a revamped expand function which makes child views of
+                   view references with user queries
+    2. TraversalView - Used by all non-query operations. Lightweight AggregateView.
+                       AggregateView inherits from Traversal View. Less impactful change.
+                       Does not have any query specific functionality like stored procedure etc
+
+Some limitations of TraversalView -
+1. It has no children
+2. It has no user queries
+3. Expands to a single list of attributes
+4. View references can only refer to other TraversalView 
+ 
+If a view reference has a user specified query, we remove those paths with such view references and create
+independent views from them with the anchor path populated - This is only for the query operation
+Later on when the AggregateTree is being constructed 
+we add those view references as separate QueryTree instances attached at the anchor path
+
+Supporting this helps for JDBC provider - since it makes the serial dispatcher for JDBC more efficient
+=======================================
+
+Add Query Diagram support for JDBC provider and allow it to analyze and optimize and come with a desired query order
+and also modify SQL query to support that query order in a DB agnostic manner.
+  We do this for JDBC as we do not have to worry about splitting for inheritance support
+  TODO: remove this splitter for JDBC provider and open type (Needed for POJO types)
+  - simple query tree
+  - query tree with sub-queries (EXISTS and IN) - semi-join 
+  - anti semi-join. Identify when an OUTER JOIN can be converted to a NOT EXISTS condition and evaluate the performance
+** Provide feeature - enforce robust plan (Use techniques to control join order)
+  Modify semi-join arrow by adding "none" to add spaces before arrow
+  For example, nonenonenonenormal
+
+
+
+
 0. Parallel dispatcher implementation
    a) use aliases to create a wide fan-out aggregatetree
-   b) use inheritance to create a wide fan-out aggregate tree
-   Test with JPA and ensure it is committed
+   b) use inheritance to create a wide fan-out aggregate tree - Check SimpleRecord example
+   Test with JPA and ensure it queries the committed values
 1. Explore replacing IN (<subquery>) with EXISTS (<correlated_subquery>)
    also remove any unnecessary tables from the join in the subquery,
    unless it participates in the critical path or has a predicate clause
@@ -49,8 +87,7 @@ java -cp ~/.m2/repository/org/hsqldb/hsqldb/2.3.3/hsqldb-2.3.3.jar org.hsqldb.ut
    Details
    =======
 
-0. Type narrowing of a property - see JSON representation
-   NarrowHandler(options)
+0. Subtype controls - Needed if the data is duplicated on all the concrete types and not normalized
    options include
    - SUBCLASS NONE (no sub classes included)
    - SUBCLASS ANY (default behavior)

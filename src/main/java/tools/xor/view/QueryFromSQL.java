@@ -51,6 +51,7 @@ public class QueryFromSQL implements QueryBuilderStrategy
         queryString.append(
             QueryStringHelper.getFilterClause(
                 settings,
+                aggregateTree == null || aggregateTree.isRoot(queryTree),
                 nativeQuery.getFunction(),
                 nativeQuery.getParameterList(),
                 relevantParams));

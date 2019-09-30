@@ -173,6 +173,14 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
         return result;
     }
 
+    public boolean isRoot(V vertex) {
+        if(getInEdges(vertex).size() == 0) {
+            return true;
+        }
+
+        return false;
+    }
+
     @Override
     public V getRoot() {
 

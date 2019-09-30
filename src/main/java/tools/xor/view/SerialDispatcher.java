@@ -43,6 +43,9 @@ public class SerialDispatcher extends AbstractDispatcher
 
         while(!queries.isEmpty()) {
             QueryTree queryTree = queries.remove(0);
+
+            // At this point the actual Query object is
+            // created from the query string that is part of the query tree
             Query query = queryTree.createQuery(po);
 
             executeQuery(query, queryTree, queryInvocation, aggregateTree, callInfo, resolver);

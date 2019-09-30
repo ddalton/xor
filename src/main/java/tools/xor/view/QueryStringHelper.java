@@ -79,7 +79,7 @@ public class QueryStringHelper
         return result.toString();
     }
 
-    public static String getFilterClause (Settings settings, List<Function> functions, List<BindParameter> binds, List<BindParameter> relevantParams)
+    public static String getFilterClause (Settings settings, boolean isRoot, List<Function> functions, List<BindParameter> binds, List<BindParameter> relevantParams)
     {
 
         StringBuilder result = new StringBuilder("");
@@ -106,7 +106,8 @@ public class QueryStringHelper
                     // This particular bind parameter does not have a value
                     // so skip this whole function
                     // make sure to update the currentBindPos before doing so
-                    if(!userParams.containsKey(binds.get(i).name) && !(!settings.isDenormalized() && QueryFragment.systemFields.contains(binds.get(i).name))) {
+                    if(shouldSkip(isRoot, userParams, binds.get(i).name, function, settings)) {
+                    //if(!userParams.containsKey(binds.get(i).name) && !(!settings.isDenormalized() && QueryFragment.systemFields.contains(binds.get(i).name))) {
 
                         currentBindPos = currentBindPos+numBinds;
                         continue outer;
@@ -124,6 +125,12 @@ public class QueryStringHelper
         }
 
         return result.toString();
+    }
+
+    private static boolean shouldSkip(boolean isRoot, Map<String, Object> userParams, String paramName, Function function, Settings settings) {
+        return (!userParams.containsKey(paramName) &&                                             // Has the user NOT provided the value for this parameter and
+            !(!settings.isDenormalized() && QueryFragment.systemFields.contains(paramName))) ||   // Is this NOT a system parameter (Denormalized query currently not supported)
+            (function.isOnlyOnRoot() && !isRoot);                                                 // or is this filter only applicable for the root query and the current query is not a root query
     }
 
     public static List<Function> getQueryTreeFunctions (Settings settings, QueryTree queryTree) {

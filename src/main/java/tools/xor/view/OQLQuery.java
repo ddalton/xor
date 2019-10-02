@@ -29,6 +29,7 @@ public class OQLQuery extends QuerySupport
 {
     protected String selectClause;
     protected List<Function> function; // should only be of type FREESTYLE
+    protected List<String> primaryKey; // Needed for join with parent query
 
     public String getSelectClause ()
     {
@@ -50,14 +51,32 @@ public class OQLQuery extends QuerySupport
         this.function = function;
     }
 
+    public List<String> getPrimaryKey() {
+        return this.primaryKey;
+    }
+
+    public void setPrimaryKey(List<String> primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+
     public OQLQuery copy ()
     {
         OQLQuery result = new OQLQuery();
         super.copy(result);
         result.selectClause = selectClause;
-        result.function = new ArrayList<>();
-        for(Function function: this.function) {
-            result.function.add(function.copy());
+
+        if(this.function != null) {
+            result.function = new ArrayList<>();
+            for (Function function : this.function) {
+                result.function.add(function.copy());
+            }
+        }
+
+        if(this.primaryKey != null) {
+            result.primaryKey = new ArrayList<>();
+            for (String keyPart : this.primaryKey) {
+                result.primaryKey.add(keyPart);
+            }
         }
 
         return result;

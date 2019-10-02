@@ -46,6 +46,7 @@ import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.EntityType;
+import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.MatchType;
 import tools.xor.Settings;
@@ -281,7 +282,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             throw new IllegalStateException("Direct addition of query condition is prohibited from Settings");
         }
 
-        Function newFunction = new Function(name, type, position, args);
+        Function newFunction = new Function(name, type, FunctionScope.ANY, position, args);
         this.function.add(newFunction);
 
         return newFunction;

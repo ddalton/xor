@@ -829,7 +829,7 @@ public class Settings {
 			throw new IllegalStateException("Direct addition of query condition is prohibited from Settings");
 		}
 
-		Function newFunction = new Function(name, type, position, args);
+		Function newFunction = new Function(name, type, FunctionScope.ANY, position, args);
 		this.additionalFunctions.add(newFunction);
 
 		return newFunction;

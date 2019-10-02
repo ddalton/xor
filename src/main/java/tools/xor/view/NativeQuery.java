@@ -28,6 +28,7 @@ public class NativeQuery extends QuerySupport
     protected List<BindParameter> parameterList;
     protected boolean usable;
     protected List<Function> function; // should only be of type FREESTYLE
+    protected List<String> primaryKey; // Needed for join with parent query
 
     public boolean isUsable ()
     {
@@ -58,6 +59,14 @@ public class NativeQuery extends QuerySupport
         this.function = function;
     }
 
+    public List<String> getPrimaryKey() {
+        return this.primaryKey;
+    }
+
+    public void setPrimaryKey(List<String> primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+
     public List<BindParameter> getParameterList ()
     {
         return parameterList;
@@ -74,13 +83,26 @@ public class NativeQuery extends QuerySupport
         super.copy(result);
         result.selectClause = selectClause;
         result.usable = usable;
-        result.parameterList = new ArrayList<>();
-        for (BindParameter bind : parameterList) {
-            result.parameterList.add(bind.copy());
+
+        if(this.parameterList != null) {
+            result.parameterList = new ArrayList<>();
+            for (BindParameter bind : parameterList) {
+                result.parameterList.add(bind.copy());
+            }
         }
-        result.function = new ArrayList<>();
-        for(Function function: this.function) {
-            result.function.add(function.copy());
+
+        if(this.function != null) {
+            result.function = new ArrayList<>();
+            for (Function function : this.function) {
+                result.function.add(function.copy());
+            }
+        }
+
+        if(this.primaryKey != null) {
+            result.primaryKey = new ArrayList<>();
+            for (String keyPart : this.primaryKey) {
+                result.primaryKey.add(keyPart);
+            }
         }
 
         return result;

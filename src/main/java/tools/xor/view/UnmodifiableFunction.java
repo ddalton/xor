@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import tools.xor.FunctionScope;
+
 import java.util.Map;
 
 public class UnmodifiableFunction extends Function
@@ -41,10 +43,6 @@ public class UnmodifiableFunction extends Function
     public String getQueryString ()
     {
         return function.getQueryString();
-    }
-
-    public boolean isOnlyOnRoot() {
-        return function.isOnlyOnRoot();
     }
 
     public String getNormalizedName ()

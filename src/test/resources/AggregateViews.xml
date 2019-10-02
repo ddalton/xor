@@ -89,9 +89,12 @@
 					   FROM Person
                                  ]]>
 			</selectClause>
-		        <function type="FREESTYLE">
-		        	<args>WHERE UUID = ?</args>
-        		</function>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+			<function type="FREESTYLE" scope="NOTROOT">
+				<args>WHERE UUID IN (^PLACEHOLDER^)</args>
+			</function>
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>

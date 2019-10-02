@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang.RandomStringUtils;
+import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
@@ -46,11 +47,11 @@ public class Function implements Comparable<Function> {
 	@XmlAttribute
 	protected String name; // Used in comparison and custom functions
 
-	@XmlAttribute
-	protected boolean onlyOnRoot; // This is only applicable for root queries
-
 	@XmlAttribute(required = true)
 	protected FunctionType type;
+
+	@XmlAttribute
+	protected FunctionScope scope = FunctionScope.ANY;
 
 	protected List<String> args;
 
@@ -64,12 +65,13 @@ public class Function implements Comparable<Function> {
 	}
 
 	public Function (Function f) {
-		this(f.name, f.type, f.position, f.args);
+		this(f.name, f.type, f.scope, f.position, f.args);
 	}
 	
-	public Function (String name, FunctionType type, int position, List<String> args) {
+	public Function (String name, FunctionType type, FunctionScope scope, int position, List<String> args) {
 		this.name = name;
 		this.type = type;
+		this.scope = scope;
 		this.args = args;
 		this.position = position;
 
@@ -105,10 +107,6 @@ public class Function implements Comparable<Function> {
 		return functionHandler != null ? functionHandler.getQueryString() : "";
 	}
 
-	public boolean isOnlyOnRoot() {
-		return onlyOnRoot;
-	}
-
 	public boolean isRelevant() {
 		return functionHandler.getNormalizedAttributeName() != null;
 	}
@@ -123,6 +121,14 @@ public class Function implements Comparable<Function> {
 
 	public Set<String> getAttributes() {
 		return functionHandler.getAttributes();
+	}
+
+	public FunctionScope getScope() {
+		return this.scope;
+	}
+
+	public void setScope(FunctionScope scope) {
+		this.scope = scope;
 	}
 
 	/**

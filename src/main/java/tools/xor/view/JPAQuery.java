@@ -87,7 +87,7 @@ public class JPAQuery extends AbstractQuery {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getResultList(View view, Settings settings) {
+	protected List getResultListInternal(View view, Settings settings) {
 		if(isNativeQuery()) {
 			setParameters(settings, paramMap, paramValues);
 		}

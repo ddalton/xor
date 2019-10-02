@@ -165,7 +165,9 @@ public class QueryFromFragments implements QueryBuilderStrategy
         if(builder.getAggregateTree().getInEdges(qp).size() > 0) {
             InterQuery<QueryTree> edge = builder.getAggregateTree().getInEdges(qp).iterator().next();
             QueryTree parent = edge.getStart();
-            if (edge != null && parent.getQuery() != null) {
+
+            // Since we are constructing an OQL query, the parent query should also be of the same type
+            if (edge != null && parent.getQueryHandle() != null && parent.getQueryHandle().getQueryType() == PersistenceOrchestrator.QueryType.OQL) {
                 addWhereStep(queryString);
                 queryString.append(qp.getRoot().getId()).append(" IN ( ").append(Query.INTERQUERY_JOIN_PLACEHOLDER).append(
                     ")");

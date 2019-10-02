@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,10 +82,9 @@ public class HibernateQuery extends AbstractQuery {
 		QueryStringHelper.initParamMap(paramMap, relevantParams);
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
-	public List getResultList(View view, Settings settings) {
-		if(isNativeQuery()) {
+	protected List getResultListInternal(View view, Settings settings) {
+		if (isNativeQuery()) {
 			setParameters(settings, paramMap, paramValues);
 		}
 

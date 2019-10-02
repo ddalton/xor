@@ -41,6 +41,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import org.json.JSONObject;
+import org.springframework.util.StringUtils;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
@@ -115,7 +116,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     public static final String DOMAIN = "DOMAIN:";
     public static final String REGEX = "_REGEX_";
 
-    protected String            name;
+    protected String            name; // Does double duty. Represents the anchor path if it is a child view
 
     // A dotted notation list of attributes representing the view scope
     protected List<String>      attributeList;
@@ -566,7 +567,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             extractJSON(result, attributeList);
         }
 
-        expand(result, expanding);
+        expand(result, "", expanding);
 
         return result;
     }
@@ -591,35 +592,52 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         }
     }
 
-    private void expand(JSONObject owner, List<String> expanding) {
+    protected void addChildView(View view, String anchor) {
+        throw new UnsupportedOperationException("A TraversalView cannot have children");
+    }
+
+    private void expand(JSONObject owner, String anchor, List<String> expanding) {
         List<String> toRemove = new LinkedList<>();
         Map<String, Object> toAdd = new HashMap<>();
 
         Iterator iter = owner.keys();
         while(iter.hasNext()) {
             String key = (String)iter.next();
+            anchor += (StringUtils.isEmpty(anchor) ? "" : Settings.PATH_DELIMITER) + key;
+
             Object child = owner.get(key);
             if(child instanceof JSONObject) {
-                expand((JSONObject) child, expanding);
+                expand((JSONObject) child, anchor, expanding);
             } else {
                 JSONObject reference = null;
+                boolean isValidReference = false;
                 if (getViewReference(key) != null) {
                     View view = getView(getShape(), key);
+
                     if(view != null) {
-                        view.expand(expanding);
-                        reference = view.getJson();
+                        isValidReference = true;
+
+                        // This will become a child AggregateView, since it is targeted for querying
+                        if(view.hasUserQuery() && this instanceof AggregateView) {
+                            addChildView(view, anchor);
+                        } else {
+                            view.expand(expanding);
+                            reference = view.getJson();
+                        }
                     }
                 }
 
-                if(reference != null) {
+                if(isValidReference) {
                     // remove the view reference field
                     toRemove.add(key);
 
-                    // merge the reference object with the owner
-                    Iterator childIter = reference.keys();
-                    while(childIter.hasNext()) {
-                        String childKey = (String)childIter.next();
-                        toAdd.put(childKey, reference.get(childKey));
+                    if(reference != null) {
+                        // merge the reference object with the owner
+                        Iterator childIter = reference.keys();
+                        while (childIter.hasNext()) {
+                            String childKey = (String)childIter.next();
+                            toAdd.put(childKey, reference.get(childKey));
+                        }
                     }
                 }
 
@@ -648,15 +666,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     @Override
     public void expand(List<String> expanding) {
 
-        if(getChildren() != null) {
-            for(AggregateView child: getChildren()) {
-                // EntityType fragments cannot be expanded
-                if(child.getTypeName() != null) {
-                    return;
-                }
-            }
-        }
-
         // If it is already expanded then return
         if(isExpanded()) {
             return;
@@ -669,13 +678,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         }
 
         this.json = extractJSON(expanding);
-
-        // First expand the children
-        if(getChildren() != null) {
-            for(View child: getChildren()) {
-                child.expand();
-            }
-        }
 
         // Find and substitute the view references
         // TODO: save a copy of the original attributeList to help with identifiying if

@@ -20,6 +20,8 @@
 package tools.xor.view;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import tools.xor.EntityType;
 import tools.xor.Settings;
@@ -114,4 +116,10 @@ public interface Query extends DML {
 	 * @return true if this is the case
 	 */
 	boolean isSQL();
+
+	/**
+	 * Used if the query needs to run multiple instance of an IN list batch
+	 * @param values > QueryTreeInvocation#MAX_INLIST_SIZE
+	 */
+	public void processLargeInList(Set values);
 }

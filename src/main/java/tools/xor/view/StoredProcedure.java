@@ -27,7 +27,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ * This option is useful if the IN list size is much greater than 1000.
+ * If so, a large datatype such as CLOB can be used and the results
+ * stored in a temp table.
+ * The query can then join with this table.
+ */
 public class StoredProcedure extends QuerySupport {
+
+	private static final String INLIST_DELIMITER = ","; // default delimiter used to separate the INLIST
 
 	protected String              name;
 	protected AggregateAction     action;
@@ -35,9 +43,11 @@ public class StoredProcedure extends QuerySupport {
 	protected OutputLocation      outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
 	protected Statement           statement;
 	protected String              callString;
-	protected String              inListParamName;  // Name of the array parameter containing
-	                                                // a list of parent IDs used for
-	                                                // constructing the IN list
+	protected String              inListParamName;  // Name of the String parameter containing
+	                                                // a list of root object IDs separated by a delimiter,
+	                                                // used for constructing the IN list
+	protected String              inListDelimiter;  // delimiter used to extract the ids from the
+	                                                // inListParam. If not provided the INLIST_DELIMITER is used
 	protected boolean             implicit;         // By default a callable statement is created,
 
 	// Set this to true if the code implicitly returns resultsets

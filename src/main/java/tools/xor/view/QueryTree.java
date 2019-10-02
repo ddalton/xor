@@ -133,6 +133,10 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return this.query;
 	}
 
+	public QueryHandle getQueryHandle() {
+		return this.handle;
+	}
+
 	public void setSelectString (String selectString) {
 		this.selectString = selectString;
 	}

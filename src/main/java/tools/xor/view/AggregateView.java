@@ -94,6 +94,16 @@ public class AggregateView extends TraversalView {
 		this.children = children;
 	}
 
+	protected void addChildView(View view, String anchor) {
+		if(this.children == null) {
+			this.children = new ArrayList<>();
+		}
+		AggregateView child = (AggregateView)view.copy();
+		child.setName(anchor);
+
+		this.children.add(child);
+	}
+
 	public OQLQuery getSystemOQLQuery() {
 		return systemOQLQuery;
 	}
@@ -199,9 +209,25 @@ public class AggregateView extends TraversalView {
 
 	@Override
 	public void expand(List<String> expanding) {
-		// TODO: We need to expand for querying
-		// TODO: This means we need to check for view references that have user queries
-		// TODO: then we create child queries for them
+		// We need to expand for querying
+		// This means we need to check for view references that have user queries
+		// then we create child queries for them
+
+		if(getChildren() != null) {
+			for(AggregateView child: getChildren()) {
+				// EntityType fragments cannot be expanded
+				if(child.getTypeName() != null) {
+					return;
+				}
+			}
+		}
+
+		// Expand the children
+		if(getChildren() != null) {
+			for(View child: getChildren()) {
+				child.expand();
+			}
+		}
 
 		super.expand(expanding);
 	}

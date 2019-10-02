@@ -27,8 +27,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -42,6 +45,7 @@ public abstract class AbstractQuery implements Query {
 	private List<String> columns;
 	private Map<String, Integer> columnMap;
 	private String queryString;
+	List<Map<String, Object>> batches;
 	
 	@Override
 	public List<String> getColumns() {
@@ -181,5 +185,49 @@ public abstract class AbstractQuery implements Query {
 		}
 
 		return row;
+	}
+
+	@Override
+	public void processLargeInList(Set values) {
+		int numBatches = values.size()/QueryTreeInvocation.MAX_INLIST_SIZE + 1;
+		this.batches = new ArrayList<>(numBatches);
+
+		Iterator iter = values.iterator();
+		for(int i = 0; i < numBatches; i++) {
+			Map<String, Object> batch = new HashMap<>();
+			batches.add(batch);
+			int start = QueryTreeInvocation.OFFSET;
+
+			Object value = null;
+			while(start % (QueryTreeInvocation.MAX_INLIST_SIZE+1) != 0) {
+				// If there are no more values we use the last value
+				// to pad the IN list of the last batch
+				if(iter.hasNext()) {
+					value = iter.next();
+				}
+				batch.put(QueryFragment.PARENT_INLIST + start++, value);
+			}
+		}
+	}
+
+	protected List getResultListInternal(View view, Settings settings) {
+		throw new UnsupportedOperationException("The implementation is required or the getResultList needs to overridden");
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public List getResultList(View view, Settings settings) {
+		if(batches == null) {
+			return getResultListInternal(view, settings);
+		} else {
+			List result = new LinkedList<>();
+			for(Map<String, Object> batch: batches) {
+				for(Map.Entry<String, Object> entry: batch.entrySet()) {
+					setParameter(entry.getKey(), entry.getValue());
+				}
+				result.addAll(getResultListInternal(view, settings));
+			}
+			return result;
+		}
 	}
 }

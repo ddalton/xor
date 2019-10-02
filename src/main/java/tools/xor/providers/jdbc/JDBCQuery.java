@@ -232,7 +232,7 @@ public class JDBCQuery extends AbstractQuery
 		return result;
 	}
 
-	@Override public List getResultList (View view, Settings settings)
+	@Override protected List getResultListInternal (View view, Settings settings)
 	{
 		return getResultSet(settings);
 	}

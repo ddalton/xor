@@ -26,6 +26,8 @@ import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.util.InterQuery;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,8 +42,8 @@ import java.util.regex.Pattern;
  */
 public class QueryTreeInvocation
 {
-    private static final int MAX_INLIST_SIZE = 999;
-    private static final int OFFSET = 1;
+    public static final int MAX_INLIST_SIZE = 999;
+    public static final int OFFSET = 1;
 
     private Map<QueryTree, Set> parentIdList; // Return the ids needed for a consuming Query
                                               // Can be userkey, if it is not composite, else
@@ -134,11 +136,12 @@ public class QueryTreeInvocation
         if (joinType == InterQuery.JoinType.INLIST) {
 
             Set inlistvalues = idList.get(queryTree.getQuery());
+            int size = inlistvalues.size() >= MAX_INLIST_SIZE ? MAX_INLIST_SIZE : inlistvalues.size();
 
             // This is simple replace
             oqlString = oqlString.replaceFirst(
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
-                getParentInListBindString(inlistvalues.size(), queryTree.getQuery()));
+                getParentInListBindString(size, queryTree.getQuery()));
         }
         else {
             oqlString = oqlString.replaceFirst(
@@ -164,11 +167,15 @@ public class QueryTreeInvocation
         if(idList.containsKey(query)) {
             Set inlistvalues = idList.get(query);
 
-            // Set the parameters for the IN list
-            Iterator iter = inlistvalues.iterator();
-            int start = OFFSET;
-            while(iter.hasNext()) {
-                query.setParameter(QueryFragment.PARENT_INLIST + start++, iter.next());
+            if(inlistvalues.size() <= MAX_INLIST_SIZE) {
+                // Set the parameters for the IN list
+                int start = OFFSET;
+                Iterator iter = inlistvalues.iterator();
+                while (iter.hasNext()) {
+                    query.setParameter(QueryFragment.PARENT_INLIST + start++, iter.next());
+                }
+            } else {
+                query.processLargeInList(inlistvalues);
             }
         }
     }
@@ -177,14 +184,6 @@ public class QueryTreeInvocation
         StringBuilder result = new StringBuilder();
 
         // We always give a name for the parameter since we are building the query
-        /*
-        if(query.isSQL()) {
-            while(count-- > 1) {
-                result.append("?, ");
-            }
-            result.append("?");
-        } else
-        */
         if(query.isOQL() || query.isSQL()) {
             int i = OFFSET;
             for(; i < count; i++) {
@@ -205,9 +204,14 @@ public class QueryTreeInvocation
             throw new RuntimeException("Child query can only be invoked after parent query has returned");
         }
 
-        if(parentIdList.get(edge.getStart()).size() > MAX_INLIST_SIZE) {
-            joinType = InterQuery.JoinType.SUBQUERY;
-        }
+        // TODO: Enable subquery/exists only in a restricted setup
+        // 1. child and all the ancestor queries are of the same type (e.g., SQL/OQL)
+        // 2. A new parent query needs to be built where we don't need to pull in additional information
+        // 3. The NativeQuery and OQLQuery objects need to a have a primarykey attribute to identify the primary key
+        //    to be used for EXISTS correlation
+        //if(parentIdList.get(edge.getStart()).size() > MAX_INLIST_SIZE) {
+        //    joinType = InterQuery.JoinType.SUBQUERY;
+        //}
 
         return joinType;
     }

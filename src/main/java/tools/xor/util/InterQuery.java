@@ -37,8 +37,8 @@ public class InterQuery<V extends QueryTree> extends Edge<V>
 
     public static enum JoinType {
         INLIST,   // used if the interquery edge is satisfied using an IN list
-        SUBQUERY, // used if the interquery edge is satisfied using a subquery. Not supported
-                  // for StoredProcedureQuery
+        SUBQUERY, // currently not used, due to issues with mix between SQL, StoredProcedure
+                  // and OQL parent queries
         NONE      // used if the interquery edge is not present, such as a root query piece
     };
 

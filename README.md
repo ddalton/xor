@@ -1,25 +1,15 @@
 Test for mix SQL and OQL queries in a view reference and view
-MAJOR REFACTORING:
-    Refactor AggregateView ->
-    1. AggregateView - Needed for query operation.
-                   Pretty much everything from AggregateView including a revamped expand function which makes child views of
-                   view references with user queries
-    2. TraversalView - Used by all non-query operations. Lightweight AggregateView.
-                       AggregateView inherits from Traversal View. Less impactful change.
-                       Does not have any query specific functionality like stored procedure etc
+a) Test OQL and SQL - Need to add foreignKey
+b) Test OQL and StoredProcedure
 
-Some limitations of TraversalView -
-1. It has no children
-2. It has no user queries
-3. Expands to a single list of attributes
-4. View references can only refer to other TraversalView 
- 
-If a view reference has a user specified query, we remove those paths with such view references and create
-independent views from them with the anchor path populated - This is only for the query operation
-Later on when the AggregateTree is being constructed 
-we add those view references as separate QueryTree instances attached at the anchor path
+Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber
+    - AggregateView#expand currently returns if a child view has EntityType populated
 
-Supporting this helps for JDBC provider - since it makes the serial dispatcher for JDBC more efficient
+Test TraversalView and
+AggregateView expand functionality
+
+
+Supporting the following helps for JDBC provider - since it makes the serial dispatcher for JDBC more efficient
 =======================================
 
 Add Query Diagram support for JDBC provider and allow it to analyze and optimize and come with a desired query order

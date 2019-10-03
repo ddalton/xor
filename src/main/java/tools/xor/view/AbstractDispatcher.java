@@ -138,6 +138,10 @@ public abstract class AbstractDispatcher implements QueryDispatcher
                 queryInvocation.resolveQuery(edge);
 
                 PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
+
+                if(query.isDeferred()) {
+                    query.setQueryString(query.extractParameters());
+                }
                 po.evaluateDeferred(query, Query.getQueryType(query), queryInvocation);
             }
         }

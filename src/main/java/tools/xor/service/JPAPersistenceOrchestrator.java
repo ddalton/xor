@@ -218,15 +218,13 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 
 	@Override
 	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
-		if(query instanceof JPAQuery && Query.isDeferred(query.getQueryString())) {
-			String queryString = qti.getResolvedQuery(query);
+		if(query instanceof JPAQuery && query.isDeferred()) {
+			String queryString = query.getQueryString();
 			if(queryType == QueryType.OQL) {
 				((JPAQuery)query).setProviderQuery(
-					queryString,
 					getEntityManager().createQuery(queryString));
 			}  else if (queryType == QueryType.SQL) {
 				((JPAQuery)query).setProviderQuery(
-					queryString,
 					getEntityManager().createNativeQuery(queryString));
 			}
 

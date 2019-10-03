@@ -133,7 +133,6 @@ public class QueryFragment implements Vertex
 
     public void addFullPath(String path) {
         this.paths.add(stripAncestor(path));
-        this.paths.add(path);
     }
 
     public void addSimpleCollectionPath (String path) {
@@ -220,18 +219,27 @@ public class QueryFragment implements Vertex
 
         // We should not create QueryField instances for fields that are only
         // referenced from functions
-        Set<String> attributePaths = new HashSet<>(aggregateTree.getView().getAttributes());
+        //Set<String> attributePaths = new HashSet<>(aggregateTree.getView().getAttributes());
+        Set<String> attributePaths = new HashSet<>(queryTree.getView().getAttributes());
 
-        for(String path: this.paths) {
-            if(isUserAttribute(attributePaths, path)) {
+        if(queryTree.getView().isCustom()) {
+            for (String path : this.paths) {
                 position += addField(new QueryField(path, position, this)) ? 1 : 0;
             }
-        }
-        for(String path: this.simpleCollectionPaths) {
-            if(isUserAttribute(attributePaths, path)) {
-                position += addField(new QueryField(path, position, this)) ? 1 : 0;
+        } else {
+            for (String path : this.paths) {
+                if (isUserAttribute(attributePaths, path)) {
+                    position += addField(new QueryField(path, position, this)) ? 1 : 0;
+                }
+            }
+
+            for (String path : this.simpleCollectionPaths) {
+                if (isUserAttribute(attributePaths, path)) {
+                    position += addField(new QueryField(path, position, this)) ? 1 : 0;
+                }
             }
         }
+
         // Add queryFields for all the primary keys fields, if not already present
         String anchorPath = getAnchorPath();
         if(entityType.getIdentifierProperty() != null) {
@@ -253,7 +261,7 @@ public class QueryFragment implements Vertex
         ObjectResolver.Type type = settings.getResolverType();
         assert type != null : "Except a value for resolver type";
 
-        if(!queryTree.getView().hasUserQuery()) {
+        if(!queryTree.getView().isCustom()) {
             Iterator<IntraQuery<QueryFragment>> iter = queryTree.getInEdges(this).iterator();
 
             if (iter.hasNext()) {

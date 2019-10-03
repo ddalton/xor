@@ -67,10 +67,11 @@
 		<attributeList>metaEntityType.name</attributeList>
 		<attributeList>disabled</attributeList>	
 		<attributeList>createdOn</attributeList>			
-	</aggregateView>	
+	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_NATIVE</name>
-		<attributeList>[BASICINFO]</attributeList>			
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
 		<nativeQuery>
 			<!-- The SQL query can contain additional columns like the following required to construct an object:
 			     1. List index
@@ -96,6 +97,41 @@
 				<args>WHERE UUID IN (^PLACEHOLDER^)</args>
 			</function>
 		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<name>BASICINFO_NATIVE_TASK</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<!-- The SQL query can contain additional columns like the following required to construct an object:
+			     1. List index
+				 2. Map key
+				 3. Entity type
+				 So this section is to map the attribute name to the column position.
+			-->
+			<parameterList name="ID_"/>
+			<selectClause>
+				<![CDATA[SELECT UUID,
+				                NAME,
+					        DISPLAYNAME,
+					        DESCRIPTION,
+					        ICONURL,
+					        DETAILEDDESCRIPTION
+					   FROM Task
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+			<function type="FREESTYLE" scope="NOTROOT">
+				<args>WHERE UUID IN (^PLACEHOLDER^)</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<name>TASKCHILDRENMIX</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>taskChildren.[BASICINFO_NATIVE_TASK]</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_OQL</name>

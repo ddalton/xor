@@ -29,7 +29,7 @@ import tools.xor.service.PersistenceOrchestrator;
 
 public interface Query extends DML {
 
-	public static final String INTERQUERY_JOIN_PLACEHOLDER = " ^PLACEHOLDER^ ";
+	public static final String INTERQUERY_JOIN_PLACEHOLDER = "^PLACEHOLDER^";
 
 	public static boolean isDeferred(String queryString) {
 		return queryString.contains(Query.INTERQUERY_JOIN_PLACEHOLDER);
@@ -94,6 +94,16 @@ public interface Query extends DML {
 	String getQueryString ();
 
 	/**
+	 * Return the string representation of the query
+	 * @return query string
+	 */
+	/**
+	 * Set the query string for this Query object
+	 * @param string containing the query
+	 */
+	void setQueryString (String string);
+
+	/**
 	 * Set the list of columns selected by this query
 	 * @param columns to set
 	 */
@@ -122,4 +132,21 @@ public interface Query extends DML {
 	 * @param values > QueryTreeInvocation#MAX_INLIST_SIZE
 	 */
 	public void processLargeInList(Set values);
+
+	/**
+	 * Returns true if the creation of the provider query object needs to be delayed.
+	 * This can happen if the place holder string is part of the query.
+	 * The resolution of the placeholder occurs after the parent query is executed.
+	 *
+	 * @return true if the query is deferred
+	 */
+	public boolean isDeferred();
+
+	// Extract the parameters and create them
+
+	/**
+	 * Extract the parameters from the query
+	 * @return modifed query string with bind placeholders
+	 */
+	String extractParameters ();
 }

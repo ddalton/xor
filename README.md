@@ -1,12 +1,10 @@
 Test for mix SQL and OQL queries in a view reference and view
-a) Test OQL and SQL - Need to add foreignKey
+a) Test OQL and SQL - Need to add foreignKey for EXISTS or use Function with FREESTYLE
 b) Test OQL and StoredProcedure
 
 Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber
     - AggregateView#expand currently returns if a child view has EntityType populated
 
-Test TraversalView and
-AggregateView expand functionality
 
 
 Supporting the following helps for JDBC provider - since it makes the serial dispatcher for JDBC more efficient

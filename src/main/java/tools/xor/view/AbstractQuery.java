@@ -32,6 +32,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -41,11 +43,14 @@ import tools.xor.providers.jdbc.DBTranslator;
 
 public abstract class AbstractQuery implements Query {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
+	final static Pattern paramPattern = Pattern.compile( ":(\\w+)" );
 	
 	private List<String> columns;
 	private Map<String, Integer> columnMap;
 	private String queryString;
-	List<Map<String, Object>> batches;
+	private List<Map<String, Object>> batches;
+	protected Map<String, BindParameter> paramMap = new HashMap<>();
 	
 	@Override
 	public List<String> getColumns() {
@@ -61,7 +66,8 @@ public abstract class AbstractQuery implements Query {
 		this.queryString = queryString;
 	}
 
-	protected void setQueryString(String queryString) {
+	@Override
+	public void setQueryString(String queryString) {
 		this.queryString = queryString;
 	}
 
@@ -229,5 +235,27 @@ public abstract class AbstractQuery implements Query {
 			}
 			return result;
 		}
+	}
+
+	// Extract the parameters and create them
+	@Override
+	public String extractParameters () {
+		paramMap.clear();
+
+		final Matcher matcher = paramPattern.matcher(getQueryString());
+
+		StringBuffer modifiedSQL = new StringBuffer();
+		int position = 1; // JDBC param number starts from 1
+		while (matcher.find()) {
+			//System.out.println("Full match: " + matcher1.group(0));
+			if(matcher.group(1) != null) {
+				String paramName = matcher.group(1);
+				paramMap.put(paramName, BindParameter.instance(position++, paramName));
+			}
+			matcher.appendReplacement(modifiedSQL, "?");
+		}
+		matcher.appendTail(modifiedSQL);
+
+		return modifiedSQL.toString();
 	}
 }

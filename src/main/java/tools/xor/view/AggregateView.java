@@ -99,7 +99,7 @@ public class AggregateView extends TraversalView {
 			this.children = new ArrayList<>();
 		}
 		AggregateView child = (AggregateView)view.copy();
-		child.setName(anchor);
+		child.setName(extractAnchor(anchor));
 
 		this.children.add(child);
 	}
@@ -232,11 +232,6 @@ public class AggregateView extends TraversalView {
 		super.expand(expanding);
 	}
 
-	@Override
-	public boolean hasUserQuery() {
-		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null;
-	}
-
 	@Override public boolean isSplitToRoot ()
 	{
 		return this.isSplitToRoot;
@@ -245,5 +240,10 @@ public class AggregateView extends TraversalView {
 	@Override public void setSplitToRoot (boolean value)
 	{
 		this.isSplitToRoot = value;
+	}
+
+	@Override
+	public boolean isCustom() {
+		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null;
 	}
 }

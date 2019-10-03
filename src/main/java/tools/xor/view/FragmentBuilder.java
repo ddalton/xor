@@ -40,6 +40,7 @@ import tools.xor.util.graph.TypeGraph;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -175,63 +176,64 @@ public class FragmentBuilder
         Map<State, QueryFragment> stateToFragmentMap = new HashMap<>();
         Map<String, QueryFragment> pathToFragmentMap = new HashMap<>();
 
-        // TODO: Since this is a tree data structure, we can do a BFS traversal
-        // through the tree
-        // That was we can avoid adding duplicate attributes from the subtypes, if it has
-        // already been selected on the supertype
-        // Only the id property needs to be duplicated both on the supertype and subtype
-        for(State state: st.getVertices()) {
+        if(view.isCustom()) {
+            // Custom views only have a single fragment as the query is user provided and
+            // does not need to be constructed
+            // The fragment here is just used to map the columns selected by the custom query
+            Collection<State> roots = st.getRoots();
+            assert roots.size() == 1 : "Custom query is supported only for a single root state tree";
 
-            QueryType qt = (QueryType)state.getType();
+            State root = roots.iterator().next();
+            QueryType qt = (QueryType)root.getType();
             QueryFragment fragment = new QueryFragment(
                 qt.getBasedOn(),
                 aggregateTree.nextAlias(),
-                ((Tree)st).getPathToRoot(state));
-            stateToFragmentMap.put(state, fragment);
-
-            // collect them to later add them in the correct order
-            for(String attr: state.getAttributes()) {
-                if(!view.hasUserQuery()) {
-                    fragment.addPath(attr);
-                } else {
-                    pathToFragmentMap.put(fragment.getFullPath(attr), fragment);
-                }
-            }
-
+                view.getName());
             queryTree.addVertex(fragment);
-        }
 
-        // We need to fetch the columns in the order specified by the user query
-        if(view.hasUserQuery()) {
-            // Add the attributes in the correct order
+            // We need to fetch the columns in the order specified by the user query
             for (String path : paths) {
-                if (pathToFragmentMap.containsKey(path)) {
-                    QueryFragment qf = pathToFragmentMap.remove(path);
-                    qf.addFullPath(path);
+                fragment.addPath(path);
+            }
+        } else {
+            // TODO: Since this is a tree data structure, we can do a BFS traversal
+            // through the tree
+            // That was we can avoid adding duplicate attributes from the subtypes, if it has
+            // already been selected on the supertype
+            // Only the id property needs to be duplicated both on the supertype and subtype
+            for (State state : st.getVertices()) {
+
+                QueryType qt = (QueryType)state.getType();
+                QueryFragment fragment = new QueryFragment(
+                    qt.getBasedOn(),
+                    aggregateTree.nextAlias(),
+                    ((Tree)st).getPathToRoot(state));
+                stateToFragmentMap.put(state, fragment);
+
+                // collect them to later add them in the correct order
+                for (String attr : state.getAttributes()) {
+                    fragment.addPath(attr);
                 }
+
+                queryTree.addVertex(fragment);
             }
-            // Add the remaining attributes - order is irrelevant
-            for (String path : new HashSet<>(pathToFragmentMap.keySet())) {
-                QueryFragment qf = pathToFragmentMap.remove(path);
-                qf.addFullPath(path);
+
+            // Add the edges
+            // handle subtypes, joins etc
+            for (Edge<State> edge : st.getEdges()) {
+                EntityType startType = ((QueryType)edge.getStart().getType()).getBasedOn();
+                Property p = startType.getProperty(edge.getName());
+
+                QueryFragment start = stateToFragmentMap.get(edge.getStart());
+                QueryFragment end = stateToFragmentMap.get(edge.getEnd());
+                IntraQuery queryEdge = new IntraQuery(
+                    edge.getName(),
+                    start,
+                    end,
+                    p);
+
+                queryTree.addEdge(queryEdge, start, end);
             }
-        }
-
-        // Add the edges
-        // handle subtypes, joins etc
-        for(Edge<State> edge: st.getEdges()) {
-            EntityType startType = ((QueryType)edge.getStart().getType()).getBasedOn();
-            Property p = startType.getProperty(edge.getName());
-
-            QueryFragment start = stateToFragmentMap.get(edge.getStart());
-            QueryFragment end = stateToFragmentMap.get(edge.getEnd());
-            IntraQuery queryEdge = new IntraQuery(
-                edge.getName(),
-                start,
-                end,
-                p);
-
-            queryTree.addEdge(queryEdge, start, end);
         }
 
         // We do not construct fragments for open types

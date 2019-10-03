@@ -37,7 +37,6 @@ public class HibernateQuery extends AbstractQuery {
 
 	private org.hibernate.Query hibQuery;
 	private NativeQuery nativeQuery;
-	private Map<String, BindParameter> paramMap = new HashMap<>();
 	private Map<String, Object> paramValues = new HashMap<>();
 
 	public HibernateQuery(String queryString, org.hibernate.Query hibQuery) {
@@ -64,8 +63,7 @@ public class HibernateQuery extends AbstractQuery {
 		return isNativeQuery();
 	}
 
-	public void setProviderQuery(String queryString, org.hibernate.Query hibQuery) {
-		setQueryString(queryString);
+	public void setProviderQuery(org.hibernate.Query hibQuery) {
 		this.hibQuery = hibQuery;
 	}
 
@@ -105,6 +103,8 @@ public class HibernateQuery extends AbstractQuery {
 		} else {
 			if (hasParameter(name)) {
 				hibQuery.setParameter(name, value);
+			} else if (paramMap.containsKey(name)) { // Needed for deferred queries
+				hibQuery.setParameter(paramMap.get(name).position, value);
 			}
 		}
 	}
@@ -146,4 +146,7 @@ public class HibernateQuery extends AbstractQuery {
 		hibQuery.setFirstResult(offset);
 	}
 
+	public boolean isDeferred() {
+		return hibQuery == null;
+	}
 }

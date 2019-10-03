@@ -35,7 +35,6 @@ public class JPAQuery extends AbstractQuery {
 	
 	private javax.persistence.Query jpaQuery;
 	private NativeQuery nativeQuery;
-	private Map<String, BindParameter> paramMap = new HashMap<>();
 	private Map<String, Object> paramValues = new HashMap<>();
 
 	public JPAQuery(String queryString, javax.persistence.Query jpaQuery) {
@@ -56,8 +55,7 @@ public class JPAQuery extends AbstractQuery {
 		}
 	}
 
-	public void setProviderQuery(String queryString, javax.persistence.Query jpaQuery) {
-		setQueryString(queryString);
+	public void setProviderQuery(javax.persistence.Query jpaQuery) {
 		this.jpaQuery = jpaQuery;
 	}
 
@@ -109,6 +107,8 @@ public class JPAQuery extends AbstractQuery {
 		} else {
 			if (hasParameter(name)) {
 				jpaQuery.setParameter(name, value);
+			} else if (paramMap.containsKey(name)) { // Needed for deferred queries
+				jpaQuery.setParameter(paramMap.get(name).position, value);
 			}
 		}
 	}
@@ -150,5 +150,9 @@ public class JPAQuery extends AbstractQuery {
 	@Override
 	public void setFirstResult(int offset) {
 		jpaQuery.setFirstResult(offset);
-	}	
+	}
+
+	public boolean isDeferred() {
+		return jpaQuery == null;
+	}
 }

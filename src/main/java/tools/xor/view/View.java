@@ -354,12 +354,6 @@ public interface View {
 	public boolean isValid();
 
 	/**
-	 * Checks if a user has provided a query for this view
-	 * @return true if a user specified OQL/SQL/SP is present
-	 */
-	boolean hasUserQuery ();
-
-	/**
 	 * When processing views with parallel collections, should the strategy by either:
 	 * 1. Split to root
 	 * 2. Split to anchor
@@ -375,4 +369,18 @@ public interface View {
 	 * @param value true to use the splitToRoot strategy
 	 */
 	public void setSplitToRoot(boolean value);
+
+	/**
+	 * Denotes if the view is powered by a custom query, such as a Native SQL, custom OQL or
+	 * a stored procedure
+	 * @return true if it has a custom query
+	 */
+	public boolean isCustom();
+
+	/**
+	 * Identifies the primary key referred by this view
+	 * This is useful, if only the primary key information is needed for joining.
+	 * @return primary key attribute names
+	 */
+	List<String> getPrimaryKeyAttribute ();
 }

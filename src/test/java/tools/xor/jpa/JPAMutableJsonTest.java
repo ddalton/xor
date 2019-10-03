@@ -67,7 +67,11 @@ import tools.xor.service.Shape;
 import tools.xor.service.Transaction;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
+import tools.xor.util.InterQuery;
+import tools.xor.util.graph.TypeGraph;
+import tools.xor.view.AggregateTree;
 import tools.xor.view.AggregateView;
+import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
 import javax.annotation.Resource;
@@ -1004,6 +1008,104 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			assert(root.has("taskChildren"));
 			JSONArray children = root.getJSONArray("taskChildren");
 			assert(children.length() == 4);
+
+		} finally {
+
+			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCSessionContext sc = po.getSessionContext();
+
+			try (Statement stmt = sc.getConnection().createStatement()) {
+				stmt.execute("DELETE from TASK");
+				sc.getConnection().commit();
+			}
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
+			tx.rollback();
+			// We don't close as the connection belongs to Spring
+		}
+	}
+
+	@Test
+	public void testChildrenMix() {
+		// First create a task with 100 children
+		// We use the generators to create this data
+		// This data is committed by the generators
+
+		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		if(shape == null) {
+			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+		}
+
+
+		JDBCType task = (JDBCType)shape.getType("TASK");
+		task.clearGenerators();
+
+		ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+		Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
+		taskparent.setGenerator(parentgen);
+		Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+		ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+		rootid.setGenerator(rootidgen);
+		Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+		ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+		namep.setGenerator(namegen);
+		ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+		Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+		dtype.setGenerator(dtypegen);
+
+		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
+																	"0,0:0", // root task
+																	"1,100:100" // root task with 100 children
+		});
+
+		// 101 is the total number of tasks. 1 root task and 100 child tasks
+		CounterGenerator gensettings = new CounterGenerator(101);
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+				(GeneratorRecipient)parentgen));
+
+		String[] types = new String[] {
+			"TASK"
+		};
+
+		Settings settings = new Settings();
+		//settings.setImportMethod(ImportMethod.CSV);
+		Transaction tx = amJDBC.createTransaction(settings);
+		tx.begin();
+		try {
+			// Generate the tasks in the DB
+			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+
+			// Query using the mix view
+			settings = new Settings();
+			settings.setView(aggregateService.getView("TASKCHILDRENMIX"));
+			shape = aggregateService.getDAS().getShape();
+			Type type = shape.getType(Task.class);
+			settings.setEntityType(type);
+			settings.init(shape);
+
+			// Print a graph of the aggregateTree
+			AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = settings.getView().getAggregateTree(
+				aggregateService.getDAS(),
+				type,
+				settings.doNarrow());
+			aggregateTree.exportToDOT("taskchildrenmix.dot");
+
+			List<?> result = aggregateService.query(null, settings);
+			assert(result.size() == 101);
+			JSONObject rootTask = (JSONObject)result.get(0);
+			assert(rootTask != null);
+
+			assert(rootTask.has("taskChildren"));
+			JSONArray children = rootTask.getJSONArray("taskChildren");
+			assert(children.length() == 100);
+
+			JSONObject child = children.getJSONObject(0);
+			assert(child != null);
+			assert(child.has("name"));
+			assert(child.has("id"));
 
 		} finally {
 

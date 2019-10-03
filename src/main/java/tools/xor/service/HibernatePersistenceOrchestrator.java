@@ -271,15 +271,13 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 
 	@Override
 	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
-		if(query instanceof HibernateQuery && Query.isDeferred(query.getQueryString())) {
-			String queryString = qti.getResolvedQuery(query);
+		if(query instanceof HibernateQuery && query.isDeferred()) {
+			String queryString = query.getQueryString();
 			if(queryType == QueryType.OQL) {
 				((HibernateQuery)query).setProviderQuery(
-					queryString,
 					getSessionFactory().getCurrentSession().createQuery(queryString));
 			}  else if (queryType == QueryType.SQL) {
 				((HibernateQuery)query).setProviderQuery(
-					queryString,
 					getSessionFactory().getCurrentSession().createSQLQuery(queryString));
 			}
 

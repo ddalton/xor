@@ -49,9 +49,6 @@ public class QueryTreeInvocation
                                               // Can be userkey, if it is not composite, else
                                               // subquery is the only option supported for composite key.
 
-    private Map<Query, String> resolvedQuery; // The Query.INTERQUERY_JOIN_PLACEHOLDER is replaced with
-                                              // the appropriate query string
-
     private Map<Query, Set> idList;           // ids needed for the QueryFragment.PARENT_INLIST parameter
                                               // If a query does not have an entry here after resolveQuery
                                               // has been processed, that means it is a SUBQUERY join till
@@ -71,18 +68,12 @@ public class QueryTreeInvocation
     public QueryTreeInvocation(List<QueryTree> rootQueries) {
         // These fields will concurrently be updated/accessed if using ParallelDispatcher
         this.parentIdList = new ConcurrentHashMap<>();
-        this.resolvedQuery = new ConcurrentHashMap<>();
         this.idList = new ConcurrentHashMap<>();
         this.visitors = new ConcurrentHashMap<>();
         this.visitorsByPath = new ConcurrentHashMap<>();
         this.objectsByPath = new ConcurrentHashMap<>();
         this.queryObjects = new ConcurrentHashMap<>();
         this.recordDeltas = new ConcurrentHashMap<>();
-
-        // Initialize with the root queries
-        //for(QueryTree queryTree: rootQueries) {
-        //    resolvedQuery.put(queryTree.getQuery(), queryTree.getQuery().getQueryString());
-        //}
     }
 
     public static class RecordDelta {
@@ -132,24 +123,24 @@ public class QueryTreeInvocation
             idList.put(queryTree.getQuery(), parentIdList.get(parentEdge.getStart()));
         }
 
-        String oqlString = queryTree.getQuery().getQueryString();
+        String queryString = queryTree.getQuery().getQueryString();
         if (joinType == InterQuery.JoinType.INLIST) {
 
             Set inlistvalues = idList.get(queryTree.getQuery());
             int size = inlistvalues.size() >= MAX_INLIST_SIZE ? MAX_INLIST_SIZE : inlistvalues.size();
 
             // This is simple replace
-            oqlString = oqlString.replaceFirst(
+            queryString = queryString.replaceFirst(
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
                 getParentInListBindString(size, queryTree.getQuery()));
         }
         else {
-            oqlString = oqlString.replaceFirst(
+            queryString = queryString.replaceFirst(
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
-                deriveSubquery(edge, getResolvedQuery(edge.getStart().getQuery())));
+                deriveSubquery(edge, edge.getStart().getQuery().getQueryString()));
 
         }
-        resolvedQuery.put(queryTree.getQuery(), oqlString);
+        queryTree.getQuery().setQueryString(queryString);
     }
 
     private String deriveSubquery(InterQuery edge, String oql) {
@@ -216,13 +207,6 @@ public class QueryTreeInvocation
         return joinType;
     }
 
-    public String getResolvedQuery(Query query) {
-        if(!resolvedQuery.containsKey(query)) {
-            return query.getQueryString();
-        }
-        return resolvedQuery.get(query);
-    }
-
     public static class QueryVisitor {
         InterQuery<QueryTree> outgoingEdge;
         Set ids;
@@ -283,12 +267,6 @@ public class QueryTreeInvocation
             queryObjects.put(key, bo);
         }
     }
-
-    /*
-    public BusinessObject findQueryObject(EntityKey key) {
-        return queryObjects.get(key);
-    }
-    */
 
     public BusinessObject getQueryObject(String path, Object idValue, Type type) {
         type = ((EntityType)type).getRootEntityType();

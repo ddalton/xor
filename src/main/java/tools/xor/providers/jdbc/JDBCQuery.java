@@ -6,6 +6,7 @@ import tools.xor.util.ClassUtil;
 import tools.xor.view.AbstractQuery;
 import tools.xor.view.BindParameter;
 import tools.xor.view.NativeQuery;
+import tools.xor.view.Query;
 import tools.xor.view.QueryStringHelper;
 import tools.xor.view.View;
 
@@ -27,10 +28,7 @@ public class JDBCQuery extends AbstractQuery
 	private Connection connection;
 	private PreparedStatement preparedStatement;
 	private NativeQuery nativeQuery;
-	private Map<String, BindParameter> paramMap = new HashMap<>();
 	private Map<String, Object> paramValues = new HashMap<>();
-
-	final static Pattern paramPattern = Pattern.compile( ":(\\w+)" );
 
 	public JDBCQuery(String sql, Connection connection, NativeQuery nativeQuery) {
 		super(sql);
@@ -46,29 +44,12 @@ public class JDBCQuery extends AbstractQuery
 		createPreparedStatement();
 	}
 
-	// Extract the parameters and create them
-	private String extractParameters() {
-		final Matcher matcher = paramPattern.matcher(getQueryString());
-
-		StringBuffer modifiedSQL = new StringBuffer();
-		int position = 1; // JDBC param number starts from 1
-		while (matcher.find()) {
-			//System.out.println("Full match: " + matcher1.group(0));
-			if(matcher.group(1) != null) {
-				String paramName = matcher.group(1);
-				paramMap.put(paramName, BindParameter.instance(position++, paramName));
-			}
-			matcher.appendReplacement(modifiedSQL, "?");
-		}
-		matcher.appendTail(modifiedSQL);
-
-		return modifiedSQL.toString();
-	}
-
 	private void createPreparedStatement() {
 		try {
 			if(connection != null) {
-				this.preparedStatement = connection.prepareStatement(getQueryString());
+				if(!Query.isDeferred(getQueryString())) {
+					this.preparedStatement = connection.prepareStatement(getQueryString());
+				}
 			} else {
 				throw new RuntimeException("Need a JDBC connection");
 			}
@@ -78,10 +59,7 @@ public class JDBCQuery extends AbstractQuery
 		}
 	}
 
-	public void setProviderQuery(String queryString, Connection connection) {
-		setQueryString(queryString);
-		this.connection = connection;
-
+	public void setProviderQuery() {
 		createPreparedStatement();
 	}
 
@@ -266,6 +244,10 @@ public class JDBCQuery extends AbstractQuery
 	@Override
 	public void setFirstResult(int offset) {
 		throw new RuntimeException("Offset not supported directly, modify your query to implement this.");
-	}	
+	}
+
+	public boolean isDeferred() {
+		return this.preparedStatement == null;
+	}
 }
 

@@ -274,11 +274,6 @@ public class UnmodifiableView implements View
 		return view.isValid();
 	}
 
-    @Override
-    public boolean hasUserQuery() {
-        return view.hasUserQuery();
-    }
-
     @Override public boolean isSplitToRoot ()
     {
         return view.isSplitToRoot();
@@ -287,5 +282,15 @@ public class UnmodifiableView implements View
     @Override public void setSplitToRoot (boolean value)
     {
         raiseException();
+    }
+
+    @Override public boolean isCustom ()
+    {
+        return view.isCustom();
+    }
+
+    @Override public List<String> getPrimaryKeyAttribute ()
+    {
+        return view.getPrimaryKeyAttribute();
     }
 }

@@ -62,7 +62,6 @@ public class StoredProcedureQuery extends AbstractQuery {
 	
 	private StoredProcedure sp;
 	private DBTranslator translator;
-	private Map<String, BindParameter> paramMap = new HashMap<String, BindParameter>();
 	
 	// If a stored procedure is returning multiple results and an error occurs,
 	// this variable helps to debug on which result call the error occurred
@@ -296,5 +295,9 @@ public class StoredProcedureQuery extends AbstractQuery {
 		catch (Exception e) {
 			throw ClassUtil.wrapRun(e);
 		}
+	}
+
+	public boolean isDeferred() {
+		return false;
 	}
 }

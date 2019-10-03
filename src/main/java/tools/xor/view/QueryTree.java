@@ -441,7 +441,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			fields.addAll(fragment.getQueryFields());
 		}
 
-		if(!getView().hasUserQuery()) {
+		if(!getView().isCustom()) {
 			Collections.sort(fields);
 			generateIdFields(aggregateTree);
 		}
@@ -449,16 +449,16 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		for(QueryField field: this.fields) {
 			attributeToFieldMap.put(field.getFullPath(), field);
 		}
-
+/*
 		// We need to reposition based on the list order
 		if(getView().hasUserQuery()) {
 			List<QueryField> fieldOrder = new LinkedList<>();
 			addQueryField(fieldOrder, getView().getAttributeList());
 			QuerySupport qs = getQuerySupport();
 			addQueryField(fieldOrder, qs.getAugmenter());
-		}
+		}*/
 	}
-
+/*
 	private void addQueryField(List<QueryField> fieldOrder, List<String> paths) {
 		if(paths != null) {
 			for (String path : paths) {
@@ -471,7 +471,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 			}
 		}
 	}
-
+*/
 	private void generateIdFields(AggregateTree aggregateTree) {
 		// We generate the id fields only if this entity is selected
 		if(fields.size() == 0) {

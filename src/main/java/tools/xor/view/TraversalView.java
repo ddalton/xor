@@ -172,6 +172,12 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     @XmlTransient
     private final Map<String, PropertyAlias> viewAliasMap = new ConcurrentHashMap<>();
 
+    // The primary key attribute name needed for linking with child views
+    // This is a list because a primary key can be composite
+    protected List<String>      primaryKeyAttribute;
+
+    /**********************  C O N S T R U C T O R S ***************************/
+
     public TraversalView(QueryTree queryTree) {
         initQuery(queryTree);
     }
@@ -201,6 +207,15 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         // We create the OQLQuery object and populate it with information from the query view
         // such as ColumnMeta information
         // The query builder should have populated the OQLQuery object
+    }
+
+    @Override
+    public List<String> getPrimaryKeyAttribute () {
+        return this.primaryKeyAttribute;
+    }
+
+    public void setPrimaryKeyAttribute (List<String> attribute) {
+        this.primaryKeyAttribute = attribute;
     }
 
     @Override
@@ -400,7 +415,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             new FragmentBuilder(das, aggregateTree).build((EntityType)viewKey.type);
 
             // Perform the split only if user query is not specified
-            if(!hasUserQuery()) {
+            if(!isCustom()) {
 
                 // run through the cartesian join splitter
                 if (isSplitToRoot()) {
@@ -484,6 +499,10 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         copy.setSplitToRoot(isSplitToRoot());
         if(attributeList != null) {
             copy.setAttributeList(new ArrayList<>(attributeList));
+        }
+
+        if(primaryKeyAttribute != null) {
+            copy.primaryKeyAttribute = new ArrayList<>(primaryKeyAttribute);
         }
 
         if(function != null) {
@@ -619,7 +638,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
                         isValidReference = true;
 
                         // This will become a child AggregateView, since it is targeted for querying
-                        if(view.hasUserQuery() && this instanceof AggregateView) {
+                        if(view.isCustom()) {
                             addChildView(view, anchor);
                         } else {
                             view.expand(expanding);
@@ -654,6 +673,9 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         }
     }
 
+    public boolean isCustom() {
+        return false;
+    }
 
     // TODO: A view is expanded for 2 reasons
     // 1. QUERY - to be used in a query
@@ -773,10 +795,22 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             view.expand(expanding);
         }
 
-        String prefix = attribute.substring(0, attribute.indexOf(VIEW_REFERENCE_START));
+        String prefix = extractAnchor(attribute);
         List<String> expandedAttributes = new ArrayList<>();
-        for(String suffix: view.getAttributeList()) {
-            expandedAttributes.add(prefix + suffix);
+
+        if(view.isCustom()) {
+            List<String> pkAttribute = view.getPrimaryKeyAttribute();
+            if(pkAttribute == null) {
+                throw new RuntimeException("primaryKeyAttribute needs to be specified to use a custom view. " +
+                    "This is needed for efficieny reasons as the whole point of the custom view is to avoid inefficient fetching by the parent");
+            }
+            for (String suffix : pkAttribute) {
+                expandedAttributes.add(prefix + suffix);
+            }
+        } else {
+            for (String suffix : view.getAttributeList()) {
+                expandedAttributes.add(prefix + suffix);
+            }
         }
 
         return expandedAttributes;
@@ -960,11 +994,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         return true;
     }
 
-    @Override
-    public boolean hasUserQuery() {
-        return false;
-    }
-
     /**
      * propertyName - optional. If the propertyName is not provided then it represents an alias on the root object
      * alias - required
@@ -1078,11 +1107,17 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         }
 
         // Get the anchor path for the view reference
-        if(path.contains(VIEW_REFERENCE_START)) {
-            path = path.substring(0, path.indexOf(VIEW_REFERENCE_START));
-        }
+        path = extractAnchor(path);
 
         return aliasMap.get(path);
+    }
+
+    public static String extractAnchor(String propertyPath) {
+        if(propertyPath.contains(VIEW_REFERENCE_START)) {
+            propertyPath = propertyPath.substring(0, propertyPath.indexOf(VIEW_REFERENCE_START));
+        }
+
+        return propertyPath;
     }
 
     public Set<PropertyAlias> getViewAliases() {

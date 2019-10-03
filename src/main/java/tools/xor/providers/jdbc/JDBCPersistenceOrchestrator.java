@@ -247,10 +247,7 @@ public class JDBCPersistenceOrchestrator
 		switch(queryType) {
 
 		case SQL:
-			Connection connection = null;
-			if (!Query.isDeferred(queryString)) {
-				connection = context.getConnection();
-			}
+			Connection connection = context.getConnection();
 			result = new JDBCQuery(queryString, connection, (NativeQuery) queryInput);
 			break;
 
@@ -276,10 +273,9 @@ public class JDBCPersistenceOrchestrator
 
 	@Override
 	public void evaluateDeferred(Query query, QueryType queryType, QueryTreeInvocation qti) {
-		if(query instanceof JDBCQuery && Query.isDeferred(query.getQueryString())) {
-			String queryString = qti.getResolvedQuery(query);
+		if(query instanceof JDBCQuery && query.isDeferred()) {
 			if (queryType == QueryType.SQL) {
-				((JDBCQuery)query).setProviderQuery(queryString, context.getConnection());
+				((JDBCQuery)query).setProviderQuery();
 			}
 
 			super.evaluateDeferred(query, queryType, qti);

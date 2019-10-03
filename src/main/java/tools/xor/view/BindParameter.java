@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BindParameter
+public class BindParameter implements Comparable<BindParameter>
 {
 
 	@XmlAttribute
@@ -262,6 +262,11 @@ public class BindParameter
 					return rs.getTimestamp(columnIndex);
 				}
 			});
+	}
+
+	@Override public int compareTo (BindParameter o)
+	{
+		return this.position - o.position;
 	}
 
 	public interface JavaConverter {

@@ -19,22 +19,15 @@
 
 package tools.xor;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import tools.xor.exception.MultipleClassForPropertyException;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.View;
 
-public abstract class AbstractTypeNarrower implements TypeNarrower {
+import java.util.HashSet;
+import java.util.Set;
 
-	private static Map<Class<?>, Map<String, Object>> subTypeProperties = new ConcurrentHashMap<Class<?>, Map<String, Object>>();
+public abstract class AbstractTypeNarrower implements TypeNarrower {
 
 	private AggregateManager aggregateManager;
 
@@ -65,89 +58,7 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	@Override
 	public Class<?> narrow(Shape shape, Object entity, View view) {
 		Class<?> entityClass = ClassUtil.getUnEnhanced(entity.getClass());
-				
-		//shape.refresh(this);
-		//getAggregateManager().getDAS().populateNarrowedClass(shape, entityClass, this);
 
-		//Class<?> result = view.downcastRoot();
 		return entityClass;
-
-		//return getAggregateManager().getDAS().getNarrowedClass(shape, entityClass, viewName);
-	}
-
-	/**
-	 * This method provides static type narrowing. Subclasses generally don't override
-	 * this method.
-	 */
-	@Override
-	public Class<?> narrow(Shape shape, Class<?> entityClass, String propertyName) {
-		Type entityType = null;
-
-		TypeMapper typeMapper = aggregateManager.getTypeMapper();
-		DataAccessService das = aggregateManager.getDAS();
-
-		Class<?> referenceClass = entityClass;
-		if(typeMapper.isExternal(entityClass))
-			referenceClass = typeMapper.toDomain(entityClass);
-
-		entityType = shape.getType(referenceClass);
-		if(SimpleType.class.isAssignableFrom(entityType.getClass()))
-			return entityType.getInstanceClass();
-
-		return narrow(entityType, propertyName);
-	}
-
-	private Class<?> narrow(Type entityType, String propertyName) {
-		if(entityType.getProperty(propertyName) != null) {
-			return entityType.getInstanceClass();
-		} else {
-			return findSubclass(entityType, propertyName);
-		}
-	}
-
-	private void populate(Type entityType) {
-		if(!EntityType.class.isAssignableFrom(entityType.getClass()))
-			return;
-
-		EntityType type = (EntityType) entityType;
-		TypeMapper typeMapper = aggregateManager.getTypeMapper();		
-
-		// Find the property in the sub-class
-		Map<String, Object> allEntityProperties = new HashMap<String, Object>();
-		for(EntityType subType: type.getSubtypes()) {
-			for(Property property: subType.getProperties()) {
-				if(allEntityProperties.get(property.getName()) == null)
-					allEntityProperties.put(property.getName(), subType.getInstanceClass());
-				else { // multiple matches
-					Object object = allEntityProperties.get(property.getName());
-					if(Set.class.isAssignableFrom(object.getClass()))
-						((Set) object).add(subType.getInstanceClass());
-					else { // create a collection object and add to it the existing and the new class
-						Set entityWithProperty = new HashSet();
-						entityWithProperty.add(object);
-						entityWithProperty.add(subType.getInstanceClass());
-						allEntityProperties.put(property.getName(), entityWithProperty);
-					}
-				}
-			}	
-		}
-		subTypeProperties.put(entityType.getInstanceClass(), allEntityProperties);
-	}
-
-	private Class<?> findSubclass(Type entityType, String propertyName) {
-		if(subTypeProperties.get(entityType.getInstanceClass()) == null)
-			populate(entityType);
-
-		Map<String, Object> allEntityProperties = subTypeProperties.get(entityType.getInstanceClass());
-		if(allEntityProperties.get(propertyName) == null)
-			return null; // No sub-class has this property
-
-		// Find the subclass
-		Object object = allEntityProperties.get(propertyName);
-		if(Class.class.isAssignableFrom(object.getClass()))
-			return (Class<?>) object;
-
-		// There is more than one match for the property throw an exception
-		throw new MultipleClassForPropertyException(entityType, propertyName, object);
 	}
 }

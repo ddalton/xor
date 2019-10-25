@@ -1,11 +1,3 @@
-   get rid of DAS#populateNarrowedClass
-   get rid of DAS#getNarrowedClass
-
-   We should not do automatic type narrowing (downcast) - Only if the user explicitly states, should we do that.
-   Due to the way we reconstitute - (subtype to parent type queries), the objects with the correct type are created
-
-
-
 Test for mix SQL and OQL queries in a view reference and view
 a) Test OQL and SQL - Need to add foreignKey for EXISTS or use Function with FREESTYLE
    - basic case done

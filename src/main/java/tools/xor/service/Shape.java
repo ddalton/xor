@@ -32,8 +32,6 @@ import tools.xor.Settings;
 import tools.xor.SimpleType;
 import tools.xor.SimpleTypeFactory;
 import tools.xor.Type;
-import tools.xor.TypeNarrower;
-import tools.xor.exception.MultipleClassForPropertyException;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
@@ -77,12 +75,6 @@ public class Shape
     protected Map<String, Map<String, Property>> domainProperties = new ConcurrentHashMap<>();
     protected Map<String, Map<String, Property>> externalProperties = new ConcurrentHashMap<>();
     protected StateGraph<State, Edge<State>> orderedGraph;
-
-    // This functionality helps to get the correct narrowed class (subtype) based on the properties
-    // defined by the view
-    // It is map between the given class and the view and the narrowed class
-    protected Map<Class<?>, Map<String, Class<?>>> narrowedClassByView = new ConcurrentHashMap<Class<?>, Map<String,Class<?>>>();
-    private volatile boolean needsUpdate;
 
     protected ShapeStrategy shapeStrategy = ShapeStrategy.SHARED;
 
@@ -799,18 +791,6 @@ public class Shape
             views.put(selected.getName(), selected);
         }
         denormalize();
-        needsUpdate = true;
-    }
-
-    public void refresh(TypeNarrower typeNarrower) {
-        if(needsUpdate) {
-            if(narrowedClassByView != null) {
-                for(Class<?> clazz: narrowedClassByView.keySet())
-                    populateNarrowedClass(clazz, typeNarrower);
-            }
-
-            needsUpdate = false;
-        }
     }
 
     private void checkViewCycles() {
@@ -835,149 +815,6 @@ public class Shape
         if(cycles.size() > 0) {
             throw new IllegalStateException("Cycle found in view references: " + GraphUtil.printCycles(
                 cycles));
-        }
-    }
-
-    public Class<?> getNarrowedClass(Class<?> entityClass, String viewName) {
-        Map<String, Class<?>> narrowedByView = narrowedClassByView.get(entityClass);
-        Object result = narrowedByView.get(viewName);
-
-        if(logger.isDebugEnabled()) {
-            logger.debug("AggregateViews#getNarrowedClass(entityClass: " + entityClass.getName()
-                    + ", viewName: " + viewName);
-            for(Map.Entry<String, Class<?>> entry: narrowedByView.entrySet()) {
-                logger.debug("view: " + entry.getKey() + " narrowed class: " + ((Class<?>)entry.getValue()).getName());
-            }
-            if (result != null) {
-                logger.debug("getNarrowedClass: " + ((Class<?>)result).getName());
-            }
-        }
-
-        if(result == null)
-            return null; // The entityClass is not applicable for this view
-
-        if(Class.class.isAssignableFrom(result.getClass()))
-            return (Class<?>) result;
-
-        if(Set.class.isAssignableFrom(result.getClass())) {
-            logger.error("Multiple sub-classes found, use a dynamic/custom TypeNarrower class to resolve this");
-            return entityClass;
-        }
-
-        return null;
-    }
-
-    public void populateNarrowedClass(Class<?> superClass, TypeNarrower typeNarrower) {
-
-        if(narrowedClassByView.get(superClass) != null) // already populated
-            return;
-
-        // Re-build in case the view has changed
-        narrowedClassByView.put(superClass, new HashMap<>());
-
-        // do the population for all views
-        Map<String, Class<?>> byViews = narrowedClassByView.get(superClass);
-        nextView: for(View view: views.values()) {
-
-            Class<?> narrowedClass = null;
-            Set multipleNarrowedClass = new HashSet();
-            for(String propertyPath: view.getConsolidatedAttributes()) {
-                String propertyName = Settings.getRootName(propertyPath);
-                Class<?> potentialNarrowedClass = null;
-                try {
-                    potentialNarrowedClass = typeNarrower.narrow(this, superClass, propertyName);
-                    if(potentialNarrowedClass == null)
-                        continue nextView; // This view property does not exist for this superClass or its sub-classes
-
-                    logger.debug("narrowedClass: " + (narrowedClass!=null ? narrowedClass.getName() : "null" )
-                            + ", potentialNarrowedClass: " + potentialNarrowedClass.getName());
-
-                    if(narrowedClass == null) {
-                        narrowedClass = potentialNarrowedClass;
-                    } else {
-                        if(!narrowedClass.isAssignableFrom(potentialNarrowedClass))
-                            multipleNarrowedClass.add(potentialNarrowedClass);
-                        else
-                            narrowedClass = potentialNarrowedClass; // Update it
-                    }
-                }
-                catch (MultipleClassForPropertyException e) {
-                    // The exception contains multiple classes
-                    multipleNarrowedClass.add(e);
-                }
-            }
-
-            if(multipleNarrowedClass.size() > 0) { // Might contain multiple classes or one or more MultipleClassForPropertyException objects
-                if(narrowedClass != null) {
-                    multipleNarrowedClass.add(narrowedClass);
-                }
-
-                Object commonClass = findCommonClass(multipleNarrowedClass);
-                if(commonClass != null) {
-                    byViews.put(view.getName(), (Class<?>)commonClass);
-                }
-            } else {
-                if(narrowedClass != null) {
-                    byViews.put(view.getName(), narrowedClass);
-                }
-            }
-        }
-    }
-
-    private Object findCommonClass(Set result) {
-        // First set all the classes to be eligible
-        Map<Class<?>, Boolean> eligibleClass = new HashMap<>();
-
-        for(Object obj: result) {
-            if(Class.class.isAssignableFrom(obj.getClass()))
-                eligibleClass.put((Class<?>) obj, Boolean.TRUE);
-            else if(MultipleClassForPropertyException.class.isAssignableFrom(obj.getClass())) {
-                MultipleClassForPropertyException me = (MultipleClassForPropertyException) obj;
-                for(Class<?> clazz: me.getMatchedClasses())
-                    eligibleClass.put(clazz, Boolean.TRUE);
-            }
-        }
-
-        // markInEligible
-        for(Object obj: result)
-            markInEligible(eligibleClass, obj);
-
-        Set<Class<?>> multipleCommonClasses = new HashSet<>();
-        for(Map.Entry<Class<?>, Boolean> eligibleEntry: eligibleClass.entrySet()) {
-            if(eligibleEntry.getValue())
-                multipleCommonClasses.add(eligibleEntry.getKey());
-        }
-
-        if(multipleCommonClasses.size() == 0) {
-            return null;
-        } else if(multipleCommonClasses.size() == 1) {
-            return multipleCommonClasses.iterator().next();
-        } else {
-            for(Class<?> clazz: multipleCommonClasses) {
-                Type type = getType(clazz);
-            }
-            // This will be treated as an error in getNarrowedClass method
-            return multipleCommonClasses;
-        }
-    }
-
-    private void markInEligible(Map<Class<?>, Boolean> eligibleClass, Object obj) {
-        next: for( Map.Entry<Class<?>, Boolean> entry : eligibleClass.entrySet()) {
-            if(!entry.getValue()) // already ineligible
-                continue;
-
-            if(Class.class.isAssignableFrom(obj.getClass())) {
-                if( ((Class<?>) obj).isAssignableFrom(entry.getKey()))
-                    continue;
-
-            } else if(MultipleClassForPropertyException.class.isAssignableFrom(obj.getClass())) {
-                MultipleClassForPropertyException me = (MultipleClassForPropertyException) obj;
-
-                for(Class<?> clazz: me.getMatchedClasses())
-                    if( clazz.isAssignableFrom(entry.getKey()))
-                        continue next;
-            }
-            eligibleClass.put(entry.getKey(), Boolean.FALSE);
         }
     }
 

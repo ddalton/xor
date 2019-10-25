@@ -544,16 +544,6 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         return PersistenceType.JDBC;
     }
 
-    @Override public void populateNarrowedClass (Shape shape, Class<?> entityClass, TypeNarrower typeNarrower)
-    {
-        // do nothing
-    }
-
-    @Override public Class<?> getNarrowedClass (Shape shape, Class<?> entityClass, String viewName)
-    {
-        return entityClass;
-    }
-
     @Override public PersistenceOrchestrator createPO (Object sessionContext, Object data)
     {
         JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);

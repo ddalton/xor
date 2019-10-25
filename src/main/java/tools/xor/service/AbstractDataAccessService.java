@@ -19,17 +19,8 @@
 
 package tools.xor.service;
 
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -38,27 +29,27 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import tools.xor.AbstractProperty;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.OpenType;
-import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.TypeNarrower;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LinkedChoices;
 import tools.xor.generator.Lot;
 import tools.xor.generator.RandomSubset;
 import tools.xor.service.exim.ExcelExportImport;
-import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.DFAtoNFA;
-import tools.xor.util.Edge;
-import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
-import tools.xor.view.View;
+
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractDataAccessService implements DataAccessService {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -265,16 +256,6 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		for(Shape shape: shapes.values()) {
 			shape.sync(am, avVersions);
 		}
-	}
-
-	@Override
-	public Class<?> getNarrowedClass(Shape shape, Class<?> entityClass, String viewName) {
-		return shape.getNarrowedClass(entityClass, viewName);
-	}	
-	
-	@Override
-	public void populateNarrowedClass(Shape shape, Class<?> superClass, TypeNarrower typeNarrower) {
-		shape.populateNarrowedClass(superClass, typeNarrower);
 	}
 
 	/**

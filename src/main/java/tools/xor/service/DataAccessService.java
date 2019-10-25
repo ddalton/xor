@@ -147,30 +147,6 @@ public interface DataAccessService {
 	public void sync(Map<String, List<AggregateView>> avVersions);
 
 	/**
-	 * Populate the view mapping with the entity based on the
-	 * attributes referenced in the view
-	 *
-	 * @param shape of the type system
-	 * @param entityClass by which the views need to be grouped
-	 * @param typeNarrower instance
-	 */
-	public void populateNarrowedClass(Shape shape, Class<?> entityClass,
-			TypeNarrower typeNarrower);
-
-	/**
-	 * Get the narrowed class for the given view and the 
-	 * actual class. This is a heuristic algorithm and if the
-	 * desired class is not found, then the user should override it
-	 * manually.
-	 *
-	 * @param shape of the type system
-	 * @param entityClass super class
-	 * @param viewName potentially contains attributes from sub classes
-	 * @return narrowed class
-	 */
-	public Class<?> getNarrowedClass(Shape shape, Class<?> entityClass, String viewName);
-
-	/**
 	 * Creates the PersistenceOrchestrator appropriate for this
 	 * DAS
 	 * @param sessionContext required if manually creating the session/entityManager

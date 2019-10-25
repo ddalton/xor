@@ -250,11 +250,11 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 		Query result = null;
 		switch(queryType) {
 		case OQL:
-			result = new HibernateQuery(queryString, getSessionFactory().getCurrentSession().createQuery(queryString));
+			result = new HibernateQuery(queryString, Query.isDeferred(queryString) ? null : getSessionFactory().getCurrentSession().createQuery(queryString));
 			break;
 
 		case SQL:
-			result = new HibernateQuery(queryString, getSessionFactory().getCurrentSession().createSQLQuery(queryString), (NativeQuery)queryInput);
+			result = new HibernateQuery(queryString, Query.isDeferred(queryString) ? null : getSessionFactory().getCurrentSession().createSQLQuery(queryString), (NativeQuery)queryInput);
 			break;
 			
 		case SP:

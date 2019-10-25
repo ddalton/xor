@@ -104,7 +104,8 @@ public class HibernateQuery extends AbstractQuery {
 			if (hasParameter(name)) {
 				hibQuery.setParameter(name, value);
 			} else if (paramMap.containsKey(name)) { // Needed for deferred queries
-				hibQuery.setParameter(paramMap.get(name).position, value);
+				// Hibernate indexes this from 0
+				hibQuery.setParameter(paramMap.get(name).position-1, value);
 			}
 		}
 	}

@@ -150,6 +150,13 @@ public abstract class AbstractDispatcher implements QueryDispatcher
         if(query != null) {
             List records = query.getResultList(null, callInfo.getSettings());
 
+            // Check if this is a single column result
+            if(records.size() > 0) {
+                if(!records.get(0).getClass().isArray()) {
+                    throw new RuntimeException("Was the identifier column forgotten to be added to the subtype query?");
+                }
+            }
+
             queryInvocation.start(aggregateTree, queryTree);
             Map<String, Object> previous = null;
             for (Object record : records) {

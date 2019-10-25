@@ -41,7 +41,7 @@ public class DenormalizedQueryTest extends AbstractDBTest {
 	@Autowired
 	protected AggregateManager aggregateService;
 
-	final String NAME = "GEORGE_WASHINGTON";
+	final String NAME = "GEORGE_WASHINGTON_1";
 	final String DISPLAY_NAME = "George Washington";
 	final String DESCRIPTION = "First President of the United States of America";
 	final String USER_NAME = "gwashington";	

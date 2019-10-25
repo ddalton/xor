@@ -36,6 +36,7 @@ import tools.xor.db.vo.base.ConsultantVO;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
+import tools.xor.view.View;
 
 public class DefaultPatch extends AbstractDBTest {
 	@Autowired
@@ -82,7 +83,10 @@ public class DefaultPatch extends AbstractDBTest {
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
-		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
+		View view = aggregateManager.getView("CONSULTANTINFO");
+		view = view.copy();
+		view.setSplitToRoot(false);
+		settings.setView(view);
 		System.out.println("View object: " + settings.getView());
 		List<?> toList = aggregateManager.query(person, settings);
 
@@ -131,7 +135,10 @@ public class DefaultPatch extends AbstractDBTest {
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
-		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
+		View view = aggregateManager.getView("CONSULTANTINFO");
+		view = view.copy();
+		view.setSplitToRoot(false);
+		settings.setView(view);
 		System.out.println("View object: " + settings.getView());
 
 		// We order by name so the first person is guaranteed to end with "0"
@@ -175,7 +182,10 @@ public class DefaultPatch extends AbstractDBTest {
 		PersonVO person = new PersonVO();
 		person.setId(result.getId());
 		settings = new Settings();
-		settings.setView(aggregateManager.getView("CONSULTANTINFO"));		
+		View view = aggregateManager.getView("CONSULTANTINFO");
+		view = view.copy();
+		view.setSplitToRoot(false);
+		settings.setView(view);
 		List<?> toList = aggregateManager.query(person, settings);
 
 		assert(toList.size() == 1);
@@ -205,7 +215,10 @@ public class DefaultPatch extends AbstractDBTest {
 
 		PersonVO person = new PersonVO();
 		settings = new Settings();
-		settings.setView(aggregateManager.getView("CONSULTANTINFO"));
+		View view = aggregateManager.getView("CONSULTANTINFO");
+		view = view.copy();
+		view.setSplitToRoot(false);
+		settings.setView(view);
 		settings.addFunction(FunctionType.ASC, "name");
 		List<?> toList = aggregateManager.query(person, settings);
 

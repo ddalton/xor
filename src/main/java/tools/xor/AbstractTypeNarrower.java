@@ -30,6 +30,7 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
+import tools.xor.view.View;
 
 public abstract class AbstractTypeNarrower implements TypeNarrower {
 
@@ -62,13 +63,16 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	 * to provide custom behavior.
 	 */
 	@Override
-	public Class<?> narrow(Shape shape, Object entity, String viewName) {
+	public Class<?> narrow(Shape shape, Object entity, View view) {
 		Class<?> entityClass = ClassUtil.getUnEnhanced(entity.getClass());
 				
-		shape.refresh(this);
-		getAggregateManager().getDAS().populateNarrowedClass(shape, entityClass, this);
+		//shape.refresh(this);
+		//getAggregateManager().getDAS().populateNarrowedClass(shape, entityClass, this);
 
-		return getAggregateManager().getDAS().getNarrowedClass(shape, entityClass, viewName);
+		//Class<?> result = view.downcastRoot();
+		return entityClass;
+
+		//return getAggregateManager().getDAS().getNarrowedClass(shape, entityClass, viewName);
 	}
 
 	/**

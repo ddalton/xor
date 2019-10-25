@@ -82,7 +82,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	final String JA_DESCRIPTION = "Second President of the United States of America";
 	final String JA_USER_NAME = "jadams";		
 
-	final String NAME = "GEORGE_WASHINGTON";
+	final String NAME = "GEORGE_WASHINGTON_4";
 	final String DISPLAY_NAME = "George Washington";
 	final String DESCRIPTION = "First President of the United States of America";
 	final String USER_NAME = "gwashington";

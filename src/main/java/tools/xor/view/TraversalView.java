@@ -357,7 +357,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     }
 
     @Override
-    public List<String> getAttributes() {
+    public List<String> getConsolidatedAttributes () {
         List<String> result = new LinkedList<>();
 
         if(getAttributeList() != null) {
@@ -366,7 +366,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
         if(getChildren() != null) {
             for (View child : getChildren()) {
-                result.addAll(child.getAttributes());
+                result.addAll(child.getConsolidatedAttributes());
             }
         }
 
@@ -536,7 +536,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     public Set<String> getViewReferences() {
         Set<String> result = new HashSet<>();
 
-        for(String attribute: getAttributes()) {
+        for(String attribute: getConsolidatedAttributes()) {
             String viewName = getViewReference(attribute);
             if(viewName != null)
                 result.add(viewName);
@@ -564,7 +564,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     @Override
     public boolean hasViewReference() {
 
-        for (String attribute : getAttributes()) {
+        for (String attribute : getConsolidatedAttributes()) {
             if (getViewReference(attribute) != null)
                 return true;
         }

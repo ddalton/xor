@@ -60,7 +60,6 @@ import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
 import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
-import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
@@ -518,7 +517,7 @@ public class Settings {
 			return params;
 
 		// TODO: skip recurse attributes and display a warning as this is not yet supported
-		for(String key: view.getAttributes()) {
+		for(String key: view.getConsolidatedAttributes()) {
 			String encodedKey = encodeParam(key);
 			if(queryParams.containsKey(encodedKey))
 				params.put(key, queryParams.get(encodedKey));
@@ -768,7 +767,7 @@ public class Settings {
 				if(getShape() == null) {
 					throw new RuntimeException("Shape needs to be provided in settings!");
 				}
-				narrowedClass = typeNarrower.narrow(getShape(), entity, getView().getName());
+				narrowedClass = typeNarrower.narrow(getShape(), entity, getView());
 				if (narrowedClass == null) {
 					throw new IllegalArgumentException(
 						"The entityClass is not applicable for this view. Check if the entity object for the correct class was passed in.");

@@ -121,9 +121,9 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public List<String> getAttributes ()
+    @Override public List<String> getConsolidatedAttributes ()
     {
-        return Collections.unmodifiableList(view.getAttributes());
+        return Collections.unmodifiableList(view.getConsolidatedAttributes());
     }
 
     @Override public List<String> getAttributeList ()

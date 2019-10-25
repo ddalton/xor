@@ -84,7 +84,11 @@ public class DefaultQueryInheritance extends AbstractDBTest {
 
 		// read the person object using a DataObject
 		Settings settings = new Settings();
-		settings.setView(aggregateManager.getView("TECHNICIANINFO"));		
+		View view = aggregateManager.getView("TECHNICIANINFO");
+		view = view.copy();
+		view.setSplitToRoot(false);
+		settings.setView(view);
+		//settings.setView(aggregateManager.getView("TECHNICIANINFO"));
 		List<?> toList = aggregateManager.query(person, settings);
 
 		assert(toList.size() == 1);

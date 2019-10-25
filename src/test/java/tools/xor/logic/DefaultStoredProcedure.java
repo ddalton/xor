@@ -44,7 +44,7 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 	@Autowired
 	protected AggregateManager aggregateService;
 
-	final String NAME = "GEORGE_WASHINGTON";
+	final String NAME = "GEORGE_WASHINGTON_3";
 	final String DISPLAY_NAME = "George Washington";
 	final String DESCRIPTION = "First President of the United States of America";
 	final String USER_NAME = "georgewashington";
@@ -62,6 +62,12 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 		Settings s = new Settings();
 		s.setPostFlush(true);
 		person = (Person) aggregateService.create(person, s);
+
+		/*
+		 * We will have to commit and clean-up so we don't affect further tests
+		 * and this will need to be done programmatically
+		 */
+
 
 		// read the person object using a Stored Procedure
 		// Commenting it out for HSQLDB as the StoredProcedure is not being created

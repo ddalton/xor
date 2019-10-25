@@ -439,7 +439,7 @@ public class DefaultSaveUpdateVO extends AbstractDBTest {
 	}
 
 	public void queryOneNative() {
-		String NAME = "GEORGE_WASHINGTON";
+		String NAME = "GEORGE_WASHINGTON_2";
 		String DISPLAY_NAME = "George Washington";
 		String DESCRIPTION = "First President of the United States of America";
 		String USER_NAME = "gwashington";	

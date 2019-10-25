@@ -49,7 +49,7 @@ import java.util.Map;
 
 /**
  * This class is responsible for building a tree of QueryFragment nodes connected by
- * InterQuery edges.
+ * IntraQuery edges.
  */
 public class FragmentBuilder
 {

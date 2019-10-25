@@ -217,10 +217,8 @@ public class QueryFragment implements Vertex
             field.setPosition(position++);
         }
 
-        // We should not create QueryField instances for fields that are only
-        // referenced from functions
-        //Set<String> attributePaths = new HashSet<>(aggregateTree.getView().getAttributes());
-        Set<String> attributePaths = new HashSet<>(queryTree.getView().getAttributes());
+        // A QueryTree is per view
+        Set<String> attributePaths = new HashSet<>(queryTree.getView().getAttributeList());
 
         if(queryTree.getView().isCustom()) {
             for (String path : this.paths) {

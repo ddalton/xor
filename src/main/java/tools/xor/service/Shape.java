@@ -881,7 +881,7 @@ public class Shape
 
             Class<?> narrowedClass = null;
             Set multipleNarrowedClass = new HashSet();
-            for(String propertyPath: view.getAttributes()) {
+            for(String propertyPath: view.getConsolidatedAttributes()) {
                 String propertyName = Settings.getRootName(propertyPath);
                 Class<?> potentialNarrowedClass = null;
                 try {

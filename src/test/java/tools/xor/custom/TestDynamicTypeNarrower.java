@@ -26,11 +26,12 @@ import tools.xor.db.vo.base.MetaEntityVO;
 import tools.xor.db.vo.base.PatentVO;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
+import tools.xor.view.View;
 
 public class TestDynamicTypeNarrower extends AbstractTypeNarrower {
 
 	@Override
-	public Class<?> narrow(Shape shape, Object entity, String viewName) {
+	public Class<?> narrow(Shape shape, Object entity, View view) {
 		Class<?> entityClass = ClassUtil.getUnEnhanced(entity.getClass());
 		
 		if(MetaEntityVO.class.isAssignableFrom(entityClass)) {
@@ -43,6 +44,6 @@ public class TestDynamicTypeNarrower extends AbstractTypeNarrower {
 				return CitationVO.class;
 		}
 		
-		return getAggregateManager().getDAS().getNarrowedClass(shape, entityClass, viewName);
+		return super.narrow(shape, entity, view);
 	}
 }

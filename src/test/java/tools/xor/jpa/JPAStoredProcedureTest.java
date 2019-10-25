@@ -35,11 +35,11 @@ import tools.xor.logic.DefaultStoredProcedure;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-VO-jpa-test.xml" })
+@TransactionConfiguration(defaultRollback = true)
+@Transactional
 public class JPAStoredProcedureTest extends DefaultStoredProcedure {
 
 	@Test
-	@Commit
-	@Transactional
 	public void singleReadSP() throws UnsupportedEncodingException, JAXBException {
 		super.singleReadSP();
 	}

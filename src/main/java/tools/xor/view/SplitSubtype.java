@@ -46,8 +46,6 @@ public class SplitSubtype implements SplitStrategy
         for(QueryTree queryTree: aggregateTree.getVertices()) {
             processQueryTree(queryTree);
         }
-
-        aggregateTree.exportToDOT("priorityType_split.dot");
     }
 
     private void processQueryTree(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree) {

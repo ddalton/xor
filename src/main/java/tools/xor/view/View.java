@@ -163,7 +163,7 @@ public interface View {
 	 * and all its descendant views
 	 * @return attributes
 	 */
-	public List<String> getAttributes();
+	public List<String> getConsolidatedAttributes ();
 
 	/**
 	 * Retrieves the list of attributes defined in the view.

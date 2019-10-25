@@ -1,6 +1,31 @@
+   get rid of DAS#populateNarrowedClass
+   get rid of DAS#getNarrowedClass
+
+   We should not do automatic type narrowing (downcast) - Only if the user explicitly states, should we do that.
+   Due to the way we reconstitute - (subtype to parent type queries), the objects with the correct type are created
+
+
+
 Test for mix SQL and OQL queries in a view reference and view
 a) Test OQL and SQL - Need to add foreignKey for EXISTS or use Function with FREESTYLE
+   - basic case done
+   - can we support SQL and then OQL?
+   - or is SQL only available in the leaf nodes?
+   - inheritance, entityType etc...
+   - In VO and POJO models
 b) Test OQL and StoredProcedure
+
+Temp table support
+==================
+If SingleDispatcher and the number of ids > 2000 (more than 2 calls needed)
+Reason for SingleDispatcher is that the data can be accessed by other queries
+For a parallel dispatcher the temp table data is not accessible
+Then it is better to do a INSERT INTO <temp table> AS SELECT <GUID>, <Primary key columns> ... 
+The GUID is part of the Query object
+Use this temp table to do child query processing
+Solves the issue of large dataset and also for Stored procedure data passing
+ -- Ids for the current entity need to be populated (for subtypes)
+ -- Ids for the collection elements needs to be populated (for parallel collection/inheritance on collection elements etc)
 
 Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber
     - AggregateView#expand currently returns if a child view has EntityType populated
@@ -35,7 +60,6 @@ and also modify SQL query to support that query order in a DB agnostic manner.
 2. Duplicate child entries - new test
 3. Doubly nested child query tet
 4. TO_ONE child query test
-5. root object downcast
 6. Subtype querying and json/state enhancement
 7. Paging test - tokens and parallel collections
 8. Collection of embedded objects

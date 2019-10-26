@@ -218,11 +218,9 @@ public interface View {
 	 *
 	 * @param das needed to create temporary types (e.g., QueryType for aliases)
 	 * @param type entity type
-	 * @param narrow true, if the query result returns type information for the entity and
-	 *               we want the objects that are created to be based off this type.
 	 * @return QueryView instance
 	 */
-	public AggregateTree getAggregateTree (DataAccessService das, Type type, boolean narrow);
+	public AggregateTree getAggregateTree (DataAccessService das, Type type);
 
 	/**
 	 * Helps to infer the Entity Type from the view name.

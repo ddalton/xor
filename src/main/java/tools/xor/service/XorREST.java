@@ -197,7 +197,6 @@ public abstract class XorREST
 
         // Try and persist this now
         settings.setPostFlush(true);
-        settings.setNarrow(true);
         getAM().create(entityBatch, settings);
     }
 

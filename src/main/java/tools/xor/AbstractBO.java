@@ -391,24 +391,7 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		Object oldInstance = this.instance;
 		this.instance = instance;
-		
-		//if(oldInstance != null) {
-			objectCreator.updateInstance(this, oldInstance);
-		//}
-
-		// Narrow the type if the instance is an instance of a subtype
-		if(type instanceof EntityType) {
-			if(getSettings().doNarrow()) {
-				if (getInstanceClassName() != null) {
-					Type narrowedType = ((EntityType)type).isDomainType() ?
-						getObjectCreator().getDAS().getShape().getType(getInstanceClassName()) :
-						getObjectCreator().getDAS().getShape().getExternalType(getInstanceClassName());
-					if (narrowedType != null) {
-						type = narrowedType;
-					}
-				}
-			}
-		}
+		objectCreator.updateInstance(this, oldInstance);
 	}
 
 	private boolean isIndexOperation(String indexStr) {

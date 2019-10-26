@@ -165,10 +165,9 @@ public class UnmodifiableView implements View
     }
 
     @Override public AggregateTree getAggregateTree (DataAccessService das,
-                                                     Type type,
-                                                     boolean narrow)
+                                                     Type type)
     {
-        return view.getAggregateTree(das, type, narrow);
+        return view.getAggregateTree(das, type);
     }
 
     @Override public Class inferDomainClass ()

@@ -161,12 +161,10 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 	public final static class QueryKey {
 		final Type type;
 		final String viewName;
-		final boolean narrow;
 
-		public QueryKey(Type type, String viewName, boolean narrow) {
+		public QueryKey(Type type, String viewName) {
 			this.type = type;
 			this.viewName = viewName;
-			this.narrow = narrow;
 		}
 
 		@Override
@@ -177,9 +175,9 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 			QueryKey otherKey = (QueryKey) object;
 
 			if(viewName.equals(otherKey.viewName) && 
-					this.type == otherKey.type &&
-					this.narrow == otherKey.narrow)
+					this.type == otherKey.type) {
 				return true;
+			}
 
 			return false;
 		}
@@ -189,7 +187,6 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 			int result = 17;
 			result = 37 * result + viewName.hashCode();
 			result = 37 * result + this.type.hashCode();
-			result = 37 * result + ((narrow) ? 1 : 0);
 			return result;
 		}
 	}

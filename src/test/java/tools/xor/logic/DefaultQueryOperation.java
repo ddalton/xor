@@ -288,7 +288,6 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Settings settings = new Settings();
 		settings.setView(aggregateService.getView("BASICINFO_NATIVE_TYPE"));	
 		settings.setPreFlush(true);
-		settings.setNarrow(true);
 		List<?> toList = aggregateService.query(george, settings);
 
 		assert(toList.size() == 1);

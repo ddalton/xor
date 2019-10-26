@@ -89,8 +89,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			callInfo.getSettings());
 		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = callInfo.getSettings().getView().getAggregateTree(
 			das,
-			referenceType,
-			callInfo.getSettings().doNarrow());
+			referenceType);
 
 		// Construct the query based on the settings
 		QueryBuilder builder = new QueryBuilder(aggregateTree, this.entity);

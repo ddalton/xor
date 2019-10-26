@@ -174,7 +174,7 @@ public class AggregateViewFactory {
 			Type type = am.getDAS().getShape().getType(av.getTypeName());
 			groupByPackage(type, av, viewsByPackage);
 			
-			QueryKey viewKey = new QueryKey(type, av.getName(), false);
+			QueryKey viewKey = new QueryKey(type, av.getName());
 
 			AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(av);
 			new FragmentBuilder(am.getDAS(), queryTree).build(new QueryTree((EntityType)viewKey.type, av));

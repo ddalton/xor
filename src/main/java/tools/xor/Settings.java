@@ -167,8 +167,6 @@ public class Settings {
 	private boolean preRefresh;   // Setting this flag to true refreshes the object before it executes the operation	
 	private boolean persist;     // Setting this flag will do an automatic saveupdate on the object graph after the UPDATE phase
 
-	private boolean narrow; // Request the query operation to narrow the object to the appropriate type. This can have a performance impact
-
 	private AssociationStrategy associationStrategy;
 	
 	private DetailStrategy detailStrategy;
@@ -736,21 +734,6 @@ public class Settings {
 
 	public void setPersist(boolean persist) {
 		this.persist = persist;
-	}
-
-	public boolean doNarrow() {
-		return narrow;
-	}
-
-	/**
-	 * Can have a performance impact, as the properties from the subtype will be
-	 * navigated. This typically can end up loading a larger object graph.
-	 * Also is used when working with native queries.
-	 * @param narrow false if going just by model type and not actual object class
-	 *               as this can be different due to polymorphism
-	 */
-	public void setNarrow(boolean narrow) {
-		this.narrow = narrow;
 	}
 
 	public void setParam (String name, Object value) {

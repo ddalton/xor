@@ -1,3 +1,10 @@
+Focus areas
+===========
+1. Temp table support
+2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
+3. Tests
+
+
 Test for mix SQL and OQL queries in a view reference and view
 a) Test OQL and SQL - Need to add foreignKey for EXISTS or use Function with FREESTYLE
    - basic case done

@@ -434,8 +434,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     }
 
     @Override
-    public AggregateTree getAggregateTree (DataAccessService das, Type type, boolean narrow) {
-        return getAggregateTree(das, new QueryKey(type, name, narrow));
+    public AggregateTree getAggregateTree (DataAccessService das, Type type) {
+        return getAggregateTree(das, new QueryKey(type, name));
     }
 
     public static boolean isBuiltInView(String viewName) {

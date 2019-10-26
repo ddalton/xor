@@ -1089,8 +1089,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			// Print a graph of the aggregateTree
 			AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = settings.getView().getAggregateTree(
 				aggregateService.getDAS(),
-				type,
-				settings.doNarrow());
+				type);
 			aggregateTree.exportToDOT("taskchildrenmix.dot");
 
 			List<?> result = aggregateService.query(null, settings);

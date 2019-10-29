@@ -56,7 +56,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
         List<QueryTree> queries = new LinkedList<>();
         queries.addAll(aggregateTree.getRoots());
         Set<QueryTree> roots = new HashSet<>(queries);
-        QueryTreeInvocation queryInvocation = new QueryTreeInvocation(queries);
+        QueryTreeInvocation queryInvocation = new QueryTreeInvocation();
 
         // execute queries
         executeQueries(queries, queryInvocation);
@@ -135,9 +135,9 @@ public abstract class AbstractDispatcher implements QueryDispatcher
             Iterator<InterQuery<QueryTree>> iter = aggregateTree.getInEdges(queryTree).iterator();
             if (iter.hasNext()) {
                 InterQuery edge = iter.next();
-                queryInvocation.resolveQuery(edge);
 
                 PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
+                queryInvocation.resolveQuery(edge);
 
                 if(query.isDeferred()) {
                     query.setQueryString(query.extractParameters());
@@ -167,6 +167,13 @@ public abstract class AbstractDispatcher implements QueryDispatcher
                     queryInvocation);
             }
             queryInvocation.finish(aggregateTree, queryTree);
+        }
+
+
+        // execute actions
+        List<Action> actions = queryTree.getActions();
+        for(Action action: actions) {
+            action.execute(queryInvocation, callInfo.getSettings().getPersistenceOrchestrator());
         }
     }
 }

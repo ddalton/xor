@@ -177,7 +177,7 @@ public class AggregateViewFactory {
 			QueryKey viewKey = new QueryKey(type, av.getName());
 
 			AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(av);
-			new FragmentBuilder(am.getDAS(), queryTree).build(new QueryTree((EntityType)viewKey.type, av));
+			new FragmentBuilder(queryTree).build(new QueryTree((EntityType)viewKey.type, av));
 			
 			// Extract system generated OQL query
 			List<AggregateView> parallelViews = new ArrayList<>();

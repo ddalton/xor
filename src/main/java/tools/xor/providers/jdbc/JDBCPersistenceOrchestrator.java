@@ -307,4 +307,14 @@ public class JDBCPersistenceOrchestrator
 	public void initForQuery() {
 		context.readOnlyTransaction();
 	}
+
+	@Override public void populateQueryJoinTable (String invocationId, Set ids)
+	{
+		try {
+			saveQueryJoinTable(context.getConnection(), invocationId, ids);
+		}
+		catch (SQLException e) {
+			throw ClassUtil.wrapRun(e);
+		}
+	}
 }

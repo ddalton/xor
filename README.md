@@ -16,15 +16,24 @@ b) Test OQL and StoredProcedure
 
 Temp table support
 ==================
-If SingleDispatcher and the number of ids > 2000 (more than 2 calls needed)
-Reason for SingleDispatcher is that the data can be accessed by other queries
-For a parallel dispatcher the temp table data is not accessible
-Then it is better to do a INSERT INTO <temp table> AS SELECT <GUID>, <Primary key columns> ... 
-The GUID is part of the Query object
-Use this temp table to do child query processing
-Solves the issue of large dataset and also for Stored procedure data passing
- -- Ids for the current entity need to be populated (for subtypes)
- -- Ids for the collection elements needs to be populated (for parallel collection/inheritance on collection elements etc)
+Table name - XOR_QUERY_JOIN_
+----------
+invocationid - UUID (Varchar2(30)) - support 128 bit guid in base64 format
+id_int - if the id is an number (schema dependent)
+id_str -  if the id is a string (schema dependent)
+id column should have an index
+
+
+When a parent query executes, it checks to see if any of its child/dependant queries need the XOR_QUERY_JOIN_ and if so, populates this table.
+To support this, we will add a new node in the AggregateTree, that is inbetween the parent and all the children. This node will be responsible
+for populating the query join table.
+
+The way this is done is:
+1. If the chlld query is a stored procedure
+2. If the child query is a SQL query and has this table referenced in its query
+
+
+
 
 Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber
     - AggregateView#expand currently returns if a child view has EntityType populated

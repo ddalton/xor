@@ -22,12 +22,8 @@ package tools.xor.view;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.QueryType;
-import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.DataAccessService;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
@@ -42,7 +38,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -55,12 +50,9 @@ public class FragmentBuilder
 {
     private static final Logger qtLogger = LogManager.getLogger(Constants.Log.QUERY_TRANSFORMER);
 
-    private Map<String, QueryFragment> pathToFragment = new HashMap<>();
     private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
-    private DataAccessService das; // optional for denormalized query, needed for creating QueryType instances
 
-    public FragmentBuilder(DataAccessService das, AggregateTree aggregateTree) {
-        this.das = das;
+    public FragmentBuilder(AggregateTree aggregateTree) {
         this.aggregateTree = aggregateTree;
     }
 

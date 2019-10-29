@@ -30,6 +30,7 @@ import tools.xor.service.PersistenceOrchestrator;
 public interface Query extends DML {
 
 	public static final String INTERQUERY_JOIN_PLACEHOLDER = "^PLACEHOLDER^";
+	public static final String QUERY_JOIN_TABLENAME = "XOR_QUERY_JOIN_";
 
 	public static boolean isDeferred(String queryString) {
 		return queryString.contains(Query.INTERQUERY_JOIN_PLACEHOLDER);

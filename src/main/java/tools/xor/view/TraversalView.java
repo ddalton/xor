@@ -52,6 +52,7 @@ import tools.xor.MatchType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
@@ -407,25 +408,24 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         this.name = name;
     }
 
-    private AggregateTree getAggregateTree (DataAccessService das, QueryKey viewKey) {
+    private AggregateTree getAggregateTree (QueryKey viewKey) {
         if(!queryCache.containsKey(viewKey)) {
 
             // Build the QueryTree
             AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(this);
-            new FragmentBuilder(das, aggregateTree).build((EntityType)viewKey.type);
+            new FragmentBuilder(aggregateTree).build((EntityType)viewKey.type);
 
-            // Perform the split only if user query is not specified
-            if(!isCustom()) {
-
-                // run through the cartesian join splitter
-                if (isSplitToRoot()) {
-                    (new SplitToRoot(aggregateTree)).execute();
-                }
-                else {
-                    (new SplitToAnchor(aggregateTree)).execute();
-                    (new SplitSubtype(aggregateTree)).execute();
-                }
+            // run through the cartesian join splitter
+            if (isSplitToRoot()) {
+                (new SplitToRoot(aggregateTree)).execute();
             }
+            else {
+                (new SplitToAnchor(aggregateTree)).execute();
+                (new SplitSubtype(aggregateTree)).execute();
+            }
+
+            Shape shape = ((EntityType)viewKey.type).getShape();
+            (new JoinTableAmender(aggregateTree, shape)).execute();
 
             queryCache.put(viewKey, aggregateTree);
         }
@@ -434,8 +434,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     }
 
     @Override
-    public AggregateTree getAggregateTree (DataAccessService das, Type type) {
-        return getAggregateTree(das, new QueryKey(type, name));
+    public AggregateTree getAggregateTree (Type type) {
+        return getAggregateTree(new QueryKey(type, name));
     }
 
     public static boolean isBuiltInView(String viewName) {

@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import tools.xor.FunctionType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,5 +108,23 @@ public class NativeQuery extends QuerySupport
         }
 
         return result;
+    }
+
+    public boolean contains(String substring) {
+        if(selectClause.contains(substring)) {
+            return true;
+        }
+
+        for(Function f: function) {
+            if(f.type == FunctionType.FREESTYLE) {
+                for(String arg: f.args) {
+                    if(arg.contains(substring)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }

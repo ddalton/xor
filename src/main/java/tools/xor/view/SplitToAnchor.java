@@ -22,7 +22,6 @@ package tools.xor.view;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -35,7 +34,7 @@ import java.util.Stack;
  * The ancestor path at the root of the new QueryTree is not null and contains the path from
  * the root of the AggregateTree to the anchor node.
  */
-public class SplitToAnchor implements SplitStrategy
+public class SplitToAnchor implements TreeMutatorStrategy
 {
     private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
 
@@ -68,7 +67,8 @@ public class SplitToAnchor implements SplitStrategy
      */
     @Override public void execute ()
     {
-        for(QueryTree queryTree: aggregateTree.getVertices()) {
+        List<QueryTree> queryTrees = aggregateTree.getNonCustomVertices();
+        for(QueryTree queryTree: queryTrees) {
             processQueryTree(queryTree);
         }
     }

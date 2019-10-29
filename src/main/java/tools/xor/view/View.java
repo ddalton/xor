@@ -60,6 +60,7 @@ import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
@@ -216,11 +217,10 @@ public interface View {
 	/**
 	 * Get the QueryTree instance that is specific to a particular EntityType.
 	 *
-	 * @param das needed to create temporary types (e.g., QueryType for aliases)
 	 * @param type entity type
 	 * @return QueryView instance
 	 */
-	public AggregateTree getAggregateTree (DataAccessService das, Type type);
+	public AggregateTree getAggregateTree (Type type);
 
 	/**
 	 * Helps to infer the Entity Type from the view name.

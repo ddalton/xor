@@ -36,10 +36,13 @@ public class InterQuery<V extends QueryTree> extends Edge<V>
     }
 
     public static enum JoinType {
-        INLIST,   // used if the interquery edge is satisfied using an IN list
-        SUBQUERY, // currently not used, due to issues with mix between SQL, StoredProcedure
-                  // and OQL parent queries
-        NONE      // used if the interquery edge is not present, such as a root query piece
+        INLIST,    // used if the interquery edge is satisfied using an IN list
+        SUBQUERY,  // currently not used, due to issues with mix between SQL, StoredProcedure
+                   // and OQL parent queries
+        JOINTABLE, // A table/temporary table that is used by the stored procedure child query
+                   // or a SQL child query. Helps in reducing SQL plan cache size.
+                   // Needed to support stored procedures
+        NONE       // used if the interquery edge is not present, such as a root query piece
     };
 
     public QueryFragment getSource() {

@@ -40,6 +40,7 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTree;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
@@ -64,6 +65,9 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	// if not, the type also needs to be saved
 	private static final String INSERT_SURROGATE_MAP_SQL = "INSERT INTO XORSURROGATEMAP"
 		+ "(SOURCE_ID, MIGRATED_ID) VALUES (?,?)";
+
+	private static final String INSERT_QUERY_JOIN_SQL = "INSERT INTO %s"
+		+ "(ID_INT, ID_STR, INVOCATION_ID) VALUES (?,?,?)";
 
 	private static final String QUERY_MIGRATED_IDS = "SELECT SOURCE_ID, MIGRATED_ID FROM XORSURROGATEMAP WHERE SOURCE_ID IN (%s)";
 
@@ -307,6 +311,39 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 			ps.executeBatch();
 			conn.commit();
+		}
+	}
+
+	protected void saveQueryJoinTable (Connection conn, String invocationId, Set ids) throws
+		SQLException
+	{
+		String sql = String.format(INSERT_QUERY_JOIN_SQL, QueryJoinAction.JOIN_TABLE_NAME);
+
+		if(ids.size() == 0) {
+			return;
+		}
+
+		// Get the type of the id object
+		boolean isStringType = false;
+		Object firstId = ids.iterator().next();
+		if(firstId instanceof String) {
+			isStringType = true;
+		}
+
+		try(PreparedStatement ps = conn.prepareStatement(sql)) {
+
+			for (Object id: ids) {
+				if(!isStringType) {
+					Long longValue = new Long(id.toString());
+					ps.setLong(1, longValue);
+				} else {
+					ps.setString(2, (String)id);
+				}
+				ps.setString(3, invocationId);
+				ps.addBatch();
+			}
+
+			ps.executeBatch();
 		}
 	}
 

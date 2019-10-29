@@ -257,7 +257,7 @@ public class QueryTransformer
 
 		// System OQL
 		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = new AggregateTree(view);
-		new FragmentBuilder(null, aggregateTree).build((EntityType)settings.getEntityType());
+		new FragmentBuilder(aggregateTree).build((EntityType)settings.getEntityType());
 		QueryBuilder qb = new QueryBuilder(aggregateTree);
 		qb.construct(settings);
 

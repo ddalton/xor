@@ -22,7 +22,6 @@ package tools.xor.view;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +32,7 @@ import java.util.Set;
  * We support OUTER JOIN with this method.
  * INNER JOIN can be supported using the TREAT operator.
  */
-public class SplitSubtype implements SplitStrategy
+public class SplitSubtype implements TreeMutatorStrategy
 {
     private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
 
@@ -43,7 +42,8 @@ public class SplitSubtype implements SplitStrategy
 
     @Override public void execute ()
     {
-        for(QueryTree queryTree: aggregateTree.getVertices()) {
+        List<QueryTree> queryTrees = aggregateTree.getNonCustomVertices();
+        for(QueryTree queryTree: queryTrees) {
             processQueryTree(queryTree);
         }
     }

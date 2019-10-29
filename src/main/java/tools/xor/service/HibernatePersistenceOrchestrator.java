@@ -71,9 +71,25 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	public static final String SQL_LOGGER = "org.hibernate.SQL";
+
+	private ConnectionUtil connectionUtil;
 	
 	public HibernatePersistenceOrchestrator() {
-		
+		this.connectionUtil = new ConnectionUtil()
+		{
+			@Override public Connection getConnection ()
+			{
+				throw new UnsupportedOperationException("Get connection is not supported");
+			}
+
+			@Override public void execute (Object context)
+			{
+				if (context instanceof Work) {
+					Work work = (Work)context;
+					getSession().doWork(work);
+				}
+			}
+		};
 	}
 	
 	/**
@@ -84,6 +100,8 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	 * @param data any additional data that needs to be passed by the user
 	 */
 	public HibernatePersistenceOrchestrator(Object sessionContext, Object data) {
+		this();
+		
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.SQL_STACK)
 			&& ApplicationConfiguration.config().getBoolean(Constants.Config.SQL_STACK)) {
 			Logger logger = Logger.getLogger(SQL_LOGGER);
@@ -287,25 +305,31 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	
 	@Override
 	protected void createStatement (final StoredProcedure sp) {
-		
-		getSession().doWork(new Work() {
-		    @Override
-		    public void execute(Connection conn) throws SQLException {
-				try {
-					DatabaseMetaData dbmd = conn.getMetaData();
-					if(!dbmd.supportsStoredProcedures()) {
-						throw new UnsupportedOperationException("Stored procedures with JDBC escape syntax is not supported");
+
+		this.connectionUtil.execute(
+			new Work()
+			{
+				@Override
+				public void execute (Connection conn) throws SQLException
+				{
+					try {
+						DatabaseMetaData dbmd = conn.getMetaData();
+						if (!dbmd.supportsStoredProcedures()) {
+							throw new UnsupportedOperationException(
+								"Stored procedures with JDBC escape syntax is not supported");
+						}
+						if (sp.isImplicit()) {
+							sp.setStatement(conn.createStatement());
+						}
+						else {
+							sp.setStatement(conn.prepareCall(sp.jdbcCallString()));
+						}
 					}
-					if(sp.isImplicit()) {
-						sp.setStatement(conn.createStatement());
-					} else {
-						sp.setStatement(conn.prepareCall(sp.jdbcCallString()));
+					catch (SQLException e) {
+						logger.info("Unable to retrieve JDBC metadata: " + e.getMessage());
 					}
-				} catch (SQLException e) {
-					logger.info("Unable to retrieve JDBC metadata: " + e.getMessage());
-				} 
-		    }
-		});
+				}
+			});
 	}
 
 	public static class BlobCreator implements Work {
@@ -325,7 +349,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	@Override
 	public Blob createBlob() {
 		BlobCreator blobCreator = new BlobCreator();
-		getSession().doWork(blobCreator);
+		this.connectionUtil.execute(blobCreator);
 
 		return blobCreator.getBlob();
 	}
@@ -344,5 +368,19 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	protected void performAttach(BusinessObject input, Object instance) {
 		// reattaches the object to the session
 		getSession().buildLockRequest(LockOptions.NONE).lock(instance);
+	}
+
+	@Override
+	public void populateQueryJoinTable (String invocationId, Set ids)
+	{
+		this.connectionUtil.execute(
+			new Work()
+			{
+				@Override
+				public void execute (Connection connection) throws SQLException
+				{
+					saveQueryJoinTable(connection, invocationId, ids);
+				}
+			});
 	}
 }

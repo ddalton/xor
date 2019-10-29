@@ -65,6 +65,7 @@ public class Constants {
 		public static final String BATCH_SKIP = "batch.skip";
 		public static final String BATCH_COMMIT_SIZE = "batch.commit.size";
 		public static final String QUERY_POOL_SIZE = "query.pool.size";
+		public static final String QUERY_JOIN_TABLE = "query.join.table";
 	}
   
   

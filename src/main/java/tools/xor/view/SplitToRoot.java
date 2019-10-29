@@ -22,7 +22,6 @@ package tools.xor.view;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,7 +29,7 @@ import java.util.List;
  * This strategy needs to be used if needing an OUTER JOIN type functionality
  * i.e., if the join needs to be included in the result, irrespective of whether
  */
-public class SplitToRoot implements SplitStrategy
+public class SplitToRoot implements TreeMutatorStrategy
 {
     private AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
 
@@ -50,9 +49,7 @@ public class SplitToRoot implements SplitStrategy
      */
     @Override public void execute ()
     {
-        Collection<QueryTree> vertices = aggregateTree.getVertices();
-
-        List<QueryTree> pieces = new LinkedList<>(vertices);
+        List<QueryTree> pieces = aggregateTree.getNonCustomVertices();
         while(!pieces.isEmpty()) {
             QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree = pieces.remove(0);
 
@@ -62,7 +59,7 @@ public class SplitToRoot implements SplitStrategy
                 }
             }
 
-            QueryFragment root = (QueryFragment)queryTree.getRoot();
+            QueryFragment root = queryTree.getRoot();
             queryTree.computeCollectionCount(root);
 
             if(root.getParallelCollectionCount() > 1) {

@@ -1318,7 +1318,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
-		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		new FragmentBuilder(queryTree).build((EntityType)task);
 		QueryTree qp = queryTree.getRoot();
 
 		//qp.exportToDOT("Complex.dot");
@@ -1334,7 +1334,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
-		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		new FragmentBuilder(queryTree).build((EntityType)task);
 		SplitToRoot cjs = new SplitToRoot(queryTree);
 		cjs.execute();
 
@@ -1349,7 +1349,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
-		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		new FragmentBuilder(queryTree).build((EntityType)task);
 		SplitToRoot cjs = new SplitToRoot(queryTree);
 		cjs.execute();
 
@@ -1362,7 +1362,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
-		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		new FragmentBuilder(queryTree).build((EntityType)task);
 		SplitToAnchor cjs = new SplitToAnchor(queryTree);
 		cjs.execute();
 
@@ -1377,7 +1377,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
-		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		new FragmentBuilder(queryTree).build((EntityType)task);
 		SplitToAnchor cjs = new SplitToAnchor(queryTree);
 		cjs.execute();
 
@@ -1520,7 +1520,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
-		new FragmentBuilder(das, queryTree).build((EntityType)task);
+		new FragmentBuilder(queryTree).build((EntityType)task);
 
 		QueryBuilder builder = new QueryBuilder(queryTree);
 		Settings settings = new Settings();

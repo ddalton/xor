@@ -26,14 +26,15 @@ import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.util.InterQuery;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -45,9 +46,11 @@ public class QueryTreeInvocation
     public static final int MAX_INLIST_SIZE = 999;
     public static final int OFFSET = 1;
 
-    private Map<QueryTree, Set> parentIdList; // Return the ids needed for a consuming Query
-                                              // Can be userkey, if it is not composite, else
-                                              // subquery is the only option supported for composite key.
+    private Map<QueryFragment, Set> parentIdList; //   Return the ids needed for a consuming Query
+                                               // Can be userkey, if it is not composite, else
+                                               // subquery is the only option supported for composite key.
+                                               //   A QueryTree can have different sets of parentIdList since
+                                               // 2 InterQuery edges might have different source fragments
 
     private Map<Query, Set> idList;           // ids needed for the QueryFragment.PARENT_INLIST parameter
                                               // If a query does not have an entry here after resolveQuery
@@ -62,10 +65,16 @@ public class QueryTreeInvocation
 
     private Map<QueryTree, List<RecordDelta>> recordDeltas;
 
-    private Map<InterQuery, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
+    private Map<QueryFragment, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
     private Map<String, QueryVisitor> visitorsByPath;
 
-    public QueryTreeInvocation(List<QueryTree> rootQueries) {
+    private Map<QueryFragment, String> invocationIds; // It is safe to key the invocationId by the QueryFragment
+                                                      // since a copy of the AggregateTree is created for every invocation
+
+    private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
+
+
+    public QueryTreeInvocation() {
         // These fields will concurrently be updated/accessed if using ParallelDispatcher
         this.parentIdList = new ConcurrentHashMap<>();
         this.idList = new ConcurrentHashMap<>();
@@ -74,6 +83,27 @@ public class QueryTreeInvocation
         this.objectsByPath = new ConcurrentHashMap<>();
         this.queryObjects = new ConcurrentHashMap<>();
         this.recordDeltas = new ConcurrentHashMap<>();
+        this.invocationIds = new ConcurrentHashMap<>();
+    }
+
+    public String getOrCreateInvocationId (QueryFragment source)
+    {
+        if(!invocationIds.containsKey(source)) {
+            // generate a GUID invocation id that is 128 bits in length in base64 format
+            UUID uuid = UUID.randomUUID();
+            byte[] bytes = getBytesFromUUID(uuid);
+            invocationIds.put(source, BASE64_URL_ENCODER.encodeToString(bytes));
+        }
+
+        return invocationIds.get(source);
+    }
+
+    public static byte[] getBytesFromUUID(UUID uuid) {
+        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+
+        return bb.array();
     }
 
     public static class RecordDelta {
@@ -114,13 +144,13 @@ public class QueryTreeInvocation
     public void resolveQuery(InterQuery<QueryTree> edge) {
 
         QueryTree queryTree = edge.getEnd();
-        InterQuery parentEdge = edge;
+        InterQuery<QueryTree> parentEdge = edge;
 
         // since query is resolved in a BFS manner, we only need to join with the immediate parent
         InterQuery.JoinType joinType = getJoinType(parentEdge);
 
         if(parentEdge != null) {
-            idList.put(queryTree.getQuery(), parentIdList.get(parentEdge.getStart()));
+            idList.put(queryTree.getQuery(), getParentIds(parentEdge));
         }
 
         String queryString = queryTree.getQuery().getQueryString();
@@ -134,13 +164,22 @@ public class QueryTreeInvocation
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
                 getParentInListBindString(size, queryTree.getQuery()));
         }
-        else {
+        else if(joinType == InterQuery.JoinType.JOINTABLE) {
+            // do nothing
+            // either INSERT the parent ids or
+            // INSERT using the parent query
+            // TODO: update the fact that the rows were inserted
+        } else {
             queryString = queryString.replaceFirst(
                 Pattern.quote(Query.INTERQUERY_JOIN_PLACEHOLDER),
                 deriveSubquery(edge, edge.getStart().getQuery().getQueryString()));
 
         }
         queryTree.getQuery().setQueryString(queryString);
+    }
+
+    public Set getParentIds(InterQuery edge) {
+        return this.parentIdList.get(edge.getSource());
     }
 
     private String deriveSubquery(InterQuery edge, String oql) {
@@ -188,10 +227,10 @@ public class QueryTreeInvocation
         return result.toString();
     }
 
-    private InterQuery.JoinType getJoinType(InterQuery edge) {
+    private InterQuery.JoinType getJoinType(InterQuery<QueryTree> edge) {
         InterQuery.JoinType joinType = InterQuery.JoinType.INLIST;
 
-        if(!parentIdList.containsKey(edge.getStart())) {
+        if(!parentIdList.containsKey(edge.getSource())) {
             throw new RuntimeException("Child query can only be invoked after parent query has returned");
         }
 
@@ -200,21 +239,24 @@ public class QueryTreeInvocation
         // 2. A new parent query needs to be built where we don't need to pull in additional information
         // 3. The NativeQuery and OQLQuery objects need to a have a primarykey attribute to identify the primary key
         //    to be used for EXISTS correlation
-        //if(parentIdList.get(edge.getStart()).size() > MAX_INLIST_SIZE) {
+        //if(parentIdList.get(edge.getSource()).size() > MAX_INLIST_SIZE) {
         //    joinType = InterQuery.JoinType.SUBQUERY;
         //}
+
+        QueryTree childQuery = edge.getEnd();
+        // first check that the child query is either
+        // 1. SQL
+        // 2. Stored procedure query
+        // and if (1) then check that it references the query join table
+        if(QueryJoinAction.needsQueryJoinTable(childQuery)) {
+            joinType = InterQuery.JoinType.JOINTABLE;
+        }
 
         return joinType;
     }
 
     public static class QueryVisitor {
-        InterQuery<QueryTree> outgoingEdge;
-        Set ids;
-
-        public QueryVisitor(InterQuery<QueryTree> outgoingEdge) {
-            this.outgoingEdge = outgoingEdge;
-            this.ids = new HashSet<>();
-        }
+        Set ids = new HashSet<>();
 
         public void addId(Object id) {
             ids.add(id);
@@ -230,20 +272,28 @@ public class QueryTreeInvocation
     public void start(AggregateTree<QueryTree, InterQuery<QueryTree>> at, QueryTree qt) {
         // Loop through each outgoing edge and create a visitor for them
         for(InterQuery outgoing: at.getOutEdges(qt)) {
-            QueryVisitor visitor = new QueryVisitor(outgoing);
-            visitors.put(outgoing, visitor);
-            visitorsByPath.put(outgoing.getSource().getIdField().getFullPath(), visitor);
+            // Multiple InterQuery edges can emanate from the same QueryFragment source
+            if(!visitors.containsKey(outgoing.getSource())) {
+                QueryVisitor visitor = new QueryVisitor();
+                visitors.put(outgoing.getSource(), visitor);
+                visitorsByPath.put(outgoing.getSource().getIdField().getFullPath(), visitor);
+            }
         }
     }
 
     public void finish(AggregateTree<QueryTree, InterQuery<QueryTree>> at, QueryTree qt) {
         // Loop through each outgoing edge and process the results
         for(InterQuery outgoing: at.getOutEdges(qt)) {
-            QueryVisitor visitor = visitors.get(outgoing);
-            parentIdList.put((QueryTree)outgoing.getStart(), visitor.ids);
+            // check if it has already been processed, since multiple InterQuery edges
+            // can start from the same QueryFragment source
+            QueryFragment source = outgoing.getSource();
+            if(visitors.containsKey(source)) {
+                QueryVisitor visitor = visitors.get(source);
+                parentIdList.put(source, visitor.ids);
 
-            // Now we no longer need this visitor as it has been processed
-            visitors.remove(outgoing);
+                // Now we no longer need this visitor as it has been processed
+                visitors.remove(source);
+            }
         }
     }
 

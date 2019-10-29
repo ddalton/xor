@@ -21,12 +21,15 @@ package tools.xor.view;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
+import org.antlr.stringtemplate.language.ArrayWrappedInList;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -139,6 +142,28 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 
 			E edgeCopy = (E)new InterQuery(edge.getName(), startCopy, endCopy, sourceCopy, targetCopy);
 			result.addEdge(edgeCopy, startCopy, endCopy);
+		}
+
+		return result;
+	}
+
+	/**
+	 * We do a BFS and if a particular vertex's view is a custom query, then we skip it and all its
+	 * children.
+	 *
+	 * @return all non-custom query vertices
+	 */
+	public List<V> getNonCustomVertices() {
+		List<V> result = new ArrayList<>();
+
+		Queue<V> vertices = new LinkedList<>();
+		vertices.addAll(getRoots());
+		while(!vertices.isEmpty()) {
+			V queryTree = vertices.remove();
+			if(!queryTree.getView().isCustom()) {
+				result.add(queryTree);
+				vertices.addAll(getChildren(queryTree));
+			}
 		}
 
 		return result;

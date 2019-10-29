@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface PersistenceOrchestrator {
-	
+
     public enum QueryType {
         OQL,
         SQL,
@@ -318,4 +318,13 @@ public interface PersistenceOrchestrator {
      * transaction overhead
      */
     public void initForQuery();
+
+    /**
+     * populate the global temporary table - this data is later used by child queries or
+     * stored procedures.
+     *
+     * @param invocationId unique id for the parent query invocation
+     * @param ids of all parent objects
+     */
+    void populateQueryJoinTable (String invocationId, Set ids);
 }

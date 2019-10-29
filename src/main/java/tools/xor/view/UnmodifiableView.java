@@ -6,6 +6,7 @@ import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Edge;
@@ -164,10 +165,9 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public AggregateTree getAggregateTree (DataAccessService das,
-                                                     Type type)
+    @Override public AggregateTree getAggregateTree (Type type)
     {
-        return view.getAggregateTree(das, type);
+        return view.getAggregateTree(type);
     }
 
     @Override public Class inferDomainClass ()

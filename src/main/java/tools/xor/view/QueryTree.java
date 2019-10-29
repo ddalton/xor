@@ -19,6 +19,7 @@
 
 package tools.xor.view;
 
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -67,10 +68,20 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	private QueryHandle handle;       // Handle to the details needed to construct the Query object
 	private String    selectString;
 	private View      view; // view associated with this QueryTree, needed for functions
+	private List<Action> actions = new LinkedList<>(); // perform any processing after a query has executed and before
+	                              // any child queries are processed
 
 	public QueryTree (EntityType rootType, View view) {
 		this.aggregateType = rootType;
 		this.view = view;
+	}
+
+	public void addAction(Action action) {
+		actions.add(action);
+	}
+
+	public List<Action> getActions() {
+		return Collections.unmodifiableList(actions);
 	}
 
 	public View getView() {

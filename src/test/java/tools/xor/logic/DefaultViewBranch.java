@@ -47,7 +47,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		View view = aggregateManager.getView("TASKCHILDREN");
 		
 		// change to accept entity type
-		AggregateTree viewBranch = view.getAggregateTree(das, taskType);
+		AggregateTree viewBranch = view.getAggregateTree(taskType);
 		assert(viewBranch != null);
 		assert(viewBranch.getOutEdges(viewBranch.getRoot()).size() == 0); // Ensure no child branches are created
 	}
@@ -64,7 +64,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		View view = aggregateManager.getView("TASKSET");
 		
 		// change to accept entity type
-		AggregateTree queryTree = view.getAggregateTree(das, taskType);
+		AggregateTree queryTree = view.getAggregateTree(taskType);
 		queryTree.exportToDOT("branches2.dot");
 
 		assert(queryTree != null);
@@ -79,7 +79,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 		Type taskType = das.getShape().getType(Task.class);
 		View view = das.getShape().getView((EntityType) taskType);
 		
-		AggregateTree viewBranch = view.getAggregateTree(das, taskType);
+		AggregateTree viewBranch = view.getAggregateTree(taskType);
 		assert(viewBranch != null);
 		System.out.println("Subbranches: " + viewBranch.getOutEdges(viewBranch.getRoot()).size());
 	}

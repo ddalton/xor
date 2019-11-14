@@ -32,6 +32,7 @@ import tools.xor.Settings;
 import tools.xor.SimpleType;
 import tools.xor.SimpleTypeFactory;
 import tools.xor.Type;
+import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
@@ -49,6 +50,7 @@ import tools.xor.view.UnmodifiableView;
 import tools.xor.view.View;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,6 +77,7 @@ public class Shape
     protected Map<String, Map<String, Property>> domainProperties = new ConcurrentHashMap<>();
     protected Map<String, Map<String, Property>> externalProperties = new ConcurrentHashMap<>();
     protected StateGraph<State, Edge<State>> orderedGraph;
+    protected Shape jdbcShape; // refers to the JDBC shape type system if available
 
     protected ShapeStrategy shapeStrategy = ShapeStrategy.SHARED;
 
@@ -212,6 +215,16 @@ public class Shape
     }
 
     /**
+     * A simple mechanism to signal an event that the type structure has changed.
+     * Currently supported only for JDBC to signal that a temporary table has been added.
+     */
+    public void signalEvent () {
+        if(das instanceof JDBCDAS) {
+            ((JDBCDAS)this.das).addNewTypes(this);
+        }
+    }
+
+    /**
      * Depending on the type sharing strategy, the type might either be completely managed by
      * this Shape instance or could be shared with a parent Shape instance.
      *
@@ -273,6 +286,23 @@ public class Shape
         }
 
         return null;
+    }
+
+    public void setJDBCShape(Shape shape) {
+        if(this.das instanceof JDBCDAS) {
+            throw new IllegalStateException("Setting the JDBC shape is not allowed on a JDBC shape, but only on an ORM based shape");
+        }
+        this.jdbcShape = shape;
+    }
+
+    public boolean hasTable(String tableName) {
+        Shape shape = (this.das instanceof JDBCDAS) ? this : this.jdbcShape;
+
+        if(shape == null) {
+            throw new RuntimeException("hasTable needs jdbcShape to be initialized or be invoked on a JDBC shape");
+        }
+
+        return shape.getType(tableName) != null;
     }
 
     public Type getType(Class<?> clazz) {
@@ -519,8 +549,10 @@ public class Shape
         }
     }
 
-    protected void deriveExternal () {
-        for(Type type: getUniqueTypes()) {
+    protected List<Type> deriveExternal (Collection<Type> types) {
+
+        List<Type> externalTypes = new ArrayList<>();
+        for(Type type: types) {
             if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
                 continue;
             }
@@ -530,11 +562,12 @@ public class Shape
                     (EntityType)type,
                     externalClass);
                 addExternalType(externalType.getName(), externalType);
+                externalTypes.add(externalType);
             }
         }
 
         // init the properties
-        for (Type type : getUniqueExternalTypes()) {
+        for (Type type : externalTypes) {
             if (ExternalType.class.isAssignableFrom(type.getClass())) {
                 ExternalType externalType = (ExternalType) type;
 
@@ -545,7 +578,7 @@ public class Shape
             }
         }
 
-        for (Type type : getUniqueExternalTypes()) {
+        for (Type type : externalTypes) {
             if(!ExternalType.class.isAssignableFrom(type.getClass())) {
                 continue;
             }
@@ -559,6 +592,8 @@ public class Shape
                 setBiDirectionOnExternalType(externalType);
             }
         }
+
+        return externalTypes;
     }
 
 
@@ -570,40 +605,40 @@ public class Shape
         return new HashSet<Type>(externalTypes.values());
     }
 
-    public void initRootType() {
-        for (Type type : getUniqueTypes()) {
+    public void initRootType(Collection<Type> types, Collection<Type> externalTypes) {
+        for (Type type : types) {
             if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
                 ((AbstractType)type).initRootEntityType();
             }
         }
-        for (Type type : getUniqueExternalTypes()) {
+        for (Type type : externalTypes) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {
                 ((AbstractType)type).initRootEntityType();
             }
         }
     }
 
-    public void initEnd() {
-        for (Type type : getUniqueTypes()) {
+    public void initEnd(Collection<Type> types, Collection<Type> externalTypes) {
+        for (Type type : types) {
             if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
                 ((AbstractType)type).unfoldProperties(this);
             }
         }
-        for (Type type : getUniqueExternalTypes()) {
+        for (Type type : externalTypes) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {
                 ((AbstractType)type).unfoldProperties(this);
             }
         }
 
-        for (Type type : getUniqueTypes()) {
+        for (Type type : types) {
             if (AbstractType.class.isAssignableFrom(type.getClass()) && !type.isOpen()) {
                 ((AbstractType)type).initEnd(this);
             }
         }
     }
 
-    public void initPositionProperty() {
-        for (Type type : getUniqueTypes()) {
+    public void initPositionProperty(Collection<Type> types) {
+        for (Type type : types) {
             if (AbstractType.class.isAssignableFrom(type.getClass())) {
                 ((AbstractType)type).initPositionProperty(this);
             }

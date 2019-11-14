@@ -87,7 +87,7 @@ public class DataImporter implements Callable
 
                 String entityName = json.getString(Constants.XOR.TYPE);
                 Type type = shape.getType(entityName);
-                BusinessObject bo = new ImmutableBO(type, null, null, objectCreator);
+                BusinessObject bo = new ImmutableBO(type, null, null, null);
                 bo.setInstance(json);
                 po.getSessionContext().create(bo, settings, dataGenerator);
 
@@ -107,6 +107,8 @@ public class DataImporter implements Callable
             // queue, so the generator is not kept waiting
             e.printStackTrace();
             throw e;
+        } finally {
+            po.getSessionContext().closeResources();
         }
 
         return result;

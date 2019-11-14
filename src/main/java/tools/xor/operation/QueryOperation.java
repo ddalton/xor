@@ -126,12 +126,23 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	}
 
 	@Override
-	public void preProcess(QueryTree queryTree, Settings settings) {
+	public void preProcess(QueryTree queryTree, Settings settings, QueryTreeInvocation qti, InterQuery parentEdge) {
 		Query query = queryTree.getQuery();
 		super.preProcess(settings, query);
 
 		if(getEntity().getIdentifierValue() != null && query.hasParameter(QueryFragment.ID_PARAMETER_NAME)) {
 			query.setParameter(QueryFragment.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
+		}
+
+		if(query.hasParameter(QueryFragment.INVOCATION_ID_PARAM)) {
+			if(parentEdge == null) {
+				throw new RuntimeException(String.format("Found %s parameter when this is not a child query", QueryFragment.INVOCATION_ID_PARAM));
+			}
+			String invocationId = qti.getInvocationId(parentEdge.getSource());
+			if(invocationId == null) {
+				throw new RuntimeException("The parent query is not yet executed");
+			}
+			query.setParameter(QueryFragment.INVOCATION_ID_PARAM, invocationId);
 		}
 
 		// initialize the query with the selected columns

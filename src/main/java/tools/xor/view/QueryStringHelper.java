@@ -23,6 +23,7 @@ import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -164,10 +165,10 @@ public class QueryStringHelper
         return consolidatedFunctions;
     }
 
-    public static void initParamMap(Map<String, BindParameter> paramMap, List<BindParameter> paramList, boolean preferAttr) {
+    public static void initPositionalParamMap (Map<String, List<BindParameter>> positionByName, List<BindParameter> paramList, boolean preferAttr) {
         int position = 1; // JDBC starts at 1
 
-        paramMap.clear();
+        positionByName.clear();
         if (paramList != null) {
             for (BindParameter param : paramList) {
                 param.position = position++;
@@ -177,12 +178,17 @@ public class QueryStringHelper
                     attrName = param.name;
                 }
 
-                paramMap.put(attrName, param);
+                List<BindParameter> params = positionByName.get(attrName);
+                if(params == null) {
+                    params = new ArrayList<>();
+                    positionByName.put(attrName, params);
+                }
+                params.add(param);
             }
         }
     }
 
-    public static void initParamMap(Map<String, BindParameter> paramMap, List<BindParameter> paramList) {
-        initParamMap(paramMap, paramList, false);
+    public static void initPositionalParamMap (Map<String, List<BindParameter>> positionByName, List<BindParameter> paramList) {
+        initPositionalParamMap(positionByName, paramList, false);
     }
 }

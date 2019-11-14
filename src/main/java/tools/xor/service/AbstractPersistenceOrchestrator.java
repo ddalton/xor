@@ -66,8 +66,10 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	private static final String INSERT_SURROGATE_MAP_SQL = "INSERT INTO XORSURROGATEMAP"
 		+ "(SOURCE_ID, MIGRATED_ID) VALUES (?,?)";
 
-	private static final String INSERT_QUERY_JOIN_SQL = "INSERT INTO %s"
-		+ "(ID_INT, ID_STR, INVOCATION_ID) VALUES (?,?,?)";
+	public static final String QUERYJOIN_ID_INT_COL = "ID_INT";
+	public static final String QUERYJOIN_ID_STR_COL = "ID_STR";
+	public static final String QUERYJOIN_INVOC_COL = "INVOCATION_ID";
+	private static final String INSERT_QUERY_JOIN_SQL = "INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)";
 
 	private static final String QUERY_MIGRATED_IDS = "SELECT SOURCE_ID, MIGRATED_ID FROM XORSURROGATEMAP WHERE SOURCE_ID IN (%s)";
 
@@ -317,7 +319,11 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	protected void saveQueryJoinTable (Connection conn, String invocationId, Set ids) throws
 		SQLException
 	{
-		String sql = String.format(INSERT_QUERY_JOIN_SQL, QueryJoinAction.JOIN_TABLE_NAME);
+		String sql = String.format(INSERT_QUERY_JOIN_SQL,
+			QueryJoinAction.JOIN_TABLE_NAME,
+			QUERYJOIN_ID_INT_COL,
+			QUERYJOIN_ID_STR_COL,
+			QUERYJOIN_INVOC_COL);
 
 		if(ids.size() == 0) {
 			return;
@@ -336,7 +342,9 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 				if(!isStringType) {
 					Long longValue = new Long(id.toString());
 					ps.setLong(1, longValue);
+					ps.setString(2, null);
 				} else {
+					ps.setLong(1, 0);
 					ps.setString(2, (String)id);
 				}
 				ps.setString(3, invocationId);

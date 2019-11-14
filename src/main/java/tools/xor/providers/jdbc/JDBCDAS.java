@@ -37,6 +37,8 @@ import tools.xor.util.PersistenceType;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -504,25 +506,57 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         }
 
         for(TableInfo table: tables) {
-            String parentName = table.getParentTable();
-            if(parentName != null) {
-                JDBCType child = (JDBCType)shape.getType(table.getName());
-                JDBCType parent = (JDBCType)shape.getType(parentName);
-                child.setSuperType(parent);
-            }
+            setSuperType(table, shape);
         }
 
         // Define the properties for the Types
         // This will end up defining the simple types
-        defineProperties(shape);
+        defineProperties(shape, shape.getUniqueTypes());
 
-        postProcess(shape, extension);
+        postProcess(shape, extension, shape.getUniqueTypes(), false);
 
         return shape;
     }
 
-    protected void defineProperties(Shape shape) {
-        for(Type type: shape.getUniqueTypes()) {
+    private void setSuperType(TableInfo table, Shape shape) {
+        String parentName = table.getParentTable();
+        if(parentName != null) {
+            JDBCType child = (JDBCType)shape.getType(table.getName());
+            JDBCType parent = (JDBCType)shape.getType(parentName);
+            child.setSuperType(parent);
+        }
+    }
+
+    public void addNewTypes(Shape shape) {
+        String name = shape.getName();
+
+        List<TableInfo> tables = name.equals(RELATIONAL_SHAPE) ? getRelationalTables() : getTables();
+        List<TableInfo> newTables = new ArrayList<>();
+        List<Type> newTypes = new ArrayList<>();
+        for(TableInfo table: tables) {
+            if(shape.getType(table.getName()) != null) {
+                continue;
+            }
+
+            newTables.add(table);
+            JDBCType dataType = new JDBCType(table.getName(), table);
+            shape.addType(dataType.getName(), dataType);
+            newTypes.add(dataType);
+        }
+
+        for(TableInfo newTable: newTables) {
+            setSuperType(newTable, shape);
+        }
+
+        // Create the properties for the new types
+        defineProperties(shape, newTypes);
+
+        // We don't do a full post-process as not all steps are necessary
+        postProcess(shape, null, newTypes, true);
+    }
+
+    protected void defineProperties(Shape shape, Collection<Type> types) {
+        for(Type type: types) {
             if(JDBCType.class.isAssignableFrom(type.getClass())) {
                 JDBCType jdbcType = (JDBCType) type;
                 jdbcType.defineProperties(shape);
@@ -530,7 +564,7 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         }
 
         // Create and Link the bi-directional relationship between the properties
-        for(Type type: shape.getUniqueTypes()) {
+        for(Type type: types) {
             if(JDBCType.class.isAssignableFrom(type.getClass())) {
                 JDBCType jdbcType = (JDBCType) type;
                 jdbcType.setOpposite(shape);

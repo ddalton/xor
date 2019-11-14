@@ -58,7 +58,7 @@ public class BindParameter implements Comparable<BindParameter>
 	boolean returnType;
 	
 	@XmlAttribute
-	public int position;
+	public Integer position;
 
 	@XmlAttribute
 	public String dateFormat;
@@ -81,7 +81,7 @@ public class BindParameter implements Comparable<BindParameter>
 	 * @param name optional
 	 * @return
 	 */
-	public static BindParameter instance(int position, String name) {
+	public static BindParameter instance(Integer position, String name) {
 		BindParameter bp = new BindParameter();
 
 		bp.position = position;

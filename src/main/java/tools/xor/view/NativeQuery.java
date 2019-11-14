@@ -26,8 +26,11 @@ import java.util.List;
 
 public class NativeQuery extends QuerySupport
 {
-    protected String selectClause;
+    // For positional parameters describes the ordering of the parameters
+    // For named parameters helps to identify the type of the parameters
+    // should not mix positional and named parameters
     protected List<BindParameter> parameterList;
+    protected String selectClause;
     protected boolean usable;
     protected List<Function> function; // should only be of type FREESTYLE
     protected List<String> primaryKey; // Needed for join with parent query

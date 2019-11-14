@@ -63,7 +63,7 @@ import java.util.Set;
 @Transactional
 public class JPAQueryOperationTest extends DefaultQueryOperation {
 
-	@Resource(name = "amJDBC")
+	@Resource(name = "amJDBCjpa")
 	protected AggregateManager amJDBC;	// Useful for generating data using JDBC
 
 	@Test

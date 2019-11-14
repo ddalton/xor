@@ -30,20 +30,24 @@ import tools.xor.JDBCType;
 import tools.xor.JSONObjectProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.service.AbstractPersistenceOrchestrator;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.BindParameter;
+import tools.xor.view.QueryJoinAction;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -115,6 +119,8 @@ public abstract class DBTranslator
         SQL_TO_JAVA_TYPE_MAP.put("BLOB", java.sql.Blob.class);
         SQL_TO_JAVA_TYPE_MAP.put("CLOB", java.sql.Clob.class);
     }
+
+    protected Map<String, JDBCDAS.TableInfo> tableMap;
 
     public static DBTranslator getTranslator(String name) {
         return translators.get(name);
@@ -424,9 +430,18 @@ public abstract class DBTranslator
         }
     }
 
-    public static DBTranslator getTranslator(Statement statement) {
+    public static DBTranslator getTranslator(Statement stmt) {
         try {
-            DatabaseMetaData metadata = statement.getConnection().getMetaData();
+            return getTranslator(stmt.getConnection());
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+    }
+
+    public static DBTranslator getTranslator(Connection conn) {
+        try {
+            DatabaseMetaData metadata = conn.getMetaData();
             String productName = metadata.getDatabaseProductName().toUpperCase();
             return DBTranslator.getTranslator(productName);
         }
@@ -810,13 +825,223 @@ public abstract class DBTranslator
         return sqlstr.toString();
     }
 
+    public String getCreateQueryJoinTableSQL (Integer stringKeyLen)
+    {
+        StringBuilder builder = new StringBuilder(String.format("CREATE GLOBAL TEMPORARY TABLE %s (", QueryJoinAction.JOIN_TABLE_NAME));
+        // We use the DECIMAL data type to store numbers as it is a ANSI type
+        // 20 digits is sufficient to store a long value
+        builder.append(String.format(" %s DECIMAL(20), ", AbstractPersistenceOrchestrator.QUERYJOIN_ID_INT_COL));
+
+        // 36 is sufficient to store a GUID value
+        if(stringKeyLen == null) {
+            stringKeyLen = 36;
+        }
+        builder.append(String.format(" %s VARCHAR(%s), ", AbstractPersistenceOrchestrator.QUERYJOIN_ID_STR_COL, stringKeyLen));
+
+        // 36 is sufficient to store a GUID value
+        // We control the population of this column
+        builder.append(String.format(" %s VARCHAR(32) ", AbstractPersistenceOrchestrator.QUERYJOIN_INVOC_COL));
+
+        builder.append(" ) ");
+
+        // Optionally we can create an index on the ID_INT and ID_STR columns
+
+        return builder.toString();
+    }
+
+    public boolean tableExists (Connection connection, String tableName)
+    {
+        boolean result = false;
+
+        try (PreparedStatement ps = connection.prepareStatement(String.format(getTableExistsSQL(), tableName));
+            ResultSet rs = ps.executeQuery();
+        ) {
+            if(rs.next()) {
+                if(rs.getInt(1) == 1) {
+                    result = true;
+                }
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        return result;
+    }
+
+    public List<JDBCDAS.TableInfo> getTables (Connection connection, ForeignKeyEnhancer enhancer)
+    {
+        Map<String, List<String>> primaryKeys = getPrimaryKeys(connection);
+
+        Map<String, JDBCDAS.TableInfo> result = new HashMap<>();
+        try (PreparedStatement ps = connection.prepareStatement(getTableColumnsSQL());
+            ResultSet rs = ps.executeQuery();
+        ) {
+            JDBCDAS.TableInfo table = null;
+            List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
+            while(rs.next()) {
+                if(table != null) {
+                    // check if we need to reset
+                    if(!table.getName().equals(rs.getString(1))) {
+                        addTable(result, columns, table, primaryKeys.get(table.getName()));
+
+                        table = null;
+                        columns = new LinkedList<>();
+                    }
+                }
+
+                if(table == null) {
+                    table = new JDBCDAS.TableInfo(rs.getString(1));
+                }
+
+                JDBCDAS.ColumnInfo ci = createColumnInfo(rs);
+                columns.add(ci);
+            }
+            if(table != null) {
+                addTable(result, columns, table, primaryKeys.get(table.getName()));
+            }
+        }
+        catch (Exception e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(connection, result);
+
+        // Give a chance to add any additional business logic based relationships
+        // not captured by a database foreign key
+        foreignKeys = enhancer.process(foreignKeys);
+        Map<String, List<JDBCDAS.ForeignKey>> fkMap = new HashMap<>();
+        for(JDBCDAS.ForeignKey fk: foreignKeys) {
+            fk.init();
+            List<JDBCDAS.ForeignKey> fkeys = null;
+            if(fkMap.containsKey(fk.getReferencingTable().getName())) {
+                fkeys = fkMap.get(fk.getReferencingTable().getName());
+            } else {
+                fkeys = new LinkedList<>();
+                fkMap.put(fk.getReferencingTable().getName(), fkeys);
+            }
+            fkeys.add(fk);
+        }
+
+        List<JDBCDAS.TableInfo> tables = new ArrayList<>(result.values());
+        for(JDBCDAS.TableInfo tableInfo: tables) {
+            tableInfo.setForeignKeys(fkMap.get(tableInfo.getName()));
+        }
+
+        tableMap = result;
+
+        return tables;
+    }
+
+    private List<JDBCDAS.ForeignKey> getForeignKeys (Connection connection, Map<String, JDBCDAS.TableInfo> tableMap)
+    {
+        List<JDBCDAS.ForeignKey> result = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(getForeignKeysSQL());
+            ResultSet rs = ps.executeQuery();
+        ) {
+            JDBCDAS.ForeignKey fkey = null;
+            List<String> referencingColumns = new LinkedList<>();
+            List<String> referencedColumns = new LinkedList<>();
+            while(rs.next()) {
+                if(fkey != null) {
+                    // check if we need to reset
+                    if(!fkey.getName().equals(rs.getString(1))) {
+                        fkey.setReferencingColumns(referencingColumns);
+                        fkey.setReferencedColumns(referencedColumns);
+                        result.add(fkey);
+
+                        fkey = null;
+                        referencingColumns = new LinkedList<>();
+                        referencedColumns = new LinkedList<>();
+                    }
+                }
+
+                if(fkey == null) {
+                    fkey = createForeignKey(rs, tableMap);
+                }
+                referencingColumns.add(rs.getString(4));
+                referencedColumns.add(rs.getString(5));
+            }
+            if(fkey != null) {
+                fkey.setReferencingColumns(referencingColumns);
+                fkey.setReferencedColumns(referencedColumns);
+                result.add(fkey);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        return result;
+    }
+
+    private void addTable(Map<String, JDBCDAS.TableInfo> tables,
+                          List<JDBCDAS.ColumnInfo> columns,
+                          JDBCDAS.TableInfo table,
+                          List<String> primaryKeys) {
+        table.setColumns(columns);
+        tables.put(table.getName(), table);
+
+        if(primaryKeys != null && primaryKeys.size() > 0) {
+            table.setPrimaryKeys(primaryKeys);
+        } else {
+            // all the fields of the table become the primary key
+            table.initNoPrimaryKey();
+        }
+    }
+
+    public Map<String, List<String>> getPrimaryKeys (Connection connection)
+    {
+        Map<String, List<String>> result = new HashMap<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(getPrimaryKeySQL());
+            ResultSet rs = ps.executeQuery();
+        ) {
+            String tableName = null;
+            List<String> columns = new LinkedList<>();
+            while(rs.next()) {
+                if(columns.size() > 0) {
+                    // check if we need to reset
+                    if(!tableName.equals(rs.getString(1))) {
+                        result.put(tableName, columns);
+
+                        columns = new LinkedList<>();
+                    }
+                }
+
+                if(columns.size() == 0) {
+                    tableName = rs.getString(1);
+                }
+                columns.add(rs.getString(3));
+            }
+            if(tableName != null) {
+                result.put(tableName, columns);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        return result;
+    }
+
     public abstract JDBCDAS.TableInfo getTable(Connection connection, ForeignKeyEnhancer enhancer, String tableName);
 
-    public abstract List<JDBCDAS.TableInfo> getTables(Connection connection ,ForeignKeyEnhancer enhancer);
+    protected abstract JDBCDAS.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDAS.TableInfo> tableMap) throws SQLException;
 
-    public abstract Map<String, List<String>> getPrimaryKeys(Connection connection);
+    protected abstract JDBCDAS.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException;
 
     public abstract JDBCDAS.SequenceInfo getSequence (Connection connection, String sequenceName);
 
     public abstract List<JDBCDAS.SequenceInfo> getSequences(Connection connection);
+
+    public abstract String getTableColumnsSQL();
+
+    public abstract String getPrimaryKeySQL();
+
+    public abstract String getForeignKeysSQL();
+
+    public abstract String getTableExistsSQL();
+
 }

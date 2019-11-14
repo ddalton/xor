@@ -114,8 +114,11 @@ public abstract class AbstractBO implements BusinessObject {
 		this.type                = type;
 		this.container           = container;
 		this.containmentProperty = containmentProperty;
-		this.objectCreator       = objectCreator;
 		this.propertyType = type;
+
+		// Can be null - then the business object is light weight
+		// as it will not "bloat" the object creator
+		this.objectCreator       = objectCreator;
 	}
 
 	@Override
@@ -391,7 +394,10 @@ public abstract class AbstractBO implements BusinessObject {
 		
 		Object oldInstance = this.instance;
 		this.instance = instance;
-		objectCreator.updateInstance(this, oldInstance);
+
+		if(objectCreator != null) {
+			objectCreator.updateInstance(this, oldInstance);
+		}
 	}
 
 	private boolean isIndexOperation(String indexStr) {
@@ -1956,7 +1962,7 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	public Settings getSettings() {
-		return objectCreator.getSettings();
+		return objectCreator != null ? objectCreator.getSettings() : null;
 	}
 
 	@Override

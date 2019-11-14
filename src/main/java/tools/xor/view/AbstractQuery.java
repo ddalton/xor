@@ -19,6 +19,12 @@
 
 package tools.xor.view;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import tools.xor.EntityType;
+import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,12 +41,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import tools.xor.EntityType;
-import tools.xor.Settings;
-import tools.xor.providers.jdbc.DBTranslator;
-
 public abstract class AbstractQuery implements Query {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
@@ -50,7 +50,10 @@ public abstract class AbstractQuery implements Query {
 	private Map<String, Integer> columnMap;
 	private String queryString;
 	private List<Map<String, Object>> batches;
-	protected Map<String, BindParameter> paramMap = new HashMap<>();
+
+	// We always refer to bind parameters by name
+	// Even positional parameters in the query need to have a name mapped
+	protected Map<String, List<BindParameter>> positionByName = new HashMap<>(); // for direct JDBC using named parameters
 	
 	@Override
 	public List<String> getColumns() {
@@ -99,25 +102,29 @@ public abstract class AbstractQuery implements Query {
 
 	}
 
-	protected void setParameters (Settings settings, Map<String, BindParameter> paramMap,
+	protected void setParameters (Settings settings,
 								  Map<String, Object> paramValues)
 	{
-		if (paramMap != null) {
-			for (Map.Entry<String, BindParameter> entry : paramMap.entrySet()) {
-				if (!paramValues.containsKey(entry.getKey())) {
+		if (positionByName != null) {
+			for (Map.Entry<String, List<BindParameter>> entry : positionByName.entrySet()) {
+				String paramName = entry.getKey();
+				if (!paramValues.containsKey(paramName)) {
 					throw new RuntimeException(
-						"Unable to find param value with key: " + entry.getKey());
+						"Unable to find param value with key: " + paramName);
 				}
-				BindParameter bp = entry.getValue();
 
-				if(bp.type != null) {
-					int timestampType = BindParameter.getType(bp.type);
-					if (timestampType == Types.TIMESTAMP
-						|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
-						bp.setDateFormat(settings.getDateFormat());
+				List<BindParameter> params = entry.getValue();
+				Object value = paramValues.get(paramName);
+				for(BindParameter bindParam: params) {
+					if (bindParam.type != null) {
+						int timestampType = BindParameter.getType(bindParam.type);
+						if (timestampType == Types.TIMESTAMP
+							|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
+							bindParam.setDateFormat(settings.getDateFormat());
+						}
 					}
+					setBindParameter(bindParam.position, value);
 				}
-				setBindParameter(bp.position, paramValues.get(entry.getKey()));
 			}
 		}
 	}
@@ -238,9 +245,10 @@ public abstract class AbstractQuery implements Query {
 	}
 
 	// Extract the parameters and create them
+	// The named parameter is converted to a positional parameter
 	@Override
 	public String extractParameters () {
-		paramMap.clear();
+		positionByName.clear();
 
 		final Matcher matcher = paramPattern.matcher(getQueryString());
 
@@ -250,7 +258,15 @@ public abstract class AbstractQuery implements Query {
 			//System.out.println("Full match: " + matcher1.group(0));
 			if(matcher.group(1) != null) {
 				String paramName = matcher.group(1);
-				paramMap.put(paramName, BindParameter.instance(position++, paramName));
+
+				// All the positional parameters for a single name
+				List<BindParameter> params = positionByName.get(paramName);
+				if(params == null) {
+					params = new ArrayList<>();
+					positionByName.put(paramName, params);
+				}
+
+				params.add(BindParameter.instance(position++, paramName));
 			}
 			matcher.appendReplacement(modifiedSQL, "?");
 		}

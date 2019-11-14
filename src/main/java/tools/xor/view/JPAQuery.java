@@ -22,7 +22,8 @@ package tools.xor.view;
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
 
-import java.sql.Types;
+import javax.persistence.Parameter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,6 +37,7 @@ public class JPAQuery extends AbstractQuery {
 	private javax.persistence.Query jpaQuery;
 	private NativeQuery nativeQuery;
 	private Map<String, Object> paramValues = new HashMap<>();
+	private Set<String> namedParams;
 
 	public JPAQuery(String queryString, javax.persistence.Query jpaQuery) {
 		this(queryString, jpaQuery, null);
@@ -60,12 +62,13 @@ public class JPAQuery extends AbstractQuery {
 	}
 
 	private void initParamMap() {
-		QueryStringHelper.initParamMap(paramMap, nativeQuery.getParameterList());
+		// We use the parameter list
+		QueryStringHelper.initPositionalParamMap(positionByName, nativeQuery.getParameterList());
 	}
 
 	@Override
 	public void updateParamMap (List<BindParameter> relevantParams) {
-		QueryStringHelper.initParamMap(paramMap, relevantParams);
+		QueryStringHelper.initPositionalParamMap(positionByName, relevantParams);
 	}
 
 	@Override public boolean isOQL ()
@@ -87,7 +90,7 @@ public class JPAQuery extends AbstractQuery {
 	@Override
 	protected List getResultListInternal(View view, Settings settings) {
 		if(isNativeQuery()) {
-			setParameters(settings, paramMap, paramValues);
+			setParameters(settings, paramValues);
 		}
 
 		return jpaQuery.getResultList();
@@ -100,41 +103,62 @@ public class JPAQuery extends AbstractQuery {
 
 	@Override
 	public void setParameter(String name, Object value) {
+		if(hasNamedParameter(name)) {
+			jpaQuery.setParameter(name, value);
+		}
+
 		if(isNativeQuery()) {
-			if(paramMap.containsKey(name)) {
+			if(positionByName.containsKey(name)) {
 				paramValues.put(name, value);
 			}
-		} else {
-			if (hasParameter(name)) {
-				jpaQuery.setParameter(name, value);
-			} else if (paramMap.containsKey(name)) { // Needed for deferred queries
-				jpaQuery.setParameter(paramMap.get(name).position, value);
+		} else if (positionByName.containsKey(name)) { // Needed for deferred queries
+			// There can be multiple references to the same parameter in a query
+			for(BindParameter p: positionByName.get(name)) {
+				jpaQuery.setParameter(p.position, value);
 			}
 		}
+	}
+
+	private boolean hasNamedParameter(String name) {
+		if(namedParams == null) {
+			namedParams = new HashSet<>();
+			for(Parameter p: jpaQuery.getParameters()) {
+				namedParams.add(p.getName());
+			}
+		}
+		if(namedParams.contains(name)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
 	public boolean hasParameter(String name) {
 
-		if(isNativeQuery()) {
-			return paramMap.containsKey(name);
-		} else {
-			Set<String> paramNames = new HashSet<String>();
+		// If the query has named parameters then the provider is able to
+		// extract it. So we need to check the provider first.
+		// If positional parameters are used, then the user needs to provide the
+		// the name to position mapping
+		// Ideally it is best to use named parameters everywhere as we can conditionally
+		// build the query
 
-			Iterator<javax.persistence.Parameter<?>> iter = jpaQuery.getParameters().iterator();
-			while (iter.hasNext()) {
-				paramNames.add(iter.next().getName());
-			}
-
-			return paramNames.contains(name);
+		if(hasNamedParameter(name)) {
+			return true;
 		}
+
+		if(isNativeQuery()) {
+			return positionByName.containsKey(name);
+		}
+
+		return false;
 	}
 
 	@Override public Object execute (Settings settings)
 	{
 		if(settings.getAction() != AggregateAction.READ) {
 			if(isNativeQuery()) {
-				setParameters(settings, paramMap, paramValues);
+				setParameters(settings, paramValues);
 			}
 			return jpaQuery.executeUpdate();
 		} else {

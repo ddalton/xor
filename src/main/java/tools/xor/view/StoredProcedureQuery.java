@@ -73,7 +73,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 		this.sp = sp;
 
-		QueryStringHelper.initParamMap(paramMap, sp.parameterList, true);
+		QueryStringHelper.initPositionalParamMap(positionByName, sp.parameterList, true);
 	}
 
 	public StoredProcedure getStoredProcedure() {
@@ -199,13 +199,15 @@ public class StoredProcedureQuery extends AbstractQuery {
 	@Override
 	public void setParameter(String name, Object value) {
 
-		BindParameter param = paramMap.get(name);
-		param.setValue((CallableStatement) sp.getStatement(), getTranslator(), value);
+		List<BindParameter> params = positionByName.get(name);
+		for(BindParameter param: params) {
+			param.setValue((CallableStatement)sp.getStatement(), getTranslator(), value);
+		}
 	}
 
 	@Override
 	public boolean hasParameter(String name) {
-		return paramMap.containsKey(name);
+		return positionByName.containsKey(name);
 	}
 
 	@Override
@@ -226,7 +228,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 	@Override public void updateParamMap (List<BindParameter> relevantParams)
 	{
-		QueryStringHelper.initParamMap(paramMap, relevantParams, true);
+		QueryStringHelper.initPositionalParamMap(positionByName, relevantParams, true);
 	}
 
 	@Override public boolean isOQL ()

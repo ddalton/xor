@@ -98,6 +98,10 @@ public class QueryTreeInvocation
         return invocationIds.get(source);
     }
 
+    public String getInvocationId (QueryFragment source) {
+        return invocationIds.get(source);
+    }
+
     public static byte[] getBytesFromUUID(UUID uuid) {
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
         bb.putLong(uuid.getMostSignificantBits());

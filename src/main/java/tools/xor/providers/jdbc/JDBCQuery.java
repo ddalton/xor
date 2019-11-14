@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class JDBCQuery extends AbstractQuery
 {
@@ -68,12 +66,12 @@ public class JDBCQuery extends AbstractQuery
 	}
 
 	private void initParamMap() {
-		QueryStringHelper.initParamMap(paramMap, nativeQuery.getParameterList());
+		QueryStringHelper.initPositionalParamMap(positionByName, nativeQuery.getParameterList());
 	}
 
 	@Override
 	public void updateParamMap (List<BindParameter> relevantParams) {
-		QueryStringHelper.initParamMap(paramMap, relevantParams);
+		QueryStringHelper.initPositionalParamMap(positionByName, relevantParams);
 	}
 
 	@Override public boolean isOQL ()
@@ -88,14 +86,14 @@ public class JDBCQuery extends AbstractQuery
 
 	@Override
 	public void setParameter(String name, Object value) {
-		if(paramMap.containsKey(name)) {
+		if(positionByName.containsKey(name)) {
 			paramValues.put(name, value);
 		}
 	}
 
 	@Override
 	public boolean hasParameter(String name) {
-		return paramMap.containsKey(name);
+		return positionByName.containsKey(name);
 	}
 
 	private int executeUpdate (Settings settings)
@@ -120,7 +118,7 @@ public class JDBCQuery extends AbstractQuery
 					}
 				}
 
-			setParameters(settings, paramMap, paramValues, preparedStatement);
+			setParameters(settings, preparedStatement);
 
 			if (context != null) {
 				if(context.isShouldBatch()) {
@@ -153,27 +151,30 @@ public class JDBCQuery extends AbstractQuery
 	}
 
 	protected void setParameters (Settings settings,
-								  Map<String, BindParameter> paramMap,
-								  Map<String, Object> paramValues,
 								  PreparedStatement statement)
 	{
 		DBTranslator translator = DBTranslator.getTranslator(statement);
-		if (paramMap != null) {
-			for (Map.Entry<String, BindParameter> entry : paramMap.entrySet()) {
-				if (!paramValues.containsKey(entry.getKey())) {
+		if (positionByName != null) {
+			for (Map.Entry<String, List<BindParameter>> entry : positionByName.entrySet()) {
+				String paramName = entry.getKey();
+				if (!paramValues.containsKey(paramName)) {
 					throw new RuntimeException(
-						"Unable to find param value with key: " + entry.getKey());
+						"Unable to find param value with key: " + paramName);
 				}
-				BindParameter pm = entry.getValue();
 
-				if(pm.type != null) {
-					int timestampType = BindParameter.getType(pm.type);
-					if (timestampType == Types.TIMESTAMP
-						|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
-						pm.setDateFormat(settings.getDateFormat());
+				List<BindParameter> params = entry.getValue();
+				Object value = paramValues.get(paramName);
+				for(BindParameter bindParam: params) {
+					if (bindParam.type != null) {
+						int timestampType = BindParameter.getType(bindParam.type);
+						if (timestampType == Types.TIMESTAMP
+							|| timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
+							bindParam.setDateFormat(settings.getDateFormat());
+						}
 					}
+					// bind by position
+					bindParam.setValue(statement, translator, value);
 				}
-				pm.setValue(statement, translator, paramValues.get(entry.getKey()));
 			}
 		}
 	}
@@ -183,7 +184,7 @@ public class JDBCQuery extends AbstractQuery
 		List result = new ArrayList<>();
 
 		try {
-			setParameters(settings, paramMap, paramValues, preparedStatement);
+			setParameters(settings, preparedStatement);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			ResultSetMetaData rsmd = rs.getMetaData();

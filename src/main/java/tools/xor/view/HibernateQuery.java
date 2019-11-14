@@ -22,13 +22,9 @@ package tools.xor.view;
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
 
-import javax.persistence.Parameter;
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +34,7 @@ public class HibernateQuery extends AbstractQuery {
 	private org.hibernate.Query hibQuery;
 	private NativeQuery nativeQuery;
 	private Map<String, Object> paramValues = new HashMap<>();
+	private Set<String> namedParams;
 
 	public HibernateQuery(String queryString, org.hibernate.Query hibQuery) {
 		this(queryString, hibQuery, null);
@@ -72,18 +69,18 @@ public class HibernateQuery extends AbstractQuery {
 	}
 
 	private void initParamMap() {
-		QueryStringHelper.initParamMap(paramMap, nativeQuery.getParameterList());
+		QueryStringHelper.initPositionalParamMap(positionByName, nativeQuery.getParameterList());
 	}
 
 	@Override
 	public void updateParamMap (List<BindParameter> relevantParams) {
-		QueryStringHelper.initParamMap(paramMap, relevantParams);
+		QueryStringHelper.initPositionalParamMap(positionByName, relevantParams);
 	}
 
 	@Override
 	protected List getResultListInternal(View view, Settings settings) {
 		if (isNativeQuery()) {
-			setParameters(settings, paramMap, paramValues);
+			setParameters(settings, paramValues);
 		}
 
 		return hibQuery.list();
@@ -96,27 +93,46 @@ public class HibernateQuery extends AbstractQuery {
 
 	@Override
 	public void setParameter(String name, Object value) {
+		if(hasNamedParameter(name)) {
+			hibQuery.setParameter(name, value);
+		}
+
 		if(isNativeQuery()) {
-			if(paramMap.containsKey(name)) {
+			if(positionByName.containsKey(name)) {
 				paramValues.put(name, value);
 			}
-		} else {
-			if (hasParameter(name)) {
-				hibQuery.setParameter(name, value);
-			} else if (paramMap.containsKey(name)) { // Needed for deferred queries
+		} else if (positionByName.containsKey(name)) { // Needed for deferred queries
+			// There can be multiple references to the same parameter in a query
+			for(BindParameter p: positionByName.get(name)) {
 				// Hibernate indexes this from 0
-				hibQuery.setParameter(paramMap.get(name).position-1, value);
+				hibQuery.setParameter(p.position-1, value);
 			}
 		}
 	}
 
+	private boolean hasNamedParameter(String name) {
+		if(namedParams == null) {
+			namedParams = new HashSet<>(Arrays.asList(hibQuery.getNamedParameters()));
+		}
+		if(namedParams.contains(name)) {
+			return true;
+		}
+
+		return false;
+	}
+
 	@Override
 	public boolean hasParameter(String name) {
-		if(isNativeQuery()) {
-			return paramMap.containsKey(name);
-		} else {
-			return (new HashSet<>(Arrays.asList(hibQuery.getNamedParameters()))).contains(name);
+
+		if(hasNamedParameter(name)) {
+			return true;
 		}
+
+		if(isNativeQuery()) {
+			return positionByName.containsKey(name);
+		}
+
+		return false;
 	}
 
 	@Override
@@ -129,7 +145,7 @@ public class HibernateQuery extends AbstractQuery {
 	{
 		if(settings.getAction() != AggregateAction.READ) {
 			if(isNativeQuery()) {
-				setParameters(settings, paramMap, paramValues);
+				setParameters(settings, paramValues);
 			}
 			return hibQuery.executeUpdate();
 		} else {

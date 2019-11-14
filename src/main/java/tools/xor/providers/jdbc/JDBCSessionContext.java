@@ -84,6 +84,7 @@ public class JDBCSessionContext implements CustomPersister
     private List<String> literalSQLs = new LinkedList<>();
     private final Map<String, PreparedStatement> statementCache = lruCache(1000);
     private Stack<ConnectionHolder> connections = new Stack<>();
+    private Map<String, BufferedWriter> csvWriters = new HashMap<>();
 
     private static class ConnectionHolder {
         private final boolean owner;
@@ -761,16 +762,37 @@ public class JDBCSessionContext implements CustomPersister
 
     private void writeToFile() {
         for(Map.Entry<String, List<String>> entry: sqlByType.entrySet()) {
-            try (BufferedWriter out = new BufferedWriter(new FileWriter(ClassUtil.getCSVFilename(
-                entry.getKey()), true))) {
-                for(String sql: entry.getValue()) {
+            BufferedWriter out = null;
+
+            try {
+                if (csvWriters.containsKey(entry.getKey())) {
+                    out = csvWriters.get(entry.getKey());
+                }
+                else {
+                    out = new BufferedWriter(new FileWriter(
+                        ClassUtil.getCSVFilename(entry.getKey()),
+                        true));
+                    csvWriters.put(entry.getKey(), out);
+                }
+                for (String sql : entry.getValue()) {
                     out.write(sql);
                     out.newLine();
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw ClassUtil.wrapRun(e);
             }
+        }
+    }
+
+    public void closeResources() {
+        try {
+            for(BufferedWriter writer: csvWriters.values()) {
+                writer.close();
+            }
+            csvWriters.clear();
+        }
+        catch (IOException e) {
+            throw ClassUtil.wrapRun(e);
         }
     }
 

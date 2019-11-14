@@ -19,6 +19,7 @@
 
 package tools.xor.generator;
 
+import org.apache.commons.lang.StringUtils;
 import tools.xor.Property;
 import tools.xor.util.graph.StateGraph;
 
@@ -62,7 +63,9 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                                                   Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return input.replace(
+                    // String replace method currently is not performant
+                    // will be improved in a later version
+                    return StringUtils.replace(input,
                         THREAD_NO,
                         new Long(Thread.currentThread().getId()).toString());
                 }
@@ -75,7 +78,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                                                   Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return visitor.getSettings() != null ? input.replace(
+                    return visitor.getSettings() != null ? StringUtils.replace(input,
                         ENTITY_SIZE,
                         visitor.getSettings().getEntitySize().name()) : input;
                 }
@@ -88,7 +91,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                                                   Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return visitor.getSettings() != null ? input.replace(
+                    return visitor.getSettings() != null ? StringUtils.replace(input,
                         GLOBAL_SEQ,
                         new Integer(visitor.getSettings().getGlobalSeq()).toString()) : input;
                 }
@@ -101,7 +104,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                                                   Generator generator,
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
-                    return visitor.getContext() != null ? input.replace(
+                    return visitor.getContext() != null ? StringUtils.replace(input,
                         VISITOR_CONTEXT,
                         visitor.getContext().toString()) : input;
                 }
@@ -122,7 +125,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                         }
                     }
 
-                    return generator != null ? input.replace(GENERATOR, value) : input;
+                    return generator != null ? StringUtils.replace(input, GENERATOR, value) : input;
                 }
             });
     }

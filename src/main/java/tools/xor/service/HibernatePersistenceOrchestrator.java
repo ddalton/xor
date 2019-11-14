@@ -24,6 +24,7 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -61,6 +63,7 @@ import tools.xor.view.HibernateQuery;
 import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
@@ -101,7 +104,7 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 	 */
 	public HibernatePersistenceOrchestrator(Object sessionContext, Object data) {
 		this();
-		
+
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.SQL_STACK)
 			&& ApplicationConfiguration.config().getBoolean(Constants.Config.SQL_STACK)) {
 			Logger logger = Logger.getLogger(SQL_LOGGER);
@@ -380,6 +383,31 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 				public void execute (Connection connection) throws SQLException
 				{
 					saveQueryJoinTable(connection, invocationId, ids);
+				}
+			});
+	}
+
+	@Override
+	public void createQueryJoinTable(final Integer stringKeyLen) {
+		this.connectionUtil.execute(
+			new Work()
+			{
+				@Override
+				public void execute (Connection connection) throws SQLException
+				{
+					DBTranslator translator = DBTranslator.getTranslator(connection);
+					if(translator.tableExists(connection, QueryJoinAction.JOIN_TABLE_NAME)) {
+						return;
+					}
+					String sql = translator.getCreateQueryJoinTableSQL(stringKeyLen);
+
+					try {
+						Statement statement = connection.createStatement();
+						statement.executeUpdate(sql);
+					}
+					catch (SQLException e) {
+						throw ClassUtil.wrapRun(e);
+					}
 				}
 			});
 	}

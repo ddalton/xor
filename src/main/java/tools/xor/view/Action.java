@@ -9,4 +9,6 @@ import tools.xor.service.PersistenceOrchestrator;
 public interface Action
 {
     void execute(QueryTreeInvocation qti, PersistenceOrchestrator po);
+
+    Action copy(Object context);
 }

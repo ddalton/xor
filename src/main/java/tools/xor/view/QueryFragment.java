@@ -47,6 +47,7 @@ public class QueryFragment implements Vertex
     public static final String ID_PARAMETER_NAME     = "ID_";
     public static final String NEXTTOKEN_PARAM_PREFIX = "ORDER_BY_";
     public static final String PARENT_INLIST = "PARENT_INLIST_";
+    public static final String INVOCATION_ID_PARAM = "INVOCATION_ID_";
 
     public static final Set<String> systemFields = new HashSet<>();
 

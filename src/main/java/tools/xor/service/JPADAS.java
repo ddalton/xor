@@ -73,7 +73,7 @@ public abstract class JPADAS extends AbstractDataAccessService {
 		// This will end up defining the simple types
 		defineProperties(shape);
 		
-		postProcess(shape, extension);
+		postProcess(shape, extension, shape.getUniqueTypes(), false);
 
 		return shape;
 	}

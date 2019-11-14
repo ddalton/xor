@@ -57,6 +57,8 @@ import tools.xor.generator.Generator;
 import tools.xor.generator.GeneratorRecipient;
 import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultMutableJson;
+import tools.xor.providers.jdbc.DBTranslator;
+import tools.xor.providers.jdbc.DBType;
 import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
@@ -71,6 +73,7 @@ import tools.xor.util.InterQuery;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateTree;
 import tools.xor.view.AggregateView;
+import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
@@ -80,6 +83,7 @@ import javax.persistence.PersistenceContext;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -97,7 +101,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	@PersistenceContext
 	EntityManager entityManager;
 
-	@Resource(name = "amJDBC")
+	@Resource(name = "amJDBCjson")
 	protected AggregateManager amJDBC;	// Useful for generating data using JDBC
 	
 	S S1 = null;
@@ -1113,6 +1117,110 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			try (Statement stmt = sc.getConnection().createStatement()) {
 				stmt.execute("DELETE from TASK");
 				sc.getConnection().commit();
+			}
+			catch (SQLException e) {
+				e.printStackTrace();
+			}
+			tx.rollback();
+			// We don't close as the connection belongs to Spring
+		}
+	}
+
+	@Test
+	public void testChildrenMixTemp() {
+		// First create a task with 100 children
+		// We use the generators to create this data
+		// This data is committed by the generators
+
+		Shape jdbcShape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		if(jdbcShape == null) {
+			jdbcShape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+		}
+
+
+		JDBCType task = (JDBCType)jdbcShape.getType("TASK");
+		task.clearGenerators();
+
+		ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+		Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
+		taskparent.setGenerator(parentgen);
+		Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+		ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+		rootid.setGenerator(rootidgen);
+		Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+		ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+		namep.setGenerator(namegen);
+		ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+		Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+		dtype.setGenerator(dtypegen);
+
+		ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
+																	"0,0:0", // root task
+																	"1,100:100" // root task with 100 children
+		});
+
+		// 101 is the total number of tasks. 1 root task and 100 child tasks
+		CounterGenerator gensettings = new CounterGenerator(101);
+		gensettings.addListener(toonegen);
+		task.addGenerator(gensettings);
+		gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+			(GeneratorRecipient)parentgen));
+
+		String[] types = new String[] {
+			"TASK"
+		};
+
+		Settings settings = new Settings();
+		//settings.setImportMethod(ImportMethod.CSV);
+		Transaction tx = amJDBC.createTransaction(settings);
+		tx.begin();
+		try {
+			// Generate the tasks in the DB
+			amJDBC.generate(jdbcShape.getName(), Arrays.asList(types), settings);
+
+			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			po.createQueryJoinTable(null);
+			jdbcShape.signalEvent(); // update the types in the shape table
+
+			// Query using the mix view
+			settings = new Settings();
+			settings.setView(aggregateService.getView("TASKCHILDRENMIXTEMP"));
+			Shape shape = aggregateService.getDAS().getShape();
+			shape.setJDBCShape(jdbcShape);
+			Type type = shape.getType(Task.class);
+			settings.setEntityType(type);
+			settings.init(shape);
+
+			// Print a graph of the aggregateTree
+			AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = settings.getView().getAggregateTree(
+				type);
+			aggregateTree.exportToDOT("taskchildrenmix.dot");
+
+			List<?> result = aggregateService.query(null, settings);
+			assert(result.size() == 101);
+			JSONObject rootTask = (JSONObject)result.get(0);
+			assert(rootTask != null);
+
+			assert(rootTask.has("taskChildren"));
+			JSONArray children = rootTask.getJSONArray("taskChildren");
+			assert(children.length() == 100);
+
+			JSONObject child = children.getJSONObject(0);
+			assert(child != null);
+			assert(child.has("name"));
+			assert(child.has("id"));
+
+		} finally {
+
+			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCSessionContext sc = po.getSessionContext();
+
+			try (Statement stmt = sc.getConnection().createStatement()) {
+				stmt.execute("DELETE from TASK");
+				sc.getConnection().commit();
+
+				// drop the temp table
+				stmt.executeUpdate(String.format("DROP TABLE %s", QueryJoinAction.JOIN_TABLE_NAME));
 			}
 			catch (SQLException e) {
 				e.printStackTrace();

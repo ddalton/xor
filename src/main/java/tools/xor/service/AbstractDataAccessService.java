@@ -47,6 +47,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -216,32 +217,48 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
-	protected void postProcess(Shape shape, SchemaExtension extension) {
+	/**
+	 * Post process the addition of the new types
+	 * @param shape to which the types are being added
+	 * @param extension any additional type processing that needs to be done
+	 * @param types that are being added
+	 * @param isTemporary true if the types are temporary - this affects which steps are optional
+	 */
+	protected void postProcess(Shape shape, SchemaExtension extension, Collection<Type> types, boolean isTemporary) {
 
-		initPositionProperty(shape);
+		// Create the properties for the types
+		initPositionProperty(shape, types);
 
 		// Extend the schema if applicable
 		if(extension != null) {
 			extension.extend(shape);
 		}
-		
-		initExternal(shape);
 
-		initRootType(shape);
-		
+		// Derive the external types
+		List<Type> externalTypes = initExternal(shape, types);
+
+		// Initialize the root type
+		initRootType(shape, types, externalTypes);
+
+		// Performance hog - skip for now
 //		initViews(shape);
 
-		initOrder(shape);
+		// Do topological sorting, to set the order between the types
+		if(!isTemporary) {
+			initOrder(shape);
 
-		initEnd(shape);
+			initEnd(shape, types, externalTypes);
+		}
 	}
 
 	/**
 	 * Should be invoked as the final step of the Shape object construction.
 	 * @param shape object being constructed
+	 * @param types that need to processed
+	 * @param externalTypes of types that need to be processed
 	 */
-	protected void initEnd(Shape shape) {
-		shape.initEnd();
+	protected void initEnd(Shape shape, Collection<Type> types, Collection<Type> externalTypes) {
+		shape.initEnd(types, externalTypes);
 
 		shape.setBuildFinished(true);
 	}
@@ -270,16 +287,16 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
-	private void initRootType(Shape shape) {
-		shape.initRootType();
+	private void initRootType(Shape shape, Collection<Type> types, Collection<Type> externalTypes) {
+		shape.initRootType(types, externalTypes);
 	}
 
-	private void initPositionProperty(Shape shape) {
-		shape.initPositionProperty();
+	private void initPositionProperty(Shape shape, Collection<Type> types) {
+		shape.initPositionProperty(types);
 	}
 
-	protected void initExternal (Shape shape) {
-		shape.deriveExternal();
+	protected List<Type> initExternal (Shape shape, Collection<Type> types) {
+		return shape.deriveExternal(types);
 	}
 
 	public QueryTransformer getQueryBuilder() {

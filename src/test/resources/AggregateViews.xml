@@ -99,6 +99,38 @@
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
+		<!-- The parent join query uses a temp table -->
+		<name>BASICINFO_NATIVE_TASK_TEMP</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_"/>
+			<selectClause>
+				<![CDATA[SELECT UUID,
+				                NAME,
+					        DISPLAYNAME,
+					        DESCRIPTION,
+					        ICONURL,
+					        DETAILEDDESCRIPTION
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>FROM Task
+				     WHERE UUID = ?</args>
+			</function>
+			<function type="FREESTYLE" scope="NOTROOT">
+				<args>FROM Task, XOR_QUERY_JOIN_ tt
+				     WHERE UUID = tt.ID_STR
+				       AND tt.INVOCATION_ID = :INVOCATION_ID_</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<name>TASKCHILDRENMIXTEMP</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>taskChildren.[BASICINFO_NATIVE_TASK_TEMP]</attributeList>
+	</aggregateView>
+	<aggregateView>
 		<name>BASICINFO_NATIVE_TASK</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<primaryKeyAttribute>id</primaryKeyAttribute>

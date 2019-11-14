@@ -327,4 +327,11 @@ public interface PersistenceOrchestrator {
      * @param ids of all parent objects
      */
     void populateQueryJoinTable (String invocationId, Set ids);
+
+	/**
+	 * Create the query join table as a temporary table if not already created
+	 * @param stringKeyLen the desired size of a string primary key.
+	 *                     If null, then a default size of 36 is used.
+	 */
+	void createQueryJoinTable(Integer stringKeyLen);
 }

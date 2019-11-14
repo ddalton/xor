@@ -22,6 +22,7 @@ package tools.xor.view;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.Settings;
+import tools.xor.util.InterQuery;
 
 import java.util.List;
 
@@ -48,8 +49,10 @@ public interface ObjectResolver
      *
      * @param queryTree query piece for the query
      * @param settings user settings
+     * @param qti QueryTreeInvocation object
+     * @param parentEdge not null if this is a child query
      */
-    void preProcess(QueryTree queryTree, Settings settings);
+    void preProcess(QueryTree queryTree, Settings settings, QueryTreeInvocation qti, InterQuery parentEdge);
 
     /**
      * Notify the resolver of the reconstituted object

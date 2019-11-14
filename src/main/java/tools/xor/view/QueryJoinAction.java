@@ -6,6 +6,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class QueryJoinAction implements Action
@@ -18,7 +19,7 @@ public class QueryJoinAction implements Action
         if (ApplicationConfiguration.config().containsKey(Constants.Config.QUERY_JOIN_TABLE)) {
             JOIN_TABLE_NAME = ApplicationConfiguration.config().getString(Constants.Config.QUERY_JOIN_TABLE);
         } else {
-            JOIN_TABLE_NAME = "XOR_QUERY_JOIN_";
+            JOIN_TABLE_NAME = Query.QUERY_JOIN_TABLENAME;
         }
     }
 
@@ -63,5 +64,21 @@ public class QueryJoinAction implements Action
 
             processed.add(source);
         }
+    }
+
+    @Override public Action copy (Object context)
+    {
+        Map<InterQuery, InterQuery> edgeMap = (Map<InterQuery, InterQuery>)context;
+
+        Set<InterQuery> edges = new HashSet<>();
+        for(InterQuery edge: edgesToProcess) {
+            if(!edgeMap.containsKey(edge)) {
+                throw new RuntimeException("Unable to find edge mapping in the copy");
+            }
+
+            edges.add(edgeMap.get(edge));
+        }
+
+        return new QueryJoinAction(edges);
     }
 }

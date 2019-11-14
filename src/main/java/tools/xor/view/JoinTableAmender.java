@@ -52,8 +52,7 @@ public class JoinTableAmender implements TreeMutatorStrategy
 
         // Check that the query join table is present in the shape
         if(addAction) {
-            Type type = shape.getType(QueryJoinAction.JOIN_TABLE_NAME);
-            if(type == null) {
+            if(!shape.hasTable(QueryJoinAction.JOIN_TABLE_NAME)) {
                 throw new RuntimeException(String.format("Unable to find join table %s in database.", QueryJoinAction.JOIN_TABLE_NAME));
             }
         }

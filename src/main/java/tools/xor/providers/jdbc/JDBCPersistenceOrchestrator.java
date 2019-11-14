@@ -17,6 +17,7 @@ import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
@@ -25,7 +26,9 @@ import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.Blob;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -312,6 +315,25 @@ public class JDBCPersistenceOrchestrator
 	{
 		try {
 			saveQueryJoinTable(context.getConnection(), invocationId, ids);
+		}
+		catch (SQLException e) {
+			throw ClassUtil.wrapRun(e);
+		}
+	}
+
+	@Override
+	public void createQueryJoinTable(Integer stringKeyLen) {
+
+		DBTranslator translator = DBTranslator.getTranslator(context.getConnection());
+		if(translator.tableExists(context.getConnection(), QueryJoinAction.JOIN_TABLE_NAME)) {
+			return;
+		}
+
+		String sql = translator.getCreateQueryJoinTableSQL(stringKeyLen);
+
+		try {
+			Statement statement = context.getConnection().createStatement();
+			statement.executeUpdate(sql);
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

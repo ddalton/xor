@@ -130,14 +130,15 @@ public abstract class AbstractDispatcher implements QueryDispatcher
                                         CallInfo callInfo,
                                         ObjectResolver resolver) {
 
+        InterQuery parentEdge = null;
         if(query != null) {
             // get the parent edge if present
             Iterator<InterQuery<QueryTree>> iter = aggregateTree.getInEdges(queryTree).iterator();
             if (iter.hasNext()) {
-                InterQuery edge = iter.next();
+                parentEdge = iter.next();
 
                 PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
-                queryInvocation.resolveQuery(edge);
+                queryInvocation.resolveQuery(parentEdge);
 
                 if(query.isDeferred()) {
                     query.setQueryString(query.extractParameters());
@@ -146,7 +147,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
             }
         }
 
-        queryTree.prepare(callInfo, resolver);
+        queryTree.prepare(callInfo, resolver, queryInvocation, parentEdge);
         if(query != null) {
             List records = query.getResultList(null, callInfo.getSettings());
 

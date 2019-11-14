@@ -25,6 +25,7 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -51,10 +52,12 @@ import org.hibernate.jdbc.Work;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
 import tools.xor.Type;
+import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
+import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
@@ -357,6 +360,31 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 				public void execute (Connection connection) throws SQLException
 				{
 					saveQueryJoinTable(connection, invocationId, ids);
+				}
+			});
+	}
+
+	@Override
+	public void createQueryJoinTable(final Integer stringKeyLen) {
+		this.connectionUtil.execute(
+			new Work()
+			{
+				@Override
+				public void execute (Connection connection) throws SQLException
+				{
+					DBTranslator translator = DBTranslator.getTranslator(connection);
+					if(translator.tableExists(connection, QueryJoinAction.JOIN_TABLE_NAME)) {
+						return;
+					}
+					String sql = translator.getCreateQueryJoinTableSQL(stringKeyLen);
+
+					try {
+						Statement statement = connection.createStatement();
+						statement.executeUpdate(sql);
+					}
+					catch (SQLException e) {
+						throw ClassUtil.wrapRun(e);
+					}
 				}
 			});
 	}

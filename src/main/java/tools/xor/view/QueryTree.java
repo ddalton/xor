@@ -131,6 +131,13 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return result;
 	}
 
+	public void postCopy(Map<InterQuery, InterQuery> edgeMap, QueryTree copy) {
+		copy.actions = new LinkedList<>();
+		for(Action action: actions) {
+			copy.addAction(action.copy(edgeMap));
+		}
+	}
+
 	public List<String> getSelectedColumns() {
 		List<String> result = new LinkedList<>();
 		for(QueryField field: fields) {
@@ -669,10 +676,10 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return this.fields;
 	}
 
-	protected Query prepare(CallInfo callInfo, ObjectResolver resolver)
+	protected Query prepare(CallInfo callInfo, ObjectResolver resolver, QueryTreeInvocation qti, InterQuery parentEdge)
 	{
 		if(query != null) {
-			resolver.preProcess(this, callInfo.getSettings());
+			resolver.preProcess(this, callInfo.getSettings(), qti, parentEdge);
 
 		}
 

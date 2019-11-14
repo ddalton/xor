@@ -1,8 +1,17 @@
 Focus areas
 ===========
-1. Temp table support
+1. Temp table support - Add test cases
+   - setup temp table in Before annotation
+   - drop temp table in After annotation
+   - [DONE] Basic test (OQL -> SQL) - Use view TASKCHILDRENMIXTEMP - refer to previous test using view TASKCHILDRENMIX
+     - test the insert is working
+     - test the join is working
+     - test the type selection is working (explicitly specified in SQL)
+   - Advanced test (OQL -> SP)
+   - Advanced test #2 (SP -> SP) 
+   - Advanced test #3 (SP -> SQL) 
+   - Ensure we rollback so the temp table is cleared
 2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
-3. Tests
 
 
 Test for mix SQL and OQL queries in a view reference and view
@@ -14,45 +23,9 @@ a) Test OQL and SQL - Need to add foreignKey for EXISTS or use Function with FRE
    - In VO and POJO models
 b) Test OQL and StoredProcedure
 
-Temp table support
-==================
-Table name - XOR_QUERY_JOIN_
-----------
-invocationid - UUID (Varchar2(30)) - support 128 bit guid in base64 format
-id_int - if the id is an number (schema dependent)
-id_str -  if the id is a string (schema dependent)
-id column should have an index
-
-
-When a parent query executes, it checks to see if any of its child/dependant queries need the XOR_QUERY_JOIN_ and if so, populates this table.
-To support this, we will add a new node in the AggregateTree, that is inbetween the parent and all the children. This node will be responsible
-for populating the query join table.
-
-The way this is done is:
-1. If the chlld query is a stored procedure
-2. If the child query is a SQL query and has this table referenced in its query
-
-
-
 
 Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber
     - AggregateView#expand currently returns if a child view has EntityType populated
-
-
-
-Supporting the following helps for JDBC provider - since it makes the serial dispatcher for JDBC more efficient
-=======================================
-
-Add Query Diagram support for JDBC provider and allow it to analyze and optimize and come with a desired query order
-and also modify SQL query to support that query order in a DB agnostic manner.
-  We do this for JDBC as we do not have to worry about splitting for inheritance support
-  TODO: remove this splitter for JDBC provider and open type (Needed for POJO types)
-  - simple query tree
-  - query tree with sub-queries (EXISTS and IN) - semi-join 
-  - anti semi-join. Identify when an OUTER JOIN can be converted to a NOT EXISTS condition and evaluate the performance
-** Provide feeature - enforce robust plan (Use techniques to control join order)
-  Modify semi-join arrow by adding "none" to add spaces before arrow
-  For example, nonenonenonenormal
 
 
 

@@ -134,6 +134,7 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 			result.addVertex(queryTreeCopy);
 		}
 
+		Map<E, E> edgeMap = new HashMap<>();
 		for(E edge: getEdges()) {
 			V startCopy = oldNew.get(edge.getStart());
 			V endCopy = oldNew.get(edge.getEnd());
@@ -142,6 +143,12 @@ public class AggregateTree<V extends QueryTree, E extends InterQuery<V>> extends
 
 			E edgeCopy = (E)new InterQuery(edge.getName(), startCopy, endCopy, sourceCopy, targetCopy);
 			result.addEdge(edgeCopy, startCopy, endCopy);
+
+			edgeMap.put(edge, edgeCopy);
+		}
+
+		for(V queryTree: getVertices()) {
+			queryTree.postCopy(edgeMap, oldNew.get(queryTree));
 		}
 
 		return result;

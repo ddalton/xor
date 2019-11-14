@@ -29,7 +29,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -39,8 +38,8 @@ public class HSQLTranslator extends DBTranslator
     private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DTD_IDENTIFIER, is_identity, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = 'PUBLIC'";
     private static final String PRIMARY_KEY_SQL = "SELECT table_name, pk_name, column_name, key_seq FROM INFORMATION_SCHEMA.SYSTEM_PRIMARYKEYS WHERE table_schem = 'PUBLIC' ORDER BY pk_name, key_seq";
     private static final String SEQUENCES_SQL = "SELECT sequence_name, data_type, maximum_value, minimum_value, increment, start_with, cycle_option  FROM information_schema.sequences";
+    private static final String TABLE_EXISTS_SQL = "SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = 'PUBLIC'";
 
-    private Map<String, JDBCDAS.TableInfo> tableMap;
     private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
 
     @Override public JDBCDAS.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
@@ -61,95 +60,24 @@ public class HSQLTranslator extends DBTranslator
         return sequenceMap.get(sequenceName);
     }
 
-    @Override public List<JDBCDAS.TableInfo> getTables (Connection connection, ForeignKeyEnhancer enhancer)
+    @Override
+    protected JDBCDAS.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException
     {
-        Map<String, List<String>> primaryKeys = getPrimaryKeys(connection);
-
-        Map<String, JDBCDAS.TableInfo> result = new HashMap<>();
-        try (PreparedStatement ps = connection.prepareStatement(COLUMNS_SQL);
-            ResultSet rs = ps.executeQuery();
-        ) {
-            JDBCDAS.TableInfo table = null;
-            List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
-            while(rs.next()) {
-                if(table != null) {
-                    // check if we need to reset
-                    if(!table.getName().equals(rs.getString(1))) {
-                        addTable(result, columns, table, primaryKeys.get(table.getName()));
-
-                        table = null;
-                        columns = new LinkedList<>();
-                    }
-                }
-
-                if(table == null) {
-                    table = new JDBCDAS.TableInfo(rs.getString(1));
-                }
-
-                String columnName = rs.getString(2);
-                Boolean nullable = "NO".equals(rs.getString(3)) ? false : true;
-                String columnType = rs.getString(4);
-                if(columnType.contains("(")) {
-                    columnType = columnType.substring(0, columnType.indexOf("("));
-                }
-                Boolean generated = "YES".equals(rs.getString(5)) ? true : false;
-                int length = rs.getInt(6);
-                if(getJavaClass(columnType) == null) {
-                    throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
-                }
-                JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, getJavaClass(columnType), columnType,
-                    generated, length);
-                columns.add(ci);
-            }
-            if(table != null) {
-                addTable(result, columns, table, primaryKeys.get(table.getName()));
-            }
+        String columnName = rs.getString(2);
+        Boolean nullable = "NO".equals(rs.getString(3)) ? false : true;
+        String columnType = rs.getString(4);
+        if(columnType.contains("(")) {
+            columnType = columnType.substring(0, columnType.indexOf("("));
         }
-        catch (Exception e) {
-            throw ClassUtil.wrapRun(e);
+        Boolean generated = "YES".equals(rs.getString(5)) ? true : false;
+        int length = rs.getInt(6);
+        if(getJavaClass(columnType) == null) {
+            throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
         }
+        JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, getJavaClass(columnType), columnType,
+            generated, length);
 
-        List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(connection, result);
-
-            // Give a chance to add any additional business logic based relationships
-            // not captured by a database foreign key
-        foreignKeys = enhancer.process(foreignKeys);
-        Map<String, List<JDBCDAS.ForeignKey>> fkMap = new HashMap<>();
-        for(JDBCDAS.ForeignKey fk: foreignKeys) {
-            fk.init();
-            List<JDBCDAS.ForeignKey> fkeys = null;
-            if(fkMap.containsKey(fk.getReferencingTable().getName())) {
-                fkeys = fkMap.get(fk.getReferencingTable().getName());
-            } else {
-                fkeys = new LinkedList<>();
-                fkMap.put(fk.getReferencingTable().getName(), fkeys);
-            }
-            fkeys.add(fk);
-        }
-
-        List<JDBCDAS.TableInfo> tables = new ArrayList<>(result.values());
-        for(JDBCDAS.TableInfo tableInfo: tables) {
-            tableInfo.setForeignKeys(fkMap.get(tableInfo.getName()));
-        }
-
-        tableMap = result;
-
-        return tables;
-    }
-
-    private void addTable(Map<String, JDBCDAS.TableInfo> tables,
-                          List<JDBCDAS.ColumnInfo> columns,
-                          JDBCDAS.TableInfo table,
-                          List<String> primaryKeys) {
-        table.setColumns(columns);
-        tables.put(table.getName(), table);
-
-        if(primaryKeys != null && primaryKeys.size() > 0) {
-            table.setPrimaryKeys(primaryKeys);
-        } else {
-            // all the fields of the table become the primary key
-            table.initNoPrimaryKey();
-        }
+        return ci;
     }
 
     private void printResult(Connection connection, String sql) {
@@ -184,87 +112,17 @@ public class HSQLTranslator extends DBTranslator
         }
     }
 
-    private List<JDBCDAS.ForeignKey> getForeignKeys (Connection connection, Map<String, JDBCDAS.TableInfo> tableMap)
+    @Override
+    protected JDBCDAS.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDAS.TableInfo> tableMap) throws SQLException
     {
-        List<JDBCDAS.ForeignKey> result = new ArrayList<>();
+        JDBCDAS.ForeignKeyRule deleteRule = getForeignKeyRule(rs.getInt(6));
+        JDBCDAS.ForeignKeyRule updateRule = getForeignKeyRule(rs.getInt(7));
+        JDBCDAS.TableInfo referencing = tableMap.get(rs.getString(2));
+        JDBCDAS.TableInfo referenced = tableMap.get(rs.getString(3));
+        JDBCDAS.ForeignKey fkey = new JDBCDAS.ForeignKey(rs.getString(1),
+            referencing, referenced, deleteRule, updateRule);
 
-        try (PreparedStatement ps = connection.prepareStatement(FOREIGN_KEY_SQL);
-            ResultSet rs = ps.executeQuery();
-        ) {
-            JDBCDAS.ForeignKey fkey = null;
-            List<String> referencingColumns = new LinkedList<>();
-            List<String> referencedColumns = new LinkedList<>();
-            while(rs.next()) {
-                if(fkey != null) {
-                    // check if we need to reset
-                    if(!fkey.getName().equals(rs.getString(1))) {
-                        fkey.setReferencingColumns(referencingColumns);
-                        fkey.setReferencedColumns(referencedColumns);
-                        result.add(fkey);
-
-                        fkey = null;
-                        referencingColumns = new LinkedList<>();
-                        referencedColumns = new LinkedList<>();
-                    }
-                }
-
-                if(fkey == null) {
-                    JDBCDAS.ForeignKeyRule deleteRule = getForeignKeyRule(rs.getInt(6));
-                    JDBCDAS.ForeignKeyRule updateRule = getForeignKeyRule(rs.getInt(7));
-                    JDBCDAS.TableInfo referencing = tableMap.get(rs.getString(2));
-                    JDBCDAS.TableInfo referenced = tableMap.get(rs.getString(3));
-                    fkey = new JDBCDAS.ForeignKey(rs.getString(1),
-                        referencing, referenced, deleteRule, updateRule);
-                }
-                referencingColumns.add(rs.getString(4));
-                referencedColumns.add(rs.getString(5));
-            }
-            if(fkey != null) {
-                fkey.setReferencingColumns(referencingColumns);
-                fkey.setReferencedColumns(referencedColumns);
-                result.add(fkey);
-            }
-        }
-        catch (SQLException e) {
-            throw ClassUtil.wrapRun(e);
-        }
-
-        return result;
-    }
-
-    @Override public Map<String, List<String>> getPrimaryKeys (Connection connection)
-    {
-        Map<String, List<String>> result = new HashMap<>();
-
-        try (PreparedStatement ps = connection.prepareStatement(PRIMARY_KEY_SQL);
-            ResultSet rs = ps.executeQuery();
-        ) {
-            String tableName = null;
-            List<String> columns = new LinkedList<>();
-            while(rs.next()) {
-                if(columns.size() > 0) {
-                    // check if we need to reset
-                    if(!tableName.equals(rs.getString(1))) {
-                        result.put(tableName, columns);
-
-                        columns = new LinkedList<>();
-                    }
-                }
-
-                if(columns.size() == 0) {
-                    tableName = rs.getString(1);
-                }
-                columns.add(rs.getString(3));
-            }
-            if(tableName != null) {
-                result.put(tableName, columns);
-            }
-        }
-        catch (SQLException e) {
-            throw ClassUtil.wrapRun(e);
-        }
-
-        return result;
+        return fkey;
     }
 
     @Override public List<JDBCDAS.SequenceInfo> getSequences (Connection connection)
@@ -294,6 +152,26 @@ public class HSQLTranslator extends DBTranslator
         this.sequenceMap = result;
 
         return new ArrayList<>(this.sequenceMap.values());
+    }
+
+    @Override public String getTableColumnsSQL ()
+    {
+        return COLUMNS_SQL;
+    }
+
+    @Override public String getPrimaryKeySQL ()
+    {
+        return PRIMARY_KEY_SQL;
+    }
+
+    @Override public String getForeignKeysSQL ()
+    {
+        return FOREIGN_KEY_SQL;
+    }
+
+    @Override public String getTableExistsSQL ()
+    {
+        return TABLE_EXISTS_SQL;
     }
 
     private JDBCDAS.ForeignKeyRule getForeignKeyRule(int value) {

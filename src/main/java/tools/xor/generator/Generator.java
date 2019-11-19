@@ -65,11 +65,17 @@ public interface Generator
     short getShortValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
-     * Returns an int value.
+     * We return an Integer instead of an int since we would like to
+     * support null values.
+     * Since we use an integer for id generation and we would like
+     * to support null parents when generating child elements.
+     *
+     * @See CollectionOwnerGenerator
+     *
      * @param visitor contains data pertaining to the calling context
      * @return int value.
      */
-    int getIntValue(StateGraph.ObjectGenerationVisitor visitor);
+    Integer getIntValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Returns a long value

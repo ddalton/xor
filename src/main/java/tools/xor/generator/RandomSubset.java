@@ -56,9 +56,10 @@ public class RandomSubset extends FixedSet
             String template = values[3];
 
             dynamicValues = new String[fanOut];
+            StringTemplate stringTemplate = new StringTemplate(new String[] {template});
             for(int i = 0; i < fanOut; i++) {
                 visitor.setContext(new Integer(intValues[i]).toString());
-                dynamicValues[i] = StringTemplate.resolve(template, null, visitor);
+                dynamicValues[i] = stringTemplate.resolve(template, null, visitor);
             }
         } else {
             for(int i = 0; i < fanOut; i++) {

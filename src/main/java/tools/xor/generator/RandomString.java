@@ -1,7 +1,7 @@
 /**
  * XOR, empowering Model Driven Architecture in J2EE applications
  *
- * Copyright (c) 2012, Dilip Dalton
+ * Copyright (c) 2019, Dilip Dalton
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,31 +19,27 @@
 
 package tools.xor.generator;
 
+import org.apache.commons.lang.RandomStringUtils;
 import tools.xor.Property;
+import tools.xor.StringType;
 import tools.xor.util.graph.StateGraph;
 
-public class DependencyReference extends DefaultGenerator
+public class RandomString extends DefaultGenerator
 {
-    public DependencyReference (String[] arguments)
+    private int length = StringType.DEFAULT_LENGTH;
+
+    public RandomString (String[] arguments)
     {
         super(arguments);
+
+        if(values.length == 1) {
+            length = Integer.parseInt(values[0]);
+        }
     }
 
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getDependencyValue(visitor);
-    }
-
-    @Override
-    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
-    {
-        String result = getDependencyValue(visitor);
-
-        if(result == null) {
-            return super.getIntValue(visitor);
-        }
-        
-        return Integer.parseInt(getDependencyValue(visitor));
+        return RandomStringUtils.randomAlphanumeric(length);
     }
 }

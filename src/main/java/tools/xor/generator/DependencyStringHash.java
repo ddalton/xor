@@ -44,7 +44,7 @@ public class DependencyStringHash extends DefaultGenerator
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         // Currently support only upto MAX_COLLECTION_ELEMENTS unique ids
         String value = getDependencyValue(visitor);

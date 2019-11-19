@@ -1,7 +1,7 @@
 /**
  * XOR, empowering Model Driven Architecture in J2EE applications
  *
- * Copyright (c) 2012, Dilip Dalton
+ * Copyright (c) 2019, Dilip Dalton
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,45 @@
  * under the License.
  */
 
-package tools.xor.generator;
+package tools.xor;
 
-import tools.xor.Property;
+import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 
-public class DependencyReference extends DefaultGenerator
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class SharedCounterGenerator extends DefaultGenerator implements Iterator
 {
-    public DependencyReference (String[] arguments)
+    private AtomicInteger id;
+    private int value;
+
+    public SharedCounterGenerator(AtomicInteger id) {
+        super(new String[]{});
+
+        this.id = id;
+        this.value = id.get();
+    }
+
+    @Override public boolean hasNext ()
     {
-        super(arguments);
+        return true;
+    }
+
+    @Override public Object next ()
+    {
+        return value = id.getAndIncrement();
     }
 
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getDependencyValue(visitor);
+        return String.valueOf(this.value);
     }
 
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        String result = getDependencyValue(visitor);
-
-        if(result == null) {
-            return super.getIntValue(visitor);
-        }
-        
-        return Integer.parseInt(getDependencyValue(visitor));
+        return this.value;
     }
 }

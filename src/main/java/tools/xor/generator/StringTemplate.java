@@ -20,10 +20,14 @@
 package tools.xor.generator;
 
 import org.apache.commons.lang.StringUtils;
+import tools.xor.HierarchyGenerator;
 import tools.xor.Property;
+import tools.xor.SharedCounterGenerator;
 import tools.xor.util.graph.StateGraph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class StringTemplate extends DefaultGenerator implements GeneratorRecipient
@@ -50,7 +54,9 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
             THREAD_NO,
             GLOBAL_SEQ,
             VISITOR_CONTEXT,
-            GENERATOR
+            GENERATOR,
+            GENERATOR_HIER_ID,
+            GENERATOR_PARENT_ID
         };
     }
 
@@ -118,7 +124,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                                                   StateGraph.ObjectGenerationVisitor visitor)
                 {
                     String value = null;
-                    if(generator != null && input.contains(GENERATOR)) {
+                    if(generator != null) {
                         value = generator.getStringValue(null, visitor);
                         if (value == null) {
                             return null;
@@ -128,11 +134,65 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                     return generator != null ? StringUtils.replace(input, GENERATOR, value) : input;
                 }
             });
+
+        evaluators.put(
+            GENERATOR_HIER_ID, new TokenEvaluator()
+            {
+                @Override public String evaluate (String input,
+                                                  Generator generator,
+                                                  StateGraph.ObjectGenerationVisitor visitor)
+                {
+                    String value = null;
+                    if(generator != null) {
+                        SharedCounterGenerator idGen = ((HierarchyGenerator) generator).getIdGenerator();
+                        value = idGen.getStringValue(null, visitor);
+                        if (value == null) {
+                            return null;
+                        }
+                    }
+
+                    return generator != null ? StringUtils.replace(input, GENERATOR_HIER_ID, value) : input;
+                }
+            });
+
+        evaluators.put(
+            GENERATOR_PARENT_ID, new TokenEvaluator()
+            {
+                @Override public String evaluate (String input,
+                                                  Generator generator,
+                                                  StateGraph.ObjectGenerationVisitor visitor)
+                {
+                    String value = null;
+                    if(generator != null) {
+                        HierarchyGenerator parentGen = ((HierarchyGenerator) generator).getParentGenerator();
+                        SharedCounterGenerator parentIdGen = (parentGen == null) ? null : parentGen.getIdGenerator();
+
+                        value = parentIdGen.getStringValue(null, visitor);
+                        if (value == null) {
+                            return null;
+                        }
+                    }
+
+                    return generator != null ? StringUtils.replace(input, GENERATOR_PARENT_ID, value) : input;
+                }
+            });
     }
 
-    public static String resolve(String input, Generator generator, StateGraph.ObjectGenerationVisitor visitor) {
-        for(String tokenName: getTokens()) {
-            input = evaluators.get(tokenName).evaluate(input, generator, visitor);
+    private List<TokenEvaluator> relevantEvaluators;
+
+    public String resolve(String input, Generator generator, StateGraph.ObjectGenerationVisitor visitor) {
+        if(this.relevantEvaluators == null) {
+
+            this.relevantEvaluators = new ArrayList<>();
+            for (String tokenName : getTokens()) {
+                if(input.contains(tokenName)) {
+                    relevantEvaluators.add(evaluators.get(tokenName));
+                }
+            }
+        }
+
+        for (TokenEvaluator evaluator: relevantEvaluators) {
+            input = evaluator.evaluate(input, generator, visitor);
         }
 
         return input;

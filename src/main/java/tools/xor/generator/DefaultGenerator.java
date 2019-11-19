@@ -47,6 +47,8 @@ public class DefaultGenerator implements Generator
     public static final String ENTITY_SIZE = "[ENTITY_SIZE]";
     public static final String VISITOR_CONTEXT = "[VISITOR_CONTEXT]";
     public static final String GENERATOR = "[GENERATOR]";
+    public static final String GENERATOR_HIER_ID = "[GENERATOR_HIER_ID]";
+    public static final String GENERATOR_PARENT_ID = "[GENERATOR_PARENT_ID]";
     public static final String QUERY_DATA = "QUERY_DATA.";
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -123,7 +125,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         int minimum = Integer.MIN_VALUE;
         int maximum = Integer.MAX_VALUE;
@@ -423,27 +425,54 @@ public class DefaultGenerator implements Generator
         int end;   // inclusive
         int sizemin;  // or sizemin
         int sizemax = -1; // if it represents a range of sizes
+        boolean noOwner;
         RangeNode next;
 
-        public void parse(String text) {
+        public void parse(String text, boolean zeroSupported) {
             if(text.indexOf(SIZE_DELIM) == -1) {
                 throw new RuntimeException(String.format("Unable to find size delimiter '%s' in input: %s", SIZE_DELIM, text));
             }
-            String rangeStr = text.substring(0, text.indexOf(SIZE_DELIM));
-            String sizeStr = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length());
+            String rangeStr = text.substring(0, text.indexOf(SIZE_DELIM)).trim();
+            String sizeStr = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length()).trim();
 
             if(sizeStr.indexOf(RANGE_DELIM) == -1) {
                 this.sizemin = Integer.parseInt(sizeStr);
             } else {
-                this.sizemin = new Integer(sizeStr.substring(0, sizeStr.indexOf(RANGE_DELIM)));
-                this.sizemax = new Integer(sizeStr.substring(sizeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+                this.sizemin = new Integer(sizeStr.substring(0, sizeStr.indexOf(RANGE_DELIM)).trim());
+                this.sizemax = new Integer(sizeStr.substring(sizeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
             }
 
             if(rangeStr.indexOf(RANGE_DELIM) == -1) {
                 throw new RuntimeException(String.format("Unable to find range delimiter '%s' in input: %s", RANGE_DELIM, rangeStr));
             }
-            this.start = new Integer(rangeStr.substring(0, rangeStr.indexOf(RANGE_DELIM)));
-            this.end = new Integer(rangeStr.substring(rangeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
+            this.start = new Integer(rangeStr.substring(0, rangeStr.indexOf(RANGE_DELIM)).trim());
+            this.end = new Integer(rangeStr.substring(rangeStr.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
+
+            if(this.start < 0 || this.end < 0) {
+                noOwner = true;
+            }
+
+            int oldStart = this.start;
+            int oldEnd = this.end;
+            this.start = Math.abs(this.start);
+            this.end = Math.abs(this.end);
+
+            if(this.end < start) {
+                throw new RuntimeException(String.format("Start value %s needs to be less than end value %s. Original start and end values are %s and %s respectively",
+                    this.start, this.end, oldStart, oldEnd));
+            }
+
+            if(!zeroSupported && this.sizemin == 0) {
+                throw new RuntimeException("minimum size should be greater than 0");
+            }
+
+            if(this.sizemin < 0) {
+                throw new RuntimeException(zeroSupported ? "minimum size should be greater than or equal to 0" : "minimum size should be greater than 0");
+            }
+        }
+
+        public boolean isNoOwner() {
+            return noOwner;
         }
 
         public int getStart() {
@@ -467,12 +496,12 @@ public class DefaultGenerator implements Generator
         }
     }
 
-    public void buildNodes(List<RangeNode> nodeList, int offset) {
+    public void buildNodes(List<RangeNode> nodeList, int offset, boolean zeroSupported) {
 
         RangeNode previous = null;
         for(int i = offset; i < values.length; i++) {
             RangeNode node = new RangeNode();
-            node.parse(values[i]);
+            node.parse(values[i], zeroSupported);
             addNode(previous, node, nodeList);
 
             previous = node;

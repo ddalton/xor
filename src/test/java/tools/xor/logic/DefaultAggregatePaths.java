@@ -35,8 +35,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.AbstractDBTest;
 import tools.xor.AssociationSetting;
 import tools.xor.EntityType;
+import tools.xor.HierarchyGenerator;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.SharedCounterGenerator;
 import tools.xor.Type;
 import tools.xor.db.base.Directory;
 import tools.xor.db.base.Employee;
@@ -688,5 +690,29 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		View view = aggregateManager.getView("PARALLEL_QUERY");
 		System.out.println("PARALLEL_QUERY View Json: " + view.getJson().toString());
+	}
+
+	@Test
+	public void generatePaths() {
+		HierarchyGenerator root = HierarchyGenerator.build(3, 30);
+
+		int count = 0;
+		while(root.hasNext()) {
+			HierarchyGenerator gen = root.next();
+			SharedCounterGenerator scg = gen.getIdGenerator();
+			String idValue = scg.getStringValue(null, null);
+
+			HierarchyGenerator parentGen = gen.getParentGenerator();
+			SharedCounterGenerator parentscg = parentGen == null ? null : parentGen.getIdGenerator();
+			String parentIdValue = parentscg == null ? null : parentscg.getStringValue(null, null);
+
+
+			String str = root.getStringValue(null, null);
+			//System.out.println(String.format("path: %s, id: %s, parentid: %s", str, idValue, parentIdValue));
+
+			count++;
+		}
+
+		assert(count == 155);
 	}
 }

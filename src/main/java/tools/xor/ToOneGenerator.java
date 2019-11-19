@@ -59,7 +59,7 @@ public class ToOneGenerator extends DefaultGenerator implements IteratorListener
 
         this.start = Integer.valueOf(values[0]);
         this.nodeList = new ArrayList<>(values.length-1);
-        buildNodes(nodeList, 1);
+        buildNodes(nodeList, 1, true);
 
         this.currentNode = nodeList.get(0);
         this.value = this.start;

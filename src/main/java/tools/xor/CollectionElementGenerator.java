@@ -22,8 +22,8 @@ package tools.xor;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
-import java.util.Iterator;
 
 /**
  * Arguments are of the form:
@@ -42,7 +42,7 @@ import java.util.Iterator;
  */
 public class CollectionElementGenerator extends DefaultGenerator implements EntityGenerator, ElementGenerator
 {
-    private StateGraph.ObjectGenerationVisitor visitor;
+    // start and end represent the range from which the value is chosen
     private int start;
     private int end;
     private int blockNo;
@@ -50,12 +50,16 @@ public class CollectionElementGenerator extends DefaultGenerator implements Enti
     private int collectionSize;
     private int counter;
     private int value;
+    private StateGraph.ObjectGenerationVisitor visitor;
 
     public CollectionElementGenerator(String[] arguments) {
         super(arguments);
 
         this.start = Integer.valueOf(values[0]);
-        this.end = Integer.valueOf(values[1]);
+
+        if(values.length > 1) {
+            this.end = Integer.valueOf(values[1]);
+        }
 
         nextOwner(-1, 0, 1);
     }
@@ -78,7 +82,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Enti
     }
 
     protected void updateValue() {
-        int startOfBlock = blockNo * blockSize;
+        int startOfBlock = blockNo++ * blockSize;
         int offset = (int)(blockSize * Math.random());
         this.value = start + (startOfBlock + offset);
     }
@@ -120,9 +124,15 @@ public class CollectionElementGenerator extends DefaultGenerator implements Enti
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return this.value;
+    }
+
+    @Override
+    public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigDecimal(this.value);
     }
 
     @Override

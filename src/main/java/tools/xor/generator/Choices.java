@@ -51,11 +51,11 @@ public class Choices extends DefaultGenerator
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getIntValue(visitor);
+        return (char) getIntValue(visitor).intValue();
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Integer.valueOf(getValues()[getPosition()]).intValue();
     }

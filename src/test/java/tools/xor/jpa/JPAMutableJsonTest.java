@@ -742,7 +742,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// Dependants
 		JDBCType taskTask = (JDBCType)shape.getType("TASK_TASK");
-		CollectionElementGenerator cegen = new SlidingElementGenerator(new String[] { "1500", "4499"});
+		// generate 3000 elements from 1500-4499
+		CollectionElementGenerator cegen = new SlidingElementGenerator(new String[] { "1500" });
 		String[] collectionSizes = new String[] { "3000",
 										 "1,1499:2"
 		};

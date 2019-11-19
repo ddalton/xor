@@ -19,14 +19,10 @@
 
 package tools.xor;
 
-import tools.xor.generator.DefaultGenerator;
-import tools.xor.util.graph.StateGraph;
-
-import java.sql.Connection;
-import java.util.Iterator;
-
 /**
  * The restriction with this generator is that the element id will never be repeated.
+ *
+ * This generator does not make use of end limit, but only start
  *
  */
 public class SlidingElementGenerator extends CollectionElementGenerator

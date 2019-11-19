@@ -29,16 +29,21 @@ import java.util.List;
 
 /**
  * Arguments are of the form:
- * list of owner ids and their collection sizes
+ * We need to support different collection sizes.
+ * Some collection owners might have large collections, whereas some might have small ones.
+ * list of owner id ranges and their collection sizes
  *
  * For example:
- * 234534    - Total rows in the entity
- * 1,8000:1
- * 8001,10000:2
- * 10001,15000:5-10
+ * 234534             // Total rows in the entity
+ * 1,8000:1           // Owners with id from 1-8000 have one element collection
+ * 8001,10000:2       // Owners with id from 8001-10000 have 2 element collection
+ * 10001,15000:5-10   // Owners with id from 10001-15000 have collections with sizes ranging from 5 to 10
  *
- * In the above example a collection owner with id 9000 will have a collection containing 2 elements
  * NOTE: A negative collection will result in the owner being set as null
+ * For example:
+ * 1000
+ * -1,-1000:1         // The collection size will be multiple with the no. of owners
+ * -1,-100:10         // So this is the same as the previous one in the number of elements generated
  *
  */
 public class CollectionOwnerGenerator extends DefaultGenerator implements EntityGenerator, ElementGenerator
@@ -47,14 +52,13 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
     private StateGraph.ObjectGenerationVisitor visitor;
     private int currentValue;
     private RangeNode currentNode;
-    private int end;
-    private int max;
+    private int end;                    // Holds the last collection owner value
+    private int max;                    // Will not generate more than this value
     private int invocationCount;
     private List<RangeNode> nodeList;
-    private int value;
-    private int collectionSize;
+    private int value;                  // Collection owner value
+    private int collectionSize;         // Size of the collection when this acts as element generator
     private int counter;
-    private int offset;
 
     private static final int COLLECTION_SIZE = 1;
 
@@ -65,7 +69,7 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
 
         this.elementGenerator = elementGenerator;
         this.nodeList = new ArrayList<>(values.length-1);
-        buildNodes(nodeList, 1);
+        buildNodes(nodeList, 1, false);
 
         nextOwner(-1, 0, COLLECTION_SIZE);
     }
@@ -92,13 +96,16 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
                 setValue();
 
                 if (this.value > currentNode.getEnd()) {
-                    currentNode = currentNode.getNext();
+                    do {
+                        currentNode = currentNode.getNext();
+                    } while(currentNode != null && currentNode.getSize() == 0);
+
+                    currentNodeChanged();
                 }
 
                 // reset for next value
                 counter = 0;
             }
-            this.offset = this.value * this.counter * currentNode.getSize();
             elementGenerator.nextOwner(this.value, this.counter, currentNode.getSize());
 
             //if(elementGenerator instanceof CollectionElementGenerator) {
@@ -122,30 +129,40 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Entity
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return String.valueOf(this.value + this.offset);
+        if(this.currentNode.isNoOwner()) {
+            return null;
+        }
+        return String.valueOf(this.value);
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return this.value + this.offset;
+        if(this.currentNode.isNoOwner()) {
+            return null;
+        }
+        return this.value;
     }
 
+    // Here the collection owner is being an element generator
+    // so it needs to reset its values
     @Override public void nextOwner (int ownerId, int index, int collectionSize)
     {
         this.collectionSize = collectionSize;
         this.counter = 0;
 
         this.currentNode = nodeList.get(0);
-        this.currentValue = currentNode.getStart();
+        currentNodeChanged();
+//        this.currentValue = currentNode.getStart();
         this.end = nodeList.get(nodeList.size()-1).getEnd();
         this.invocationCount = 0;
-        setValue();
+//        setValue();
         elementGenerator.nextOwner(this.value, this.counter, currentNode.getSize());
     }
 
-    public int getOffset() {
-        return this.offset;
+    private void currentNodeChanged() {
+        this.currentValue = currentNode.getStart();
+        setValue();
     }
 
     public int getInvocationCount() {

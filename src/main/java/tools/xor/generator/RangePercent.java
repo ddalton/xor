@@ -172,7 +172,7 @@ public class RangePercent extends DefaultGenerator
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return getValue();
     }

@@ -52,23 +52,23 @@ public class QueryDataField extends DefaultGenerator
     @Override
     public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (byte)getIntValue(visitor);
+        return (byte)getIntValue(visitor).intValue();
     }
 
     @Override
     public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (short)getIntValue(visitor);
+        return (short)getIntValue(visitor).intValue();
     }
 
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getIntValue(visitor);
+        return (char) getIntValue(visitor).intValue();
     }
 
     @Override
-    public int getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Integer.valueOf(getValue(visitor).toString());
     }

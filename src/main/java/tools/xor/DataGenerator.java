@@ -36,7 +36,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -178,7 +177,7 @@ public class DataGenerator
 
     public void generateInstances(EntityType entityType, Settings settings)
     {
-        for(EntityGenerator generator : entityType.getGenerators()) {
+        for(GeneratorDriver generator : entityType.getGenerators()) {
             System.out.println(String.format("Generating data for entity: %s", entityType.getName()));
 
             List<Future> importJobs = createImportJobs();

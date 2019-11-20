@@ -19,7 +19,6 @@
 
 package tools.xor;
 
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 
 import java.lang.annotation.Annotation;
@@ -371,13 +370,13 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Return the entity specific settings related to data generation
 	 * @return
 	 */
-	public List<EntityGenerator> getGenerators ();
+	public List<GeneratorDriver> getGenerators ();
 
 	/**
 	 * add the generator settings for the entity
 	 * @param generator generator settings object
 	 */
-	public void addGenerator(EntityGenerator generator);
+	public void addGenerator(GeneratorDriver generator);
 
 	/**
 	 * Clear the generators set on this type

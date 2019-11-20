@@ -51,6 +51,11 @@ public class DefaultGenerator implements Generator
     public static final String GENERATOR_PARENT_ID = "[GENERATOR_PARENT_ID]";
     public static final String QUERY_DATA = "QUERY_DATA.";
 
+    // Used for collection sizes and range percent choices
+    protected static final String RANGE_DELIM = ",";
+    protected static final String PERCENT_DELIM = ":";
+    private static final String SIZE_DELIM = ":";
+
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     protected String[] values;
 
@@ -417,9 +422,6 @@ public class DefaultGenerator implements Generator
         // overridden by subclasses
     }
 
-    private static final String RANGE_DELIM = ",";
-    private static final String SIZE_DELIM = ":";
-
     public static class RangeNode {
         int start; // inclusive
         int end;   // inclusive
@@ -559,5 +561,65 @@ public class DefaultGenerator implements Generator
                 visit.recipient.accept(visit.generator);
             }
         }
+    }
+
+    public abstract static class PercentNode {
+        BigDecimal startPercent; // exclusive, exception is 0
+        BigDecimal endPercent; // inclusive
+        PercentNode left;
+        PercentNode right;
+
+        protected PercentNode findNode(BigDecimal random) {
+            if( (random.equals(0) && startPercent.equals(0))
+                || (random.compareTo(startPercent) == 1 && random.compareTo(endPercent) != 1) ) {
+                return this;
+            }
+
+            // walk the left tree
+            if(random.compareTo(startPercent) != 1) {
+                return left.findNode(random);
+            } else {
+                return right.findNode(random);
+            }
+        }
+
+        protected void parse(String text, PercentNode previous) {
+            if(previous == null) {
+                startPercent = new BigDecimal(0);
+            } else {
+                startPercent = previous.endPercent;
+            }
+
+            String percent = text.substring(text.indexOf(PERCENT_DELIM)+PERCENT_DELIM.length());
+            endPercent = new BigDecimal(percent);
+        }
+
+        public abstract Integer getInt ();
+
+        public abstract String getString ();
+    }
+
+    /**
+     * Given a start and end index of the values array, it returns
+     * a node, that is the root of the binary tree.
+     *
+     * @param startIndex of the values array representing the start of the tree
+     * @param endIndex of the values array representing the end of the tree
+     * @param nodeList the list of nodes converted to a tree data structure
+     * @return root node of binary tree
+     */
+    protected PercentNode buildTree(int startIndex, int endIndex, List<PercentNode> nodeList)
+    {
+        if(startIndex > endIndex) {
+            return null;
+        }
+
+        int mid = (startIndex+endIndex)/2;
+        PercentNode root = nodeList.get(mid);
+
+        root.left = buildTree(startIndex, mid-1, nodeList);
+        root.right = buildTree(mid+1, endIndex, nodeList);
+
+        return root;
     }
 }

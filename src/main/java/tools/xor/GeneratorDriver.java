@@ -25,7 +25,18 @@ import tools.xor.util.graph.StateGraph;
 
 import java.sql.Connection;
 
-public interface EntityGenerator
+/**
+ * A generator implementing this interface signals that that generator is the
+ * main driver for that type.
+ * The generator for other fields on the table can be powered of by the driving generator.
+ *
+ * There are multiple generators that can be chosen as a driver. Some examples are:
+ *  1. CounterGenerator         - A simple driver that can be used to initialize an id
+ *  2. CollectionOwnerGenerator - Useful to populate a table that has both element and owner id in the same table
+ *  3. HierarchGenerator        - Useful to populate a table that describes a hierarchy relationship
+ *  4. QueryGenerator           - If a table needs to get its values from other table(s)
+ */
+public interface GeneratorDriver
 {
     void init(Connection connection, StateGraph.ObjectGenerationVisitor visitor);
 

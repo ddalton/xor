@@ -31,7 +31,7 @@ import tools.xor.CollectionElementGenerator;
 import tools.xor.CollectionOwnerGenerator;
 import tools.xor.CounterGenerator;
 import tools.xor.ElementGenerator;
-import tools.xor.EntityGenerator;
+import tools.xor.GeneratorDriver;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableBO;
@@ -289,7 +289,7 @@ public class HanaPerf1Test
                 // Add the generators
                 // ROOTID
                 EntityType user = (EntityType)shape.getType("US_USERTAB");
-                EntityGenerator gensettings = new CounterGenerator(US_USERTAB_COUNT);
+                GeneratorDriver gensettings = new CounterGenerator(US_USERTAB_COUNT);
                 //EntityGenerator gensettings = new CounterGenerator(3500000);
                 user.addGenerator(gensettings);
 
@@ -387,7 +387,7 @@ public class HanaPerf1Test
                 // 1. Between us_grouptab and users
                 // 2. Between privateorggrouptab and users
                 EntityType bid = (EntityType)shape.getType("US_BASEIDTAB");
-                EntityGenerator cegen = new CollectionElementGenerator(new String[] { "1", "500"});
+                GeneratorDriver cegen = new CollectionElementGenerator(new String[] { "1", "500"});
                 String[] collectionSizes = new String[] { "4500", "1,100:1", "101,310:2", "311,500:10" };   // NOTE: Do not limit this
                 //EntityGenerator cegen = new CollectionElementGenerator(new String[] { "1", "3000000"});
                 //String[] collectionSizes = new String[] { "1000000",
@@ -417,7 +417,7 @@ public class HanaPerf1Test
                                                           };   // NOTE: Do not limit this
                 */
 
-                EntityGenerator cogen = new CollectionOwnerGenerator(collectionSizes,
+                GeneratorDriver cogen = new CollectionOwnerGenerator(collectionSizes,
                     (CollectionElementGenerator)cegen);
                 bid.addGenerator(cogen);
                 Generator lvidgen = new StringTemplate(new String[] {"USERS_[GENERATOR]"});
@@ -443,7 +443,7 @@ public class HanaPerf1Test
                 // PROCUREMENTUNITTAB
                 EntityType pru = (EntityType) shape.getType("PROCUREMENTUNITTAB");
                 //EntityGenerator entitySettings = new CounterGenerator(14693, 29875);
-                EntityGenerator entitySettings = new CounterGenerator(400, 100);
+                GeneratorDriver entitySettings = new CounterGenerator(400, 100);
                 pru.addGenerator(entitySettings);
 
                 rootid = (ExtendedProperty)pru.getProperty("ROOTID");

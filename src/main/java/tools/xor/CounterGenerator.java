@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class CounterGenerator extends DefaultGenerator implements Iterator<Integer>, EntityGenerator
+public class CounterGenerator extends DefaultGenerator implements Iterator<Integer>, GeneratorDriver
 {
     private final int count;
     private final int start;

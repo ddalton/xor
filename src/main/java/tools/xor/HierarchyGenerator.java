@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HierarchyGenerator extends DefaultGenerator implements EntityGenerator, Iterator<HierarchyGenerator>
+public class HierarchyGenerator extends DefaultGenerator implements GeneratorDriver, Iterator<HierarchyGenerator>
 {
     private static final String PATH_DELIM = "/";
 

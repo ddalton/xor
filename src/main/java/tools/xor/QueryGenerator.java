@@ -34,7 +34,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class QueryGenerator implements Iterator<Object[]>, EntityGenerator, Closeable
+public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Closeable
 {
     private final String sql;
     private final int max;

@@ -96,7 +96,7 @@ public abstract class AbstractType implements EntityType {
 
 	private Shape shape;
 
-	private final List<EntityGenerator> entityGenerators = new LinkedList<>();
+	private final List<GeneratorDriver> entityGenerators = new LinkedList<>();
 
 	public AbstractType() {
 		classResolver = new ClassResolver(this);
@@ -390,12 +390,12 @@ public abstract class AbstractType implements EntityType {
 		return false;
 	}
 
-	@Override public List<EntityGenerator> getGenerators ()
+	@Override public List<GeneratorDriver> getGenerators ()
 	{
 		return this.entityGenerators;
 	}
 
-	@Override public void addGenerator (EntityGenerator generator)
+	@Override public void addGenerator (GeneratorDriver generator)
 	{
 		this.entityGenerators.add(generator);
 	}

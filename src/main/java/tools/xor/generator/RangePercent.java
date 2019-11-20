@@ -25,7 +25,6 @@ import tools.xor.util.graph.StateGraph;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,11 +32,9 @@ import java.util.List;
 public class RangePercent extends DefaultGenerator
 {
     private static final String PLACEHOLDER = "[__]";
-    private static final String RANGE_DELIM = ",";
-    private static final String PERCENT_DELIM = ":";
 
-    List<RangeNode> nodeList;
-    RangeNode tree;
+    List<PercentNode> nodeList;
+    PercentNode tree;
 
     /**
      * Arguments are of the form:
@@ -52,6 +49,16 @@ public class RangePercent extends DefaultGenerator
      * 36,85:0.36
      * 86,2576:1.00
      *
+     * or
+     *
+     * 1:0.06          // The same value of 1 is returned
+     * 4,15:0.18
+     * 16,35:0.30
+     * 36,85:0.36
+     * 86,2576:1.00
+     *
+     * :0.06      // to represent a null value
+     *
      * Implementation wise, we use a binary tree for efficiency
      *
      * @param arguments
@@ -62,7 +69,7 @@ public class RangePercent extends DefaultGenerator
 
         buildNodes();
 
-        this.tree = buildTree(0, nodeList.size()-1);
+        this.tree = buildTree(0, nodeList.size()-1, nodeList);
     }
 
     private void buildNodes() {
@@ -78,97 +85,70 @@ public class RangePercent extends DefaultGenerator
         }
     }
 
-    private static class RangeNode {
-        int startVal;
-        int endVal;
-        BigDecimal startPercent; // exclusive, exception is 0
-        BigDecimal endPercent; // inclusive
-
-        RangeNode left;
-        RangeNode right;
+    private static class RangeNode extends PercentNode {
+        Integer startVal;
+        Integer endVal;
 
         public void parse(String text, RangeNode previous) {
-            if(previous == null) {
-                startPercent = new BigDecimal(0);
+            super.parse(text, previous);
+
+            // This particular entry is an explicit value and does not constitute a range
+            String range = text.substring(0, text.indexOf(PERCENT_DELIM)).trim();
+            if(range.indexOf(RANGE_DELIM) == -1) {
+                if(!("".equals(range))) {
+                    this.startVal = new Integer(range);
+                }
+                this.endVal = startVal;
             } else {
-                startPercent = previous.endPercent;
-            }
-
-            String range = text.substring(0, text.indexOf(PERCENT_DELIM));
-            String percent = text.substring(text.indexOf(PERCENT_DELIM)+PERCENT_DELIM.length());
-
-            endPercent = new BigDecimal(percent);
-
-            this.startVal = new Integer(range.substring(0, range.indexOf(RANGE_DELIM)));
-            this.endVal = new Integer(range.substring(text.indexOf(RANGE_DELIM)+RANGE_DELIM.length()));
-        }
-
-        private RangeNode findNode(BigDecimal random) {
-            if( (random.equals(0) && startPercent.equals(0))
-                || (random.compareTo(startPercent) == 1 && random.compareTo(endPercent) != 1) ) {
-                return this;
-            }
-
-            // walk the left tree
-            if(random.compareTo(startPercent) != 1) {
-                return left.findNode(random);
-            } else {
-                return right.findNode(random);
+                this.startVal = new Integer(range.substring(0, range.indexOf(RANGE_DELIM)));
+                this.endVal = new Integer(range.substring(
+                    text.indexOf(RANGE_DELIM) + RANGE_DELIM.length()));
             }
         }
 
-        public int getRandom() {
-            long range = endVal - startVal;
-            return startVal + ((int)(Math.random() * range));
+        @Override
+        public Integer getInt () {
+            if(startVal == null) {
+                return null;
+            }
+
+            if(startVal == endVal) {
+                return startVal;
+            } else {
+                long range = endVal - startVal;
+                return startVal + ((int)(Math.random() * range));
+            }
+        }
+
+        @Override
+        public String getString() {
+            return getInt() == null ? null : String.valueOf(getInt());
         }
     }
 
-    /**
-     * Given a start and end index of the values array, it returns
-     * a node, that is the root of the binary tree.
-     *
-     * @param startIndex of the values array representing the start of the tree
-     * @param endIndex of the values array representing the end of the tree
-     * @return root node of binary tree
-     */
-    private RangeNode buildTree(int startIndex, int endIndex)
-    {
-        if(startIndex > endIndex) {
-            return null;
-        }
-
-        int mid = (startIndex+endIndex)/2;
-        RangeNode root = nodeList.get(mid);
-
-        root.left = buildTree(startIndex, mid-1);
-        root.right = buildTree(mid+1, endIndex);
-
-        return root;
-    }
-
-    private int getValue() {
+    protected Integer getValue() {
         BigDecimal random = BigDecimal.valueOf(Math.random());
 
-        RangeNode node = tree.findNode(random);
-        return node.getRandom();
+        PercentNode node = tree.findNode(random);
+        return node.getInt();
     }
 
     @Override
     public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (byte)getValue();
+        return (byte)getValue().intValue();
     }
 
     @Override
     public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (short)getValue();
+        return (short)getValue().intValue();
     }
 
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getValue();
+        return (char) getValue().intValue();
     }
 
     @Override
@@ -215,7 +195,8 @@ public class RangePercent extends DefaultGenerator
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return values[0].replace(PLACEHOLDER, String.valueOf(getValue()));
+        Integer value = getValue();
+        return value == null ? null : values[0].replace(PLACEHOLDER, String.valueOf(value));
     }
 
     @Override public int getFanout (Property property, Settings settings, String path, StateGraph.ObjectGenerationVisitor visitor)

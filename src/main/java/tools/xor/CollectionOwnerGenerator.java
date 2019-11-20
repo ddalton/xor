@@ -24,7 +24,6 @@ import tools.xor.util.graph.StateGraph;
 
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,7 +45,7 @@ import java.util.List;
  * -1,-100:10         // So this is the same as the previous one in the number of elements generated
  *
  */
-public class CollectionOwnerGenerator extends DefaultGenerator implements EntityGenerator, ElementGenerator
+public class CollectionOwnerGenerator extends DefaultGenerator implements GeneratorDriver, ElementGenerator
 {
     private final ElementGenerator elementGenerator;
     private StateGraph.ObjectGenerationVisitor visitor;

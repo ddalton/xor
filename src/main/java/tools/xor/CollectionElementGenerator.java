@@ -40,7 +40,7 @@ import java.sql.Connection;
  * If this restriction is not needed, then the calculation can be more efficient.
  *
  */
-public class CollectionElementGenerator extends DefaultGenerator implements EntityGenerator, ElementGenerator
+public class CollectionElementGenerator extends DefaultGenerator implements GeneratorDriver, ElementGenerator
 {
     // start and end represent the range from which the value is chosen
     private int start;

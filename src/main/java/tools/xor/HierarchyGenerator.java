@@ -51,6 +51,7 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
         3,
         5,
         7,
+        11,
         31,
         97,
         239,
@@ -105,11 +106,12 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
             for(int i = 0; i < PRIMES.length; i++) {
                 int value = PRIMES[i];
 
-                if(Math.pow(maxDepth, value) > totalRecords) {
+                if(Math.pow(value, maxDepth) > totalRecords) {
                     chosen = i;
                     break;
                 }
             }
+            //System.out.println(String.format("total: %s, depth: %s, chosen: %s, result: %s", totalRecords, maxDepth, chosen, Math.pow(PRIMES[chosen], maxDepth)));
 
             if(chosen == -1) {
                 throw new RuntimeException("Unable to choose a prime value for the desired levels and records."
@@ -153,8 +155,6 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
 
     @Override public HierarchyGenerator next ()
     {
-        //HierarchyGenerator result = this;
-
         boolean incremented = false;
         if(pathPart == null || childGenerator == null || !childGenerator.hasNext()) {
             generate();
@@ -164,6 +164,7 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
             }
 
             incremented = true;
+            current = this;
         }
 
         if(!incremented) {

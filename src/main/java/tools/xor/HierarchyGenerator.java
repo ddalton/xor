@@ -37,10 +37,13 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
     private HierarchyGenerator childGenerator;
     private HierarchyGenerator parentGenerator;
     private SharedCounterGenerator idGenerator;   // If populated helps to additionally track an id. There should be separate one for each HierarchyGenerator.
-    private int maxItems;                         // max number of items in a particular level for a path
+    private int maxInLevel;                         // max number of items in a particular level for a path
+    private int total;
     private int counter;                          // current position of item that was last generated
+    private int invocationCount;
     private String pathPart;
     private String delim;
+    private HierarchyGenerator current = this;
 
     // Will be used to find the sizes > 2
     static int[] PRIMES = {
@@ -72,7 +75,7 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
      * upto maxDepth and capable to generating upto totalRecords
      *
      * @param maxDepth the max depth of the hierarchy
-     * @param totalRecords that is capable of being generated
+     * @param totalRecords that needs to be generated
      * @return the root hierarchy generator object
      */
     static public HierarchyGenerator build(int maxDepth, int totalRecords) {
@@ -96,7 +99,7 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
         }
 
         if(maxDepth == 1) {
-            root.setMaxItems(totalRecords);
+            root.setMaxInLevel(totalRecords);
         } else {
             int chosen = -1;
             for(int i = 0; i < PRIMES.length; i++) {
@@ -115,17 +118,22 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
 
             current = root;
             while(current != null) {
-                current.setMaxItems(PRIMES[chosen]);
+                current.setMaxInLevel(PRIMES[chosen]);
                 current = current.childGenerator;
             }
         }
+        root.setTotal(totalRecords);
 
         return root;
     }
 
-    public void setMaxItems(int maxItems)
+    public void setTotal(int total) {
+        this.total = total;
+    }
+
+    public void setMaxInLevel (int maxItems)
     {
-        this.maxItems = maxItems;
+        this.maxInLevel = maxItems;
     }
 
     public void linkChild(HierarchyGenerator child) {
@@ -140,12 +148,12 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
 
     @Override public boolean hasNext ()
     {
-        return counter < maxItems || (childGenerator != null && childGenerator.hasNext());
+        return (counter < maxInLevel || (childGenerator != null && childGenerator.hasNext())) && (this.parentGenerator != null || invocationCount < total);
     }
 
     @Override public HierarchyGenerator next ()
     {
-        HierarchyGenerator result = this;
+        //HierarchyGenerator result = this;
 
         boolean incremented = false;
         if(pathPart == null || childGenerator == null || !childGenerator.hasNext()) {
@@ -160,10 +168,11 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
 
         if(!incremented) {
             // childGenerator cannot be null
-            result = childGenerator.next();
+            current = childGenerator.next();
         }
+        invocationCount++;
 
-        return result;
+        return current;
     }
 
     private void generate() {
@@ -189,8 +198,16 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
         return this.idGenerator;
     }
 
+    public SharedCounterGenerator getCurrentIdGenerator() {
+        return current.idGenerator;
+    }
+
     public HierarchyGenerator getParentGenerator() {
         return this.parentGenerator;
+    }
+
+    public HierarchyGenerator getCurrentParent() {
+        return current.parentGenerator;
     }
 
     @Override
@@ -206,8 +223,8 @@ public class HierarchyGenerator extends DefaultGenerator implements EntityGenera
             current = current.childGenerator;
         }
 
-        StringBuilder sb = new StringBuilder(PATH_DELIM);
-        sb.append(String.join(PATH_DELIM, paths));
+        StringBuilder sb = new StringBuilder(this.delim);
+        sb.append(String.join(this.delim, paths));
 
         return sb.toString();
     }

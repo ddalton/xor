@@ -698,21 +698,22 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		int count = 0;
 		while(root.hasNext()) {
-			HierarchyGenerator gen = root.next();
-			SharedCounterGenerator scg = gen.getIdGenerator();
+			root.next();
+			//HierarchyGenerator gen = root.next();
+			SharedCounterGenerator scg = root.getCurrentIdGenerator();
 			String idValue = scg.getStringValue(null, null);
 
-			HierarchyGenerator parentGen = gen.getParentGenerator();
+			HierarchyGenerator parentGen = root.getCurrentParent();
 			SharedCounterGenerator parentscg = parentGen == null ? null : parentGen.getIdGenerator();
 			String parentIdValue = parentscg == null ? null : parentscg.getStringValue(null, null);
 
 
 			String str = root.getStringValue(null, null);
-			//System.out.println(String.format("path: %s, id: %s, parentid: %s", str, idValue, parentIdValue));
+			System.out.println(String.format("path: %s, id: %s, parentid: %s", str, idValue, parentIdValue));
 
 			count++;
 		}
 
-		assert(count == 155);
+		assert(count == 30);
 	}
 }

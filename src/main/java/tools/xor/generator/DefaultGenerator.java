@@ -592,6 +592,14 @@ public class DefaultGenerator implements Generator
 
             String percent = text.substring(text.indexOf(PERCENT_DELIM)+PERCENT_DELIM.length());
             endPercent = new BigDecimal(percent);
+
+            if(endPercent.compareTo(new BigDecimal(0)) <= 0) {
+                throw new RuntimeException(String.format("The percent value %s needs to be greater than 0", endPercent));
+            }
+
+            if(endPercent.compareTo(new BigDecimal(1)) > 0) {
+                throw new RuntimeException(String.format("The percent value %s needs to be <= 1.00", endPercent));
+            }
         }
 
         public abstract Integer getInt ();

@@ -69,4 +69,9 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
     {
         this.visitor = visitor;
     }
+
+    @Override
+    public String getCurrentValue(StateGraph.ObjectGenerationVisitor visitor) {
+        return String.valueOf(current);
+    }
 }

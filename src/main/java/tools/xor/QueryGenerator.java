@@ -30,9 +30,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Closeable
 {
@@ -47,6 +49,9 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
     private int fetchSize = 1000;
     private StateGraph.ObjectGenerationVisitor visitor;
     private List<DefaultGenerator.GeneratorVisit> visits;
+
+    // Used if the generator is a driver
+    private Set<IteratorListener> listeners = new HashSet<>();
 
     public QueryGenerator (String sql,
                            int max)
@@ -138,6 +143,16 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
             for (DefaultGenerator.GeneratorVisit visit : visits) {
                 visit.getRecipient().accept(visit.getGenerator());
             }
+        }
+    }
+
+    public void addListener(IteratorListener listener) {
+        listeners.add(listener);
+    }
+
+    protected void notifyListeners(int sourceId, StateGraph.ObjectGenerationVisitor visitor) {
+        for(IteratorListener listener: listeners) {
+            listener.handleEvent(sourceId, visitor);
         }
     }
 }

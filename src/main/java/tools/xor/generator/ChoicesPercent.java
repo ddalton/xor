@@ -55,7 +55,7 @@ public class ChoicesPercent extends DefaultGenerator
 
         buildNodes();
 
-        this.tree = buildTree(0, nodeList.size()-1, nodeList);
+        this.tree = (PercentNode)buildTree(0, nodeList.size()-1, nodeList);
     }
 
     private void buildNodes() {
@@ -97,7 +97,7 @@ public class ChoicesPercent extends DefaultGenerator
     protected String getValue() {
         BigDecimal random = BigDecimal.valueOf(Math.random());
 
-        PercentNode node = tree.findNode(random);
+        PercentNode node = (PercentNode)tree.findNode(random);
         return node.getString();
     }
 

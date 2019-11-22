@@ -33,7 +33,6 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
     private final int start;
     private StateGraph.ObjectGenerationVisitor visitor;
     private int current;
-    private Set<IteratorListener> listeners = new HashSet<>();
 
     public CounterGenerator(int count) {
         this(count, 0);
@@ -51,10 +50,6 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
         this.current = start;
     }
 
-    public void addListener(IteratorListener listener) {
-        listeners.add(listener);
-    }
-
     @Override public boolean hasNext ()
     {
         return current < count+start;
@@ -65,10 +60,7 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
         int value = current++;
 
         visitor.setContext(value);
-
-        for(IteratorListener listener: listeners) {
-            listener.handleEvent(value, this.visitor);
-        }
+        notifyListeners(value, this.visitor);
 
         return value;
     }

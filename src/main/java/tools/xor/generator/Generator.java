@@ -166,4 +166,13 @@ public interface Generator
      * @param visitor context
      */
     void init(StateGraph.ObjectGenerationVisitor visitor);
+
+    /**
+     * Returns the current value from the generator if applicable
+     * It is an undecorated value of the string representation.
+     *
+     * @param visitor context
+     * @return current value
+     */
+    String getCurrentValue(StateGraph.ObjectGenerationVisitor visitor);
 }

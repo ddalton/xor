@@ -173,6 +173,8 @@ public class HierarchyGenerator extends DefaultGenerator implements GeneratorDri
         }
         invocationCount++;
 
+        notifyListeners(invocationCount, this.visitor);
+
         return current;
     }
 

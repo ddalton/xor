@@ -125,7 +125,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                 {
                     String value = null;
                     if(generator != null) {
-                        value = generator.getStringValue(null, visitor);
+                        value = generator.getCurrentValue(visitor);
                         if (value == null) {
                             return null;
                         }
@@ -145,7 +145,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                     String value = null;
                     if(generator != null) {
                         SharedCounterGenerator idGen = ((HierarchyGenerator) generator).getCurrentIdGenerator();
-                        value = idGen.getStringValue(null, visitor);
+                        value = idGen.getCurrentValue(visitor);
                         if (value == null) {
                             return null;
                         }
@@ -168,7 +168,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                         SharedCounterGenerator parentIdGen = (parentGen == null) ? null : parentGen.getIdGenerator();
 
                         if(parentIdGen != null) {
-                            value = parentIdGen.getStringValue(null, visitor);
+                            value = parentIdGen.getCurrentValue(visitor);
                         }
                         if (value == null) {
                             return null;

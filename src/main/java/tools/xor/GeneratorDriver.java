@@ -43,4 +43,6 @@ public interface GeneratorDriver
     public void processVisitors();
 
     void addVisit(DefaultGenerator.GeneratorVisit visit);
+
+    void addListener(IteratorListener listener);
 }

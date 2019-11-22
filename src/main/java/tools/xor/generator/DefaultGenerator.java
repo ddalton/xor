@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.IteratorListener;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
@@ -35,8 +36,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class DefaultGenerator implements Generator
 {
@@ -55,9 +58,13 @@ public class DefaultGenerator implements Generator
     protected static final String RANGE_DELIM = ",";
     protected static final String PERCENT_DELIM = ":";
     private static final String SIZE_DELIM = ":";
+    protected static final String PLACEHOLDER = "[__]";
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     protected String[] values;
+
+    // Used if the generator is a driver
+    private Set<IteratorListener> listeners = new HashSet<>();
 
     // Used to cache the fanout value for a FixedSet generator of domain values
     // It's value has the following interpretation:
@@ -422,6 +429,47 @@ public class DefaultGenerator implements Generator
         // overridden by subclasses
     }
 
+    public static class ModRange {
+        Integer newstart; // start for the new range
+        Integer newend;   // end for the new range
+        int start;    // start of existing range
+        int end;      // end of existing range
+        int newRangeDiff;
+
+        public void parse(String text) {
+            if(text.indexOf(SIZE_DELIM) == -1) {
+                throw new RuntimeException("Expected input of format <new start>,<new end>:<start>,<end>");
+            }
+
+            String newRange = text.substring(0, text.indexOf(SIZE_DELIM)).trim();
+            String range = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length()).trim();
+
+            if(!("".equals(newRange))) {
+                this.newstart = new Integer(newRange.substring(0, newRange.indexOf(RANGE_DELIM)).trim());
+                this.newend = new Integer(newRange.substring(newRange.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
+                newRangeDiff = newend - newstart;
+            }
+
+            this.start = new Integer(range.substring(0, range.indexOf(RANGE_DELIM)).trim());
+            this.end = new Integer(range.substring(range.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
+        }
+
+        public Integer getNewValue(int value) {
+            if(newstart == null) {
+                return null;
+            }
+
+            assert(value >= start && value <= end) : "value should be within range inclusive";
+
+            // convert value from old range to new range
+            return start + (value%newRangeDiff);
+        }
+
+        public boolean inRange(int value) {
+            return (value >= start && value <= end);
+        }
+    }
+
     public static class RangeNode {
         int start; // inclusive
         int end;   // inclusive
@@ -629,5 +677,19 @@ public class DefaultGenerator implements Generator
         root.right = buildTree(mid+1, endIndex, nodeList);
 
         return root;
+    }
+
+    public String getCurrentValue(StateGraph.ObjectGenerationVisitor visitor) {
+        return getStringValue(null, visitor);
+    }
+
+    public void addListener(IteratorListener listener) {
+        listeners.add(listener);
+    }
+
+    protected void notifyListeners(int sourceId, StateGraph.ObjectGenerationVisitor visitor) {
+        for(IteratorListener listener: listeners) {
+            listener.handleEvent(sourceId, visitor);
+        }
     }
 }

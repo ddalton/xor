@@ -117,6 +117,8 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Genera
             return null;
         }
 
+        notifyListeners(value, this.visitor);
+
         return this.value;
     }
 

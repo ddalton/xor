@@ -77,6 +77,8 @@ public class CollectionElementGenerator extends DefaultGenerator implements Gene
 
         updateValue();
 
+        notifyListeners(value, this.visitor);
+
         counter++;
         return value;
     }

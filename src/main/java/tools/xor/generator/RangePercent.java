@@ -31,10 +31,9 @@ import java.util.List;
 
 public class RangePercent extends DefaultGenerator
 {
-    private static final String PLACEHOLDER = "[__]";
-
-    List<PercentNode> nodeList;
-    PercentNode tree;
+    private List<PercentNode> nodeList;
+    private PercentNode tree;
+    protected Integer value;
 
     /**
      * Arguments are of the form:
@@ -122,7 +121,9 @@ public class RangePercent extends DefaultGenerator
 
         @Override
         public String getString() {
-            return getInt() == null ? null : String.valueOf(getInt());
+            Integer val = getInt();
+
+            return val == null ? null : String.valueOf(val);
         }
     }
 
@@ -130,7 +131,9 @@ public class RangePercent extends DefaultGenerator
         BigDecimal random = BigDecimal.valueOf(Math.random());
 
         PercentNode node = tree.findNode(random);
-        return node.getInt();
+        this.value = node.getInt();
+
+        return this.value;
     }
 
     @Override
@@ -202,5 +205,10 @@ public class RangePercent extends DefaultGenerator
     @Override public int getFanout (Property property, Settings settings, String path, StateGraph.ObjectGenerationVisitor visitor)
     {
         return getValue();
+    }
+
+    @Override
+    public String getCurrentValue(StateGraph.ObjectGenerationVisitor visitor) {
+        return value == null ? null : String.valueOf(value);
     }
 }

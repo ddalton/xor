@@ -38,8 +38,12 @@ import java.util.Set;
 public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.AutonomousEdge<V>> extends StateGraph<V, E> implements Tree<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-	// TODO: support mapping between path and state
 	private V rootState;
+
+	// Needed for copy functionality
+	StateTree(Type aggregateRoot, Shape shape) {
+		super(aggregateRoot, shape);
+	}
 	
 	public StateTree(Type aggregateRoot, Shape shape, State rootState) {
 		super(aggregateRoot, shape);
@@ -110,6 +114,36 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 
 			descendants = new HashMap<>();
 			children = new HashSet<>();
+		}
+
+		@Override
+		public State copy() {
+			SubtypeState result = new SubtypeState((QueryType)getType(), this.isStartState());
+			copyData(result);
+
+			// Resolvers can be shared
+			result.resolvers = resolvers;
+
+			return result;
+		}
+
+		public void copyDependencies(SubtypeState copy, Map<SubtypeState, SubtypeState> oldNew) {
+
+			if(supertype != null) {
+				copy.supertype = oldNew.get(supertype);
+			}
+
+			if(children.size() > 0) {
+				for(SubtypeState child: children) {
+					copy.children.add(oldNew.get(child));
+				}
+			}
+
+			if(descendants.size() > 0) {
+				for(Map.Entry<String, SubtypeState> entry: descendants.entrySet()) {
+					copy.descendants.put(entry.getKey(), oldNew.get(entry.getValue()));
+				}
+			}
 		}
 
 		public SubtypeState getSupertype () {
@@ -652,10 +686,25 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 	@Override
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
 
-		StateTree<V, E> result = new StateTree<V, E>(getAggregateRoot(), getShape(), this.rootState);
+		StateTree<V, E> result = new StateTree<V, E>(getAggregateRoot(), getShape());
 
 		copyData(result, mergeStates);
 
 		return result;
+	}
+
+	@Override
+	protected Map<V, V> copyData(StateGraph<V, E> copy, Map<Type, V> mergeStates) {
+		Map<V, V> oldNew = super.copyData(copy, mergeStates);
+
+		// Copy dependencies
+		for(Map.Entry<V, V> entry: oldNew.entrySet()) {
+			entry.getKey().copyDependencies(entry.getValue(),
+				(Map<SubtypeState, SubtypeState>)oldNew);
+		}
+
+		((StateTree)copy).rootState = (V) oldNew.get(getRootState());
+
+		return oldNew;
 	}
 }

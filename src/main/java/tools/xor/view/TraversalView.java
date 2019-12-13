@@ -215,6 +215,16 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         return this.primaryKeyAttribute;
     }
 
+    @Override public boolean isTempTablePopulated ()
+    {
+        return false;
+    }
+
+    @Override public void setTempTablePopulated (boolean tempTablePopulated)
+    {
+        throw new UnsupportedOperationException("This method cannot be invoked on TraversalView");
+    }
+
     public void setPrimaryKeyAttribute (List<String> attribute) {
         this.primaryKeyAttribute = attribute;
     }
@@ -587,7 +597,9 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             extractJSON(result, attributeList);
         }
 
-        expand(result, "", expanding);
+        if(!isCompositionView()) {
+            expand(result, "", expanding);
+        }
 
         return result;
     }
@@ -677,6 +689,31 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         return false;
     }
 
+    @Override
+    public boolean isCompositionView() {
+
+        if(getAttributeList() != null) {
+            for (String attribute : getAttributeList()) {
+                if (isCompositionReference(attribute)) {
+                    View view = getView(shape, attribute);
+                    if(view.isCustom()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean isCompositionReference(String path) {
+        if(path.trim().startsWith(TraversalView.VIEW_REFERENCE_START)) {
+            return true;
+        }
+
+        return false;
+    }
+
     // TODO: A view is expanded for 2 reasons
     // 1. QUERY - to be used in a query
     //            Any user provided child queries (or view references) should not be expanded
@@ -702,26 +739,30 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
         this.json = extractJSON(expanding);
 
-        // Find and substitute the view references
-        // TODO: save a copy of the original attributeList to help with identifiying if
-        //       it is expandable
-        attributeList = getExpandedList(getAttributeList(), expanding);
+        // We don't expand composition views
+        if(!isCompositionView()) {
+            // Find and substitute the view references
+            // TODO: save a copy of the original attributeList to help with identifiying if
+            //       it is expandable
+            attributeList = getExpandedList(getAttributeList(), expanding);
 
-        // Get the RegEx attributes
-        Map<String, Pattern> regexMap = new HashMap<>();
-        Set<String> exactSet = new HashSet<>();
-        for(String attrPath: this.attributeList) {
-            if(DFAtoRE.isRegex(attrPath)) {
-                regexMap.put(attrPath, Pattern.compile(attrPath));
-            } else {
-                exactSet.add(attrPath);
+            // Get the RegEx attributes
+            Map<String, Pattern> regexMap = new HashMap<>();
+            Set<String> exactSet = new HashSet<>();
+            for (String attrPath : this.attributeList) {
+                if (DFAtoRE.isRegex(attrPath)) {
+                    regexMap.put(attrPath, Pattern.compile(attrPath));
+                }
+                else {
+                    exactSet.add(attrPath);
+                }
             }
-        }
-        if(regexMap.size() > 0) {
-            this.setRegexAttributes(regexMap);
-        }
-        if(exactSet.size() > 0) {
-            this.setExactAttributes(exactSet);
+            if (regexMap.size() > 0) {
+                this.setRegexAttributes(regexMap);
+            }
+            if (exactSet.size() > 0) {
+                this.setExactAttributes(exactSet);
+            }
         }
 
         setExpanded(true);

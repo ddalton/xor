@@ -131,6 +131,7 @@ public abstract class DBTranslator
     }
 
     public BindParameter.SQLConverter getSQLConverter(int type) {
+
         // TODO: Move from BindParameter to here
         return null;
     }

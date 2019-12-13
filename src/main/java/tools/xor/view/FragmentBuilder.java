@@ -22,8 +22,10 @@ package tools.xor.view;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.QueryType;
+import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
@@ -33,14 +35,18 @@ import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.Tree;
 import tools.xor.util.graph.TypeGraph;
 
+import javax.swing.text.html.parser.Entity;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is responsible for building a tree of QueryFragment nodes connected by
@@ -56,15 +62,21 @@ public class FragmentBuilder
         this.aggregateTree = aggregateTree;
     }
 
-    private void constructQueryTrees (QueryTree parent, View childView) {
+    private void constructQueryTrees (QueryTree<QueryFragment, IntraQuery<QueryFragment>> parent, View childView) {
         // first build the QueryTree for the child
+        // The EntityType for the child QueryTree is derived as:
+        // 1. If the child view does not have a name or a typename, then it inherits the parent's type
+        // 2. If the child view has a typename, that that is the child's entity type
+        // 3. If the child view has a name, then it is a property of the parent type and this
+        //    property type is used as the child view's entity type
+
         EntityType entityType = null;
+        Property property = null; // Needed to label the edge to the child
         if(childView.getTypeName() != null && !"".equals(childView.getTypeName().trim())) {
             entityType = (EntityType)aggregateTree.getView().getShape().getType(childView.getTypeName());
         } else {
             // derive it from the root
             if(childView.getName() != null && !"".equals(childView.getName().trim()) ) {
-                Property property = null;
                 for(QueryTree qp: aggregateTree.getRoots()) {
                     property = qp.getAggregateType().getProperty(childView.getName());
                     if(property != null) {
@@ -72,7 +84,11 @@ public class FragmentBuilder
                     }
                 }
                 if(property != null) {
-                    entityType = (EntityType) property.getType();
+                    if(property.isMany()) {
+                        entityType = (EntityType) ((ExtendedProperty)property).getElementType();
+                    } else {
+                        entityType = (EntityType)property.getType();
+                    }
                 }
             }
             if(entityType == null) {
@@ -80,37 +96,67 @@ public class FragmentBuilder
                 entityType = (EntityType)parent.getAggregateType();
             }
         }
-        QueryTree<QueryFragment, IntraQuery<QueryFragment>> childPiece = new QueryTree(entityType, childView);
-        build(childPiece);
 
-        QueryTree.FragmentAnchor sourceAnchor = null;
-        for(QueryTree qp: aggregateTree.getRoots()) {
-            sourceAnchor = qp.findFragment(childView.getName());
-            if(sourceAnchor != null) {
-                break;
+
+        List<QueryTree> queriesFromView = getQueriesFromView(childView, entityType);
+        for(QueryTree<QueryFragment, IntraQuery<QueryFragment>> childQueryTree: queriesFromView) {
+            build(childQueryTree);
+
+            QueryTree.FragmentAnchor sourceAnchor = null;
+            for (QueryTree qp : aggregateTree.getRoots()) {
+                sourceAnchor = qp.findFragment(childView.getName());
+                if (sourceAnchor != null) {
+                    break;
+                }
             }
-        }
-        if(sourceAnchor != null) {
-            QueryFragment sourceFragment = sourceAnchor.fragment;
-            QueryFragment targetFragment = childPiece.getRoot();
+            if (sourceAnchor != null) {
+                QueryFragment sourceFragment = sourceAnchor.fragment;
+                QueryFragment targetFragment = childQueryTree.getRoot();
 
-            addInterQueryEdge(parent, childPiece, sourceFragment, targetFragment);
-        }
+                addInterQueryEdge(property, parent, childQueryTree, sourceFragment, targetFragment);
+            } else if(parent.getView().isCustom()) {
+                QueryFragment sourceFragment = parent.getRoot();
+                QueryFragment targetFragment = childQueryTree.getRoot();
 
-        if(childView.getChildren() != null) {
-            for (View grandchildView: childView.getChildren()) {
-                constructQueryTrees(childPiece, grandchildView);
+                addInterQueryEdge(property, parent, childQueryTree, sourceFragment, targetFragment);
+            }
+
+            if(childView.getChildren() != null) {
+                for (View grandchildView: childView.getChildren()) {
+                    constructQueryTrees(childQueryTree, grandchildView);
+                }
             }
         }
     }
 
-    private void addInterQueryEdge(QueryTree parent, QueryTree<QueryFragment, IntraQuery<QueryFragment>> childPiece,
-                                   QueryFragment sourceFragment, QueryFragment targetFragment) {
+    private void addInterQueryEdge(Property property,
+                                   QueryTree parent,
+                                   QueryTree<QueryFragment, IntraQuery<QueryFragment>> childPiece,
+                                   QueryFragment sourceFragment,
+                                   QueryFragment targetFragment) {
+
         // TODO: Ensure that the source fragment has id property to help with reconstitution
         aggregateTree.addEdge(
             new InterQuery(
-                "", parent,
-                childPiece, sourceFragment, targetFragment), parent, childPiece);
+                property == null ? "" : property.getName(), parent, childPiece, sourceFragment, targetFragment),
+            parent,
+            childPiece);
+    }
+
+    private List<QueryTree> getQueriesFromView(View view, EntityType entityType) {
+        List<QueryTree> rootQueries = new ArrayList<>();
+        if(view.isCompositionView()) {
+            // A composition view only contains view references as its attributes
+            // Create a querytree for each of them
+            for(View child: getCompositionViews(view, entityType.getShape())) {
+                // Make a copy of the child view
+                rootQueries.add(new QueryTree(entityType, child.copy()));
+            }
+        } else {
+            rootQueries.add(new QueryTree(entityType, view));
+        }
+
+        return rootQueries;
     }
 
     /**
@@ -121,17 +167,32 @@ public class FragmentBuilder
     {
         View view = aggregateTree.getView();
 
-        QueryTree queryTree = new QueryTree(entityType, view);
-        // If the view has direct attributes or no children then build a query for this view
-        if(view.getAttributeList().size() > 0 || (view.getChildren() == null || view.getChildren().size() == 0)) {
-            build(queryTree);
-        }
-
-        if (view.getChildren() != null) {
-            for (View childView : view.getChildren()) {
-                constructQueryTrees(queryTree, childView);
+        List<QueryTree> rootQueries = getQueriesFromView(view, entityType);
+        for(QueryTree queryTree: rootQueries) {
+            // If the view has direct attributes or no children then build a query for this view
+            if (view.getAttributeList().size() > 0 || (view.getChildren() == null
+                || view.getChildren().size() == 0)) {
+                build(queryTree);
+            }
+            if (view.getChildren() != null) {
+                for (View childView : view.getChildren()) {
+                    constructQueryTrees(queryTree, childView);
+                }
             }
         }
+    }
+
+    private Set<View> getCompositionViews(View view, Shape shape) {
+
+        Set<View> views = new HashSet<>();
+        for(String attribute: view.getAttributeList()) {
+            if(TraversalView.isCompositionReference(attribute)) {
+                String viewname = TraversalView.getViewReference(attribute);
+                views.add(shape.getView(viewname));
+            }
+        }
+
+        return views;
     }
 
     public void build(QueryTree queryTree)

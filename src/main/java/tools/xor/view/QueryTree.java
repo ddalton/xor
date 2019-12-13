@@ -542,6 +542,12 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		if(path == null || root == null) {
 			return null;
 		}
+
+		// We are looking for the root
+		if(path.equals(root.getAncestorPath())) {
+			return "";
+		}
+
 		String anchorPath = root.getAnchorPath();
 
 		// we first strip out the ancestor path from the root QueryTree

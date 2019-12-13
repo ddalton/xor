@@ -50,7 +50,7 @@ public class QueryJoinAction implements Action
         // Child queries need to refer to the session id/invocation id while refering to the parent ids
 
         Set<QueryFragment> processed = new HashSet<>();
-        for(InterQuery edge: edgesToProcess) {
+        for(InterQuery<QueryTree> edge: edgesToProcess) {
             if(processed.contains(edge.getSource())) {
                 continue;
             }
@@ -60,7 +60,11 @@ public class QueryJoinAction implements Action
             Set ids = qti.getParentIds(edge);
 
             // perform the insert (will choose the correct id column based on the type of the id object)
-            po.populateQueryJoinTable(invocationId, ids);
+            // We do this only if the parent query has not already populated
+            QueryTree queryTree = edge.getStart();
+            if(queryTree.getView() == null || !queryTree.getView().isTempTablePopulated()) {
+                po.populateQueryJoinTable(invocationId, ids);
+            }
 
             processed.add(source);
         }

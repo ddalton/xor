@@ -72,8 +72,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	
 	public StateGraph(Type aggregateRoot, Shape shape) {
 		super();
-		this.root = aggregateRoot;
 		this.shape = shape;
+		this.root = aggregateRoot;
 
 		assert(this.shape != null) : "Shape cannot be null";
 	}
@@ -238,14 +238,14 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	@Override
 	public StateGraph<V, E> copy(Map<Type, V> mergeStates) {
 		
-		StateGraph<V, E> result = new StateGraph<V, E>(this.root, this.shape);
+		StateGraph<V, E> copy = new StateGraph<V, E>(this.root, this.shape);
 		
-		copyData(result, mergeStates);
+		copyData(copy, mergeStates);
 
-		return result;
+		return copy;
 	}
 
-	protected void copyData(StateGraph<V, E> result, Map<Type, V> mergeStates) {
+	protected Map<V, V> copyData(StateGraph<V, E> copy, Map<Type, V> mergeStates) {
 		Map<V, V> oldNew = new HashMap<V, V>();
 		for(V v: getVertices()) {
 			V newState = (V) v.copy();
@@ -258,17 +258,19 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 			// A graph may not have any edges, so let us add the
 			// vertices here
-			result.addVertex(newState);
+			copy.addVertex(newState);
 		}
 
 		for(E edge: getEdges()) {
-			result.addEdge(
+			copy.addEdge(
 				(E) new Edge<State>(
 					edge.getName(),
 					oldNew.get(edge.getStart()),
 					oldNew.get(edge.getEnd()),
 					edge.isQualified()));
 		}
+
+		return oldNew;
 	}
 
 	@Override

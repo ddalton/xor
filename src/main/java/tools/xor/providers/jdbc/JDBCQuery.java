@@ -118,7 +118,7 @@ public class JDBCQuery extends AbstractQuery
 					}
 				}
 
-			setParameters(settings, preparedStatement);
+			QueryStringHelper.setParameters(settings, preparedStatement, positionByName, paramValues);
 
 			if (context != null) {
 				if(context.isShouldBatch()) {
@@ -149,7 +149,7 @@ public class JDBCQuery extends AbstractQuery
 			return getResultList(null, settings);
 		}
 	}
-
+/*
 	protected void setParameters (Settings settings,
 								  PreparedStatement statement)
 	{
@@ -178,13 +178,13 @@ public class JDBCQuery extends AbstractQuery
 			}
 		}
 	}
-
+*/
 	private List getResultSet (Settings settings)
 	{
 		List result = new ArrayList<>();
 
 		try {
-			setParameters(settings, preparedStatement);
+			QueryStringHelper.setParameters(settings, preparedStatement, positionByName, paramValues);
 			ResultSet rs = preparedStatement.executeQuery();
 
 			ResultSetMetaData rsmd = rs.getMetaData();

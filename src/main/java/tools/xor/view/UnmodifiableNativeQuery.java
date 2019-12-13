@@ -19,6 +19,8 @@
 
 package tools.xor.view;
 
+import sun.awt.image.ImageWatched;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,7 +53,11 @@ public class UnmodifiableNativeQuery extends NativeQuery
 
     public List<String> getAugmenter ()
     {
-        return Collections.unmodifiableList(query.getAugmenter());
+        if(query.getAugmenter() != null) {
+            return Collections.unmodifiableList(query.getAugmenter());
+        } else {
+            return new LinkedList<>();
+        }
     }
 
     public void setAugmenter (List<String> attributeList)
@@ -77,8 +83,10 @@ public class UnmodifiableNativeQuery extends NativeQuery
     public List<Function> getFunction ()
     {
         List<Function> result = new LinkedList<>();
-        for(Function func: query.getFunction()) {
-            result.add(func.copy());
+        if(query.function != null) {
+            for (Function func : query.getFunction()) {
+                result.add(func.copy());
+            }
         }
         return result;
     }
@@ -90,14 +98,21 @@ public class UnmodifiableNativeQuery extends NativeQuery
     public List<BindParameter> getParameterList ()
     {
         List<BindParameter> result = new LinkedList<>();
-        for(BindParameter param: query.getParameterList()) {
-            result.add(param.copy());
+        if (query.getParameterList() != null) {
+            for (BindParameter param : query.getParameterList()) {
+                result.add(param.copy());
+            }
         }
+
         return result;
     }
 
     public void setParameterList (List<BindParameter> parameterList)
     {
         raiseException();
+    }
+
+    public boolean contains(String substring) {
+        return query.contains(substring);
     }
 }

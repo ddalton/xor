@@ -425,10 +425,15 @@ public class ClassUtil {
 
 	public static void executeScript(DataSource datasource, String path) throws SQLException
 	{
-		executeScript(datasource, path, false);
+		executeScript(datasource, path, false, ";");
 	}
 
-	public static void executeScript(DataSource datasource, String path, boolean continueOnError) throws SQLException
+	public static void executeScript(DataSource datasource, String path, String separator) throws SQLException
+	{
+		executeScript(datasource, path, false, separator);
+	}
+
+	public static void executeScript(DataSource datasource, String path, boolean continueOnError, String separator) throws SQLException
 	{
 		EncodedResource er = new EncodedResource(new ClassPathResource(path));
 		try (Connection connection = datasource.getConnection();) {
@@ -438,7 +443,7 @@ public class ClassUtil {
 				continueOnError,
 				false,
 				"--",
-				";",
+				separator,
 				"/*",
 				"*/");
 		}

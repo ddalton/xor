@@ -22,7 +22,10 @@ package tools.xor.view;
 import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
 
+import java.sql.PreparedStatement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -84,6 +87,9 @@ public class QueryStringHelper
     public static String getFilterClause (Settings settings, boolean isRoot, List<Function> functions, List<BindParameter> binds, List<BindParameter> relevantParams)
     {
 
+        if(binds == null) {
+            binds = new ArrayList<>();
+        }
         StringBuilder result = new StringBuilder("");
 
         Map<String, Object> userParams = settings.getParams();
@@ -190,5 +196,36 @@ public class QueryStringHelper
 
     public static void initPositionalParamMap (Map<String, List<BindParameter>> positionByName, List<BindParameter> paramList) {
         initPositionalParamMap(positionByName, paramList, false);
+    }
+
+    public static void setParameters (Settings settings,
+                                  PreparedStatement statement,
+                                  Map<String, List<BindParameter>> positionByName,
+                                  Map<String, Object> paramValues)
+    {
+        DBTranslator translator = DBTranslator.getTranslator(statement);
+        if (positionByName != null) {
+            for (Map.Entry<String, List<BindParameter>> entry : positionByName.entrySet()) {
+                String paramName = entry.getKey();
+                if (!paramValues.containsKey(paramName)) {
+                    throw new RuntimeException(
+                        "Unable to find param value with key: " + paramName);
+                }
+
+                List<BindParameter> params = entry.getValue();
+                Object value = paramValues.get(paramName);
+                for(BindParameter bindParam: params) {
+                    if (bindParam.type != null) {
+                        int timestampType = BindParameter.getType(bindParam.type);
+                        if (timestampType == Types.TIMESTAMP
+                            || timestampType == Types.TIMESTAMP_WITH_TIMEZONE) {
+                            bindParam.setDateFormat(settings.getDateFormat());
+                        }
+                    }
+                    // bind by position
+                    bindParam.setValue(statement, translator, value);
+                }
+            }
+        }
     }
 }

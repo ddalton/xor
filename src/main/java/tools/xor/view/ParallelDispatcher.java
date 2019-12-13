@@ -48,9 +48,20 @@ public class ParallelDispatcher extends AbstractDispatcher implements Callback
     private static ExecutorService qe = Executors.newFixedThreadPool(QUERY_POOL_SIZE);
     private CountDownLatch latch;
 
+    private void validate(AggregateTree<QueryTree, InterQuery<QueryTree>> at) {
+        // Check that a stored procedure does not populate the temp table
+        // as that temp table data cannot be seen by a different thread
+        for(QueryTree vertex: at.getVertices()) {
+            if(vertex.getView() != null && vertex.getView().isTempTablePopulated()) {
+                throw new RuntimeException("The view creates data that cannot be seen from a different session");
+            }
+        }
+    }
+
     public ParallelDispatcher(AggregateTree<QueryTree, InterQuery<QueryTree>> at, ObjectResolver resolver, CallInfo callInfo) {
         super(at, resolver, callInfo);
 
+        validate(at);
         this.latch = new CountDownLatch(at.getVertices().size());
     }
 

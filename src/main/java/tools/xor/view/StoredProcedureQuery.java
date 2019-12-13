@@ -20,6 +20,7 @@
 package tools.xor.view;
 
 import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 	
 	private StoredProcedure sp;
 	private DBTranslator translator;
+	private Map<String, Object> paramValues = new HashMap<>();
 	
 	// If a stored procedure is returning multiple results and an error occurs,
 	// this variable helps to debug on which result call the error occurred
@@ -74,6 +76,19 @@ public class StoredProcedureQuery extends AbstractQuery {
 		this.sp = sp;
 
 		QueryStringHelper.initPositionalParamMap(positionByName, sp.parameterList, true);
+
+		populateDefaultValues();
+	}
+
+	private void populateDefaultValues() {
+		// NOTE: if a parameter is being used in multiple positions it should be using the
+		//       same value. So looking at the first item is sufficient.
+		for(Map.Entry<String, List<BindParameter>> entry: positionByName.entrySet()) {
+			BindParameter bp = entry.getValue().get(0);
+			if(bp.getDefaultValue() != null) {
+				paramValues.put(entry.getKey(), bp.getDefaultValue());
+			}
+		}
 	}
 
 	public StoredProcedure getStoredProcedure() {
@@ -94,66 +109,91 @@ public class StoredProcedureQuery extends AbstractQuery {
 	 */
 	public List getResultList(View view, Settings settings)
 	{
+		// Implicit SQL cannot have bind parameters
+		if(!sp.implicit) {
+			QueryStringHelper.setParameters(
+				settings,
+				(PreparedStatement)sp.getStatement(),
+				positionByName,
+				paramValues);
+		}
 		return (List)execute(view, AggregateAction.READ);
 	}
 
-	public Object execute(View viewBranch, AggregateAction action) {
+	public Object execute(View view, AggregateAction action) {
 		boolean isMultiple = sp.isMultiple();
-		Map<Integer, View> branchPosition = new HashMap<Integer, View>();
+		Map<Integer, View> viewPosition = new HashMap<Integer, View>();
+		Map<String, View> viewParam = new HashMap<String, View>();
+
+		OutputLocation ol = sp.getOutputLocation();
+		if(ol != null) {
+			viewPosition.put(ol.getPosition(), view);
+			if(ol.getParameter() != null) {
+				viewParam.put(ol.getParameter(), view);
+			}
+		} else {
+			viewPosition.put(0, view);
+		}
 
 		if(isMultiple) {
-			if(viewBranch.getChildren().size() > 0) {
-				for (View subBranch : viewBranch.getChildren()) {
-					StoredProcedure branchSP = subBranch.getStoredProcedure(action);
-					OutputLocation ol = branchSP.getOutputLocation();
-					branchPosition.put(ol.getPosition(), subBranch);
-				}
-			} else {
-				OutputLocation ol = sp.getOutputLocation();
-				branchPosition.put(ol.getPosition(), viewBranch);
-			}
+			/*
+			Handle children in future once the framework can handle multiple result sets
+			 */
 		}
 
 		List result = new ArrayList();
 		try {
 			ResultSet rs = null;
 			boolean hasResults = false;
-			do {
-				if (resultCount++ == 0) {
+			multiple: do {
+				if (resultCount == 0) {
 					// When requesting the result for the first time, we execute
 					// the query
 					// The stored procedure only need to contain queries
 					if(sp.isImplicit()) {
-						sp.getStatement().executeQuery(sp.getCallString());
-						hasResults = sp.getStatement().getMoreResults();
+						hasResults = sp.getStatement().execute(sp.getCallString());
 					} else {
-						((CallableStatement)sp.getStatement()).execute();
+						hasResults = ((CallableStatement)sp.getStatement()).execute();
 					}
+
+					if(!sp.isImplicit()) {
+						// Look for the result from an OUT parameter.
+						for (BindParameter param : sp.parameterList) {
+							if (param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
+								if(viewParam.containsKey(param.name)) {
+
+									// get cursor and cast it to ResultSet
+									rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(
+										param.position);
+									View subBranch = viewPosition.get(param.position);
+									result.addAll(extractResults(rs));
+
+									// got the result, we don't want to break in case the SP has side effects
+									// break multiple;
+								}
+							}
+						}
+					}
+
 				} else {
 					// Only makes sense for implicit results
 					hasResults = sp.getStatement().getMoreResults();
 				}
 
-				// Each viewBranch specifies the output location
-				if(sp.isImplicit()) {
-					if(hasResults) {
-						rs = sp.getStatement().getResultSet();
-						if (branchPosition.containsKey(resultCount)) {
-							result.addAll(extractResults(rs));
-						}
-					}
+				if(hasResults) {
+					rs = sp.getStatement().getResultSet();
 				}
-				else {
-					// Look for the result from an OUT parameter.
-					for (BindParameter param : sp.parameterList) {
-						if (param.mode == ParameterMode.OUT || param.mode == ParameterMode.INOUT) {
 
-							// get cursor and cast it to ResultSet
-							rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(param.position);
-							View subBranch = branchPosition.get(param.position);
-							result.addAll(extractResults(rs));
-						}
-					}
+				// Each view specifies the output location
+				if (viewPosition.containsKey(resultCount)) {
+					result.addAll(extractResults(rs));
+
+					// got the result, we don't want to break in case the SP has side effects
+					// break multiple;
+				}
+
+				if(hasResults) {
+					resultCount++;
 				}
 
 			} while (hasResults || sp.getStatement().getUpdateCount() != -1);
@@ -199,10 +239,16 @@ public class StoredProcedureQuery extends AbstractQuery {
 	@Override
 	public void setParameter(String name, Object value) {
 
+		if(positionByName.containsKey(name)) {
+			paramValues.put(name, value);
+		}
+/*
 		List<BindParameter> params = positionByName.get(name);
 		for(BindParameter param: params) {
 			param.setValue((CallableStatement)sp.getStatement(), getTranslator(), value);
 		}
+
+ */
 	}
 
 	@Override
@@ -269,6 +315,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 	@Override public Object execute (Settings settings)
 	{
+		// TODO: support object modification
 		return null;
 	}
 

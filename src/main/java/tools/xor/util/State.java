@@ -59,19 +59,23 @@ public class State implements Vertex {
 	public Set<String> getAttributes() {
 		return this.attributes == null ? new HashSet<String>() : Collections.unmodifiableSet(this.attributes);
 	}
-	
+
 	public State copy() {
 		State result = new State(this.type, this.isStartState());
 		
-		if(this.attributes != null) {
-			result.attributes = new HashSet<>(this.attributes);
-		}
-
-		result.setFinishState(this.finishState);
-		result.setInScope(this.inScope);
-		result.setReference(this.reference);
+		copyData(result);
 		
 		return result;
+	}
+
+	protected void copyData(State copy) {
+		if(this.attributes != null) {
+			copy.attributes = new HashSet<>(this.attributes);
+		}
+
+		copy.setFinishState(this.finishState);
+		copy.setInScope(this.inScope);
+		copy.setReference(this.reference);
 	}
 
 	public void initDataTypes() {

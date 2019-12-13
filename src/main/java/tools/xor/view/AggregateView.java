@@ -57,6 +57,8 @@ public class AggregateView extends TraversalView {
 	// and all its members are aliases
  	protected List<AggregateView> children;
 
+	protected boolean tempTablePopulated;
+
 	@XmlTransient
 	private boolean isSplitToRoot = true;
 
@@ -84,6 +86,18 @@ public class AggregateView extends TraversalView {
 	 */
 	public AggregateView() {
 		super();
+	}
+
+	@Override
+	public boolean isTempTablePopulated ()
+	{
+		return tempTablePopulated;
+	}
+
+	@Override
+	public void setTempTablePopulated (boolean tempTablePopulated)
+	{
+		this.tempTablePopulated = tempTablePopulated;
 	}
 
 	public List<AggregateView> getChildren() {
@@ -196,6 +210,14 @@ public class AggregateView extends TraversalView {
 
 		if(systemOQLQuery != null) {
 			avCopy.setUserOQLQuery(systemOQLQuery.copy());
+		}
+
+		if(storedProcedure != null) {
+			List<StoredProcedure> spCopy = new ArrayList<>(storedProcedure.size());
+			for(StoredProcedure sp: storedProcedure) {
+				spCopy.add(sp.copy());
+			}
+			avCopy.setStoredProcedure(spCopy);
 		}
 
 		if(children != null) {

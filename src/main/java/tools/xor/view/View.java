@@ -256,6 +256,18 @@ public interface View {
 	public boolean hasViewReference();
 
 	/**
+	 * Checks if the view contains other direct custom views, i.e., the
+	 * attribute starts with a view reference.
+	 *
+	 * [TODO] There are 1 other aspect we need to consider
+	 * If there are other attributes that need to retrieved apart from the view reference
+	 * One solution is that we club all these other attributes and add it as a child view
+	 *
+	 * @return true if composition view
+	 */
+	boolean isCompositionView ();
+
+	/**
 	 * Resolve the view references and also help to identify the attributes that are
 	 * defined as regular expressions and those that are not.
 	 */
@@ -381,4 +393,26 @@ public interface View {
 	 * @return primary key attribute names
 	 */
 	List<String> getPrimaryKeyAttribute ();
+
+	/**
+	 * Flag to indicate if the query powering this view populates the temp table.
+	 * This is usually enabled for a stored procedure that does this for efficiency reasons,
+	 * i.e., The XOR framework can avoid populating this table if this flag is true.
+	 *
+	 * NOTE: If this flag is true then the parallel dispatcher will not work as it cannot
+	 *       see the temp table data from a different session
+	 *
+	 * @return true if the temp table is populated by the stored procedure
+	 */
+	boolean isTempTablePopulated ();
+
+	/**
+	 * Used by a parent AggregateView that uses a stored procedure
+	 * If this is true, then the parent query will populate the temp table, before the
+	 * child query is executed.
+	 *
+	 * @param tempTablePopulated flag to indicate if the query/sp for this view populates the temp
+	 *                           table
+	 */
+	void setTempTablePopulated (boolean tempTablePopulated);
 }

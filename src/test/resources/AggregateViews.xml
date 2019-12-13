@@ -184,6 +184,66 @@
 		</userOQLQuery>
 	</aggregateView>
 	<aggregateView>
+		<name>TESTSELECT_SP1</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>GR_USERS</attributeList>
+		<attributeList>GR_UNIQUENAME</attributeList>
+		<attributeList>GR_CREATED</attributeList>
+		<attributeList>GR_MODIFIED</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
+		<storedProcedure>
+			<name>getselect</name>
+			<action>READ</action>
+			<!--implicit>true</implicit-->
+			<!--multiple>true</multiple-->
+			<!--outputLocation position="1"/-->
+			<!--parameterList attribute="id" mode="IN" /-->
+			<!-- OutputLocation is optional for an update stored procedure, but is
+				 required for a read stored procedure that is not implicit.-->
+			<parameterList name="idcol" mode="IN" position="1" type="INTEGER" defaultValue="0"/>
+			<!-- The result list should match the attribute list
+				 The result list is optional and is only necessary if the order/number of columns are
+				 different.
+				 If the result list is not specified we then go by the attribute list order
+			-->
+			<callString>call testselect1(?)</callString>
+		</storedProcedure>
+	</aggregateView>
+	<aggregateView>
+		<name>USERS_DETAIL</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>CUS_ORGANIZATION</attributeList>
+		<attributeList>CUS_UNIQUENAME</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
+		<nativeQuery>
+			<selectClause>
+				<![CDATA[
+						SELECT
+						     g.rootid,
+							 u.rootid,
+							 u.cus_organization,
+							 u.cus_uniquename
+						 FROM us_usertab u,
+							  us_baseidtab bid,
+							  us_grouptab g
+						WHERE g.gr_users = bid.lvid
+						  AND bid.val = u.rootid
+                                 ]]>
+			</selectClause>
+			<function type="FREESTYLE" scope="NOTROOT">
+				<args>AND g.rootid IN (^PLACEHOLDER^)</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<name>GROUP_USERS</name>
+		<attributeList>[TESTSELECT_SP1]</attributeList>
+		<children>
+			<name>users</name>
+			<attributeList>[USERS_DETAIL]</attributeList>
+		</children>
+	</aggregateView>
+	<aggregateView>
 		<name>BASICINFO_SP</name>
 		<attributeList>[BASICINFO]</attributeList>			
 		<storedProcedure>

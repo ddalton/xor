@@ -190,6 +190,11 @@ public class UnmodifiableView implements View
         return view.hasViewReference();
     }
 
+    @Override public boolean isCompositionView ()
+    {
+        return view.isCompositionView();
+    }
+
     @Override public void expand ()
     {
         view.expand();
@@ -291,5 +296,15 @@ public class UnmodifiableView implements View
     @Override public List<String> getPrimaryKeyAttribute ()
     {
         return view.getPrimaryKeyAttribute();
+    }
+
+    @Override public boolean isTempTablePopulated ()
+    {
+        return view.isTempTablePopulated();
+    }
+
+    @Override public void setTempTablePopulated (boolean tempTablePopulated)
+    {
+        raiseException();
     }
 }

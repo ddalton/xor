@@ -131,12 +131,16 @@ public class StoredProcedure extends QuerySupport {
 		result.setName(name);
 		result.setCallString(callString);
 		result.setAction(action);
-		result.setOutputLocation(outputLocation.copy());
+		result.setOutputLocation(outputLocation != null ? outputLocation.copy() : null);
 		result.setImplicit(implicit);
 		result.setMultiple(multiple);
 
-		for (BindParameter bind : parameterList) {
-			result.parameterList.add(bind.copy());
+		if(parameterList != null) {
+			List<BindParameter> paramCopy = new ArrayList<>(parameterList.size());
+			for (BindParameter bind : parameterList) {
+				paramCopy.add(bind.copy());
+			}
+			result.parameterList = paramCopy;
 		}
 
 		// NOTE: we don't copy Statement as that is specific to the JDBC connection

@@ -9,6 +9,7 @@ import javax.persistence.ParameterMode;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlTransient;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Array;
@@ -63,9 +64,13 @@ public class BindParameter implements Comparable<BindParameter>
 	@XmlAttribute
 	public String dateFormat;
 
+	@XmlTransient
+	private Object defaultValueObject;
+
 	static final Map<Class, JavaConverter> convertersByJavaType = new ConcurrentHashMap<>();
 	static final Map<Integer, SQLConverter> convertersBySQLType = new ConcurrentHashMap<>();
 	static final Map<String, Integer> typeMap = new HashMap<>();
+	static final String DATE_DELIM = ",";
 
 	static final JavaConverter defaultJavaConverter = new JavaConverter()
 	{
@@ -264,6 +269,22 @@ public class BindParameter implements Comparable<BindParameter>
 			});
 	}
 
+	private static Date getSqlDate(String value) {
+		if(value.indexOf(DATE_DELIM) == -1) {
+			throw new RuntimeException("Format expected and should be of the form: <format>,<value>");
+		}
+		String format = value.substring(0, value.indexOf(DATE_DELIM));
+		SimpleDateFormat formatter = new SimpleDateFormat(format);
+
+		try {
+			java.util.Date date = formatter.parse(value.substring(value.indexOf(DATE_DELIM) + DATE_DELIM.length()));
+			return new Date(date.getTime());
+		}
+		catch (ParseException e) {
+			throw ClassUtil.wrapRun(e);
+		}
+	}
+
 	@Override public int compareTo (BindParameter o)
 	{
 		return this.position - o.position;
@@ -294,6 +315,10 @@ public class BindParameter implements Comparable<BindParameter>
 
 		default public void setDataContext(Object value) {
 			// Users can set any custom data needed by the converter
+		}
+
+		default public Object stringToSQLType(String value) {
+			return value;
 		}
 	}
 
@@ -361,6 +386,10 @@ public class BindParameter implements Comparable<BindParameter>
 				{
 					return rs.getLong(parameterIndex);
 				}
+
+				public Object stringToSQLType(String value) {
+					return Long.valueOf(value);
+				}
 			}
 		);
 
@@ -392,6 +421,10 @@ public class BindParameter implements Comparable<BindParameter>
 												   int parameterIndex) throws SQLException
 				{
 					return rs.getBytes(parameterIndex);
+				}
+
+				public Object stringToSQLType(String value) {
+					return value.getBytes();
 				}
 			};
 		convertersBySQLType.put(Types.BINARY, binaryConverter);
@@ -426,6 +459,10 @@ public class BindParameter implements Comparable<BindParameter>
 												   int parameterIndex) throws SQLException
 				{
 					return rs.getBoolean(parameterIndex);
+				}
+
+				public Object stringToSQLType(String value) {
+					return Boolean.parseBoolean(value);
 				}
 			};
 
@@ -575,6 +612,15 @@ public class BindParameter implements Comparable<BindParameter>
 				{
 					return rs.getDate(parameterIndex);
 				}
+
+				/**
+				 * The value should contain the date format in the form <format>,<value>
+				 * @param value contains the date to be parsed
+				 * @return date object
+				 */
+				@Override public Object stringToSQLType(String value) {
+					return getSqlDate(value);
+				}
 			}
 		);
 
@@ -606,6 +652,11 @@ public class BindParameter implements Comparable<BindParameter>
 												   int parameterIndex) throws SQLException
 				{
 					return rs.getBigDecimal(parameterIndex);
+				}
+
+
+				@Override public Object stringToSQLType(String value) {
+					return new BigDecimal(value);
 				}
 			};
 		convertersBySQLType.put(Types.DECIMAL, bigdecimalConverter);
@@ -644,6 +695,10 @@ public class BindParameter implements Comparable<BindParameter>
 				{
 					return rs.getDouble(parameterIndex);
 				}
+
+				@Override public Object stringToSQLType(String value) {
+					return Double.parseDouble(value);
+				}
 			}
 		);
 
@@ -677,6 +732,10 @@ public class BindParameter implements Comparable<BindParameter>
 												   int parameterIndex) throws SQLException
 				{
 					return rs.getFloat(parameterIndex);
+				}
+
+				@Override public Object stringToSQLType(String value) {
+					return Float.parseFloat(value);
 				}
 			};
 		convertersBySQLType.put(Types.FLOAT, floatConverter);
@@ -712,6 +771,10 @@ public class BindParameter implements Comparable<BindParameter>
 												   int parameterIndex) throws SQLException
 				{
 					return rs.getInt(parameterIndex);
+				}
+
+				@Override public Object stringToSQLType(String value) {
+					return Integer.parseInt(value);
 				}
 			};
 		convertersBySQLType.put(Types.INTEGER, integerConverter);
@@ -776,6 +839,10 @@ public class BindParameter implements Comparable<BindParameter>
 				{
 					return rs.getTime(parameterIndex);
 				}
+
+				@Override public Object stringToSQLType(String value) {
+					return getSqlDate(value);
+				}
 			}
 		);
 
@@ -824,6 +891,10 @@ public class BindParameter implements Comparable<BindParameter>
 				{
 					return rs.getTimestamp(parameterIndex);
 				}
+
+				@Override public Object stringToSQLType(String value) {
+					return getSqlDate(value);
+				}
 			}
 		);
 
@@ -859,6 +930,10 @@ public class BindParameter implements Comparable<BindParameter>
 												   int parameterIndex) throws SQLException
 				{
 					return rs.getByte(parameterIndex);
+				}
+
+				@Override public Object stringToSQLType(String value) {
+					return Byte.valueOf(value);
 				}
 			}
 		);
@@ -897,6 +972,18 @@ public class BindParameter implements Comparable<BindParameter>
 		this.returnType = value;
 	}
 
+	public Object getDefaultValue() {
+		if(type == null) {
+			throw new RuntimeException("type is required to get the default value");
+		}
+
+		if(defaultValueObject == null && defaultValue != null) {
+			defaultValueObject = convertersBySQLType.get(getType(type)).stringToSQLType(defaultValue);
+		}
+
+		return defaultValueObject;
+	}
+
 	public static int getType(String type) {
 		if(typeMap.containsKey(type)) {
 			return typeMap.get(type);
@@ -920,7 +1007,7 @@ public class BindParameter implements Comparable<BindParameter>
 		return typeValue;
 	}
 
-	private SQLConverter getSQLConverter(DBTranslator translator, int typeValue) {
+	private static SQLConverter getSQLConverter(DBTranslator translator, int typeValue) {
 		SQLConverter result = translator.getSQLConverter(typeValue);
 
 		if(result == null) {
@@ -965,7 +1052,7 @@ public class BindParameter implements Comparable<BindParameter>
 
 	static public Object getValue(DBTranslator translator, int type, ResultSet rs, int parameterIndex) {
 		try {
-			return translator.getSQLConverter(type).sQLToJava(rs, parameterIndex);
+			return getSQLConverter(translator, type).sQLToJava(rs, parameterIndex);
 		}
 		catch (SQLException e) {
 			throw ClassUtil.wrapRun(e);

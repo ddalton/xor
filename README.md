@@ -1,15 +1,24 @@
 Focus areas
 ===========
+NOTE - If using temp table, then the query needs to be run using a single JDBC connection to avoid data visibility issues
 1. Temp table support - Add test cases
-   - setup temp table in Before annotation
-   - drop temp table in After annotation
+   - [DONE] setup temp table in Before annotation
+   - [DONE] drop temp table in After annotation
    - [DONE] Basic test (OQL -> SQL) - Use view TASKCHILDRENMIXTEMP - refer to previous test using view TASKCHILDRENMIX
      - test the insert is working
      - test the join is working
      - test the type selection is working (explicitly specified in SQL)
-   - Advanced test (OQL -> SP)
-   - Advanced test #2 (SP -> SP) 
-   - Advanced test #3 (SP -> SQL) 
+   - [DONE] Call stored procedure (SP)
+   - Advanced test #2 (SP -> SQL) ( Worked on in test HanaPerf2Test#testSP2) - ERROR: Duplicate record identified, please enhance the view to distinguish this duplicate record,
+
+TESTING....
+mvnDebug -DforkMode=never test -Dtest=HanaPerf2Test
+
+     without getting the OWNERID to link up the objects, this is not much useful
+
+
+   - Advanced test #3 (SP -> SP) - populated TEMP table in first SP (more efficient)
+   - Advanced test (OQL -> SP) - populates TEMP table in XOR
    - Ensure we rollback so the temp table is cleared
 2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
 

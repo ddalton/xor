@@ -19,18 +19,23 @@
 
 package tools.xor.util.graph;
 
+import org.hibernate.internal.util.collections.IdentitySet;
 import tools.xor.Settings;
 import tools.xor.util.DFAtoNFA;
 import tools.xor.util.Edge;
 import tools.xor.util.Vertex;
+import tools.xor.view.ReconstituteVisitor;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 public class TreeOperations<V extends Vertex, E extends Edge<V>> extends DirectedSparseGraph<V, E> implements Tree<V, E>
@@ -331,6 +336,51 @@ public class TreeOperations<V extends Vertex, E extends Edge<V>> extends Directe
 
 
             writer.write(result.toString());
+        }
+    }
+
+    public void reconstitute(ReconstituteVisitor visitor) {
+        List<V> nodes = new LinkedList<>();
+        Map<V, Object> processed = new IdentityHashMap<V, Object>();
+
+
+        nodes.addAll(getRoots());
+        for(V node: nodes) {
+            reconstituteSubtype(node, visitor, processed);
+        }
+
+        // Do a BFS traversal of the remaining nodes
+        while(!nodes.isEmpty()) {
+            // remove the first node
+            V node = nodes.remove(0);
+            if(!processed.containsKey(node)) {
+                visitor.visit(node, false);
+            } else {
+                processed.put(node, null);
+            }
+
+            // We need to go through all children including
+            // inheritance relationships because some associations can only be reached
+            // through an inheritance relationship
+            nodes.addAll(getChildren(node));
+        }
+    }
+
+    private void reconstituteSubtype(V node, ReconstituteVisitor visitor, Map<V, Object> processed) {
+        // do a pre-order DFS of all inheritance edges
+        Collection<E> outEdges = getOutEdges(node);
+        for(E edge: outEdges) {
+            reconstituteSubtype(edge.getEnd(), visitor, processed);
+        }
+
+        Collection<E> inEdges = getInEdges(node);
+        if(inEdges.size() == 1) {
+            E edge = inEdges.iterator().next();
+            if(DFAtoNFA.UNLABELLED.equals(edge.getName())) {
+                // visit the subtype
+                visitor.visit(node, true);
+                processed.put(node, null);
+            }
         }
     }
 }

@@ -1,5 +1,47 @@
 Focus areas
 ===========
+Reconstitution rules (AbstractDispatcher):
+1. Convert NFA to DFA
+   i.e., process all inheritance target querytrees first, so all
+   unlabelled edges are processed
+2. Perform top-down processing from the root of the aggregate tree
+
+For step (2) to work properly, all InterQuery edges need to have
+a proper source fragment.
+Even for Custom views, additional QueryFragment objects need to be created.
+They do not have to be attached to the root fragment of custom querytrees
+as they are only there to assist in holding the visitor objects to help
+with object reconstitution.
+
+
+CLARITY
+-=====
+Need clarity on how the InterQuery edge is specified and how 
+the custom query rules fit in
+
+So in the example, below for SP-SQL invocation between GROUP and USERS 
+using the interquery edge "users".
+The child view name is "users" and since the owner is the root query fragment,
+no additonal query fragment needs to be created.
+The Interquery fragment named "users" will be created connection this queryfragment
+and the root query fragment for the SQL query tree.
+
+TODO: test with a complex SP, that retrieves multiple levels of an entity
+and a custom child SQL, connection at a multi-part anchor e.g, a.b
+
+
+This complex test should also be performed with OQL->SQL and SQL->SP and SP->SP
+
+Test with inheritance and collection combination
+
+eg. group -> privategroup
+    users
+
+also multi-lever
+    users -> organization -> departments -> heads
+
+
+
 NOTE - If using temp table, then the query needs to be run using a single JDBC connection to avoid data visibility issues
 1. Temp table support - Add test cases
    - [DONE] setup temp table in Before annotation
@@ -14,23 +56,21 @@ NOTE - If using temp table, then the query needs to be run using a single JDBC c
 TESTING....
 mvnDebug -DforkMode=never test -Dtest=HanaPerf2Test
 
-     without getting the OWNERID to link up the objects, this is not much useful
+test with view modification below
+and remove view name "users"
+
+		<name>USERS_DETAIL</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>users.ROOTID</attributeList>
+		<attributeList>users.CUS_ORGANIZATION</attributeList>
+		<attributeList>users.CUS_UNIQUENAME</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
 
 
    - Advanced test #3 (SP -> SP) - populated TEMP table in first SP (more efficient)
    - Advanced test (OQL -> SP) - populates TEMP table in XOR
    - Ensure we rollback so the temp table is cleared
 2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
-
-
-Test for mix SQL and OQL queries in a view reference and view
-a) Test OQL and SQL - Need to add foreignKey for EXISTS or use Function with FREESTYLE
-   - basic case done
-   - can we support SQL and then OQL?
-   - or is SQL only available in the leaf nodes?
-   - inheritance, entityType etc...
-   - In VO and POJO models
-b) Test OQL and StoredProcedure
 
 
 Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber

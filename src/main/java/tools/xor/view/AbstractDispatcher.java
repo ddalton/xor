@@ -26,7 +26,6 @@ import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -55,68 +54,91 @@ public abstract class AbstractDispatcher implements QueryDispatcher
     {
         List<QueryTree> queries = new LinkedList<>();
         queries.addAll(aggregateTree.getRoots());
-        Set<QueryTree> roots = new HashSet<>(queries);
         QueryTreeInvocation queryInvocation = new QueryTreeInvocation();
 
         // execute queries
+        // Done in a top-down traversal of the AggregateTree starting at the root(s)
         executeQueries(queries, queryInvocation);
 
-        try {
-            // reconstitute results
-            queries.addAll(aggregateTree.getRoots());
-            while (!queries.isEmpty()) {
-                QueryTree queryTree = queries.remove(0);
-                reconstitutePreorderDFS(queryTree, roots, queryInvocation);
-            }
-        } catch (Exception e) {
-            throw ClassUtil.wrapRun(e);
-        }
+        /*
+         * The reconstitution rules are:
+         * 1. Convert NFA to DFA
+         *    i.e., process all QueryTrees that are the subtype in an inheritance relationship
+         *          first, so all unlabelled edges are processed
+         * 2. Perform top-down processing from the root of the aggregate tree
+         *    on the remaining relationships (labelled edges)
+         */
+        Reconstitutor reconstitutor = new Reconstitutor(this.aggregateTree,
+            resolver,
+            callInfo,
+            queryInvocation);
+        aggregateTree.reconstitute(reconstitutor);
 
         resolver.postProcess();
     }
 
-    protected void reconstitutePreorderDFS (QueryTree queryTree,
-                                          Set<QueryTree> roots,
-                                          QueryTreeInvocation queryInvocation) throws
-        Exception
-    {
-        boolean isRoot = roots.contains(queryTree);
+    private static class Reconstitutor implements ReconstituteVisitor {
 
-        // pre-order traversal
-        for (QueryTree childQuery : aggregateTree.getChildren(queryTree)) {
-            reconstitutePreorderDFS(childQuery, roots, queryInvocation);
+        protected AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree;
+        protected ObjectResolver resolver;
+        protected CallInfo callInfo;
+        protected Set<QueryTree> roots;
+        protected QueryTreeInvocation queryInvocation;
+
+        public Reconstitutor(AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree,
+                             ObjectResolver resolver,
+                             CallInfo callInfo,
+                             QueryTreeInvocation queryTreeInvocation) {
+            this.aggregateTree = aggregateTree;
+            this.resolver = resolver;
+            this.callInfo = callInfo;
+            this.queryInvocation = queryTreeInvocation;
+
+            roots = new HashSet<>();
+            roots.addAll(aggregateTree.getRoots());
         }
 
-        // Check if there are any results to process
-        List<QueryTreeInvocation.RecordDelta> recordDeltas = queryInvocation.getRecordDeltas(queryTree);
-        if(recordDeltas == null) {
-            return;
-        }
+        @Override public void visit (Object node, boolean isSubtype)
+        {
+            QueryTree queryTree = (QueryTree) node;
+            boolean isRoot = roots.contains(queryTree);
 
-        // Process the results
-        for (QueryTreeInvocation.RecordDelta delta : recordDeltas) {
-            Object[] record = delta.getRecord();
-            BusinessObject anchorObject = queryTree.getRootObject(
-                record,
-                (BusinessObject)callInfo.getOutput(),
-                queryInvocation);
-
-            Map<String, Object> propertyResult = delta.getPropertyResult();
-            ReconstituteRecordVisitor collectionReconstitutor = new ReconstituteRecordVisitor();
-            for (String propertyPath : delta.getChanged()) {
-                // Set the value and create any intermediate objects if necessary
-                anchorObject.reconstitute(
-                    propertyPath,
-                    propertyResult,
-                    queryTree,
-                    collectionReconstitutor,
-                    queryInvocation);
+            // Check if there are any results to process
+            List<QueryTreeInvocation.RecordDelta> recordDeltas = queryInvocation.getRecordDeltas(queryTree);
+            if(recordDeltas == null) {
+                return;
             }
-            String lcp = queryTree.getDeepestCollection(delta.getLCP());
-            collectionReconstitutor.process(lcp);
 
-            // Notify the resolver of the object
-            resolver.notify(anchorObject, isRoot);
+            try {
+                // Process the results
+                for (QueryTreeInvocation.RecordDelta delta : recordDeltas) {
+                    Object[] record = delta.getRecord();
+                    BusinessObject anchorObject = queryTree.getRootObject(
+                        record,
+                        (BusinessObject)callInfo.getOutput(),
+                        queryInvocation);
+
+                    Map<String, Object> propertyResult = delta.getPropertyResult();
+                    ReconstituteRecordVisitor collectionReconstitutor = new ReconstituteRecordVisitor();
+                    for (String propertyPath : delta.getChanged()) {
+                        // Set the value and create any intermediate objects if necessary
+                        anchorObject.reconstitute(
+                            propertyPath,
+                            propertyResult,
+                            queryTree,
+                            collectionReconstitutor,
+                            queryInvocation);
+                    }
+                    String lcp = queryTree.getDeepestCollection(delta.getLCP());
+                    collectionReconstitutor.process(lcp);
+
+                    // Notify the resolver of the object
+                    resolver.notify(anchorObject, isRoot);
+                }
+            }
+            catch (Exception e) {
+                throw ClassUtil.wrapRun(e);
+            }
         }
     }
 

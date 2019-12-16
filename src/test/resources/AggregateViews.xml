@@ -212,8 +212,9 @@
 	<aggregateView>
 		<name>USERS_DETAIL</name>
 		<attributeList>ROOTID</attributeList>
-		<attributeList>CUS_ORGANIZATION</attributeList>
-		<attributeList>CUS_UNIQUENAME</attributeList>
+		<attributeList>users.ROOTID</attributeList>
+		<attributeList>users.CUS_ORGANIZATION</attributeList>
+		<attributeList>users.CUS_UNIQUENAME</attributeList>
 		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
 		<nativeQuery>
 			<selectClause>
@@ -239,7 +240,6 @@
 		<name>GROUP_USERS</name>
 		<attributeList>[TESTSELECT_SP1]</attributeList>
 		<children>
-			<name>users</name>
 			<attributeList>[USERS_DETAIL]</attributeList>
 		</children>
 	</aggregateView>

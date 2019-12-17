@@ -289,7 +289,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		// to enable this select an additional column that distinguishes this duplicate value
 		// for e.g., a column representing a list index
 		if(changed.size() == 0) {
-			logger.error("Duplicate record identified, please enhance the view to distinguish this duplicate record, ");
+			logger.warn("Duplicate record identified, please enhance the view to distinguish this duplicate record, ");
 		}
 
 		// We find the longest common prefix of all the changed paths
@@ -714,6 +714,10 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 				E incomingEdge = iter.next();
 				return incomingEdge.getProperty();
 			}
+		}
+
+		if(getView().isCustom()) {
+			return getAggregateType().getProperty(path);
 		}
 
 		return null;

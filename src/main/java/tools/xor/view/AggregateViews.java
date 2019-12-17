@@ -58,7 +58,7 @@ public class AggregateViews {
 		for(AggregateView view: aggregateView) {
 			List<AggregateView> viewVersions = avVersions.get(view.getName());
 			if(viewVersions == null) {
-				viewVersions = new ArrayList<AggregateView>();
+				viewVersions = new ArrayList<>();
 				avVersions.put(view.getName(), viewVersions);
 			}
 			viewVersions.add(view);

@@ -232,7 +232,7 @@
                                  ]]>
 			</selectClause>
 			<function type="FREESTYLE" scope="NOTROOT">
-				<args>AND g.rootid IN (^PLACEHOLDER^)</args>
+				<args>AND g.rootid IN (^PLACEHOLDER^) ORDER BY g.rootid, u.rootid</args>
 			</function>
 		</nativeQuery>
 	</aggregateView>

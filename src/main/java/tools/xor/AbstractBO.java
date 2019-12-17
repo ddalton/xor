@@ -865,6 +865,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 			//Property domainProperty = domainEntityType.getProperty(currentPath.toString());
 			Property domainProperty = queryTree.getProperty(currentPath.toString());
+
 			if(property == null) {
 				if(getType().isOpen()) {
 					QueryTree.FragmentAnchor anchorFragment = queryTree.findFragment(currentPath.toString());

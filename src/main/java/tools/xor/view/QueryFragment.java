@@ -347,6 +347,10 @@ public class QueryFragment implements Vertex
         return getAlias() + Settings.PATH_DELIMITER + getEntityType().getIdentifierProperty().getName();
     }
 
+    public String getIdPath() {
+        return getFullPath(getEntityType().getIdentifierProperty().getName());
+    }
+
     public QueryField getField(String path) {
         if(pathToFieldMap.containsKey(path)) {
             return pathToFieldMap.get(path);

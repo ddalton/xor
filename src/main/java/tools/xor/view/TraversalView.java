@@ -118,7 +118,15 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     public static final String DOMAIN = "DOMAIN:";
     public static final String REGEX = "_REGEX_";
 
-    protected String            name; // Does double duty. Represents the anchor path if it is a child view
+    protected String            name;
+    protected String            anchorPath;
+    protected String            typeName;   // represents the root entity type name
+    protected List<Join>        join;
+    protected int               version;    // The version from which this view is effective
+
+    // The primary key attribute name needed for linking with child views
+    // This is a list because a primary key can be composite
+    protected List<String>      primaryKeyAttribute;
 
     // A dotted notation list of attributes representing the view scope
     protected List<String>      attributeList;
@@ -132,15 +140,9 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     @XmlTransient
     protected JSONObject        json;
 
-    protected String            typeName; // represents the root entity type
-
     // Each function should be independent of one another
     // TODO: Should this be pushed down to AggregateView?
     protected List<Function> function = new ArrayList<>();
-
-    protected List<Join>        join;
-
-    protected int               version; // The version from which this view is effective
 
     @XmlTransient
     private boolean expanded;
@@ -172,10 +174,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
     @XmlTransient
     private final Map<String, PropertyAlias> viewAliasMap = new ConcurrentHashMap<>();
-
-    // The primary key attribute name needed for linking with child views
-    // This is a list because a primary key can be composite
-    protected List<String>      primaryKeyAttribute;
 
     /**********************  C O N S T R U C T O R S ***************************/
 
@@ -418,6 +416,16 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         this.name = name;
     }
 
+    @Override
+    public String getAnchorPath() {
+        return anchorPath;
+    }
+
+    @Override
+    public void setAnchorPath(String anchorPath) {
+        this.anchorPath = anchorPath;
+    }
+
     private AggregateTree getAggregateTree (QueryKey viewKey) {
         if(!queryCache.containsKey(viewKey)) {
 
@@ -500,6 +508,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     protected void copyInto(TraversalView copy) {
 
         copy.setName(name);
+        copy.setAnchorPath(anchorPath);
         copy.setTypeName(typeName);
         copy.setExpanded(expanded);
         copy.jsonString = jsonString;

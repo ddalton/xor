@@ -35,7 +35,6 @@ import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.Tree;
 import tools.xor.util.graph.TypeGraph;
 
-import javax.swing.text.html.parser.Entity;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -76,13 +75,9 @@ public class FragmentBuilder
             entityType = (EntityType)aggregateTree.getView().getShape().getType(childView.getTypeName());
         } else {
             // derive it from the root
-            if(childView.getName() != null && !"".equals(childView.getName().trim()) ) {
-                for(QueryTree qp: aggregateTree.getRoots()) {
-                    property = qp.getAggregateType().getProperty(childView.getName());
-                    if(property != null) {
-                        break;
-                    }
-                }
+            if(childView.getAnchorPath() != null && !"".equals(childView.getAnchorPath().trim()) ) {
+
+                property = parent.getAggregateType().getProperty(childView.getAnchorPath());
                 if(property != null) {
                     if(property.isMany()) {
                         entityType = (EntityType) ((ExtendedProperty)property).getElementType();
@@ -97,28 +92,28 @@ public class FragmentBuilder
             }
         }
 
-
         List<QueryTree> queriesFromView = getQueriesFromView(childView, entityType);
         for(QueryTree<QueryFragment, IntraQuery<QueryFragment>> childQueryTree: queriesFromView) {
             build(childQueryTree);
 
-            QueryTree.FragmentAnchor sourceAnchor = null;
-            for (QueryTree qp : aggregateTree.getRoots()) {
-                sourceAnchor = qp.findFragment(childView.getName());
-                if (sourceAnchor != null) {
-                    break;
-                }
-            }
+            QueryTree.FragmentAnchor sourceAnchor = parent.findFragment(childView.getAnchorPath());
+            QueryFragment sourceFragment = null;
+            QueryFragment targetFragment = null;
             if (sourceAnchor != null) {
-                QueryFragment sourceFragment = sourceAnchor.fragment;
-                QueryFragment targetFragment = childQueryTree.getRoot();
-
-                addInterQueryEdge(property, parent, childQueryTree, sourceFragment, targetFragment);
+                sourceFragment = sourceAnchor.fragment;
+                targetFragment = childQueryTree.getRoot();
             } else if(parent.getView().isCustom()) {
-                QueryFragment sourceFragment = parent.getRoot();
-                QueryFragment targetFragment = childQueryTree.getRoot();
+                sourceFragment = parent.getRoot();
+                targetFragment = childQueryTree.getRoot();
+            }
 
-                addInterQueryEdge(property, parent, childQueryTree, sourceFragment, targetFragment);
+            if(sourceFragment != null) {
+                addInterQueryEdge(
+                    property,
+                    parent,
+                    childQueryTree,
+                    sourceFragment,
+                    targetFragment);
             }
 
             if(childView.getChildren() != null) {
@@ -135,7 +130,23 @@ public class FragmentBuilder
                                    QueryFragment sourceFragment,
                                    QueryFragment targetFragment) {
 
-        // TODO: Ensure that the source fragment has id property to help with reconstitution
+        // The source fragment should fetch the id of the entity, since this id is needed
+        // to join with the target QueryTree
+        // This is done automatically for system generated QueryTrees - See QueryTree#generateIdFields
+        // IMPLICATION 1: For QueryTree of custom views we need to check that the view is indeed fetching
+        // this id
+        View sourceView = parent.getView();
+        if(sourceView.isCustom() && !sourceView.getAttributeList().contains(sourceFragment.getIdPath())) {
+            throw new RuntimeException(String.format("Missing %s in parent view. The parent view needs to fetch the owner ids when joining with a child view.", sourceFragment.getIdPath()));
+        }
+
+        // IMPLICATION 2: The target EntityType is always the same as the EntityType of the owner of the association
+        // This is because the target QueryTree's root fragment is a copy of the sourceFragment from the
+        // source QueryTree
+        if(sourceFragment.getEntityType() != targetFragment.getEntityType()) {
+            throw new RuntimeException("Source and target QueryFragments do not represent the same type - a join is not possible");
+        }
+
         aggregateTree.addEdge(
             new InterQuery(
                 property == null ? "" : property.getName(), parent, childPiece, sourceFragment, targetFragment),
@@ -150,6 +161,9 @@ public class FragmentBuilder
             // Create a querytree for each of them
             for(View child: getCompositionViews(view, entityType.getShape())) {
                 // Make a copy of the child view
+                // and populate the anchor path
+                View childView = child.copy();
+                childView.setAnchorPath(view.getAnchorPath());
                 rootQueries.add(new QueryTree(entityType, child.copy()));
             }
         } else {
@@ -227,8 +241,6 @@ public class FragmentBuilder
 
         // Add the fragments
         Map<State, QueryFragment> stateToFragmentMap = new HashMap<>();
-        Map<String, QueryFragment> pathToFragmentMap = new HashMap<>();
-
         if(view.isCustom()) {
             // Custom views only have a single fragment as the query is user provided and
             // does not need to be constructed
@@ -241,7 +253,7 @@ public class FragmentBuilder
             QueryFragment fragment = new QueryFragment(
                 qt.getBasedOn(),
                 aggregateTree.nextAlias(),
-                view.getName());
+                view.getAnchorPath());
             queryTree.addVertex(fragment);
 
             // We need to fetch the columns in the order specified by the user query

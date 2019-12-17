@@ -113,7 +113,7 @@ public class AggregateView extends TraversalView {
 			this.children = new ArrayList<>();
 		}
 		AggregateView child = (AggregateView)view.copy();
-		child.setName(extractAnchor(anchor));
+		child.setAnchorPath(extractAnchor(anchor));
 
 		this.children.add(child);
 	}

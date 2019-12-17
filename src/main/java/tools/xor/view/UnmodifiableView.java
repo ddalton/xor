@@ -165,6 +165,16 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
+    @Override public String getAnchorPath ()
+    {
+        return view.getAnchorPath();
+    }
+
+    @Override public void setAnchorPath (String path)
+    {
+        raiseException();
+    }
+
     @Override public AggregateTree getAggregateTree (Type type)
     {
         return view.getAggregateTree(type);

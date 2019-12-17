@@ -1,3 +1,5 @@
+in HanaPerf2Test#testSP2 check why the SQL returns only 500 rows
+
 Focus areas
 ===========
 Reconstitution rules (AbstractDispatcher):

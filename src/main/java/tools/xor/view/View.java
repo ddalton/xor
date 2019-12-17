@@ -215,6 +215,19 @@ public interface View {
 	public void setName(String name);
 
 	/**
+	 * Retrieve the anchor path of the view.
+	 * The anchor path is the point in the parent view where this view is anchored
+	 * @return anchor path
+	 */
+	public String getAnchorPath();
+
+	/**
+	 * Set the anchor path of the view.
+	 * @param path of the anchor
+	 */
+	public void setAnchorPath(String path);
+
+	/**
 	 * Get the QueryTree instance that is specific to a particular EntityType.
 	 *
 	 * @param type entity type

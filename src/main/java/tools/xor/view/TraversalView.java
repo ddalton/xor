@@ -123,6 +123,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     protected String            typeName;   // represents the root entity type name
     protected List<Join>        join;
     protected int               version;    // The version from which this view is effective
+    protected int               resultPosition;
 
     // The primary key attribute name needed for linking with child views
     // This is a list because a primary key can be composite
@@ -221,6 +222,11 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     @Override public void setTempTablePopulated (boolean tempTablePopulated)
     {
         throw new UnsupportedOperationException("This method cannot be invoked on TraversalView");
+    }
+
+    @Override public int getResultPosition ()
+    {
+        return resultPosition;
     }
 
     public void setPrimaryKeyAttribute (List<String> attribute) {

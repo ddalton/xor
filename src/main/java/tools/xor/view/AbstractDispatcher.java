@@ -171,7 +171,14 @@ public abstract class AbstractDispatcher implements QueryDispatcher
 
         queryTree.prepare(callInfo, resolver, queryInvocation, parentEdge);
         if(query != null) {
-            List records = query.getResultList(null, callInfo.getSettings());
+            View view = queryTree.getView();
+            List records =  null;
+            if(view instanceof AggregateView) {
+                records = ((AggregateView)view).getResults();
+            }
+            if(records == null) {
+                records = query.getResultList(queryTree.getView(), callInfo.getSettings());
+            }
 
             // Check if this is a single column result
             if(records.size() > 0) {

@@ -428,4 +428,13 @@ public interface View {
 	 *                           table
 	 */
 	void setTempTablePopulated (boolean tempTablePopulated);
+
+	/**
+	 * Returns the position of the result for this view. Usually the view is a child view.
+	 * Used in conjunction with a stored procedure that returns multiple results.
+	 * The position starts from 0
+	 *
+	 * @return position of result set corresponding to this view
+	 */
+	int getResultPosition();
 }

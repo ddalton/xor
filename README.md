@@ -1,33 +1,5 @@
-in HanaPerf2Test#testSP2 check why the SQL returns only 500 rows
-
-Focus areas
-===========
-Reconstitution rules (AbstractDispatcher):
-1. Convert NFA to DFA
-   i.e., process all inheritance target querytrees first, so all
-   unlabelled edges are processed
-2. Perform top-down processing from the root of the aggregate tree
-
-For step (2) to work properly, all InterQuery edges need to have
-a proper source fragment.
-Even for Custom views, additional QueryFragment objects need to be created.
-They do not have to be attached to the root fragment of custom querytrees
-as they are only there to assist in holding the visitor objects to help
-with object reconstitution.
-
-
 CLARITY
 -=====
-Need clarity on how the InterQuery edge is specified and how 
-the custom query rules fit in
-
-So in the example, below for SP-SQL invocation between GROUP and USERS 
-using the interquery edge "users".
-The child view name is "users" and since the owner is the root query fragment,
-no additonal query fragment needs to be created.
-The Interquery fragment named "users" will be created connection this queryfragment
-and the root query fragment for the SQL query tree.
-
 TODO: test with a complex SP, that retrieves multiple levels of an entity
 and a custom child SQL, connection at a multi-part anchor e.g, a.b
 
@@ -53,24 +25,11 @@ NOTE - If using temp table, then the query needs to be run using a single JDBC c
      - test the join is working
      - test the type selection is working (explicitly specified in SQL)
    - [DONE] Call stored procedure (SP)
-   - Advanced test #2 (SP -> SQL) ( Worked on in test HanaPerf2Test#testSP2) - ERROR: Duplicate record identified, please enhance the view to distinguish this duplicate record,
-
-TESTING....
-mvnDebug -DforkMode=never test -Dtest=HanaPerf2Test
-
-test with view modification below
-and remove view name "users"
-
-		<name>USERS_DETAIL</name>
-		<attributeList>ROOTID</attributeList>
-		<attributeList>users.ROOTID</attributeList>
-		<attributeList>users.CUS_ORGANIZATION</attributeList>
-		<attributeList>users.CUS_UNIQUENAME</attributeList>
-		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
-
-
+   - [DONE] Advanced test #2 (SP -> SQL) 
+   - test #2 (SQL -> SP) - Use TEMP table
    - Advanced test #3 (SP -> SP) - populated TEMP table in first SP (more efficient)
-   - Advanced test (OQL -> SP) - populates TEMP table in XOR
+   - Advanced test #4 (OQL -> SP) - populates TEMP table in XOR
+   - Advanced test #5 (Single SP, multiple view) - the single SP returns multiple result sets
    - Ensure we rollback so the temp table is cleared
 2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
 

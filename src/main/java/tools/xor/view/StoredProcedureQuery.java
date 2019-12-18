@@ -55,7 +55,6 @@ A stored procedure can be overloaded, so we will provide an option for the user 
 {call getorders(?::INT)}
 {call getorders(?::DATE)}
 
-NOTE: the child AggregateViews need to be ordered such that the resultsets are processed before reading any of the OUT parameters
  *
  */
 public class StoredProcedureQuery extends AbstractQuery {
@@ -120,31 +119,45 @@ public class StoredProcedureQuery extends AbstractQuery {
 		return (List)execute(view, AggregateAction.READ);
 	}
 
-	public Object execute(View view, AggregateAction action) {
-		boolean isMultiple = sp.isMultiple();
-		Map<Integer, View> viewPosition = new HashMap<Integer, View>();
-		Map<String, View> viewParam = new HashMap<String, View>();
+	private void initPosition(Map<Integer, View> viewPosition, View view) {
+		viewPosition.put(view.getResultPosition(), view);
 
-		OutputLocation ol = sp.getOutputLocation();
+		if(view.getChildren() != null) {
+			for(View child: view.getChildren()) {
+				initPosition(viewPosition, child);
+			}
+		}
+	}
+
+	private void setResults(View view, List results) {
+		if(view instanceof AggregateView) {
+			((AggregateView)view).setResults(results);
+		} else {
+			throw new RuntimeException("A custom view being modified should be an instance of AggregateView");
+		}
+	}
+
+	public Object execute(View view, AggregateAction action) {
+		Map<Integer, View> positionView = new HashMap<>();
+		Map<String, View> viewParam = new HashMap<>();
+
+		initPosition(positionView, view);
+
+		List<OutputLocation> ol = sp.getOutputLocation();
 		if(ol != null) {
-			viewPosition.put(ol.getPosition(), view);
-			if(ol.getParameter() != null) {
-				viewParam.put(ol.getParameter(), view);
+			for(OutputLocation loc: ol) {
+				if(loc.getPosition() >= 0) {
+					throw new RuntimeException("A view using an output parameter should have a negative position");
+				}
+				viewParam.put(loc.getParameter(), positionView.get(loc.getPosition()));
 			}
 		} else {
-			viewPosition.put(0, view);
+			positionView.put(0, view);
 		}
 
-		if(isMultiple) {
-			/*
-			Handle children in future once the framework can handle multiple result sets
-			 */
-		}
-
-		List result = new ArrayList();
 		try {
 			ResultSet rs = null;
-			boolean hasResults = false;
+			boolean hasResults;
 			multiple: do {
 				if (resultCount == 0) {
 					// When requesting the result for the first time, we execute
@@ -165,8 +178,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 									// get cursor and cast it to ResultSet
 									rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(
 										param.position);
-									View subBranch = viewPosition.get(param.position);
-									result.addAll(extractResults(rs));
+									setResults(viewParam.get(param.name), extractResults(rs));
 
 									// got the result, we don't want to break in case the SP has side effects
 									// break multiple;
@@ -185,8 +197,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 				}
 
 				// Each view specifies the output location
-				if (viewPosition.containsKey(resultCount)) {
-					result.addAll(extractResults(rs));
+				if (positionView.containsKey(resultCount)) {
+					setResults(positionView.get(resultCount), extractResults(rs));
 
 					// got the result, we don't want to break in case the SP has side effects
 					// break multiple;
@@ -208,6 +220,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 			}
 		}
 
+		List result = ((AggregateView)view).getResults();
 		return result;
 	}
 

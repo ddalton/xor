@@ -37,21 +37,21 @@ public class StoredProcedure extends QuerySupport {
 
 	private static final String INLIST_DELIMITER = ","; // default delimiter used to separate the INLIST
 
-	protected String              name;
-	protected AggregateAction     action;
-	protected List<BindParameter> parameterList;    // Pass data to the stored procedure
-	protected OutputLocation      outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
-	protected Statement           statement;
-	protected String              callString;
-	protected String              inListParamName;  // Name of the String parameter containing
-	                                                // a list of root object IDs separated by a delimiter,
-	                                                // used for constructing the IN list
-	protected String              inListDelimiter;  // delimiter used to extract the ids from the
-	                                                // inListParam. If not provided the INLIST_DELIMITER is used
-	protected boolean             implicit;         // By default a callable statement is created,
+	protected String               name;
+	protected AggregateAction      action;
+	protected List<BindParameter>  parameterList;    // Pass data to the stored procedure
+	protected List<OutputLocation> outputLocation;	// Parameterized (non-implicit) SP, which param represents the result
+	protected Statement            statement;
+	protected String               callString;
+	protected String               inListParamName;  // Name of the String parameter containing
+	                                                 // a list of root object IDs separated by a delimiter,
+	                                                 // used for constructing the IN list
+	protected String               inListDelimiter;  // delimiter used to extract the ids from the
+	                                                 // inListParam. If not provided the INLIST_DELIMITER is used
+	protected boolean              implicit;         // By default a callable statement is created,
 
 	// Set this to true if the code implicitly returns resultsets
-	protected boolean           multiple; // flag to denote if it supports multiple resultsets
+	protected boolean              multiple; // flag to denote if it supports multiple resultsets
 
 	@XmlAttribute
 	private String maxResults;
@@ -88,11 +88,11 @@ public class StoredProcedure extends QuerySupport {
 		this.parameterList = parameterList;
 	}
 
-	public OutputLocation getOutputLocation() {
+	public List<OutputLocation> getOutputLocation() {
 		return outputLocation;
 	}
 
-	public void setOutputLocation(OutputLocation outputLocation) {
+	public void setOutputLocation(List<OutputLocation> outputLocation) {
 		this.outputLocation = outputLocation;
 	}
 	
@@ -131,9 +131,16 @@ public class StoredProcedure extends QuerySupport {
 		result.setName(name);
 		result.setCallString(callString);
 		result.setAction(action);
-		result.setOutputLocation(outputLocation != null ? outputLocation.copy() : null);
 		result.setImplicit(implicit);
 		result.setMultiple(multiple);
+
+		if(outputLocation != null) {
+			List<OutputLocation> copy = new ArrayList<>();
+			for(OutputLocation loc: outputLocation) {
+				copy.add(loc.copy());
+			}
+			result.outputLocation = copy;
+		}
 
 		if(parameterList != null) {
 			List<BindParameter> paramCopy = new ArrayList<>(parameterList.size());

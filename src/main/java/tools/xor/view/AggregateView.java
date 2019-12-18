@@ -30,6 +30,11 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * If using stored procedures, then a copy of this must be made as
+ * the results attribute is populated in every invocation and this instance cannot
+ * be shared.
+ */
 @XmlRootElement(name="AggregateView")
 public class AggregateView extends TraversalView {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -61,6 +66,9 @@ public class AggregateView extends TraversalView {
 
 	@XmlTransient
 	private boolean isSplitToRoot = true;
+
+	@XmlTransient
+	private List results;
 
 	public AggregateView(QueryTree queryTree) {
 		super(queryTree);
@@ -267,5 +275,13 @@ public class AggregateView extends TraversalView {
 	@Override
 	public boolean isCustom() {
 		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null;
+	}
+
+	public void setResults(List results) {
+		this.results = results;
+	}
+
+	public List getResults() {
+		return this.results;
 	}
 }

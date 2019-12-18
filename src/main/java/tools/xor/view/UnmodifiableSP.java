@@ -80,12 +80,12 @@ public class UnmodifiableSP extends StoredProcedure
         raiseException();
     }
 
-    @Override public OutputLocation getOutputLocation ()
+    @Override public List<OutputLocation> getOutputLocation ()
     {
         return sp.getOutputLocation();
     }
 
-    @Override public void setOutputLocation (OutputLocation outputLocation)
+    @Override public void setOutputLocation (List<OutputLocation> outputLocation)
     {
         raiseException();
     }

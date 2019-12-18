@@ -7,10 +7,9 @@ public class OutputLocation {
 	
 	private String parameter;
 
-	// Indexed from 1. Useful if the stored procedure is
-	// returning multiple results and not all the results are needed
-	// The position specifies which result this corresponds to
-	// used for validation
+	// Should match result position of the view
+	// We use negative positions as 0 and positive numbers are used to
+	// denote the position of the result sets returned from the stored procedure call
 	private int position;
 	
 	public OutputLocation copy() {

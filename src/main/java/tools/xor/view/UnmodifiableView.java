@@ -318,7 +318,7 @@ public class UnmodifiableView implements View
         raiseException();
     }
 
-    @Override public int getResultPosition ()
+    @Override public Integer getResultPosition ()
     {
         return view.getResultPosition();
     }

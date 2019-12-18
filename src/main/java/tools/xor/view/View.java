@@ -436,5 +436,5 @@ public interface View {
 	 *
 	 * @return position of result set corresponding to this view
 	 */
-	int getResultPosition();
+	Integer getResultPosition();
 }

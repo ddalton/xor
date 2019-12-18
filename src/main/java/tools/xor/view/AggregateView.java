@@ -274,7 +274,7 @@ public class AggregateView extends TraversalView {
 
 	@Override
 	public boolean isCustom() {
-		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null;
+		return getNativeQuery() != null || getUserOQLQuery() != null || getStoredProcedure(AggregateAction.READ) != null || getResultPosition() != null;
 	}
 
 	public void setResults(List results) {

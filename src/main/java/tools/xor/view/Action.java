@@ -8,7 +8,13 @@ import tools.xor.service.PersistenceOrchestrator;
  */
 public interface Action
 {
-    void execute(QueryTreeInvocation qti, PersistenceOrchestrator po);
+    /**
+     * Execute any actions associated with the query tree
+     * @param dispatcher some actions are only valid in a SerialDispatcher
+     * @param qti needed to get the invocation id and any parent ids
+     * @param po used to populate the temp join table
+     */
+    void execute(AbstractDispatcher dispatcher, QueryTreeInvocation qti, PersistenceOrchestrator po);
 
     Action copy(Object context);
 }

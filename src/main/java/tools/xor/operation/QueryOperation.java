@@ -134,14 +134,24 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			query.setParameter(QueryFragment.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
 		}
 
-		if(query.hasParameter(QueryFragment.INVOCATION_ID_PARAM)) {
+		if(query.hasParameter(QueryFragment.PARENT_INVOCATION_ID_PARAM)) {
 			if(parentEdge == null) {
-				throw new RuntimeException(String.format("Found %s parameter when this is not a child query", QueryFragment.INVOCATION_ID_PARAM));
+				throw new RuntimeException(String.format("Found %s parameter when this is not a child query", QueryFragment.PARENT_INVOCATION_ID_PARAM));
 			}
 			String invocationId = qti.getInvocationId(parentEdge.getSource());
 			if(invocationId == null) {
 				throw new RuntimeException("The parent query is not yet executed");
 			}
+			query.setParameter(QueryFragment.PARENT_INVOCATION_ID_PARAM, invocationId);
+		}
+
+		if(query.hasParameter(QueryFragment.INVOCATION_ID_PARAM)) {
+			if(parentEdge == null) {
+				throw new RuntimeException(String.format("Found %s parameter when this is not a child query", QueryFragment.INVOCATION_ID_PARAM));
+			}
+
+			// It is not necessary for the child query to be executed
+			String invocationId = qti.getOrCreateInvocationId(parentEdge.getTarget());
 			query.setParameter(QueryFragment.INVOCATION_ID_PARAM, invocationId);
 		}
 

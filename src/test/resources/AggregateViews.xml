@@ -121,7 +121,7 @@
 			<function type="FREESTYLE" scope="NOTROOT">
 				<args>FROM Task, XOR_QUERY_JOIN_ tt
 				     WHERE UUID = tt.ID_STR
-				       AND tt.INVOCATION_ID = :INVOCATION_ID_</args>
+				       AND tt.INVOCATION_ID = :PARENT_INVOCATION_ID_</args>
 			</function>
 		</nativeQuery>
 	</aggregateView>
@@ -210,6 +210,25 @@
 		</storedProcedure>
 	</aggregateView>
 	<aggregateView>
+		<name>TESTSELECT_SP2</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>users.ROOTID</attributeList>
+		<attributeList>users.CUS_ORGANIZATION</attributeList>
+		<attributeList>users.CUS_UNIQUENAME</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
+		<storedProcedure>
+			<name>getselect</name>
+			<action>READ</action>
+			<parameterList name="PARENT_INVOCATION_ID_" mode="IN" type="VARCHAR"/>
+			<!-- The result list should match the attribute list
+				 The result list is optional and is only necessary if the order/number of columns are
+				 different.
+				 If the result list is not specified we then go by the attribute list order
+			-->
+			<callString>call testselect2(?)</callString>
+		</storedProcedure>
+	</aggregateView>
+	<aggregateView>
 		<name>USERS_DETAIL</name>
 		<attributeList>ROOTID</attributeList>
 		<attributeList>users.ROOTID</attributeList>
@@ -237,10 +256,39 @@
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
+		<name>GROUPS_DETAIL</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>GR_USERS</attributeList>
+		<attributeList>GR_UNIQUENAME</attributeList>
+		<attributeList>GR_CREATED</attributeList>
+		<attributeList>GR_MODIFIED</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
+		<nativeQuery>
+			<selectClause>
+				<![CDATA[
+						SELECT
+						     rootid,
+							 gr_users,
+							 gr_uniquename,
+							 gr_created,
+							 gr_modified
+						 FROM us_grouptab g
+                                 ]]>
+			</selectClause>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<name>GROUP_USERS</name>
 		<attributeList>[TESTSELECT_SP1]</attributeList>
 		<children>
 			<attributeList>[USERS_DETAIL]</attributeList>
+		</children>
+	</aggregateView>
+	<aggregateView>
+		<name>GROUP_USERS2</name>
+		<attributeList>[GROUPS_DETAIL]</attributeList>
+		<children>
+			<attributeList>[TESTSELECT_SP2]</attributeList>
 		</children>
 	</aggregateView>
 	<aggregateView>

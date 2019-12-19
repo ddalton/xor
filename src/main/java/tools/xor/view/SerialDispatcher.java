@@ -48,7 +48,7 @@ public class SerialDispatcher extends AbstractDispatcher
             // created from the query string that is part of the query tree
             Query query = queryTree.createQuery(po);
 
-            executeQuery(query, queryTree, queryInvocation, aggregateTree, callInfo, resolver);
+            executeQuery(this, query, queryTree, queryInvocation);
 
             queries.addAll(aggregateTree.getChildren(queryTree));
         }

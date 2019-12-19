@@ -40,14 +40,14 @@ public class QueryJoinAction implements Action
         return result;
     }
 
-    @Override public void execute (QueryTreeInvocation qti, PersistenceOrchestrator po)
+    @Override public void execute (AbstractDispatcher dispatcher, QueryTreeInvocation qti, PersistenceOrchestrator po)
     {
         // To make it work with all types of parent queries, we
         // will batch insert the values into the temp table
         // The ids are not necessarily the root of the query tree as it depends on the
         // source of the InterQuery edge
 
-        // Child queries need to refer to the session id/invocation id while refering to the parent ids
+        // Child queries need to refer to the session id/invocation id while referring to the parent ids
 
         Set<QueryFragment> processed = new HashSet<>();
         for(InterQuery<QueryTree> edge: edgesToProcess) {
@@ -63,6 +63,9 @@ public class QueryJoinAction implements Action
             // We do this only if the parent query has not already populated
             QueryTree queryTree = edge.getStart();
             if(queryTree.getView() == null || !queryTree.getView().isTempTablePopulated()) {
+                if(dispatcher instanceof ParallelDispatcher) {
+                    throw new RuntimeException("temp table results do not work with parallel dispatcher. Use serial dispatcher by calling ClassUtil.setParallelDispatch with false.");
+                }
                 po.populateQueryJoinTable(invocationId, ids);
             }
 

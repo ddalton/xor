@@ -145,12 +145,14 @@ public abstract class AbstractDispatcher implements QueryDispatcher
     /*
      * This is a static method since this is also called from the ParallelDispatcher static inner class
      */
-    protected static void executeQuery (Query query,
+    protected static void executeQuery (AbstractDispatcher disptacher,
+                                        Query query,
                                         QueryTree queryTree,
-                                        QueryTreeInvocation queryInvocation,
-                                        AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree,
-                                        CallInfo callInfo,
-                                        ObjectResolver resolver) {
+                                        QueryTreeInvocation queryInvocation) {
+
+        AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = disptacher.aggregateTree;
+        CallInfo callInfo = disptacher.callInfo;
+        ObjectResolver resolver = disptacher.resolver;
 
         InterQuery parentEdge = null;
         if(query != null) {
@@ -203,7 +205,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
         // execute actions
         List<Action> actions = queryTree.getActions();
         for(Action action: actions) {
-            action.execute(queryInvocation, callInfo.getSettings().getPersistenceOrchestrator());
+            action.execute(disptacher, queryInvocation, callInfo.getSettings().getPersistenceOrchestrator());
         }
     }
 }

@@ -84,7 +84,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 		//       same value. So looking at the first item is sufficient.
 		for(Map.Entry<String, List<BindParameter>> entry: positionByName.entrySet()) {
 			BindParameter bp = entry.getValue().get(0);
-			if(bp.getDefaultValue() != null) {
+			if(bp.type != null && bp.getDefaultValue() != null) {
 				paramValues.put(entry.getKey(), bp.getDefaultValue());
 			}
 		}

@@ -101,12 +101,10 @@ public class ParallelDispatcher extends AbstractDispatcher implements Callback
             Query query = queryTree.createQuery(po);
 
             executeQuery(
+                dispatcher,
                 query,
                 queryTree,
-                queryInvocation,
-                dispatcher.aggregateTree,
-                dispatcher.callInfo,
-                dispatcher.resolver);
+                queryInvocation);
         }
 
         public QueryTree getQueryTree() {

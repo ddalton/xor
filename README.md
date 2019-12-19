@@ -1,5 +1,3 @@
-CLARITY
--=====
 TODO: test with a complex SP, that retrieves multiple levels of an entity
 and a custom child SQL, connection at a multi-part anchor e.g, a.b
 
@@ -26,11 +24,13 @@ NOTE - If using temp table, then the query needs to be run using a single JDBC c
      - test the type selection is working (explicitly specified in SQL)
    - [DONE] Call stored procedure (SP)
    - [DONE] Advanced test #2 (SP -> SQL) 
-   - test #2 (SQL -> SP) - Use TEMP table
-   - Advanced test #3 (SP -> SP) - populated TEMP table in first SP (more efficient)
-   - Advanced test #4 (OQL -> SP) - populates TEMP table in XOR
-   - Advanced test #5 (Single SP, multiple view) - the single SP returns multiple result sets
+   - [DONE] test #2 (SQL -> SP) - Use TEMP table
+   - Advanced test #3 (SP -> SP) - NOT populated TEMP table in first SP (less efficient)
+   - Advanced test #4 (SP -> SP) - populated TEMP table in first SP (more efficient)
+   - Advanced test #5 (OQL -> SP) - populates TEMP table in XOR
+   - Advanced test #6 (Single SP, multiple view) - the single SP returns multiple result sets
    - Ensure we rollback so the temp table is cleared
+   - Test with single id to SP - avoid using TEMP table in this case
 2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
 
 

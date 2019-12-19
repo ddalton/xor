@@ -138,7 +138,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			if(parentEdge == null) {
 				throw new RuntimeException(String.format("Found %s parameter when this is not a child query", QueryFragment.PARENT_INVOCATION_ID_PARAM));
 			}
-			String invocationId = qti.getInvocationId(parentEdge.getSource());
+			String invocationId = qti.getInvocationId((QueryTree)parentEdge.getStart());
 			if(invocationId == null) {
 				throw new RuntimeException("The parent query is not yet executed");
 			}
@@ -146,12 +146,8 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		}
 
 		if(query.hasParameter(QueryFragment.INVOCATION_ID_PARAM)) {
-			if(parentEdge == null) {
-				throw new RuntimeException(String.format("Found %s parameter when this is not a child query", QueryFragment.INVOCATION_ID_PARAM));
-			}
-
 			// It is not necessary for the child query to be executed
-			String invocationId = qti.getOrCreateInvocationId(parentEdge.getTarget());
+			String invocationId = qti.getOrCreateInvocationId(queryTree);
 			query.setParameter(QueryFragment.INVOCATION_ID_PARAM, invocationId);
 		}
 

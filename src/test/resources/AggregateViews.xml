@@ -209,6 +209,32 @@
 			<callString>call testselect1(?)</callString>
 		</storedProcedure>
 	</aggregateView>
+	<aggregateView tempTablePopulated="true">
+		<name>TESTSELECT_SP1_TEMP_POP</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>GR_USERS</attributeList>
+		<attributeList>GR_UNIQUENAME</attributeList>
+		<attributeList>GR_CREATED</attributeList>
+		<attributeList>GR_MODIFIED</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
+		<storedProcedure>
+			<name>getselect</name>
+			<action>READ</action>
+			<!--implicit>true</implicit-->
+			<!--multiple>true</multiple-->
+			<!--outputLocation position="1"/-->
+			<!--parameterList attribute="id" mode="IN" /-->
+			<!-- OutputLocation is optional for an update stored procedure, but is
+				 required for a read stored procedure that is not implicit.-->
+			<parameterList name="INVOCATION_ID_" mode="IN" type="VARCHAR"/>
+			<!-- The result list should match the attribute list
+				 The result list is optional and is only necessary if the order/number of columns are
+				 different.
+				 If the result list is not specified we then go by the attribute list order
+			-->
+			<callString>call testselect1temppop(?)</callString>
+		</storedProcedure>
+	</aggregateView>
 	<aggregateView>
 		<name>TESTSELECT_SP2</name>
 		<attributeList>ROOTID</attributeList>
@@ -287,6 +313,20 @@
 	<aggregateView>
 		<name>GROUP_USERS2</name>
 		<attributeList>[GROUPS_DETAIL]</attributeList>
+		<children>
+			<attributeList>[TESTSELECT_SP2]</attributeList>
+		</children>
+	</aggregateView>
+	<aggregateView>
+		<name>GROUP_USERS3</name>
+		<attributeList>[TESTSELECT_SP1]</attributeList>
+		<children>
+			<attributeList>[TESTSELECT_SP2]</attributeList>
+		</children>
+	</aggregateView>
+	<aggregateView>
+		<name>GROUP_USERS4</name>
+		<attributeList>[TESTSELECT_SP1_TEMP_POP]</attributeList>
 		<children>
 			<attributeList>[TESTSELECT_SP2]</attributeList>
 		</children>

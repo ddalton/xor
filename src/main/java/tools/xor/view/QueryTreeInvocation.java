@@ -61,15 +61,11 @@ public class QueryTreeInvocation
                                                              // The parent objects are obtained by getting
                                                              // the full path from the source fragment of the InterQuery edge
 
-    private Map<EntityKey, BusinessObject> queryObjects; // Unique object per id and path
-
+    private Map<EntityKey, BusinessObject>    queryObjects; // Unique object per id and path
     private Map<QueryTree, List<RecordDelta>> recordDeltas;
-
-    private Map<QueryFragment, QueryVisitor> visitors; // used during a QueryTree's resolveField calls
-    private Map<String, QueryVisitor> visitorsByPath;
-
-    private Map<QueryFragment, String> invocationIds; // It is safe to key the invocationId by the QueryFragment
-                                                      // since a copy of the AggregateTree is created for every invocation
+    private Map<QueryFragment, QueryVisitor>  visitors; // used during a QueryTree's resolveField calls
+    private Map<String, QueryVisitor>         visitorsByPath;
+    private Map<QueryTree, String>            invocationIds; // Safe to use QueryTree as we use a copy of the AggregateTree
 
     private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
@@ -86,20 +82,20 @@ public class QueryTreeInvocation
         this.invocationIds = new ConcurrentHashMap<>();
     }
 
-    public String getOrCreateInvocationId (QueryFragment source)
+    public String getOrCreateInvocationId (QueryTree queryTree)
     {
-        if(!invocationIds.containsKey(source)) {
+        if(!invocationIds.containsKey(queryTree)) {
             // generate a GUID invocation id that is 128 bits in length in base64 format
             UUID uuid = UUID.randomUUID();
             byte[] bytes = getBytesFromUUID(uuid);
-            invocationIds.put(source, BASE64_URL_ENCODER.encodeToString(bytes));
+            invocationIds.put(queryTree, BASE64_URL_ENCODER.encodeToString(bytes));
         }
 
-        return invocationIds.get(source);
+        return invocationIds.get(queryTree);
     }
 
-    public String getInvocationId (QueryFragment source) {
-        return invocationIds.get(source);
+    public String getInvocationId (QueryTree queryTree) {
+        return invocationIds.get(queryTree);
     }
 
     public static byte[] getBytesFromUUID(UUID uuid) {

@@ -56,7 +56,7 @@ public class QueryJoinAction implements Action
             }
 
             QueryFragment source = edge.getSource();
-            String invocationId = qti.getOrCreateInvocationId(source);
+            String invocationId = qti.getOrCreateInvocationId(edge.getStart());
             Set ids = qti.getParentIds(edge);
 
             // perform the insert (will choose the correct id column based on the type of the id object)

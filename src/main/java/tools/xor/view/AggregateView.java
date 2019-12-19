@@ -25,6 +25,7 @@ import tools.xor.AggregateAction;
 import tools.xor.Type;
 import tools.xor.service.Shape;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public class AggregateView extends TraversalView {
 	// and all its members are aliases
  	protected List<AggregateView> children;
 
+ 	@XmlAttribute
 	protected boolean tempTablePopulated;
 
 	@XmlTransient
@@ -208,6 +210,7 @@ public class AggregateView extends TraversalView {
 
 		AggregateView avCopy = (AggregateView) copy;
 
+		avCopy.tempTablePopulated = tempTablePopulated;
 		if(nativeQuery != null) {
 			avCopy.setNativeQuery(nativeQuery.copy());
 		}

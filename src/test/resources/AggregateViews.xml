@@ -332,6 +332,20 @@
 		</children>
 	</aggregateView>
 	<aggregateView>
+		<name>GROUP_USERS5</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>GR_USERS</attributeList>
+		<attributeList>GR_UNIQUENAME</attributeList>
+		<attributeList>GR_CREATED</attributeList>
+		<attributeList>GR_MODIFIED</attributeList>
+		<children>
+			<attributeList>[TESTSELECT_SP2]</attributeList>
+		</children>
+		<function type="ASC" position="1">
+			<args>ROOTID</args>
+		</function>
+	</aggregateView>
+	<aggregateView>
 		<name>BASICINFO_SP</name>
 		<attributeList>[BASICINFO]</attributeList>			
 		<storedProcedure>

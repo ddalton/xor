@@ -428,8 +428,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     }
 
     @Override
-    public void setAnchorPath(String anchorPath) {
-        this.anchorPath = anchorPath;
+    public void setAnchorPath(String path) {
+        this.anchorPath = path;
     }
 
     private AggregateTree getAggregateTree (QueryKey viewKey) {
@@ -650,11 +650,11 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         Iterator iter = owner.keys();
         while(iter.hasNext()) {
             String key = (String)iter.next();
-            anchor += (StringUtils.isEmpty(anchor) ? "" : Settings.PATH_DELIMITER) + key;
+            String anchorPath = anchor + ((StringUtils.isEmpty(anchor) ? "" : Settings.PATH_DELIMITER) + key);
 
             Object child = owner.get(key);
             if(child instanceof JSONObject) {
-                expand((JSONObject) child, anchor, expanding);
+                expand((JSONObject) child, anchorPath, expanding);
             } else {
                 JSONObject reference = null;
                 boolean isValidReference = false;
@@ -666,7 +666,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
                         // This will become a child AggregateView, since it is targeted for querying
                         if(view.isCustom()) {
-                            addChildView(view, anchor);
+                            addChildView(view, anchorPath);
                         } else {
                             view.expand(expanding);
                             reference = view.getJson();

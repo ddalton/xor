@@ -22,6 +22,7 @@ package tools.xor.view;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import tools.xor.AggregateAction;
+import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.Shape;
 
@@ -123,7 +124,12 @@ public class AggregateView extends TraversalView {
 			this.children = new ArrayList<>();
 		}
 		AggregateView child = (AggregateView)view.copy();
-		child.setAnchorPath(extractAnchor(anchor));
+		String anchorStr = extractAnchor(anchor);
+		if(anchorStr.endsWith(Settings.PATH_DELIMITER)) {
+			anchorStr = Settings.getAnchorName(anchorStr);
+		}
+
+		child.setAnchorPath(anchorStr);
 
 		this.children.add(child);
 	}

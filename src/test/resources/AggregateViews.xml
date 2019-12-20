@@ -345,6 +345,27 @@
 			<args>ROOTID</args>
 		</function>
 	</aggregateView>
+	<aggregateView resultPosition="0">
+		<name>GROUP_USERS6</name>
+		<attributeList>ROOTID</attributeList>
+		<attributeList>GR_USERS</attributeList>
+		<attributeList>GR_UNIQUENAME</attributeList>
+		<attributeList>GR_CREATED</attributeList>
+		<attributeList>GR_MODIFIED</attributeList>
+		<primaryKeyAttribute>ROOTID</primaryKeyAttribute>
+		<storedProcedure>
+			<name>getselect</name>
+			<action>READ</action>
+			<parameterList name="idcol" mode="IN" type="VARCHAR" defaultValue="1"/>
+			<callString>call testselectwhole(?)</callString>
+		</storedProcedure>
+		<children resultPosition="1">
+			<attributeList>ROOTID</attributeList>
+			<attributeList>users.ROOTID</attributeList>
+			<attributeList>users.CUS_ORGANIZATION</attributeList>
+			<attributeList>users.CUS_UNIQUENAME</attributeList>
+		</children>
+	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_SP</name>
 		<attributeList>[BASICINFO]</attributeList>			

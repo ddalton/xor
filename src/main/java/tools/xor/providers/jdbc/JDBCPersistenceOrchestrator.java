@@ -259,6 +259,11 @@ public class JDBCPersistenceOrchestrator
 			result = new StoredProcedureQuery((StoredProcedure) queryInput);
 			break;
 
+		case SP_MULTI:
+			// Only the root has type SP, the dependent ones do not create a statement
+			result = new StoredProcedureQuery(null);
+			break;
+
 		case OQL:
 			connection = null;
 			if (!Query.isDeferred(queryString)) {

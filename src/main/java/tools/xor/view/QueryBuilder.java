@@ -89,23 +89,23 @@ public class QueryBuilder
      * Get the correct Builder strategy object for the QueryTree if present, else get it
      * for the view.
      *
-     * @param qp for which the builder strategy object is returned
+     * @param queryTree for which the builder strategy object is returned
      * @param view fallback to view if the QueryTree is not provided
      * @param builder responsible for constructing the queries
      * @return builder startegy object
      */
-    public static QueryBuilderStrategy getBuilderStrategy(QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp, View view, QueryBuilder builder, AggregateTree queryTree) {
-        view = qp != null ? qp.getView() : view;
+    public static QueryBuilderStrategy getBuilderStrategy(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree, View view, QueryBuilder builder, AggregateTree aggregateTree) {
+        view = queryTree != null ? queryTree.getView() : view;
 
-        if(view.getStoredProcedure(AggregateAction.READ) != null) {
-            return new QueryFromSP(view, qp, queryTree);
+        if(view.getStoredProcedure(AggregateAction.READ) != null || view.getResultPosition() != null) {
+            return new QueryFromSP(view, queryTree, aggregateTree);
         } else if(view.getNativeQuery() != null) {
-            return new QueryFromSQL(view, qp, queryTree);
+            return new QueryFromSQL(view, queryTree, aggregateTree);
         } else if(view.getUserOQLQuery() != null) {
-            return new QueryFromOQL(view, qp, queryTree);
+            return new QueryFromOQL(view, queryTree, aggregateTree);
         } else {
-            if(qp != null) {
-                return new QueryFromFragments(qp, builder);
+            if(queryTree != null) {
+                return new QueryFromFragments(queryTree, builder);
             }
         }
 

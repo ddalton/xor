@@ -245,6 +245,11 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 			result = new StoredProcedureQuery((StoredProcedure)queryInput);
 			break;
 
+		case SP_MULTI:
+			// Only the root has type SP, the dependent ones do not create a statement
+			result = new StoredProcedureQuery(null);
+			break;
+
 		default:
 			throw new RuntimeException("Unsupported queryType: " + queryType.name());
 		}

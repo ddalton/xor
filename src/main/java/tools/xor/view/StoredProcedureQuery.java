@@ -74,7 +74,9 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 		this.sp = sp;
 
-		QueryStringHelper.initPositionalParamMap(positionByName, sp.parameterList, true);
+		if(sp != null) {
+			QueryStringHelper.initPositionalParamMap(positionByName, sp.parameterList, true);
+		}
 
 		populateDefaultValues();
 	}
@@ -302,6 +304,12 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 	@Override
 	public void prepare(EntityType entityType, QueryTree queryTree) {
+
+		// If this belongs to a SP_MULTI query then the root query has already
+		// been executed, so nothing to do here
+		if(sp == null) {
+			return;
+		}
 
 		// A Java Type can map to multiple SQL types, so it is mandatory for the user
 		// to specify the parameter type

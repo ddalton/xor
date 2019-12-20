@@ -22,6 +22,8 @@ package tools.xor.view;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
 
+import java.util.ArrayList;
+
 public class QueryFromSP implements QueryBuilderStrategy
 {
     private final View view;
@@ -47,6 +49,13 @@ public class QueryFromSP implements QueryBuilderStrategy
                 querySP);
 
             querySP.deriveColumns(this.queryTree, handle, settings, this.aggregateTree, this.view);
+        } else {
+            handle = new QueryHandle(
+                null,
+                PersistenceOrchestrator.QueryType.SP_MULTI,
+                null);
+
+            handle.setColumns(new ArrayList<>(view.getAttributeList()));
         }
 
         return handle;

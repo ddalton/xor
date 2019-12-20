@@ -28,7 +28,7 @@ NOTE - If using temp table, then the query needs to be run using a single JDBC c
    - [DONE] Advanced test #3 (SP -> SP) - NOT populated TEMP table in first SP (less efficient)
    - [DONE] Advanced test #4 (SP -> SP) - populated TEMP table in first SP (more efficient)
    - [DONE] Advanced test #5 (OQL -> SP) - populates TEMP table in XOR
-   - Advanced test #6 (Single SP, multiple view) - the single SP returns multiple result sets
+   - [DONE] Advanced test #6 (Single SP, multiple view) - the single SP returns multiple result sets
    - Ensure we rollback so the temp table is cleared
    - Test with single id to SP - avoid using TEMP table in this case
 2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView

@@ -281,7 +281,12 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 		case SP:
 			createStatement((StoredProcedure) queryInput);
 			result = new StoredProcedureQuery((StoredProcedure) queryInput);
-			break;			
+			break;
+
+		case SP_MULTI:
+			// Only the root has type SP, the dependent ones do not create a statement
+			result = new StoredProcedureQuery(null);
+			break;
 
 		default:
 			throw new RuntimeException("Unsupported queryType: " + queryType.name());

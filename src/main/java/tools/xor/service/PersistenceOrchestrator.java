@@ -44,7 +44,8 @@ public interface PersistenceOrchestrator {
     public enum QueryType {
         OQL,
         SQL,
-        SP
+        SP,
+		SP_MULTI
     }
 	
 	/**

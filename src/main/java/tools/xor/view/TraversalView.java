@@ -34,6 +34,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -123,6 +124,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     protected String            typeName;   // represents the root entity type name
     protected List<Join>        join;
     protected int               version;    // The version from which this view is effective
+
+    @XmlAttribute
     protected Integer           resultPosition; // Wrapper class, because we test custom
 
     // The primary key attribute name needed for linking with child views
@@ -518,6 +521,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         copy.setTypeName(typeName);
         copy.setExpanded(expanded);
         copy.jsonString = jsonString;
+        copy.resultPosition = resultPosition;
         if(json != null) {
             copy.json = ClassUtil.copyJson(json);
         }

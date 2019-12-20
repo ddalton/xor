@@ -55,6 +55,11 @@ public class QueryJoinAction implements Action
                 continue;
             }
 
+            View view = edge.getEnd().getView();
+            if(view instanceof AggregateView && ((AggregateView)view).getResults() != null) {
+                continue;
+            }
+
             QueryFragment source = edge.getSource();
             String invocationId = qti.getOrCreateInvocationId(edge.getStart());
             Set ids = qti.getParentIds(edge);

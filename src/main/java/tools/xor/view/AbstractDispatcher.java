@@ -171,36 +171,33 @@ public abstract class AbstractDispatcher implements QueryDispatcher
             }
         }
 
+        List records =  null;
         queryTree.prepare(callInfo, resolver, queryInvocation, parentEdge);
-        if(query != null) {
-            View view = queryTree.getView();
-            List records =  null;
-            if(view instanceof AggregateView) {
-                records = ((AggregateView)view).getResults();
-            }
-            if(records == null) {
-                records = query.getResultList(queryTree.getView(), callInfo.getSettings());
-            }
-
-            // Check if this is a single column result
-            if(records.size() > 0) {
-                if(!records.get(0).getClass().isArray()) {
-                    throw new RuntimeException("Was the identifier column forgotten to be added to the subtype query?");
-                }
-            }
-
-            queryInvocation.start(aggregateTree, queryTree);
-            Map<String, Object> previous = null;
-            for (Object record : records) {
-                previous = queryTree.resolveField(
-                    null, // Not reconstituting at this phase
-                    (Object[])record,
-                    previous,
-                    queryInvocation);
-            }
-            queryInvocation.finish(aggregateTree, queryTree);
+        View view = queryTree.getView();
+        if(view instanceof AggregateView) {
+            records = ((AggregateView)view).getResults();
+        }
+        if(query != null && records == null) {
+            records = query.getResultList(queryTree.getView(), callInfo.getSettings());
         }
 
+        // Check if this is a single column result
+        if(records.size() > 0) {
+            if(!records.get(0).getClass().isArray()) {
+                throw new RuntimeException("Was the identifier column forgotten to be added to the subtype query?");
+            }
+        }
+
+        queryInvocation.start(aggregateTree, queryTree);
+        Map<String, Object> previous = null;
+        for (Object record : records) {
+            previous = queryTree.resolveField(
+                null, // Not reconstituting at this phase
+                (Object[])record,
+                previous,
+                queryInvocation);
+        }
+        queryInvocation.finish(aggregateTree, queryTree);
 
         // execute actions
         List<Action> actions = queryTree.getActions();

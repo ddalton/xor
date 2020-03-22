@@ -68,25 +68,29 @@ public class AggregateViewFactory {
 		load(AGGREGATE_VIEW_FILE, am);
 	}
 	
-	public void load(String fileName, AggregateManager am) {
+	public static AggregateViews load(String fileName) {
 		AggregateViews views = new AggregateViews();
 
 		try {
-			InputStream stream = this.getClass().getClassLoader().getResourceAsStream(fileName);
+			InputStream stream = AggregateViewFactory.class.getClassLoader().getResourceAsStream(fileName);
 			if(stream == null) {
-				logger.warn("Unable to find the view configuration file: " + fileName);
-				return;
+				throw new RuntimeException("Unable to find the view configuration file: " + fileName);
 			}
 			
 			JAXBContext jaxbContext = JAXBContext.newInstance(AggregateViews.class);
 			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
 			views = (AggregateViews) jaxbUnmarshaller.unmarshal(stream);
-			views.sync(am);
-			
 		} catch (JAXBException e) {
 			throw new RuntimeException("Unable to read " + fileName, e);
 		} 
+		
+		return views;
+	}
+	
+	public void load(String fileName, AggregateManager am) {
+		AggregateViews views = load(fileName);
+		views.sync(am);
 	}
 	
 	public void save(String fileName, AggregateViews views) throws JAXBException {	

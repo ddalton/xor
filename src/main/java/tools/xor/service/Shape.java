@@ -182,6 +182,7 @@ public class Shape
         for(Map.Entry<String, String> entry: typeMappings.entrySet()) {
             // Get the domain property for this entry
             String propertyName = aliases.get(entry.getKey());
+            // TODO: an alias may not be of rootType
             Property property = getProperty(rootType, propertyName);
 
             Type newPropertyType = getType(entry.getValue());
@@ -360,6 +361,8 @@ public class Shape
      * @param type QueryType for which we need to derive the external type
      * @return external type
      */
+    // TODO: We should not need an external type for QueryType since QueryType is an external type
+    // instances of QueryType should be returned directly to the user, thus avoiding the DTO copy
     public ExternalType deriveExternalType(QueryType type) {
         ExternalType externalType = null;
         Class<?> externalClass = getDAS().getTypeMapper().toExternal(type.getInstanceClass());

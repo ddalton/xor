@@ -31,6 +31,9 @@ import java.util.Set;
 /**
  * State specific to a particular edge. This graph might have multiple states for the same type,
  * depending on how that state is accessed.
+ * 
+ * Needed for the construction of the QueryTree.
+ * Each node/vertex corresponds to a QueryFragment in the QueryTree, where it represents a single entity that is part of a JOIN
  *
  * @param <V> Vertex
  * @param <E> Edge

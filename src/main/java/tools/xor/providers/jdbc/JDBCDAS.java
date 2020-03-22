@@ -19,22 +19,6 @@
 
 package tools.xor.providers.jdbc;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import tools.xor.JDBCType;
-import tools.xor.RelationshipType;
-import tools.xor.Type;
-import tools.xor.TypeMapper;
-import tools.xor.TypeNarrower;
-import tools.xor.service.AbstractDataAccessService;
-import tools.xor.service.DASFactory;
-import tools.xor.service.PersistenceOrchestrator;
-import tools.xor.service.SchemaExtension;
-import tools.xor.service.Shape;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.PersistenceType;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -45,6 +29,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import tools.xor.JDBCType;
+import tools.xor.RelationshipType;
+import tools.xor.Type;
+import tools.xor.TypeMapper;
+import tools.xor.service.AbstractDataAccessService;
+import tools.xor.service.DASFactory;
+import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.SchemaExtension;
+import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.PersistenceType;
 
 /**
  * This class is part of the Data Access Service framework.
@@ -517,6 +518,50 @@ public abstract class JDBCDAS extends AbstractDataAccessService
 
         return shape;
     }
+    
+	private List<TableInfo> defineTypes(Shape shape, Set<String> entityNames) {
+		
+        List<TableInfo> tables = shape.getName().equals(RELATIONAL_SHAPE) ? getRelationalTables() : getTables();
+        
+        List<TableInfo> filteredTables = new ArrayList();
+		if(entityNames != null && !entityNames.isEmpty()) {
+
+			Map<String, TableInfo> providerEntityMap = new HashMap<>();
+			for(TableInfo entityType: tables) {
+				providerEntityMap.put(entityType.getName(), entityType);
+			}
+			
+			for(String entityName: entityNames) {
+				if(providerEntityMap.containsKey(entityName)) {
+					filteredTables.add(providerEntityMap.get(entityName));
+				}
+			}
+		} else {
+			filteredTables = tables;
+		}
+		
+        for(TableInfo table: filteredTables){
+            JDBCType dataType = new JDBCType(table.getName(), table);
+            shape.addType(dataType.getName(), dataType);
+        }			
+        
+        return filteredTables;
+	}    
+	
+	@Override public void processShape(Shape shape, SchemaExtension extension, Set<String> entityNames) {
+		
+		List<TableInfo> tables = defineTypes(shape, entityNames);
+		
+        for(TableInfo table: tables) {
+            setSuperType(table, shape);
+        }
+
+        // Define the properties for the Types
+        // This will end up defining the simple types
+        defineProperties(shape, shape.getUniqueTypes());
+
+        postProcess(shape, extension, shape.getUniqueTypes(), false);		
+	}	
 
     private void setSuperType(TableInfo table, Shape shape) {
         String parentName = table.getParentTable();

@@ -48,6 +48,19 @@ import java.util.Map;
  * Needs to handle both the types of QueryTree instances:
  * 1. Flattened
  * 2. Nested
+ * 
+ * QueryOperation does not involved DTO copying as the
+ * reconstituted object is directly returned to the user.
+ * 
+ * Operates on a Query By Example pattern.
+ * So the user has to provide an input object and its entityType in the settings object.
+ * 
+ * NOTE: If the user would like the object result from the query operation to be 
+ *   in the shape of the QueryType then the QueryType needs to be passed in as the entityType
+ *   in the settings object.
+ *   In some cases (QueryType is basedOn entityType), this restriction can be bypassed during
+ *   reconstitution since the property is found from the root QueryFragment of the QueryTree, 
+ *   and since all the types are represented as QueryType instances in QueryTree, the correct property is found. 
  *  
  * @author Dilip Dalton
  *

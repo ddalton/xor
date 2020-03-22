@@ -40,9 +40,9 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
 import org.json.JSONObject;
 import org.springframework.util.StringUtils;
+
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
@@ -52,8 +52,6 @@ import tools.xor.FunctionType;
 import tools.xor.MatchType;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.DataAccessService;
-import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.DFAtoRE;
@@ -61,8 +59,8 @@ import tools.xor.util.Edge;
 import tools.xor.util.InterQuery;
 import tools.xor.util.State;
 import tools.xor.util.Vertex;
-import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.StateTree;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateTree.QueryKey;
 import tools.xor.view.expression.AliasHandler;
@@ -1152,7 +1150,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
                         PropertyAlias pa = new PropertyAlias(
                             function.getName(),
                             function.getAttribute(),
-                            ah.getSubclassName(),
+                            ah.getTypeName(),
                             ah.getViewName(),
                             ah.isInterQuery());
 

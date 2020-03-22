@@ -20,8 +20,11 @@
 package tools.xor.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -32,8 +35,8 @@ import org.hibernate.mapping.PersistentClass;
 import tools.xor.HibernateType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.util.PersistenceType;
 import tools.xor.util.HibernateUtil;
+import tools.xor.util.PersistenceType;
 
 /**
  * This class is part of the Data Access Service framework
@@ -58,6 +61,8 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 	public Shape addShape(String name, SchemaExtension extension) {
 		Shape shape = getOrCreateShape(name);
 
+		processShape(shape, extension, null);
+		/*
 		Configuration conf = getConfiguration();
 		Iterator<PersistentClass> classMappings = conf.getClassMappings();
 
@@ -81,11 +86,61 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 		defineProperties(shape);
 		
 		postProcess(shape, extension, shape.getUniqueTypes(), false);
-
+*/
 		return shape;
 	}
+	
+	private void defineTypes(Shape shape, Set<String> entityNames) {
+		
+		Configuration conf = getConfiguration();
+		Iterator<PersistentClass> providerEntities = conf.getClassMappings();
+		List<PersistentClass> filteredEntities = new ArrayList<>();
+		Iterator<PersistentClass> entityIterator = providerEntities;
+		
+		if(entityNames != null && !entityNames.isEmpty()) {
+			Map<String, PersistentClass> providerEntityMap = new HashMap<>();
+			while(providerEntities.hasNext()) {
+				PersistentClass entityType = providerEntities.next();
+				providerEntityMap.put(entityType.getEntityName(), entityType);
+			}
+			
+			for(String entityName: entityNames) {
+				if(providerEntityMap.containsKey(entityName)) {
+					filteredEntities.add(providerEntityMap.get(entityName));
+				}
+			}
+			
+			entityIterator = filteredEntities.iterator();
+		} 
+		
+		logger.info("Getting the list of hibernate mapped classes");
+		while (entityIterator.hasNext()) {
+			PersistentClass classMapping = (PersistentClass) entityIterator
+					.next();
+			logger.debug("     Adding hibernate persisted class: "
+					+ classMapping.getClassName());
+			defineType(classMapping, shape);
+		}			
+	}	
+	
+	@Override public void processShape(Shape shape, SchemaExtension extension, Set<String> entityNames) {
+		
+		defineTypes(shape, entityNames);
+		
+		// Set the super type
+		defineSuperType(shape);
 
-	protected void defineTypes(PersistentClass classMapping, Shape shape) {
+		// Set the base types
+		setBaseTypes(shape);
+
+		// Define the properties for the Types 
+		// This will end up defining the simple types
+		defineProperties(shape);
+		
+		postProcess(shape, extension, shape.getUniqueTypes(), false);		
+	}	
+
+	protected void defineType(PersistentClass classMapping, Shape shape) {
 		HibernateType dataType = new HibernateType( HibernateUtil.getEntityType(getSessionFactory(), classMapping.getEntityName()),
 				classMapping);
 		

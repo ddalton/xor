@@ -19,11 +19,7 @@
 
 package tools.xor.view;
 
-import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
-import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.service.QueryCapability;
 

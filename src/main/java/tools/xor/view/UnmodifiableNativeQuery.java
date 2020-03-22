@@ -19,8 +19,6 @@
 
 package tools.xor.view;
 
-import sun.awt.image.ImageWatched;
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;

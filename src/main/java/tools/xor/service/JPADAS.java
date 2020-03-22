@@ -20,7 +20,9 @@
 package tools.xor.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManagerFactory;
@@ -53,14 +55,16 @@ public abstract class JPADAS extends AbstractDataAccessService {
 	@Override
 	public Shape addShape(String name, SchemaExtension extension) {
 		Shape shape = getOrCreateShape(name);
-
+		
+		processShape(shape, extension, null);
+/*
 		Metamodel metaModel = getEmf().getMetamodel();
 		Set<EntityType<?>> classMappings = metaModel.getEntities();
 
 		logger.info("Getting the list of JPA mapped classes");  		
 		for(EntityType<?> classMapping: classMappings){ 
 			logger.debug("     Adding JPA persisted class: " + classMapping.getName());
-			defineTypes(classMapping, shape);
+			defineType(classMapping, shape);
 		}
 
 		// Set the super type
@@ -74,11 +78,56 @@ public abstract class JPADAS extends AbstractDataAccessService {
 		defineProperties(shape);
 		
 		postProcess(shape, extension, shape.getUniqueTypes(), false);
-
+*/
 		return shape;
 	}
+	
+	private void defineTypes(Shape shape, Set<String> entityNames) {
+		
+		Metamodel metaModel = getEmf().getMetamodel();
+		Set<EntityType<?>> providerEntities = metaModel.getEntities();
+		List<EntityType<?>> filteredEntities = new ArrayList<>();
+		
+		if(entityNames != null && !entityNames.isEmpty()) {
+			Map<String, EntityType<?>> providerEntityMap = new HashMap<>();
+			for(EntityType<?> entityType: providerEntities) {
+				providerEntityMap.put(entityType.getJavaType().getName(), entityType);
+			}
+			
+			for(String entityName: entityNames) {
+				if(providerEntityMap.containsKey(entityName)) {
+					filteredEntities.add(providerEntityMap.get(entityName));
+				}
+			}
+		} else {
+			filteredEntities = new ArrayList(providerEntities);
+		}
+		
+		logger.info("Getting the list of JPA mapped classes");  		
+		for(EntityType<?> classMapping: filteredEntities){ 
+			logger.debug("     Adding JPA persisted class: " + classMapping.getName());
+			defineType(classMapping, shape);
+		}	
+	}
+	
+	@Override public void processShape(Shape shape, SchemaExtension extension, Set<String> entityNames) {
+		
+		defineTypes(shape, entityNames);
+		
+		// Set the super type
+		defineSuperType(shape);
 
-	protected void defineTypes(EntityType<?> classMapping, Shape shape) {
+		// Set the base types
+		setBaseTypes(shape);
+
+		// Define the properties for the Types 
+		// This will end up defining the simple types
+		defineProperties(shape);
+		
+		postProcess(shape, extension, shape.getUniqueTypes(), false);		
+	}
+
+	protected void defineType(EntityType<?> classMapping, Shape shape) {
 		JPAType dataType = new JPAType(classMapping);
 		logger.debug("Defined data type: " + dataType.getName());
 		shape.addType(classMapping.getJavaType().getName(), dataType);

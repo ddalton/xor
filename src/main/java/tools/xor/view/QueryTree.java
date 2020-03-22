@@ -19,14 +19,24 @@
 
 package tools.xor.view;
 
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.ReconstituteRecordVisitor;
 import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -39,19 +49,20 @@ import tools.xor.util.State;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.TreeOperations;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Represents a portion of the user's request that can be satisfied by a single query.
+ * 
+ * The QueryTree is created from the StateTree
+ * 
+ * StateTree => QueryTree
+ *   SubtypeState => QueryFragment
+ *   
+ * For views based on QueryType the mapping is a bit constrained, since the presence of a QueryType
+ * usually involves a user provided query. So in this case the StateTree has only one state, the root state.
+ * All the fields of the query are represented in this root state.
+ * 
+ * If the view is powered by a user query, then the QueryFragment that gets built for a QueryType 
+ * has its type the QueryType, not the type on which the QueryType is based on.
  */
 public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends TreeOperations<V, E>
 	implements Vertex

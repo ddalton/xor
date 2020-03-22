@@ -234,11 +234,6 @@ public class FragmentBuilder
          *  6. If it is not explorable we just add the id or the path
          */
 
-        // Function attributes
-        for(String attr: view.getFunctionAttributes()) {
-            st.extend(attr, st.getRootState(), false);
-        }
-
         // Add the fragments
         Map<State, QueryFragment> stateToFragmentMap = new HashMap<>();
         if(view.isCustom()) {
@@ -261,6 +256,12 @@ public class FragmentBuilder
                 fragment.addPath(path);
             }
         } else {
+
+            // Function attributes
+            for(String attr: view.getFunctionAttributes()) {
+                st.extend(attr, st.getRootState(), false);
+            }	
+        	
             // TODO: Since this is a tree data structure, we can do a BFS traversal
             // through the tree
             // That was we can avoid adding duplicate attributes from the subtypes, if it has
@@ -270,7 +271,7 @@ public class FragmentBuilder
 
                 QueryType qt = (QueryType)state.getType();
                 QueryFragment fragment = new QueryFragment(
-                    qt.getBasedOn(),
+                    qt.getBasedOn(),  // Need the actual type, since the query is built using the actual type
                     aggregateTree.nextAlias(),
                     ((Tree)st).getPathToRoot(state));
                 stateToFragmentMap.put(state, fragment);

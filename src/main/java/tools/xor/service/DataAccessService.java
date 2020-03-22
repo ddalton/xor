@@ -22,6 +22,7 @@ package tools.xor.service;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import tools.xor.EntityType;
 import tools.xor.OpenType;
@@ -167,4 +168,13 @@ public interface DataAccessService {
 	 * @return SettingsBuilder object
 	 */
 	public Settings.SettingsBuilder settings();
+
+	/**
+	 * Populates the provider defined types within the shape object
+	 * @param shape that needs to be populated
+	 * @param extension for allowing the framework user to extend the shape
+	 * @param entityNames optional, if present then only the types listed in this set is populated from
+	 *    the underlying ORM provider
+	 */
+	void processShape(Shape shape, SchemaExtension extension, Set<String> entityNames);
 }

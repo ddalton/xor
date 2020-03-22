@@ -49,6 +49,10 @@ package tools.xor.operation;
  * 2. Nested result shaped in the form of the AggregateView's StateTree
  *    Both LEAF_GROUP and STATE_TREE support this result structure.
  * 
+ * The other difference is that TreeTraversal has lower overhead since
+ * there is no copying to a DTO. The object reconstituted from the query result
+ * is directly returned to the user.
+ * 
  * @author Dilip Dalton
  *
  */

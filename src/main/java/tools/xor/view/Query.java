@@ -20,10 +20,8 @@
 package tools.xor.view;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.service.PersistenceOrchestrator;
 

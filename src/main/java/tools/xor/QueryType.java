@@ -19,32 +19,31 @@
 
 package tools.xor;
 
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import tools.xor.service.DataAccessService;
-import tools.xor.view.AggregateView;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import tools.xor.view.AggregateView;
 
 /**
  * A temporary type that is used for Queries. The user can modify the shape of this type
  * as desired and hence we don't persist it. It could be cached for performance if the shape
  * of this type rarely changes.
  *
- *
  * Because it is temporary, it has a randomly generated name, that is mainly used for debugging.
+ * Cached QueryType instances have a user provided name.
  */
 public class QueryType extends AbstractType {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private String name;
-    private EntityType basedOn;
+    private EntityType basedOn; // Optional. If not provided, then all the properties need to be described using aliases
     private Map<String, Property> properties; // Properties in addition to the basedOn type
     private List<AggregateView.PropertyAlias> selfJoins; // Needed for root query type as it does not have a parent
 
@@ -65,7 +64,8 @@ public class QueryType extends AbstractType {
 
     @Override
     public String getName() {
-        return basedOn.getName() + " ["+name+"]";
+    		//return (basedOn == null) ? name : basedOn.getName();
+        return ((basedOn == null) ? "" : basedOn.getName()) + " ["+name+"]";
     }
 
     @Override
@@ -79,7 +79,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public List<Type> getEmbeddableTypes() {
-        return this.basedOn.getEmbeddableTypes();
+        return basedOn == null ? new ArrayList<>() : this.basedOn.getEmbeddableTypes();
     }
 
     @Override
@@ -95,7 +95,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public String toString() {
-        return getName() + " [" + this.basedOn.getName() + "]";
+        return getName() + (basedOn == null ? "" : " [" + this.basedOn.getName() + "]");
     }
 
     @Override
@@ -112,9 +112,11 @@ public class QueryType extends AbstractType {
     public Property getProperty(String path) {
         if(this.properties.containsKey(path)) {
             return this.properties.get(path);
-        } else {
+        } else if(basedOn != null){
             return this.basedOn.getProperty(path);
         }
+        
+        return null;
     }
 
     @Override
@@ -174,7 +176,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public Property getIdentifierProperty() {
-        return this.basedOn.getIdentifierProperty();
+        return basedOn == null ? null : this.basedOn.getIdentifierProperty();
     }
 
     @Override
@@ -189,7 +191,7 @@ public class QueryType extends AbstractType {
 
     @Override
     public Property getVersionProperty() {
-        return this.basedOn.getVersionProperty();
+        return basedOn == null ? null : this.basedOn.getVersionProperty();
     }
 
     @Override
@@ -199,6 +201,6 @@ public class QueryType extends AbstractType {
 
     @Override
     public List<EntityType> findInSubtypes (String property) {
-        return this.basedOn.findInSubtypes(property);
+        return basedOn == null ? new ArrayList<>() : this.basedOn.findInSubtypes(property);
     }
 }

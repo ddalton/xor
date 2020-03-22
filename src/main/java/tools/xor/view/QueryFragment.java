@@ -19,15 +19,6 @@
 
 package tools.xor.view;
 
-import org.apache.commons.lang.StringUtils;
-import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.JDBCProperty;
-import tools.xor.JDBCType;
-import tools.xor.Settings;
-import tools.xor.util.IntraQuery;
-import tools.xor.util.Vertex;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +27,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
+
+import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.JDBCType;
+import tools.xor.Settings;
+import tools.xor.util.IntraQuery;
+import tools.xor.util.Vertex;
 
 public class QueryFragment implements Vertex
 {

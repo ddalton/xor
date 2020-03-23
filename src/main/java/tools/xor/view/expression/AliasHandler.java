@@ -44,8 +44,12 @@ import java.util.List;
  * argument 0 - original property path
  * argument 1 - If present, then argument 0 is resolved using this type - argument1.getProperty(argument0)
  *              else argument 1 is resolved using the root type.
+ *              if argument 0 is null, then the alias is not based on an existing type, but is dynamically specified
  * argument 2 - view anchored in this alias. Alias does not have to refer to just an entity type but can also refer to a view
- * argument 3 - true if an inter query edge. Useful in linking two QueryTree instances.
+ *              For a dynamic alias (not anchored in an existing type), the view has to be a dynamic view
+ * argument 3 - identifies the role, optional value. Can take values of IDENTIFIER, VERSION, OWNERID (needed for linking with parent objects)
+ * argument 4 - If argument 1 is of type 'list', then the elementType value needs to be specified
+ * argument 5 - If argument 4 is of type 'object', then the name of the elementType can be specified to refer to an existing type
  * 
  * Note: A QueryType can exist without a basedOn type. But then all its properties should be expressible using aliases.
  * 
@@ -57,9 +61,11 @@ import java.util.List;
  */
 public class AliasHandler extends FunctionHandler
 {
-    private String typeName;
+    private String type;
     private String viewName;
-    private boolean interQuery;
+    private String role; // Identifier, version property etc
+    private String elementType;
+    private String elementEntityName;
 
     @Override
     public void init(List<String> args) {
@@ -67,25 +73,42 @@ public class AliasHandler extends FunctionHandler
         normalizedNames.put(args.get(0), null);
 
         if(args.size() > 1) {
-            typeName = args.get(1);
+            type = args.get(1);
         }
         if(args.size() > 2) {
             viewName = args.get(2);
         }
-        if(args.size() > 3) {
-            interQuery = Boolean.parseBoolean(args.get(3));
-        }
     }
 
-    public String getTypeName() {
-        return this.typeName;
+    public String getType() {
+        return this.type;
     }
 
     public String getViewName() {
         return this.viewName;
     }
 
-    public boolean isInterQuery() {
-        return this.interQuery;
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getElementType() {
+        return elementType;
+    }
+
+    public void setElementType(String elementType) {
+        this.elementType = elementType;
+    }
+
+    public String getElementEntityName() {
+        return elementEntityName;
+    }
+
+    public void setElementEntityName(String elementEntityName) {
+        this.elementEntityName = elementEntityName;
     }
 }

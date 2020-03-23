@@ -1,12 +1,27 @@
 package tools.xor.util.graph;
 
-import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.SparseMultigraph;
-import edu.uci.ics.jung.graph.util.EdgeType;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
 import tools.xor.AbstractProperty;
 import tools.xor.AssociationSetting;
 import tools.xor.BasicType;
@@ -32,21 +47,6 @@ import tools.xor.util.DFAtoRE.UnionExpression;
 import tools.xor.util.Edge;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.State;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSparseGraph<V, E> implements TypeGraph<V, E> {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

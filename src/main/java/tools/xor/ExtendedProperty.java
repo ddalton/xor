@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import tools.xor.AbstractProperty.LambdaResult;
+import tools.xor.JSONObjectProperty.Converter;
 import tools.xor.event.PropertyEvent;
 import tools.xor.generator.Generator;
 import tools.xor.generator.GeneratorRecipient;
@@ -402,4 +403,10 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
 	 *   inheritance hierarchy
 	 */
 	public boolean doPropagateId();
+
+	/**
+	 * Return the JSON property value converter, if this property is on a dynamic type
+	 * @return converter object
+	 */
+    Converter getConverter();
 }

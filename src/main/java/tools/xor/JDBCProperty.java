@@ -19,15 +19,15 @@
 
 package tools.xor;
 
+import java.util.List;
+
+import javax.persistence.metamodel.Attribute;
+
 import tools.xor.providers.jdbc.JDBCDAS;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.view.QueryBuilder;
-
-import javax.persistence.metamodel.Attribute;
-import java.util.List;
 
 /**
  * We do not implement ExtendedProperty since most the functionality from ExtendedProperty

@@ -19,12 +19,24 @@
 
 package tools.xor.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
 import tools.xor.AbstractType;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExternalType;
+import tools.xor.JSONObjectProperty.Converter;
 import tools.xor.OpenType;
 import tools.xor.Property;
 import tools.xor.QueryType;
@@ -48,17 +60,6 @@ import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.UnmodifiableView;
 import tools.xor.view.View;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents the shape of the type system.
@@ -150,52 +151,6 @@ public class Shape
                     typeMap.put(entityName, type);
             }
         }
-    }
-
-    /**
-     * Creates a QueryType with properties created from the rootType renamed based on aliases map
-     * and with the type defined by typeMappings.
-     * QueryType objects are temporary and hence are not part of the Shape system.
-     *
-     * @param rootType on which this QueryType is based.
-     * @param aliases for the properties of rootType
-     * @param typeMappings subclass types of the properties of the rootType. The key is alias name.
-     * @return QueryType entity type
-     */
-    public EntityType createQueryType(EntityType rootType, Map<String, String> aliases, Map<String, String> typeMappings) {
-
-        Map<String, Property> propertyMap = new HashMap<>(); // for existence check
-
-        // check if the aliases have any missing type mappings
-        // if so, they are added with the predefined type mapping
-        for(Map.Entry<String, String> entry: aliases.entrySet()) {
-            if(!typeMappings.containsKey(entry.getKey())) {
-                String propertyName = aliases.get(entry.getKey());
-                ExtendedProperty property = (ExtendedProperty)getProperty(rootType, propertyName);
-                String typeName = property.isMany() ? property.getElementType().getName() : property.getType().getName();
-
-                typeMappings.put(entry.getKey(), typeName);
-            }
-        }
-
-        // We first create the properties and then create the QueryType instance from it.
-        for(Map.Entry<String, String> entry: typeMappings.entrySet()) {
-            // Get the domain property for this entry
-            String propertyName = aliases.get(entry.getKey());
-            // TODO: an alias may not be of rootType
-            Property property = getProperty(rootType, propertyName);
-
-            Type newPropertyType = getType(entry.getValue());
-            Property queryProperty = ((ExtendedProperty) property).refine(entry.getKey(), newPropertyType, rootType);
-            propertyMap.put(queryProperty.getName(), queryProperty);
-        }
-
-        // create QueryType for all the embedded types
-
-        EntityType result = new QueryType(rootType, propertyMap);
-        result.setShape(this);
-
-        return result;
     }
 
     /**
@@ -898,5 +853,9 @@ public class Shape
      */
     public StateGraph<State, Edge<State>> getOrderedGraph() {
         return this.orderedGraph;
+    }
+    
+    public Converter getConverter(ExtendedProperty property) {
+        return null;
     }
 }

@@ -29,6 +29,7 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
 /**
@@ -44,19 +45,37 @@ public class QueryType extends AbstractType {
 
     private String name;
     private EntityType basedOn; // Optional. If not provided, then all the properties need to be described using aliases
+                                //   and the QueryType is a dynamic type
     private Map<String, Property> properties; // Properties in addition to the basedOn type
-    private List<AggregateView.PropertyAlias> selfJoins; // Needed for root query type as it does not have a parent
+    private List<AggregateView.PropertyAlias> selfJoins; // Needed for root query type as it does not have a parent,
+                                                         // makes sense only for properties that have basedOn populated
 
+    /**
+     * Create a QueryType instance from properties belonging to basedOn type
+     * 
+     * @param basedOn EntityType on which this QueryType is based on
+     * @param properties whose aliases are modelled in QueryType
+     */
     public QueryType(EntityType basedOn, Map<String, Property> properties) {
+        this(RandomStringUtils.randomAlphanumeric(16).toUpperCase(), basedOn.getShape(), properties);
+        this.basedOn = basedOn;
+    }
+    
+    /**
+     * Create a QueryType instance from QueryProperty instances
+     * 
+     * @param name user provided name for the QueryType
+     * @param shape to which this QueryType belongs
+     * @param properties that belong to the QueryType
+     */
+    public QueryType(String name, Shape shape, Map<String, Property> properties) {
         super();
 
-        this.name = RandomStringUtils.randomAlphanumeric(16).toUpperCase();
-        this.basedOn = basedOn;
+        this.name = name;
         this.properties = properties != null ? new ConcurrentHashMap<>(properties) : new ConcurrentHashMap<>();
         this.selfJoins = new LinkedList<>();
-
-        setShape(basedOn.getShape());
-    }
+        setShape(shape);
+    }    
 
     public void addSelfJoin(AggregateView.PropertyAlias alias) {
         selfJoins.add(alias);

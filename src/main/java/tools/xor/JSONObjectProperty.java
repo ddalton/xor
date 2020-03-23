@@ -24,7 +24,7 @@ public class JSONObjectProperty
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private static Map<Class, Converter> convertersByClass = new ConcurrentHashMap<Class, Converter>();
-    private static Map<String, Converter> convertersByProperty = new ConcurrentHashMap<String, Converter>();
+    //private static Map<String, Converter> convertersByProperty = new ConcurrentHashMap<String, Converter>();
     public static final String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
     public static final String ISO8601_FORMAT_TIME = "HH:mm:ss";
     public static final String ISO8601_FORMAT = ISO8601_FORMAT_DATE + "'T'" + ISO8601_FORMAT_TIME + ".SSSZ";
@@ -53,11 +53,11 @@ public class JSONObjectProperty
         }
     }
 
-    public static void registerConverter(String propertyName, Converter converter) {
-        if(!convertersByProperty.containsKey(propertyName)) {
-            convertersByProperty.put(propertyName, converter);
-        }
-    }
+//    public static void registerConverter(String propertyName, Converter converter) {
+//        if(!convertersByProperty.containsKey(propertyName)) {
+//            convertersByProperty.put(propertyName, converter);
+//        }
+//    }
 
     public static Converter findConverter(Class<?> clazz) {
         if(convertersByClass.containsKey(clazz)) {
@@ -458,9 +458,9 @@ public class JSONObjectProperty
 
     private Converter getConverter() {
         if(this.converter == null) {
-            if(convertersByProperty.containsKey(getName())) {
-                converter = convertersByProperty.get(getName());
-            }
+//            if(convertersByProperty.containsKey(getName())) {
+//                converter = convertersByProperty.get(getName());
+//            }
             if(convertersByClass.containsKey(getDomainProperty().getType().getInstanceClass())) {
                 converter = convertersByClass.get(getDomainProperty().getType().getInstanceClass());
             }

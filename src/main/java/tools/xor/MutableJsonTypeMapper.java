@@ -21,7 +21,6 @@ package tools.xor;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

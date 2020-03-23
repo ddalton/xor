@@ -22,11 +22,8 @@ package tools.xor;
 import java.util.List;
 import java.util.Map;
 
-import org.hsqldb.lib.ObjectComparator;
-import tools.xor.util.IntraQuery;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.graph.ObjectGraph;
-import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
 import tools.xor.view.QueryTreeInvocation;
 

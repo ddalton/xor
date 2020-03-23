@@ -19,10 +19,7 @@
 
 package tools.xor.util;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.Blob;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
@@ -32,7 +29,6 @@ import org.json.JSONObject;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
-import tools.xor.ListType;
 import tools.xor.MutableJsonTypeMapper;
 import tools.xor.Property;
 import tools.xor.Settings;

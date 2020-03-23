@@ -1062,15 +1062,13 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         String alias;
         String propertyName;
         String typeName;
-        String viewName;
-        boolean isInterQuery; // If present, then this alias represents an interquery edge
+        String viewName; // Could give rise to an interquery edge if the view is a custom view
 
-        public PropertyAlias(String alias, String propertyName, String typeName, String viewName, boolean isInterQuery) {
+        	public PropertyAlias(String alias, String propertyName, String typeName, String viewName) {
             this.alias = alias;
             this.propertyName = propertyName;
             this.typeName = typeName;
             this.viewName = viewName;
-            this.isInterQuery = isInterQuery;
 
             assert(this.alias != null);
         }
@@ -1111,10 +1109,9 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             if( (propertyName != null ? propertyName.equals(other.propertyName) : other.propertyName == null) &&
                 (typeName != null ? typeName.equals(other.typeName) : other.typeName == null) &&
                 (viewName != null ? viewName.equals(other.viewName) : other.viewName == null)
-                ) {
-                if(isInterQuery == other.isInterQuery) {
-                    return true;
-                }
+                ) 
+            {
+            	    return true;
             }
 
             return false;
@@ -1128,7 +1125,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             h = propertyName != null ? (31 * h + propertyName.hashCode()) : h;
             h = typeName != null ? (31 * h + typeName.hashCode()) : h;
             h = viewName != null ? (31 * h + viewName.hashCode()) : h;
-            h = isInterQuery ? 31 * h : h;
 
             return h;
         }
@@ -1150,9 +1146,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
                         PropertyAlias pa = new PropertyAlias(
                             function.getName(),
                             function.getAttribute(),
-                            ah.getTypeName(),
-                            ah.getViewName(),
-                            ah.isInterQuery());
+                            ah.getType(),
+                            ah.getViewName());
 
                         if(pa.isViewReference()) {
                             viewAliasMap.put(function.getAttribute(), pa);

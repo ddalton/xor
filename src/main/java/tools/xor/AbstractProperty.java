@@ -45,22 +45,20 @@ import javax.persistence.Id;
 import javax.persistence.MapKey;
 import javax.persistence.OrderBy;
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
-import javax.swing.text.html.parser.Entity;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.JSONObjectProperty.Converter;
 import tools.xor.annotation.XorAlways;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorExternalData;
-import tools.xor.annotation.XorLambda;
 import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
 import tools.xor.generator.Generator;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
@@ -165,6 +163,19 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 		
 		this.elementType = elementType;
+	}
+	
+	@Override
+	public Converter getConverter() {
+	    // Get the converter corresponding to the shape
+	    Shape shape = this.parentType.getShape();
+	    Converter converter = shape.getConverter(this);
+	    
+	    if(converter == null) {
+	        converter = JSONObjectProperty.findConverter(type.getInstanceClass());
+	    }
+	    
+	    return converter;
 	}
 
 	@Override

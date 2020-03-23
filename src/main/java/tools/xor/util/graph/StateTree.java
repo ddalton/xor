@@ -299,7 +299,7 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 		State startState = new SubtypeState(queryType, true);
 
 		// Handle the root view
-		viewAliasStateMap.put(new PropertyAlias("root", null, null, view.getName(), false), startState);
+		viewAliasStateMap.put(new PropertyAlias("root", null, null, view.getName()), startState);
 		nameViewMap.put(view.getName(), view);
 		buildMaps(viewAliasStateMap, nameViewMap, view, queryType);
 

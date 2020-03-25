@@ -65,7 +65,7 @@ public class AliasHandler extends FunctionHandler
 {
     private String type;
     private String viewName;  // EntityName or Element EntityName
-    private String role;      // Identifier, version property etc
+    private String role;      // Identifier, composite_#  where # - 1..n
     private String elementType;
 
     @Override

@@ -192,7 +192,8 @@ public class TwitterJDBCTest
         };
 
         // Rebuild the types
-        das.addShape("_DEFAULT_", extension);
+        das.removeShape(DataAccessService.DEFAULT_SHAPE);
+        das.createShape(DataAccessService.DEFAULT_SHAPE, extension);
     }
 
     @Before

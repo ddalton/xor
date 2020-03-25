@@ -132,7 +132,7 @@ public class PlainJDBCTest
 			System.out.println("[Commit seed data - " + ((time4 - time3) / 1000) + " μs");
 
 			// build the shape
-			am.getDAS().addShape(SHAPE_NAME);
+			am.getDAS().createShape(SHAPE_NAME);
 		}
 	}
 

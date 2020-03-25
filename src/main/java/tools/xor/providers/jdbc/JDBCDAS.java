@@ -495,9 +495,9 @@ public abstract class JDBCDAS extends AbstractDataAccessService
         return type;
     }
 
-    @Override public Shape addShape (String name, SchemaExtension extension)
+    @Override public Shape createShape (String name, SchemaExtension extension)
     {
-        Shape shape = getOrCreateShape(name);
+        Shape shape = super.createShape(name, extension);
 
         List<TableInfo> tables = name.equals(RELATIONAL_SHAPE) ? getRelationalTables() : getTables();
 

@@ -66,15 +66,23 @@ public interface DataAccessService {
 	 * @return Shape responsible for creating the entity type
 	 */
 	public Shape getOwner(EntityType entityType);
-
+	
 	/**
-	 * Build the Type and Property objects for the static API
-	 * Rebuilds an existing shape.
-	 *
-	 * @param name of the Shape represting the type system
-	 * @return shape that was added
+	 * Add the shape to the DAS, and additionally control if 
+	 * the added shape can be make active.
+	 * 
+	 * @param shape object representing the type system
+	 * @param isActive true if the shape is the default shape for the DAS
 	 */
-	public Shape addShape(String name);
+	public void addShape(Shape shape, boolean isActive);
+	
+    /**
+     * Add the shape to the DAS.
+     * The shape that is added does not affect the active shape.
+     *
+     * @param name of the Shape representing the type system
+     */
+    public Shape createShape(String name);	
 
 	/**
 	 * Build the Type and Property objects for the static API
@@ -84,7 +92,7 @@ public interface DataAccessService {
 	 * @param extension code to add new types/properties to the shape
 	 * @return shape that was added
 	 */
-	public Shape addShape(String name, SchemaExtension extension);
+	public Shape createShape(String name, SchemaExtension extension);
 
 	/**
 	 * Remove an existing shape

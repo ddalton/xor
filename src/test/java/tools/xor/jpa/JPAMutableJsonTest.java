@@ -697,7 +697,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 
 
@@ -847,7 +847,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 		JDBCType pTask = (JDBCType)shape.getType("TASK");
 
@@ -923,7 +923,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void testSubtypeSubquery() {
 		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 
 
@@ -1039,7 +1039,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 
 
@@ -1135,7 +1135,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		Shape jdbcShape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(jdbcShape == null) {
-			jdbcShape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+			jdbcShape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 
 

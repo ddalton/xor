@@ -59,34 +59,54 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	protected DASFactory        dasFactory;
 
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
-	private ThreadLocal<Shape> overriddenShape = new ThreadLocal<Shape>(); // temporarily overridden by user
+	private ThreadLocal<Shape> activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
 
 	public AbstractDataAccessService(DASFactory factory, TypeMapper typeMapper) {
 		this.dasFactory = factory;
 		this.typeMapper = typeMapper;
 		this.shapes = new HashMap<>();
-		shapes.put(DEFAULT_SHAPE, new Shape(DEFAULT_SHAPE, null, this));
-	}
-
-	@Override
-	public Shape addShape(String name) {
-		return this.addShape(name, null);
-	}
+	}	
+	
+    @Override
+    public void addShape(Shape shape, boolean active) {
+        if(shapes.containsKey(shape.getName())) {
+            throw new RuntimeException(String.format("Shape with name %s already exists", shape.getName()));
+        }
+        
+        shapes.put(shape.getName(), shape);
+        
+        if(active) {
+            activeShape.set(shape);
+        }
+    }	
 
 	@Override
 	public Shape getShape() {
-		// Needs to be always present to allow user overrides
-		if(hasOverriddenShape()) {
-			return getOverriddenShape();
+	    Shape shape = activeShape.get();
+		if(shape == null) {
+		    throw new RuntimeException("No shape currently set as active");
 		}
-
-		return shapes.get(DEFAULT_SHAPE);
+		
+		return shape;
 	}
 
 	@Override
 	public Shape getShape(String name) {
 		return shapes.get(name);
 	}
+	
+    @Override public Shape createShape (String name)
+    {
+        return createShape(name, null);
+    }	
+    
+    @Override public Shape createShape (String name, SchemaExtension extension)
+    {
+        Shape shape = new Shape(name, null, this);
+        addShape(shape, true);
+        
+        return shape;
+    }
 
 	@Override
 	public Shape getOwner(EntityType entityType) {
@@ -104,64 +124,13 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		return null;
 	}
 
-	protected boolean hasOverriddenShape() {
-		return overriddenShape.get() != null;
-	}
-
-	protected Shape getOverriddenShape() {
-		return overriddenShape.get();
-	}
-
 	public AggregateManager getAggregateManager() {
 		return this.dasFactory.getAggregateManager();
-	}
-
-	/**
-	 * Override the current shape
-	 * @param name for the overridden shape
-	 * @param reuse true if reuse shape with same name
-	 * @return the new shape that overrides the existing shape
-	 */
-	public Shape overrideShape(String name, boolean reuse) {
-		if(shapes.containsKey(name) && !reuse) {
-			throw new RuntimeException("A Shape object already exists with the name: " + name);
-		}
-		Shape result = getOrCreateShape(name, getShape());
-		overriddenShape.set(result);
-
-		return result;
-	}
-
-	protected void removeShapeOverride(boolean delete) {
-		if(delete) {
-			shapes.remove(overriddenShape.get().getName());
-		}
-		overriddenShape.remove();
-	}
-
-	/**
-	 * Return an existing shape with the provided name or create one if not present.
-	 * @param name of the shape
-	 * @param parent of the shape
-	 * @return the newly created shape
-	 */
-	public Shape getOrCreateShape (String name, Shape parent) {
-		Shape shape = shapes.get(name);
-		if(shape == null) {
-			shape = new Shape(name, parent, this);
-			shapes.put(name, shape);
-		}
-
-		return shape;
 	}
 
 	@Override
 	public void removeShape(String name) {
 		shapes.remove(name);
-	}
-
-	protected Shape getOrCreateShape (String name) {
-		return getOrCreateShape(name, null);
 	}
 
 	@Override

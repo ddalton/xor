@@ -100,7 +100,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 				if( ((HibernateDAS)das.get(name)).getConfiguration() == null)
 					throw new RuntimeException("Could not get Hibernate configuration.");
 
-				das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
+				das.get(name).createShape(AbstractDataAccessService.DEFAULT_SHAPE);
 				return das.get(name);
 			}
 		} catch(BeanCreationException e) {
@@ -145,7 +145,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 		injectDependencies(das.get(name), name);
 
 		if(addShape) {
-			das.get(name).addShape(AbstractDataAccessService.DEFAULT_SHAPE);
+			das.get(name).createShape(AbstractDataAccessService.DEFAULT_SHAPE);
 		}
 
 		return das.get(name);

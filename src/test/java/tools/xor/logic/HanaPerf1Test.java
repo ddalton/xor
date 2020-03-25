@@ -551,8 +551,8 @@ public class HanaPerf1Test
         };
 
         // Rebuild the types
-        das.addShape(AbstractDataAccessService.DEFAULT_SHAPE, relationshipExtension);
-        das.addShape(AbstractDataAccessService.RELATIONAL_SHAPE, generatorExtension);
+        das.createShape(AbstractDataAccessService.DEFAULT_SHAPE, relationshipExtension);
+        das.createShape(AbstractDataAccessService.RELATIONAL_SHAPE, generatorExtension);
     }
 
     private void populate() {

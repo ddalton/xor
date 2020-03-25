@@ -228,7 +228,7 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	public void testSubtypeSubquery() {
 		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getDAS().addShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 
 

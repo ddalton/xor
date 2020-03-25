@@ -63,6 +63,8 @@ import tools.xor.view.View;
  *   Float
  *   Double
  *   
+ * @see tools.xor.view.TraversalView.PropertyAlias#getJavaClass(String)
+ *   
  * Helps with Dynamic Query Object Reconstitution
  */
 public class QueryShape extends Shape

@@ -28,7 +28,6 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 
 public class ExternalProperty extends AbstractProperty {

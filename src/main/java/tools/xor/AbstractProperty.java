@@ -154,7 +154,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		initBusinessLogicAnnotations();		
 	}	
 
-	public AbstractProperty(String name, Type type, EntityType parentType, RelationshipType relType, EntityType elementType) {
+	public AbstractProperty(String name, Type type, EntityType parentType, RelationshipType relType, Type elementType) {
 		this(name, type, parentType);
 		this.relType = relType;
 		

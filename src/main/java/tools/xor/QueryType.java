@@ -84,7 +84,7 @@ public class QueryType extends AbstractType {
     @Override
     public String getName() {
     		//return (basedOn == null) ? name : basedOn.getName();
-        return ((basedOn == null) ? "" : basedOn.getName()) + " ["+name+"]";
+        return ((basedOn == null) ? name : basedOn.getName()) + " ["+name+"]";
     }
 
     @Override

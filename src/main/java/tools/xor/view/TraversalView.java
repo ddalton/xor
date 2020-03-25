@@ -19,7 +19,10 @@
 
 package tools.xor.view;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1062,7 +1065,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         String alias;
         String propertyName;
         String typeName;
-        String viewName; // Could give rise to an interquery edge if the view is a custom view
+        String viewName;                  // Could give rise to an interquery edge if the view is a custom view
+        String elementType;     
 
         	public PropertyAlias(String alias, String propertyName, String typeName, String viewName) {
             this.alias = alias;
@@ -1072,6 +1076,12 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
             assert(this.alias != null);
         }
+        	
+        	public PropertyAlias(String alias, String propertyName, String typeName, String viewName, String elementType) {
+            this(alias, propertyName, typeName, viewName);
+            
+            this.elementType = elementType;
+        }        	
 
         public boolean isViewReference() {
             return this.viewName != null && !"".equals(this.viewName.trim());
@@ -1092,6 +1102,14 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         public String getOriginal() {
             return Settings.getBaseName(this.propertyName);
         }
+        
+        public String getElementType() {
+            return elementType;
+        }
+
+        public void setElementType(String elementType) {
+            this.elementType = elementType;
+        }      
 
         @Override
         public boolean equals(Object o) {
@@ -1108,7 +1126,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
             if( (propertyName != null ? propertyName.equals(other.propertyName) : other.propertyName == null) &&
                 (typeName != null ? typeName.equals(other.typeName) : other.typeName == null) &&
-                (viewName != null ? viewName.equals(other.viewName) : other.viewName == null)
+                (viewName != null ? viewName.equals(other.viewName) : other.viewName == null) &&
+                (elementType != null ? elementType.equals(other.elementType) : other.elementType == null)
                 ) 
             {
             	    return true;
@@ -1125,9 +1144,74 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             h = propertyName != null ? (31 * h + propertyName.hashCode()) : h;
             h = typeName != null ? (31 * h + typeName.hashCode()) : h;
             h = viewName != null ? (31 * h + viewName.hashCode()) : h;
+            h = elementType != null ? (31 * h + elementType.hashCode()) : h;          
 
             return h;
         }
+        
+        public Class getTypeJavaClass() {
+            return getJavaClass(this.typeName);
+        }
+        
+        public Class getElementTypeJavaClass() {
+            return getJavaClass(this.elementType);
+        }        
+        
+        public Class getJavaClass(String tname) {
+            if(typeToClassMap.containsKey(tname.toUpperCase())) {
+                return typeToClassMap.get(tname.toUpperCase());
+            }
+
+            // Try to find the class using the class loader
+            try {
+                return Thread.currentThread().getContextClassLoader().loadClass(tname);
+            } catch (ClassNotFoundException e) {
+                throw ClassUtil.wrapRun(e);
+            }
+        }
+        
+        private static Map<String, Class> typeToClassMap = new HashMap<>();
+        static {
+            typeToClassMap.put("LIST", List.class);
+            typeToClassMap.put("OBJECT", Object.class);
+            typeToClassMap.put("STRING", String.class);
+            typeToClassMap.put("BIGDECIMAL", BigDecimal.class);
+            typeToClassMap.put("BIGINTEGER", BigInteger.class);
+            typeToClassMap.put("BOOLEAN", Boolean.class);
+            typeToClassMap.put("INTEGER", Integer.class);
+            typeToClassMap.put("LONG", Long.class);
+            typeToClassMap.put("FLOAT", Float.class);
+            typeToClassMap.put("DOUBLE", Double.class);
+            typeToClassMap.put("BYTEARRAY", Byte[].class);
+            typeToClassMap.put("DATE", Date.class);
+        }
+        public boolean isSimple() {
+            // This is a simple type if it doesn't represent an TO_ONE or a TO_MANY relationship to an entity type
+            return !typeName.toUpperCase().equals("OBJECT") && (elementType == null || !elementType.toUpperCase().equals("OBJECT"));
+        }
+    }
+    
+    public void initAliases() {
+        // check and initialize if needed
+        if(getFunction() != null) {
+            for (Function function : getFunction()) {
+                if (function.type == FunctionType.ALIAS) {
+                    AliasHandler ah = (AliasHandler)function.getHandler();
+                    PropertyAlias pa = new PropertyAlias(
+                        function.getName(),
+                        function.getAttribute(),
+                        ah.getType(),
+                        ah.getViewName(),
+                        ah.getElementType());
+
+                    if(pa.isViewReference()) {
+                        viewAliasMap.put(function.getAttribute(), pa);
+                    } else {
+                        aliasMap.put(function.getAttribute(), pa);
+                    }
+                }
+            }
+        }        
     }
 
     /**
@@ -1139,24 +1223,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
         if(aliasMap.size() == 0) {
             // check and initialize if needed
-            if(getFunction() != null) {
-                for (Function function : getFunction()) {
-                    if (function.type == FunctionType.ALIAS) {
-                        AliasHandler ah = (AliasHandler)function.getHandler();
-                        PropertyAlias pa = new PropertyAlias(
-                            function.getName(),
-                            function.getAttribute(),
-                            ah.getType(),
-                            ah.getViewName());
-
-                        if(pa.isViewReference()) {
-                            viewAliasMap.put(function.getAttribute(), pa);
-                        } else {
-                            aliasMap.put(function.getAttribute(), pa);
-                        }
-                    }
-                }
-            }
+            initAliases();
         }
 
         // Get the anchor path for the view reference
@@ -1172,6 +1239,10 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
         return propertyPath;
     }
+    
+    public Set<PropertyAlias> getAliases() {
+        return new HashSet(aliasMap.values());
+    }    
 
     public Set<PropertyAlias> getViewAliases() {
         return new HashSet(viewAliasMap.values());

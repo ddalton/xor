@@ -47,9 +47,11 @@ import java.util.List;
  *              if argument 0 is null, then the alias is not based on an existing type, but is dynamically specified
  * argument 2 - view anchored in this alias. Alias does not have to refer to just an entity type but can also refer to a view
  *              For a dynamic alias (not anchored in an existing type), the view has to be a dynamic view
+ *              If a view is specified, then argument1(type) should either be OBJECT or LIST and
+ *              if LIST, the elementType is OBJECT (element EntityName is the view name)
+ *              If view is not specified, then additional alias entries need to be present to define the object
  * argument 3 - identifies the role, optional value. Can take values of IDENTIFIER, VERSION, OWNERID (needed for linking with parent objects)
- * argument 4 - If argument 1 is of type 'list', then the elementType value needs to be specified
- * argument 5 - If argument 4 is of type 'object', then the name of the elementType can be specified to refer to an existing type
+ * argument 4 - If argument 1 is of type LIST, then the elementType value needs to be specified
  * 
  * Note: A QueryType can exist without a basedOn type. But then all its properties should be expressible using aliases.
  * 
@@ -62,10 +64,9 @@ import java.util.List;
 public class AliasHandler extends FunctionHandler
 {
     private String type;
-    private String viewName;
-    private String role; // Identifier, version property etc
+    private String viewName;  // EntityName or Element EntityName
+    private String role;      // Identifier, version property etc
     private String elementType;
-    private String elementEntityName;
 
     @Override
     public void init(List<String> args) {
@@ -102,13 +103,5 @@ public class AliasHandler extends FunctionHandler
 
     public void setElementType(String elementType) {
         this.elementType = elementType;
-    }
-
-    public String getElementEntityName() {
-        return elementEntityName;
-    }
-
-    public void setElementEntityName(String elementEntityName) {
-        this.elementEntityName = elementEntityName;
     }
 }

@@ -32,11 +32,14 @@ import org.apache.log4j.Logger;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
+import tools.xor.QueryProperty;
 import tools.xor.QueryType;
+import tools.xor.RelationshipType;
 import tools.xor.Type;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.AggregateViews;
+import tools.xor.view.TraversalView.PropertyAlias;
 import tools.xor.view.View;
 
 /**
@@ -157,8 +160,68 @@ public class QueryShape extends Shape
         // Get the objects with names and create QueryType object with those names and associate it against the anchor path
         // root QueryType has empty anchor path
         // for QueryType(s) that do not have a name, generate a name and do the same as above
-        // Now populate the propeties for the QueryType(s) by processing the last element of the path
-        // For this algorithm to work, all QueryType(s) need to marked with "Object" type, if not an error is thrown    	
+        // Now populate the properties for the QueryType(s) by processing the last element of the path
+        // For this algorithm to work, all QueryType(s) need to marked with "Object" type, if not an error is thrown  
+        
+        // QueryType and QueryProperty does not have provider DataAccessService dependency because the types
+        // are dynamically created and not queried from the DAS.
+        
+        
+        // To keep things simple we don't support child views for QueryType views (maybe in future)
+        // nested queries are modelled using view references
+        // Two passes
+        // Pass 1a: Go through each view and child views and create the QueryType instances looking at the first level
+        //          Dynamically add to the view alias for the child views
+        //                   -- anchor path, generated name for the view
+        // Pass 1b: For each view, fill the QueryType with containment QueryType instances (generated name)
+        // Pass 2:  Go through each view references and add them to the QueryType instances
+        //          Then add the view to the shape. That takes care of expanding the view if needed
+        //          Check state tree creation and if the state tree is created property (i.e., for view references)
+
+        Map<String, QueryType> queryTypeMap = new HashMap<>();
+        
+        // PASS 1
+        for(AggregateView view: views) {
+            // 1a
+            QueryType qt = createQueryType(view, queryTypeMap);
+            
+            // 1b
+            
+            
+            // We only add the root QueryType to the shape
+            addType(qt.getName(), qt);
+        }
+        
+        // PASS 2
+    }
+    
+    private QueryType createQueryType(AggregateView view, Map<String, QueryType> queryTypeMap) {
+        // Extract the aliases
+        view.initAliases();
+        
+        Map<String, Property> properties = new HashMap<>();
+        QueryType qt = new QueryType(view.getName(), this, properties);
+        for(PropertyAlias pa: view.getAliases()) {
+            // Gather the simple properties, including collection of simple types
+            if(pa.isSimple()) {
+                QueryProperty qp = null;
+                if(pa.getTypeJavaClass() == List.class) {
+                    qp = new QueryProperty(pa.getAlias(), getType(pa.getTypeJavaClass()), qt);
+                } else {
+                    qp = new QueryProperty(pa.getAlias(), getType(pa.getTypeJavaClass()), qt, RelationshipType.TO_MANY, getType(pa.getElementTypeJavaClass()));
+                }
+                qt.addProperty(qp);
+            }
+        }
+        queryTypeMap.put(qt.getName(), qt);
+        
+        if(view.getChildren() != null) {
+            for(AggregateView child: view.getChildren()) {
+                createQueryType(child, queryTypeMap);
+            }
+        }
+        
+        return qt;
     }
     
     /**

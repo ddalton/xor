@@ -24,13 +24,12 @@ public class JSONObjectProperty
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private static Map<Class, Converter> convertersByClass = new ConcurrentHashMap<Class, Converter>();
-    //private static Map<String, Converter> convertersByProperty = new ConcurrentHashMap<String, Converter>();
     public static final String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
     public static final String ISO8601_FORMAT_TIME = "HH:mm:ss";
     public static final String ISO8601_FORMAT = ISO8601_FORMAT_DATE + "'T'" + ISO8601_FORMAT_TIME + ".SSSZ";
     public static final String ANSI_FORMAT_DATETIME = ISO8601_FORMAT_DATE + " " + ISO8601_FORMAT_TIME;
 
-    private volatile Converter converter;
+    private volatile Converter converter;   // For performance optimization
     private final ExtendedProperty property;
 
     public interface Converter {
@@ -47,18 +46,16 @@ public class JSONObjectProperty
         public void   add(Settings settings, JSONArray jsonArray, Object object);
     }
 
-    public static void registerConverter(Class<?> clazz, Converter converter) {
-        if(!convertersByClass.containsKey(clazz)) {
-            convertersByClass.put(clazz, converter);
-        }
-    }
-
-//    public static void registerConverter(String propertyName, Converter converter) {
-//        if(!convertersByProperty.containsKey(propertyName)) {
-//            convertersByProperty.put(propertyName, converter);
-//        }
-//    }
-
+    /**
+     * Find the built-in converters based on the provided class
+     * New converters can be added directly to the Shape containing the type to override the
+     * converter behavior.
+     * 
+     * @param clazz for which the built-in converter needs to be found
+     * @return built-in converter
+     * 
+     * @see tools.xor.service.Shape#registerConverter(Class, Converter)
+     */
     public static Converter findConverter(Class<?> clazz) {
         if(convertersByClass.containsKey(clazz)) {
             return convertersByClass.get(clazz);
@@ -456,6 +453,7 @@ public class JSONObjectProperty
         }
     }
 
+    /*
     private Converter getConverter() {
         if(this.converter == null) {
 //            if(convertersByProperty.containsKey(getName())) {
@@ -467,6 +465,15 @@ public class JSONObjectProperty
         }
 
         return converter;
+    }
+    */
+    
+    private Converter getConverter() {
+        if(this.converter == null) {
+            this.converter = ((ExtendedProperty) getDomainProperty()).getConverter();
+        }
+        
+        return this.converter;
     }
 
     private void setExternal(Settings settings, JSONObject jsonObject, String name, Object propertyValue) throws JSONException {

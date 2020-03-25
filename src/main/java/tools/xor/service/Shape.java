@@ -79,8 +79,8 @@ public class Shape
     protected Map<String, Map<String, Property>> externalProperties = new ConcurrentHashMap<>();
     protected StateGraph<State, Edge<State>> orderedGraph;
     protected Shape jdbcShape; // refers to the JDBC shape type system if available
-
     protected ShapeStrategy shapeStrategy = ShapeStrategy.SHARED;
+    private   Map<Class, Converter> convertersByClass = new ConcurrentHashMap<Class, Converter>();
 
     // Used to signal if the shape has finished being being
     private volatile boolean buildFinished;
@@ -855,7 +855,16 @@ public class Shape
         return this.orderedGraph;
     }
     
+    public void registerConverter(Class<?> clazz, Converter converter) {
+        if(!convertersByClass.containsKey(clazz)) {
+            convertersByClass.put(clazz, converter);
+        }
+    }    
+    
     public Converter getConverter(ExtendedProperty property) {
+        if(convertersByClass.containsKey(property.getType().getInstanceClass())) {
+            return convertersByClass.get(property.getType().getInstanceClass());
+        }       
         return null;
     }
 }

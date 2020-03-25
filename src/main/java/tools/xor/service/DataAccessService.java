@@ -25,16 +25,10 @@ import java.util.Map;
 import java.util.Set;
 
 import tools.xor.EntityType;
-import tools.xor.OpenType;
-import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.TypeNarrower;
-import tools.xor.util.Edge;
 import tools.xor.util.PersistenceType;
-import tools.xor.util.State;
-import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
 

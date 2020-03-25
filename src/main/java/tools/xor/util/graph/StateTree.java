@@ -553,6 +553,8 @@ public class StateTree<V extends StateTree.SubtypeState, E extends StateTree.Aut
 				// add an edge where required
 				if(subtypeStates.size() == 1) {
 					SubtypeState sts = subtypeStates.get(0);
+					// If we have reached here then we should have a QueryType that is having a basedOn type populated
+					// and is not DQOR (Dynamic Query Object Reconstitution) where basedOn is null
 					Property p = ((QueryType)sts.getType()).getBasedOn().getProperty(attribute);
 					return addQueryEdge(current, p, (V)sts, initialize);
 				}

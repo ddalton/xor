@@ -56,7 +56,7 @@ import tools.xor.util.graph.TreeOperations;
  * The mapping is typically:
  * AggregateView -> AggregateTree
  * 
- * A AggregateTree is a tree data structure, where the nodes are QueryTree instances.
+ * A AggregateTree is a graph that typically represents a tree data structure, where the nodes are QueryTree instances.
  * The TreeTraversal algorithm uses this data structure to execute the queries.
  * The AggregateTree represents two types of partitioning of the queries
  * 1. Leaf group
@@ -87,6 +87,14 @@ import tools.xor.util.graph.TreeOperations;
  *    The thread from the Query Pool can be used to do this construction or can hand it off to the
  *    calling thread. The recommended approach is to hand it off so the Query Pool solely focuses
  *    on executing queries
+ *    
+ * In Dynamic Query Object Reconstitution (DQOR) - where QueryType is not based on an existing type, but specified
+ *   [D] Dynamic        - The entity type is specified dynamically in the aggregate view
+ *   [Q] Query          - The action is applicable to querying data
+ *   [O] Object         - The result is a object
+ *   [R] Reconstitution - The act of converting from a query result (set of records) to one or more object  
+ *   
+ * AggregateTree can represent an acyclic graph where there are multiple references to the same view.
  *
  * @author Dilip Dalton
  *

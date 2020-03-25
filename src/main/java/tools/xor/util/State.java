@@ -101,9 +101,6 @@ public class State implements Vertex {
 	 * @return type name
 	 */
 	public String getTypeName() {
-		if(getType() instanceof QueryType) {
-			return ((QueryType)type).getBasedOn().getName();
-		}
 		return getType().getName();
 	}
 

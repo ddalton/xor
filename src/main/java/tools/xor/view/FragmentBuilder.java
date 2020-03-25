@@ -246,7 +246,7 @@ public class FragmentBuilder
             State root = roots.iterator().next();
             QueryType qt = (QueryType)root.getType();
             QueryFragment fragment = new QueryFragment(
-                qt.getBasedOn(),
+                qt.getBasedOn() == null ? qt : qt.getBasedOn(), // DQOR QueryTypes do not have basedOn type
                 aggregateTree.nextAlias(),
                 view.getAnchorPath());
             queryTree.addVertex(fragment);
@@ -287,6 +287,7 @@ public class FragmentBuilder
             // Add the edges
             // handle subtypes, joins etc
             for (Edge<State> edge : st.getEdges()) {
+                // DQOR QueryTypes do not have edges in StateTree
                 EntityType startType = ((QueryType)edge.getStart().getType()).getBasedOn();
                 Property p = startType.getProperty(edge.getName());
 

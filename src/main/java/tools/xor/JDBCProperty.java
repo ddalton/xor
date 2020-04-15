@@ -201,11 +201,6 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         return this.columns;
     }
 
-    @Override public void init (Shape shape)
-    {
-
-    }
-
     @Override public Object getDefault ()
     {
         return null;

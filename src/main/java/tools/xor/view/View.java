@@ -19,6 +19,11 @@
 
 package tools.xor.view;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 /*
  * If no view/qualifier is specified then we return all the properties and children of the aggregate
  * 
@@ -55,22 +60,16 @@ package tools.xor.view;
  */
 
 import org.json.JSONObject;
+
 import tools.xor.AggregateAction;
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.DataAccessService;
-import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.Edge;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 public interface View {
 
@@ -437,4 +436,12 @@ public interface View {
 	 * @return position of result set corresponding to this view
 	 */
 	Integer getResultPosition();
+
+	/**
+	 * Return the name of the DataAccessService instance applicable for this view.
+	 * Useful for DQOR (Dynamic Query Object Reconstitution) objects
+	 * 
+	 * @return
+	 */
+    String getDasName();
 }

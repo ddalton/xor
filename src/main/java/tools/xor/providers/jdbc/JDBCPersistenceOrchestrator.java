@@ -1,6 +1,21 @@
 package tools.xor.providers.jdbc;
 
+import java.io.Serializable;
+import java.sql.Blob;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.sql.DataSource;
+
 import org.springframework.jdbc.datasource.DataSourceUtils;
+
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityKey;
@@ -8,7 +23,6 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.NaturalEntityKey;
 import tools.xor.Property;
-import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
@@ -21,20 +35,6 @@ import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
-
-import javax.sql.DataSource;
-import java.io.Serializable;
-import java.sql.Blob;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class JDBCPersistenceOrchestrator
 	extends AbstractPersistenceOrchestrator

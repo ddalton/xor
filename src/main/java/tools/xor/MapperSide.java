@@ -17,18 +17,14 @@
  * under the License.
  */
 
-package tools.xor.service;
+package tools.xor;
 
-import tools.xor.TypeMapper;
-
-public interface DASFactory {
-	DataAccessService create(TypeMapper typeMapper);
-
-	void setAggregateManager(AggregateManager aggregateManager);
-
-	AggregateManager getAggregateManager();
-	
-	PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext);
-	
-	void injectDependencies(Object bean, String name);
+/**
+ * Denotes the side a TypeMapper instance is targeted against
+ * @author Dilip Dalton
+ *
+ */
+public enum MapperSide {
+    EXTERNAL, 
+    DOMAIN;       
 }

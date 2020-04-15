@@ -22,6 +22,8 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.JSONObjectProperty.Converter;
+
 /**
  * This is designed to work with org.json.JSONObject
  * 
@@ -32,15 +34,14 @@ public class MutableJsonProperty extends ExternalProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	private final JSONObjectProperty jsonObjectProperty;
+	private Converter converter;
 	
-	public MutableJsonProperty(ExtendedProperty domainProperty, Type type,
-			ExternalType parentType, Type elementType) {
+	public MutableJsonProperty(ExtendedProperty domainProperty, Type type, ExternalType parentType, Type elementType) {
 		super(domainProperty, type, parentType, elementType);
 		jsonObjectProperty = new JSONObjectProperty(this);
 	}
 
-	public MutableJsonProperty(String name, ExtendedProperty domainProperty, Type type,
-							   ExternalType parentType, Type elementType) {
+	public MutableJsonProperty(String name, ExtendedProperty domainProperty, Type type, ExternalType parentType, Type elementType) {
 		super(name, domainProperty, type, parentType, elementType);
 		jsonObjectProperty = new JSONObjectProperty(this);
 	}
@@ -82,5 +83,14 @@ public class MutableJsonProperty extends ExternalProperty {
 	@Override
 	public void addMapEntry(Object dataObject, Object key, Object value) {
 		this.jsonObjectProperty.addMapEntry(dataObject, key, value);
+	}
+	
+	public void setConverter(Converter converter) {
+	    this.converter = converter;
+	}
+	
+	@Override
+	public Converter getConverter() {
+	    return this.converter;
 	}
 }

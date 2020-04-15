@@ -143,7 +143,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 */
 	public void persistGraph(ObjectCreator objectCreator, Settings settings) {
 
-		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
+		EntityType entityType = (EntityType) objectCreator.getTypeMapper().getDomainShape().getType(((EntityType)settings.getEntityType()).getEntityName());
 
 		// For topological sorting we need to use the VIEW_GRAPH
 		View view = settings.getView();
@@ -172,7 +172,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 	 */
 	public void deleteGraph(ObjectCreator objectCreator, Settings settings) {
 
-		EntityType entityType = ((EntityType)settings.getEntityType()).getDomainType();
+		EntityType entityType = (EntityType) objectCreator.getTypeMapper().getDomainShape().getType(((EntityType)settings.getEntityType()).getEntityName());
 		TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
 		deleteRoots(objectCreator, sg);
 	}

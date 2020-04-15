@@ -20,13 +20,11 @@
 package tools.xor;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
 import org.json.JSONObject;
-import tools.xor.service.DataAccessService;
+
 import tools.xor.service.Shape;
 
 /**
@@ -51,7 +49,7 @@ public class MutableJsonType extends ExternalType {
 	
 	@Override
 	public String getName() {
-		return getDomainType().getName();
+		return getEntityName();
 	}
 
 	@Override
@@ -60,20 +58,30 @@ public class MutableJsonType extends ExternalType {
 	}
 
 	@Override
-	public Property defineProperty(Property domainProperty, Shape shape) {
-		Class<?> externalClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-		if(externalClass == null)
+	public Property defineProperty(Property domainProperty, Shape dynamicShape, TypeMapper typeMapper) {
+	    
+		Class<?> externalClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
+		if(externalClass == null) {
 			throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
+		}
 
-		Type propertyType = shape.getExternalType(domainProperty.getType().getName());
+        String typeName = domainProperty.getType().getName();
+        if(domainProperty.getType() instanceof EntityType) {
+            typeName = ((EntityType)domainProperty.getType()).getEntityName();
+        }
+        Type propertyType = dynamicShape.getType(typeName);
 		Type elementType = null;
 		if(((ExtendedProperty)domainProperty).getElementType() != null) {
-			elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
+            String elementTypeName = ((ExtendedProperty)domainProperty).getElementType().getName();
+            if(((ExtendedProperty)domainProperty).getElementType() instanceof EntityType) {
+                elementTypeName = ((EntityType)((ExtendedProperty)domainProperty).getElementType()).getEntityName();
+            }                    
+            elementType = dynamicShape.getType(elementTypeName);		    
 		}		
 		if(propertyType == null) {
-			Class<?> propertyClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+			Class<?> propertyClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
 			logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
-			propertyType = shape.getType(propertyClass);
+			propertyType = dynamicShape.getType(propertyClass);
 		}
 		MutableJsonProperty dynamicProperty = null;
 		if(domainProperty.isOpenContent()) {
@@ -81,23 +89,28 @@ public class MutableJsonType extends ExternalType {
 		} else {
 			dynamicProperty = new MutableJsonProperty((ExtendedProperty) domainProperty, propertyType, this, elementType);
 		}
+        dynamicProperty.setDomainTypeName(domainProperty.getType().getInstanceClass().getName());
+        dynamicProperty.setConverter(((ExtendedProperty)domainProperty).getConverter());
+        
 		return dynamicProperty;
 	}
 
 	@Override
-	public void setProperty (Shape shape)
+	public void setProperty (Shape domainShape, Shape dynamicShape, TypeMapper typeMapper)
 	{
 		// populate the properties for this type
-		for (Property domainProperty : shape.getProperties(domainType).values()) {
+	    EntityType domainType = (EntityType) domainShape.getType(getEntityName());
+		for (Property domainProperty : domainShape.getProperties(domainType).values()) {
 			MutableJsonProperty dynamicProperty = (MutableJsonProperty)defineProperty(
 				domainProperty,
-				shape);
+				dynamicShape,
+				typeMapper);
 
-			dynamicProperty.init(shape);
+			dynamicProperty.init((ExtendedProperty) domainProperty, dynamicShape);
 			logger.debug(
 				"[" + getName() + "] Domain property name: " + domainProperty.getName()
 					+ ", type name: " + dynamicProperty.getJavaType());
-			shape.addProperty(dynamicProperty);
+			dynamicShape.addProperty(dynamicProperty);
 		}
 	}
 

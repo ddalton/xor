@@ -1,6 +1,7 @@
 package tools.xor.view;
 
 import tools.xor.Type;
+import tools.xor.service.DomainShape;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.InterQuery;
@@ -51,8 +52,8 @@ public class JoinTableAmender implements TreeMutatorStrategy
         }
 
         // Check that the query join table is present in the shape
-        if(addAction) {
-            if(!shape.hasTable(QueryJoinAction.JOIN_TABLE_NAME)) {
+        if(addAction && shape instanceof DomainShape) {
+            if(!((DomainShape)shape).hasTable(QueryJoinAction.JOIN_TABLE_NAME)) {
                 throw new RuntimeException(String.format("Unable to find join table %s in database.", QueryJoinAction.JOIN_TABLE_NAME));
             }
         }

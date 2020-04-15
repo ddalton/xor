@@ -45,7 +45,7 @@ import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ImmutableBO;
 import tools.xor.ListType;
-import tools.xor.MapperDirection;
+import tools.xor.MapperSide;
 import tools.xor.MutableBO;
 import tools.xor.NaturalEntityKey;
 import tools.xor.ProcessingStage;
@@ -95,13 +95,14 @@ public class ObjectCreator {
 	private BusinessObject                 root; // represents the root object
 	private Settings                       settings; // the criteria under which this instance operates
 
-	public ObjectCreator(Settings settings, Shape shape, PersistenceOrchestrator po, MapperDirection direction) {
+	public ObjectCreator(Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
 		this.settings = settings;
-		this.shape = shape;
-		this.das = shape.getDAS();
 		this.persistenceOrchestrator = po;
-		this.typeMapper = das.getTypeMapper().newInstance(direction);
+		this.typeMapper = typeMapper;
 		this.creationStrategy = this.typeMapper.getCreationStrategy(this);
+		
+		this.shape = this.typeMapper.getShape();
+		this.das = this.typeMapper.getDAS();
 	}
 
 	public Settings getSettings() {
@@ -151,10 +152,7 @@ public class ObjectCreator {
 
 	public Type getType(Class<?> clazz) {
 		clazz = ClassUtil.getUnEnhanced(clazz);
-		if(typeMapper.isDomain(clazz))
-			return shape.getType(clazz);
-		else 
-			return shape.getExternalType(clazz);
+		return shape.getType(clazz);
 	}
 
 	/**
@@ -162,35 +160,37 @@ public class ObjectCreator {
 	 * @param bo business object whose java class type we need to infer
 	 * @return type
 	 */
-	public Type getType(BusinessObject bo) {
+	public Type getDomainType(BusinessObject bo) {
 		// We have the same type for JDBC
 		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
 			return bo.getType();
 		}
 
 		Object instance = ClassUtil.getInstance(bo);
-		ClassUtil.getUnEnhanced(instance.getClass());
+		Class<?> clazz = ClassUtil.getUnEnhanced(instance.getClass());
 
-		return getType(ClassUtil.getUnEnhanced(instance.getClass()));
+		return typeMapper.getDomainShape().getType(clazz);		
 	}
 
-	public Type getType(Class<?> inputClass, Type domainType) {
-		// We have the same type for JDBC
-		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-			return domainType;
-		}
+    public Type getType(Class<?> inputClass, Type domainType) {
+        // We have the same type for JDBC
+        if (getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+            return domainType;
+        }
 
-		inputClass = ClassUtil.getUnEnhanced(inputClass);
-		if(typeMapper.isDomain(inputClass)) {
-			return shape.getType(inputClass);
-		} else { 
-			if(domainType != null && domainType instanceof EntityType) {
-				return shape.getExternalType(typeMapper.getExternalTypeName(inputClass, domainType));
-			} else {
-				return shape.getExternalType(inputClass);
-			}
-		}
-	}
+        inputClass = ClassUtil.getUnEnhanced(inputClass);
+        if (typeMapper.isDomain(inputClass)) {
+            return shape.getType(inputClass);
+        } else {
+            // Else we will return the type based on the given domainType's entityName
+            // from the Shape belonging to this ObjectCreator
+            if (domainType != null && domainType instanceof EntityType) {
+                return shape.getType(((EntityType) domainType).getEntityName());
+            } else {
+                return shape.getType(inputClass);
+            }
+        }
+    }
 
 	public void addByNaturalKey(BusinessObject entity, String anchor) {
 		if(naturalKeyRegistrations.containsKey(entity)) {
@@ -597,7 +597,7 @@ public class ObjectCreator {
 							else {
 								throw new IllegalStateException(
 									"There is more than 1 dataObject instance representing the same entity (same id and root type). Please check if XOR.id is populated. [type: "
-										+ existingRootType.getDomainType().getName() + ", id: "
+										+ existingRootType.getEntityName() + ", id: "
 										+ newDataObject.getIdentifierValue() + "]" + (
 										existingRootType.isEmbedded() ?
 											". Check your data as sharing of embedded objects is not allowed." :
@@ -715,9 +715,9 @@ public class ObjectCreator {
 				//targetInstanceClass = sourceInstance != null ? ClassUtil.getUnEnhanced(sourceInstance.getClass()) : null;
 
 				if(domainEntityType == null) {
-					targetInstanceClass = typeMapper.getTargetClass(sourceInstance.getClass(), ci);
+					targetInstanceClass = typeMapper.getMappedClass(sourceInstance.getClass(), ci);
 				} else {
-					if(typeMapper.isToExternal()) {
+					if(typeMapper.isExternalSide()) {
 						
 						targetInstanceClass = typeMapper.toExternal(domainEntityType.getInstanceClass());
 						//Class<?> externalClass = typeMapper.toExternal(domainEntityType.getInstanceClass());
@@ -732,7 +732,7 @@ public class ObjectCreator {
 
 			Type targetType = null;
 			if(sourceInstance != null && typeMapper.isDomain( ClassUtil.getUnEnhanced(sourceInstance.getClass()))) {
-				Type domainType = getType((BusinessObject)ci.getInput());
+				Type domainType = getDomainType((BusinessObject)ci.getInput());
 				if(typeMapper.isOpen(targetInstanceClass)) {
 					if(domainEntityType != null) {
 						domainType = domainEntityType;

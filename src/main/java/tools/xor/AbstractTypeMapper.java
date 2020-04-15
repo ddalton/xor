@@ -19,22 +19,73 @@
 
 package tools.xor;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import tools.xor.service.DataAccessService;
+import tools.xor.service.DynamicShape;
+import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.NaturalKeyStrategy;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.POJOCreationStrategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class AbstractTypeMapper implements TypeMapper {
-	private MapperDirection direction;
+    protected static final String DYNAMIC_SUFFIX = "_DYNAMIC"; // Added to domain shape name, if the dynamic shape is based on it 
+    
+	private MapperSide side;
+    private DataAccessService das;
+    private String shapeName;
+    protected Shape domainShape;
+    protected Shape dynamicShape;
+    
+    public AbstractTypeMapper()
+    {
+        this.side = MapperSide.DOMAIN;
+    }
+    
+    public AbstractTypeMapper(DataAccessService das, MapperSide side, String shapeName)
+    {
+        this.das = das;
+        this.side = side;
+        this.shapeName = shapeName;
+    }
 
-	/**
+    @Override
+	public DataAccessService getDAS() {
+        return das;
+    }
+
+    @Override
+    public void setDAS(DataAccessService das) {
+        assert this.das == null : "TypeMapper instance already associated with a DAS instance";
+        
+        this.das = das;
+    }
+
+    @Override
+    public String getShapeName() {
+        return shapeName;
+    }
+
+    public void setShapeName(String shapeName) {
+        this.shapeName = shapeName;
+    }
+
+    /**
 	 * Should be overridden by subclasses to return the correct type
-	 * @return TypeMapper instance
-	 */
-	abstract protected TypeMapper createInstance();
+	 * 
+     * @param das DataAccessService responsible for powering this TypeMapper instance
+     * @param side TypeMapper targeted against EXTERNAL or DOMAIN side
+     * @param shapeName name of the shape instance
+     * @return TypeMapper instance
+     */
+	abstract protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName);
+	
+    @Override
+    public TypeMapper newInstance(MapperSide side, String shapeName) {
+        return newInstance(this.getDAS(), side, shapeName);
+    } 
 
 	@Override
 	public Class<?> toDomain(Type type) {
@@ -47,13 +98,13 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}	
 
 	@Override
-	public MapperDirection getDirection() {
-		return direction;
+	public MapperSide getSide() {
+		return side;
 	}
 	
 	@Override
-	public void setDirection(MapperDirection direction) {
-		this.direction = direction;
+	public void setSide(MapperSide direction) {
+		this.side = direction;
 	}	
 	
 	@Override
@@ -67,38 +118,14 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}	
 	
 	@Override
-	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo) {
+	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
 		Class<?> result = null;
 
-		switch(getDirection()) {
-		case EXTERNALTODOMAIN:
-		case EXTERNALTOEXTERNAL:			
+		switch(getSide()) {
+		case EXTERNAL:			
 			result = toExternal(clazz);
 			break;
-		case DOMAINTOEXTERNAL:
-		case DOMAINTODOMAIN:			
-			result = toDomain(clazz);
-			break;
-		default:
-			result = clazz;
-			break;
-		}
-
-		return result;
-	}
-	
-	
-	@Override
-	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo) {
-		Class<?> result = null;
-
-		switch(getDirection()) {
-		case DOMAINTOEXTERNAL:
-		case EXTERNALTOEXTERNAL:			
-			result = toExternal(clazz);
-			break;
-		case EXTERNALTODOMAIN:
-		case DOMAINTODOMAIN:			
+		case DOMAIN:			
 			result = toDomain(clazz);
 			break;
 		default:
@@ -109,15 +136,18 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		return result;
 	}	
 	
-	public boolean isToExternal() {
-		return getDirection() == MapperDirection.DOMAINTOEXTERNAL ||
-				getDirection() == MapperDirection.EXTERNALTOEXTERNAL;
+	public boolean isExternalSide() {
+		return getSide() == MapperSide.EXTERNAL;
 	}
 
 	@Override
 	public CreationStrategy getCreationStrategy(ObjectCreator oc) {
-		return new POJOCreationStrategy(oc);
+		return getDomainCreationStrategy(oc);
 	}	
+	
+	protected CreationStrategy getDomainCreationStrategy(ObjectCreator oc) {
+	    return new POJOCreationStrategy(oc);
+	}
 	
 	@Override
 	public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass) {
@@ -125,7 +155,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}
 	
 	@Override
-	public String getExternalTypeName(Class<?> inputClass, Type domainType) {
+	public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
 		return inputClass.getName();
 	}
 	
@@ -185,7 +215,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 			rootEntityType = (EntityType) bo.getType();
 		}
 
-		String domainTypeName = rootEntityType.getDomainType().getName();
+		String domainTypeName = rootEntityType.getEntityName();
 
 		if(id == null) {
 			return null;
@@ -232,11 +262,11 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 
 	public static String getSurrogateKeyTypeName (Type type) {
 		EntityType rootEntityType = ((EntityType)type).getRootEntityType();
-		return rootEntityType.getDomainType().getName();
+		return rootEntityType.getEntityName();
 	}
 
 	public static String getNaturalKeyTypeName (Type type) {
-		return ((EntityType)type).getDomainType().getName();
+		return ((EntityType)type).getEntityName();
 	}
 
 	public List<EntityKey> getNaturalKey(BusinessObject bo) {
@@ -297,4 +327,124 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 
 		return result;
 	}
+	
+	/**
+	 * Find the domain property using the entityName.
+	 * The pre-requisite here for this call to be successful, is for the related domain
+	 * and the dynamic types to have the same entity name.
+	 * 
+	 * @param entityName of the type
+	 * @param propertyName of the property
+	 * @return property that is found in the type with entity name - entityName
+	 */
+	protected Property getDomainProperty(String entityName, String propertyName) {
+	    EntityType type = (EntityType) getDomainShape().getType(entityName);
+	    
+	    // If an alias is used, then the mapping should be used here
+	    return type.getProperty(propertyName);
+	}
+	
+    @Override
+    public void setDomainShape(Shape domainShape) {
+        this.domainShape = domainShape;
+    }
+
+    @Override
+    public void setDynamicShape(Shape dynamicShape) {
+        this.dynamicShape = dynamicShape;
+    }	
+    
+    @Override
+    public Shape getShape() {
+        if(getSide() == MapperSide.DOMAIN) {
+            return getDomainShape();
+        } else {
+            return getDynamicShape();
+        }
+    }
+    
+    @Override
+    public Shape getDomainShape() {
+        if(this.domainShape == null) {
+            this.domainShape = getDAS().getShape(getShapeName());
+            
+            if(this.domainShape == null) {
+                // create this shape
+                this.domainShape = getDAS().createShape(getShapeName());
+            }
+        }
+
+        return this.domainShape;
+    }
+
+    @Override
+    public Shape getDynamicShape() {
+        if(this.dynamicShape == null) {
+            this.dynamicShape = getDAS().getShape(getShapeName()+DYNAMIC_SUFFIX);
+            
+            if(this.dynamicShape == null) {
+                // create the dynamic shape
+                this.dynamicShape = createDynamicShape(getDomainShape());
+            }
+        }
+
+        return this.dynamicShape;
+    }
+    
+    private Shape createDynamicShape(Shape domain) {
+        if(domain == null) {
+            return null;
+        }
+        
+        Shape dynamicParent = createDynamicShape(domain.getParent());
+        String name = domain.getName() + DYNAMIC_SUFFIX;
+        Shape dynamic = getDAS().getShape(name);
+        if(dynamic == null) {
+            dynamic = new DynamicShape(domain.getName()+DYNAMIC_SUFFIX, dynamicParent, domain, this);
+            getDAS().addShape(dynamic);
+        }
+        
+        return dynamic;
+    }
+
+    @Override
+    public void addProperty(ExtendedProperty property) {
+        EntityType type = (EntityType) property.getContainingType();
+
+        Property domainProperty = type.isDomainType() ? property : null;
+        Property externalProperty = !type.isDomainType() ? property : null;
+        if (externalProperty == null && type.isDomainType()) {
+            ExternalType externalType = (ExternalType) getDynamicShape().getType(type.getEntityName());
+            if (externalType != null) {
+                externalProperty = externalType.defineProperty(domainProperty, getDynamicShape(), this);
+            }
+        }
+
+        if(domainProperty != null) {
+            getDomainShape().addProperty(domainProperty);
+        }
+        if(externalProperty != null) {
+            getDynamicShape().addProperty(externalProperty);
+        }
+    }
+    
+    @Override
+    public void addType(EntityType type) {
+        if(getDomainShape().getType(type.getName()) != null) {
+            throw new RuntimeException("A type with the same name exists, please choose a different name for the open type: " + type.getName());
+        }
+
+        type.setShape(getDomainShape());
+        ((OpenType)type).setProperty();
+        getDomainShape().addType(type.getName(), type);
+
+        Class<?> externalClass = getDAS().getTypeMapper().toExternal(type.getInstanceClass());
+        if(externalClass != null) {
+            ExternalType externalType = getDAS().getTypeMapper().createExternalType(
+                type,
+                externalClass);
+            getDynamicShape().addType(externalType.getName(), externalType);
+            externalType.setProperty(getDomainShape(), getDynamicShape(), this);
+        }        
+    }
 }

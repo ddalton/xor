@@ -19,10 +19,12 @@
 
 package tools.xor;
 
+import java.util.List;
+
+import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ObjectCreator;
-
-import java.util.List;
 
 /**
  * The framework can be used with both single and dual model hierarchies.
@@ -34,6 +36,35 @@ import java.util.List;
  *
  */
 public interface TypeMapper {
+    
+    /**
+     * The DomainShape represents the type system from the perspective of the
+     * backend/persistence layer.
+     * 
+     * @return domain shape instance
+     */
+    Shape getDomainShape();
+    
+    /**
+     * The DynamicShape represents type system from the perspective of the end user
+     * interacting with the persistence/backend layer.
+     * 
+     * @return dynamic shape instance
+     */
+    Shape getDynamicShape();
+    
+    /**
+     * Have the domainShape be built externally and set on the TypeMapper instance
+     * @param domainShape
+     */
+    void setDomainShape(Shape domainShape);
+    
+    /**
+     * Allow the dynamicShape to be set programmatically.
+     * This is needed for cases where the DynamicShape cannot be inferred from the DomainShape.
+     * @param dynamicShape
+     */
+    void setDynamicShape(Shape dynamicShape);
 
 	/**
 	 * We need to find the domain form of the class
@@ -75,41 +106,48 @@ public interface TypeMapper {
 	 * Describes what form corresponds to the source and target types
 	 * The source class and target class resolution is dependent upon this.
 	 * 
-	 * @return direction
+	 * @return Mapper side value
 	 */
-	public MapperDirection getDirection();
+	public MapperSide getSide();
 	
 	/**
 	 * Sets the desired forms of the source and target types
 	 * 
-	 * @param direction value
+	 * @param side MapperSide value
 	 */
-	public void setDirection(MapperDirection direction);	
+	public void setSide(MapperSide side);	
 	
 	/**
-	 * Returns the source form of the class given an input class
+	 * Returns the correct form of the class given an input class basedo on the MapperSide value
 	 * @param clazz input
 	 * @param callInfo Need this object to obtain the property or the parent property in case property is null
-	 * @return source class
-	 * @see TypeMapper#getDirection()
+	 * @return class based on the MapperSide value
 	 */
-	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo);
-	
-	/**
-	 * Returns the target form of the class given an input class
-	 * @param clazz input
-	 * @param callInfo Need this object to obtain the property or the parent property in case property is null
-	 * @return target class
-	 * @see TypeMapper#getDirection()
-	 */
-	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo);	
+	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo);	
 	
 	/**
 	 * Factory method to create a TypeMapper instance
 	 * @param direction value
 	 * @return typemapper instance
 	 */
-	public TypeMapper newInstance(MapperDirection direction);
+	public TypeMapper newInstance(MapperSide side);
+	
+    /**
+     * Factory method to create a TypeMapper instance
+     * @param direction value
+     * @param shapeName name of the domain shape that this mapper is based on
+     * @return typemapper instance
+     */
+    public TypeMapper newInstance(MapperSide side, String shapeName);
+    
+    /**
+     * Factory method to create a TypeMapper instance
+     * @param das DataAccessService instance for this type mapper
+     * @param direction value
+     * @param shapeName name of the domain shape that this mapper is based on
+     * @return typemapper instance
+     */
+    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName);       
 
 	/**
 	 * Check if the given class is in its external form
@@ -149,7 +187,7 @@ public interface TypeMapper {
 	 * @param domainType domain type
 	 * @return external name
 	 */
-	public String getExternalTypeName(Class<?> inputClass, Type domainType);
+	public String getExternalTypeName(Class<?> inputClass, EntityType domainType);
 
 	/** 
 	 * Flag that denotes if the object needs to be read after the child properties are processed
@@ -200,5 +238,42 @@ public interface TypeMapper {
 	 * Check to see if we are created external Business object(s)
 	 * @return true if the target object is of external type
 	 */
-	public boolean isToExternal();
+	public boolean isExternalSide();
+
+	/**
+	 * Get the Shape based on the MapperSide
+	 * @return shape instance
+	 */
+    Shape getShape();
+    
+    /**
+     * Get the Shape name
+     * @return shape name
+     */
+    String getShapeName();    
+
+    /**
+     * Return the DataAccessService powering this type mapper
+     * @return DAS instance
+     */
+    DataAccessService getDAS();
+
+    /**
+     * Set the DataAccessService powering this type mapper
+     * @param das instance
+     */
+    void setDAS(DataAccessService das);
+
+    /**
+     * Add the property to both the domain and dynamic shapes
+     * managed by the type mapper
+     * @param openProperty property to add
+     */
+    void addProperty(ExtendedProperty openProperty);
+    
+    /**
+     * Add a new type to both the domain and dynamic shapes
+     * @param type to add
+     */
+    void addType(EntityType type);
 }

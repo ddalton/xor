@@ -46,52 +46,69 @@ public class ImmutableJsonType extends ExternalType {
 		return null;
 	}	
 	
-	@Override
-	public String getName() {
-		return getDomainType().getName();
-	}
+    @Override
+    public String getName() {
+        return getEntityName();
+    }	
 	
 	@Override
 	public boolean isOpen() {
 		return true;
 	}
+	
 
-	@Override
-	public void setProperty (Shape shape)
-	{
-		// populate the properties for this type
-		for (Property domainProperty : shape.getProperties(domainType).values()) {
-			AbstractProperty abstractProperty = (AbstractProperty)domainProperty;
-			Class<?> externalClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-			if (externalClass == null)
-				throw new RuntimeException(
-					"The dynamic type is missing for the following domain class: "
-						+ domainProperty.getType().getInstanceClass().getName());
+    @Override
+    public void setProperty (Shape domainShape, Shape dynamicShape, TypeMapper typeMapper)
+    {
+        // populate the properties for this type
+        EntityType domainType = (EntityType) domainShape.getType(getEntityName());
+        for (Property domainProperty : domainShape.getProperties(domainType).values()) {
+            ImmutableJsonProperty dynamicProperty = (ImmutableJsonProperty)defineProperty(
+                domainProperty,
+                dynamicShape,
+                typeMapper);
 
-			Type propertyType = shape.getExternalType(domainProperty.getType().getName());
-			Type elementType = null;
-			if (((ExtendedProperty)domainProperty).getElementType() != null) {
-				elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getName());
-			}
-			if (propertyType == null) {
-				Class<?> propertyClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
-				logger.debug(
-					"Name: " + domainProperty.getName() + ", Domain class: "
-						+ domainProperty.getType().getInstanceClass().getName()
-						+ ", property class: " + propertyClass.getName());
-				propertyType = shape.getType(propertyClass);
-			}
-			ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty(
-				(ExtendedProperty)domainProperty,
-				propertyType,
-				this,
-				elementType);
+            dynamicProperty.init((ExtendedProperty) domainProperty, dynamicShape);
+            logger.debug(
+                "[" + getName() + "] Domain property name: " + domainProperty.getName()
+                    + ", type name: " + dynamicProperty.getJavaType());
+            dynamicShape.addProperty(dynamicProperty);
+        }
+    }	
+	
+    @Override
+    public Property defineProperty(Property domainProperty, Shape dynamicShape, TypeMapper typeMapper) {
+        
+        Class<?> externalClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
+        if(externalClass == null) {
+            throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
+        }
 
-			dynamicProperty.init(shape);
-			logger.debug(
-				"[" + getName() + "] Domain property name: " + abstractProperty.getName()
-					+ ", type name: " + dynamicProperty.getJavaType());
-			shape.addProperty(dynamicProperty);
-		}
-	}	
+        String typeName = domainProperty.getType().getName();
+        if(domainProperty.getType() instanceof EntityType) {
+            typeName = ((EntityType)domainProperty.getType()).getEntityName();
+        }
+        Type propertyType = dynamicShape.getType(typeName);
+        Type elementType = null;
+        if(((ExtendedProperty)domainProperty).getElementType() != null) {
+            String elementTypeName = ((ExtendedProperty)domainProperty).getElementType().getName();
+            if(((ExtendedProperty)domainProperty).getElementType() instanceof EntityType) {
+                elementTypeName = ((EntityType)((ExtendedProperty)domainProperty).getElementType()).getEntityName();
+            }                    
+            elementType = dynamicShape.getType(elementTypeName);
+        }       
+        if(propertyType == null) {
+            Class<?> propertyClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
+            logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
+            propertyType = dynamicShape.getType(propertyClass);
+        }
+        ImmutableJsonProperty dynamicProperty = new ImmutableJsonProperty(
+                (ExtendedProperty)domainProperty,
+                propertyType,
+                this,
+                elementType);
+        dynamicProperty.setDomainTypeName(domainProperty.getType().getInstanceClass().getName());
+        
+        return dynamicProperty;
+    }	
 }

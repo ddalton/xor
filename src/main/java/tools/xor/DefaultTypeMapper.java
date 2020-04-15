@@ -19,9 +19,27 @@
 
 package tools.xor;
 
+import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 
+/**
+ * The DefaultTypeMapper does not need to manage dual type systems.
+ * The dynamic and domain represent the same type system.
+ * 
+ * @author Dilip Dalton
+ *
+ */
 public class DefaultTypeMapper extends AbstractTypeMapper {
-
+   
+    public DefaultTypeMapper() {
+        super();
+    }
+    
+    public DefaultTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    {
+        super(das, side, shapeName);
+    }
+    
 	/* (non-Javadoc)
 	 * @see TypeMapper#toReference(java.lang.Class)
 	 */
@@ -36,29 +54,52 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	@Override
 	public Class<?> toExternal(Class<?> referenceClass) {
 		return referenceClass;		
-	}
-
-	@Override
-	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo) {
-		return clazz;
 	}	
 	
 	@Override
-	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo) {
+	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
 		return clazz;
 	}
 
 	@Override
-	protected TypeMapper createInstance() {
-		return new DefaultTypeMapper();
+	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+		return new DefaultTypeMapper(das, side, shapeName);
 	}
 
 	@Override 
-	public TypeMapper newInstance(MapperDirection direction) {
-		TypeMapper mapper = createInstance();
-		mapper.setDirection(direction);
-		
-		return mapper;
+	public TypeMapper newInstance(MapperSide side) {
+		return newInstance(side, null);
 	}
+    
+    @Override 
+    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+        return createInstance(das, side, shapeName);
+    }    
+    
+    @Override
+    public Shape getDomainShape() {
+        if(this.domainShape == null) {
+            this.domainShape = getDAS().getShape(getShapeName());
+            
+            if(this.domainShape == null) {
+                // create this shape
+                this.domainShape = getDAS().createShape(getShapeName());
+            }
+        }
 
+        return this.domainShape;
+    }
+
+    @Override
+    public Shape getDynamicShape() {
+        if(this.dynamicShape == null) {
+            // this call initializes the dynamic shape
+            this.getDomainShape();
+            
+            // By default the dynamic shape is the same as the domain shape
+            // implementations can override this behavior
+            this.dynamicShape = this.domainShape;            
+        }
+        return this.dynamicShape;
+    }        
 }

@@ -872,7 +872,7 @@ public abstract class AbstractBO implements BusinessObject {
 					if (anchorFragment != null) {
 						EntityType type = anchorFragment.fragment.getEntityType();
 						// We need the external type
-						type = (EntityType)type.getShape().getExternalType(type.getName());
+						type = (EntityType)type.getShape().getType(type.getEntityName());
 						if(type.isSubtypeOf((EntityType)current.getType())) {
 							current.downcast(type);
 							property = current.getInstanceProperty(step);
@@ -1471,11 +1471,11 @@ public abstract class AbstractBO implements BusinessObject {
 		settings.setAction(AggregateAction.LOAD);
 		callInfo.setSettings(settings);
 
-		ObjectCreator oc = new ObjectCreator(
-			settings,
-			getObjectCreator().getShape(),
-			getObjectCreator().getPersistenceOrchestrator(),
-			MapperDirection.DOMAINTODOMAIN);
+        TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        ObjectCreator oc = new ObjectCreator(
+            settings,
+            getObjectCreator().getPersistenceOrchestrator(),
+            typeMapper);		
 		return oc.createTarget(callInfo);
 	}
 
@@ -1489,7 +1489,8 @@ public abstract class AbstractBO implements BusinessObject {
 		callInfo.setSettings(settings);		
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTOEXTERNAL);
+        TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.EXTERNAL);        
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
 		oc.setReadOnly(true);
 		
 		callInfo.setOutputObjectCreator(oc);
@@ -1537,12 +1538,8 @@ public abstract class AbstractBO implements BusinessObject {
 		settings.setAction(AggregateAction.READ);
 		callInfo.setSettings(settings);		
 
-		MapperDirection direction = MapperDirection.EXTERNALTOEXTERNAL;
-		if(settings.doBaseline()) // We need to return a domain object
-			direction = direction.toDomain();
-
-		Shape shape = getObjectCreator().getShape();
-		ObjectCreator oc = new ObjectCreator(settings, shape, getObjectCreator().getPersistenceOrchestrator(), direction);
+        TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(settings.doBaseline() ? MapperSide.DOMAIN : MapperSide.EXTERNAL);        
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
 		oc.setReadOnly(true);
 		oc.setShare(true);
 		
@@ -1554,7 +1551,7 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		try {
-			Type targetType = getObjectCreator().getDAS().getType(shape, settings.getNarrowedClass(), settings.getEntityType());
+			Type targetType = getObjectCreator().getDAS().getType(typeMapper.getShape(), settings.getNarrowedClass(), settings.getEntityType());
 			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, targetType));
 			
 			// Needed to hold references to open property created objects
@@ -1702,12 +1699,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public Type getDomainType() {
-		if(getType().isOpen()) {
-			return ((EntityType)getType()).getDomainType();
-		}
-		return getObjectCreator().getShape().getType(
-			getObjectCreator().getTypeMapper().toDomain(
-				getType().getInstanceClass()));
+		return objectCreator.getTypeMapper().getDomainShape().getType(((EntityType)getType()).getEntityName());
 	}
 
 	@Override

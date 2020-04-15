@@ -65,7 +65,7 @@ public class DataGenerator
     public static final JSONObject END_MARKER = new JSONObject();
     public static final Object SUCCESS = new Object();
 
-    private Shape shape;
+    private TypeMapper typeMapper;
     private Settings settings;
     private List<String> types;
     private DASFactory dasFactory;
@@ -77,9 +77,9 @@ public class DataGenerator
     private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
     private boolean reachedHigh[] = new boolean[DataGenerator.IMPORTER_POOL_SIZE];
 
-    public DataGenerator (List<String> types, Shape shape, Settings settings, DASFactory dasFactory) {
+    public DataGenerator (List<String> types, TypeMapper typeMapper, Settings settings, DASFactory dasFactory) {
         this.types = types;
-        this.shape = shape;
+        this.typeMapper = typeMapper;
         this.settings = settings;
         this.dasFactory = dasFactory;
         this.importMethod = settings.getImportMethod();
@@ -93,7 +93,7 @@ public class DataGenerator
         Set<EntityType> result = new HashSet<>();
 
         for(String typename: types) {
-            Type type = shape.getType(typename);
+            Type type = typeMapper.getShape().getType(typename);
             if(hasGenerator(type)) {
                 EntityType entityType = (EntityType)type;
                 while(entityType != null) {
@@ -124,7 +124,7 @@ public class DataGenerator
 
         Set<String> processed = new HashSet<>();
         for(String typename: types) {
-            Type type = shape.getType(typename);
+            Type type = typeMapper.getShape().getType(typename);
             if(hasGenerator(type)) {
                 generateInstances((EntityType)type, settings);
                 processed.add(typename);
@@ -169,7 +169,7 @@ public class DataGenerator
                 throw new RuntimeException("Writing to CSV can have only 1 importer job");
             }
 
-            importJobs.add(importers.submit(new DataImporter(this, importerQueues[i], po, shape, settings)));
+            importJobs.add(importers.submit(new DataImporter(this, importerQueues[i], po, typeMapper, settings)));
         }
 
         return importJobs;

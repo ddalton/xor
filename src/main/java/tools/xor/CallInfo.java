@@ -257,11 +257,22 @@ public class CallInfo {
 
 		return true;
 	}
+	
+	public EntityType getDomainType(EntityType entityType) {
+	    TypeMapper typeMapper = null;
+	    if(outputObjectCreator != null) {
+	        typeMapper = outputObjectCreator.getTypeMapper();
+	    } else if(inputObjectCreator != null) {
+	        typeMapper = inputObjectCreator.getTypeMapper();
+	    }
+	    
+	    return (EntityType) typeMapper.getDomainShape().getType(entityType.getEntityName());
+	}
 
 	private State getCurrentState() {
 		if(currentState == null) {
 			EntityType entityType = (EntityType)settings.getEntityType();
-			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType(), settings.getScope());
+			TypeGraph sg = settings.getView().getTypeGraph(getDomainType(entityType), settings.getScope());
 			if(getParent() == null || getParent().isBulkInput()) {
 				currentState = sg.getRootState();
 			} else {
@@ -302,9 +313,9 @@ public class CallInfo {
 		}
 		else {
 			EntityType entityType = (EntityType)settings.getEntityType();
-			TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType());
+			TypeGraph sg = settings.getView().getTypeGraph(getDomainType(entityType));
 
-			State state = sg.getVertex(((EntityType)type).getDomainType());
+			State state = sg.getVertex(getDomainType((EntityType)type));
 			return state.isReference();
 		}
 	}
@@ -313,13 +324,13 @@ public class CallInfo {
 		checkView();
 
 		EntityType entityType = (EntityType)settings.getEntityType();
-		TypeGraph sg = settings.getView().getTypeGraph(entityType.getDomainType(), settings.getScope());
+		TypeGraph sg = settings.getView().getTypeGraph(getDomainType(entityType), settings.getScope());
 
 		if(logger.isDebugEnabled()) {
 			logger.debug("Type: " + getOutputRoot().getType().getName() + ", view: " 
 					+ settings.getView().getName() 
 					+ " type: " + type.getName()
-					+ " domain type: " + ((EntityType)type).getDomainType().getName());
+					+ " domain type: " + getDomainType((EntityType)type).getName());
 			logger.debug("State graph is " + ( (sg==null) ? "NOT":"") + " present");
 		}
 
@@ -353,7 +364,7 @@ public class CallInfo {
 				settings.getView().getExactAttributes());
 		} else {
 			exactProperties = sg.next(
-				((EntityType)type).getDomainType(),
+				getDomainType((EntityType)type),
 				getInputPropertyPath(),
 				settings.getView().getExactAttributes());
 		}

@@ -125,6 +125,8 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
     protected String            typeName;   // represents the root entity type name
     protected List<Join>        join;
     protected int               version;    // The version from which this view is effective
+    protected String            dasName;    // The DataAccessService name for which this view is applicable. 
+                                            // Optional parameter useful for native queries 
 
     @XmlAttribute
     protected Integer           resultPosition; // Wrapper class, because we test custom
@@ -262,6 +264,15 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
     public void setJoin(List<Join> join) {
         this.join = join;
+    }
+    
+    @Override
+    public String getDasName() {
+        return this.dasName;
+    }
+    
+    public void setDasName(String name) {
+        this.dasName = name;
     }
 
     public List<AggregateView> getChildren() {

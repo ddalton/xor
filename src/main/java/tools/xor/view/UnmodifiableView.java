@@ -1,20 +1,5 @@
 package tools.xor.view;
 
-import org.json.JSONObject;
-import tools.xor.AggregateAction;
-import tools.xor.EntityType;
-import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.DataAccessService;
-import tools.xor.service.PersistenceOrchestrator;
-import tools.xor.service.Shape;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.Edge;
-import tools.xor.util.State;
-import tools.xor.util.graph.StateGraph;
-import tools.xor.util.graph.TypeGraph;
-import tools.xor.util.graph.UnmodifiableTypeGraph;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -22,6 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.json.JSONObject;
+
+import tools.xor.AggregateAction;
+import tools.xor.EntityType;
+import tools.xor.Settings;
+import tools.xor.Type;
+import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.Edge;
+import tools.xor.util.State;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.util.graph.TypeGraph;
+import tools.xor.util.graph.UnmodifiableTypeGraph;
 
 public class UnmodifiableView implements View
 {
@@ -321,5 +320,10 @@ public class UnmodifiableView implements View
     @Override public Integer getResultPosition ()
     {
         return view.getResultPosition();
+    }
+
+    @Override
+    public String getDasName() {
+        return view.getDasName();
     }
 }

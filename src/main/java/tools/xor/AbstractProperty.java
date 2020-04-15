@@ -76,7 +76,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	protected AccessType accessType;
 	protected boolean    alwaysInitialized;
-	private boolean      readOnly;
+	protected boolean    readOnly;
 	private Map<String, Object> constraints;
 	
 	private   VersionInfo versionInfo;
@@ -108,7 +108,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	 *     Invoked when the last reference to the object is removed
 	 */
 	// Business logic related annotations 
-	protected List<MethodInfo>     lambdas;
+	protected List<MethodInfo> lambdas;
 	protected String           name; // If this is used, it represents an open property or alias
 	protected RelationshipType relType; // The type of relationship this open property models
 	
@@ -123,12 +123,13 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	protected ExtendedProperty mapKeyOf;
 	protected ExtendedProperty indexOf;
 	protected boolean          hasIdAnnotation;	 // Convert to Boolean type for lazy initialization and caching
-	private String       mapPath;
 	private Property     mappedBy;
+	private String       mapPath;
 	private Property     mapOf;
 	private Boolean      unique; 
 	private Type         type;
 	private EntityType   parentType;
+	private String       domainTypeName; // If this is an ExternalProperty instance, and there is a corresponding domain property. This refers to the type name of that property
 	private Generator generator; // TODO: Map of incoming properties, as the generator value for key fields can vary based on how the object is accessed
 	// The default generator is used as the fallback
 	private Map<String, Generator> generators = new HashMap<>();
@@ -640,8 +641,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		}
 		return result;
 	}	
-
-	public abstract void init(Shape shape);
 
 	protected void executePrePropertyLogic(CallInfo ci, Method prePropertyLogic) 
 	{
@@ -1380,11 +1379,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	public abstract void initMappedBy(Shape shape);
 
 	@Override
-	public Property getDomainProperty() {
-		return this;
-	}
-
-	@Override
 	public List<String> expand(Set<Type> examined) {
 		List<String> result = new LinkedList<String>();
 
@@ -1559,5 +1553,14 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	@Override
 	public void accept (Generator generator) {
 		setGenerator(generator);
+	}
+	
+	public void setDomainTypeName(String domainTypeName) {
+	    this.domainTypeName = domainTypeName;
+	}
+	
+	@Override
+	public String getDomainTypeName() {
+	    return this.domainTypeName;
 	}
 }

@@ -19,12 +19,11 @@
 
 package tools.xor;
 
-import org.json.JSONObject;
-import tools.xor.util.State;
-import tools.xor.util.graph.StateGraph;
-
 import java.util.List;
-import java.util.Map;
+
+import org.json.JSONObject;
+
+import tools.xor.util.graph.StateGraph;
 
 /**
  * This type is useful for representing data that does not have properties.

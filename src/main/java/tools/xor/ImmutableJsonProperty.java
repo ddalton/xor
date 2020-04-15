@@ -49,7 +49,7 @@ import tools.xor.util.ClassUtil;
 public class ImmutableJsonProperty extends ExternalProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	private static Map<Class, Converter> converters = new HashMap<Class, Converter>();
+	private static Map<String, Converter> converters = new HashMap<String, Converter>();
 	public static final String ISO8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 	
 	public interface Converter {
@@ -72,7 +72,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 	
 	static {
-		converters.put(Boolean.class,
+		converters.put(Boolean.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -96,9 +96,9 @@ public class ImmutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);
-		converters.put(boolean.class, converters.get(Boolean.class)); // primitive
+		converters.put(boolean.class.getName(), converters.get(Boolean.class.getName())); // primitive
 		
-		converters.put(BigDecimal.class,
+		converters.put(BigDecimal.class.getName(),
 			new AbstractConverter() {
 				@Override
 				public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -117,7 +117,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 			}
 		);
 		
-		converters.put(BigInteger.class,
+		converters.put(BigInteger.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -136,7 +136,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 				}
 			);	
 		
-		converters.put(Double.class,
+		converters.put(Double.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -154,9 +154,9 @@ public class ImmutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);		
-		converters.put(double.class, converters.get(Double.class)); // primitive
+		converters.put(double.class.getName(), converters.get(Double.class.getName())); // primitive
 		
-		converters.put(Float.class,
+		converters.put(Float.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -174,9 +174,9 @@ public class ImmutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);	
-		converters.put(float.class, converters.get(Float.class)); // primitive		
+		converters.put(float.class.getName(), converters.get(Float.class.getName())); // primitive		
 		
-		converters.put(Integer.class,
+		converters.put(Integer.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -194,9 +194,9 @@ public class ImmutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);
-		converters.put(int.class, converters.get(Integer.class)); // primitive				
+		converters.put(int.class.getName(), converters.get(Integer.class.getName())); // primitive				
 		
-		converters.put(Long.class,
+		converters.put(Long.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -214,9 +214,9 @@ public class ImmutableJsonProperty extends ExternalProperty {
 					}
 				}
 			);
-		converters.put(long.class, converters.get(Long.class)); // primitive		
+		converters.put(long.class.getName(), converters.get(Long.class.getName())); // primitive		
 		
-		converters.put(String.class,	
+		converters.put(String.class.getName(),	
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -235,7 +235,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 				}
 			);		
 		
-		converters.put(Date.class,
+		converters.put(Date.class.getName(),
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -268,7 +268,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 		 * all the other properties. So build() should be invoked only once at the end of 
 		 * populating all the fields.
 		 */
-		converters.put(JsonObjectBuilder.class,	
+		converters.put(JsonObjectBuilder.class.getName(),	
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -288,7 +288,7 @@ public class ImmutableJsonProperty extends ExternalProperty {
 				}
 			);	
 		
-		converters.put(JsonArrayBuilder.class,	
+		converters.put(JsonArrayBuilder.class.getName(),	
 				new AbstractConverter() {
 					@Override
 					public Object toExternal(JsonObjectBuilder builder, String name, Object object) {
@@ -374,19 +374,32 @@ public class ImmutableJsonProperty extends ExternalProperty {
 		}		
 	}	
 	
-	
+    /**
+     * Get the property converter based on the domain class name
+     * @return converter
+     */
+    private Converter getDomainConverter() {
+        Converter result = null;
+        
+        // we have a potential converter
+        if(this.getDomainTypeName() != null) {
+            result = converters.get(this.getDomainTypeName());
+        }
+        
+        return result;
+    }	
 	
 	private Object toExternal(JsonObjectBuilder builder, String name, Object propertyValue) {
-		if(converters.containsKey(getDomainProperty().getType().getInstanceClass())) {
-			Object result = converters.get(getDomainProperty().getType().getInstanceClass()).toExternal(builder, name, propertyValue);
-			return result;
+        Converter domainConverter = getDomainConverter();
+        if(domainConverter != null) {
+            return domainConverter.toExternal(builder, name, propertyValue);	    
 		} else {
 			if(BusinessObject.class.isAssignableFrom(propertyValue.getClass())) {
 				Object childbuilder = ((BusinessObject)propertyValue).getInstance();
 				if(JsonObjectBuilder.class.isAssignableFrom(childbuilder.getClass())) {
-					return converters.get(JsonObjectBuilder.class).toExternal( builder, name, childbuilder);	
+					return converters.get(JsonObjectBuilder.class.getName()).toExternal( builder, name, childbuilder);	
 				} else if (JsonArrayBuilder.class.isAssignableFrom(childbuilder.getClass())) {
-					return converters.get(JsonArrayBuilder.class).toExternal( builder, name, childbuilder);	
+					return converters.get(JsonArrayBuilder.class.getName()).toExternal( builder, name, childbuilder);	
 				}
 			}
 
@@ -395,13 +408,13 @@ public class ImmutableJsonProperty extends ExternalProperty {
 	}
 	
 	private Object toDomain(JsonValue jsonValue) {
-		if(converters.containsKey(getDomainProperty().getType().getInstanceClass())) {
-			return converters.get(getDomainProperty().getType().getInstanceClass()).toDomain(jsonValue);
+	    Converter domainConverter = getDomainConverter();
+		if(domainConverter != null) {
+			return domainConverter.toDomain(jsonValue);
 		} else {
 			logger.info("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass() 
 					+ ", jsonValue: " + jsonValue 
-					+ ", type name: " + getType().getName() 
-					+ ", domain type: " + getDomainProperty().getType().getInstanceClass().getName());
+					+ ", type name: " + getType().getName());
 			return jsonValue;
 		}
 
@@ -416,14 +429,14 @@ public class ImmutableJsonProperty extends ExternalProperty {
 		}
 
 		JsonArrayBuilder jsonArrayBuilder = (JsonArrayBuilder) ((BusinessObject) dataObject).getInstance();
-		if(converters.containsKey(element.getClass())) {
-			converters.get(element.getClass()).add(jsonArrayBuilder, element);
+		if(converters.containsKey(element.getClass().getName())) {
+			converters.get(element.getClass().getName()).add(jsonArrayBuilder, element);
 		} else {
 
 			if(JsonObjectBuilder.class.isAssignableFrom(element.getClass())) {
-				converters.get(JsonObjectBuilder.class).add( jsonArrayBuilder, element);	
+				converters.get(JsonObjectBuilder.class.getName()).add( jsonArrayBuilder, element);	
 			} else if (JsonArrayBuilder.class.isAssignableFrom(element.getClass())) {
-				converters.get(JsonArrayBuilder.class).add(jsonArrayBuilder, element);	
+				converters.get(JsonArrayBuilder.class.getName()).add(jsonArrayBuilder, element);	
 			} else {
 				logger.error("DynamicProperty#addElement element " + element.getClass() + " is not of type JsonValue/JsonObjectBuilder/JsonArrayBuilder");
 			}

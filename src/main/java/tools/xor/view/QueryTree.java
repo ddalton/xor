@@ -42,6 +42,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
@@ -199,13 +200,22 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 				String idPropertyName = ((EntityType)this.aggregateType).getIdentifierProperty().getName();
 				idValue = getQueryValue(queryRow, anchorPath+idPropertyName);
 			}
+			
+			// We need to get the dynamic type, so we have to get the dynamic shape
+			Shape shape = entity.getObjectCreator().getShape();
+            Type type = shape.getType(((EntityType)this.aggregateType).getEntityName());
+            String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
+            if(entityName != null) {
+                type = shape.getType(entityName.trim());
+            }
 
+			/*
 			Type type = ((EntityType)this.aggregateType).getShape().getExternalType(this.aggregateType.getName());
 			String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
 			if(entityName != null) {
 				type = ((EntityType)this.aggregateType).getShape().getExternalType(entityName.trim());
 			}
-			/*
+			
 			String entityName = (String) getQueryValue(queryRow, QueryFragment.ENTITY_TYPE_ATTRIBUTE);
 			Type type = entity.getType();
 			if(entityName != null) {

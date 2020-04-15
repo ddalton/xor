@@ -493,7 +493,7 @@ public class ExcelExportImport extends AbstractExportImport
         cell.setCellValue("isOpen");
         cell.setCellStyle(headerStyle);
 
-        EntityType domainType = entityType.getDomainType();
+        EntityType domainType = (EntityType) am.getTypeMapper().getDomainShape().getType(entityType.getEntityName());
         for(Property property: domainType.getProperties()) {
             startRow++;
             sheetDetailsRow = infoSheet.createRow(startRow);

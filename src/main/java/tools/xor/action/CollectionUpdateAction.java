@@ -125,7 +125,7 @@ public abstract class CollectionUpdateAction implements Executable {
 		CallInfo next = new CallInfo();
 		next.init(sourceElement, null, callInfo, null);
 		
-		EntityType targetType = ((tools.xor.EntityType)sourceElement.getType()).getDomainType();
+		EntityType targetType = callInfo.getDomainType((tools.xor.EntityType)sourceElement.getType());
 		next.setOutput(callInfo.getOutputObjectCreator().createTarget(next, null, targetType));
 		
 		linkElement(next, key, isNew);		

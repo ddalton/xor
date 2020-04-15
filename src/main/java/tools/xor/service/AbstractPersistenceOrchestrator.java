@@ -175,7 +175,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 					Class<?> desiredClass = typeMapper.toDomain(
 						type.isDomainType() ?
 							type.getInstanceClass() :
-							type.getDomainType().getInstanceClass(), from);
+							typeMapper.getDomainShape().getType(type.getEntityName()).getInstanceClass(), from);
 					persistentObject = findById(desiredClass, id);
 				}
 			}

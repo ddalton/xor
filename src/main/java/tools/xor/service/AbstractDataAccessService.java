@@ -19,6 +19,16 @@
 
 package tools.xor.service;
 
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -26,6 +36,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+
 import tools.xor.AbstractProperty;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
@@ -43,15 +54,6 @@ import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
 
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public abstract class AbstractDataAccessService implements DataAccessService {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
@@ -65,20 +67,23 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		this.dasFactory = factory;
 		this.typeMapper = typeMapper;
 		this.shapes = new HashMap<>();
+		
+		this.typeMapper.setDAS(this);
 	}	
 	
     @Override
-    public void addShape(Shape shape, boolean active) {
+    public void addShape(Shape shape) {
         if(shapes.containsKey(shape.getName())) {
             throw new RuntimeException(String.format("Shape with name %s already exists", shape.getName()));
         }
         
         shapes.put(shape.getName(), shape);
-        
-        if(active) {
-            activeShape.set(shape);
-        }
     }	
+    
+    @Override
+    public void setActive(Shape shape) {
+        activeShape.set(shape);        
+    }
 
 	@Override
 	public Shape getShape() {
@@ -92,6 +97,10 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 
 	@Override
 	public Shape getShape(String name) {
+	    if(StringUtils.isEmpty(name)) {
+	        return getShape();
+	    }
+	    
 		return shapes.get(name);
 	}
 	
@@ -102,8 +111,9 @@ public abstract class AbstractDataAccessService implements DataAccessService {
     
     @Override public Shape createShape (String name, SchemaExtension extension)
     {
-        Shape shape = new Shape(name, null, this);
-        addShape(shape, true);
+        Shape shape = new DomainShape(name, null, this);
+        addShape(shape);
+        this.setActive(shape);
         
         return shape;
     }
@@ -203,11 +213,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 			extension.extend(shape);
 		}
 
-		// Derive the external types
-		List<Type> externalTypes = initExternal(shape, types);
-
 		// Initialize the root type
-		initRootType(shape, types, externalTypes);
+		initRootType(shape, types);
 
 		// Performance hog - skip for now
 //		initViews(shape);
@@ -216,7 +223,7 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		if(!isTemporary) {
 			initOrder(shape);
 
-			initEnd(shape, types, externalTypes);
+			initEnd(shape, types);
 		}
 	}
 
@@ -226,8 +233,8 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 	 * @param types that need to processed
 	 * @param externalTypes of types that need to be processed
 	 */
-	protected void initEnd(Shape shape, Collection<Type> types, Collection<Type> externalTypes) {
-		shape.initEnd(types, externalTypes);
+	protected void initEnd(Shape shape, Collection<Type> types) {
+		((AbstractShape)shape).initEnd(types);
 
 		shape.setBuildFinished(true);
 	}
@@ -256,16 +263,12 @@ public abstract class AbstractDataAccessService implements DataAccessService {
 		}
 	}
 
-	private void initRootType(Shape shape, Collection<Type> types, Collection<Type> externalTypes) {
-		shape.initRootType(types, externalTypes);
+	private void initRootType(Shape shape, Collection<Type> types) {
+		((AbstractShape)shape).initRootType(types);
 	}
 
 	private void initPositionProperty(Shape shape, Collection<Type> types) {
-		shape.initPositionProperty(types);
-	}
-
-	protected List<Type> initExternal (Shape shape, Collection<Type> types) {
-		return shape.deriveExternal(types);
+		((AbstractShape)shape).initPositionProperty(types);
 	}
 
 	public QueryTransformer getQueryBuilder() {

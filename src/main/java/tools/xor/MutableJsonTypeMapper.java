@@ -28,6 +28,8 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ExcelJsonCreationStrategy;
@@ -37,6 +39,8 @@ import tools.xor.util.ObjectCreator;
 public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	
 	private String domainPackagePath;
+    private Shape domainShape;
+    private Shape dynamicShape;	
 	
 	private static final Set<Class<?>> unchanged = new HashSet<Class<?>>();
 	
@@ -73,6 +77,15 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	public static Set<Class<?>> getUnchanged() {
 		return unchanged;
 	}
+	
+    public MutableJsonTypeMapper() {
+        super();
+    }	
+	
+    public MutableJsonTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    {
+        super(das, side, shapeName);
+    }	
 
 	public String getDomainPackagePath() {
 		return domainPackagePath;
@@ -132,52 +145,20 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	}	
 	
 	@Override
-	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo) {
+	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
 		Class<?> result = null;
 
-		switch(getDirection()) {
-		case EXTERNALTODOMAIN:
-		case EXTERNALTOEXTERNAL:			
+		switch(getSide()) {
+		case EXTERNAL:		
 			result = toExternal(clazz);
 			break;
-		case DOMAINTOEXTERNAL:
-		case DOMAINTODOMAIN:
+		case DOMAIN:
 			try {
 				result = toDomain(clazz, (BusinessObject) callInfo.getInput());
 			} catch (UnsupportedOperationException e) {
 				if(callInfo.getInputProperty() != null) {
-					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
-				} else {
-					// Collection, so go to the owner and get the element type
-					ExtendedProperty property = callInfo.getParent().getInputProperty();
-					result = ((ExtendedProperty)property.getDomainProperty()).getElementType().getInstanceClass();
-				}
-			}
-			break;
-		default:
-			result = clazz;
-			break;
-		}
-
-		return result;
-	}	
-	
-	@Override
-	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo) {
-		Class<?> result = null;
-
-		switch(getDirection()) {
-		case DOMAINTOEXTERNAL:
-		case EXTERNALTOEXTERNAL:			
-			result = toExternal(clazz);
-			break;
-		case EXTERNALTODOMAIN:
-		case DOMAINTODOMAIN:
-			try {
-				result = toDomain(clazz, (BusinessObject) callInfo.getInput());
-			} catch (UnsupportedOperationException e) {
-				if(callInfo.getInputProperty() != null) {
-					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
+                    Property domainProperty = getDomainProperty(callInfo.getInputProperty().getContainingType().getEntityName(), callInfo.getInputProperty().getName());				    
+					result = domainProperty.getType().getInstanceClass();
 				} else {
 					if(callInfo.getParent() == null) {
 						throw new RuntimeException("Unable to infer the entity type, provide this information using XOR:type field");
@@ -188,7 +169,8 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 					if(property == null && callInfo.getParent().isBulkInput()) {
 						type = callInfo.getSettings().getEntityType();
 					} else {
-						type = ((ExtendedProperty)property.getDomainProperty()).getElementType();
+	                    Property domainProperty = getDomainProperty(property.getContainingType().getEntityName(), property.getName());					    
+						type = ((ExtendedProperty)domainProperty).getElementType();
 					}
 					result = type.getInstanceClass();
 				}
@@ -207,12 +189,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	 * Return the domain class from the external type
 	 */
 	public Class<?> toDomain(Type type) {
-		if(ExternalType.class.isAssignableFrom(type.getClass())) {
-			ExternalType externalType = (ExternalType) type;
-			return externalType.getDomainType().getInstanceClass();
-		} else {
-			throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
-		}
+		throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
 	}	
 
 	@Override
@@ -259,23 +236,32 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		}
 		return (clazz.getCanonicalName().startsWith(domainPackagePath));
 	}		
+	
+    @Override 
+    public TypeMapper newInstance(MapperSide side) {
+        return newInstance(side, null);
+    }
+    
+    @Override
+    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+        MutableJsonTypeMapper mapper = (MutableJsonTypeMapper)createInstance(das, side, shapeName);
+        mapper.setDomainPackagePath(getDomainPackagePath());
 
-	@Override
-	public TypeMapper newInstance(MapperDirection direction) {
-		MutableJsonTypeMapper mapper = (MutableJsonTypeMapper)createInstance();
-		mapper.setDirection(direction);
-		mapper.setDomainPackagePath(getDomainPackagePath());
+        return mapper;        
+    }       
 
-		return mapper;		
-	}
-
-	protected TypeMapper createInstance() {
-		return new MutableJsonTypeMapper();
+    @Override
+	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+		return new MutableJsonTypeMapper(das, side, shapeName);
 	}
 	
 	@Override
 	public CreationStrategy getCreationStrategy(ObjectCreator oc) {
-		return new MutableJsonCreationStrategy(oc);
+        if(getSide() == MapperSide.EXTERNAL) {
+            return new MutableJsonCreationStrategy(oc);
+        }
+        
+        return getDomainCreationStrategy(oc);	    
 	}		
 	
 	@Override
@@ -284,8 +270,8 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	}	
 	
 	@Override
-	public String getExternalTypeName(Class<?> inputClass, Type domainType) {
-		return domainType.getName();
+	public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
+		return domainType.getEntityName();
 	}	
 	
 	@Override

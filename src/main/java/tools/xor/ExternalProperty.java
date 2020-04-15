@@ -33,21 +33,42 @@ import tools.xor.service.Shape;
 public class ExternalProperty extends AbstractProperty {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
-	private ExtendedProperty domainProperty;
-	private Boolean containment; // Note: this should be an instance to allow 3VL.
+	protected boolean isContainment; 
+	protected boolean isMany;
+	protected boolean isNullable;
+	protected String  mappedByName;
+	protected PersistentAttributeType associationType;
+	protected boolean isMap;
+	protected boolean isList;
+	protected boolean isSet;
+	protected String  domainName;
 	
 	public ExternalProperty(ExtendedProperty domainProperty, Type type, ExternalType parentType, Type elementType) {
 		super(type, parentType);
-		this.domainProperty = domainProperty;
-		setElementType(elementType);			
+		setElementType(elementType);		
+		processProperty(domainProperty);
 		
 		init();
 	}
 
 	public ExternalProperty(String name, ExtendedProperty domainProperty, Type type, EntityType parentType, Type elementType) {
 		super(name, type, parentType);
-		this.domainProperty = domainProperty;
 		setElementType(elementType);
+	    processProperty(domainProperty);
+	}
+	
+	private void processProperty(ExtendedProperty domainProperty) {
+	    // We cannot use name, as that would signal an open property
+	    this.domainName = domainProperty.getName();
+	    this.isContainment = domainProperty.isContainment();
+	    this.isMany = domainProperty.isMany();
+	    this.readOnly = domainProperty.isReadOnly();
+	    this.mappedByName = domainProperty.getMappedByName();
+	    this.associationType = domainProperty.getAssociationType();
+	    this.alwaysInitialized = domainProperty.isAlwaysInitialized();
+	    this.isMap = domainProperty.isMap();
+	    this.isList = domainProperty.isList();
+	    this.isSet = domainProperty.isSet();
 	}
 
 	@Override
@@ -67,11 +88,6 @@ public class ExternalProperty extends AbstractProperty {
 		}			
 	}
 	
-	@Override
-	public Property getDomainProperty() {
-		return domainProperty;
-	}
-	
 	public Class<?> getJavaType() {
 		if (field != null) {
 			return field.getDeclaringClass();
@@ -86,36 +102,17 @@ public class ExternalProperty extends AbstractProperty {
 	
 	@Override
 	public String getName() {
-		return domainProperty.getName();
+		return this.domainName;
 	}
 
 	@Override
 	public boolean isMany() {
-		return domainProperty.isMany();
+		return this.isMany;
 	}
 
 	@Override
 	public boolean isContainment() {
-		// First check if the field has been initialized,
-		// if not, fallback to the domain value
-		if(containment != null) {
-			return containment;
-		}
-		return domainProperty.isContainment();
-	}
-
-	/**
-	 * It is possible to mark an external property as a containment property for
-	 * data generation reasons.
-	 * This allows us to enhance the model without touching
-	 * the domain model. By setting it as containment, these fields will be given
-	 * priority for data generation, and hence make them available for linking with
-	 * non-containment relationships.
-	 *
-	 * @param containment value to set
-	 */
-	public void setContainment(boolean containment) {
-		this.containment = containment;
+		return this.isContainment;
 	}
 
 	@Override
@@ -124,13 +121,8 @@ public class ExternalProperty extends AbstractProperty {
 	}
 
 	@Override
-	public boolean isReadOnly() {
-		return getDomainProperty().isReadOnly();
-	}
-
-	@Override
 	public boolean isNullable() {
-		return domainProperty.isNullable();
+		return this.isNullable;
 	}
 
 	@Override
@@ -143,62 +135,47 @@ public class ExternalProperty extends AbstractProperty {
 		return null;
 	}
 
-	/*
-	protected Type getExternalKeyType(DataAccessService das, Shape shape) {
-		//return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getKeyType().getInstanceClass()));
-		return
-	}	
-	
-	protected Type getExternalElementType(DataAccessService das, Shape shape) {
-		return shape.getExternalType(das.getTypeMapper().toExternal(domainProperty.getElementType().getInstanceClass()));
-	}*/
+    public void init(ExtendedProperty domainProperty, Shape dynamicShape) {
+        if (domainProperty.getKeyType() != null) {
+            String keyTypeName = domainProperty.getKeyType().getName();
+            if (domainProperty.getKeyType() instanceof EntityType) {
+                keyTypeName = ((EntityType) domainProperty.getKeyType()).getEntityName();
+            }
+            keyType = dynamicShape.getType(keyTypeName);
+        }
+        if (domainProperty.getElementType() != null) {
+            String entityTypeName = domainProperty.getElementType().getName();
+            if (domainProperty.getElementType() instanceof EntityType) {
+                entityTypeName = ((EntityType) domainProperty.getElementType()).getEntityName();
+            }
+            elementType = dynamicShape.getType(entityTypeName);
+        }
 
-	protected Type getExternalKeyType(Shape shape) {
-		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getKeyType().getName());
-	}
+        if ((field != null && AbstractType.isWrapperType(field.getType()))
+                || (getterMethod != null && AbstractType.isWrapperType(getterMethod.getReturnType())))
+            logger.info("Primitive type found: " + getContainingType().getInstanceClass().getName() + "::"
+                    + field.getName() + ", use a wrapper class instead.");
 
-	protected Type getExternalElementType(Shape shape) {
-		return shape.getExternalType(((ExtendedProperty)getDomainProperty()).getElementType().getName());
-	}
-
-	@Override
-	public void init(Shape shape) {
-		if(domainProperty.getKeyType() != null)
-			keyType = getExternalKeyType(shape);
-		if(domainProperty.getElementType() != null) 
-			elementType = getExternalElementType(shape);
-		
-		if( (field != null && AbstractType.isWrapperType(field.getType())) || 
-				(getterMethod != null && AbstractType.isWrapperType(getterMethod.getReturnType()))
-			)
-			logger.info("Primitive type found: " + getContainingType().getInstanceClass().getName() + "::" + field.getName() + ", use a wrapper class instead.");
-
-		/* Not sure if this is needed for an external Type
-		if(domainProperty.getPositionProperty() != null) {
-			positionProperty = (ExtendedProperty)getElementType().getProperty(domainProperty.getPositionProperty().getName());
-		}
-		*/
-	}
-	
-	@Override
-	public boolean isAlwaysInitialized() {
-		return domainProperty.isAlwaysInitialized();
-	}
+        /*
+         * Not sure if this is needed for an external Type
+         * if(domainProperty.getPositionProperty() != null) { positionProperty =
+         * (ExtendedProperty)getElementType().getProperty(domainProperty.
+         * getPositionProperty().getName()); }
+         */
+    }
 
 	@Override
 	public void initMappedBy(Shape shape) {
-		String mappedBy = domainProperty.getMappedByName();
-
 		Type type = isMany() ? getElementType() : getType();
-		setMappedBy( mappedBy != null ? type.getProperty(mappedBy) : null, mappedBy);
+		setMappedBy( mappedByName != null ? type.getProperty(mappedByName) : null, mappedByName);
 
 		if(getMappedBy() != null)
-			logger.debug("Opposite of property '" + domainProperty.getContainingType().getName() + "." + getName() + "' is '" + mappedBy + "'");
+			logger.debug("Opposite of property '" + getContainingType().getName() + "." + getName() + "' is '" + mappedByName + "'");
 	}
 
 	@Override
 	public PersistentAttributeType getAssociationType() {
-		return domainProperty.getAssociationType();
+		return this.associationType;
 	}
 
 	@Override
@@ -216,17 +193,17 @@ public class ExternalProperty extends AbstractProperty {
 
 	@Override
 	public boolean isMap() {
-		return domainProperty.isMap();
+		return this.isMap;
 	}
 
 	@Override
 	public boolean isList() {
-		return domainProperty.isList();
+		return this.isList;
 	}
 
 	@Override
 	public boolean isSet() {
-		return domainProperty.isSet();
+		return this.isSet;
 	}
 
 	@Override public boolean isCollectionOfReferences ()

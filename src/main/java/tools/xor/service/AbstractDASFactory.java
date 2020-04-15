@@ -26,7 +26,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.BeanCreationException;
 
-import tools.xor.MapperDirection;
+import tools.xor.DefaultTypeMapper;
+import tools.xor.MapperSide;
 import tools.xor.TypeMapper;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.util.PersistenceType;
@@ -71,25 +72,32 @@ public abstract class AbstractDASFactory implements DASFactory {
 	protected DataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
 		throw new UnsupportedOperationException("This method is only supported by a user provided custom DAS factory");
 	}
+	
+	private TypeMapper createTypeMapper(TypeMapper typeMapper) {
+	       return (typeMapper == null) ? new DefaultTypeMapper(null, MapperSide.DOMAIN, null) : typeMapper.newInstance(null, typeMapper.getSide(), typeMapper.getShapeName());
+	}
 
 	/**
 	 * Need to synchronize on this method, since the meta model needs to be ready before using XOR
 	 */
-	public synchronized DataAccessService create() {
-		if(name == null)
+	public synchronized DataAccessService create(TypeMapper typeMapper) {
+	    typeMapper = createTypeMapper(typeMapper);
+	    assert typeMapper.getDAS() == null : "Cannot create a new DAS with an already initialized TypeMapper instance";
+	    
+		if(name == null) {
 			throw new RuntimeException("Name needs to be specified for the DASFactory");
+		}
 
-		if(das.get(name) != null)
-			return das.get(name);
+		DataAccessService result = das.get(name);
+		if(result != null) {
+		    typeMapper.setDAS(result);
+			return result;
+		}
 
-		// Needed for creating the external types
-		TypeMapper typeMapper = (aggregateManager.getTypeMapper() != null) ?
-			aggregateManager.getTypeMapper().newInstance(MapperDirection.DOMAINTOEXTERNAL) :
-			null;
 		PersistenceType persistenceType = aggregateManager.getPersistenceType();
-
 		try { // HibernateDAS
 			if(persistenceType == null || persistenceType == PersistenceType.HIBERNATE) {
+			    typeMapper = createTypeMapper(typeMapper);
 				addDAS(createHibernateDAS(typeMapper), false);
 
 				// Try version 4 specifically
@@ -109,6 +117,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		try { // JPADataAccessService
 			if(persistenceType == null || persistenceType == PersistenceType.JPA) {
+	             typeMapper = createTypeMapper(typeMapper);
 				return addDAS(createJPADAS(typeMapper, name), true);
 			}
 		} catch (BeanCreationException e) {
@@ -117,6 +126,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		try { // Google App Engine, use JPA for metadata configuration
 			if(persistenceType == null || persistenceType == PersistenceType.DATASTORE) {
+	             typeMapper = createTypeMapper(typeMapper);
 				return addDAS(createCustomDAS(typeMapper, name), true);
 			}
 		} catch (BeanCreationException e) {
@@ -125,15 +135,18 @@ public abstract class AbstractDASFactory implements DASFactory {
 
 		// Ariba persistence uses a custom implementation
 		if(persistenceType == null || persistenceType == PersistenceType.AML) {
+            typeMapper = createTypeMapper(typeMapper);
 			return addDAS(createCustomDAS(typeMapper, name), true);
 		}
 
 		// Enterprise Objects Framework (EO) persistence uses a custom implementation
 		if(persistenceType == null || persistenceType == PersistenceType.EOF) {
+            typeMapper = createTypeMapper(typeMapper);
 			return addDAS(createCustomDAS(typeMapper, name), true);
 		}
 
 		if(persistenceType == null || persistenceType == PersistenceType.JDBC) {
+            typeMapper = createTypeMapper(typeMapper);
 			return addDAS(createJDBCDAS(typeMapper), true);
 		}
 
@@ -155,8 +168,9 @@ public abstract class AbstractDASFactory implements DASFactory {
 	public PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext) {
 		PersistenceOrchestrator result;
 
-		if(das.get(name) == null)
-			this.create();
+		if(das.get(name) == null) {
+			this.create(aggregateManager.getTypeMapper());
+		}
 
 		
 		result = das.get(name).createPO(sessionContext, name);

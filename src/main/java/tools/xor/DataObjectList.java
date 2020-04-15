@@ -74,19 +74,14 @@ public class DataObjectList {
 		if (element instanceof JSONObject) {
 			try {
 				Class elementClass = MutableJsonTypeMapper.getEntityClass((JSONObject)element);
-
-				if(fallbackET.isDomainType()) {
-					type = dataObject.getObjectCreator().getShape().getType(elementClass);
-				} else {
-					type = dataObject.getObjectCreator().getShape().getExternalType(elementClass);
-				}
+				type = dataObject.getObjectCreator().getShape().getType(elementClass);
 			}
 			catch (Exception e) {
 				type = fallback;
 			}
 		}
 
-		return (type != null) ? type : fallback;
+		return (type != null && type instanceof EntityType) ? type : fallback;
 	}
 
 	public List<BusinessObject> list(Settings settings) {

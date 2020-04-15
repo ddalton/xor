@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import tools.xor.AbstractDBTest.TypeTest;
 import tools.xor.Type;
+import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.DirectedSparseGraph;
@@ -25,7 +26,7 @@ public class TopoSortTest {
 	@Test
 	public void test1() {
 
-		Shape shape = new Shape("Test", null, null);
+		Shape shape = new DomainShape("Test", null, null);
 
 		Type root = new TypeTest("A");
 		State stateA = new State(root, false);	

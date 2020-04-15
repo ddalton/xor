@@ -47,28 +47,20 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.jdbc.Work;
 
-import tools.xor.AbstractBO;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-import tools.xor.util.ObjectCreator;
-import tools.xor.view.AggregateView;
 import tools.xor.view.HibernateQuery;
-import tools.xor.view.JPAQuery;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
-
-import javax.persistence.LockModeType;
 
 public abstract class HibernatePersistenceOrchestrator extends AbstractPersistenceOrchestrator {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

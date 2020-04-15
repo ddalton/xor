@@ -28,9 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.EntityType;
-import tools.xor.MapperDirection;
+import tools.xor.MapperSide;
 import tools.xor.MutableBO;
 import tools.xor.Settings;
+import tools.xor.TypeMapper;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ObjectCreator;
@@ -82,11 +83,8 @@ public class DefaultBackPointer extends AbstractDBTest {
 
 	public void linkBackPointer (Object entity)
 	{
-		ObjectCreator oc = new ObjectCreator(
-			new Settings(),
-			aggregateService.getDAS().getShape(),
-			aggregateService.getPersistenceOrchestrator(),
-			MapperDirection.EXTERNALTOEXTERNAL);
+        TypeMapper typeMapper = aggregateService.getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        ObjectCreator oc = new ObjectCreator(new Settings(), aggregateManager.getPersistenceOrchestrator(), typeMapper);	    
 		MutableBO dataObject = (MutableBO)oc.createDataObject(
 			entity,
 			(EntityType)oc.getType(entity.getClass()),

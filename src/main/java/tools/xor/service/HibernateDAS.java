@@ -173,8 +173,9 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 		for (Type type : shape.getUniqueTypes()) {
 			if (HibernateType.class.isAssignableFrom(type.getClass())) {
 				HibernateType hibernateType = (HibernateType) type;
-				if(hibernateType.getHibernateType().isComponentType())
+				if(hibernateType.getHibernateType().isComponentType()) {
 					continue;
+				}
 
 				List<Type> baseTypes = new ArrayList<Type>();
 				PersistentClass base = ((PersistentClass)hibernateType.getHibernateClass()).getSuperclass();

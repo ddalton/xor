@@ -19,19 +19,19 @@
 
 package tools.xor;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
-import tools.xor.service.PersistenceOrchestrator;
-import tools.xor.service.Shape;
-import tools.xor.util.ApplicationConfiguration;
-import tools.xor.util.Constants;
-import tools.xor.util.ObjectCreator;
-
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.Constants;
+import tools.xor.util.ObjectCreator;
 
 public class DataImporter implements Callable
 {
@@ -50,16 +50,16 @@ public class DataImporter implements Callable
 
     private ConcurrentLinkedQueue<JSONObject> queue;
     private Settings settings;
-    private Shape shape;
+    private TypeMapper typeMapper;
     private ObjectCreator objectCreator;
     private JDBCPersistenceOrchestrator po;
     private DataGenerator dataGenerator;
 
-    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, PersistenceOrchestrator po, Shape shape, Settings settings) {
+    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, PersistenceOrchestrator po, TypeMapper typeMapper, Settings settings) {
         this.queue = queue;
         this.settings = settings;
-        this.shape = shape;
-        this.objectCreator = new ObjectCreator(settings, shape, settings.getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+        this.typeMapper = typeMapper;
+        this.objectCreator = new ObjectCreator(settings, settings.getPersistenceOrchestrator(), typeMapper);
         this.po = (JDBCPersistenceOrchestrator)po;
         this.dataGenerator = dataGenerator;
     }
@@ -86,7 +86,7 @@ public class DataImporter implements Callable
                 }
 
                 String entityName = json.getString(Constants.XOR.TYPE);
-                Type type = shape.getType(entityName);
+                Type type = typeMapper.getShape().getType(entityName);
                 BusinessObject bo = new ImmutableBO(type, null, null, null);
                 bo.setInstance(json);
                 po.getSessionContext().create(bo, settings, dataGenerator);

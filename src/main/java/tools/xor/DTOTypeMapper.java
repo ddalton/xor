@@ -22,6 +22,8 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import tools.xor.service.DataAccessService;
+
 /**
  * Using JSON is a better alternative if possible as you don't have to maintain a DTO layer
  * 
@@ -36,6 +38,15 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 
 	private String domainPackagePath;
 	private String externalPackagePath;
+	
+    public DTOTypeMapper() {
+        super();
+    }
+    
+    public DTOTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    {
+        super(das, side, shapeName);
+    }	
 
 	public String getDomainPackagePath() {
 		return domainPackagePath;
@@ -136,17 +147,21 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance() {
-		return new DTOTypeMapper();
+	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+		return new DTOTypeMapper(das, side, shapeName);
 	}
+	
+    @Override 
+    public TypeMapper newInstance(MapperSide side) {
+        return newInstance(side, null);
+    }
+    
+    @Override 
+    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+        DTOTypeMapper mapper = (DTOTypeMapper)createInstance(das, side, shapeName);
+        mapper.setDomainPackagePath(getDomainPackagePath());
+        mapper.setExternalPackagePath(getExternalPackagePath());
 
-	@Override
-	public TypeMapper newInstance(MapperDirection direction) {
-		DTOTypeMapper mapper = (DTOTypeMapper)createInstance();
-		mapper.setDirection(direction);
-		mapper.setDomainPackagePath(getDomainPackagePath());
-		mapper.setExternalPackagePath(getExternalPackagePath());
-
-		return mapper;		
-	}	
+        return mapper;
+    }      
 }

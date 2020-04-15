@@ -33,6 +33,9 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 
+import tools.xor.service.DataAccessService;
+import tools.xor.service.DynamicShape;
+import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ImmutableJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
@@ -40,6 +43,8 @@ import tools.xor.util.ObjectCreator;
 public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	
 	private String domainPackagePath;
+    private Shape domainShape;
+    private Shape dynamicShape; 	
 	
 	private static final Map<Class<?>, Class<?>> javaToJson = new HashMap<Class<?>, Class<?>>();
 	
@@ -68,6 +73,15 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 		javaToJson.put(float.class, JsonNumber.class);
 		javaToJson.put(double.class, JsonNumber.class);		
 	}
+	
+    public ImmutableJsonTypeMapper() {
+        super();
+    }	
+	
+    public ImmutableJsonTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    {
+        super(das, side, shapeName);
+    }	
 
 	public String getDomainPackagePath() {
 		return domainPackagePath;
@@ -86,57 +100,25 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	}
 	
 	@Override
-	public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo) {
+	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
 		Class<?> result = null;
 
-		switch(getDirection()) {
-		case EXTERNALTODOMAIN:
-		case EXTERNALTOEXTERNAL:			
+		switch(getSide()) {
+		case EXTERNAL:			
 			result = toExternal(clazz);
 			break;
-		case DOMAINTOEXTERNAL:
-		case DOMAINTODOMAIN:
+		case DOMAIN:		
 			try {
 				result = toDomain(clazz);
 			} catch (UnsupportedOperationException e) {
 				if(callInfo.getInputProperty() != null) {
-					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
+                    Property domainProperty = getDomainProperty(callInfo.getInputProperty().getContainingType().getEntityName(), callInfo.getInputProperty().getName());				    
+					result = domainProperty.getType().getInstanceClass();
 				} else {
 					// Collection, so go to the owner and get the element type
 					ExtendedProperty property = callInfo.getParent().getInputProperty();
-					result = ((ExtendedProperty)property.getDomainProperty()).getElementType().getInstanceClass();
-				}
-			}
-			break;
-		default:
-			result = clazz;
-			break;
-		}
-
-		return result;
-	}	
-	
-	
-	@Override
-	public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo) {
-		Class<?> result = null;
-
-		switch(getDirection()) {
-		case DOMAINTOEXTERNAL:
-		case EXTERNALTOEXTERNAL:			
-			result = toExternal(clazz);
-			break;
-		case EXTERNALTODOMAIN:
-		case DOMAINTODOMAIN:		
-			try {
-				result = toDomain(clazz);
-			} catch (UnsupportedOperationException e) {
-				if(callInfo.getInputProperty() != null) {
-					result = callInfo.getInputProperty().getDomainProperty().getType().getInstanceClass();
-				} else {
-					// Collection, so go to the owner and get the element type
-					ExtendedProperty property = callInfo.getParent().getInputProperty();
-					result = ((ExtendedProperty)property.getDomainProperty()).getElementType().getInstanceClass();
+                    Property domainProperty = getDomainProperty(property.getContainingType().getEntityName(), property.getName());
+					result = ((ExtendedProperty)domainProperty).getElementType().getInstanceClass();
 				}
 			}
 			break;
@@ -153,12 +135,7 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	 * Return the domain class from the external type
 	 */
 	public Class<?> toDomain(Type type) {
-		if(ExternalType.class.isAssignableFrom(type.getClass())) {
-			ExternalType externalType = (ExternalType) type;
-			return externalType.getDomainType().getInstanceClass();
-		} else {
-			throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
-		}
+		throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
 	}	
 
 	@Override
@@ -199,22 +176,30 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance() {
-		return new ImmutableJsonTypeMapper();
+	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+		return new ImmutableJsonTypeMapper(das, side, shapeName);
 	}
+	
+    @Override 
+    public TypeMapper newInstance(MapperSide side) {
+        return newInstance(side, null);
+    }
+    
+    @Override
+    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+        ImmutableJsonTypeMapper mapper = (ImmutableJsonTypeMapper)createInstance(das, side, shapeName);
+        mapper.setDomainPackagePath(getDomainPackagePath());
 
-	@Override
-	public TypeMapper newInstance(MapperDirection direction) {
-		ImmutableJsonTypeMapper mapper = (ImmutableJsonTypeMapper)createInstance();
-		mapper.setDirection(direction);
-		mapper.setDomainPackagePath(getDomainPackagePath());
-
-		return mapper;		
-	}	
+        return mapper;           
+    }     
 	
 	@Override
 	public CreationStrategy getCreationStrategy(ObjectCreator oc) {
-		return new ImmutableJsonCreationStrategy(oc);
+	    if(getSide() == MapperSide.EXTERNAL) {
+	        return new ImmutableJsonCreationStrategy(oc);
+	    }
+	    
+	    return getDomainCreationStrategy(oc);
 	}		
 	
 	@Override
@@ -223,8 +208,8 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	}	
 	
 	@Override
-	public String getExternalTypeName(Class<?> inputClass, Type domainType) {
-		return domainType.getName();
+	public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
+		return domainType.getEntityName();
 	}	
 	
 	@Override

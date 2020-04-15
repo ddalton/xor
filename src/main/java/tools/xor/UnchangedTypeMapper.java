@@ -21,13 +21,24 @@ package tools.xor;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import tools.xor.service.DataAccessService;
+import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
-import tools.xor.util.MutableJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.UnchangedCreationStrategy;
 
 public class UnchangedTypeMapper extends AbstractTypeMapper
 {
+    public UnchangedTypeMapper() {
+        super();
+    }
+    
+    public UnchangedTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    {
+        super(das, side, shapeName);
+    }
+    
     @Override public Class<?> toDomain (Class<?> externalClass)
     {
         return externalClass;
@@ -48,13 +59,7 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         return domainClass;
     }
 
-    @Override
-    public Class<?> getSourceClass(Class<?> clazz, CallInfo callInfo)
-    {
-        return clazz;
-    }
-
-    public Class<?> getTargetClass(Class<?> clazz, CallInfo callInfo)
+    public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo)
     {
         return clazz;
     }
@@ -83,7 +88,7 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     }
 
     @Override
-    public String getExternalTypeName(Class<?> inputClass, Type domainType) {
+    public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
         return domainType.getName();
     }
 
@@ -102,15 +107,45 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         return false;
     }
 
-    protected TypeMapper createInstance() {
-        return new UnchangedTypeMapper();
+    @Override
+    protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+        return new UnchangedTypeMapper(das, side, shapeName);
+    }
+    
+    @Override 
+    public TypeMapper newInstance(MapperSide side) {
+        return newInstance(side, null);
+    }   
+    
+    @Override
+    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+        return createInstance(das, side, shapeName);
+    }     
+    
+    @Override
+    public Shape getDomainShape() {
+        if(this.domainShape == null) {
+            this.domainShape = getDAS().getShape(getShapeName());
+            
+            if(this.domainShape == null) {
+                // create this shape
+                this.domainShape = getDAS().createShape(getShapeName());
+            }
+        }
+
+        return this.domainShape;
     }
 
     @Override
-    public TypeMapper newInstance(MapperDirection direction) {
-        TypeMapper mapper = createInstance();
-        mapper.setDirection(direction);
-
-        return mapper;
-    }
+    public Shape getDynamicShape() {
+        if(this.dynamicShape == null) {
+            // this call initializes the dynamic shape
+            this.getDomainShape();
+            
+            // By default the dynamic shape is the same as the domain shape
+            // implementations can override this behavior
+            this.dynamicShape = this.domainShape;            
+        }
+        return this.dynamicShape;
+    }    
 }

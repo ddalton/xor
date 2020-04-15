@@ -45,11 +45,10 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public boolean isDomainType();
 	
 	/**
-	 * For external types, this will return the domain type from which it is based off.
-	 * For domain types, this will return self.
-	 * @return Domain Type for this type
+	 * For external types, this will return the domain type name from which it is based off. Optional.
+	 * @return Domain Type for this type, null otherwise
 	 */
-	public EntityType getDomainType();
+	public String getDomainTypeName();
 	
 	/**
 	 * Returns the property that refers to the id of the entity
@@ -96,13 +95,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * it does not include properties not defined on its supertypes
 	 * @return list of properties
 	 */
-	List /*Property*/<Property> getDeclaredProperties();
-	
-	/**
-	 * Used to get access to the Domain type from external types
-	 * @return TypeMapper
-	 */
-	public TypeMapper getTypeMapper();	
+	List /*Property*/<Property> getDeclaredProperties();	
 
 	/**
 	 * Get a list of all the types that are embedded in this type
@@ -382,4 +375,10 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * Clear the generators set on this type
 	 */
 	public void clearGenerators();
+
+	/**
+	 * Set the value for the root entity type
+	 * @param value
+	 */
+    void setRootEntityType(String value);
 }

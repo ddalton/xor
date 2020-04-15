@@ -22,13 +22,12 @@ package tools.xor;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;

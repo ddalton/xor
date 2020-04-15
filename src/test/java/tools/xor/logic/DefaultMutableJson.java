@@ -46,6 +46,7 @@ import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
@@ -347,8 +348,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		}
 		
 		Object jsonObject = aggregateService.read(task, settings);
-		JSONObject jsonTask = (JSONObject) jsonObject;
-		System.out.println("JSON string for object: " + jsonTask.toString());	
+		JSONObject jsonTask = (JSONObject) jsonObject;	
 		assert(jsonTask.get("name").toString().equals(TASK_NAME));
 		JSONArray jsonChildren = jsonTask.getJSONArray("taskChildren");
 		assert(((JSONArray)jsonChildren).length() == 1);
@@ -1056,12 +1056,12 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		properties.add(tools.xor.db.sp.P.class.getName() + OpenType.DELIM + "partNo");
 		properties.add(tools.xor.db.sp.S.class.getName() + OpenType.DELIM + "supplierNo");
 		OpenType crossJoin = new OpenType("crossjoin", properties);
-		aggregateManager.getDAS().getShape().addOpenType(crossJoin);
+		aggregateManager.getTypeMapper().addType(crossJoin);
 
 		Settings settings = new Settings();
 		settings.setEntityType(crossJoin);
 		AggregateView view = new AggregateView("CROSS");
-		view.setShape(new Shape("test", null, null));
+		view.setShape(new DomainShape("test", null, null));
 		settings.setView(view);
 		view.setAttributeList(new ArrayList<String>(properties));
 
@@ -1577,11 +1577,11 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 		// First create a natural key for Task based on name
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType externalTask = (EntityType)das.getShape().getExternalType(Task.class);
-		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
-		String[] key = { "name" };
-		externalTask.setNaturalKey(key);
-		domainTask.setNaturalKey(key);
+        EntityType domainTask = (EntityType)das.getTypeMapper().getDomainShape().getType(Task.class);
+        EntityType externalTask = (EntityType)das.getTypeMapper().getDynamicShape().getType(domainTask.getEntityName());        
+        String[] key = { "name" };
+        externalTask.setNaturalKey(key);
+        domainTask.setNaturalKey(key);		
 
 		try {
 			// Create task

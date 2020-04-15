@@ -13,7 +13,6 @@ import tools.xor.db.vo.base.TechnicianVO;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateViewFactory;
-import tools.xor.view.AggregateViews;
 
 /**
  * Unit test the TopoSort algorithm.

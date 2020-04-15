@@ -20,44 +20,58 @@
 package tools.xor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.DataAccessService;
 import tools.xor.service.Shape;
 
 public class ExternalType extends AbstractType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
-	protected EntityType                 domainType;
-	private Class<?>                     javaClass;
-	private List<Type>                   baseTypes;	
+	private Class<?>         javaClass;
+	private String           entityName;
+	private boolean          isDataType;
+	private List<Type>       baseTypes;	
+	protected String         idPropertyName;
+	protected String         versionPropertyName;
+	protected boolean        isEmbedded;
+	protected boolean        isEntity;
+	protected boolean        isImmutable;
 
-	public ExternalType(EntityType domainType, Class<?> javaClass) {
-		this.domainType = domainType;
-		this.javaClass = javaClass;
-		
-		initMeta();
-	}
+    public ExternalType(EntityType domainType, Class<?> javaClass) {
+        this.javaClass = javaClass;
+        this.entityName = domainType.getEntityName();
+        this.isDataType = domainType.isDataType();
+        this.idPropertyName = domainType.getIdentifierProperty() != null ? domainType.getIdentifierProperty().getName() : null;
+        this.versionPropertyName = domainType.getVersionProperty() != null ? domainType.getVersionProperty().getName() : null;
+        this.isEmbedded = domainType.isEmbedded();
+        this.isEntity = domainType.isEntity();
 
-	public void setProperty (Shape shape)
+        if (domainType.getNaturalKey() != null) {
+            this.naturalKey = new ArrayList<String>(domainType.getNaturalKey());
+            this.expandedNaturalKey = new ArrayList<String>(domainType.getExpandedNaturalKey());
+        }
+
+        initMeta();
+    }
+
+	public void setProperty (Shape domainShape, Shape dynamicShape, TypeMapper typeMapper)
 	{
-		setProperty(shape, true);
+		setProperty(domainShape, dynamicShape, typeMapper, true);
 	}
 
-	public void setProperty (Shape shape, boolean add) {
+	public void setProperty (Shape domainShape, Shape dynamicShape, TypeMapper typeMapper, boolean add) {
 		// populate the properties for this type
-		for (Property domainProperty : shape.getProperties(domainType).values()) {
+        EntityType domainType = (EntityType) domainShape.getType(getEntityName());
+		for (Property domainProperty : domainShape.getProperties(domainType).values()) {
 			ExternalProperty externalProperty = (ExternalProperty)defineProperty(
 				domainProperty,
-				shape);
+				dynamicShape,
+				typeMapper);
 
-			externalProperty.init(shape);
+			externalProperty.init((ExtendedProperty) domainProperty, dynamicShape);
 			if(add) {
 				if (externalProperty.getGetterMethod() == null && !(domainType instanceof JDBCType) ) {
 					logger.warn(
@@ -69,7 +83,7 @@ public class ExternalType extends AbstractType {
 				logger.debug(
 					"[" + getName() + "] Domain property name: " + domainProperty.getName()
 						+ ", type name: " + externalProperty.getJavaType());
-				shape.addProperty(externalProperty);
+				dynamicShape.addProperty(externalProperty);
 			}
 		}
 	}
@@ -81,15 +95,16 @@ public class ExternalType extends AbstractType {
 	 * @param shape of the type
 	 * @return Property object
 	 */
-	public Property defineProperty(Property domainProperty, Shape shape) {
-		Class<?> externalClass = shape.getDAS().getTypeMapper().toExternal(domainProperty.getType().getInstanceClass());
+	public Property defineProperty(Property domainProperty, Shape dynamicShape, TypeMapper typeMapper) {
+        
+		Class<?> externalClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
 		if(externalClass == null)
 			throw new RuntimeException("The external type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 
-		Type propertyType = shape.getExternalType(externalClass);
+		Type propertyType = dynamicShape.getType(externalClass);
 		Type elementType = 	null;
 		if(((ExtendedProperty)domainProperty).getElementType() != null) {
-			elementType = shape.getExternalType(((ExtendedProperty)domainProperty).getElementType().getInstanceClass());
+			elementType = dynamicShape.getType(((ExtendedProperty)domainProperty).getElementType().getInstanceClass());
 		}
 		ExternalProperty externalProperty = null;
 		if(domainProperty.isOpenContent()) {
@@ -113,7 +128,7 @@ public class ExternalType extends AbstractType {
 
 	@Override
 	public String getEntityName() {
-		return domainType.getName();
+		return this.entityName;
 	}	
 
 	@Override
@@ -133,7 +148,7 @@ public class ExternalType extends AbstractType {
 
 	@Override
 	public boolean isDataType() {
-		return domainType.isDataType();
+		return this.isDataType;
 	}
 
 	@Override
@@ -156,15 +171,17 @@ public class ExternalType extends AbstractType {
 		return baseTypes;
 	}
 
-	public void setBaseType(DataAccessService dataAccessService) {
-		baseTypes = new ArrayList<Type>();
+	public void setBaseType(EntityType domainType, TypeMapper typeMapper) {
+        baseTypes = new ArrayList<Type>();
 
-		for(Type baseType: domainType.getBaseTypes()) {
-			Class<?> externalClass = getTypeMapper().toExternal(baseType.getInstanceClass());
-			Type externalType = getShape().getType(externalClass);
+        if (domainType.getBaseTypes() != null) {
+            for (Type baseType : domainType.getBaseTypes()) {
+                Class<?> externalClass = typeMapper.toExternal(baseType.getInstanceClass());
+                Type externalType = getShape().getType(externalClass);
 
-			baseTypes.add(externalType);
-		}
+                baseTypes.add(externalType);
+            }
+        }
 	}
 /*
 	@Override
@@ -176,16 +193,6 @@ public class ExternalType extends AbstractType {
 		}
 	}	
 */
-	@Override
-	public List<Property> getDeclaredProperties() {
-		List<Property> result = new ArrayList<Property>();
-		for(Property property: domainType.getDeclaredProperties()) {
-			logger.debug("[" + getName() + "] declared domain property name: " + property.getName());
-			result.add(getProperty(property.getName()));
-		}
-
-		return result;
-	}
 
 	@Override
 	public List<?> getAliasNames() {
@@ -214,16 +221,12 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
-	public EntityType getDomainType() {
-		return domainType;
-	}
-
-	@Override
 	public Property getIdentifierProperty() {
-		if(domainType.getIdentifierProperty() != null) {
-			Property result = getProperty(domainType.getIdentifierProperty().getName());
+	    if(this.idPropertyName != null) {
+	        Property result = getProperty(idPropertyName);
+
 			if(result == null) {
-				logger.warn("Identifier property " + domainType.getIdentifierProperty().getName() + " is null for Exterrnal type: " + getName() + " from type: " + domainType.getName());
+				logger.warn("Identifier property " + idPropertyName + " is null for Exterrnal type: " + getName());
 			}
 			return result;
 		} else {
@@ -233,43 +236,27 @@ public class ExternalType extends AbstractType {
 
 	@Override
 	public boolean isEmbedded() {
-		return domainType.isEmbedded();
+		return this.isEmbedded;
 	}
 
 	@Override
 	public boolean isEntity() {
-		return domainType.isEntity();
+		return this.isEntity;
 	}	
 	
 	@Override
 	public boolean isImmutable() {
-		return domainType.isImmutable();
+		return this.isImmutable;
 	}
 
 	@Override
 	public Property getVersionProperty() {
-		return getProperty(domainType.getVersionProperty().getName());
-	}
-
-	@Override
-	public List<String> getNaturalKey() {
-		if(domainType.getNaturalKey() != null)
-			return domainType.getNaturalKey();
-		else
-			return null;
-	}
-
-	@Override
-	public List<String> getExpandedNaturalKey() {
-		if(domainType.getExpandedNaturalKey() != null)
-			return domainType.getExpandedNaturalKey();
-		else
-			return null;
+		return getProperty(this.versionPropertyName);
 	}
 
 	@Override
 	public boolean supportsDynamicUpdate() {
-		return domainType.supportsDynamicUpdate();
+	    // This is not a persistence managed entity
+		return false;
 	}
-
 }

@@ -19,6 +19,24 @@
 
 package tools.xor.service;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -31,18 +49,18 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
+
 import tools.xor.AbstractBO;
 import tools.xor.AbstractType;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
 import tools.xor.DataGenerator;
-import tools.xor.DefaultTypeMapper;
 import tools.xor.DefaultTypeNarrower;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.MapperDirection;
+import tools.xor.MapperSide;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SimpleType;
@@ -76,23 +94,6 @@ import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Function;
 import tools.xor.view.TypeVersion;
 import tools.xor.view.View;
-
-import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 @Component
 public class AggregateManager implements Xor
@@ -146,14 +147,13 @@ public class AggregateManager implements Xor
 	protected void init ()
 	{
 
-		if (associationStrategy == null)
+		if (associationStrategy == null) {
 			associationStrategy = new DefaultAssociationStrategy();
+		}
 
-		if (detailStrategy == null)
+		if (detailStrategy == null) {
 			detailStrategy = new DefaultDetailStrategy();
-
-		if (typeMapper == null)
-			typeMapper = new DefaultTypeMapper();
+		}
 
 		if (typeNarrower == null) {
 			typeNarrower = new DefaultTypeNarrower();
@@ -163,6 +163,9 @@ public class AggregateManager implements Xor
 		if (dasFactory != null) {
 			metaModel = new MetaModel(this);
 			dasFactory.setAggregateManager(this);
+			
+			// create or make a copy if typeMapper already initialized
+		    typeMapper = this.getDAS().getTypeMapper();
 		}
 		else {
 			logger.error(
@@ -328,7 +331,7 @@ public class AggregateManager implements Xor
 
 	public DataAccessService getDAS ()
 	{
-		return dasFactory.create();
+		return dasFactory.create(this.typeMapper);
 	}
 
 	public Settings getSettings ()
@@ -543,11 +546,12 @@ public class AggregateManager implements Xor
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
-			ObjectCreator oc = new ObjectCreator(
-				settings,
-				getShape(settings),
-				getPersistenceOrchestrator(),
-				MapperDirection.DOMAINTODOMAIN);
+            TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.DOMAIN);
+            ObjectCreator oc = new ObjectCreator(
+                settings,
+                getPersistenceOrchestrator(),
+                typeMapper);		    
+
 			BusinessObject from = oc.createDataObject(
 				entity,
 				oc.getShape().getType(entity.getClass()),
@@ -599,25 +603,32 @@ public class AggregateManager implements Xor
 		operation.execute(settings);
 		return operation.getResult();
 	}
+	
+	private MapperSide findSide(Object entity, Settings settings) {
+        MapperSide side = MapperSide.EXTERNAL;
+        if ((settings.getEntityType() != null && settings.getEntityType().isOpen()) ||
+            getDAS().getTypeMapper().isDomain(getEntityClass(entity, settings))) 
+        {
+            side = MapperSide.DOMAIN;
+        }
+        
+        return side;
+	}
 
 	private List<?> queryInternal (Object entity, Settings settings)
 	{
 		owLogger.debug("Performing query operation");
 		checkAndSet(settings, entity);
 
-		DataAccessService das = getDAS();
 		if (settings.doPreFlush())
 			getPersistenceOrchestrator().flush();
 
-		MapperDirection direction = MapperDirection.EXTERNALTOEXTERNAL;
-		if ((settings.getEntityType() != null && settings.getEntityType().isOpen()) ||
-			das.getTypeMapper().isDomain(getEntityClass(entity, settings)))
-			direction = MapperDirection.DOMAINTOEXTERNAL;
-		if (settings.doBaseline()) {
-			direction = direction.toDomain();
-		}
-
-		ObjectCreator oc = new ObjectCreator(settings, getShape(settings), getPersistenceOrchestrator(), direction);
+		MapperSide side = findSide(entity, settings);
+        TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(side);
+        ObjectCreator oc = new ObjectCreator(
+            settings,
+            getPersistenceOrchestrator(),
+            typeMapper);            
 		oc.setReadOnly(true);
 
 		Type fromType = settings.getEntityType();
@@ -670,11 +681,12 @@ public class AggregateManager implements Xor
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
+		    MapperSide side = findSide(entity, settings);
+		    TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(side);
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				getShape(settings),
 				getPersistenceOrchestrator(),
-				MapperDirection.EXTERNALTODOMAIN);
+				typeMapper);
 
 			BusinessObject from = oc.createDataObject(
 				entity,
@@ -701,11 +713,11 @@ public class AggregateManager implements Xor
 		owLogger.debug("Performing object conversion from External to Domain");
 		checkAndSet(settings, entity);
 
-		ObjectCreator oc = new ObjectCreator(
-			settings,
-			getShape(settings),
-			getPersistenceOrchestrator(),
-			MapperDirection.EXTERNALTODOMAIN);
+        TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        ObjectCreator oc = new ObjectCreator(
+            settings,
+            getPersistenceOrchestrator(),
+            typeMapper);   		
 
 		BusinessObject from = oc.createDataObject(
 			entity,
@@ -757,14 +769,16 @@ public class AggregateManager implements Xor
 
 		checkAndSet(settings, entity);
 
-		if (settings.doPreRefresh())
+		if (settings.doPreRefresh()) {
 			getPersistenceOrchestrator().refresh(entity);
+		}
 
-		ObjectCreator oc = new ObjectCreator(
-			settings,
-			getShape(settings),
-			getPersistenceOrchestrator(),
-			MapperDirection.DOMAINTOEXTERNAL);
+		MapperSide side = findSide(entity, settings);
+        TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(side);
+        ObjectCreator oc = new ObjectCreator(
+            settings,
+            getPersistenceOrchestrator(),
+            typeMapper);  		
 		oc.setReadOnly(true);
 
 		BusinessObject from = oc.createDataObject(
@@ -811,11 +825,11 @@ public class AggregateManager implements Xor
 		owLogger.debug("Performing object conversion from Domain to External");
 		checkAndSet(settings, entity);
 
-		ObjectCreator oc = new ObjectCreator(
-			settings,
-			getShape(settings),
-			getPersistenceOrchestrator(),
-			MapperDirection.DOMAINTOEXTERNAL);
+        TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        ObjectCreator oc = new ObjectCreator(
+            settings,
+            getPersistenceOrchestrator(),
+            typeMapper);    		
 		oc.setReadOnly(true);
 
 		BusinessObject from = oc.createDataObject(
@@ -991,11 +1005,12 @@ public class AggregateManager implements Xor
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
-			ObjectCreator oc = new ObjectCreator(
-				settings,
-				getShape(settings),
-				getPersistenceOrchestrator(),
-				MapperDirection.EXTERNALTODOMAIN);
+		    MapperSide side = findSide(entity, settings);
+	        TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(side);
+	        ObjectCreator oc = new ObjectCreator(
+	            settings,
+	            getPersistenceOrchestrator(),
+	            typeMapper);        		    
 
 			BusinessObject from = oc.createDataObject(
 				entity,
@@ -1129,11 +1144,11 @@ public class AggregateManager implements Xor
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
-			ObjectCreator oc = new ObjectCreator(
-				settings,
-				getShape(settings),
-				getPersistenceOrchestrator(),
-				MapperDirection.EXTERNALTODOMAIN);
+            TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+            ObjectCreator oc = new ObjectCreator(
+                settings,
+                getPersistenceOrchestrator(),
+                typeMapper);		    
 
 			BusinessObject from = oc.createDataObject(
 				entity,
@@ -1196,11 +1211,11 @@ public class AggregateManager implements Xor
 	private void attach(Object entity, Object snapshot, Settings settings) {
 
 		// attach it to the persistence layer
-		ObjectCreator oc = new ObjectCreator(
-			settings,
-			getShape(settings),
-			getPersistenceOrchestrator(),
-			MapperDirection.EXTERNALTODOMAIN);
+        TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        ObjectCreator oc = new ObjectCreator(
+            settings,
+            getPersistenceOrchestrator(),
+            typeMapper);	    
 
 		BusinessObject bo = oc.createDataObject(
 			entity,
@@ -1480,11 +1495,11 @@ public class AggregateManager implements Xor
 			// clone the task object using a DataObject
 
 			// Create an object creator for the target root
-			ObjectCreator oc = new ObjectCreator(
-				settings,
-				getShape(settings),
-				getPersistenceOrchestrator(),
-				MapperDirection.EXTERNALTODOMAIN);
+            TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+            ObjectCreator oc = new ObjectCreator(
+                settings,
+                getPersistenceOrchestrator(),
+                typeMapper);			
 
 			// The Excel should have a single sheet containing the denormalized data
 			// Create a JSONObject for each row
@@ -1566,10 +1581,10 @@ public class AggregateManager implements Xor
 	@Override
 	public void generate (String name, List<String> types, Settings settings)
 	{
-		Shape shape = getDAS().getShape(name);
+		TypeMapper typeMapper = getDAS().getTypeMapper().newInstance(MapperSide.DOMAIN, name);
 
 		// Generate the data
 		dbInit(settings);
-		(new DataGenerator(types, shape, settings, getDasFactory())).execute();
+		(new DataGenerator(types, typeMapper, settings, getDasFactory())).execute();
 	}
 }

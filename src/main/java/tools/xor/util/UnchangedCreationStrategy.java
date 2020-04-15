@@ -23,12 +23,11 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
 import tools.xor.ListType;
 import tools.xor.Property;
-import tools.xor.Settings;
-import tools.xor.util.graph.ObjectGraph;
 
 
 public class UnchangedCreationStrategy extends AbstractCreationStrategy {

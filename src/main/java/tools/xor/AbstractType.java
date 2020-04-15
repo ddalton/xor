@@ -42,8 +42,8 @@ import javax.persistence.UniqueConstraint;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
 import org.json.JSONObject;
+
 import tools.xor.annotation.XorAfter;
 import tools.xor.annotation.XorDataService;
 import tools.xor.annotation.XorDomain;
@@ -66,7 +66,6 @@ public abstract class AbstractType implements EntityType {
 	
 	public static final int ALL = -1;
 	
-	private TypeMapper          typeMapper;   // Used to get the derivedClass from the referenceClass and vice versa
 	private ClassResolver       classResolver;
 	private boolean             immutable;
 
@@ -78,8 +77,9 @@ public abstract class AbstractType implements EntityType {
 	private   String            superTypeName;
 	private   EntityType        superType;
 	private   int               order; //represents the topological sort order of the entity type
-	private   List<String>      naturalKey;
+	protected List<String>      naturalKey;
 	protected List<String>      expandedNaturalKey;
+	private   String            domainTypeName;
 	
 	private Map<String, Method>     readerMethods    = new HashMap<String, Method>();
 	private Map<String, Method>     updaterMethods   = new HashMap<String, Method>();	
@@ -160,11 +160,17 @@ public abstract class AbstractType implements EntityType {
 		this.order = value;
 	}
 
+	@Override
 	public EntityType getRootEntityType() {
 		if(rootEntityType == null) {
-			return null;
+			rootEntityType = getEntityName();
 		}
 		return (EntityType)getShape().getType(this.rootEntityType);
+	}
+	
+	@Override
+	public void setRootEntityType(String value) {
+	    this.rootEntityType = value;
 	}
 
 	private static boolean isInValid(Type type) {
@@ -292,12 +298,7 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		if(superType == null) {
-			if (isDomainType()) {
-				superType = (EntityType)getShape().getType(superTypeName);
-			}
-			else {
-				superType = (EntityType)getShape().getExternalType(superTypeName);
-			}
+			superType = (EntityType)getShape().getType(superTypeName);
 		}
 
 		return superType;
@@ -952,19 +953,13 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public EntityType getDomainType() {
-		return this;
+	public String getDomainTypeName() {
+		return this.domainTypeName;
 	}
-
-	@Override
-	public TypeMapper getTypeMapper() {
-		return typeMapper;
+	
+	public void setDomainTypeName(String value) {
+	    this.domainTypeName = value;
 	}
-
-	public void setTypeMapper(TypeMapper typeMapper) {
-		this.typeMapper = typeMapper;
-	}
-
 
 	@Override
 	public boolean isDataType ()

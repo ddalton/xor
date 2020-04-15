@@ -32,14 +32,14 @@ import tools.xor.view.View;
 
 public class MetaModel {
 
-	protected DASFactory dasFactory;
+    protected AggregateManager am;
 
 	public MetaModel(AggregateManager am) {
-		this.dasFactory = am.getDasFactory();
+	    this.am = am;
 	}
 
 	protected DataAccessService getDAS() {
-		DataAccessService das = dasFactory.create();
+		DataAccessService das = am.getDasFactory().create(am.getTypeMapper());
 
 		return das;
 	}

@@ -65,6 +65,7 @@ import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataAccessService;
+import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
 import tools.xor.service.Transaction;
 import tools.xor.util.ClassUtil;
@@ -167,8 +168,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void checkOpenField() throws JSONException {
 		DataAccessService das = aggregateService.getDAS();
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
-		Property openProperty = new JPAProperty("ItemList", das.getShape().getType(Object.class), taskType);
-		das.getShape().addOpenProperty(openProperty);
+		ExtendedProperty openProperty = new JPAProperty("ItemList", das.getShape().getType(Object.class), taskType);
+		aggregateService.getTypeMapper().addProperty(openProperty);
 
 		super.checkOpenField();
 	}
@@ -198,7 +199,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		if(taskType.getProperty("subTaskObj") == null) {
 			ExtendedProperty openProperty = new JPAProperty("subTaskObj", das.getShape().getType(Task.class), taskType, RelationshipType.TO_ONE, null);
 			openProperty.addKeyMapping(new String[]{"subTask"}, new String[]{"id"});
-			das.getShape().addOpenProperty(openProperty);
+            aggregateService.getTypeMapper().addProperty(openProperty);
 		}
 	}
 	
@@ -305,7 +306,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
         if(partType.getProperty("supplierParts") == null) {
             ExtendedProperty openProperty = new JPAProperty("supplierParts", das.getShape().getType(Set.class), partType, RelationshipType.TO_MANY, (EntityType) das.getShape().getType(SP.class));
             openProperty.addKeyMapping(new String[]{"partNo"}, new String[]{"partNo"});
-            das.getShape().addOpenProperty(openProperty);
+            aggregateService.getTypeMapper().addProperty(openProperty);
         }		
 	}
 	
@@ -420,7 +421,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		Property openProperty = taskType.getProperty("ItemList");
 		if(openProperty != null) {
-			das.getShape().removeOpenProperty(openProperty);
+			das.getShape().removeProperty(openProperty);
 		}
 
 		super.checkReferenceSemantics();
@@ -497,7 +498,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// First create a natural key for Task based on name
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType externalTask = (EntityType)das.getShape().getExternalType(Task.class);
+		EntityType externalTask = (EntityType)das.getShape().getType(Task.class);
 		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
 		String[] key = { "name" };
 		externalTask.setNaturalKey(key);
@@ -552,8 +553,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		// First create a natural key for Task based on name
 		DataAccessService das = aggregateManager.getDAS();
-		EntityType externalTask = (EntityType)das.getShape().getExternalType(Task.class);
-		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
+		//EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
+        EntityType domainTask = (EntityType)das.getTypeMapper().getDomainShape().getType(Task.class);
+        EntityType externalTask = (EntityType)das.getTypeMapper().getDynamicShape().getType(domainTask.getEntityName());		
 		String[] key = { "name" };
 		externalTask.setNaturalKey(key);
 		domainTask.setNaturalKey(key);
@@ -1187,7 +1189,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			settings = new Settings();
 			settings.setView(aggregateService.getView("TASKCHILDRENMIXTEMP"));
 			Shape shape = aggregateService.getDAS().getShape();
-			shape.setJDBCShape(jdbcShape);
+			((DomainShape)shape).setJDBCShape(jdbcShape);
 			Type type = shape.getType(Task.class);
 			settings.setEntityType(type);
 			settings.init(shape);

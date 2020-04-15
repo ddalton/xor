@@ -37,9 +37,10 @@ import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableBO;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
-import tools.xor.MapperDirection;
+import tools.xor.MapperSide;
 import tools.xor.QueryGenerator;
 import tools.xor.Settings;
+import tools.xor.TypeMapper;
 import tools.xor.generator.Choices;
 import tools.xor.generator.DateRange;
 import tools.xor.generator.DefaultGenerator;
@@ -665,6 +666,8 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
     public void deleteBaseId() {
         DataAccessService das = am.getDAS();
         Shape shape = das.getShape(AbstractDataAccessService.RELATIONAL_SHAPE);
+        TypeMapper typeMapper = am.getDAS().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        typeMapper.setDomainShape(shape);
 
         Settings settings = new Settings();
         JDBCType entityType = (JDBCType)shape.getType("US_BASEIDTAB");
@@ -698,12 +701,12 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
                 bids.add(json);
 
                 if(i++%1000 == 0) {
-                    delete(bids, entityType, sc, settings, po);
+                    delete(bids, entityType, sc, settings, po, typeMapper);
                     sc.commit();
                     bids = new LinkedList<>();
                 }
             }
-            delete(bids, entityType, sc, settings, po);
+            delete(bids, entityType, sc, settings, po, typeMapper);
             sc.commit();
         }
         catch (SQLException e) {
@@ -731,6 +734,8 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
     public void updateUser(int offset) {
         DataAccessService das = am.getDAS();
         Shape shape = das.getShape(AbstractDataAccessService.RELATIONAL_SHAPE);
+        TypeMapper typeMapper = am.getDAS().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        typeMapper.setDomainShape(shape);
 
         Settings settings = new Settings();
         JDBCType entityType = (JDBCType)shape.getType("US_USERTAB");
@@ -773,14 +778,14 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
 
                 if(i++%1000 == 0) {
                     //am.update(users, settings);
-                    update(users, originalUsers, entityType, sc, settings, po);
+                    update(users, originalUsers, entityType, sc, settings, po, typeMapper);
                     sc.commit();
                     users = new LinkedList<>();
                     originalUsers = new LinkedList<>();
                 }
             }
             //am.update(users, settings);
-            update(users, originalUsers, entityType, sc, settings, po);
+            update(users, originalUsers, entityType, sc, settings, po, typeMapper);
             sc.commit();
         }
         catch (SQLException e) {
@@ -790,8 +795,8 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         }
     }
 
-    private void update(List<JSONObject> users, List<JSONObject> originalUsers, EntityType entityType, JDBCSessionContext sc, Settings settings, PersistenceOrchestrator po) {
-        ObjectCreator oc = new ObjectCreator(settings, entityType.getShape(), po, MapperDirection.DOMAINTODOMAIN);
+    private void update(List<JSONObject> users, List<JSONObject> originalUsers, EntityType entityType, JDBCSessionContext sc, Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
+        ObjectCreator oc = new ObjectCreator(settings, po, typeMapper);        
         for(int i = 0; i < users.size(); i++) {
             BusinessObject bo = new ImmutableBO(entityType, null, null, oc);
             bo.setInstance(users.get(i));
@@ -802,8 +807,8 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         }
     }
 
-    private void delete(List<JSONObject> bids, EntityType entityType, JDBCSessionContext sc, Settings settings, PersistenceOrchestrator po) {
-        ObjectCreator oc = new ObjectCreator(settings, entityType.getShape(), po, MapperDirection.DOMAINTODOMAIN);
+    private void delete(List<JSONObject> bids, EntityType entityType, JDBCSessionContext sc, Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
+        ObjectCreator oc = new ObjectCreator(settings, po, typeMapper);
         for(int i = 0; i < bids.size(); i++) {
             BusinessObject bo = new ImmutableBO(entityType, null, null, oc);
             bo.setInstance(bids.get(i));

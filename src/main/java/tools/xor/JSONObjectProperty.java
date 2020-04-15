@@ -372,10 +372,6 @@ public class JSONObjectProperty
         return property.getType();
     }
 
-    private Property getDomainProperty() {
-        return property.getDomainProperty();
-    }
-
     public Class<?> getJavaType() {
         return this.property.getType().getInstanceClass();
     }
@@ -452,25 +448,10 @@ public class JSONObjectProperty
             logger.error("DynamicProperty#setValue dataObject instance is not a JsonObject");
         }
     }
-
-    /*
-    private Converter getConverter() {
-        if(this.converter == null) {
-//            if(convertersByProperty.containsKey(getName())) {
-//                converter = convertersByProperty.get(getName());
-//            }
-            if(convertersByClass.containsKey(getDomainProperty().getType().getInstanceClass())) {
-                converter = convertersByClass.get(getDomainProperty().getType().getInstanceClass());
-            }
-        }
-
-        return converter;
-    }
-    */
     
     private Converter getConverter() {
         if(this.converter == null) {
-            this.converter = ((ExtendedProperty) getDomainProperty()).getConverter();
+            this.converter = property.getConverter();
         }
         
         return this.converter;
@@ -489,7 +470,7 @@ public class JSONObjectProperty
             } else if (JSONArray.class.isAssignableFrom(instanceObj.getClass())) {
                 convertersByClass.get(JSONArray.class).setExternal( settings, jsonObject, name, instanceObj);
             } else {
-                logger.error("setExternal - converter not found for java type: " + getDomainProperty().getType().getInstanceClass().getName());
+                logger.error("setExternal - converter not found for java type: " + getType().getInstanceClass().getName());
             }
         }
     }
@@ -500,8 +481,7 @@ public class JSONObjectProperty
         } else {
             if(logger.isDebugEnabled()) {
                 logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass()
-                        + ", type name: " + getType().getName()
-                        + ", domain type: " + getDomainProperty().getType().getInstanceClass().getName());
+                        + ", type name: " + getType().getName());
             }
             return jsonObject.get(key);
         }

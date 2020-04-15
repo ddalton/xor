@@ -72,9 +72,17 @@ public interface DataAccessService {
 	 * the added shape can be make active.
 	 * 
 	 * @param shape object representing the type system
-	 * @param isActive true if the shape is the default shape for the DAS
 	 */
-	public void addShape(Shape shape, boolean isActive);
+	public void addShape(Shape shape);
+	
+	/**
+	 * Make the shape as the default shape for the DAS.
+	 * This is useful so that the name of the shape does not have to be passed
+	 * all over the code.
+	 * 
+	 * @param shape to be made active
+	 */
+	public void setActive(Shape shape);
 	
     /**
      * Add the shape to the DAS.

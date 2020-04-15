@@ -30,9 +30,10 @@ import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
 import tools.xor.EntityType;
-import tools.xor.MapperDirection;
+import tools.xor.MapperSide;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.TypeMapper;
 import tools.xor.custom.TestAssociationStrategy;
 import tools.xor.db.base.Chapter;
 import tools.xor.db.base.ChapterType;
@@ -87,7 +88,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		
 		// read the person object using a DataObject
 		settings = getSettings();
-		ObjectCreator oc = new ObjectCreator(settings, das.getShape(), aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+        TypeMapper typeMapper = das.getTypeMapper().newInstance(MapperSide.DOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, aggregateManager.getPersistenceOrchestrator(), typeMapper);
 		settings.expand(new AssociationSetting("assignedTo.name")); // enhance the view to get the technician name
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		settings.setEntityType(taskType);
@@ -136,7 +138,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
-		ObjectCreator oc = new ObjectCreator(new Settings(), das.getShape(), aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+        TypeMapper typeMapper = das.getTypeMapper().newInstance(MapperSide.DOMAIN);
+        ObjectCreator oc = new ObjectCreator(new Settings(), aggregateManager.getPersistenceOrchestrator(), typeMapper);
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		
 		Property property = taskType.getProperty("name");
@@ -167,7 +170,8 @@ public class DefaultCheckType extends AbstractDBTest {
 		task.setDescription("Setup high-speed broadband internet using DSL technology");
 		
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
-		ObjectCreator oc = new ObjectCreator(new Settings(), das.getShape(), aggregateManager.getPersistenceOrchestrator(), MapperDirection.DOMAINTOEXTERNAL);
+        TypeMapper typeMapper = das.getTypeMapper().newInstance(MapperSide.DOMAIN);
+        ObjectCreator oc = new ObjectCreator(new Settings(), aggregateManager.getPersistenceOrchestrator(), typeMapper);		
 		BusinessObject from = oc.createDataObject(task, taskType, null, null);
 		
 		Property property = taskType.getProperty("name");

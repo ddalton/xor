@@ -303,12 +303,6 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
 	public boolean isIdentifier();
 	
 	/**
-	 * Returns the property representing the domain type
-	 * @return Property object
-	 */
-	public Property getDomainProperty();
-	
-	/**
 	 * Returns the relationship type for an open property
 	 * @return null if not an open property
 	 */
@@ -409,4 +403,14 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
 	 * @return converter object
 	 */
     Converter getConverter();
+    
+    @Override
+    EntityType getContainingType();
+    
+    /** 
+     * Returns the domain type name for this property
+     * 
+     * @return domain type name. null if not present.
+     */
+    String getDomainTypeName();
 }

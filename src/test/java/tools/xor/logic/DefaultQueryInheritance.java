@@ -29,23 +29,14 @@ import tools.xor.AbstractDBTest;
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.db.base.ChapterType;
-import tools.xor.db.base.Facet;
-import tools.xor.db.base.MetaEntityState;
-import tools.xor.db.base.MetaEntityType;
 import tools.xor.db.base.Technician;
-import tools.xor.db.common.Property;
 import tools.xor.db.pm.Task;
 import tools.xor.db.vo.base.PersonVO;
 import tools.xor.db.vo.base.TechnicianVO;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
-import tools.xor.util.InterQuery;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
-import tools.xor.view.AggregateTree;
-import tools.xor.view.FragmentBuilder;
-import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
 public class DefaultQueryInheritance extends AbstractDBTest {

@@ -313,8 +313,10 @@ public class QueryTreeInvocation
             Type type = ((EntityType)bo.getType()).getRootEntityType();
             EntityKey key = new SurrogateEntityKey(id, type.getName(), path);
             BusinessObject existing = queryObjects.get(key);
-            assert(existing == null);
-            queryObjects.put(key, bo);
+
+            if(existing != bo) {
+                queryObjects.put(key, bo);
+            }
         }
     }
 

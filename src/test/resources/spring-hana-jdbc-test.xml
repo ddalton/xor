@@ -35,7 +35,7 @@
 		<property name="name" value="hanadas" />
 	</bean>
 
-        <bean id="typeMapper" class="tools.xor.UnchangedTypeMapper"/>
+    <bean id="typeMapper" class="tools.xor.UnchangedTypeMapper"/>
 	
 	<!-- DataSource -->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"

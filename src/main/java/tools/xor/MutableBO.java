@@ -85,7 +85,8 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+        TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);		
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
@@ -115,7 +116,8 @@ public class MutableBO extends AbstractBO {
 		Date a = new Date();
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+		TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
@@ -152,7 +154,8 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.EXTERNALTODOMAIN);
+        TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		DeleteOperation operation = new DeleteOperation();
@@ -179,7 +182,8 @@ public class MutableBO extends AbstractBO {
 		this.createAggregate(settings);
 
 		// Create an object creator for the target root
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getShape(), getObjectCreator().getPersistenceOrchestrator(), MapperDirection.DOMAINTODOMAIN);
+        TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);		
 		callInfo.setOutputObjectCreator(oc);
 		CloneOperation operation = new CloneOperation();
 		callInfo.setOperation(operation);

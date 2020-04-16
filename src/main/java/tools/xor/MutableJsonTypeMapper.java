@@ -28,7 +28,7 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.CreationStrategy;
@@ -82,7 +82,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
         super();
     }	
 	
-    public MutableJsonTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    public MutableJsonTypeMapper(DataModel das, MapperSide side, String shapeName) 
     {
         super(das, side, shapeName);
     }	
@@ -243,7 +243,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
     }
     
     @Override
-    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
         MutableJsonTypeMapper mapper = (MutableJsonTypeMapper)createInstance(das, side, shapeName);
         mapper.setDomainPackagePath(getDomainPackagePath());
 
@@ -251,7 +251,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
     }       
 
     @Override
-	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
 		return new MutableJsonTypeMapper(das, side, shapeName);
 	}
 	

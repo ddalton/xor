@@ -35,7 +35,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;

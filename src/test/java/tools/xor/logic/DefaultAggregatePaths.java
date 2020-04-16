@@ -47,7 +47,7 @@ import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
 import tools.xor.generator.LocalizedString;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.MetaModel;
 import tools.xor.util.AggregatePropertyPaths;
 import tools.xor.util.DFAtoRE;
@@ -66,10 +66,10 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 	@Test
 	public void checkDirPath() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		Type dir = das.getShape().getType(Directory.class);
-		View view = aggregateManager.getDAS().getShape().getView((EntityType) dir);
+		View view = aggregateManager.getModel().getShape().getView((EntityType) dir);
 
 		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(dir, das.getShape());
 		System.out.println("********* Directory model paths **********");
@@ -84,7 +84,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	}
 
 	public void checkPaths() {	
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type person = das.getShape().getType(Person.class);
 		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(person, das.getShape());
@@ -107,7 +107,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	
 	@Test
 	public void checkBasePaths() {	
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type task = das.getShape().getType(Task.class);
 		Set<String> paths = AggregatePropertyPaths.enumerateBase(task);
@@ -119,10 +119,10 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	
 	@Test
 	public void checkStateGraph() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type task = das.getShape().getType(Task.class);
-		View view = aggregateManager.getDAS().getShape().getView((EntityType) task);
+		View view = aggregateManager.getModel().getShape().getView((EntityType) task);
 		List<Property> properties = view.getTypeGraph((EntityType)task).next(task, null, null);
 		
 		List<String> propertyNames = new ArrayList<String>();
@@ -137,7 +137,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	}
 
 	public void checkCyclicPaths() {	
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type task = das.getShape().getType(Task.class);
 		Set<String> paths = AggregatePropertyPaths.enumerateRegEx(task, das.getShape());
@@ -197,7 +197,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t3 = new Edge(INPUT_B, stateB, stateB);
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 
 		re.getGraph().addEdge(t1);
 		re.getGraph().addEdge(t2);
@@ -246,7 +246,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateC, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 
 		// A is both start and finish state
 		stateA.setFinishState(true);
@@ -317,7 +317,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 
 		stateD.setFinishState(true);
 		
@@ -374,7 +374,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 		
 		stateB.setFinishState(true);
 
@@ -431,7 +431,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 		
 		// A is both start and finish state
 		stateA.setFinishState(true);
@@ -489,7 +489,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t6 = new Edge(INPUT_B, stateD, stateB);		
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 		
 		stateC.setFinishState(true);
 		
@@ -534,7 +534,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Edge t2 = new Edge(INPUT_C, stateB, stateC);	
 
 		DFAtoRE re = new DFAtoRE();
-		re.setAggregateType(A, aggregateManager.getDAS().getShape());
+		re.setAggregateType(A, aggregateManager.getModel().getShape());
 
 		stateC.setFinishState(true);
 		
@@ -550,7 +550,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 	
 	@Test
 	public void testDFATask() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type task = das.getShape().getType(Task.class);
 		
@@ -614,7 +614,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 	public void generateStateGraph() {
 		//Settings settings = new Settings();
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		/*
 		EntityType taskType = (EntityType)das.getType(Task.class);
 
@@ -629,7 +629,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 	public void generateStateInheritanceGraph() {
 		Settings settings = new Settings();
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		EntityType taskType = (EntityType)das.getShape().getType(Task.class);
 
 		settings.setEntityType(taskType);
@@ -642,7 +642,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 	public void generateStatePersonGraph() {
 		Settings settings = new Settings();
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		EntityType personType = (EntityType)das.getShape().getType(Person.class);
 
 		settings.setEntityType(personType);
@@ -654,7 +654,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 	public void checkPersonSubTypes() {
 
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		EntityType personType = (EntityType)das.getShape().getType(Person.class);
 
 		Set<EntityType> personSubTypes = personType.getSubtypes();

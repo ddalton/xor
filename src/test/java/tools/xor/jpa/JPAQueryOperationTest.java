@@ -226,9 +226,9 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	 * @see tools.xor.jpa.JPAMutableJsonTest#testSubtypeSubquery
 	 */
 	public void testSubtypeSubquery() {
-		Shape shape = amJDBC.getDAS().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getDAS().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
 		}
 
 
@@ -306,7 +306,7 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 			settings = new Settings();
 			settings.setView(priorityView);
 
-			shape = aggregateService.getDAS().getShape();
+			shape = aggregateService.getModel().getShape();
 			Type type = shape.getType(Task.class);
 			settings.setEntityType(type);
 			settings.init(shape);

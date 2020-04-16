@@ -19,7 +19,7 @@
 
 package tools.xor;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 
 import java.math.BigDecimal;

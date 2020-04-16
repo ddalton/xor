@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 import java.util.ArrayList;
 
@@ -32,7 +32,7 @@ public class DefaultDataAccessService {
 	protected AggregateManager aggregateManager;
 	
 	public void defineMeta() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		// List the declared properties
 		for(Type type: das.getShape().getUniqueTypes()) {

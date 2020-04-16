@@ -36,7 +36,7 @@ import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
@@ -61,7 +61,7 @@ public class TwitterJDBCTest
     protected DataSource dataSource;
 
     private void addAdditionalRelationships() {
-        DataAccessService das = am.getDAS();
+        DataModel das = am.getModel();
 
         SchemaExtension extension = new SchemaExtension()
         {
@@ -192,8 +192,8 @@ public class TwitterJDBCTest
         };
 
         // Rebuild the types
-        das.removeShape(DataAccessService.DEFAULT_SHAPE);
-        das.createShape(DataAccessService.DEFAULT_SHAPE, extension);
+        das.removeShape(DataModel.DEFAULT_SHAPE);
+        das.createShape(DataModel.DEFAULT_SHAPE, extension);
     }
 
     @Before
@@ -403,13 +403,13 @@ public class TwitterJDBCTest
             connection.commit();
         }
 
-        DataAccessService das = am.getDAS();
+        DataModel das = am.getModel();
         das.removeShape("_DEFAULT_");
     }
 
     @Test
     public void testUrlCreate() {
-        DataAccessService das = am.getDAS();
+        DataModel das = am.getModel();
         Shape shape = das.getShape();
 
         am.dbInit(null);
@@ -487,7 +487,7 @@ public class TwitterJDBCTest
 
     @Test
     public void testCompositionCreate() {
-        DataAccessService das = am.getDAS();
+        DataModel das = am.getModel();
         Shape shape = das.getShape();
 
         JSONObject tweet = getTweet(false, 10001);
@@ -502,7 +502,7 @@ public class TwitterJDBCTest
 
     @Test
     public void testInheritanceCreate() {
-        DataAccessService das = am.getDAS();
+        DataModel das = am.getModel();
         Shape shape = das.getShape();
 
         // Create a quotetweet object

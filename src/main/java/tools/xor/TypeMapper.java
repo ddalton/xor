@@ -21,7 +21,7 @@ package tools.xor;
 
 import java.util.List;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ObjectCreator;
@@ -147,7 +147,7 @@ public interface TypeMapper {
      * @param shapeName name of the domain shape that this mapper is based on
      * @return typemapper instance
      */
-    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName);       
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName);       
 
 	/**
 	 * Check if the given class is in its external form
@@ -256,13 +256,13 @@ public interface TypeMapper {
      * Return the DataAccessService powering this type mapper
      * @return DAS instance
      */
-    DataAccessService getDAS();
+    DataModel getModel();
 
     /**
      * Set the DataAccessService powering this type mapper
      * @param das instance
      */
-    void setDAS(DataAccessService das);
+    void setModel(DataModel das);
 
     /**
      * Add the property to both the domain and dynamic shapes

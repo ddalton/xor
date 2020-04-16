@@ -31,7 +31,7 @@ import tools.xor.db.pm.AddressEntity;
 import tools.xor.db.pm.FinancialSummary;
 import tools.xor.db.pm.Project;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 public class DefaultModifyOneToOne extends AbstractDBTest {
 	
@@ -39,7 +39,7 @@ public class DefaultModifyOneToOne extends AbstractDBTest {
 	protected AggregateManager aggregateManager;
 	
 	protected void checkBidirMapping() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		EntityType projectType = (EntityType) das.getShape().getType(Project.class);
 		ExtendedProperty fs = (ExtendedProperty) projectType.getProperty("financialSummary");
@@ -57,7 +57,7 @@ public class DefaultModifyOneToOne extends AbstractDBTest {
 	}
 	
 	protected void checkSingleMapping() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		EntityType personType = (EntityType) das.getShape().getType(Person.class);
 		ExtendedProperty address = (ExtendedProperty) personType.getProperty("address");

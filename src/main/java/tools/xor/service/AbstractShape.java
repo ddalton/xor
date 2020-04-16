@@ -62,7 +62,7 @@ public abstract class AbstractShape implements Shape
 
     // Move the following to Shape abstraction
     protected Map<String, Type> types = new ConcurrentHashMap<String, Type>();
-    protected DataAccessService das; // It is possible this is null, especially if it is shared across DAS instances. A child shape can be created with the DAS populated for each DAS.
+    protected DataModel das; // It is possible this is null, especially if it is shared across DAS instances. A child shape can be created with the DAS populated for each DAS.
     protected String name;
     protected Shape parent;
     protected Map<String, View> views = new ConcurrentHashMap<String, View>();
@@ -74,7 +74,7 @@ public abstract class AbstractShape implements Shape
     // Used to signal if the shape has finished being being
     private volatile boolean buildFinished;
 
-    public AbstractShape(String name, Shape parent, DataAccessService das) {
+    public AbstractShape(String name, Shape parent, DataModel das) {
         this.name = name;
         this.das = das;
         this.parent = parent;
@@ -93,7 +93,7 @@ public abstract class AbstractShape implements Shape
     }
     
     @Override
-    public DataAccessService getDAS() {
+    public DataModel getDAS() {
         return das;
     }
 

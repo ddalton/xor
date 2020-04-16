@@ -45,7 +45,7 @@ import tools.xor.db.pm.Task;
 import tools.xor.db.pm.TaskDetails;
 import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
@@ -1077,14 +1077,14 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	public void importCSV() throws Exception
 	{
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
-		settings.init(aggregateService.getDAS().getShape());
+		settings.setEntityType(aggregateService.getModel().getShape().getType(Task.class));
+		settings.init(aggregateService.getModel().getShape());
 
 		aggregateService.importCSV("bulk/", settings);
 
 		// query the task object
 		settings = new Settings();
-		settings.setEntityType(aggregateService.getDAS().getShape().getType(Task.class));
+		settings.setEntityType(aggregateService.getModel().getShape().getType(Task.class));
 		settings.setDenormalized(true);
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		List<?> result = aggregateService.query(null, settings);
@@ -1096,7 +1096,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	protected void generateMediumSizedEntity() throws IOException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		Settings settings = new Settings();
 		settings.setEntityType(taskType);
@@ -1125,7 +1125,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	protected void generateMediumSizedDomainEntity() throws IOException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		InputStream inputStream = new FileInputStream("DomainValues.xlsx");
 		das.initGenerators(inputStream);
 
@@ -1178,7 +1178,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		json2.put("description", "Homework from school");
 		json2.put("ownedBy", person); // Should share the person reference - check
 
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		EntityType personType = (EntityType) das.getShape().getType(Person.class);
 		personType.setNaturalKey(new String[] { "userName"});
 		Settings settings = new Settings();
@@ -1212,7 +1212,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	}
 
 	protected void generatePicture() {
-		DataAccessService das = aggregateService.getDAS();
+		DataModel das = aggregateService.getModel();
 		EntityType personType = (EntityType) das.getShape().getType(Person.class);
 		View view = das.getShape().getBaseView(personType).copy();
 		Settings settings = new Settings();
@@ -1275,7 +1275,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	}
 
 	public void testEmployeeType() {
-		DataAccessService das = aggregateService.getDAS();
+		DataModel das = aggregateService.getModel();
 		EntityType employeeType = (EntityType)das.getShape().getType(Employee.class);
 		View view = das.getShape().getView(employeeType).copy();
 		Settings settings = new Settings();
@@ -1292,7 +1292,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	{
 
 		try {
-			DataAccessService das = aggregateService.getDAS();
+			DataModel das = aggregateService.getModel();
 
 			EntityType employeeType = (EntityType)das.getShape().getType(Employee.class);
 			View view = das.getShape().getBaseView(employeeType).copy();
@@ -1344,7 +1344,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	public void generateObjectGraph() throws FileNotFoundException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		//InputStream inputStream = new FileInputStream("CoursesValues.xlsx");
 		//das.initGenerators(inputStream);
 
@@ -1374,7 +1374,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	public void generatePersonObjectGraph() throws FileNotFoundException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		//InputStream inputStream = new FileInputStream("CoursesValues.xlsx");
 		//das.initGenerators(inputStream);
 
@@ -1399,7 +1399,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	public void generateCollectionObjectGraph() throws FileNotFoundException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
 		View view = das.getShape().getView(deptType).copy();
@@ -1424,7 +1424,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	}
 
 	public void readDifferentPersonViews() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
 		View view = das.getShape().getView(deptType).copy();
@@ -1464,7 +1464,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 
 	public void readEmployeeNumber() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
 		View view = das.getShape().getView(deptType).copy();
@@ -1521,7 +1521,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	public void readNarrowedCollectionObjectGraph() throws FileNotFoundException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		EntityType deptType = (EntityType)das.getShape().getType(Department.class);
 		View view = das.getShape().getView(deptType).copy();
@@ -1549,7 +1549,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 	public void generateBoundedPersonObjectGraph() throws FileNotFoundException
 	{
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		InputStream inputStream = new FileInputStream("BoundedPerson.xlsx");
 		das.initGenerators(inputStream);
 
@@ -1576,7 +1576,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		final String DESC = "This is dependent task that has many duplicates";
 
 		// First create a natural key for Task based on name
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
         EntityType domainTask = (EntityType)das.getTypeMapper().getDomainShape().getType(Task.class);
         EntityType externalTask = (EntityType)das.getTypeMapper().getDynamicShape().getType(domainTask.getEntityName());        
         String[] key = { "name" };

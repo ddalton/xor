@@ -42,11 +42,20 @@ public class JPAPersistenceXmlDAS extends JPADAS {
 		super(typeMapper, name, dasFactory);
 		this.emf = JPAUtil.getEmf(name);
 	}
-
-	@Override
-	public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-		return new JPAPersistenceXMLPO(sessionContext, data);
-	}
+	
+    @Override
+    public DataProvider getDataProvider() {
+        if(this.dataProvider == null) {
+            this.dataProvider = new DataProvider() {
+                @Override
+                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
+                    return new JPAPersistenceXMLPO(sessionContext, data);
+                } 
+            };
+        }
+        
+        return super.getDataProvider();
+    }	
 
 	@Override
 	public EntityManagerFactory getEmf() {

@@ -31,7 +31,7 @@ public class DomainShape extends AbstractShape
 
     protected Shape jdbcShape; // refers to the JDBC shape type system if available
 
-    public DomainShape(String name, Shape parent, DataAccessService das) {
+    public DomainShape(String name, Shape parent, DataModel das) {
         super(name, parent, das);
     }
     

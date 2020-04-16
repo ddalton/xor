@@ -43,7 +43,7 @@ import tools.xor.db.base.Technician;
 import tools.xor.db.pm.AddressEntity;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
@@ -56,7 +56,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	private static final String TASK_NAME = "SETUP_DSL";
 	
 	protected void checkPath() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		
 		// create person
 		Technician owner = new Technician();
@@ -118,7 +118,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}
 
 	protected void checkOrder() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		
 		EntityType chapterT = (EntityType) das.getShape().getType(Chapter.class);
 		EntityType chapterTT = (EntityType) das.getShape().getType(ChapterType.class);
@@ -129,7 +129,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}
 	
 	protected void checkReflectionGetter() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		
 		// Create Task
 		Task task = new Task();
@@ -161,7 +161,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}
 	
 	protected void checkReflectionSetter() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		
 		// Create Task
 		Task task = new Task();
@@ -192,7 +192,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}	
 	
 	protected void generateSimple() {
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		EntityType addressType = (EntityType) das.getShape().getType(AddressEntity.class);
 		
 		JSONObject address = (JSONObject) addressType.generate(new Settings(), null, null, null, new StateGraph.ObjectGenerationVisitor(new HashMap<JSONObject, State>(), new Settings(), null));

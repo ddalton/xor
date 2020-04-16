@@ -22,7 +22,7 @@ package tools.xor;
 import java.util.ArrayList;
 import java.util.List;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.DynamicShape;
 import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
@@ -34,7 +34,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
     protected static final String DYNAMIC_SUFFIX = "_DYNAMIC"; // Added to domain shape name, if the dynamic shape is based on it 
     
 	private MapperSide side;
-    private DataAccessService das;
+    private DataModel model;
     private String shapeName;
     protected Shape domainShape;
     protected Shape dynamicShape;
@@ -44,23 +44,23 @@ public abstract class AbstractTypeMapper implements TypeMapper {
         this.side = MapperSide.DOMAIN;
     }
     
-    public AbstractTypeMapper(DataAccessService das, MapperSide side, String shapeName)
+    public AbstractTypeMapper(DataModel das, MapperSide side, String shapeName)
     {
-        this.das = das;
+        this.model = das;
         this.side = side;
         this.shapeName = shapeName;
     }
 
     @Override
-	public DataAccessService getDAS() {
-        return das;
+	public DataModel getModel() {
+        return model;
     }
 
     @Override
-    public void setDAS(DataAccessService das) {
-        assert this.das == null : "TypeMapper instance already associated with a DAS instance";
+    public void setModel(DataModel das) {
+        assert this.model == null : "TypeMapper instance already associated with a DAS instance";
         
-        this.das = das;
+        this.model = das;
     }
 
     @Override
@@ -80,11 +80,11 @@ public abstract class AbstractTypeMapper implements TypeMapper {
      * @param shapeName name of the shape instance
      * @return TypeMapper instance
      */
-	abstract protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName);
+	abstract protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName);
 	
     @Override
     public TypeMapper newInstance(MapperSide side, String shapeName) {
-        return newInstance(this.getDAS(), side, shapeName);
+        return newInstance(this.getModel(), side, shapeName);
     } 
 
 	@Override
@@ -366,11 +366,11 @@ public abstract class AbstractTypeMapper implements TypeMapper {
     @Override
     public Shape getDomainShape() {
         if(this.domainShape == null) {
-            this.domainShape = getDAS().getShape(getShapeName());
+            this.domainShape = getModel().getShape(getShapeName());
             
             if(this.domainShape == null) {
                 // create this shape
-                this.domainShape = getDAS().createShape(getShapeName());
+                this.domainShape = getModel().createShape(getShapeName());
             }
         }
 
@@ -380,7 +380,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
     @Override
     public Shape getDynamicShape() {
         if(this.dynamicShape == null) {
-            this.dynamicShape = getDAS().getShape(getShapeName()+DYNAMIC_SUFFIX);
+            this.dynamicShape = getModel().getShape(getShapeName()+DYNAMIC_SUFFIX);
             
             if(this.dynamicShape == null) {
                 // create the dynamic shape
@@ -398,10 +398,10 @@ public abstract class AbstractTypeMapper implements TypeMapper {
         
         Shape dynamicParent = createDynamicShape(domain.getParent());
         String name = domain.getName() + DYNAMIC_SUFFIX;
-        Shape dynamic = getDAS().getShape(name);
+        Shape dynamic = getModel().getShape(name);
         if(dynamic == null) {
             dynamic = new DynamicShape(domain.getName()+DYNAMIC_SUFFIX, dynamicParent, domain, this);
-            getDAS().addShape(dynamic);
+            getModel().addShape(dynamic);
         }
         
         return dynamic;
@@ -438,9 +438,9 @@ public abstract class AbstractTypeMapper implements TypeMapper {
         ((OpenType)type).setProperty();
         getDomainShape().addType(type.getName(), type);
 
-        Class<?> externalClass = getDAS().getTypeMapper().toExternal(type.getInstanceClass());
+        Class<?> externalClass = getModel().getTypeMapper().toExternal(type.getInstanceClass());
         if(externalClass != null) {
-            ExternalType externalType = getDAS().getTypeMapper().createExternalType(
+            ExternalType externalType = getModel().getTypeMapper().createExternalType(
                 type,
                 externalClass);
             getDynamicShape().addType(externalType.getName(), externalType);

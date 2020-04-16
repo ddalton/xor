@@ -52,7 +52,7 @@ public class DynamicShape extends AbstractShape
     
     private Set<AggregateView> registrations = new HashSet<>();
 
-    public DynamicShape(String name, Shape parent, DataAccessService das) {
+    public DynamicShape(String name, Shape parent, DataModel das) {
         super(name, parent, das);
     }
     

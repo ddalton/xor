@@ -22,7 +22,7 @@ package tools.xor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ObjectCreator;
@@ -34,7 +34,7 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         super();
     }
     
-    public UnchangedTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    public UnchangedTypeMapper(DataModel das, MapperSide side, String shapeName) 
     {
         super(das, side, shapeName);
     }
@@ -108,7 +108,7 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     }
 
     @Override
-    protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+    protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
         return new UnchangedTypeMapper(das, side, shapeName);
     }
     
@@ -118,18 +118,18 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     }   
     
     @Override
-    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
         return createInstance(das, side, shapeName);
     }     
     
     @Override
     public Shape getDomainShape() {
         if(this.domainShape == null) {
-            this.domainShape = getDAS().getShape(getShapeName());
+            this.domainShape = getModel().getShape(getShapeName());
             
             if(this.domainShape == null) {
                 // create this shape
-                this.domainShape = getDAS().createShape(getShapeName());
+                this.domainShape = getModel().createShape(getShapeName());
             }
         }
 

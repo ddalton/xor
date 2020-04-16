@@ -27,7 +27,7 @@ import tools.xor.Type;
 import tools.xor.db.base.Rate;
 import tools.xor.db.base.Technician;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 
 public class DefaultNarrowing extends AbstractDBTest {
@@ -35,7 +35,7 @@ public class DefaultNarrowing extends AbstractDBTest {
 	protected AggregateManager aggregateManager;
 
 	public void checkNarrowing() {	
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type technicianType = das.getShape().getType(Technician.class);
 		ExtendedProperty rate = (ExtendedProperty) technicianType.getProperty("rate");		

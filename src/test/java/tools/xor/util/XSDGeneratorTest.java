@@ -29,7 +29,7 @@ import tools.xor.Type;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.xpath.XPathLexer;
 import tools.xor.util.xpath.XPathParser;
 import tools.xor.util.xsd.XSDGenerator;
@@ -50,7 +50,7 @@ public class XSDGeneratorTest {
 	
 	@Test
 	public void testHeader() throws Exception {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type personType = das.getShape().getType(Person.class);
 		logger.info("Task XSD document: " + (new XSDGenerator()).generate(new XSDVisitor(), personType));
@@ -58,7 +58,7 @@ public class XSDGeneratorTest {
 
 	@Test
 	public void testTask() throws Exception {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		logger.info("Task XSD document: " + (new XSDGenerator()).generate(new XSDVisitor(), taskType));

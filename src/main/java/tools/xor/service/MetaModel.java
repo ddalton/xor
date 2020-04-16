@@ -38,8 +38,8 @@ public class MetaModel {
 	    this.am = am;
 	}
 
-	protected DataAccessService getDAS() {
-		DataAccessService das = am.getDasFactory().create(am.getTypeMapper());
+	protected DataModel getDAS() {
+		DataModel das = am.getDasFactory().create(am.getTypeMapper());
 
 		return das;
 	}

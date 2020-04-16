@@ -25,7 +25,7 @@ import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.TypeMapper;
 import tools.xor.UnchangedTypeMapper;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.view.ObjectResolver;
@@ -76,7 +76,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		return entity;
 	}
 	
-	protected tools.xor.Type getNarrowedType (DataAccessService das, Settings settings) {
+	protected tools.xor.Type getNarrowedType (DataModel das, Settings settings) {
 		TypeMapper typeMapper = das.getTypeMapper();
 
 		if(typeMapper instanceof UnchangedTypeMapper) {
@@ -94,7 +94,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		this.entity = (BusinessObject) callInfo.getInput();
 		assert entity != null : "Entity information is required.";
 
-		DataAccessService das = this.entity.getObjectCreator().getDAS();
+		DataModel das = this.entity.getObjectCreator().getDAS();
 		
 		// Always use the REFERENCE type
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedType(

@@ -26,7 +26,7 @@ import org.json.JSONObject;
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.QueryOperation;
 import tools.xor.operation.ReadOperation;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;

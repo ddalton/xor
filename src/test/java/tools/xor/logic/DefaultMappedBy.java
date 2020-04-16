@@ -37,7 +37,7 @@ import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.ClassUtil;
 
 
@@ -49,7 +49,7 @@ public class DefaultMappedBy {
 	 * Test OneToMany mappedBy
 	 */
 	public void checkOneToMany() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty taskChildren = (ExtendedProperty) taskType.getProperty("taskChildren");
@@ -72,7 +72,7 @@ public class DefaultMappedBy {
 	 * Test OneToOne mappedBy
 	 */
 	public void checkOneToOne() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty quote = (ExtendedProperty) taskType.getProperty("quote");
@@ -103,7 +103,7 @@ public class DefaultMappedBy {
 	 * Test ManyToMany mappedBy
 	 */
 	public void checkManyToMany() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Project.class);
 		ExtendedProperty managers = (ExtendedProperty) taskType.getProperty("managers");
@@ -128,7 +128,7 @@ public class DefaultMappedBy {
 	 * Test embedded version of OneToOne
 	 */
 	public void checkOneToOneEmbedded() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type employee = das.getShape().getType(Employee.class);
 		ExtendedProperty parkingSpot = (ExtendedProperty) employee.getProperty("location.parkingSpot");
@@ -150,7 +150,7 @@ public class DefaultMappedBy {
 	}	
 
 	public void checkImmutable() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 		EntityType metaEntityState = (EntityType) das.getShape().getType(MetaEntityState.class);
 		Annotation annotation = metaEntityState.getClassAnnotation(XorEntity.class);
 		
@@ -163,7 +163,7 @@ public class DefaultMappedBy {
 	}
 	
 	public void checkListIndex() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type task = das.getShape().getType(Task.class);
 		ExtendedProperty dependants = (ExtendedProperty) task.getProperty("dependants");

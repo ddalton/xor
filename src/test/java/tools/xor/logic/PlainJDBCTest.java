@@ -38,7 +38,7 @@ import tools.xor.generator.RangePercent;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
@@ -132,7 +132,7 @@ public class PlainJDBCTest
 			System.out.println("[Commit seed data - " + ((time4 - time3) / 1000) + " μs");
 
 			// build the shape
-			am.getDAS().createShape(SHAPE_NAME);
+			am.getModel().createShape(SHAPE_NAME);
 		}
 	}
 
@@ -333,14 +333,14 @@ public class PlainJDBCTest
 		long time2 = System.nanoTime();
 		System.out.println("[Drop tables - " + ((time2 - time1) / 1000) + " μs");
 
-		am.getDAS().removeShape(SHAPE_NAME);
+		am.getModel().removeShape(SHAPE_NAME);
 	}
 
 	@Test
 	public void jsonSelect() {
 		String jsonString = "{ \"normalized\": false, \"view\" : { \"attributeList\" : [\"count\"], \"nativeQuery\" : { \"selectClause\": \"SELECT count(*) FROM librarian\" } } }";
 
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 
 		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -360,7 +360,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void selectView() {
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -398,7 +398,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void queryEntity() {
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -439,7 +439,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void queryCollection() {
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -477,7 +477,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void queryManyToMany() {
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -533,7 +533,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void testDeeplyNested() {
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -581,7 +581,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void testDeeplyNested2() {
-		DataAccessService das = am.getDAS();
+		DataModel das = am.getModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);

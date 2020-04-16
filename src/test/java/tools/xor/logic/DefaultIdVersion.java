@@ -26,7 +26,7 @@ import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 
 public class DefaultIdVersion {
@@ -34,7 +34,7 @@ public class DefaultIdVersion {
 	protected AggregateManager aggregateManager;
 	
 	public void checkId() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property id = taskType.getProperty("id");
@@ -46,7 +46,7 @@ public class DefaultIdVersion {
 	}
 	
 	public void checkVersion() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property version = taskType.getProperty("version");

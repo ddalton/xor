@@ -11,7 +11,7 @@ import tools.xor.db.base.Chapter;
 import tools.xor.db.base.Facet;
 import tools.xor.db.base.MetaEntityType;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.State;
 import tools.xor.util.Edge;
 import tools.xor.util.graph.StateGraph;
@@ -29,7 +29,7 @@ public class DefaultTopoSortTest {
      * Test for a binary strongly connected component.
      */
 	public void testCategoryOrder() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type chapterType = das.getShape().getType(Chapter.class);
 		Type categoryType = das.getShape().getType(MetaEntityType.class);

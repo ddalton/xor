@@ -19,7 +19,7 @@
 
 package tools.xor;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 
 /**
@@ -35,7 +35,7 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
         super();
     }
     
-    public DefaultTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    public DefaultTypeMapper(DataModel das, MapperSide side, String shapeName) 
     {
         super(das, side, shapeName);
     }
@@ -62,7 +62,7 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
 		return new DefaultTypeMapper(das, side, shapeName);
 	}
 
@@ -72,18 +72,18 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	}
     
     @Override 
-    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
         return createInstance(das, side, shapeName);
     }    
     
     @Override
     public Shape getDomainShape() {
         if(this.domainShape == null) {
-            this.domainShape = getDAS().getShape(getShapeName());
+            this.domainShape = getModel().getShape(getShapeName());
             
             if(this.domainShape == null) {
                 // create this shape
-                this.domainShape = getDAS().createShape(getShapeName());
+                this.domainShape = getModel().createShape(getShapeName());
             }
         }
 

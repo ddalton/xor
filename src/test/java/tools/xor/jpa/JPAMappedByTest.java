@@ -32,7 +32,7 @@ import tools.xor.Type;
 import tools.xor.db.base.Department;
 import tools.xor.db.common.Head;
 import tools.xor.logic.DefaultMappedBy;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -87,7 +87,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 
 		//entityManager.persist(d);
 
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Settings settings = das.settings().base(Department.class)
 			.expand(new AssociationSetting(Head.class))
 			.build();
@@ -111,7 +111,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 		d.setName("Mathematics");
 		d.setHead(h);
 
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type deptType = das.getShape().getType(Department.class);
 		Settings settings = new Settings();
 		settings.setPostFlush(true);

@@ -24,7 +24,7 @@ import tools.xor.CallInfo;
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 public interface Operation {
 	/**

@@ -73,9 +73,18 @@ public class HibernateSpringDAS extends HibernateDAS {
 		
 		return configuration;
 	}
-
-	@Override
-	public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-		return new HibernateSpringPO(sessionContext, data);
-	}
+    
+    @Override
+    public DataProvider getDataProvider() {
+        if(this.dataProvider == null) {
+            this.dataProvider = new DataProvider() {
+                @Override
+                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
+                    return new HibernateSpringPO(sessionContext, data);
+                } 
+            };
+        }
+        
+        return super.getDataProvider();
+    }	
 }

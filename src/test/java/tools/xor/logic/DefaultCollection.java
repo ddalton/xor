@@ -27,7 +27,7 @@ import tools.xor.Type;
 import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 
 public class DefaultCollection {
@@ -35,7 +35,7 @@ public class DefaultCollection {
 	protected AggregateManager aggregateManager;
 	
 	public void checkSet() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property children = taskType.getProperty("taskChildren");
@@ -46,7 +46,7 @@ public class DefaultCollection {
 	}
 
 	public void checkList() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property dependencies = taskType.getProperty("dependants");
@@ -57,7 +57,7 @@ public class DefaultCollection {
 	}	
 	
 	public void checkMap() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type prjType = das.getShape().getType(Project.class);
 		Property subProjects = prjType.getProperty("subProjects");

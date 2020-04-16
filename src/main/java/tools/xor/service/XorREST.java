@@ -62,7 +62,7 @@ public abstract class XorREST
         JSONObject json = new JSONObject(jsonString);
         Object entity = getEntity(json);
 
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
         String settings = json.getJSONObject("settings").toString();
         Object persistentObj = getAM().create(entity, das.settings().json(settings).build());
         Settings readSettings = das.settings().base(persistentObj.getClass()).build();
@@ -82,7 +82,7 @@ public abstract class XorREST
         JSONObject json = new JSONObject(jsonString);
         Object entity = getEntity(json);
 
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
         String settings = json.getJSONObject("settings").toString();
         JSONObject readJson = (JSONObject)getAM().read(
             entity,
@@ -99,7 +99,7 @@ public abstract class XorREST
         JSONObject json = new JSONObject(jsonString);
         Object entity = getEntity(json);
 
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
         String settings = json.getJSONObject("settings").toString();
         getAM().update(entity, das.settings().json(settings).build());
     }
@@ -113,7 +113,7 @@ public abstract class XorREST
         JSONObject json = new JSONObject(jsonString);
         Object entity = getEntity(json);
 
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
         String settings = json.getJSONObject("settings").toString();
         getAM().delete(entity, das.settings().json(settings).build());
     }
@@ -150,7 +150,7 @@ public abstract class XorREST
      * @param inputStream containing the Excel file.
      */
     protected void initializeGenerators(InputStream inputStream) {
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
         das.initGenerators(inputStream);
     }
 
@@ -249,7 +249,7 @@ public abstract class XorREST
      */
     public String query (String json)
     {
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
         Settings settings = das.settings().json(json).build();
 
         List list = getAM().query(null, settings);
@@ -262,7 +262,7 @@ public abstract class XorREST
     }
 
     private JSONObject toExternal(Object persistentObj) {
-        Settings readSettings = getAM().getDAS().settings().base(persistentObj.getClass()).build();
+        Settings readSettings = getAM().getModel().settings().base(persistentObj.getClass()).build();
         JSONObject readJson = (JSONObject)getAM().toExternal(persistentObj, readSettings);
 
         return readJson;
@@ -270,7 +270,7 @@ public abstract class XorREST
 
     public String batchCRUD (InputStream jsonStream)
     {
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
 
         // Get the iterator from the json stream
         Settings.SettingsIterator<JSONObject> iter = das.settings().iterator(jsonStream);
@@ -324,7 +324,7 @@ public abstract class XorREST
      */
     public String batchDML (InputStream jsonStream)
     {
-        DataAccessService das = getAM().getDAS();
+        DataModel das = getAM().getModel();
 
         // Get the iterator from the json stream
         Settings.SettingsIterator<Settings> iter = das.settings().iterator(jsonStream);
@@ -387,7 +387,7 @@ public abstract class XorREST
      */
     public String batchJDBC (InputStream jsonStream)
     {
-        DataAccessService das = getJDBCAM().getDAS();
+        DataModel das = getJDBCAM().getModel();
 
         // Get the iterator from the json stream
         Settings.SettingsIterator<Settings> iter = das.settings().iterator(jsonStream);

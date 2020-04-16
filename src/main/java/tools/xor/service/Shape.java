@@ -80,7 +80,7 @@ public interface Shape
      * 
      * @return
      */
-    public DataAccessService getDAS();
+    public DataModel getDAS();
 
     /**
      * Returns the type of Shape object being created. Whether it has a copy of the properties from

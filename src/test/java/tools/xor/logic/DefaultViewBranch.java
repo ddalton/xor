@@ -27,7 +27,7 @@ import tools.xor.EntityType;
 import tools.xor.Type;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.view.QueryTree;
 import tools.xor.view.AggregateTree;
 import tools.xor.view.View;
@@ -41,7 +41,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	 */
 	@Test
 	public void testCreateBranches1() {	
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		View view = aggregateManager.getView("TASKCHILDREN");
@@ -58,7 +58,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	 */
 	@Test
 	public void testCreateBranches2() {	
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		View view = aggregateManager.getView("TASKSET");
@@ -74,7 +74,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	
 	//@Test
 	public void testTaskFull() {
-		DataAccessService das = aggregateManager.getDAS(); 
+		DataModel das = aggregateManager.getModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		View view = das.getShape().getView((EntityType) taskType);

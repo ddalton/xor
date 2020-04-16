@@ -44,7 +44,7 @@ import tools.xor.util.PersistenceType;
  * @author Dilip Dalton
  * 
  */
-public abstract class HibernateDAS extends AbstractDataAccessService {
+public abstract class HibernateDAS extends AbstractDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception()
 	.getStackTrace()[0].getClassName());
@@ -188,10 +188,5 @@ public abstract class HibernateDAS extends AbstractDataAccessService {
 				hibernateType.setBaseType(baseTypes);
 			}
 		}
-	}
-
-	@Override
-	public PersistenceType getAccessType() {
-		return PersistenceType.HIBERNATE;
 	}
 }

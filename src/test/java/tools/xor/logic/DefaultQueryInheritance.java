@@ -134,7 +134,7 @@ public class DefaultQueryInheritance extends AbstractDBTest {
 		 settings = new Settings();
 		 View view = aggregateManager.getView("TASKSKILL");
 
-		 Type taskType = aggregateManager.getDAS().getShape().getType(Task.class);
+		 Type taskType = aggregateManager.getModel().getShape().getType(Task.class);
 		 view = view.copy();
 		 view.setSplitToRoot(false);
 		 TypeGraph tg = view.getTypeGraph((EntityType)taskType, StateGraph.Scope.EDGE);

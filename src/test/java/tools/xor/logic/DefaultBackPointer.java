@@ -83,7 +83,7 @@ public class DefaultBackPointer extends AbstractDBTest {
 
 	public void linkBackPointer (Object entity)
 	{
-        TypeMapper typeMapper = aggregateService.getDAS().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        TypeMapper typeMapper = aggregateService.getModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(new Settings(), aggregateManager.getPersistenceOrchestrator(), typeMapper);	    
 		MutableBO dataObject = (MutableBO)oc.createDataObject(
 			entity,

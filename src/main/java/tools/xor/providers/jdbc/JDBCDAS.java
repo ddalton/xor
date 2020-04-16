@@ -39,13 +39,13 @@ import tools.xor.JDBCType;
 import tools.xor.RelationshipType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.service.AbstractDataAccessService;
+import tools.xor.service.AbstractDataModel;
 import tools.xor.service.DASFactory;
+import tools.xor.service.DataProvider;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
-import tools.xor.util.PersistenceType;
 
 /**
  * This class is part of the Data Access Service framework.
@@ -61,7 +61,7 @@ import tools.xor.util.PersistenceType;
  *
  * @author Dilip Dalton
  */
-public abstract class JDBCDAS extends AbstractDataAccessService
+public abstract class JDBCDAS extends AbstractDataModel
 {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
@@ -616,20 +616,22 @@ public abstract class JDBCDAS extends AbstractDataAccessService
             }
         }
     }
-
+    
     @Override
-    public PersistenceType getAccessType ()
-    {
-        return PersistenceType.JDBC;
-    }
+    public DataProvider getDataProvider() {
+        if(this.dataProvider == null) {
+            this.dataProvider = new DataProvider() {
+                @Override
+                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
+                    JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
+                    po.setDataSource(getDataSource());
 
-    @Override public PersistenceOrchestrator createPO (Object sessionContext, Object data)
-    {
-        JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
-        po.setDataSource(getDataSource());
-
-        return po;
-    }
-
+                    return po;
+                } 
+            };
+        }
+        
+        return super.getDataProvider();
+    }     
 }
 

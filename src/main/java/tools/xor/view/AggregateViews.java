@@ -68,7 +68,7 @@ public class AggregateViews {
 		}
 		
 		// merge the new views with existing views
-		am.getDAS().sync(avVersions);
+		am.getModel().sync(avVersions);
 	}
 	
 }

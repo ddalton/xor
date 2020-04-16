@@ -46,9 +46,18 @@ public class JPASpringDAS extends JPADAS {
 	public JPASpringDAS(TypeMapper typeMapper, String name, DASFactory dasFactory) {
 		super(typeMapper, name, dasFactory);
 	}
-
-	@Override
-	public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-		return new JPASpringPO(sessionContext, data);
-	}
+	
+    @Override
+    public DataProvider getDataProvider() {
+        if(this.dataProvider == null) {
+            this.dataProvider = new DataProvider() {
+                @Override
+                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
+                    return new JPASpringPO(sessionContext, data);
+                } 
+            };
+        }
+        
+        return super.getDataProvider();
+    }   	
 }

@@ -22,7 +22,7 @@ package tools.xor.service;
 import tools.xor.TypeMapper;
 
 public interface DASFactory {
-	DataAccessService create(TypeMapper typeMapper);
+	DataModel create(TypeMapper typeMapper);
 
 	void setAggregateManager(AggregateManager aggregateManager);
 

@@ -35,9 +35,10 @@ import tools.xor.util.PersistenceType;
 public abstract class AbstractDASFactory implements DASFactory {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
-	protected String                                name;	
-	protected AggregateManager                      aggregateManager;
-	protected static final Map<String, DataAccessService> das = new ConcurrentHashMap<String, DataAccessService>(); // If the name is specified then the DAS is cached by the name
+	protected String                              name;	
+	protected AggregateManager                    aggregateManager;
+	protected static final Map<String, DataModel> das = new ConcurrentHashMap<String, DataModel>(); // If the name is specified then the DAS is cached by the name
+	protected DataProvider                        dataProvider; // can optionally be specified
 
 	@Override
 	public AggregateManager getAggregateManager() {
@@ -57,6 +58,14 @@ public abstract class AbstractDASFactory implements DASFactory {
 		this.name = name;
 	}
 	
+	public DataProvider getDataProvider() {
+	    return this.dataProvider;
+	}
+	
+	public void setDataProvider(DataProvider dp) {
+	    this.dataProvider = dp;
+	}
+	
 	protected abstract HibernateDAS createHibernateDAS(TypeMapper typeMapper);
 	
 	protected abstract JPADAS createJPADAS(TypeMapper typeMapper, String name);
@@ -69,7 +78,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 	 * @param name unique to this mapping
 	 * @return DataAccessService object
 	 */
-	protected DataAccessService createCustomDAS(TypeMapper typeMapper, String name) {
+	protected DataModel createCustomDAS(TypeMapper typeMapper, String name) {
 		throw new UnsupportedOperationException("This method is only supported by a user provided custom DAS factory");
 	}
 	
@@ -80,17 +89,17 @@ public abstract class AbstractDASFactory implements DASFactory {
 	/**
 	 * Need to synchronize on this method, since the meta model needs to be ready before using XOR
 	 */
-	public synchronized DataAccessService create(TypeMapper typeMapper) {
+	public synchronized DataModel create(TypeMapper typeMapper) {
 	    typeMapper = createTypeMapper(typeMapper);
-	    assert typeMapper.getDAS() == null : "Cannot create a new DAS with an already initialized TypeMapper instance";
+	    assert typeMapper.getModel() == null : "Cannot create a new DAS with an already initialized TypeMapper instance";
 	    
 		if(name == null) {
 			throw new RuntimeException("Name needs to be specified for the DASFactory");
 		}
 
-		DataAccessService result = das.get(name);
+		DataModel result = das.get(name);
 		if(result != null) {
-		    typeMapper.setDAS(result);
+		    typeMapper.setModel(result);
 			return result;
 		}
 
@@ -108,7 +117,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 				if( ((HibernateDAS)das.get(name)).getConfiguration() == null)
 					throw new RuntimeException("Could not get Hibernate configuration.");
 
-				das.get(name).createShape(AbstractDataAccessService.DEFAULT_SHAPE);
+				das.get(name).createShape(AbstractDataModel.DEFAULT_SHAPE);
 				return das.get(name);
 			}
 		} catch(BeanCreationException e) {
@@ -153,12 +162,15 @@ public abstract class AbstractDASFactory implements DASFactory {
 		return das.get(name);
 	}
 
-	private DataAccessService addDAS(DataAccessService instance, boolean addShape) {
+	private DataModel addDAS(DataModel instance, boolean addShape) {
+	    if(this.dataProvider != null) {
+	        instance.setDataProvider(dataProvider);
+	    }
 		das.put(name, instance);
 		injectDependencies(das.get(name), name);
 
 		if(addShape) {
-			das.get(name).createShape(AbstractDataAccessService.DEFAULT_SHAPE);
+			das.get(name).createShape(AbstractDataModel.DEFAULT_SHAPE);
 		}
 
 		return das.get(name);
@@ -173,7 +185,7 @@ public abstract class AbstractDASFactory implements DASFactory {
 		}
 
 		
-		result = das.get(name).createPO(sessionContext, name);
+		result = das.get(name).getDataProvider().createPO(sessionContext, name);
 
 		if(result != null)
 			injectDependencies(result, null);

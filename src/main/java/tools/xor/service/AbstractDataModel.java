@@ -54,22 +54,32 @@ import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
 
-public abstract class AbstractDataAccessService implements DataAccessService {
+public abstract class AbstractDataModel implements DataModel {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	protected TypeMapper        typeMapper;
-	protected DASFactory        dasFactory;
-
+	protected TypeMapper         typeMapper;
+	protected DASFactory         dasFactory;
+    protected DataProvider       dataProvider;
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
-	private ThreadLocal<Shape> activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
+	private ThreadLocal<Shape>   activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
 
-	public AbstractDataAccessService(DASFactory factory, TypeMapper typeMapper) {
+	public AbstractDataModel(DASFactory factory, TypeMapper typeMapper) {
 		this.dasFactory = factory;
 		this.typeMapper = typeMapper;
 		this.shapes = new HashMap<>();
 		
-		this.typeMapper.setDAS(this);
+		this.typeMapper.setModel(this);
 	}	
+	
+	@Override
+	public DataProvider getDataProvider() {
+	    return this.dataProvider;
+	}
+	
+	@Override
+	public void setDataProvider(DataProvider dp) {
+	    this.dataProvider = dp;
+	}
 	
     @Override
     public void addShape(Shape shape) {

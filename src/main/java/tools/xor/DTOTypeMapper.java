@@ -22,7 +22,7 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 
 /**
  * Using JSON is a better alternative if possible as you don't have to maintain a DTO layer
@@ -43,7 +43,7 @@ public class DTOTypeMapper extends AbstractTypeMapper {
         super();
     }
     
-    public DTOTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    public DTOTypeMapper(DataModel das, MapperSide side, String shapeName) 
     {
         super(das, side, shapeName);
     }	
@@ -147,7 +147,7 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
 		return new DTOTypeMapper(das, side, shapeName);
 	}
 	
@@ -157,7 +157,7 @@ public class DTOTypeMapper extends AbstractTypeMapper {
     }
     
     @Override 
-    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
         DTOTypeMapper mapper = (DTOTypeMapper)createInstance(das, side, shapeName);
         mapper.setDomainPackagePath(getDomainPackagePath());
         mapper.setExternalPackagePath(getExternalPackagePath());

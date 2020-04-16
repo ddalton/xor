@@ -33,7 +33,7 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.DynamicShape;
 import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
@@ -78,7 +78,7 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
         super();
     }	
 	
-    public ImmutableJsonTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    public ImmutableJsonTypeMapper(DataModel das, MapperSide side, String shapeName) 
     {
         super(das, side, shapeName);
     }	
@@ -176,7 +176,7 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
 		return new ImmutableJsonTypeMapper(das, side, shapeName);
 	}
 	
@@ -186,7 +186,7 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
     }
     
     @Override
-    public TypeMapper newInstance(DataAccessService das, MapperSide side, String shapeName) {
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
         ImmutableJsonTypeMapper mapper = (ImmutableJsonTypeMapper)createInstance(das, side, shapeName);
         mapper.setDomainPackagePath(getDomainPackagePath());
 

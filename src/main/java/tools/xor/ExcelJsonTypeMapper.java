@@ -19,7 +19,7 @@
 
 package tools.xor;
 
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
@@ -30,13 +30,13 @@ public class ExcelJsonTypeMapper extends MutableJsonTypeMapper {
         super();
     }   
     
-    public ExcelJsonTypeMapper(DataAccessService das, MapperSide side, String shapeName) 
+    public ExcelJsonTypeMapper(DataModel das, MapperSide side, String shapeName) 
     {
         super(das, side, shapeName);
     }    
 
 	@Override
-	protected TypeMapper createInstance(DataAccessService das, MapperSide side, String shapeName) {
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
 		return new ExcelJsonTypeMapper(das, side, shapeName);
 	}
 	

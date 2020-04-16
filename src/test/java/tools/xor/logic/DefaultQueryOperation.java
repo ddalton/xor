@@ -55,7 +55,7 @@ import tools.xor.db.enums.common.ValueTypeEnum;
 import tools.xor.db.pm.Project;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 import tools.xor.view.AggregateView;
@@ -1314,7 +1314,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 	public void validateComplex() {
 		View view = aggregateService.getView("COMPLEX");
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
@@ -1330,7 +1330,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 	public void querySplitToRoot() {
 		View view = aggregateService.getView("COMPLEX");
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
@@ -1345,7 +1345,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 	public void querySplitToRootNoSplit() {
 		View view = aggregateService.getView("TASKGRANDCHILDREN");
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
@@ -1358,7 +1358,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 	public void querySplitToAnchor() {
 		View view = aggregateService.getView("COMPLEX");
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
@@ -1373,7 +1373,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 	public void querySplitToAnchorNoSplit() {
 		View view = aggregateService.getView("TASKGRANDCHILDREN");
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);
@@ -1499,7 +1499,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	public void querySplitToAnchorParallel() {
 		View view = aggregateService.getView("PARALLEL_QUERY");
 		view = view.copy();
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 
 		// We use splitToAnchor strategy
 		view.setSplitToRoot(false);
@@ -1516,7 +1516,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 
 	public void oqlQuery() {
 		View view = aggregateService.getView("COMPLEX");
-		DataAccessService das = aggregateManager.getDAS();
+		DataModel das = aggregateManager.getModel();
 		Type task = das.getShape().getType(Task.class);
 
 		AggregateTree<QueryTree, InterQuery<QueryTree>> queryTree = new AggregateTree(view);

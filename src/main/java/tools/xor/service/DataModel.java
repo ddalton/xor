@@ -28,7 +28,6 @@ import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.util.PersistenceType;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
 
@@ -37,7 +36,7 @@ import tools.xor.view.QueryTransformer;
  * @author Dilip Dalton
  *
  */
-public interface DataAccessService {
+public interface DataModel {
 
 	static final String DEFAULT_SHAPE = "_DEFAULT_";
 	static final String RELATIONAL_SHAPE = "_RELATIONAL_"; // no relationships, useful for data generation and import
@@ -137,12 +136,6 @@ public interface DataAccessService {
 	 * @return query builder object
 	 */
 	public QueryTransformer getQueryBuilder();
-	
-	/**
-	 * Returns the access type
-	 * @return persistence type
-	 */
-	public PersistenceType getAccessType();
 
 	/**
 	 *
@@ -158,14 +151,17 @@ public interface DataAccessService {
 	public void sync(Map<String, List<AggregateView>> avVersions);
 
 	/**
-	 * Creates the PersistenceOrchestrator appropriate for this
-	 * DAS
-	 * @param sessionContext required if manually creating the session/entityManager
-	 * @param data any additional data required by the PersistenceOrchestrator, e.g., 
-	 *        persistence unit name
-	 * @return PersistenceOrchestrator object
+	 * Returns the DataProvider associated with this DataModel.
+	 * The same DataModel should be able to work with different data providers.
+	 * @return DataProvider instance
 	 */
-	public PersistenceOrchestrator createPO(Object sessionContext, Object data);
+	DataProvider getDataProvider();
+	
+	/**
+	 * Set the DataProvider for this DataModel
+	 * @param dataProvider instance
+	 */
+	void setDataProvider(DataProvider dataProvider);
 
 	/**
 	 * Initialize the generators needed for data generating from an Excel file

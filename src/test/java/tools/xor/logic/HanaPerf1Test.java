@@ -56,9 +56,9 @@ import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCDAS;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
-import tools.xor.service.AbstractDataAccessService;
+import tools.xor.service.AbstractDataModel;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
@@ -118,7 +118,7 @@ public class HanaPerf1Test
 
     private void addAdditionalRelationships()
     {
-        DataAccessService das = am.getDAS();
+        DataModel das = am.getModel();
 
         SchemaExtension relationshipExtension = new SchemaExtension()
         {
@@ -552,8 +552,8 @@ public class HanaPerf1Test
         };
 
         // Rebuild the types
-        das.createShape(AbstractDataAccessService.DEFAULT_SHAPE, relationshipExtension);
-        das.createShape(AbstractDataAccessService.RELATIONAL_SHAPE, generatorExtension);
+        das.createShape(AbstractDataModel.DEFAULT_SHAPE, relationshipExtension);
+        das.createShape(AbstractDataModel.RELATIONAL_SHAPE, generatorExtension);
     }
 
     private void populate() {
@@ -570,7 +570,7 @@ public class HanaPerf1Test
 
         Settings settings = new Settings();
         settings.setImportMethod(importMethod);
-        am.generate(AbstractDataAccessService.RELATIONAL_SHAPE, Arrays.asList(types), settings);
+        am.generate(AbstractDataModel.RELATIONAL_SHAPE, Arrays.asList(types), settings);
     }
 
     @After
@@ -664,9 +664,9 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
 
     //@Test
     public void deleteBaseId() {
-        DataAccessService das = am.getDAS();
-        Shape shape = das.getShape(AbstractDataAccessService.RELATIONAL_SHAPE);
-        TypeMapper typeMapper = am.getDAS().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        DataModel das = am.getModel();
+        Shape shape = das.getShape(AbstractDataModel.RELATIONAL_SHAPE);
+        TypeMapper typeMapper = am.getModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
         typeMapper.setDomainShape(shape);
 
         Settings settings = new Settings();
@@ -732,9 +732,9 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
     }
 
     public void updateUser(int offset) {
-        DataAccessService das = am.getDAS();
-        Shape shape = das.getShape(AbstractDataAccessService.RELATIONAL_SHAPE);
-        TypeMapper typeMapper = am.getDAS().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        DataModel das = am.getModel();
+        Shape shape = das.getShape(AbstractDataModel.RELATIONAL_SHAPE);
+        TypeMapper typeMapper = am.getModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
         typeMapper.setDomainShape(shape);
 
         Settings settings = new Settings();

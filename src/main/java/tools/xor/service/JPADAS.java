@@ -35,14 +35,13 @@ import org.apache.log4j.Logger;
 import tools.xor.JPAType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.util.PersistenceType;
 
 /**
  * This class is part of the Data Access Service framework 
  * @author Dilip Dalton
  *
  */
-public abstract class JPADAS extends AbstractDataAccessService {
+public abstract class JPADAS extends AbstractDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 	
@@ -175,10 +174,4 @@ public abstract class JPADAS extends AbstractDataAccessService {
 			}
 		}
 	}
-
-	@Override
-	public PersistenceType getAccessType() {
-		return PersistenceType.JPA;
-	}
-
 }

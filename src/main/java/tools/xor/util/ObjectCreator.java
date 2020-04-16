@@ -56,7 +56,7 @@ import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.Shape;
 import tools.xor.util.graph.ObjectGraph;
@@ -84,7 +84,7 @@ public class ObjectCreator {
 	private Map<BusinessObject, List<EntityKey>> naturalKeyRegistrations = new Reference2ReferenceOpenHashMap<BusinessObject, List<EntityKey>>();
 
 
-	private DataAccessService              das;
+	private DataModel              das;
 	private Shape                          shape;
 	private PersistenceOrchestrator        persistenceOrchestrator;
 	private TypeMapper                     typeMapper;
@@ -102,7 +102,7 @@ public class ObjectCreator {
 		this.creationStrategy = this.typeMapper.getCreationStrategy(this);
 		
 		this.shape = this.typeMapper.getShape();
-		this.das = this.typeMapper.getDAS();
+		this.das = this.typeMapper.getModel();
 	}
 
 	public Settings getSettings() {
@@ -142,7 +142,7 @@ public class ObjectCreator {
 		return this.shape;
 	}
 
-	public DataAccessService getDAS() {
+	public DataModel getDAS() {
 		return das;
 	} 
 

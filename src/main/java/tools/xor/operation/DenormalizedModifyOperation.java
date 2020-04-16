@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import tools.xor.Settings;
-import tools.xor.service.DataAccessService;
+import tools.xor.service.DataModel;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.DML;
 import tools.xor.view.QueryTransformer;

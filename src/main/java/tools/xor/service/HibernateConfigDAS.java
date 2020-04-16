@@ -51,9 +51,18 @@ public class HibernateConfigDAS extends HibernateDAS {
 	public Configuration getConfiguration()  {
 		return HibernateUtil.getConfiguration();
 	}
-
+	
 	@Override
-	public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-		return new HibernateConfigPO(sessionContext, data);
+	public DataProvider getDataProvider() {
+	    if(this.dataProvider == null) {
+	        this.dataProvider = new DataProvider() {
+                @Override
+                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
+                    return new HibernateConfigPO(sessionContext, data);
+                } 
+	        };
+	    }
+	    
+	    return super.getDataProvider();
 	}
 }

@@ -2,16 +2,16 @@ package tools.xor.providers.jdbc;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import tools.xor.TypeMapper;
-import tools.xor.service.DASFactory;
+import tools.xor.service.DataModelFactory;
 
 import javax.sql.DataSource;
 
-public class JDBCSpringDAS extends JDBCDAS
+public class JDBCSpringDAS extends JDBCDataModel
 {
     @Autowired
     private DataSource dataSource;
 
-    public JDBCSpringDAS (DASFactory dasFactory, TypeMapper typeMapper)
+    public JDBCSpringDAS (DataModelFactory dasFactory, TypeMapper typeMapper)
     {
         super(dasFactory, typeMapper);
     }

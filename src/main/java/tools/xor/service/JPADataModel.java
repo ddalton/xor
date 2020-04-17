@@ -41,11 +41,11 @@ import tools.xor.TypeMapper;
  * @author Dilip Dalton
  *
  */
-public abstract class JPADAS extends AbstractDataModel {
+public abstract class JPADataModel extends AbstractDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 	
-	public JPADAS(TypeMapper typeMapper, String name, DASFactory dasFactory) {
+	public JPADataModel(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
 		super(dasFactory, typeMapper);
 	}
 	

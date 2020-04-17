@@ -23,7 +23,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.OpenType;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 
 public class DomainShape extends AbstractShape
 {
@@ -42,15 +42,15 @@ public class DomainShape extends AbstractShape
     public void signalEvent () {
         assert this.das != null : "Shape is not specific to a DAS. Create a child shape with the DAS populated.";
         
-        if(das instanceof JDBCDAS) {
-            ((JDBCDAS)this.das).addNewTypes(this);
+        if(das instanceof JDBCDataModel) {
+            ((JDBCDataModel)this.das).addNewTypes(this);
         }
     }
 
     public void setJDBCShape(Shape shape) {
         assert this.das != null : "Shape is not specific to a DAS. Create a child shape with the DAS populated.";
         
-        if(this.das instanceof JDBCDAS) {
+        if(this.das instanceof JDBCDataModel) {
             throw new IllegalStateException("Setting the JDBC shape is not allowed on a JDBC shape, but only on an ORM based shape");
         }
         this.jdbcShape = shape;
@@ -59,7 +59,7 @@ public class DomainShape extends AbstractShape
     public boolean hasTable(String tableName) {
         assert this.das != null : "Shape is not specific to a DAS. Create a child shape with the DAS populated.";
         
-        Shape shape = (this.das instanceof JDBCDAS) ? this : this.jdbcShape;
+        Shape shape = (this.das instanceof JDBCDataModel) ? this : this.jdbcShape;
 
         if(shape == null) {
             throw new RuntimeException("hasTable needs jdbcShape to be initialized or be invoked on a JDBC shape");

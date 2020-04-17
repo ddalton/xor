@@ -19,23 +19,9 @@
 
 package tools.xor.service;
 
-import javax.sql.DataSource;
-
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
-import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.PersistenceOrchestrator;
 
-public class JDBCDataProvider implements DataProvider {
-    private DataSource dataSource;
-    
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
+public interface PersistenceProvider {
     /**
      * Creates the PersistenceOrchestrator appropriate for this DataModel
      * @param sessionContext required if manually creating the session/entityManager
@@ -43,10 +29,5 @@ public class JDBCDataProvider implements DataProvider {
      *        persistence unit name
      * @return PersistenceOrchestrator object
      */
-    public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-        JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
-        po.setDataSource(getDataSource());
-
-        return po;        
-    }
+    PersistenceOrchestrator createPO(Object sessionContext, Object data);    
 }

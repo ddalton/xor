@@ -120,7 +120,7 @@ public abstract class DBTranslator
         SQL_TO_JAVA_TYPE_MAP.put("CLOB", java.sql.Clob.class);
     }
 
-    protected Map<String, JDBCDAS.TableInfo> tableMap;
+    protected Map<String, JDBCDataModel.TableInfo> tableMap;
 
     public static DBTranslator getTranslator(String name) {
         return translators.get(name);
@@ -645,7 +645,7 @@ public abstract class DBTranslator
 
             // foreign keys
             if(!p.getType().isDataType() && p.getMappedBy() == null) {
-                JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
+                JDBCDataModel.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
                 if(fkey == null) {
                     throw new RuntimeException("A TO_ONE relationship should have a foreign key");
                 } else {
@@ -713,7 +713,7 @@ public abstract class DBTranslator
     private int setValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV, boolean isUpdate) {
         // simple type
         if(p.getType().isDataType() && !p.isMany()) {
-            JDBCDAS.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
+            JDBCDataModel.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
             JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
             values.add(getColumnString(bo.get(col.getName()), isUpdate, col.getName(), c));
 
@@ -724,13 +724,13 @@ public abstract class DBTranslator
 
         // foreign keys
         if(!p.getType().isDataType() && p.getMappedBy() == null) {
-            JDBCDAS.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
+            JDBCDataModel.ForeignKey fkey = ((JDBCProperty)p).getForeignKey();
             JSONObject entity = (JSONObject)bo.get(p);
-            List<JDBCDAS.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(
+            List<JDBCDataModel.ColumnInfo> referencedColumns = fkey.getReferencedTable().getColumnInfo(
                 fkey.getReferencedColumns());
             for (int i = 0; i < referencedColumns.size(); i++) {
                 String dataType = referencedColumns.get(i).getDataType();
-                JDBCDAS.ColumnInfo col = referencedColumns.get(i);
+                JDBCDataModel.ColumnInfo col = referencedColumns.get(i);
                 JDBCtoSQLConverter c = isCSV ? getCSVConverter(dataType) : getConverter(dataType);
                 values.add(getColumnString(entity.get(col.getName()), isUpdate, col.getName(), c));
 
@@ -870,16 +870,16 @@ public abstract class DBTranslator
         return result;
     }
 
-    public List<JDBCDAS.TableInfo> getTables (Connection connection, ForeignKeyEnhancer enhancer)
+    public List<JDBCDataModel.TableInfo> getTables (Connection connection, ForeignKeyEnhancer enhancer)
     {
         Map<String, List<String>> primaryKeys = getPrimaryKeys(connection);
 
-        Map<String, JDBCDAS.TableInfo> result = new HashMap<>();
+        Map<String, JDBCDataModel.TableInfo> result = new HashMap<>();
         try (PreparedStatement ps = connection.prepareStatement(getTableColumnsSQL());
             ResultSet rs = ps.executeQuery();
         ) {
-            JDBCDAS.TableInfo table = null;
-            List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
+            JDBCDataModel.TableInfo table = null;
+            List<JDBCDataModel.ColumnInfo> columns = new LinkedList<>();
             while(rs.next()) {
                 if(table != null) {
                     // check if we need to reset
@@ -892,10 +892,10 @@ public abstract class DBTranslator
                 }
 
                 if(table == null) {
-                    table = new JDBCDAS.TableInfo(rs.getString(1));
+                    table = new JDBCDataModel.TableInfo(rs.getString(1));
                 }
 
-                JDBCDAS.ColumnInfo ci = createColumnInfo(rs);
+                JDBCDataModel.ColumnInfo ci = createColumnInfo(rs);
                 columns.add(ci);
             }
             if(table != null) {
@@ -906,15 +906,15 @@ public abstract class DBTranslator
             throw ClassUtil.wrapRun(e);
         }
 
-        List<JDBCDAS.ForeignKey> foreignKeys = getForeignKeys(connection, result);
+        List<JDBCDataModel.ForeignKey> foreignKeys = getForeignKeys(connection, result);
 
         // Give a chance to add any additional business logic based relationships
         // not captured by a database foreign key
         foreignKeys = enhancer.process(foreignKeys);
-        Map<String, List<JDBCDAS.ForeignKey>> fkMap = new HashMap<>();
-        for(JDBCDAS.ForeignKey fk: foreignKeys) {
+        Map<String, List<JDBCDataModel.ForeignKey>> fkMap = new HashMap<>();
+        for(JDBCDataModel.ForeignKey fk: foreignKeys) {
             fk.init();
-            List<JDBCDAS.ForeignKey> fkeys = null;
+            List<JDBCDataModel.ForeignKey> fkeys = null;
             if(fkMap.containsKey(fk.getReferencingTable().getName())) {
                 fkeys = fkMap.get(fk.getReferencingTable().getName());
             } else {
@@ -924,8 +924,8 @@ public abstract class DBTranslator
             fkeys.add(fk);
         }
 
-        List<JDBCDAS.TableInfo> tables = new ArrayList<>(result.values());
-        for(JDBCDAS.TableInfo tableInfo: tables) {
+        List<JDBCDataModel.TableInfo> tables = new ArrayList<>(result.values());
+        for(JDBCDataModel.TableInfo tableInfo: tables) {
             tableInfo.setForeignKeys(fkMap.get(tableInfo.getName()));
         }
 
@@ -934,14 +934,14 @@ public abstract class DBTranslator
         return tables;
     }
 
-    private List<JDBCDAS.ForeignKey> getForeignKeys (Connection connection, Map<String, JDBCDAS.TableInfo> tableMap)
+    private List<JDBCDataModel.ForeignKey> getForeignKeys (Connection connection, Map<String, JDBCDataModel.TableInfo> tableMap)
     {
-        List<JDBCDAS.ForeignKey> result = new ArrayList<>();
+        List<JDBCDataModel.ForeignKey> result = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(getForeignKeysSQL());
             ResultSet rs = ps.executeQuery();
         ) {
-            JDBCDAS.ForeignKey fkey = null;
+            JDBCDataModel.ForeignKey fkey = null;
             List<String> referencingColumns = new LinkedList<>();
             List<String> referencedColumns = new LinkedList<>();
             while(rs.next()) {
@@ -977,9 +977,9 @@ public abstract class DBTranslator
         return result;
     }
 
-    private void addTable(Map<String, JDBCDAS.TableInfo> tables,
-                          List<JDBCDAS.ColumnInfo> columns,
-                          JDBCDAS.TableInfo table,
+    private void addTable(Map<String, JDBCDataModel.TableInfo> tables,
+                          List<JDBCDataModel.ColumnInfo> columns,
+                          JDBCDataModel.TableInfo table,
                           List<String> primaryKeys) {
         table.setColumns(columns);
         tables.put(table.getName(), table);
@@ -1027,15 +1027,15 @@ public abstract class DBTranslator
         return result;
     }
 
-    public abstract JDBCDAS.TableInfo getTable(Connection connection, ForeignKeyEnhancer enhancer, String tableName);
+    public abstract JDBCDataModel.TableInfo getTable(Connection connection, ForeignKeyEnhancer enhancer, String tableName);
 
-    protected abstract JDBCDAS.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDAS.TableInfo> tableMap) throws SQLException;
+    protected abstract JDBCDataModel.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDataModel.TableInfo> tableMap) throws SQLException;
 
-    protected abstract JDBCDAS.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException;
+    protected abstract JDBCDataModel.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException;
 
-    public abstract JDBCDAS.SequenceInfo getSequence (Connection connection, String sequenceName);
+    public abstract JDBCDataModel.SequenceInfo getSequence (Connection connection, String sequenceName);
 
-    public abstract List<JDBCDAS.SequenceInfo> getSequences(Connection connection);
+    public abstract List<JDBCDataModel.SequenceInfo> getSequences(Connection connection);
 
     public abstract String getTableColumnsSQL();
 

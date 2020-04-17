@@ -40,7 +40,10 @@
 	<bean id="vojpadas"
 		class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="vojpadas" />		
-	</bean>		
+		<property name="dataModelBuilder" ref="jpabuilder" />
+	</bean>			
+
+	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder"/>
 	
 	<!-- Type Mapper for DTO objects -->
 	<bean id="typeMapper" class="tools.xor.DTOTypeMapper">	

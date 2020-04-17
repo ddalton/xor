@@ -1,6 +1,6 @@
 package tools.xor.service;
 
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 
 import java.util.List;
 
@@ -24,5 +24,5 @@ import java.util.List;
  */
 public interface ForeignKeyEnhancer
 {
-    List<JDBCDAS.ForeignKey> process(List<JDBCDAS.ForeignKey> foreignKeys);
+    List<JDBCDataModel.ForeignKey> process(List<JDBCDataModel.ForeignKey> foreignKeys);
 }

@@ -26,7 +26,7 @@ import org.json.JSONObject;
 import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
-import tools.xor.service.DASFactory;
+import tools.xor.service.DataModelFactory;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -68,7 +68,7 @@ public class DataGenerator
     private TypeMapper typeMapper;
     private Settings settings;
     private List<String> types;
-    private DASFactory dasFactory;
+    private DataModelFactory dasFactory;
     private ImportMethod importMethod;
     private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
     private Map<String, List<Property>> generatedFields = new HashMap<>();
@@ -77,7 +77,7 @@ public class DataGenerator
     private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
     private boolean reachedHigh[] = new boolean[DataGenerator.IMPORTER_POOL_SIZE];
 
-    public DataGenerator (List<String> types, TypeMapper typeMapper, Settings settings, DASFactory dasFactory) {
+    public DataGenerator (List<String> types, TypeMapper typeMapper, Settings settings, DataModelFactory dasFactory) {
         this.types = types;
         this.typeMapper = typeMapper;
         this.settings = settings;

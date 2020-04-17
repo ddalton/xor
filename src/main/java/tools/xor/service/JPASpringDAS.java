@@ -32,7 +32,7 @@ import tools.xor.TypeMapper;
  * @author Dilip Dalton
  *
  */
-public class JPASpringDAS extends JPADAS {
+public class JPASpringDAS extends JPADataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
@@ -43,14 +43,14 @@ public class JPASpringDAS extends JPADAS {
 		return entityManagerFactory;
 	}
 	
-	public JPASpringDAS(TypeMapper typeMapper, String name, DASFactory dasFactory) {
+	public JPASpringDAS(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
 		super(typeMapper, name, dasFactory);
 	}
 	
     @Override
-    public DataProvider getDataProvider() {
+    public PersistenceProvider getDataProvider() {
         if(this.dataProvider == null) {
-            this.dataProvider = new DataProvider() {
+            this.dataProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new JPASpringPO(sessionContext, data);

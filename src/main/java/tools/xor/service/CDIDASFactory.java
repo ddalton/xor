@@ -24,13 +24,10 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.inject.Inject;
 
-import tools.xor.TypeMapper;
-import tools.xor.providers.jdbc.JDBCDAS;
-import tools.xor.providers.jdbc.JDBCSpringDAS;
 import tools.xor.util.ClassUtil;
 
 @Alternative
-public class CDIDASFactory extends AbstractDASFactory {
+public class CDIDASFactory extends AbstractDataModelFactory {
 	
 	@Inject private BeanManager beanManager;
 
@@ -39,22 +36,5 @@ public class CDIDASFactory extends AbstractDASFactory {
 	    InjectionTarget injectionTarget = beanManager.createInjectionTarget(beanManager.createAnnotatedType(ClassUtil.getUnEnhanced(bean.getClass())));		
 	    injectionTarget.inject(bean, beanManager.createCreationalContext(null));
 	    injectionTarget.postConstruct(bean);
-	}
-
-
-	@Override
-	protected HibernateDAS createHibernateDAS(TypeMapper typeMapper) {
-		return new HibernateSpringDAS(typeMapper, this);
-	}
-
-
-	@Override
-	protected JPADAS createJPADAS(TypeMapper typeMapper, String name) {
-		return new JPASpringDAS(typeMapper, name, this);
-	}
-
-	@Override protected JDBCDAS createJDBCDAS (TypeMapper typeMapper)
-	{
-		return new JDBCSpringDAS(this, typeMapper);
 	}
 }

@@ -40,7 +40,10 @@
 	<bean id="mutablejsonjpadas"
 		class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="mutablejsonjpadas" />		
-	</bean>		
+		<property name="dataModelBuilder" ref="jpabuilder" />
+	</bean>			
+
+	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder"/>
 	
 	<!-- Type Mapper for DTO objects -->
 	<bean id="typeMapper" class="tools.xor.ExcelJsonTypeMapper">	
@@ -61,7 +64,10 @@
 	<bean id="jdbcdas"
 		  class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="jdbcdasjson" />
+		<property name="dataModelBuilder" ref="jdbcbuilder" />
 	</bean>
+
+	<bean id="jdbcbuilder" class="tools.xor.service.JDBCSpringDataModelBuilder"/>
 
 	<bean id="uctm" class="tools.xor.UnchangedTypeMapper"/>
 	

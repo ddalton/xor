@@ -25,12 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
-import tools.xor.TypeMapper;
-import tools.xor.providers.jdbc.JDBCDAS;
-import tools.xor.providers.jdbc.JDBCSpringDAS;
-
 @Component
-public class SpringDASFactory extends AbstractDASFactory {
+public class SpringDASFactory extends AbstractDataModelFactory {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	@Autowired
@@ -41,20 +37,5 @@ public class SpringDASFactory extends AbstractDASFactory {
 		beanFactory.autowireBean(bean);
 		if(name != null)
 			beanFactory.initializeBean(bean, name);		
-	}
-
-	@Override
-	protected HibernateDAS createHibernateDAS(TypeMapper typeMapper) {
-		return new HibernateSpringDAS(typeMapper, this);
-	}
-
-	@Override
-	protected JPADAS createJPADAS(TypeMapper typeMapper, String name) {
-		return new JPASpringDAS(typeMapper, name, this);
-	}
-
-	@Override protected JDBCDAS createJDBCDAS (TypeMapper typeMapper)
-	{
-		return new JDBCSpringDAS(this, typeMapper);
 	}
 }

@@ -77,7 +77,7 @@ import tools.xor.operation.DenormalizedModifyOperation;
 import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.providers.jdbc.CustomPersister;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.exim.CSVExportImport;
@@ -104,7 +104,7 @@ public class AggregateManager implements Xor
 
 	private static int BULK_BATCH_SIZE = 1000; // Flush the session for every batch to reduce memory pressure during bulk CSV import
 
-	private DASFactory dasFactory;
+	private DataModelFactory dasFactory;
 	private List<String> viewFiles;           // A list of files to read the view information from
 	private List<TypeVersion> typeVersions;        // A list of the types and the versions it is valid it
 	private int viewVersion = TypeVersion.MIN_VERSION_VALUE;
@@ -175,12 +175,12 @@ public class AggregateManager implements Xor
 		reloadViews();
 	}
 
-	public DASFactory getDasFactory ()
+	public DataModelFactory getDasFactory ()
 	{
 		return dasFactory;
 	}
 
-	public void setDasFactory (DASFactory dasFactory)
+	public void setDasFactory (DataModelFactory dasFactory)
 	{
 		this.dasFactory = dasFactory;
 	}
@@ -1310,7 +1310,7 @@ public class AggregateManager implements Xor
 	public static class DefaultForeignKeyEnhancer implements ForeignKeyEnhancer
 	{
 
-		@Override public List<JDBCDAS.ForeignKey> process (List<JDBCDAS.ForeignKey> foreignKeys)
+		@Override public List<JDBCDataModel.ForeignKey> process (List<JDBCDataModel.ForeignKey> foreignKeys)
 		{
 			return foreignKeys;
 		}
@@ -1319,7 +1319,7 @@ public class AggregateManager implements Xor
 	public static class AggregateManagerBuilder
 	{
 
-		private DASFactory nestedDasFactory;
+		private DataModelFactory nestedDasFactory;
 		private boolean nestedAutoFlushNative;
 		private Interceptor nestedInterceptor;
 		private AssociationStrategy nestedAssociationStrategy;
@@ -1329,7 +1329,7 @@ public class AggregateManager implements Xor
 		private TypeMapper nestedTypeMapper;
 		private int nestedViewVersion;
 
-		public AggregateManagerBuilder dasFactory (DASFactory nestedDasFactory)
+		public AggregateManagerBuilder dasFactory (DataModelFactory nestedDasFactory)
 		{
 			this.nestedDasFactory = nestedDasFactory;
 			return this;

@@ -1,15 +1,15 @@
 package tools.xor.providers.jdbc;
 
 import tools.xor.TypeMapper;
-import tools.xor.service.DASFactory;
+import tools.xor.service.DataModelFactory;
 
 import javax.sql.DataSource;
 
-public class JDBCConfigDAS extends JDBCDAS
+public class JDBCConfigDAS extends JDBCDataModel
 {
     private DataSource dataSource;
 
-    public JDBCConfigDAS (DASFactory dasFactory, TypeMapper typeMapper)
+    public JDBCConfigDAS (DataModelFactory dasFactory, TypeMapper typeMapper)
     {
         super(dasFactory, typeMapper);
     }

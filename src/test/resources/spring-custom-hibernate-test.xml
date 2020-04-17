@@ -48,7 +48,10 @@
 	<bean id="customhibernatedas"
 		class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="customhibernatedas" />		
+		<property name="dataModelBuilder" ref="hibbuilder" />
 	</bean>		
+
+	<bean id="hibbuilder" class="tools.xor.service.HibernateSpringDataModelBuilder"/>
 	
 	<!-- Association Strategy between aggregates -->
 	<bean id="associationStrategy" class="tools.xor.custom.TestAssociationStrategy" />

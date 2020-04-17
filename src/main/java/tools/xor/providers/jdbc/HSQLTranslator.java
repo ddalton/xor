@@ -40,9 +40,9 @@ public class HSQLTranslator extends DBTranslator
     private static final String SEQUENCES_SQL = "SELECT sequence_name, data_type, maximum_value, minimum_value, increment, start_with, cycle_option  FROM information_schema.sequences";
     private static final String TABLE_EXISTS_SQL = "SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = 'PUBLIC'";
 
-    private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
+    private Map<String, JDBCDataModel.SequenceInfo> sequenceMap;
 
-    @Override public JDBCDAS.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
+    @Override public JDBCDataModel.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
     {
         if(tableMap == null) {
             getTables(connection, enhancer);
@@ -51,7 +51,7 @@ public class HSQLTranslator extends DBTranslator
         return tableMap.get(tableName);
     }
 
-    @Override public JDBCDAS.SequenceInfo getSequence (Connection connection, String sequenceName)
+    @Override public JDBCDataModel.SequenceInfo getSequence (Connection connection, String sequenceName)
     {
         if(sequenceMap == null) {
             getSequences(connection);
@@ -61,7 +61,7 @@ public class HSQLTranslator extends DBTranslator
     }
 
     @Override
-    protected JDBCDAS.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException
+    protected JDBCDataModel.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException
     {
         String columnName = rs.getString(2);
         Boolean nullable = "NO".equals(rs.getString(3)) ? false : true;
@@ -74,7 +74,7 @@ public class HSQLTranslator extends DBTranslator
         if(getJavaClass(columnType) == null) {
             throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
         }
-        JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, getJavaClass(columnType), columnType,
+        JDBCDataModel.ColumnInfo ci = new JDBCDataModel.ColumnInfo(columnName, nullable, getJavaClass(columnType), columnType,
             generated, length);
 
         return ci;
@@ -113,28 +113,28 @@ public class HSQLTranslator extends DBTranslator
     }
 
     @Override
-    protected JDBCDAS.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDAS.TableInfo> tableMap) throws SQLException
+    protected JDBCDataModel.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDataModel.TableInfo> tableMap) throws SQLException
     {
-        JDBCDAS.ForeignKeyRule deleteRule = getForeignKeyRule(rs.getInt(6));
-        JDBCDAS.ForeignKeyRule updateRule = getForeignKeyRule(rs.getInt(7));
-        JDBCDAS.TableInfo referencing = tableMap.get(rs.getString(2));
-        JDBCDAS.TableInfo referenced = tableMap.get(rs.getString(3));
-        JDBCDAS.ForeignKey fkey = new JDBCDAS.ForeignKey(rs.getString(1),
+        JDBCDataModel.ForeignKeyRule deleteRule = getForeignKeyRule(rs.getInt(6));
+        JDBCDataModel.ForeignKeyRule updateRule = getForeignKeyRule(rs.getInt(7));
+        JDBCDataModel.TableInfo referencing = tableMap.get(rs.getString(2));
+        JDBCDataModel.TableInfo referenced = tableMap.get(rs.getString(3));
+        JDBCDataModel.ForeignKey fkey = new JDBCDataModel.ForeignKey(rs.getString(1),
             referencing, referenced, deleteRule, updateRule);
 
         return fkey;
     }
 
-    @Override public List<JDBCDAS.SequenceInfo> getSequences (Connection connection)
+    @Override public List<JDBCDataModel.SequenceInfo> getSequences (Connection connection)
     {
-        Map<String, JDBCDAS.SequenceInfo> result = new HashMap<>();
+        Map<String, JDBCDataModel.SequenceInfo> result = new HashMap<>();
 
         try (PreparedStatement ps = connection.prepareStatement(SEQUENCES_SQL);
             ResultSet rs = ps.executeQuery();
         ) {
-            JDBCDAS.SequenceInfo seq = null;
+            JDBCDataModel.SequenceInfo seq = null;
             while(rs.next()) {
-                seq = new JDBCDAS.SequenceInfo(
+                seq = new JDBCDataModel.SequenceInfo(
                     rs.getString(1),
                     rs.getString(2),
                     rs.getLong(3),
@@ -174,18 +174,18 @@ public class HSQLTranslator extends DBTranslator
         return TABLE_EXISTS_SQL;
     }
 
-    private JDBCDAS.ForeignKeyRule getForeignKeyRule(int value) {
+    private JDBCDataModel.ForeignKeyRule getForeignKeyRule(int value) {
         switch(value) {
         case 1:
-            return JDBCDAS.ForeignKeyRule.CASCADE;
+            return JDBCDataModel.ForeignKeyRule.CASCADE;
         case 2:
-            return JDBCDAS.ForeignKeyRule.SET_NULL;
+            return JDBCDataModel.ForeignKeyRule.SET_NULL;
         case 3:
-            return JDBCDAS.ForeignKeyRule.SET_DEFAULT;
+            return JDBCDataModel.ForeignKeyRule.SET_DEFAULT;
         case 4:
-            return JDBCDAS.ForeignKeyRule.RESTRICT;
+            return JDBCDataModel.ForeignKeyRule.RESTRICT;
         case 5:
-            return JDBCDAS.ForeignKeyRule.NO_ACTION;
+            return JDBCDataModel.ForeignKeyRule.NO_ACTION;
         }
 
         throw new RuntimeException("Unknown value for foreign key rule: " + value);

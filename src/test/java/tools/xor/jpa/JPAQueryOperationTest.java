@@ -41,7 +41,7 @@ import tools.xor.generator.Generator;
 import tools.xor.generator.GeneratorRecipient;
 import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultQueryOperation;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
@@ -226,9 +226,9 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	 * @see tools.xor.jpa.JPAMutableJsonTest#testSubtypeSubquery
 	 */
 	public void testSubtypeSubquery() {
-		Shape shape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 

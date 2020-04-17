@@ -33,7 +33,7 @@ import org.hibernate.mapping.Value;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.type.CollectionType;
 
-import tools.xor.service.HibernateDAS;
+import tools.xor.service.HibernateDataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.HibernateUtil;
 
@@ -146,7 +146,7 @@ public class HibernateProperty extends AbstractProperty {
 	}		
 
 	public void init(Shape shape) {
-		HibernateDAS hibernateDAS = (HibernateDAS) shape.getDAS();
+		HibernateDataModel hibernateDAS = (HibernateDataModel) shape.getDAS();
 
 		if(isMany()) {
 			if(hibernateProperty.getType().isCollectionType()) {

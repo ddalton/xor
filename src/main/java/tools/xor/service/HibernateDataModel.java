@@ -36,7 +36,6 @@ import tools.xor.HibernateType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.util.HibernateUtil;
-import tools.xor.util.PersistenceType;
 
 /**
  * This class is part of the Data Access Service framework
@@ -44,12 +43,12 @@ import tools.xor.util.PersistenceType;
  * @author Dilip Dalton
  * 
  */
-public abstract class HibernateDAS extends AbstractDataModel {
+public abstract class HibernateDataModel extends AbstractDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception()
 	.getStackTrace()[0].getClassName());
 	
-	public HibernateDAS(TypeMapper typeMapper, DASFactory dasFactory) {
+	public HibernateDataModel(TypeMapper typeMapper, DataModelFactory dasFactory) {
 		super(dasFactory, typeMapper);
 	}
 	

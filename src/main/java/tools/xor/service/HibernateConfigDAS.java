@@ -33,12 +33,12 @@ import tools.xor.util.HibernateUtil;
  * @author Dilip Dalton
  * 
  */
-public class HibernateConfigDAS extends HibernateDAS {
+public class HibernateConfigDAS extends HibernateDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception()
 	.getStackTrace()[0].getClassName());	
 	
-	public HibernateConfigDAS(TypeMapper typeMapper, DASFactory dasFactory) {
+	public HibernateConfigDAS(TypeMapper typeMapper, DataModelFactory dasFactory) {
 		super(typeMapper, dasFactory);
 	}
 	
@@ -53,9 +53,9 @@ public class HibernateConfigDAS extends HibernateDAS {
 	}
 	
 	@Override
-	public DataProvider getDataProvider() {
+	public PersistenceProvider getDataProvider() {
 	    if(this.dataProvider == null) {
-	        this.dataProvider = new DataProvider() {
+	        this.dataProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new HibernateConfigPO(sessionContext, data);

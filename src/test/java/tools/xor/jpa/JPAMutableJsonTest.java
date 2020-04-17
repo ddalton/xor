@@ -60,7 +60,7 @@ import tools.xor.logic.DefaultMutableJson;
 import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.providers.jdbc.DBType;
 import tools.xor.providers.jdbc.ImportMethod;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
@@ -697,9 +697,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// task with 1500 dependents
 		// use the generator to do this
 
-		Shape shape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -847,9 +847,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		entityManager.flush();
 
 
-		Shape shape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 		JDBCType pTask = (JDBCType)shape.getType("TASK");
 
@@ -923,9 +923,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	 */
 	@Test
 	public void testSubtypeSubquery() {
-		Shape shape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -1039,9 +1039,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// We use the generators to create this data
 		// This data is committed by the generators
 
-		Shape shape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -1135,9 +1135,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// We use the generators to create this data
 		// This data is committed by the generators
 
-		Shape jdbcShape = amJDBC.getModel().getShape(JDBCDAS.RELATIONAL_SHAPE);
+		Shape jdbcShape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(jdbcShape == null) {
-			jdbcShape = amJDBC.getModel().createShape(JDBCDAS.RELATIONAL_SHAPE);
+			jdbcShape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 

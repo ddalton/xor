@@ -22,7 +22,7 @@ package tools.xor;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.service.Shape;
 
 import java.util.ArrayList;
@@ -42,12 +42,12 @@ public class JDBCType extends AbstractType {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private String name;
-    private JDBCDAS.TableInfo tableInfo;
+    private JDBCDataModel.TableInfo tableInfo;
     private Property id;
     private Property version;
     private Map<String, String> pathToColumnMap;
 
-    public JDBCType(String name, JDBCDAS.TableInfo tableInfo) {
+    public JDBCType(String name, JDBCDataModel.TableInfo tableInfo) {
         super();
 
         this.name = name;
@@ -64,7 +64,7 @@ public class JDBCType extends AbstractType {
         return this.tableInfo.getName();
     }
 
-    public JDBCDAS.TableInfo getTableInfo() {
+    public JDBCDataModel.TableInfo getTableInfo() {
         return this.tableInfo;
     }
 
@@ -80,11 +80,11 @@ public class JDBCType extends AbstractType {
             return;
         }
 
-        JDBCDAS das = (JDBCDAS)getShape().getDAS();
+        JDBCDataModel das = (JDBCDataModel)getShape().getDAS();
         // Key is column name and value is java type
-        for(JDBCDAS.ColumnInfo column: das.getTable(getTableName()).getBasicColumns()) {
+        for(JDBCDataModel.ColumnInfo column: das.getTable(getTableName()).getBasicColumns()) {
             Type propertyType = getShape().getType(column.getType());
-            List<JDBCDAS.ColumnInfo> columns = new LinkedList<>();
+            List<JDBCDataModel.ColumnInfo> columns = new LinkedList<>();
             columns.add(column);
             JDBCProperty property = new JDBCProperty(column.getName(), columns, propertyType, this);
 
@@ -92,13 +92,13 @@ public class JDBCType extends AbstractType {
         }
 
         // For each foreign key add a relationship property
-        JDBCDAS.TableInfo table = das.getTable(getTableName());
-        List<JDBCDAS.ForeignKey> fkeys = table.getForeignKeys();
-        JDBCDAS.ForeignKey parentFK = table.getParentFK();
+        JDBCDataModel.TableInfo table = das.getTable(getTableName());
+        List<JDBCDataModel.ForeignKey> fkeys = table.getForeignKeys();
+        JDBCDataModel.ForeignKey parentFK = table.getParentFK();
         if(fkeys != null) {
-            for (JDBCDAS.ForeignKey fkey : fkeys) {
+            for (JDBCDataModel.ForeignKey fkey : fkeys) {
                 Type propertyType = getShape().getType(fkey.getReferencedTable().getName());
-                List<JDBCDAS.ColumnInfo> columns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
+                List<JDBCDataModel.ColumnInfo> columns = fkey.getReferencingTable().getColumnInfo(fkey.getReferencingColumns());
 
                 if(fkey != parentFK) {
                     JDBCProperty property = new JDBCProperty(
@@ -134,7 +134,7 @@ public class JDBCType extends AbstractType {
 
                 List<String> primaryKeyPropertyNames = new LinkedList<>();
                 if(this.tableInfo.getForeignKeys() != null) {
-                    for (JDBCDAS.ForeignKey fk : this.tableInfo.getForeignKeys()) {
+                    for (JDBCDataModel.ForeignKey fk : this.tableInfo.getForeignKeys()) {
                         if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
                             primaryKeyPropertyNames.add(fk.getPropertyName());
                             foreignKeySet.addAll(fk.getReferencingColumns());
@@ -171,7 +171,7 @@ public class JDBCType extends AbstractType {
 
             if(this.tableInfo.getForeignKeys() != null) {
                 Set<String> foreignKeySet = new HashSet<>();
-                for (JDBCDAS.ForeignKey fk : this.tableInfo.getForeignKeys()) {
+                for (JDBCDataModel.ForeignKey fk : this.tableInfo.getForeignKeys()) {
                     if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
                         foreignKeySet.addAll(fk.getReferencingColumns());
                     }
@@ -209,7 +209,7 @@ public class JDBCType extends AbstractType {
             Map<String, String> childFkMap = new HashMap<>();
             columnMap.put(childPrefix, childFkMap);
             if(!property.getType().isDataType()) {
-                JDBCDAS.ForeignKey fk = property.getForeignKey();
+                JDBCDataModel.ForeignKey fk = property.getForeignKey();
 
                 for(int i = 0; i < fk.getReferencingColumns().size(); i++) {
                     // We key by the column at the current depth

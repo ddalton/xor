@@ -53,7 +53,7 @@ import tools.xor.generator.StringTemplate;
 import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.providers.jdbc.DBType;
 import tools.xor.providers.jdbc.ImportMethod;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AbstractDataModel;
@@ -128,9 +128,9 @@ public class HanaPerf1Test
                 // Responsibilities is a composition relationship
                 JDBCType userType = (JDBCType)shape.getType("USERTAB");
                 JDBCType respType = (JDBCType)shape.getType("GROUPRESPONSIBLETAB");
-                JDBCDAS.ForeignKey fk = new JDBCDAS.ForeignKey("FK1_1__N_allresps", respType.getTableInfo(), userType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                JDBCDataModel.ForeignKey fk = new JDBCDataModel.ForeignKey("FK1_1__N_allresps", respType.getTableInfo(), userType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 JDBCProperty userid = (JDBCProperty)respType.getProperty("ROOTID");
                 JDBCProperty userProp = new JDBCProperty("user", userid.getColumns(), userType, respType, fk);
                 fk.makeComposition();
@@ -139,9 +139,9 @@ public class HanaPerf1Test
 
                 // user relationship between USERTAB and US_USERTAB
                 JDBCType ususerType = (JDBCType)shape.getType("US_USERTAB");
-                fk = new JDBCDAS.ForeignKey("FK1_1__1_userdetails", userType.getTableInfo(), ususerType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__1_userdetails", userType.getTableInfo(), ususerType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 userProp = (JDBCProperty)userType.getProperty("US_USER");
                 JDBCProperty userEntityProp = new JDBCProperty("user", userProp.getColumns(), ususerType, userType, fk);
                 userProp.initMappedBy(shape);
@@ -151,9 +151,9 @@ public class HanaPerf1Test
                 // US_GROUPTAB and US_BASEIDTAB using LVID (make LVID as not null)
                 JDBCType groupType = (JDBCType)shape.getType("US_GROUPTAB");
                 JDBCType baseidType = (JDBCType)shape.getType("US_BASEIDTAB");
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_allusers", baseidType.getTableInfo(), groupType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_allusers", baseidType.getTableInfo(), groupType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 JDBCProperty lvid = (JDBCProperty)baseidType.getProperty("LVID");
                 JDBCProperty groupProp = new JDBCProperty("group", lvid.getColumns(), groupType, baseidType, fk);
                 groupProp.setNullable(false); // This field cannot be null and helps with topological sort
@@ -162,9 +162,9 @@ public class HanaPerf1Test
 
                 // US_BASEIDTAB and PRIVATEORGGROUPTAB
                 JDBCType pogType = (JDBCType)shape.getType("PRIVATEORGGROUPTAB");
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_allids", baseidType.getTableInfo(), pogType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_allids", baseidType.getTableInfo(), pogType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 JDBCProperty rootid = (JDBCProperty)baseidType.getProperty("ROOTID");
                 JDBCProperty pogProp = new JDBCProperty("pog", rootid.getColumns(), pogType, baseidType, fk);
                 fk.makeComposition();
@@ -174,9 +174,9 @@ public class HanaPerf1Test
                 // inheritance
                 pogType.setSuperType(groupType);
 
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), groupType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), groupType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 JDBCProperty parentGroup = (JDBCProperty)respType.getProperty("GRB_GROUP");
                 JDBCProperty parentProp = new JDBCProperty("parentgroup", parentGroup.getColumns(), groupType, respType, fk);
                 parentProp.setNullable(false); // needed for dependency
@@ -184,18 +184,18 @@ public class HanaPerf1Test
                 respType.addProperty(parentProp);
 
                 JDBCType procType = (JDBCType)shape.getType("PROCUREMENTUNITTAB");
-                fk = new JDBCDAS.ForeignKey("FK1_1__1_context", procType.getTableInfo(), pogType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__1_context", procType.getTableInfo(), pogType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 JDBCProperty uniqueProp = (JDBCProperty)procType.getProperty("PROR_UNIQUENAME");
                 pogProp = new JDBCProperty("pog", uniqueProp.getColumns(), pogType, procType, fk);
                 fk.makeComposition();
                 pogProp.initMappedBy(shape);
                 procType.addProperty(pogProp);
 
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), procType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), procType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 JDBCProperty proc = (JDBCProperty)respType.getProperty("GRB_PROCUREMENTUNIT");
                 JDBCProperty procProp = new JDBCProperty("procunit", proc.getColumns(), procType, respType, fk);
                 procProp.setNullable(false); // needed for dependency

@@ -32,21 +32,21 @@ import tools.xor.util.JPAUtil;
  * @author Dilip Dalton
  *
  */
-public class JPAPersistenceXmlDAS extends JPADAS {
+public class JPAPersistenceXmlDAS extends JPADataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
 	private EntityManagerFactory emf;
 	
-	public JPAPersistenceXmlDAS(TypeMapper typeMapper, String name, DASFactory dasFactory) {
+	public JPAPersistenceXmlDAS(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
 		super(typeMapper, name, dasFactory);
 		this.emf = JPAUtil.getEmf(name);
 	}
 	
     @Override
-    public DataProvider getDataProvider() {
+    public PersistenceProvider getDataProvider() {
         if(this.dataProvider == null) {
-            this.dataProvider = new DataProvider() {
+            this.dataProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new JPAPersistenceXMLPO(sessionContext, data);

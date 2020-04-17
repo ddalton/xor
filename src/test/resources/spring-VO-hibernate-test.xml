@@ -40,7 +40,10 @@
 	<bean id="vohibernatedas"
 		class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="vohibernatedas" />		
+		<property name="dataModelBuilder" ref="hibbuilder" />
 	</bean>	
+
+	<bean id="hibbuilder" class="tools.xor.service.HibernateSpringDataModelBuilder"/>
 	
 	<!-- Type Mapper for DTO objects -->
 	<bean id="typeMapper" class="tools.xor.DTOTypeMapper">	

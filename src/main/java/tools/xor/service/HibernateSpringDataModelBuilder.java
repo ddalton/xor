@@ -19,15 +19,19 @@
 
 package tools.xor.service;
 
-import tools.xor.service.PersistenceOrchestrator;
+import org.springframework.stereotype.Component;
 
-public interface DataProvider {
+import tools.xor.TypeMapper;
+
+@Component
+public class HibernateSpringDataModelBuilder implements DataModelBuilder {
+
     /**
-     * Creates the PersistenceOrchestrator appropriate for this DataModel
-     * @param sessionContext required if manually creating the session/entityManager
-     * @param data any additional data required by the PersistenceOrchestrator, e.g., 
-     *        persistence unit name
-     * @return PersistenceOrchestrator object
+     * Build the DataModel and initialize it with the provided TypeMapper instance
+     * @param typeMapper used to derive an external model from the built model 
+     * @return DataModel instance
      */
-    PersistenceOrchestrator createPO(Object sessionContext, Object data);    
+    public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
+        return new HibernateSpringDAS(typeMapper, dataModelFactory);
+    }
 }

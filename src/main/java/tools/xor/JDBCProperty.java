@@ -23,7 +23,7 @@ import java.util.List;
 
 import javax.persistence.metamodel.Attribute;
 
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -40,8 +40,8 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     private boolean    isMany;
     private boolean    isComposition;
     private boolean    nullable;
-    private List<JDBCDAS.ColumnInfo> columns;
-    private JDBCDAS.ForeignKey       foreignKey;
+    private List<JDBCDataModel.ColumnInfo> columns;
+    private JDBCDataModel.ForeignKey       foreignKey;
     private final JSONObjectProperty jsonObjectProperty;
 
     /**
@@ -54,7 +54,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
      *                     The inverse gives rise to a collection property that will be created
      *                     in a future step.
      */
-    public JDBCProperty(String name, List<JDBCDAS.ColumnInfo> columns, Type type, EntityType parentType, JDBCDAS.ForeignKey foreignKey) {
+    public JDBCProperty(String name, List<JDBCDataModel.ColumnInfo> columns, Type type, EntityType parentType, JDBCDataModel.ForeignKey foreignKey) {
         super(name, type, parentType);
 
         this.columns = columns;
@@ -66,7 +66,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
 
         this.nullable = true;
         // Even if a single column in NOT NULL, then the nullable flag should be false
-        for(JDBCDAS.ColumnInfo ci: this.columns) {
+        for(JDBCDataModel.ColumnInfo ci: this.columns) {
             if(!ci.isNullable()) {
                 this.nullable = false;
                 break;
@@ -95,7 +95,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
      * @param type of the property. Can be a simple JAVA wrapper or a POJO class.
      * @param parentType The EntityType containing this property
      */
-    public JDBCProperty(String name, List<JDBCDAS.ColumnInfo> columns, Type type, EntityType parentType) {
+    public JDBCProperty(String name, List<JDBCDataModel.ColumnInfo> columns, Type type, EntityType parentType) {
         this(name, columns, type, parentType, null);
     }
 
@@ -134,7 +134,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
 
     public String getSelectList(String alias) {
         StringBuilder selectList = new StringBuilder();
-        for(JDBCDAS.ColumnInfo ci: this.columns) {
+        for(JDBCDataModel.ColumnInfo ci: this.columns) {
             if(selectList.length() > 0) {
                 selectList.append(QueryBuilder.COMMA_DELIMITER);
             }
@@ -150,7 +150,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         // i.e., if the property has a foreign key then the referencing table is leftAlias
         // and referenced table is rightAlias and vice verse for the inverse
 
-        JDBCDAS.ForeignKey fk = this.foreignKey;
+        JDBCDataModel.ForeignKey fk = this.foreignKey;
         boolean inverse = getMappedBy() != null ? true : false;
         if(fk == null) {
             if(getMappedBy() != null) {
@@ -197,7 +197,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         this.isComposition = value;
     }
 
-    public List<JDBCDAS.ColumnInfo> getColumns() {
+    public List<JDBCDataModel.ColumnInfo> getColumns() {
         return this.columns;
     }
 
@@ -210,7 +210,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         initMappedBy(shape, this.foreignKey);
     }
 
-    public void initMappedBy (Shape shape, JDBCDAS.ForeignKey fk)
+    public void initMappedBy (Shape shape, JDBCDataModel.ForeignKey fk)
     {
         if(fk != null) {
 
@@ -241,7 +241,7 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
         }
     }
 
-    public JDBCDAS.ForeignKey getForeignKey() {
+    public JDBCDataModel.ForeignKey getForeignKey() {
         return this.foreignKey;
     }
 

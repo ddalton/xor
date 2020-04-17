@@ -155,13 +155,13 @@ public interface DataModel {
 	 * The same DataModel should be able to work with different data providers.
 	 * @return DataProvider instance
 	 */
-	DataProvider getDataProvider();
+	PersistenceProvider getDataProvider();
 	
 	/**
 	 * Set the DataProvider for this DataModel
 	 * @param dataProvider instance
 	 */
-	void setDataProvider(DataProvider dataProvider);
+	void setDataProvider(PersistenceProvider dataProvider);
 
 	/**
 	 * Initialize the generators needed for data generating from an Excel file

@@ -40,8 +40,8 @@ import tools.xor.RelationshipType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.service.AbstractDataModel;
-import tools.xor.service.DASFactory;
-import tools.xor.service.DataProvider;
+import tools.xor.service.DataModelFactory;
+import tools.xor.service.PersistenceProvider;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
@@ -61,7 +61,7 @@ import tools.xor.util.ClassUtil;
  *
  * @author Dilip Dalton
  */
-public abstract class JDBCDAS extends AbstractDataModel
+public abstract class JDBCDataModel extends AbstractDataModel
 {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
@@ -434,7 +434,7 @@ public abstract class JDBCDAS extends AbstractDataModel
         }
     }
 
-    public JDBCDAS(DASFactory dasFactory, TypeMapper typeMapper) {
+    public JDBCDataModel(DataModelFactory dasFactory, TypeMapper typeMapper) {
         super(dasFactory, typeMapper);
     }
 
@@ -618,9 +618,9 @@ public abstract class JDBCDAS extends AbstractDataModel
     }
     
     @Override
-    public DataProvider getDataProvider() {
+    public PersistenceProvider getDataProvider() {
         if(this.dataProvider == null) {
-            this.dataProvider = new DataProvider() {
+            this.dataProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);

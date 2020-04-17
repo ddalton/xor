@@ -48,7 +48,7 @@ public class HANATranslator extends DBTranslator
     private static final String SEQUENCES_SQL = "SELECT sequence_name, max_value, min_value, increment_by, start_number, is_cycled  FROM sequences WHERE SCHEMA_NAME = CURRENT_USER";
     private static final String TABLE_EXISTS_SQL = "SELECT count(*) FROM TABLES WHERE TABLE_NAME = '%s' AND SCHEMA_NAME = CURRENT_USER";
 
-    private Map<String, JDBCDAS.SequenceInfo> sequenceMap;
+    private Map<String, JDBCDataModel.SequenceInfo> sequenceMap;
 
     protected static final Map<String, Class> HANA_SQL_TO_JAVA_TYPE_MAP = new HashMap<>();
     protected static final Map<String, JDBCtoSQLConverter> hanaConvertersByDataType = new ConcurrentHashMap<>();
@@ -172,7 +172,7 @@ public class HANATranslator extends DBTranslator
         return super.getConverter(dataType);
     }
 
-    @Override public JDBCDAS.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
+    @Override public JDBCDataModel.TableInfo getTable (Connection connection, ForeignKeyEnhancer enhancer, String tableName)
     {
         if(tableMap == null) {
             getTables(connection, enhancer);
@@ -181,7 +181,7 @@ public class HANATranslator extends DBTranslator
         return tableMap.get(tableName);
     }
 
-    @Override public JDBCDAS.SequenceInfo getSequence (Connection connection, String sequenceName)
+    @Override public JDBCDataModel.SequenceInfo getSequence (Connection connection, String sequenceName)
     {
         if(sequenceMap == null) {
             getSequences(connection);
@@ -191,7 +191,7 @@ public class HANATranslator extends DBTranslator
     }
 
     @Override
-    protected JDBCDAS.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException
+    protected JDBCDataModel.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException
     {
         String columnName = rs.getString(2);
         Boolean nullable = rs.getBoolean(3);
@@ -201,7 +201,7 @@ public class HANATranslator extends DBTranslator
         if(getJavaClass(columnType) == null) {
             throw new RuntimeException("Unknown java mapping for SQL type: " + columnType);
         }
-        JDBCDAS.ColumnInfo ci = new JDBCDAS.ColumnInfo(columnName, nullable, getJavaClass(
+        JDBCDataModel.ColumnInfo ci = new JDBCDataModel.ColumnInfo(columnName, nullable, getJavaClass(
             columnType), columnType, generated, length);
 
         return ci;
@@ -240,29 +240,29 @@ public class HANATranslator extends DBTranslator
     }
 
     @Override
-    protected JDBCDAS.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDAS.TableInfo> tableMap) throws SQLException
+    protected JDBCDataModel.ForeignKey createForeignKey(ResultSet rs, Map<String, JDBCDataModel.TableInfo> tableMap) throws SQLException
     {
-        JDBCDAS.ForeignKeyRule deleteRule = JDBCDAS.ForeignKeyRule.valueOf(rs.getString(
+        JDBCDataModel.ForeignKeyRule deleteRule = JDBCDataModel.ForeignKeyRule.valueOf(rs.getString(
             6));
-        JDBCDAS.ForeignKeyRule updateRule = JDBCDAS.ForeignKeyRule.valueOf(rs.getString(7));
-        JDBCDAS.TableInfo referencing = tableMap.get(rs.getString(2));
-        JDBCDAS.TableInfo referenced = tableMap.get(rs.getString(3));
-        JDBCDAS.ForeignKey fkey = new JDBCDAS.ForeignKey(rs.getString(1),
+        JDBCDataModel.ForeignKeyRule updateRule = JDBCDataModel.ForeignKeyRule.valueOf(rs.getString(7));
+        JDBCDataModel.TableInfo referencing = tableMap.get(rs.getString(2));
+        JDBCDataModel.TableInfo referenced = tableMap.get(rs.getString(3));
+        JDBCDataModel.ForeignKey fkey = new JDBCDataModel.ForeignKey(rs.getString(1),
             referencing, referenced, deleteRule, updateRule);
 
         return fkey;
     }
 
-    @Override public List<JDBCDAS.SequenceInfo> getSequences (Connection connection)
+    @Override public List<JDBCDataModel.SequenceInfo> getSequences (Connection connection)
     {
-        Map<String, JDBCDAS.SequenceInfo> result = new HashMap<>();
+        Map<String, JDBCDataModel.SequenceInfo> result = new HashMap<>();
 
         try (PreparedStatement ps = connection.prepareStatement(SEQUENCES_SQL);
             ResultSet rs = ps.executeQuery();
         ) {
-            JDBCDAS.SequenceInfo seq = null;
+            JDBCDataModel.SequenceInfo seq = null;
             while(rs.next()) {
-                seq = new JDBCDAS.SequenceInfo(
+                seq = new JDBCDataModel.SequenceInfo(
                     rs.getString(1),
                     "DECIMAL",
                     rs.getLong(2),

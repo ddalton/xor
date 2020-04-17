@@ -31,6 +31,7 @@ import tools.xor.Settings;
 import tools.xor.db.common.Contact;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DefaultDASFactory;
+import tools.xor.service.JPAXMLDataModelBuilder;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.JPAUtil;
 
@@ -90,9 +91,12 @@ public class JPAPersistenceXmlTest {
     		contact.setName("John smith");
     		contact.setEmail("jsmith@unknown.com");
     		
+    		DefaultDASFactory dmf = new DefaultDASFactory("xor");
+    		dmf.setDataModelBuilder(new JPAXMLDataModelBuilder());
+    		
     		// Create AggregateManager
     		AggregateManager am = new AggregateManager.AggregateManagerBuilder()
-    			.dasFactory(new DefaultDASFactory("xor"))
+    			.dasFactory(dmf)
     			.persistenceType(PersistenceType.JPA)
     			.build();
     		Settings settings = new Settings();

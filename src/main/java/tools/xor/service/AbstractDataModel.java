@@ -58,12 +58,12 @@ public abstract class AbstractDataModel implements DataModel {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	protected TypeMapper         typeMapper;
-	protected DASFactory         dasFactory;
-    protected DataProvider       dataProvider;
+	protected DataModelFactory         dasFactory;
+    protected PersistenceProvider       dataProvider;
 	protected Map<String, Shape> shapes; // Contains all the initialized shapes
 	private ThreadLocal<Shape>   activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
 
-	public AbstractDataModel(DASFactory factory, TypeMapper typeMapper) {
+	public AbstractDataModel(DataModelFactory factory, TypeMapper typeMapper) {
 		this.dasFactory = factory;
 		this.typeMapper = typeMapper;
 		this.shapes = new HashMap<>();
@@ -72,12 +72,12 @@ public abstract class AbstractDataModel implements DataModel {
 	}	
 	
 	@Override
-	public DataProvider getDataProvider() {
+	public PersistenceProvider getDataProvider() {
 	    return this.dataProvider;
 	}
 	
 	@Override
-	public void setDataProvider(DataProvider dp) {
+	public void setDataProvider(PersistenceProvider dp) {
 	    this.dataProvider = dp;
 	}
 	

@@ -30,7 +30,7 @@ import org.hibernate.mapping.Component;
 import org.hibernate.mapping.PersistentClass;
 
 import tools.xor.service.DataModel;
-import tools.xor.service.HibernateDAS;
+import tools.xor.service.HibernateDataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 
@@ -104,7 +104,7 @@ public class HibernateType extends AbstractType {
 	}
 
 	public void setProperty(Shape shape) {
-		HibernateDAS dataAccessService = (HibernateDAS)getShape().getDAS();
+		HibernateDataModel dataAccessService = (HibernateDataModel)getShape().getDAS();
 		if(getProperties() == null) {
 
 			// Components don't have identifiers

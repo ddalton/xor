@@ -32,7 +32,7 @@ import tools.xor.AssociationSetting;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
-import tools.xor.providers.jdbc.JDBCDAS;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
@@ -85,18 +85,18 @@ public class TwitterJDBCTest
                 JDBCType userUrlType = (JDBCType) shape.getType("user_url");
                 JDBCType userDescType = (JDBCType) shape.getType("user_description");
                 JDBCProperty userUrlPK = (JDBCProperty)userUrlType.getProperty("ID_STR");
-                JDBCDAS.ForeignKey fk = new JDBCDAS.ForeignKey("FK1_1__1_url", userUrlType.getTableInfo(), entitiesUserType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                JDBCDataModel.ForeignKey fk = new JDBCDataModel.ForeignKey("FK1_1__1_url", userUrlType.getTableInfo(), entitiesUserType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty entities = new JDBCProperty("entities", userUrlPK.getColumns(), entitiesUserType, userUrlType, fk);
                 entities.initMappedBy(das.getShape());
                 userUrlType.addProperty(entities);
 
                 JDBCProperty userDescPK = (JDBCProperty)userDescType.getProperty("ID_STR");
-                fk = new JDBCDAS.ForeignKey("FK1_1__1_description", userDescType.getTableInfo(), entitiesUserType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__1_description", userDescType.getTableInfo(), entitiesUserType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 entities = new JDBCProperty("entities", userDescPK.getColumns(), entitiesUserType, userDescType, fk);
                 entities.initMappedBy(das.getShape());
@@ -105,9 +105,9 @@ public class TwitterJDBCTest
                 JDBCType urlsType = (JDBCType) shape.getType("urls");
                 JDBCProperty urlsPK = (JDBCProperty)urlsType.getProperty("ID_STR");
                 // Create a synthetic foreign key between urls and user_url
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_urls", urlsType.getTableInfo(), userUrlType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_urls", urlsType.getTableInfo(), userUrlType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty userurl = new JDBCProperty("userurl", urlsPK.getColumns(), userUrlType, urlsType, fk);
                 userurl.initMappedBy(das.getShape());
@@ -115,18 +115,18 @@ public class TwitterJDBCTest
                 ((JDBCProperty)userUrlType.getProperty("urls")).setIndexPositionProperty(position);
 
                 // Create a synthetic foreign key between urls and user_description
-                fk = new JDBCDAS.ForeignKey("FK2_1__N_urls", urlsType.getTableInfo(), userDescType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK2_1__N_urls", urlsType.getTableInfo(), userDescType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty userdesc = new JDBCProperty("userdesc", urlsPK.getColumns(), userDescType, urlsType, fk);
                 userdesc.initMappedBy(das.getShape());
 
                 JDBCType entitiesTweetType = (JDBCType) shape.getType("entities_tweet");
                 // Create a synthetic foreign key between urls and entities_tweet
-                fk = new JDBCDAS.ForeignKey("FK3_1__N_urls", urlsType.getTableInfo(), entitiesTweetType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK3_1__N_urls", urlsType.getTableInfo(), entitiesTweetType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty entitiesTweet = new JDBCProperty("entitiestweet", urlsPK.getColumns(), entitiesTweetType, urlsType, fk);
                 entitiesTweet.initMappedBy(das.getShape());
@@ -145,40 +145,40 @@ public class TwitterJDBCTest
                 JDBCType indicesType = (JDBCType) shape.getType("indices");
                 JDBCType hashtagsType = (JDBCType) shape.getType("hashtags");
                 JDBCProperty indicesPK = (JDBCProperty)indicesType.getProperty("ID_STR");
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), hashtagsType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), hashtagsType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty hashtags = new JDBCProperty("hashtags", indicesPK.getColumns(), hashtagsType, indicesType, fk);
                 hashtags.initMappedBy(das.getShape());
 
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), urlsType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), urlsType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty urls = new JDBCProperty("urls", indicesPK.getColumns(), urlsType, indicesType, fk);
                 urls.initMappedBy(das.getShape());
 
                 JDBCType mentionsType = (JDBCType) shape.getType("user_mentions");
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), mentionsType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), mentionsType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty user_mentions = new JDBCProperty("user_mentions", indicesPK.getColumns(), mentionsType, indicesType, fk);
                 user_mentions.initMappedBy(das.getShape());
 
                 JDBCType symbolsType = (JDBCType) shape.getType("symbols");
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), symbolsType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), symbolsType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty symbols = new JDBCProperty("symbols", indicesPK.getColumns(), symbolsType, indicesType, fk);
                 symbols.initMappedBy(das.getShape());
 
                 JDBCType mediaType = (JDBCType) shape.getType("media");
-                fk = new JDBCDAS.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), mediaType.getTableInfo(),
-                    JDBCDAS.ForeignKeyRule.NO_ACTION,
-                    JDBCDAS.ForeignKeyRule.NO_ACTION);
+                fk = new JDBCDataModel.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), mediaType.getTableInfo(),
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION,
+                    JDBCDataModel.ForeignKeyRule.NO_ACTION);
                 fk.makeComposition();
                 JDBCProperty media = new JDBCProperty("media", indicesPK.getColumns(), mediaType, indicesType, fk);
                 media.initMappedBy(das.getShape());

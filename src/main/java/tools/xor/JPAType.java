@@ -35,7 +35,7 @@ import javax.swing.text.html.parser.Entity;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.JPADAS;
+import tools.xor.service.JPADataModel;
 import tools.xor.service.Shape;
 
 public class JPAType extends AbstractType {

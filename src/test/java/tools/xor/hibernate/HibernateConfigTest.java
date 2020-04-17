@@ -28,7 +28,9 @@ import org.junit.Test;
 import tools.xor.Settings;
 import tools.xor.db.common.Contact;
 import tools.xor.service.AggregateManager;
+import tools.xor.service.DataModelBuilder;
 import tools.xor.service.DefaultDASFactory;
+import tools.xor.service.HibernateConfigDataModelBuilder;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.HibernateUtil;
 
@@ -81,10 +83,13 @@ public class HibernateConfigTest {
     		Contact contact = new Contact();
     		contact.setName("John smith");
     		contact.setEmail("jsmith@unknown.com");
+    		
+    		DefaultDASFactory factory = new DefaultDASFactory("hconfig");
+    		factory.setDataModelBuilder(new HibernateConfigDataModelBuilder());
 
     		// Create AggregateManager
     		AggregateManager am = new AggregateManager.AggregateManagerBuilder()
-    			.dasFactory(new DefaultDASFactory("hconfig"))
+    			.dasFactory(factory)
     			.persistenceType(PersistenceType.HIBERNATE)
     			.build();
     		Settings settings = new Settings();

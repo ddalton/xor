@@ -39,7 +39,10 @@
 	<bean id="customjpadas"
 		class="tools.xor.service.SpringDASFactory">
 		<property name="name" value="customjpadas" />		
+		<property name="dataModelBuilder" ref="jpabuilder" />
 	</bean>			
+
+	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder"/>
 	
 	<!-- Association Strategy between aggregates -->
 	<bean id="associationStrategy" class="tools.xor.custom.TestAssociationStrategy" />

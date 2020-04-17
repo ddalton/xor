@@ -22,7 +22,7 @@ package tools.xor.service;
 import org.springframework.stereotype.Component;
 
 import tools.xor.TypeMapper;
-import tools.xor.providers.jdbc.JDBCSpringDAS;
+import tools.xor.providers.jdbc.JDBCSpringDataModel;
 
 @Component
 public class JDBCSpringDataModelBuilder implements DataModelBuilder {
@@ -33,6 +33,6 @@ public class JDBCSpringDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new JDBCSpringDAS(dataModelFactory, typeMapper);
+        return new JDBCSpringDataModel(dataModelFactory, typeMapper);
     }
 }

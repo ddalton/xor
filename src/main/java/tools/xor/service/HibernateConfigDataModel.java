@@ -33,12 +33,12 @@ import tools.xor.util.HibernateUtil;
  * @author Dilip Dalton
  * 
  */
-public class HibernateConfigDAS extends HibernateDataModel {
+public class HibernateConfigDataModel extends HibernateDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception()
 	.getStackTrace()[0].getClassName());	
 	
-	public HibernateConfigDAS(TypeMapper typeMapper, DataModelFactory dasFactory) {
+	public HibernateConfigDataModel(TypeMapper typeMapper, DataModelFactory dasFactory) {
 		super(typeMapper, dasFactory);
 	}
 	

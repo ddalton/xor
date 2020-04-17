@@ -46,7 +46,7 @@
 	</bean>		
 	
 	<bean id="customhibernatedas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="customhibernatedas" />		
 		<property name="dataModelBuilder" ref="hibbuilder" />
 	</bean>		

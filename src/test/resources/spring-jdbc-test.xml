@@ -33,7 +33,7 @@
 	</bean>
 
 	<bean id="jdbcdas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="jdbcdas" />
 		<property name="dataModelBuilder" ref="jdbcbuilder" />
 	</bean>

@@ -37,7 +37,7 @@
 	</bean>		
 	
 	<bean id="customjpadas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="customjpadas" />		
 		<property name="dataModelBuilder" ref="jpabuilder" />
 	</bean>			

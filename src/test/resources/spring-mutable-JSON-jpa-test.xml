@@ -38,7 +38,7 @@
 	</bean>		
 	
 	<bean id="mutablejsonjpadas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="mutablejsonjpadas" />		
 		<property name="dataModelBuilder" ref="jpabuilder" />
 	</bean>			
@@ -62,7 +62,7 @@
 	</bean>
 
 	<bean id="jdbcdas"
-		  class="tools.xor.service.SpringDASFactory">
+		  class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="jdbcdasjson" />
 		<property name="dataModelBuilder" ref="jdbcbuilder" />
 	</bean>

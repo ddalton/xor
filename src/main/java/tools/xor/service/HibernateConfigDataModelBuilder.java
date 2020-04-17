@@ -29,6 +29,6 @@ public class HibernateConfigDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new HibernateConfigDAS(typeMapper, dataModelFactory);
+        return new HibernateConfigDataModel(typeMapper, dataModelFactory);
     }
 }

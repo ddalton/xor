@@ -31,7 +31,7 @@
 	</bean>
 
 	<bean id="jdbcdas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="hanadas" />
 		<property name="dataModelBuilder" ref="jdbcbuilder" />
 	</bean>

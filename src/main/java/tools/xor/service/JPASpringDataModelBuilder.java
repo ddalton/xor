@@ -32,6 +32,6 @@ public class JPASpringDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new JPASpringDAS(typeMapper, name, dataModelFactory);
+        return new JPASpringDataModel(typeMapper, name, dataModelFactory);
     }
 }

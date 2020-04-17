@@ -37,7 +37,7 @@ import tools.xor.TypeMapper;
  * @author Dilip Dalton
  * 
  */
-public class HibernateSpringDAS extends HibernateDataModel {
+public class HibernateSpringDataModel extends HibernateDataModel {
 
 	private static final Logger logger = LogManager.getLogger(new Exception()
 	.getStackTrace()[0].getClassName());
@@ -51,7 +51,7 @@ public class HibernateSpringDAS extends HibernateDataModel {
 	@Resource(name = "&sessionFactory")
 	protected Object sessionFactoryBean;
 	
-	public HibernateSpringDAS(TypeMapper typeMapper, DataModelFactory dasFactory) {
+	public HibernateSpringDataModel(TypeMapper typeMapper, DataModelFactory dasFactory) {
 		super(typeMapper, dasFactory);
 	}
 	

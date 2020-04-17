@@ -29,6 +29,6 @@ public class JPAXMLDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new JPAPersistenceXmlDAS(typeMapper, name, dataModelFactory);
+        return new JPAXmlDataModel(typeMapper, name, dataModelFactory);
     }
 }

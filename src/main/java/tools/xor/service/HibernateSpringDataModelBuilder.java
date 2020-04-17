@@ -32,6 +32,6 @@ public class HibernateSpringDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new HibernateSpringDAS(typeMapper, dataModelFactory);
+        return new HibernateSpringDataModel(typeMapper, dataModelFactory);
     }
 }

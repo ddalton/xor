@@ -20,7 +20,7 @@
 package tools.xor.service;
 
 import tools.xor.TypeMapper;
-import tools.xor.providers.jdbc.JDBCConfigDAS;
+import tools.xor.providers.jdbc.JDBCConfigDataModel;
 
 public class JDBCConfigDataModelBuilder implements DataModelBuilder {
 
@@ -30,6 +30,6 @@ public class JDBCConfigDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new JDBCConfigDAS(dataModelFactory, typeMapper);
+        return new JDBCConfigDataModel(dataModelFactory, typeMapper);
     }
 }

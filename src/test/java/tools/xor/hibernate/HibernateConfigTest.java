@@ -29,7 +29,7 @@ import tools.xor.Settings;
 import tools.xor.db.common.Contact;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModelBuilder;
-import tools.xor.service.DefaultDASFactory;
+import tools.xor.service.DefaultDataModelFactory;
 import tools.xor.service.HibernateConfigDataModelBuilder;
 import tools.xor.util.PersistenceType;
 import tools.xor.util.HibernateUtil;
@@ -84,7 +84,7 @@ public class HibernateConfigTest {
     		contact.setName("John smith");
     		contact.setEmail("jsmith@unknown.com");
     		
-    		DefaultDASFactory factory = new DefaultDASFactory("hconfig");
+    		DefaultDataModelFactory factory = new DefaultDataModelFactory("hconfig");
     		factory.setDataModelBuilder(new HibernateConfigDataModelBuilder());
 
     		// Create AggregateManager

@@ -32,7 +32,7 @@
 	</bean>		
 	
 	<bean id="hibernatedas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="hibernatedas" />		
 		<property name="dataModelBuilder" ref="hibbuilder" />
 	</bean>

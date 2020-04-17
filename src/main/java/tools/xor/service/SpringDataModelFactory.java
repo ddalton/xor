@@ -26,7 +26,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SpringDASFactory extends AbstractDataModelFactory {
+public class SpringDataModelFactory extends AbstractDataModelFactory {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	@Autowired

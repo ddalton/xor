@@ -38,7 +38,7 @@
 	</bean>	
 
 	<bean id="jsonhibernatedas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="jsonhibernatedas" />		
 		<property name="dataModelBuilder" ref="hibbuilder" />
 	</bean>

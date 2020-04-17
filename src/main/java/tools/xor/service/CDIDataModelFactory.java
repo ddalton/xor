@@ -19,15 +19,22 @@
 
 package tools.xor.service;
 
-public class DefaultDASFactory extends AbstractDataModelFactory {
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.InjectionTarget;
+import javax.inject.Inject;
+
+import tools.xor.util.ClassUtil;
+
+@Alternative
+public class CDIDataModelFactory extends AbstractDataModelFactory {
 	
-	public DefaultDASFactory(String name) {
-		this.name = name;
-	}
+	@Inject private BeanManager beanManager;
 
 	@Override
 	public void injectDependencies(Object bean, String name) {
-		// Dependency injection is not supported in the default case
-		// The resources need to be manually or statically configured
+	    InjectionTarget injectionTarget = beanManager.createInjectionTarget(beanManager.createAnnotatedType(ClassUtil.getUnEnhanced(bean.getClass())));		
+	    injectionTarget.inject(bean, beanManager.createCreationalContext(null));
+	    injectionTarget.postConstruct(bean);
 	}
 }

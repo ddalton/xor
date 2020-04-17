@@ -38,7 +38,7 @@
 	</bean>	
 
 	<bean id="vohibernatedas"
-		class="tools.xor.service.SpringDASFactory">
+		class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="vohibernatedas" />		
 		<property name="dataModelBuilder" ref="hibbuilder" />
 	</bean>	

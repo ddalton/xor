@@ -19,28 +19,32 @@
 
 package tools.xor.service;
 
+import javax.inject.Inject;
 import javax.persistence.EntityManagerFactory;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import tools.xor.TypeMapper;
-import tools.xor.util.JPAUtil;
 
 /**
  * This class is part of the Data Access Service framework 
  * @author Dilip Dalton
  *
  */
-public class JPAPersistenceXmlDAS extends JPADataModel {
+public class JPASpringDataModel extends JPADataModel {
 
-	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
-
-	private EntityManagerFactory emf;
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public JPAPersistenceXmlDAS(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
+    @Inject
+    EntityManagerFactory entityManagerFactory;	
+
+	public EntityManagerFactory getEmf() {
+		return entityManagerFactory;
+	}
+	
+	public JPASpringDataModel(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
 		super(typeMapper, name, dasFactory);
-		this.emf = JPAUtil.getEmf(name);
 	}
 	
     @Override
@@ -49,16 +53,11 @@ public class JPAPersistenceXmlDAS extends JPADataModel {
             this.dataProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-                    return new JPAPersistenceXMLPO(sessionContext, data);
+                    return new JPASpringPO(sessionContext, data);
                 } 
             };
         }
         
         return super.getDataProvider();
-    }	
-
-	@Override
-	public EntityManagerFactory getEmf() {
-		return this.emf;
-	}
+    }   	
 }

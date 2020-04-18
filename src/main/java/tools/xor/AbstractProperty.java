@@ -211,15 +211,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	@Override
 	public Type getType() {
-		/*
-		if(type != null && type instanceof EntityType && ((EntityType)type).getDAS() != null) {
-			Type result = ((EntityType)type).getDAS().getType(type.getName());
-
-			if(result != null) {
-				return result;
-			}
-		}*/
-
 		return type;
 	}
 
@@ -239,15 +230,6 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 	@Override
 	public Type getElementType() {
-		/*
-		if(elementType != null && elementType instanceof EntityType && ((EntityType)elementType).getDAS() != null) {
-			Type result = ((EntityType)elementType).getDAS().getType(elementType.getName());
-
-			if(result != null) {
-				return result;
-			}
-		}
-*/
 		return elementType;
 	}	
 

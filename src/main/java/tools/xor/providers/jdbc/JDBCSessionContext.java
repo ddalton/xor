@@ -23,6 +23,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import tools.xor.AbstractTypeMapper;
 import tools.xor.BusinessObject;
 import tools.xor.DataGenerator;
 import tools.xor.EntityKey;
@@ -181,7 +183,7 @@ public class JDBCSessionContext implements CustomPersister
         EntityKey ek;
         JDBCType type = (JDBCType) entityType;
         if(type.getIdentifierProperty() != null) {
-            ek = new SurrogateEntityKey(object.get(type.getIdentifierProperty().getName()), type.getName());
+            ek = new SurrogateEntityKey(object.get(type.getIdentifierProperty().getName()), AbstractTypeMapper.getSurrogateKeyTypeName(type));
         } else if(type.getNaturalKey() != null) {
             Map<String, Object> naturalKey = new HashMap<>();
             for(String key: type.getNaturalKey()) {

@@ -116,7 +116,13 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public boolean isEmbedded();
 	
 	/**
-	 * Returns the highest ancestor entity in an inheritance hierarchy. Useful in EntityKey
+	 * Returns the highest ancestor entity in an inheritance hierarchy. 
+	 * Useful in EntityKey formation since we want find the same entity
+	 * but it might be associated against a parent type.
+	 * 
+	 * If a type has multiple super types, then we don't rely on this 
+	 * method but use the entity type directly.
+	 *  
 	 * @return EntityType
 	 */
 	public EntityType getRootEntityType();

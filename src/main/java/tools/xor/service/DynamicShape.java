@@ -22,8 +22,10 @@ package tools.xor.service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
@@ -35,6 +37,7 @@ import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
+import tools.xor.service.Shape.ShapeStrategy;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.AggregateViews;
@@ -198,4 +201,33 @@ public class DynamicShape extends AbstractShape
     public void process(String fileName, DomainShape domainShape, TypeMapper typeMapper) {
         extractTypes(fileName, domainShape, typeMapper);
     }    
+    
+    @Override
+    // ExternalType can model multiple inheritance
+    public Property getProperty(EntityType type, String name) {
+        Property result = null;
+
+        if (type instanceof ExternalType) {
+            Queue<ExternalType> pending = new LinkedList<>();
+            pending.addAll(((ExternalType) type).getParentTypes());
+            ExternalType current = (ExternalType) type;
+            do {
+                if (getDirectProperties(current) != null && getDirectProperties(current).containsKey(name)) {
+                    result = getDirectProperties(current).get(name);
+                }
+                current = (ExternalType) pending.poll();
+                if(current != null) {
+                    pending.addAll(current.getParentTypes());
+                }
+            } while (result == null && current != null);
+
+            if (result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+                result = parent.getProperty(type, name);
+            }
+        } else {
+            return super.getProperty(type, name);
+        }
+
+        return result;
+    }   
 }

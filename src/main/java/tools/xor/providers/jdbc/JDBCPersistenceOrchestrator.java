@@ -16,6 +16,7 @@ import javax.sql.DataSource;
 
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
+import tools.xor.AbstractTypeMapper;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityKey;
@@ -200,7 +201,7 @@ public class JDBCPersistenceOrchestrator
 			// The object with the given id is obtained from the JDBCSessionContext
 			EntityKey ek;
 			if (!(id instanceof EntityKey)) {
-				ek = new SurrogateEntityKey(id, type.getName());
+				ek = new SurrogateEntityKey(id, AbstractTypeMapper.getSurrogateKeyTypeName(type));
 			}
 			else {
 				ek = (EntityKey)id;

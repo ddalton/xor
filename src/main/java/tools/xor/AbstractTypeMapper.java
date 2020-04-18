@@ -214,7 +214,6 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		} else {
 			rootEntityType = (EntityType) bo.getType();
 		}
-
 		String domainTypeName = rootEntityType.getEntityName();
 
 		if(id == null) {
@@ -225,7 +224,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		// Helps with entity import from a different system
 		if(rootEntityType.getNaturalKey() != null && bo != null) {
 			try {
-				return NaturalKeyStrategy.getInstance().execute(bo, domainTypeName, anchor);
+				return NaturalKeyStrategy.getInstance().execute(bo, getNaturalKeyTypeName(type), anchor);
 			} catch (IllegalStateException ise) {
 				//Fall through to surrogate key, the natural key values are not populated;
 			}
@@ -261,6 +260,8 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}
 
 	public static String getSurrogateKeyTypeName (Type type) {
+	    // Not all DataModels might share the surrogate key by the root entity type.
+	    // This might have to be made configurable for each DataModel
 		EntityType rootEntityType = ((EntityType)type).getRootEntityType();
 		return rootEntityType.getEntityName();
 	}

@@ -2,7 +2,6 @@ package tools.xor.util;
 
 import tools.xor.BusinessObject;
 import tools.xor.EntityKey;
-import tools.xor.EntityType;
 import tools.xor.SurrogateEntityKey;
 
 public class SurrogateKeyStrategy implements EntityKeyStrategy {

@@ -260,12 +260,12 @@ public abstract class AbstractBO implements BusinessObject {
 	
 	@Override
 	public BusinessObject getBySurrogateKey(Object id, Type type) {
-		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName()), type);
+		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, AbstractTypeMapper.getSurrogateKeyTypeName(type)), type);
 	}
 
 	@Override
 	public BusinessObject getBySurrogateKey(Object id, Type type, String path) {
-		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, type.getName(), path), type);
+		return getObjectCreator().getByEntityKey(new SurrogateEntityKey(id, AbstractTypeMapper.getSurrogateKeyTypeName(type), path), type);
 	}
 
 	@Override
@@ -273,7 +273,7 @@ public abstract class AbstractBO implements BusinessObject {
 		return getObjectCreator().getByEntityKey(
 			new NaturalEntityKey(
 				naturalKeyValues,
-				type.getName()), type);
+				AbstractTypeMapper.getNaturalKeyTypeName(type)), type);
 	}
 
 	@Override
@@ -281,7 +281,7 @@ public abstract class AbstractBO implements BusinessObject {
 		return getObjectCreator().getByEntityKey(
 			new NaturalEntityKey(
 				naturalKeyValues,
-				type.getName(),
+				AbstractTypeMapper.getNaturalKeyTypeName(type),
 				path), type);
 	}
 

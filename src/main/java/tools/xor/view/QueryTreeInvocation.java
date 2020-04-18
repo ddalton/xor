@@ -19,6 +19,7 @@
 
 package tools.xor.view;
 
+import tools.xor.AbstractTypeMapper;
 import tools.xor.BusinessObject;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
@@ -309,21 +310,19 @@ public class QueryTreeInvocation
 
         Object id = bo.getIdentifierValue();
         // Currently we only support tracking objects with surrogate key
-        if(id != null) {
-            Type type = ((EntityType)bo.getType()).getRootEntityType();
-            EntityKey key = new SurrogateEntityKey(id, type.getName(), path);
+        if (id != null) {
+            EntityKey key = new SurrogateEntityKey(id, AbstractTypeMapper.getSurrogateKeyTypeName(bo.getType()), path);
             BusinessObject existing = queryObjects.get(key);
 
-            if(existing != bo) {
+            if (existing != bo) {
                 queryObjects.put(key, bo);
             }
         }
     }
 
     public BusinessObject getQueryObject(String path, Object idValue, Type type) {
-        type = ((EntityType)type).getRootEntityType();
-        EntityKey key = new SurrogateEntityKey(idValue, type.getName(), path);
-
+        EntityKey key = new SurrogateEntityKey(idValue, AbstractTypeMapper.getSurrogateKeyTypeName(type), path);        
+        
         return queryObjects.get(key);
     }
 

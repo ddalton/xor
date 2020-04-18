@@ -20,7 +20,9 @@
 package tools.xor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -39,6 +41,7 @@ public class ExternalType extends AbstractType {
 	protected boolean        isEmbedded;
 	protected boolean        isEntity;
 	protected boolean        isImmutable;
+	protected Set<ExternalType> parentTypes;
 
     public ExternalType(EntityType domainType, Class<?> javaClass) {
         this.javaClass = javaClass;
@@ -48,6 +51,7 @@ public class ExternalType extends AbstractType {
         this.versionPropertyName = domainType.getVersionProperty() != null ? domainType.getVersionProperty().getName() : null;
         this.isEmbedded = domainType.isEmbedded();
         this.isEntity = domainType.isEntity();
+        this.parentTypes = new HashSet<>();
 
         if (domainType.getNaturalKey() != null) {
             this.naturalKey = new ArrayList<String>(domainType.getNaturalKey());
@@ -183,16 +187,6 @@ public class ExternalType extends AbstractType {
             }
         }
 	}
-/*
-	@Override
-	public void initRootEntityType(DataAccessService das, Shape shape) {
-		if(domainType.getRootEntityType() != null) {
-			Class<?> externalClass = das.getTypeMapper().toExternal(domainType.getRootEntityType().getInstanceClass());
-			String externalTypeName = das.getTypeMapper().getExternalTypeName(externalClass, domainType);
-			rootEntityType = (EntityType) shape.getExternalType(externalTypeName);
-		}
-	}	
-*/
 
 	@Override
 	public List<?> getAliasNames() {
@@ -259,4 +253,20 @@ public class ExternalType extends AbstractType {
 	    // This is not a persistence managed entity
 		return false;
 	}
+	
+    @Override
+    public void setSuperType(EntityType value) {
+        super.setSuperType(value);
+        
+        this.parentTypes.add((ExternalType) value);
+    }	
+	
+	 /**
+     * An ExternalType can model multiple inheritance. For e.g., swagger schema
+     * @return immediate super types
+     */
+    public Set<ExternalType> getParentTypes()
+    {
+        return this.parentTypes;
+    }
 }

@@ -88,12 +88,12 @@ public abstract class AbstractDataModelFactory implements DataModelFactory {
 		    throw new RuntimeException("DataModelBuilder instance needs to be set on the DataModelFactory");
 		}
 		
-		addDAS(getDataModelBuilder().build(name, typeMapper, this), true);
+		addModel(getDataModelBuilder().build(name, typeMapper, this), true);
 
 		return models.get(name);
 	}
 
-	private DataModel addDAS(DataModel instance, boolean addShape) {
+	private DataModel addModel(DataModel instance, boolean addShape) {
 		models.put(name, instance);
 		injectDependencies(models.get(name), name);
 

@@ -19,27 +19,16 @@
 
 package tools.xor.service;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import tools.xor.TypeMapper;
 
-/**
- * Reads a swagger file containing a json schema component.
- *
- * Inheritance - allOf (Need to support multiple inheritance)
- * Association - $ref
- * toMany      - "type" : "array"
- * 
- */
-public class SwaggerDataModel extends AbstractDataModel {
-    
+@Component
+public class SwaggerSpringDataModelBuilder implements DataModelBuilder {
+
     private List<String> swaggerFiles = new ArrayList<>();
     private List<String> identifiers = new ArrayList<>();
     private String schemaAnchor; // the path where the schema is present in the JSON document
@@ -70,34 +59,19 @@ public class SwaggerDataModel extends AbstractDataModel {
      */
     public void setIdentifiers(List<String> identifiers) {
         this.identifiers = identifiers;
-    }
-
-    public SwaggerDataModel(DataModelFactory factory, TypeMapper typeMapper) {
-        super(factory, typeMapper);
-    }
-    
-    @Override
-    public Shape createShape(String name, SchemaExtension extension) {
-        Shape shape = super.createShape(name, extension);
+    }    
+     
+    /**
+     * Build the DataModel and initialize it with the provided TypeMapper instance
+     * @param typeMapper used to derive an external model from the built model 
+     * @return DataModel instance
+     */
+    public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
+        SwaggerDataModel model = new SwaggerSpringDataModel(dataModelFactory, typeMapper);
+        model.setSwaggerFiles(getSwaggerFiles());
+        model.setSchemaAnchor(getSchemaAnchor());
+        model.setIdentifiers(getIdentifiers());
         
-        processShape(shape, null, null);
-        
-        return shape;
-    }
-
-    @Override
-    public void processShape(Shape shape, SchemaExtension extension, Set<String> entityNames) {
-        for (String fileName : swaggerFiles) {
-            try {
-                InputStream stream = SwaggerDataModel.class.getClassLoader().getResourceAsStream(fileName);
-                if (stream == null) {
-                    throw new RuntimeException("Unable to find the swagger configuration file: " + fileName);
-                }
-                String jsonTxt = IOUtils.toString(stream);
-                JSONObject json = new JSONObject(jsonTxt);
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to read " + fileName, e);
-            }
-        }
+        return model;
     }
 }

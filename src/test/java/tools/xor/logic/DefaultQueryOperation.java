@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,17 +60,15 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
+import tools.xor.view.AggregateTree;
 import tools.xor.view.AggregateView;
-import tools.xor.view.SplitToAnchor;
-import tools.xor.view.SplitToRoot;
 import tools.xor.view.FragmentBuilder;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryTree;
-import tools.xor.view.AggregateTree;
+import tools.xor.view.SplitToAnchor;
+import tools.xor.view.SplitToRoot;
 import tools.xor.view.View;
 import tools.xor.view.expression.FunctionHandler;
-
-import javax.annotation.Resource;
 
 public class DefaultQueryOperation extends AbstractDBTest {
 	@Resource(name = "aggregateManager")

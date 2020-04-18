@@ -19,8 +19,15 @@
 
 package tools.xor.jpa;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Resource;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -48,14 +55,6 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.Shape;
 import tools.xor.service.Transaction;
 import tools.xor.view.AggregateView;
-
-import javax.annotation.Resource;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-jdbc-test.xml" })

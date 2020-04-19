@@ -165,7 +165,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	/**
 	 * Find all the immediate subType entities of this type
 	 */
-	public void defineChildSubtypes();
+	public void defineChildTypes();
 	
 	/**
 	 * Get a list of all the sub types of this type
@@ -174,10 +174,10 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public Set<EntityType> getSubtypes();
 
 	/**
-	 * Get a list of all the sub types that are the immediate children of this type
+	 * Get a list of all the immediate sub types of this type
 	 * @return subtypes
 	 */
-	public Set<EntityType> getChildSubtypes();
+	public Set<EntityType> getChildTypes();
 
 	/**
 	 * Add property to this type and its external type
@@ -271,16 +271,16 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	public boolean supportsDynamicUpdate();
 
 	/**
-	 * Get the super type for this type
+	 * Get the immediate super type for this type
 	 * @return EntityType
 	 */
-	public EntityType getSuperType();
+	public EntityType getParentType();
 	
 	/**
-	 * Set the super type for this entity type
+	 * Set the immediate super type for this entity type
 	 * @param value of EntityType
 	 */
-	public void setSuperType(EntityType value);
+	public void setParentType(EntityType value);
 
 	/**
 	 * set the shape to which this type belongs. It is an error to reassign a type from a

@@ -161,11 +161,11 @@ public abstract class AbstractDataModel implements DataModel {
 	/**
 	 * This is a performance intensive method. So we now define subtypes as and when they are
 	 * needed.
-	 * For this to work we save the DataAccessService instance along with the EntityType.
+	 * For this to work we save the DataModel instance along with the EntityType.
 	 *
 	 * @param shape of the type being defined
 	 */
-	protected void defineSuperType (Shape shape){
+	protected void defineParentTypes (Shape shape){
 		List<EntityType> entityTypes = new ArrayList<EntityType>();
 		for(Type type: shape.getUniqueTypes()) {
 			if(!EntityType.class.isAssignableFrom(type.getClass()))
@@ -182,7 +182,7 @@ public abstract class AbstractDataModel implements DataModel {
 			while(clazz != Object.class) {
 				Type superType = shape.getType(clazz.getSuperclass().getName());
 				if(superType != null) {
-					type.setSuperType((EntityType) superType);
+					type.setParentType((EntityType) superType);
 					break;
 				}
 				clazz = clazz.getSuperclass();

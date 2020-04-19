@@ -401,7 +401,7 @@ public class JDBCSessionContext implements CustomPersister
             }
 
             // Walk up the super-type
-            entityType = (JDBCType)entityType.getSuperType();
+            entityType = (JDBCType)entityType.getParentType();
         }
 
         List result = new LinkedList<>();
@@ -437,7 +437,7 @@ public class JDBCSessionContext implements CustomPersister
             }
 
             // Walk up the super-type
-            entityType = (JDBCType)entityType.getSuperType();
+            entityType = (JDBCType)entityType.getParentType();
         }
 
         List result = new LinkedList<>();
@@ -459,7 +459,7 @@ public class JDBCSessionContext implements CustomPersister
                 null));
 
             // Walk up the super-type
-            entityType = (JDBCType)entityType.getSuperType();
+            entityType = (JDBCType)entityType.getParentType();
         }
 
         return result;

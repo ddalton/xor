@@ -84,7 +84,7 @@ public class DFAtoNFA {
 									 Map<EntityType, State> entityTypeMap) {
 
 		State entityState = entityTypeMap.get(entityType);
-		for(EntityType subType: entityType.getChildSubtypes()) {
+		for(EntityType subType: entityType.getChildTypes()) {
 
 			State subTypeState = entityTypeMap.get(subType);
 			// extend the state set to include this new state
@@ -107,7 +107,7 @@ public class DFAtoNFA {
 	private static void addSuperTypes(EntityType entityType, StateGraph<State, Edge<State>> stateGraph, Map<EntityType, State> entityTypeMap) {
 
 		State entityState = entityTypeMap.get(entityType);
-		EntityType superType = entityType.getSuperType();
+		EntityType superType = entityType.getParentType();
 
 		if(superType != null) {
 

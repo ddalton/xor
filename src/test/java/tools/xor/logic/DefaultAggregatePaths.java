@@ -659,7 +659,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		Set<EntityType> personSubTypes = personType.getSubtypes();
 		assert(personSubTypes != null && personSubTypes.size() == 4);
-		Set<EntityType> personChildSubTypes = personType.getChildSubtypes();
+		Set<EntityType> personChildSubTypes = personType.getChildTypes();
 		assert(personChildSubTypes != null && personChildSubTypes.size() == 3);
 
 
@@ -667,7 +667,7 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 
 		Set<EntityType> employeeSubTypes = employeeType.getSubtypes();
 		assert(employeeSubTypes != null && employeeSubTypes.size() == 1);
-		Set<EntityType> employeeChildSubTypes = employeeType.getChildSubtypes();
+		Set<EntityType> employeeChildSubTypes = employeeType.getChildTypes();
 		assert(employeeChildSubTypes != null && employeeChildSubTypes.size() == 1);
 	}
 

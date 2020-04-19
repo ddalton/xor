@@ -20,6 +20,8 @@
 package tools.xor;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -40,6 +42,20 @@ public class MutableJsonType extends ExternalType {
 		super(domainType, javaClass);
 	}
 	
+	/**
+	 * Used to support swagger schema
+	 * @param json schema for the type
+	 */
+	public MutableJsonType(String entityName, JSONObject json, String idPropertyName) {
+	    super(entityName, JSONObject.class);
+	    
+        this.isDataType = true;
+        this.idPropertyName = idPropertyName;
+        this.versionPropertyName = null; // currently not supported as this schema is not used for updates
+        this.isEmbedded = idPropertyName == null;
+        this.isEntity = true;
+        this.parentTypes = new ArrayList<>();
+	}
 
 	@Override
 	public Method getGetterMethod(String targetProperty){

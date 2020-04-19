@@ -136,7 +136,7 @@ public class SimpleType implements BasicType {
 	}
 
 	@Override
-	public List<Type> getBaseTypes() {
+	public List<Type> getParentTypes() {
 		return new ArrayList<Type>();
 	}
 

@@ -127,7 +127,7 @@ public class HibernateType extends AbstractType {
 
 			// populate the properties for this type
 			Iterator<?> propertyIterator = getPropertyIterator();
-			HibernateType superType = (HibernateType)getSuperType();
+			HibernateType superType = (HibernateType)getParentType();
 			// Ensure that the properties has been populated for the supertype
 			if(superType != null) {
 				superType.setProperty(shape);
@@ -179,7 +179,7 @@ public class HibernateType extends AbstractType {
 	}
 
 	@Override
-	public List<Type> getBaseTypes() {
+	public List<Type> getParentTypes() {
 		return baseTypes;
 	}
 

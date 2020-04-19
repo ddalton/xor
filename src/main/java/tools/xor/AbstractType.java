@@ -72,7 +72,7 @@ public abstract class AbstractType implements EntityType {
 	// Need to only contain type name, as the actual type should be resolved dynamically
 	protected String            rootEntityType;
 	protected Set<String>       subTypes;
-	protected Set<String>       childSubTypes;
+	protected Set<String>       childTypes; // immediate sub types
 
 	private   String            superTypeName;
 	private   EntityType        superType;
@@ -265,14 +265,14 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public void defineChildSubtypes() {
+	public void defineChildTypes() {
 		Map<Class, EntityType> subTypeMap = new HashMap<>();
 		for(EntityType entityType: getSubtypes()) {
 			subTypeMap.put(entityType.getInstanceClass(), entityType);
 		}
 
 		// Check child/immediate subTypes
-		childSubTypes = new HashSet<String>();
+		childTypes = new HashSet<String>();
 		next: for(EntityType subType: getSubtypes()) {
 			Class subTypeInstanceClass = subType.getInstanceClass().getSuperclass();
 			while(getInstanceClass() != subTypeInstanceClass) {
@@ -285,13 +285,13 @@ public abstract class AbstractType implements EntityType {
 			}
 			// We should be at the root of the inheritance hierarchy. Just confirm to be safe.
 			if(getInstanceClass() == subTypeInstanceClass) {
-				childSubTypes.add(subType.getEntityName());
+				childTypes.add(subType.getEntityName());
 			}
 		}
 	}
 	
 	@Override
-	public EntityType getSuperType() {
+	public EntityType getParentType() {
 
 		if(this.superTypeName == null) {
 			return null;
@@ -305,7 +305,7 @@ public abstract class AbstractType implements EntityType {
 	}
 	
 	@Override
-	public void setSuperType(EntityType value) {
+	public void setParentType(EntityType value) {
 		this.superTypeName = value.getEntityName();
 	}	
 	
@@ -328,15 +328,15 @@ public abstract class AbstractType implements EntityType {
 	}
 
 	@Override
-	public Set<EntityType> getChildSubtypes() {
-		if(childSubTypes == null) {
+	public Set<EntityType> getChildTypes() {
+		if(childTypes == null) {
 			// first ensure that the subTypes are initialized
 			getSubtypes();
-			defineChildSubtypes();
+			defineChildTypes();
 		}
 
 		Set<EntityType> result = new HashSet<>();
-		for(String entityName: childSubTypes) {
+		for(String entityName: childTypes) {
 			result.add((EntityType)getShape().getType(entityName));
 		}
 		return result;
@@ -635,8 +635,8 @@ public abstract class AbstractType implements EntityType {
 
 		EntityType potentialRootEntityType = this;
 
-		while(potentialRootEntityType.getSuperType() != null) {
-			potentialRootEntityType = potentialRootEntityType.getSuperType();
+		while(potentialRootEntityType.getParentType() != null) {
+			potentialRootEntityType = potentialRootEntityType.getParentType();
 		}
 
 		this.rootEntityType = potentialRootEntityType.getEntityName();
@@ -1005,7 +1005,7 @@ public abstract class AbstractType implements EntityType {
 		// Make the map mutable since we need to add to it
 		propertyMap = new HashMap<>(propertyMap);
 
-		EntityType parentType = getSuperType();
+		EntityType parentType = getParentType();
 		while(parentType != null) {
 			Map<String, Property> parentProperties = getShape().getProperties(parentType);
 			for(Map.Entry<String, Property> entry: parentProperties.entrySet()) {
@@ -1015,7 +1015,7 @@ public abstract class AbstractType implements EntityType {
 			}
 
 			// Walk up the super types
-			parentType = parentType.getSuperType();
+			parentType = parentType.getParentType();
 		}
 
 		return new ArrayList<>(propertyMap.values());
@@ -1298,14 +1298,14 @@ public abstract class AbstractType implements EntityType {
 	public boolean isRootConcreteType() {
 		boolean result = true;
 
-		EntityType superType = getSuperType();
+		EntityType superType = getParentType();
 		while (superType != null) {
 			if(!superType.isAbstract()) {
 				result = false;
 				break;
 			}
 
-			superType = superType.getSuperType();
+			superType = superType.getParentType();
 		}
 
 		return result;
@@ -1323,7 +1323,7 @@ public abstract class AbstractType implements EntityType {
 			if(parent == this) {
 				return true;
 			}
-			parent = parent.getSuperType();
+			parent = parent.getParentType();
 		}
 
 		return false;
@@ -1331,7 +1331,7 @@ public abstract class AbstractType implements EntityType {
 
 	@Override
 	public boolean isSubtypeOf (EntityType entityType) {
-		EntityType superType = getSuperType();
+		EntityType superType = getParentType();
 		if(superType == null) {
 			return false;
 		}
@@ -1344,9 +1344,9 @@ public abstract class AbstractType implements EntityType {
 		List<EntityType> result = new LinkedList<>();
 
 		Stack<EntityType> reverse = new Stack<>();
-		while(entityType.getSuperType() != this) {
+		while(entityType.getParentType() != this) {
 			reverse.push(entityType);
-			entityType = entityType.getSuperType();
+			entityType = entityType.getParentType();
 		}
 
 		while(!reverse.isEmpty()) {
@@ -1365,7 +1365,7 @@ public abstract class AbstractType implements EntityType {
 
 		// We will do a BFS to get the result
 		Queue<EntityType> queue = new LinkedList<>();
-		queue.addAll(getChildSubtypes());
+		queue.addAll(getChildTypes());
 		while(!queue.isEmpty()) {
 			// remove the head of the queue
 			EntityType childType = queue.remove();
@@ -1376,7 +1376,7 @@ public abstract class AbstractType implements EntityType {
 			if(getShape().getDeclaredProperty(childType, property) != null) {
 				result.add(childType);
 			} else {
-				queue.addAll(childType.getChildSubtypes());
+				queue.addAll(childType.getChildTypes());
 			}
 		}
 

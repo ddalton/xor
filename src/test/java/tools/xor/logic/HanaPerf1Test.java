@@ -172,7 +172,7 @@ public class HanaPerf1Test
                 baseidType.addProperty(pogProp);
 
                 // inheritance
-                pogType.setSuperType(groupType);
+                pogType.setParentType(groupType);
 
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), groupType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
@@ -380,7 +380,7 @@ public class HanaPerf1Test
                 context.setGenerator(contextgen);
 
                 // inheritance
-                p.setSuperType(g);
+                p.setParentType(g);
 
 
                 // US_BASEIDTAB

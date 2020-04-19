@@ -389,13 +389,13 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			State v = null;
 			
 			if(EntityType.class.isAssignableFrom(vertex.getType().getClass())) {
-				EntityType superType = ((EntityType) vertex.getType()).getSuperType();
+				EntityType superType = ((EntityType) vertex.getType()).getParentType();
 				if(superType == null) {
 					throw new RuntimeException("Is the type from the correct shape?");
 				}
 				v = sg.getVertex(superType);
 				while(v == null) {
-					superType = superType.getSuperType();
+					superType = superType.getParentType();
 					if(superType == null)
 						break;
 					v = sg.getVertex(superType);

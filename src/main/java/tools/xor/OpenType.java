@@ -126,7 +126,7 @@ public class OpenType extends AbstractType {
 	}
 
 	@Override
-	public List<Type> getBaseTypes() {
+	public List<Type> getParentTypes() {
 		return new ArrayList<Type>();
 	}
 

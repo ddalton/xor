@@ -568,7 +568,7 @@ public abstract class JDBCDataModel extends AbstractDataModel
         if(parentName != null) {
             JDBCType child = (JDBCType)shape.getType(table.getName());
             JDBCType parent = (JDBCType)shape.getType(parentName);
-            child.setSuperType(parent);
+            child.setParentType(parent);
         }
     }
 

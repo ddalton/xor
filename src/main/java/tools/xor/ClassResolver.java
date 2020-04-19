@@ -118,8 +118,8 @@ public class ClassResolver {
 	public ClassResolver getParentResolver() {
 		ClassResolver result = null;
 		
-		if(type.getBaseTypes().size() == 1) {
-			BasicType parent = (BasicType) type.getBaseTypes().get(0);
+		if(type.getParentTypes().size() == 1) {
+			BasicType parent = (BasicType) type.getParentTypes().get(0);
 			result = parent.getClassResolver();
 		}
 		

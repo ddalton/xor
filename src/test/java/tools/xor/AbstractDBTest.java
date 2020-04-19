@@ -108,7 +108,7 @@ public class AbstractDBTest {
 		}
 
 		@Override
-		public List<Type> getBaseTypes() {
+		public List<Type> getParentTypes() {
 			return null;
 		}
 

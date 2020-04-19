@@ -98,7 +98,7 @@ public class DataGenerator
                 EntityType entityType = (EntityType)type;
                 while(entityType != null) {
                     result.add(entityType);
-                    entityType = entityType.getSuperType();
+                    entityType = entityType.getParentType();
                 }
             }
         }
@@ -288,7 +288,7 @@ public class DataGenerator
                         visitor));
             }
 
-            currentType = currentType.getSuperType();
+            currentType = currentType.getParentType();
         }
         json.put(Constants.XOR.TYPE, entityType.getName());
 

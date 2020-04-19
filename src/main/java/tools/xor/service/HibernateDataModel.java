@@ -61,31 +61,7 @@ public abstract class HibernateDataModel extends AbstractDataModel {
         Shape shape = super.createShape(name, extension);
 
 		processShape(shape, extension, null);
-		/*
-		Configuration conf = getConfiguration();
-		Iterator<PersistentClass> classMappings = conf.getClassMappings();
 
-		logger.info("Getting the list of hibernate mapped classes");
-		while (classMappings.hasNext()) {
-			PersistentClass classMapping = (PersistentClass) classMappings
-					.next();
-			logger.debug("     Adding hibernate persisted class: "
-					+ classMapping.getClassName());
-			defineTypes(classMapping, shape);
-		}
-
-		// Set the super type
-		defineSuperType(shape);
-
-		// Set the base types
-		setBaseTypes(shape);
-
-		// Define the properties for the Types
-		// This will end up defining the simple types
-		defineProperties(shape);
-		
-		postProcess(shape, extension, shape.getUniqueTypes(), false);
-*/
 		return shape;
 	}
 	
@@ -127,10 +103,7 @@ public abstract class HibernateDataModel extends AbstractDataModel {
 		defineTypes(shape, entityNames);
 		
 		// Set the super type
-		defineSuperType(shape);
-
-		// Set the base types
-		setBaseTypes(shape);
+		defineParentTypes(shape);
 
 		// Define the properties for the Types 
 		// This will end up defining the simple types
@@ -164,27 +137,6 @@ public abstract class HibernateDataModel extends AbstractDataModel {
 			if (HibernateType.class.isAssignableFrom(type.getClass())) {
 				HibernateType hibernateType = (HibernateType) type;
 				hibernateType.setOpposite(shape);
-			}
-		}
-	}
-
-	protected void setBaseTypes(Shape shape) {
-		for (Type type : shape.getUniqueTypes()) {
-			if (HibernateType.class.isAssignableFrom(type.getClass())) {
-				HibernateType hibernateType = (HibernateType) type;
-				if(hibernateType.getHibernateType().isComponentType()) {
-					continue;
-				}
-
-				List<Type> baseTypes = new ArrayList<Type>();
-				PersistentClass base = ((PersistentClass)hibernateType.getHibernateClass()).getSuperclass();
-
-				if (base != null) {
-					Type baseType = shape.getType(base.getEntityName());
-					if (baseType != null)
-						baseTypes.add(baseType);	
-				}
-				hibernateType.setBaseType(baseTypes);
 			}
 		}
 	}

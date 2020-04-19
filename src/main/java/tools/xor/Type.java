@@ -152,11 +152,12 @@ public interface Type
   boolean isAbstract();
 
   /**
-   * Returns the List of base Types for this Type.  The List is empty
-   * if there are no base Types. 
+   * Returns the List of immediate super Types for this Type.  The List is empty
+   * if there are no super Types. 
+   * Original name in spec: getBaseTypes
    * @return the List of base Types for this Type.
    */
-  List /*Type*/<Type> getBaseTypes();
+  List /*Type*/<? extends Type> getParentTypes();
   
   /**
    * Returns the Properties declared in this Type as opposed to

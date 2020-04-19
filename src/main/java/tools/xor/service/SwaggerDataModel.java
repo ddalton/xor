@@ -22,12 +22,15 @@ package tools.xor.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 
+import tools.xor.MutableJsonType;
 import tools.xor.TypeMapper;
 
 /**
@@ -41,7 +44,8 @@ import tools.xor.TypeMapper;
 public class SwaggerDataModel extends AbstractDataModel {
     
     private List<String> swaggerFiles = new ArrayList<>();
-    private List<String> identifiers = new ArrayList<>();
+    private List<String> identifiers = new ArrayList<>(); // for e.g., <type name>:<id name>
+    private Map<String, String> idMap = new HashMap<>(); // Map between entityTypeName and id property name
     private String schemaAnchor; // the path where the schema is present in the JSON document
     
     public List<String> getSwaggerFiles() {
@@ -76,9 +80,23 @@ public class SwaggerDataModel extends AbstractDataModel {
         super(factory, typeMapper);
     }
     
+    private void buildIdMap() {
+        if (this.identifiers != null) {
+            for (String idStr : identifiers) {
+                String[] pair = idStr.split(":");
+                if(pair.length != 2) {
+                    throw new RuntimeException("entityName to identifier property should be of the form <entity name>:<id name>. Got incorrect input: " + idStr);
+                }
+                idMap.put(pair[0], pair[1]);
+            }
+        }
+    }
+    
     @Override
     public Shape createShape(String name, SchemaExtension extension) {
         Shape shape = super.createShape(name, extension);
+        
+        buildIdMap();
         
         processShape(shape, null, null);
         
@@ -95,9 +113,17 @@ public class SwaggerDataModel extends AbstractDataModel {
                 }
                 String jsonTxt = IOUtils.toString(stream);
                 JSONObject json = new JSONObject(jsonTxt);
+                
+                defineTypes(shape, json);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to read " + fileName, e);
             }
+        }
+    }
+    
+    private void defineTypes(Shape shape, JSONObject json) {
+        for(String entityTypeName: JSONObject.getNames(json)) {
+            shape.addType(entityTypeName, new MutableJsonType(entityTypeName, json, idMap.get(entityTypeName)));
         }
     }
 }

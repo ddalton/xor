@@ -56,28 +56,7 @@ public abstract class JPADataModel extends AbstractDataModel {
         Shape shape = super.createShape(name, extension);
 		
 		processShape(shape, extension, null);
-/*
-		Metamodel metaModel = getEmf().getMetamodel();
-		Set<EntityType<?>> classMappings = metaModel.getEntities();
 
-		logger.info("Getting the list of JPA mapped classes");  		
-		for(EntityType<?> classMapping: classMappings){ 
-			logger.debug("     Adding JPA persisted class: " + classMapping.getName());
-			defineType(classMapping, shape);
-		}
-
-		// Set the super type
-		defineSuperType(shape);
-
-		// Set the base types
-		setBaseTypes(shape);
-
-		// Define the properties for the Types 
-		// This will end up defining the simple types
-		defineProperties(shape);
-		
-		postProcess(shape, extension, shape.getUniqueTypes(), false);
-*/
 		return shape;
 	}
 	
@@ -114,10 +93,7 @@ public abstract class JPADataModel extends AbstractDataModel {
 		defineTypes(shape, entityNames);
 		
 		// Set the super type
-		defineSuperType(shape);
-
-		// Set the base types
-		setBaseTypes(shape);
+		defineParentTypes(shape);
 
 		// Define the properties for the Types 
 		// This will end up defining the simple types
@@ -152,26 +128,4 @@ public abstract class JPADataModel extends AbstractDataModel {
 			}			
 		}		
 	}	
-
-	protected void setBaseTypes(Shape shape) {
-		for(Type type: shape.getUniqueTypes()) {
-			if(JPAType.class.isAssignableFrom(type.getClass())) {
-				
-				JPAType jPAType = (JPAType) type;
-				
-				if(jPAType.getEntityType().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.EMBEDDABLE)
-					continue;				
-
-				List<Type> baseTypes = new ArrayList<Type>();
-				Class<?> base = jPAType.getEntityType().getJavaType().getSuperclass();
-
-				if(base != null) {
-					Type baseType = shape.getType(base.getName());
-					if(baseType != null) 
-						baseTypes.add(baseType);
-				}
-				jPAType.setBaseType(baseTypes);
-			}
-		}
-	}
 }

@@ -258,28 +258,28 @@ public class JDBCType extends AbstractType {
                     continue;
                 }
 
-                EntityType superType = ((EntityType)type).getSuperType();
+                EntityType superType = ((EntityType)type).getParentType();
                 while(superType != null) {
                     if(superType == this) {
                         subTypes.add(type.getName());
                         break;
                     }
-                    superType = superType.getSuperType();
+                    superType = superType.getParentType();
                 }
             }
         }
     }
 
     @Override
-    public void defineChildSubtypes() {
-        childSubTypes = new HashSet<>();
+    public void defineChildTypes() {
+        childTypes = new HashSet<>();
 
         for(EntityType type: getSubtypes()) {
             if(type.isOpen()) {
                 continue;
             }
-            if(type.getSuperType() == this) {
-                childSubTypes.add(type.getName());
+            if(type.getParentType() == this) {
+                childTypes.add(type.getName());
             }
         }
     }
@@ -323,7 +323,7 @@ public class JDBCType extends AbstractType {
     }
 
     @Override
-    public List<Type> getBaseTypes() {
+    public List<Type> getParentTypes() {
         return new ArrayList<Type>();
     }
 

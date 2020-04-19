@@ -42,7 +42,7 @@ public class JPAType extends AbstractType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
 	private javax.persistence.metamodel.Type<?>  persistenceType;
-	private List<Type>               baseTypes;
+	private List<Type>               parentTypes;
 	private AccessType               accessType;
 	private JPAProperty              identifierProperty;
 	private JPAProperty              versionProperty;	
@@ -116,7 +116,7 @@ public class JPAType extends AbstractType {
 			return;
 		}
 
-		JPAType superType = (JPAType)getSuperType();
+		JPAType superType = (JPAType)getParentType();
 		// Ensure that the properties has been populated for the supertype
 		if(superType != null) {
 			superType.defineProperties(shape);
@@ -177,12 +177,12 @@ public class JPAType extends AbstractType {
 	}
 
 	@Override
-	public List<Type> getBaseTypes() {
-		return baseTypes;
+	public List<Type> getParentTypes() {
+		return parentTypes;
 	}
 
-	public void setBaseType(List<Type> types) {
-		baseTypes = types;
+	public void setParentTypes(List<Type> types) {
+		parentTypes = types;
 	}
 
 	@Override

@@ -220,7 +220,7 @@ public abstract class AbstractShape implements Shape
             if (getDirectProperties(current) != null && getDirectProperties(current).containsKey(name)) {
                 result = getDirectProperties(current).get(name);
             }
-            current = current.getSuperType();
+            current = current.getParentType();
         } while(result == null && current != null);
 
         if(result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {

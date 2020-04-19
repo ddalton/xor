@@ -274,7 +274,7 @@ public class AggregatePropertyPaths {
 								+ aggregateType.getName() + "#" + property.getName());
 					}
 				}
-				entityType = entityType.getSuperType();
+				entityType = entityType.getParentType();
 			}
 		}
 

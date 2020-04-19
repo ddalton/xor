@@ -114,7 +114,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 				param.put(key, from.get(key) );
 			}
 
-			type = type.getSuperType();
+			type = type.getParentType();
 			if(param.size() == 0) {
 				continue;
 			}

@@ -166,8 +166,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		if(vertex.getType() != null && vertex.getType() instanceof EntityType) {
 			EntityType entityType = (EntityType)vertex.getType();
-			if(entityType.getSuperType() != null) {
-				return getVertex(entityType.getSuperType());
+			if(entityType.getParentType() != null) {
+				return getVertex(entityType.getParentType());
 			}
 		}
 

@@ -32,26 +32,25 @@ import tools.xor.service.Shape;
 public class ExternalType extends AbstractType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
-	private Class<?>         javaClass;
-	private String           entityName;
-	private boolean          isDataType;
-	private List<Type>       baseTypes;	
-	protected String         idPropertyName;
-	protected String         versionPropertyName;
-	protected boolean        isEmbedded;
-	protected boolean        isEntity;
-	protected boolean        isImmutable;
-	protected Set<ExternalType> parentTypes;
+	private Class<?>           javaClass;
+	private String             entityName;
+	protected boolean          isDataType;
+	protected List<ExternalType> parentTypes;	
+	protected String           idPropertyName;
+	protected String           versionPropertyName;
+	protected boolean          isEmbedded;
+	protected boolean          isEntity;
+	protected boolean          isImmutable;
 
     public ExternalType(EntityType domainType, Class<?> javaClass) {
-        this.javaClass = javaClass;
-        this.entityName = domainType.getEntityName();
+        this(domainType.getEntityName(), javaClass);
+
         this.isDataType = domainType.isDataType();
         this.idPropertyName = domainType.getIdentifierProperty() != null ? domainType.getIdentifierProperty().getName() : null;
         this.versionPropertyName = domainType.getVersionProperty() != null ? domainType.getVersionProperty().getName() : null;
         this.isEmbedded = domainType.isEmbedded();
         this.isEntity = domainType.isEntity();
-        this.parentTypes = new HashSet<>();
+        this.parentTypes = new ArrayList<>();
 
         if (domainType.getNaturalKey() != null) {
             this.naturalKey = new ArrayList<String>(domainType.getNaturalKey());
@@ -59,6 +58,11 @@ public class ExternalType extends AbstractType {
         }
 
         initMeta();
+    }
+    
+    public ExternalType(String entityName, Class<?> javaClass) {
+        this.entityName = entityName;
+        this.javaClass = javaClass;
     }
 
 	public void setProperty (Shape domainShape, Shape dynamicShape, TypeMapper typeMapper)
@@ -171,19 +175,17 @@ public class ExternalType extends AbstractType {
 	}
 
 	@Override
-	public List<Type> getBaseTypes() {
-		return baseTypes;
+	public List<ExternalType> getParentTypes() {
+		return this.parentTypes;
 	}
 
-	public void setBaseType(EntityType domainType, TypeMapper typeMapper) {
-        baseTypes = new ArrayList<Type>();
-
-        if (domainType.getBaseTypes() != null) {
-            for (Type baseType : domainType.getBaseTypes()) {
+	public void initParentTypes(EntityType domainType, TypeMapper typeMapper) {
+        if (domainType.getParentTypes() != null) {
+            for (Type baseType : domainType.getParentTypes()) {
                 Class<?> externalClass = typeMapper.toExternal(baseType.getInstanceClass());
                 Type externalType = getShape().getType(externalClass);
 
-                baseTypes.add(externalType);
+                this.parentTypes.add((ExternalType) externalType);
             }
         }
 	}
@@ -255,18 +257,9 @@ public class ExternalType extends AbstractType {
 	}
 	
     @Override
-    public void setSuperType(EntityType value) {
-        super.setSuperType(value);
+    public void setParentType(EntityType value) {
+        super.setParentType(value);
         
         this.parentTypes.add((ExternalType) value);
     }	
-	
-	 /**
-     * An ExternalType can model multiple inheritance. For e.g., swagger schema
-     * @return immediate super types
-     */
-    public Set<ExternalType> getParentTypes()
-    {
-        return this.parentTypes;
-    }
 }

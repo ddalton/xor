@@ -96,18 +96,18 @@ public class DynamicShape extends AbstractShape
             EntityType domainType = (EntityType) externalTypeMap.get(externalType);
             setSuperTypeOnExternalType(domainShape, externalType, domainType);
             externalType.setOpposite(this);
-            externalType.setBaseType(domainType, typeMapper);
+            externalType.initParentTypes(domainType, typeMapper);
         }
     }
     
     private void setSuperTypeOnExternalType(Shape domainShape, ExternalType externalType, EntityType domainType) {
-        if(domainType.getSuperType() == null) {
+        if(domainType.getParentType() == null) {
             return;
         }
 
-        Type superType = getType(domainType.getSuperType().getEntityName());
+        Type superType = getType(domainType.getParentType().getEntityName());
         if(superType instanceof EntityType) {
-            externalType.setSuperType((EntityType)superType);
+            externalType.setParentType((EntityType)superType);
         }        
         
         // Also set up the root entity type
@@ -209,14 +209,16 @@ public class DynamicShape extends AbstractShape
 
         if (type instanceof ExternalType) {
             Queue<ExternalType> pending = new LinkedList<>();
-            pending.addAll(((ExternalType) type).getParentTypes());
+            if(type.getParentTypes() != null) {
+                pending.addAll(((ExternalType) type).getParentTypes());
+            }
             ExternalType current = (ExternalType) type;
             do {
                 if (getDirectProperties(current) != null && getDirectProperties(current).containsKey(name)) {
                     result = getDirectProperties(current).get(name);
                 }
                 current = (ExternalType) pending.poll();
-                if(current != null) {
+                if(current != null && current.getParentTypes() != null) {
                     pending.addAll(current.getParentTypes());
                 }
             } while (result == null && current != null);

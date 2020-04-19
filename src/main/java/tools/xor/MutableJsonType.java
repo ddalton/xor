@@ -20,8 +20,11 @@
 package tools.xor;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -41,9 +44,21 @@ public class MutableJsonType extends ExternalType {
 	
 	private static final String SWAGGER_ALLOF = "allOf";
 	private static final String SWAGGER_TYPE  = "type";
+    private static final String SWAGGER_ARRAY_TYPE  = "array";
+    private static final String SWAGGER_ITEMS  = "items";
 	private static final String SWAGGER_PROPERTIES = "properties";
 	private static final String SWAGGER_REF   = "$ref";
 	public static final String  SWAGGER_REF_SEPARATOR = "/";
+	private static final Map<String, Class<?>> SWAGGER_TYPES = new HashMap<>();
+	
+	static {
+	    SWAGGER_TYPES.put("string", String.class);
+	    SWAGGER_TYPES.put("number", BigDecimal.class);
+	    SWAGGER_TYPES.put("integer", Integer.class);
+	    SWAGGER_TYPES.put("boolean", boolean.class);
+	    SWAGGER_TYPES.put(SWAGGER_ARRAY_TYPE, List.class);
+	    SWAGGER_TYPES.put("object", Object.class);
+	}
 	
 	private List<String> parentTypeNames;
 	private JSONObject   swaggerSchema;
@@ -75,13 +90,20 @@ public class MutableJsonType extends ExternalType {
             for(int i = 0 ; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
                 if(obj.has(SWAGGER_REF)) {
-                    String parentPath = obj.getString(SWAGGER_REF);
-                    // get the last component in the parent path
-                    String parentEntityName = parentPath.substring(parentPath.lastIndexOf(SWAGGER_REF_SEPARATOR) + SWAGGER_REF_SEPARATOR.length());
-                    this.parentTypeNames.add(parentEntityName);
+                    // get the parent entity name from the ref path
+                    this.parentTypeNames.add(getEntityNameFromRef(obj));
                 }
             }
         }
+	}
+	
+	private String getEntityNameFromRef(JSONObject obj) {
+        String refPath = obj.getString(SWAGGER_REF);
+        
+        // get the last component in the parent path
+        String refEntityName = refPath.substring(refPath.lastIndexOf(SWAGGER_REF_SEPARATOR) + SWAGGER_REF_SEPARATOR.length());
+        
+        return refEntityName;
 	}
 	
 	@Override
@@ -174,27 +196,61 @@ public class MutableJsonType extends ExternalType {
 	 * Used to define the swagger type properties
 	 * @param shape for swagger schema
 	 */
-	public void defineProperties(Shape shape) {
-	    JSONObject properties = swaggerSchema.has(SWAGGER_PROPERTIES) ? swaggerSchema.getJSONObject(SWAGGER_PROPERTIES) : null;
-	    
-        if(properties == null && swaggerSchema.has(SWAGGER_ALLOF)) {
+    public void defineProperties(Shape shape) {
+        JSONObject properties = swaggerSchema.has(SWAGGER_PROPERTIES) ? swaggerSchema.getJSONObject(SWAGGER_PROPERTIES)
+                : null;
+
+        if (properties == null && swaggerSchema.has(SWAGGER_ALLOF)) {
             JSONArray array = swaggerSchema.getJSONArray(SWAGGER_ALLOF);
-            
+
             // Process each element in the array
-            for(int i = 0 ; i < array.length(); i++) {
+            for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
-                if(obj.has(SWAGGER_TYPE)) {
+                if (obj.has(SWAGGER_TYPE)) {
                     properties = obj.has(SWAGGER_PROPERTIES) ? obj.getJSONObject(SWAGGER_PROPERTIES) : null;
                     break;
                 }
             }
         }
-        
+
         // process each property
-        if(this.parentTypeNames.size() == 0 && properties == null) {
+        if (this.parentTypeNames.size() == 0 && properties == null) {
             throw new RuntimeException("Unable to find the properties object or the type has no properties");
         }
-	}
+
+        if (properties != null) {
+            String[] propertyNames = JSONObject.getNames(properties);
+            for (int i = 0; i < propertyNames.length; i++) {
+                JSONObject obj = properties.getJSONObject(propertyNames[i]);
+                Type propertyType = null;
+                Type elementType = null;
+
+                // TO_ONE relationship
+                if (obj.has(SWAGGER_REF)) {
+                    String toOneEntityName = getEntityNameFromRef(obj);
+                    propertyType = getShape().getType(toOneEntityName);
+                } else if (obj.has(SWAGGER_TYPE)) {
+                    propertyType = getShape().getType(SWAGGER_TYPES.get(obj.get(SWAGGER_TYPE)));
+                    if (SWAGGER_ARRAY_TYPE.equals(obj.get(SWAGGER_TYPE))) {
+                        // look for the items object
+                        JSONObject items = obj.getJSONObject(SWAGGER_ITEMS);
+                        // to many entity relationship
+                        if (items.has(SWAGGER_REF)) {
+                            elementType = getShape().getType(getEntityNameFromRef(items));
+                        } else {
+                            Class<?> simpleType = SWAGGER_TYPES.get(items.get(SWAGGER_TYPE));
+                            elementType = getShape().getType(simpleType);
+                        }
+                    }
+                }
+
+                // The property might just be a placeholder, so we check for this scenario.
+                if(propertyType != null) {
+                    shape.addProperty(new MutableJsonProperty(propertyNames[i], propertyType, this, elementType));
+                }
+            }
+        }
+    }
 
 	@Override
 	public void setOpenProperty(Object obj, String propertyName, Object value ) {

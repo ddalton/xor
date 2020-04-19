@@ -57,6 +57,16 @@ public class ExternalProperty extends AbstractProperty {
 	    processProperty(domainProperty);
 	}
 	
+    public ExternalProperty(String name, Type type, EntityType parentType, Type elementType) {
+        super(name, type, parentType);
+        setElementType(elementType);
+
+        this.domainName = name;
+        this.isMany = elementType != null;
+        this.associationType = isMany ? PersistentAttributeType.ONE_TO_MANY : (type.isDataType() ? null : PersistentAttributeType.MANY_TO_ONE);
+        this.isList = elementType != null; // Support list by default
+    }	
+	
 	private void processProperty(ExtendedProperty domainProperty) {
 	    // We cannot use name, as that would signal an open property
 	    this.domainName = domainProperty.getName();

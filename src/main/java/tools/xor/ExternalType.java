@@ -60,6 +60,7 @@ public class ExternalType extends AbstractType {
     public ExternalType(String entityName, Class<?> javaClass) {
         this.entityName = entityName;
         this.javaClass = javaClass;
+        this.isDataType = false;
         this.parentTypes = new ArrayList<>();
     }
 

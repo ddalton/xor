@@ -45,6 +45,11 @@ public class MutableJsonProperty extends ExternalProperty {
 		super(name, domainProperty, type, parentType, elementType);
 		jsonObjectProperty = new JSONObjectProperty(this);
 	}
+	
+    public MutableJsonProperty(String name, Type type, EntityType parentType, Type elementType) {
+        super(name, type, parentType, elementType);
+        jsonObjectProperty = new JSONObjectProperty(this);
+    }
 
 	@Override
 	public Class<?> getJavaType() {

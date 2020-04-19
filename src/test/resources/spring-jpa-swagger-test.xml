@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-	xmlns:aop="http://www.springframework.org/schema/aop"
-	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:tx="http://www.springframework.org/schema/tx"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
@@ -17,7 +15,7 @@
      http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
 
 	<context:component-scan base-package="tools.xor" />
-	
+
 	<bean id="propertyConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
@@ -26,74 +24,73 @@
 			</list>
 		</property>
 	</bean>
-	
-	<!-- XOR -->
-	<bean id="aggregateManager"
-		class="tools.xor.service.AggregateManager">
-		<property name="associationStrategy" ref="associationStrategy" />	
-		<property name="dasFactory" ref="jpadas" />	
-		<property name="viewsDirectory" value="views" />
-	</bean>		
-	
-	<bean id="jpadas"
-		class="tools.xor.service.SpringDataModelFactory">
-		<property name="name" value="jpadas" />		
-		<property name="dataModelBuilder" ref="jpabuilder" />
-	</bean>			
 
-	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder"/>
-	
+	<!-- XOR -->
+	<bean id="aggregateManager" class="tools.xor.service.AggregateManager">
+		<property name="associationStrategy" ref="associationStrategy" />
+		<property name="dasFactory" ref="jpadas" />
+		<property name="viewsDirectory" value="views" />
+	</bean>
+
+	<bean id="jpadas" class="tools.xor.service.SpringDataModelFactory">
+		<property name="name" value="jpadas" />
+		<property name="dataModelBuilder" ref="jpabuilder" />
+	</bean>
+
+	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder" />
+
 	<!-- Association Strategy between aggregates -->
 	<bean id="associationStrategy" class="tools.xor.custom.TestAssociationStrategy" />
 
 	<!-- Swagger -->
-	<bean id="amSwagger"
-		  class="tools.xor.service.AggregateManager">
+	<bean id="amSwagger" class="tools.xor.service.AggregateManager">
 		<property name="typeMapper" ref="uctm" />
 		<property name="dasFactory" ref="swaggerdm" />
 	</bean>
 
-	<bean id="swaggerdm"
-		  class="tools.xor.service.SpringDataModelFactory">
+	<bean id="swaggerdm" class="tools.xor.service.SpringDataModelFactory">
 		<property name="name" value="swaggerdmjpa" />
 		<property name="dataModelBuilder" ref="swaggerbuilder" />
 	</bean>
 
-	<bean id="swaggerbuilder" class="tools.xor.service.SwaggerSpringDataModelBuilder">	
-        <property name = "swaggerFiles">
-         <list>
-            <value>task-base.json</value>
-            <value>task-spi.json</value>
-         </list>
-        </property>
+	<bean id="swaggerbuilder" class="tools.xor.service.SwaggerSpringDataModelBuilder">
+		<property name="swaggerFiles">
+			<list>
+				<value>task-base.json</value>
+				<value>task-spi.json</value>
+			</list>
+		</property>
+
+		<property name="schemaAnchor" value="components/schemas" />
 	</bean>
 
-	<bean id="uctm" class="tools.xor.UnchangedTypeMapper"/>
+	<bean id="uctm" class="tools.xor.UnchangedTypeMapper" />
 
 	<!-- DataSource -->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
 		destroy-method="close">
 		<property name="driverClassName" value="${test.connection.driverClass}" />
-		<!--property name="url" value="jdbc:hsqldb:file:testdb" /-->
-		<property name="url" value="${test.connection.url}" />		
+		<!--property name="url" value="jdbc:hsqldb:file:testdb" / -->
+		<property name="url" value="${test.connection.url}" />
 		<property name="username" value="${test.connection.userName}" />
 		<property name="password" value="${test.connection.password}" />
 		<property name="maxActive" value="20" />
-	</bean>	
-	
-	<bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+	</bean>
+
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
 		<property name="dataSource" ref="dataSource" />
 		<property name="packagesToScan" value="tools.xor.db" />
 		<property name="jpaVendorAdapter">
-			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"/>
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
 		</property>
-        <property name="jpaPropertyMap">
-            <map>		
-				<entry key="hibernate.dialect" value="${test.hibernate.dialect}"/>
-				<entry key="hibernate.show_sql" value="${test.hibernate.showSql}"/>
-				<!--entry key="hibernate.hbm2ddl.auto" value="validate"/-->
-				<entry key="hibernate.hbm2ddl.auto" value="${test.hibernate.hbm2ddlAuto}"/>				
-				<entry key="hibernate.max_fetch_depth" value="0"/>		 
+		<property name="jpaPropertyMap">
+			<map>
+				<entry key="hibernate.dialect" value="${test.hibernate.dialect}" />
+				<entry key="hibernate.show_sql" value="${test.hibernate.showSql}" />
+				<!--entry key="hibernate.hbm2ddl.auto" value="validate"/ -->
+				<entry key="hibernate.hbm2ddl.auto" value="${test.hibernate.hbm2ddlAuto}" />
+				<entry key="hibernate.max_fetch_depth" value="0" />
 			</map>
 		</property>
 	</bean>

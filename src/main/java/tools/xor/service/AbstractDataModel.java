@@ -57,11 +57,11 @@ import tools.xor.view.QueryTransformer;
 public abstract class AbstractDataModel implements DataModel {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	protected TypeMapper         typeMapper;
-	protected DataModelFactory         dasFactory;
-    protected PersistenceProvider       dataProvider;
-	protected Map<String, Shape> shapes; // Contains all the initialized shapes
-	private ThreadLocal<Shape>   activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
+	protected TypeMapper          typeMapper;
+	protected DataModelFactory    dasFactory;
+    protected PersistenceProvider dataProvider;
+	protected Map<String, Shape>  shapes; // Contains all the initialized shapes
+	private ThreadLocal<Shape>    activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
 
 	public AbstractDataModel(DataModelFactory factory, TypeMapper typeMapper) {
 		this.dasFactory = factory;

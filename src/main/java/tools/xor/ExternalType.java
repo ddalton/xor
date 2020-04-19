@@ -20,9 +20,7 @@
 package tools.xor;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -50,7 +48,6 @@ public class ExternalType extends AbstractType {
         this.versionPropertyName = domainType.getVersionProperty() != null ? domainType.getVersionProperty().getName() : null;
         this.isEmbedded = domainType.isEmbedded();
         this.isEntity = domainType.isEntity();
-        this.parentTypes = new ArrayList<>();
 
         if (domainType.getNaturalKey() != null) {
             this.naturalKey = new ArrayList<String>(domainType.getNaturalKey());
@@ -63,6 +60,7 @@ public class ExternalType extends AbstractType {
     public ExternalType(String entityName, Class<?> javaClass) {
         this.entityName = entityName;
         this.javaClass = javaClass;
+        this.parentTypes = new ArrayList<>();
     }
 
 	public void setProperty (Shape domainShape, Shape dynamicShape, TypeMapper typeMapper)

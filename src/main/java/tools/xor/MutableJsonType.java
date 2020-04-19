@@ -21,10 +21,11 @@ package tools.xor;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tools.xor.service.Shape;
@@ -37,6 +38,15 @@ import tools.xor.service.Shape;
  */
 public class MutableJsonType extends ExternalType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+	
+	private static final String SWAGGER_ALLOF = "allOf";
+	private static final String SWAGGER_TYPE  = "type";
+	private static final String SWAGGER_PROPERTIES = "properties";
+	private static final String SWAGGER_REF   = "$ref";
+	public static final String  SWAGGER_REF_SEPARATOR = "/";
+	
+	private List<String> parentTypeNames;
+	private JSONObject   swaggerSchema;
 
 	public MutableJsonType(EntityType domainType, Class<?> javaClass) {
 		super(domainType, javaClass);
@@ -49,13 +59,43 @@ public class MutableJsonType extends ExternalType {
 	public MutableJsonType(String entityName, JSONObject json, String idPropertyName) {
 	    super(entityName, JSONObject.class);
 	    
+	    this.swaggerSchema = json;
         this.isDataType = true;
         this.idPropertyName = idPropertyName;
         this.versionPropertyName = null; // currently not supported as this schema is not used for updates
         this.isEmbedded = idPropertyName == null;
         this.isEntity = true;
-        this.parentTypes = new ArrayList<>();
+        this.parentTypeNames = new ArrayList<>();
+        
+        // extract parentTypes
+        if(json.has(SWAGGER_ALLOF)) {
+            JSONArray array = json.getJSONArray(SWAGGER_ALLOF);
+            
+            // Process each element in the array
+            for(int i = 0 ; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                if(obj.has(SWAGGER_REF)) {
+                    String parentPath = obj.getString(SWAGGER_REF);
+                    // get the last component in the parent path
+                    String parentEntityName = parentPath.substring(parentPath.lastIndexOf(SWAGGER_REF_SEPARATOR) + SWAGGER_REF_SEPARATOR.length());
+                    this.parentTypeNames.add(parentEntityName);
+                }
+            }
+        }
 	}
+	
+	@Override
+    public void initParentTypes(EntityType domainType, TypeMapper typeMapper) {
+	    // Are we initializing for a Swagger schema
+	    if(this.parentTypeNames != null) {
+            for (String parentEntityName : this.parentTypeNames) {
+                Type externalType = getShape().getType(parentEntityName);
+                this.parentTypes.add((ExternalType) externalType);
+            }	        
+	    } else {
+	        super.initParentTypes(domainType, typeMapper);
+	    }
+    }	
 
 	@Override
 	public Method getGetterMethod(String targetProperty){
@@ -128,6 +168,32 @@ public class MutableJsonType extends ExternalType {
 					+ ", type name: " + dynamicProperty.getJavaType());
 			dynamicShape.addProperty(dynamicProperty);
 		}
+	}
+	
+	/**
+	 * Used to define the swagger type properties
+	 * @param shape for swagger schema
+	 */
+	public void defineProperties(Shape shape) {
+	    JSONObject properties = swaggerSchema.has(SWAGGER_PROPERTIES) ? swaggerSchema.getJSONObject(SWAGGER_PROPERTIES) : null;
+	    
+        if(properties == null && swaggerSchema.has(SWAGGER_ALLOF)) {
+            JSONArray array = swaggerSchema.getJSONArray(SWAGGER_ALLOF);
+            
+            // Process each element in the array
+            for(int i = 0 ; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                if(obj.has(SWAGGER_TYPE)) {
+                    properties = obj.has(SWAGGER_PROPERTIES) ? obj.getJSONObject(SWAGGER_PROPERTIES) : null;
+                    break;
+                }
+            }
+        }
+        
+        // process each property
+        if(this.parentTypeNames.size() == 0 && properties == null) {
+            throw new RuntimeException("Unable to find the properties object or the type has no properties");
+        }
 	}
 
 	@Override

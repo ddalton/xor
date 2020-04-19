@@ -30,7 +30,9 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 
+import tools.xor.ExternalType;
 import tools.xor.MutableJsonType;
+import tools.xor.Type;
 import tools.xor.TypeMapper;
 
 /**
@@ -112,18 +114,44 @@ public class SwaggerDataModel extends AbstractDataModel {
                     throw new RuntimeException("Unable to find the swagger configuration file: " + fileName);
                 }
                 String jsonTxt = IOUtils.toString(stream);
-                JSONObject json = new JSONObject(jsonTxt);
+                JSONObject jsonSchema = new JSONObject(jsonTxt);
                 
-                defineTypes(shape, json);
+                if(this.schemaAnchor != null) {
+                    String[] paths = this.schemaAnchor.split(MutableJsonType.SWAGGER_REF_SEPARATOR);
+                    for(String path: paths) {
+                        if(!jsonSchema.has(path)) {
+                            throw new RuntimeException("Unable to find key in schemaAnchor path: " + path);
+                        }
+                        jsonSchema = jsonSchema.getJSONObject(path);
+                    }
+                }
+                
+                defineTypes(shape, jsonSchema);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to read " + fileName, e);
             }
         }
+        
+        // Parent types names are extracted during the construction of the MutableJsonType
+        for(Type type: shape.getUniqueTypes()) {
+            ((ExternalType)type).initParentTypes(null, null);
+        }
+        
+        defineProperties(shape);
     }
     
-    private void defineTypes(Shape shape, JSONObject json) {
-        for(String entityTypeName: JSONObject.getNames(json)) {
-            shape.addType(entityTypeName, new MutableJsonType(entityTypeName, json, idMap.get(entityTypeName)));
+    private void defineTypes(Shape shape, JSONObject jsonSchema) {
+        for(String entityTypeName: JSONObject.getNames(jsonSchema)) {          
+            shape.addType(entityTypeName, new MutableJsonType(entityTypeName, jsonSchema.getJSONObject(entityTypeName), idMap.get(entityTypeName)));
         }
     }
+
+    protected void defineProperties(Shape shape) {
+        for(Type type: shape.getUniqueTypes()) {
+            if(MutableJsonType.class.isAssignableFrom(type.getClass())) {
+                MutableJsonType swaggerType = (MutableJsonType) type;
+                swaggerType.defineProperties(shape);
+            }
+        }     
+    }    
 }

@@ -539,7 +539,12 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
         }
         copy.setSplitToRoot(isSplitToRoot());
         if(attributeList != null) {
-            copy.setAttributeList(new ArrayList<>(attributeList));
+            List<String> attributesCopy = new ArrayList<>();
+            // XML format adds spaces at the end of the path that we don't need
+            for(String path: attributeList) {
+                attributesCopy.add(path.trim());
+            }
+            copy.setAttributeList(new ArrayList<>(attributesCopy));
         }
 
         if(primaryKeyAttribute != null) {

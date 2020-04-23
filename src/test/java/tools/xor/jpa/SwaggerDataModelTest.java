@@ -19,6 +19,9 @@
 
 package tools.xor.jpa;
 
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -31,12 +34,23 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
+import tools.xor.CounterGenerator;
+import tools.xor.ExtendedProperty;
+import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.db.base.Person;
+import tools.xor.generator.DefaultGenerator;
+import tools.xor.generator.Generator;
+import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultQueryOperation;
+import tools.xor.providers.jdbc.JDBCDataModel;
+import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
+import tools.xor.service.Shape;
+import tools.xor.service.Transaction;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-swagger-test.xml" })
@@ -46,6 +60,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
 
     @Resource(name = "amSwagger")
     protected AggregateManager amSwagger;
+    
+    @Resource(name = "amJDBCjpa")
+    protected AggregateManager amJDBC;  // Useful for generating data using JDBC    
     
     final String NAME = "GEORGE_WASHINGTON_4";
     final String DISPLAY_NAME = "George Washington";
@@ -87,5 +104,79 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         assert (result.get("name").equals(NAME));
         assert (result.get("displayName").equals(DISPLAY_NAME));
         assert (result.get("description").equals(DESCRIPTION));
+    }
+    
+    @Test
+    public void testPaging() {
+        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if (shape == null) {
+            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+        JDBCType task = (JDBCType) shape.getType("TASK");
+        task.clearGenerators();
+
+        Generator rootidgen = new StringTemplate(new String[] { "ID_[VISITOR_CONTEXT]" });
+        ExtendedProperty rootid = (ExtendedProperty) task.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        Generator namegen = new StringTemplate(new String[] { "NAME_[VISITOR_CONTEXT]" });
+        ExtendedProperty namep = (ExtendedProperty) task.getProperty("NAME");
+        namep.setGenerator(namegen);
+        ExtendedProperty dtype = (ExtendedProperty) task.getProperty("DTYPE");
+        Generator dtypegen = new DefaultGenerator(new String[] { "Task" });
+        dtype.setGenerator(dtypegen);
+
+        // create 200 tasks with a page size of 25
+        // We start at 10000 to avoid any conflict with existing data created by tests
+        // that did not cleanup properly
+        CounterGenerator gensettings = new CounterGenerator(200, 10000);
+        task.addGenerator(gensettings);
+
+        String[] types = new String[] { "TASK" };
+
+        Settings settings = new Settings();
+        // settings.setImportMethod(ImportMethod.CSV);
+        Transaction tx = amJDBC.createTransaction(settings);
+        tx.begin();
+        try {
+            amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+
+            // read page 1
+            settings = new Settings();
+            settings.setOffset(0);
+            settings.setLimit(25);
+            settings.setView(amSwagger.getView("BASICINFO_OQL_SORT"));
+            DataModel model = amSwagger.getModel();
+            Type taskType = model.getShape().getType("Task");
+            settings.setEntityType(taskType);
+            List<?> toList = amSwagger.query(null, settings);
+            
+            System.out.println("SWAGGERTEST: " + toList.size());
+            assert (toList.size() == 25);
+            
+        } finally {
+
+            deleteTaskEntries();
+            tx.rollback();
+            // We don't close as the connection belongs to Spring
+        }
+
+    }
+    
+    private void deleteTaskEntries() {
+        JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) amJDBC.getPersistenceOrchestrator();
+        JDBCSessionContext sc = po.getSessionContext();
+
+        try (Statement stmt = sc.getConnection().createStatement()) {
+            stmt.execute("DELETE from TASK");
+            sc.getConnection().commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }        
+    }
+    
+    @Test
+    public void testScrolling() {
+        
     }
 }

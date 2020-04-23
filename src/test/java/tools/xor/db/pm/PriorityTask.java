@@ -1,7 +1,5 @@
 package tools.xor.db.pm;
 
-import tools.xor.db.base.Id;
-
 import javax.persistence.Entity;
 
 @Entity

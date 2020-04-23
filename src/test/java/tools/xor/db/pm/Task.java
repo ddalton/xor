@@ -33,19 +33,13 @@ import javax.persistence.OrderColumn;
 
 import org.json.JSONObject;
 
-import tools.xor.AbstractProperty;
 import tools.xor.AggregateAction;
-import tools.xor.BusinessObject;
-import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
-import tools.xor.annotation.XorDataService;
-import tools.xor.annotation.XorDomain;
 import tools.xor.annotation.XorExternal;
 import tools.xor.annotation.XorExternalData;
 import tools.xor.annotation.XorLambda;
 import tools.xor.db.base.Identity;
 import tools.xor.db.base.Person;
-import tools.xor.service.PersistenceOrchestrator;
 
 @Entity
 public class Task extends Identity {

@@ -179,16 +179,10 @@ public class ObjectCreator {
         }
 
         inputClass = ClassUtil.getUnEnhanced(inputClass);
-        if (typeMapper.isDomain(inputClass)) {
-            return shape.getType(inputClass);
+        if (domainType != null && domainType instanceof EntityType) {
+            return shape.getType(((EntityType) domainType).getEntityName());
         } else {
-            // Else we will return the type based on the given domainType's entityName
-            // from the Shape belonging to this ObjectCreator
-            if (domainType != null && domainType instanceof EntityType) {
-                return shape.getType(((EntityType) domainType).getEntityName());
-            } else {
-                return shape.getType(inputClass);
-            }
+            return shape.getType(inputClass);
         }
     }
 

@@ -50,12 +50,7 @@ public class JPASpringDataModel extends JPADataModel {
     @Override
     public PersistenceProvider getPersistenceProvider() {
         if(super.getPersistenceProvider() == null) {
-            this.persistenceProvider = new PersistenceProvider() {
-                @Override
-                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-                    return new JPASpringPO(sessionContext, data);
-                } 
-            };
+            this.persistenceProvider = new JPASpringProvider();
         }
         
         return this.persistenceProvider;

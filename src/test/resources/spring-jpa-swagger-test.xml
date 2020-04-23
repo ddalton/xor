@@ -67,6 +67,22 @@
 		<property name="persistenceProvider" ref="jpapp" />
 	</bean>
 
+	<!-- JDBC -->
+	<bean id="amJDBCjpa"
+		  class="tools.xor.service.AggregateManager">
+		<property name="typeMapper" ref="uctm" />
+		<property name="dasFactory" ref="jdbcdas" />
+		<property name="persistenceType" value="JDBC" />
+	</bean>
+
+	<bean id="jdbcdas"
+		  class="tools.xor.service.SpringDataModelFactory">
+		<property name="name" value="jdbcdasjpa" />
+		<property name="dataModelBuilder" ref="jdbcbuilder" />
+	</bean>
+
+	<bean id="jdbcbuilder" class="tools.xor.service.JDBCSpringDataModelBuilder"/>			
+
 	<bean id="uctm" class="tools.xor.UnchangedTypeMapper" />
 
 	<!-- DataSource -->

@@ -5,12 +5,12 @@
 		<attributeList>name</attributeList>
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
-	</aggregateView>		
+	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO</name>
 		<attributeList>[VERYBASIC]</attributeList>
 		<attributeList>iconUrl</attributeList>
-		<attributeList>detailedDescription</attributeList>			
+		<attributeList>detailedDescription</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>ALIASEXISTING</name>
@@ -35,13 +35,13 @@
 		<version>2</version>
 		<attributeList>[VERYBASIC]</attributeList>
 		<attributeList>iconUrl</attributeList>
-		<attributeList>detailedDescription</attributeList>	
-		<attributeList>objectId</attributeList>	
-	</aggregateView>	
+		<attributeList>detailedDescription</attributeList>
+		<attributeList>objectId</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>TECHNICIANINFO</name>
-		<attributeList>[BASICINFO]</attributeList>		
-		<attributeList>skill</attributeList>					
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>skill</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>TASKSKILL</name>
@@ -52,34 +52,31 @@
 		<name>CONSULTANTINFO</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<attributeList>version</attributeList>
-		<attributeList>type</attributeList>					
-	</aggregateView>	
+		<attributeList>type</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>CITATIONINFO</name>
 		<attributeList>citations.[VERYBASIC]</attributeList>
-		<attributeList>citations.metaEntityType.name</attributeList>					
-	</aggregateView>	
+		<attributeList>citations.metaEntityType.name</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>ARTIFACTINFO</name>
-		<attributeList>[BASICINFO]</attributeList>		
+		<attributeList>[BASICINFO]</attributeList>
 		<attributeList>ownedBy.name</attributeList>
 		<attributeList>state.name</attributeList>
 		<attributeList>metaEntityType.name</attributeList>
-		<attributeList>disabled</attributeList>	
-		<attributeList>createdOn</attributeList>			
+		<attributeList>disabled</attributeList>
+		<attributeList>createdOn</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_NATIVE</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<primaryKeyAttribute>id</primaryKeyAttribute>
 		<nativeQuery>
-			<!-- The SQL query can contain additional columns like the following required to construct an object:
-			     1. List index
-				 2. Map key
-				 3. Entity type
-				 So this section is to map the attribute name to the column position.
-			-->
-			<parameterList name="ID_"/>
+			<!-- The SQL query can contain additional columns like the following required 
+				to construct an object: 1. List index 2. Map key 3. Entity type So this section 
+				is to map the attribute name to the column position. -->
+			<parameterList name="ID_" />
 			<selectClause>
 				<![CDATA[SELECT UUID, 
 				                NAME,
@@ -104,7 +101,7 @@
 		<attributeList>[BASICINFO]</attributeList>
 		<primaryKeyAttribute>id</primaryKeyAttribute>
 		<nativeQuery>
-			<parameterList name="ID_"/>
+			<parameterList name="ID_" />
 			<selectClause>
 				<![CDATA[SELECT UUID,
 				                NAME,
@@ -116,32 +113,32 @@
 			</selectClause>
 			<function scope="ROOT" type="FREESTYLE">
 				<args>FROM Task
-				     WHERE UUID = ?</args>
+					WHERE UUID = ?
+				</args>
 			</function>
 			<function type="FREESTYLE" scope="NOTROOT">
 				<args>FROM Task, XOR_QUERY_JOIN_ tt
-				     WHERE UUID = tt.ID_STR
-				       AND tt.INVOCATION_ID = :PARENT_INVOCATION_ID_</args>
+					WHERE UUID = tt.ID_STR
+					AND tt.INVOCATION_ID = :PARENT_INVOCATION_ID_
+				</args>
 			</function>
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
 		<name>TASKCHILDRENMIXTEMP</name>
 		<attributeList>[BASICINFO]</attributeList>
-		<attributeList>taskChildren.[BASICINFO_NATIVE_TASK_TEMP]</attributeList>
+		<attributeList>taskChildren.[BASICINFO_NATIVE_TASK_TEMP]
+		</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_NATIVE_TASK</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<primaryKeyAttribute>id</primaryKeyAttribute>
 		<nativeQuery>
-			<!-- The SQL query can contain additional columns like the following required to construct an object:
-			     1. List index
-				 2. Map key
-				 3. Entity type
-				 So this section is to map the attribute name to the column position.
-			-->
-			<parameterList name="ID_"/>
+			<!-- The SQL query can contain additional columns like the following required 
+				to construct an object: 1. List index 2. Map key 3. Entity type So this section 
+				is to map the attribute name to the column position. -->
+			<parameterList name="ID_" />
 			<selectClause>
 				<![CDATA[SELECT UUID,
 				                NAME,
@@ -178,11 +175,30 @@
 								detailedDescription
 							FROM tools.xor.db.base.Person]]>
 			</selectClause>
-		        <function type="FREESTYLE">
-		        	<args>WHERE id = :ID_</args>
-        		</function>
+			<function type="FREESTYLE">
+				<args>WHERE id = :ID_</args>
+			</function>
 		</userOQLQuery>
 	</aggregateView>
+    <aggregateView>
+        <name>BASICINFO_OQL_SORT</name>
+        <attributeList>[BASICINFO]</attributeList>
+        <userOQLQuery>
+            <selectClause>
+                <![CDATA[SELECT id,
+                                name,
+                                displayName,
+                                description,
+                                iconUrl,
+                                detailedDescription
+                            FROM tools.xor.db.pm.Task
+                          ORDER BY id]]>
+            </selectClause>
+            <function type="FREESTYLE">
+                <args>WHERE id = :ID_</args>
+            </function>
+        </userOQLQuery>
+    </aggregateView>	
 	<aggregateView>
 		<name>TESTSELECT_SP1</name>
 		<attributeList>ROOTID</attributeList>
@@ -194,18 +210,17 @@
 		<storedProcedure>
 			<name>getselect</name>
 			<action>READ</action>
-			<!--implicit>true</implicit-->
-			<!--multiple>true</multiple-->
-			<!--outputLocation position="1"/-->
-			<!--parameterList attribute="id" mode="IN" /-->
-			<!-- OutputLocation is optional for an update stored procedure, but is
-				 required for a read stored procedure that is not implicit.-->
-			<parameterList name="idcol" mode="IN" position="1" type="INTEGER" defaultValue="0"/>
-			<!-- The result list should match the attribute list
-				 The result list is optional and is only necessary if the order/number of columns are
-				 different.
-				 If the result list is not specified we then go by the attribute list order
-			-->
+			<!--implicit>true</implicit -->
+			<!--multiple>true</multiple -->
+			<!--outputLocation position="1"/ -->
+			<!--parameterList attribute="id" mode="IN" / -->
+			<!-- OutputLocation is optional for an update stored procedure, but is 
+				required for a read stored procedure that is not implicit. -->
+			<parameterList name="idcol" mode="IN" position="1"
+				type="INTEGER" defaultValue="0" />
+			<!-- The result list should match the attribute list The result list is 
+				optional and is only necessary if the order/number of columns are different. 
+				If the result list is not specified we then go by the attribute list order -->
 			<callString>call testselect1(?)</callString>
 		</storedProcedure>
 	</aggregateView>
@@ -220,18 +235,16 @@
 		<storedProcedure>
 			<name>getselect</name>
 			<action>READ</action>
-			<!--implicit>true</implicit-->
-			<!--multiple>true</multiple-->
-			<!--outputLocation position="1"/-->
-			<!--parameterList attribute="id" mode="IN" /-->
-			<!-- OutputLocation is optional for an update stored procedure, but is
-				 required for a read stored procedure that is not implicit.-->
-			<parameterList name="INVOCATION_ID_" mode="IN" type="VARCHAR"/>
-			<!-- The result list should match the attribute list
-				 The result list is optional and is only necessary if the order/number of columns are
-				 different.
-				 If the result list is not specified we then go by the attribute list order
-			-->
+			<!--implicit>true</implicit -->
+			<!--multiple>true</multiple -->
+			<!--outputLocation position="1"/ -->
+			<!--parameterList attribute="id" mode="IN" / -->
+			<!-- OutputLocation is optional for an update stored procedure, but is 
+				required for a read stored procedure that is not implicit. -->
+			<parameterList name="INVOCATION_ID_" mode="IN" type="VARCHAR" />
+			<!-- The result list should match the attribute list The result list is 
+				optional and is only necessary if the order/number of columns are different. 
+				If the result list is not specified we then go by the attribute list order -->
 			<callString>call testselect1temppop(?)</callString>
 		</storedProcedure>
 	</aggregateView>
@@ -245,12 +258,11 @@
 		<storedProcedure>
 			<name>getselect</name>
 			<action>READ</action>
-			<parameterList name="PARENT_INVOCATION_ID_" mode="IN" type="VARCHAR"/>
-			<!-- The result list should match the attribute list
-				 The result list is optional and is only necessary if the order/number of columns are
-				 different.
-				 If the result list is not specified we then go by the attribute list order
-			-->
+			<parameterList name="PARENT_INVOCATION_ID_" mode="IN"
+				type="VARCHAR" />
+			<!-- The result list should match the attribute list The result list is 
+				optional and is only necessary if the order/number of columns are different. 
+				If the result list is not specified we then go by the attribute list order -->
 			<callString>call testselect2(?)</callString>
 		</storedProcedure>
 	</aggregateView>
@@ -277,7 +289,8 @@
                                  ]]>
 			</selectClause>
 			<function type="FREESTYLE" scope="NOTROOT">
-				<args>AND g.rootid IN (^PLACEHOLDER^) ORDER BY g.rootid, u.rootid</args>
+				<args>AND g.rootid IN (^PLACEHOLDER^) ORDER BY g.rootid, u.rootid
+				</args>
 			</function>
 		</nativeQuery>
 	</aggregateView>
@@ -356,7 +369,8 @@
 		<storedProcedure>
 			<name>getselect</name>
 			<action>READ</action>
-			<parameterList name="idcol" mode="IN" type="VARCHAR" defaultValue="1"/>
+			<parameterList name="idcol" mode="IN" type="VARCHAR"
+				defaultValue="1" />
 			<callString>call testselectwhole(?)</callString>
 		</storedProcedure>
 		<children resultPosition="1">
@@ -368,7 +382,7 @@
 	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_SP</name>
-		<attributeList>[BASICINFO]</attributeList>			
+		<attributeList>[BASICINFO]</attributeList>
 		<storedProcedure>
 			<name>GetPersonBasic</name>
 			<action>READ</action>
@@ -378,38 +392,28 @@
 			<augmenter>description</augmenter>
 			<augmenter>iconUrl</augmenter>
 			<augmenter>detailedDescription</augmenter>
-        		<!--implicit>true</implicit-->
-        		<!--multiple>true</multiple-->
-			<outputLocation position="1"/>
-			<!--parameterList attribute="id" mode="IN" /-->
-			<!-- OutputLocation is optional for an update stored procedure, but is
-			     required for a read stored procedure that is not implicit.-->
-			<parameterList name="returnValue" mode="OUT" returnType="true" position="1" type="-10"/>
-			<!-- The result list should match the attribute list 
-			     The result list is optional and is only necessary if the order/number of columns are
-				 different.
-				 If the result list is not specified we then go by the attribute list order
-			-->
-			<!--callString>begin GetPersonBasic; end;</callString-->
+			<!--implicit>true</implicit -->
+			<!--multiple>true</multiple -->
+			<outputLocation position="1" />
+			<!--parameterList attribute="id" mode="IN" / -->
+			<!-- OutputLocation is optional for an update stored procedure, but is 
+				required for a read stored procedure that is not implicit. -->
+			<parameterList name="returnValue" mode="OUT"
+				returnType="true" position="1" type="-10" />
+			<!-- The result list should match the attribute list The result list is 
+				optional and is only necessary if the order/number of columns are different. 
+				If the result list is not specified we then go by the attribute list order -->
+			<!--callString>begin GetPersonBasic; end;</callString -->
 		</storedProcedure>
 		<storedProcedure>
-			<!-- The call can contain additional columns like the following required to construct an object:
-			     1. List index
-				 2. Map key
-				 3. Entity type
-				 So this section is to map the attribute name to the column position.
-				 
-				 https://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
-				 parameters can be either positional or named
-				 
-				 a. The first parameter is needed to infer type information
-				 b. The mode is either IN|OUT|INOUT
-
-				 All OUT|INOUT parameters are returned in a map to the caller along with the rows updated/inserted/deleted count
-				 
-				 If an outputLocation is defined, then the stored procedure has most likely modified
-				 the input data and is returning the updated content
-			-->
+			<!-- The call can contain additional columns like the following required 
+				to construct an object: 1. List index 2. Map key 3. Entity type So this section 
+				is to map the attribute name to the column position. https://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html 
+				parameters can be either positional or named a. The first parameter is needed 
+				to infer type information b. The mode is either IN|OUT|INOUT All OUT|INOUT 
+				parameters are returned in a map to the caller along with the rows updated/inserted/deleted 
+				count If an outputLocation is defined, then the stored procedure has most 
+				likely modified the input data and is returning the updated content -->
 			<name>basicInfoCreate</name>
 			<action>CREATE</action>
 			<parameterList attribute="id" mode="OUT" />
@@ -417,26 +421,25 @@
 			<parameterList attribute="displayName" />
 			<parameterList attribute="description" />
 			<parameterList attribute="iconUrl" />
-			<parameterList attribute="detailedDescription" />	
-			<parameterList name="extra1" type="java.lang.String" defaultValue="ABC" mode="IN"/> <!-- Stored procedure specific parameter -->
-			<parameterList name="extra2" type="java.util.Date" defaultValue="2013-10-21T13:28:06.419Z" mode="OUT" /> <!-- A stored procedure specific OUT parameter should specify type -->
+			<parameterList attribute="detailedDescription" />
+			<parameterList name="extra1" type="java.lang.String"
+				defaultValue="ABC" mode="IN" /> <!-- Stored procedure specific parameter -->
+			<parameterList name="extra2" type="java.util.Date"
+				defaultValue="2013-10-21T13:28:06.419Z" mode="OUT" /> <!-- A stored procedure specific OUT parameter should specify type -->
 			<parameterList name="extra3" mode="OUT" />
-			<outputLocation type="PARAMETER" name="extra3"/>
+			<outputLocation type="PARAMETER" name="extra3" />
 		</storedProcedure>
 	</aggregateView>
 	<aggregateView>
 		<name>BASICINFO_NATIVE_TYPE</name>
-		<attributeList>[BASICINFO]</attributeList>			
+		<attributeList>[BASICINFO]</attributeList>
 		<nativeQuery>
-			<!-- The SQL query can contain additional columns like the following required to construct an object:
-			     1. List index
-				 2. Map key
-				 3. Entity type
-				 So this section is to map the attribute name to the column position.
-                             These additional columns should come after all the attribute list has been satisfied
-			-->
-			<augmenter>TYPE_</augmenter>				
-			<parameterList name="ID_"/>
+			<!-- The SQL query can contain additional columns like the following required 
+				to construct an object: 1. List index 2. Map key 3. Entity type So this section 
+				is to map the attribute name to the column position. These additional columns 
+				should come after all the attribute list has been satisfied -->
+			<augmenter>TYPE_</augmenter>
+			<parameterList name="ID_" />
 			<selectClause>
 				<![CDATA[SELECT p.uuid,
 							  name,
@@ -449,21 +452,21 @@
 							  LEFT JOIN Employee e
 							ON p.uuid = e.uuid]]>
 			</selectClause>
-		        <function type="FREESTYLE">
-		        	<args>WHERE p.UUID = ?</args>
-        		</function>
+			<function type="FREESTYLE">
+				<args>WHERE p.UUID = ?</args>
+			</function>
 		</nativeQuery>
-	</aggregateView>	
+	</aggregateView>
 	<aggregateView>
 		<name>TASKCHILDREN</name>
-		<attributeList>[BASICINFO]</attributeList>			
-		<attributeList>taskChildren.[VERYBASIC]</attributeList>					
-	</aggregateView>	
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>taskChildren.[VERYBASIC]</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKGRANDCHILDREN</name>
-		<attributeList>[TASKCHILDREN]</attributeList>							
+		<attributeList>[TASKCHILDREN]</attributeList>
 		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
-	</aggregateView>		
+	</aggregateView>
 	<aggregateView>
 		<name>TASKGRANDCHILDRENSKIP</name>
 		<attributeList>id</attributeList>
@@ -471,9 +474,9 @@
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
 		<attributeList>iconUrl</attributeList>
-		<attributeList>detailedDescription</attributeList>			
-		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>									
-	</aggregateView>	
+		<attributeList>detailedDescription</attributeList>
+		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKGRANDCHILDSETLIST</name>
 		<attributeList>id</attributeList>
@@ -481,41 +484,45 @@
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
 		<attributeList>iconUrl</attributeList>
-		<attributeList>detailedDescription</attributeList>		
-		<attributeList>taskChildren.name</attributeList>			
-		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>										
-		<attributeList>taskChildren.dependants.[VERYBASIC]</attributeList>									
-	</aggregateView>		
+		<attributeList>detailedDescription</attributeList>
+		<attributeList>taskChildren.name</attributeList>
+		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
+		<attributeList>taskChildren.dependants.[VERYBASIC]</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKDEP</name>
-		<attributeList>[BASICINFO]</attributeList>				
-		<attributeList>dependants.[VERYBASIC]</attributeList>								
-	</aggregateView>	
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>dependants.[VERYBASIC]</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>SUBPROJECTS</name>
-		<attributeList>[BASICINFO]</attributeList>				
-		<attributeList>subProjects.[VERYBASIC]</attributeList>							
-	</aggregateView>		
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>subProjects.[VERYBASIC]</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>SETLISTMAP</name>
-		<attributeList>[SUBPROJECTS]</attributeList>									
-		<attributeList>rootTask.[BASICINFO]</attributeList>		
-		<attributeList>rootTask.taskChildren.taskChildren.id</attributeList>			
-		<attributeList>rootTask.taskChildren.taskChildren.name</attributeList>			
-		<attributeList>rootTask.taskChildren.taskChildren.displayName</attributeList>			
-		<attributeList>rootTask.taskChildren.taskChildren.description</attributeList>							
-		<attributeList>rootTask.taskChildren.dependants.id</attributeList>			
-		<attributeList>rootTask.taskChildren.dependants.name</attributeList>			
-		<attributeList>rootTask.taskChildren.dependants.displayName</attributeList>			
-		<attributeList>rootTask.taskChildren.dependants.description</attributeList>							
-	</aggregateView>			
+		<attributeList>[SUBPROJECTS]</attributeList>
+		<attributeList>rootTask.[BASICINFO]</attributeList>
+		<attributeList>rootTask.taskChildren.taskChildren.id</attributeList>
+		<attributeList>rootTask.taskChildren.taskChildren.name</attributeList>
+		<attributeList>rootTask.taskChildren.taskChildren.displayName
+		</attributeList>
+		<attributeList>rootTask.taskChildren.taskChildren.description
+		</attributeList>
+		<attributeList>rootTask.taskChildren.dependants.id</attributeList>
+		<attributeList>rootTask.taskChildren.dependants.name</attributeList>
+		<attributeList>rootTask.taskChildren.dependants.displayName
+		</attributeList>
+		<attributeList>rootTask.taskChildren.dependants.description
+		</attributeList>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKSET</name>
-		<attributeList>[TASKCHILDREN]</attributeList>		
-		<attributeList>dependants.id</attributeList>			
-		<attributeList>dependants.name</attributeList>			
-		<attributeList>dependants.displayName</attributeList>			
-		<attributeList>dependants.description</attributeList>			
+		<attributeList>[TASKCHILDREN]</attributeList>
+		<attributeList>dependants.id</attributeList>
+		<attributeList>dependants.name</attributeList>
+		<attributeList>dependants.displayName</attributeList>
+		<attributeList>dependants.description</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>PERSON_ASC</name>
@@ -525,9 +532,9 @@
 		<attributeList>description</attributeList>
 		<function type="ASC" position="1">
 			<args>name</args>
-		</function>		
+		</function>
 	</aggregateView>
-		<aggregateView>
+	<aggregateView>
 		<name>PERSON_DESC</name>
 		<attributeList>id</attributeList>
 		<attributeList>name</attributeList>
@@ -535,7 +542,7 @@
 		<attributeList>description</attributeList>
 		<function type="DESC" position="1">
 			<args>name</args>
-		</function>		
+		</function>
 	</aggregateView>
 	<aggregateView>
 		<name>TASKFILTER</name>
@@ -544,7 +551,7 @@
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
 		<attributeList>iconUrl</attributeList>
-		<attributeList>detailedDescription</attributeList>	
+		<attributeList>detailedDescription</attributeList>
 		<function type="COMPARISON" name="ilike">
 			<args>name</args>
 			<args>name</args>
@@ -563,7 +570,7 @@
 		</function>
 		<function type="ASC" position="1">
 			<args>name</args>
-		</function>		
+		</function>
 	</aggregateView>
 	<aggregateView>
 		<name>SERVICESINFO</name>
@@ -572,13 +579,13 @@
 		<attributeList>displayName</attributeList>
 		<attributeList>description</attributeList>
 		<attributeList>iconUrl</attributeList>
-		<attributeList>detailedDescription</attributeList>	
+		<attributeList>detailedDescription</attributeList>
 		<attributeList>createdOn</attributeList>
 		<attributeList>updatedOn</attributeList>
-		<attributeList>metaEntityType.id</attributeList>	
+		<attributeList>metaEntityType.id</attributeList>
 		<attributeList>state.name</attributeList>
 		<attributeList>catalogItem.id</attributeList>
-		<attributeList>catalogItem.catalog.id</attributeList>					
+		<attributeList>catalogItem.catalog.id</attributeList>
 		<join>
 			<entity>CatalogItem ci</entity>
 		</join>
@@ -586,12 +593,12 @@
 			<args>[id] = ci.context.id and ci.catalog.id= :catalogId</args>
 			<args>oql</args>
 		</function>
-	</aggregateView>	
+	</aggregateView>
 	<aggregateView>
 		<name>PROPERTY_BY_NAME_AND_ARTIFACT</name>
-		<attributeList>name</attributeList>		
+		<attributeList>name</attributeList>
 		<attributeList>property.name</attributeList>
-		<attributeList>property.displayName</attributeList>		
+		<attributeList>property.displayName</attributeList>
 		<attributeList>property.valueType.name</attributeList>
 		<attributeList>property.values.value</attributeList>
 		<function type="COMPARISON" name="equal">
@@ -602,7 +609,7 @@
 			<args>id</args>
 			<args>artifactId</args>
 		</function>
-	</aggregateView>	
+	</aggregateView>
 	<aggregateView>
 		<name>OM_BY_ARTIFACT</name>
 		<attributeList>optionModel.id</attributeList>
@@ -610,12 +617,12 @@
 		<attributeList>optionModel.displayName</attributeList>
 		<attributeList>optionModel.description</attributeList>
 		<attributeList>optionModel.iconUrl</attributeList>
-		<attributeList>optionModel.detailedDescription</attributeList>	
+		<attributeList>optionModel.detailedDescription</attributeList>
 		<function type="COMPARISON" name="equal">
 			<args>id</args>
 			<args>artifactId</args>
 		</function>
-	</aggregateView>	
+	</aggregateView>
 	<aggregateView>
 		<name>FIND_PROPERTIES_BY_BINDING</name>
 		<attributeList>property.id</attributeList>
@@ -623,7 +630,7 @@
 		<attributeList>property.displayName</attributeList>
 		<attributeList>property.description</attributeList>
 		<attributeList>property.iconUrl</attributeList>
-		<attributeList>property.detailedDescription</attributeList>	
+		<attributeList>property.detailedDescription</attributeList>
 		<function type="COMPARISON" name="equal">
 			<args>property.name</args>
 			<args>propertyName</args>
@@ -638,96 +645,98 @@
 		</function>
 	</aggregateView>
 	<aggregateView>
-		<name>TASKUNIONFILTER</name>	
+		<name>TASKUNIONFILTER</name>
 		<children>
-			<attributeList>[BASICINFO]</attributeList>	
+			<attributeList>[BASICINFO]</attributeList>
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
 				<args>name1</args>
 			</function>
 		</children>
 		<children>
-			<attributeList>[BASICINFO]</attributeList>	
+			<attributeList>[BASICINFO]</attributeList>
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
 				<args>name2</args>
 			</function>
-		</children>	
-	</aggregateView>			
+		</children>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKUNIONSET</name>
-		<children>		
-			<attributeList>[TASKSET]</attributeList>		
+		<children>
+			<attributeList>[TASKSET]</attributeList>
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
 				<args>name1</args>
 			</function>
-		</children>			
-		<children>		
-			<attributeList>[TASKSET]</attributeList>		
+		</children>
+		<children>
+			<attributeList>[TASKSET]</attributeList>
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
 				<args>name2</args>
 			</function>
-		</children>			
-	</aggregateView>	
+		</children>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKUNIONOVERLAP</name>
-		<children>		
-			<attributeList>[TASKSET]</attributeList>			
+		<children>
+			<attributeList>[TASKSET]</attributeList>
 			<function type="ASC" position="1">
 				<args>name</args>
-			</function>		
-		</children>			
-		<children>		
-			<attributeList>[TASKSET]</attributeList>				
+			</function>
+		</children>
+		<children>
+			<attributeList>[TASKSET]</attributeList>
 			<function type="COMPARISON" name="ilike">
 				<args>name</args>
 				<args>name1</args>
 			</function>
-		</children>			
-	</aggregateView>		
+		</children>
+	</aggregateView>
 	<aggregateView>
 		<name>TASKPARALLEL</name>
-		<children>		
-			<attributeList>[TASKDEP]</attributeList>		
-		</children>			
-		<children>		
-			<attributeList>[TASKCHILDREN]</attributeList>	
-		</children>			
+		<children>
+			<attributeList>[TASKDEP]</attributeList>
+		</children>
+		<children>
+			<attributeList>[TASKCHILDREN]</attributeList>
+		</children>
 	</aggregateView>
-	<aggregateView>	
+	<aggregateView>
 		<name>VALIDENTITY</name>
-		<typeName>tools.xor.db.pm.Task</typeName>		
+		<typeName>tools.xor.db.pm.Task</typeName>
 		<attributeList>id</attributeList>
 		<attributeList>name</attributeList>
-		<attributeList>taskChildren.name</attributeList>			
-	</aggregateView>	
-	<aggregateView>	
+		<attributeList>taskChildren.name</attributeList>
+	</aggregateView>
+	<aggregateView>
 		<name>INVALIDENTITY</name>
-		<typeName>tools.xor.db.pm.Task</typeName>				
+		<typeName>tools.xor.db.pm.Task</typeName>
 		<attributeList>id</attributeList>
 		<attributeList>name</attributeList>
-		<attributeList>taskChildren.invalidField</attributeList>			
+		<attributeList>taskChildren.invalidField</attributeList>
 	</aggregateView>
 	<aggregateView>
 		<name>COMPLEX</name>
-		<attributeList>[TASKCHILDREN]</attributeList>							
+		<attributeList>[TASKCHILDREN]</attributeList>
 		<attributeList>taskChildren.taskChildren.[VERYBASIC]</attributeList>
 		<attributeList>project.name</attributeList>
 		<attributeList>dependants.[VERYBASIC]</attributeList>
 		<attributeList>dependants.project.name</attributeList>
-		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]</attributeList>
+		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]
+		</attributeList>
 		<attributeList>assignedTo.name</attributeList>
-	</aggregateView>		
+	</aggregateView>
 	<aggregateView>
 		<name>PARALLEL_QUERY</name>
-		<attributeList>taskChildren.[TASKCHILDREN]</attributeList>							
+		<attributeList>taskChildren.[TASKCHILDREN]</attributeList>
 		<attributeList>[VERYBASIC]</attributeList>
 		<attributeList>project.name</attributeList>
 		<attributeList>dependants.[VERYBASIC]</attributeList>
 		<attributeList>dependants.taskChildren.[VERYBASIC]</attributeList>
-		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]</attributeList>
+		<attributeList>dependants.taskChildren.auditTask.[VERYBASIC]
+		</attributeList>
 		<attributeList>assignedTo.name</attributeList>
-	</aggregateView>		
+	</aggregateView>
 </AggregateViews>

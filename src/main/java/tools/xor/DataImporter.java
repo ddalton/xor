@@ -71,7 +71,10 @@ public class DataImporter implements Callable
         try {
             // Begin a new transaction
             po.getSessionContext().beginTransaction();
-
+            
+            // Initial cleanup
+            po.getSessionContext().commit();
+            
             int i = 1;
             while (true) {
                 // Give a millisecond for the data to start flowing
@@ -89,6 +92,9 @@ public class DataImporter implements Callable
                 Type type = typeMapper.getShape().getType(entityName);
                 BusinessObject bo = new ImmutableBO(type, null, null, null);
                 bo.setInstance(json);
+                if(logger.isDebugEnabled()) {
+                    logger.debug("DataImporter#call json: " + json.toString());
+                }
                 po.getSessionContext().create(bo, settings, dataGenerator);
 
                 if (i++ % COMMIT_SIZE == 0) {

@@ -1460,8 +1460,13 @@ public abstract class AbstractProperty implements ExtendedProperty {
 	}
 
 	public void setGenerator(String incomingProperty, Generator generator) {
-		generator.validate(this);
-		this.generators.put(incomingProperty, generator);
+	    if(generator != null) {
+        		generator.validate(this);
+        		this.generators.put(incomingProperty, generator);
+	    } else {
+	        // clear the generator
+	        this.generators.remove(incomingProperty);
+	    }
 	}
 
 	public Generator getGenerator(String incomingProperty) {

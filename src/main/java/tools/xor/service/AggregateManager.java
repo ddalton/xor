@@ -1164,7 +1164,9 @@ public class AggregateManager implements Xor
 			// Get the persistent managed object
 			from = from.load(settings);
 
-			from.delete(settings);
+			if(from != null) {
+			    from.delete(settings);
+			}
 
 		} finally {
 			flushHandler.done();

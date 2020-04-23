@@ -403,6 +403,11 @@ public abstract class AbstractType implements EntityType {
 
 	@Override public void clearGenerators() {
 		this.entityGenerators.clear();
+		
+		// We also unset all the generators for the properties of this type
+		for(Property p: getProperties()) {
+		    ((ExtendedProperty)p).setGenerator(null);
+		}
 	}
 
 	protected Method getPolymorphicSetterMethod (String property)

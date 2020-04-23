@@ -1,17 +1,14 @@
+Failure in JPAMutableJsonTest#testChildrenMixTemp
 support paging and scrolling
-
-
-What is the need for getSourceClass and getTargetClass?
-Why do we need isExternal and isDomain?
-Why do we need createExternalType?
-why immutable?
-why isOpen?
-why isToExternal?
-
-getEntityKey and getSurrogateKey methods need to be moved to AbstractType and made static
+using JDBC to populate data
+2 tests:
+1. Paging (offset/skip, top/limit)
+2. Scrolling - order by columns and conditionally add depending on whether the token is set
 
 
 
+Test TO_ONE and TO_MANY using generator and JDBC for swagger schema
+Would have to additionally mark the identifier properties
 
 
 TODO: test with a complex SP, that retrieves multiple levels of an entity
@@ -32,28 +29,12 @@ also multi-lever
 
 NOTE - If using temp table, then the query needs to be run using a single JDBC connection to avoid data visibility issues
 1. Temp table support - Add test cases
-   - [DONE] setup temp table in Before annotation
-   - [DONE] drop temp table in After annotation
-   - [DONE] Basic test (OQL -> SQL) - Use view TASKCHILDRENMIXTEMP - refer to previous test using view TASKCHILDRENMIX
-     - test the insert is working
-     - test the join is working
-     - test the type selection is working (explicitly specified in SQL)
-   - [DONE] Call stored procedure (SP)
-   - [DONE] Advanced test #2 (SP -> SQL) 
-   - [DONE] test #2 (SQL -> SP) - Use TEMP table
-   - [DONE] Advanced test #3 (SP -> SP) - NOT populated TEMP table in first SP (less efficient)
-   - [DONE] Advanced test #4 (SP -> SP) - populated TEMP table in first SP (more efficient)
-   - [DONE] Advanced test #5 (OQL -> SP) - populates TEMP table in XOR
-   - [DONE] Advanced test #6 (Single SP, multiple view) - the single SP returns multiple result sets
    - Ensure we rollback so the temp table is cleared
    - Test with single id to SP - avoid using TEMP table in this case
-2. Alias and narrow support in the json query for AggregateView - Alias and narrow support does not make sense in TraversalView
 
 
 Bug - Why cannot child view with EntityType be expanded - JPAMutableJsonTest#readEmployeeNumber
     - AggregateView#expand currently returns if a child view has EntityType populated
-
-
 
 
 0. Parallel dispatcher implementation

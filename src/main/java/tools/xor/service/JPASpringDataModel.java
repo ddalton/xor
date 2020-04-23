@@ -48,9 +48,9 @@ public class JPASpringDataModel extends JPADataModel {
 	}
 	
     @Override
-    public PersistenceProvider getDataProvider() {
-        if(this.dataProvider == null) {
-            this.dataProvider = new PersistenceProvider() {
+    public PersistenceProvider getPersistenceProvider() {
+        if(super.getPersistenceProvider() == null) {
+            this.persistenceProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new JPASpringPO(sessionContext, data);
@@ -58,6 +58,6 @@ public class JPASpringDataModel extends JPADataModel {
             };
         }
         
-        return super.getDataProvider();
+        return this.persistenceProvider;
     }   	
 }

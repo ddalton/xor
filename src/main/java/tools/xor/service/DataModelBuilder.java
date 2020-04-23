@@ -38,4 +38,11 @@ public interface DataModelBuilder {
      * @return
      */
     DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory);    
+    
+    /**
+     * Returns a PersistenceProvider instance that is to be used with the DataModel created by the builder.
+     */
+    default PersistenceProvider getPersistenceProvider() {
+        return null;
+    }
 }

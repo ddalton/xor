@@ -44,9 +44,9 @@ public class JPAXmlDataModel extends JPADataModel {
 	}
 	
     @Override
-    public PersistenceProvider getDataProvider() {
-        if(this.dataProvider == null) {
-            this.dataProvider = new PersistenceProvider() {
+    public PersistenceProvider getPersistenceProvider() {
+        if(super.getPersistenceProvider() == null) {
+            this.persistenceProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new JPAPersistenceXMLPO(sessionContext, data);
@@ -54,7 +54,7 @@ public class JPAXmlDataModel extends JPADataModel {
             };
         }
         
-        return super.getDataProvider();
+        return this.persistenceProvider;
     }	
 
 	@Override

@@ -75,9 +75,9 @@ public class HibernateSpringDataModel extends HibernateDataModel {
 	}
     
     @Override
-    public PersistenceProvider getDataProvider() {
-        if(this.dataProvider == null) {
-            this.dataProvider = new PersistenceProvider() {
+    public PersistenceProvider getPersistenceProvider() {
+        if(super.getPersistenceProvider() == null) {
+            this.persistenceProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new HibernateSpringPO(sessionContext, data);
@@ -85,6 +85,6 @@ public class HibernateSpringDataModel extends HibernateDataModel {
             };
         }
         
-        return super.getDataProvider();
+        return this.persistenceProvider;
     }	
 }

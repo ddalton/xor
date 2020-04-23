@@ -37,7 +37,10 @@
 		<property name="dataModelBuilder" ref="jpabuilder" />
 	</bean>
 
-	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder" />
+	<bean id="jpapp" class="tools.xor.service.JPASpringProvider" />
+	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder">
+		<property name="persistenceProvider" ref="jpapp" />
+	</bean>
 
 	<!-- Association Strategy between aggregates -->
 	<bean id="associationStrategy" class="tools.xor.custom.TestAssociationStrategy" />
@@ -56,12 +59,12 @@
 	<bean id="swaggerbuilder" class="tools.xor.service.SwaggerSpringDataModelBuilder">
 		<property name="swaggerFiles">
 			<list>
-				<value>task-base.json</value>
-				<value>task-spi.json</value>
+				<value>project.json</value>
 			</list>
 		</property>
 
 		<property name="schemaAnchor" value="components/schemas" />
+		<property name="persistenceProvider" ref="jpapp" />
 	</bean>
 
 	<bean id="uctm" class="tools.xor.UnchangedTypeMapper" />

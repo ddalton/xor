@@ -59,7 +59,7 @@ public abstract class AbstractDataModel implements DataModel {
 	
 	protected TypeMapper          typeMapper;
 	protected DataModelFactory    dasFactory;
-    protected PersistenceProvider dataProvider;
+    protected PersistenceProvider persistenceProvider;
 	protected Map<String, Shape>  shapes; // Contains all the initialized shapes
 	private ThreadLocal<Shape>    activeShape = new ThreadLocal<Shape>(); // currently activated shape out of many shapes. This avoids having to keep track of the name of the shape
 
@@ -72,13 +72,16 @@ public abstract class AbstractDataModel implements DataModel {
 	}	
 	
 	@Override
-	public PersistenceProvider getDataProvider() {
-	    return this.dataProvider;
+	public PersistenceProvider getPersistenceProvider() {
+	    if(this.persistenceProvider == null) {
+	        this.persistenceProvider = this.dasFactory.getDataModelBuilder().getPersistenceProvider();
+	    }
+	    return this.persistenceProvider;
 	}
 	
 	@Override
-	public void setDataProvider(PersistenceProvider dp) {
-	    this.dataProvider = dp;
+	public void setPersistenceProvider(PersistenceProvider dp) {
+	    this.persistenceProvider = dp;
 	}
 	
     @Override

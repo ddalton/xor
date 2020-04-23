@@ -22,13 +22,48 @@ package tools.xor.service;
 import tools.xor.TypeMapper;
 
 public interface DataModelFactory {
+    /**
+     * Create the DataModel instance. This is the domain model.
+     * 
+     * @param typeMapper encapsulates mapping logic between an external and domain model
+     * @return DataModel instance.
+     */
 	DataModel create(TypeMapper typeMapper);
 
+	/**
+	 * Set the AggregateManager service corresponding to this DataModelFactory.
+	 * @param aggregateManager instance
+	 */
 	void setAggregateManager(AggregateManager aggregateManager);
 
+	/**
+	 * Return the AggregateManager instance corresponding to this DataMdoelFactory.
+	 * @return aggregateManager instance
+	 */
 	AggregateManager getAggregateManager();
 	
+	/**
+	 * Create the PersistenceOrchestrator for this DataModel. The PersistenceOrchestrator
+	 * encapsulates the interactions with a particular persistence manager (JDBC, JPA etc)
+	 * for this model.
+	 * 
+	 * @param sessionContext session related data
+	 * @return PersistenceOrchestrator instance
+	 */
 	PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext);
 	
+	/**
+	 * Used to inject dependencies for an object managed by a Dependency injection framework
+	 * such as Spring.
+	 * @param bean java object
+	 * @param name of the model
+	 */
 	void injectDependencies(Object bean, String name);
+	
+	/**
+	 * Return the builder for this model.
+	 * 
+	 * @return
+	 */
+	DataModelBuilder getDataModelBuilder();
 }

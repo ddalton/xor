@@ -55,6 +55,7 @@ public abstract class AbstractDataModelFactory implements DataModelFactory {
 		this.name = name;
 	}
 	
+	@Override
     public DataModelBuilder getDataModelBuilder() {
         return dataModelBuilder;
     }
@@ -112,7 +113,7 @@ public abstract class AbstractDataModelFactory implements DataModelFactory {
 			this.create(aggregateManager.getTypeMapper());
 		}
 		
-		result = models.get(name).getDataProvider().createPO(sessionContext, name);
+		result = models.get(name).getPersistenceProvider().createPO(sessionContext, name);
 
 		if(result != null)
 			injectDependencies(result, null);

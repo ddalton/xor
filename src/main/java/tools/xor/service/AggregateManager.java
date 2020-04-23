@@ -477,7 +477,11 @@ public class AggregateManager implements Xor
 				throw new RuntimeException(
 					"Unable to identify the type on which to perform the operation. Need to explicitly specify the domain type.");
 			}
-			settings.setEntityType(das.getShape().getType(domainClass.getName()));
+			Type entityType = das.getShape().getType(domainClass.getName());
+			if(entityType == null) {
+			    throw new RuntimeException("EntityType needs to be provided in the settings");
+			}
+			settings.setEntityType(entityType);
 			settings.init(das.getShape()); // populate the view from the type if necessary
 			owLogger.debug("Operation on Entity Type: " + settings.getEntityType().getName());
 			if (owLogger.isTraceEnabled()) {

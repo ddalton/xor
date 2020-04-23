@@ -25,6 +25,8 @@ import tools.xor.TypeMapper;
 
 @Component
 public class JPASpringDataModelBuilder implements DataModelBuilder {
+    
+    private PersistenceProvider persistenceProvider;
 
     /**
      * Build the DataModel and initialize it with the provided TypeMapper instance
@@ -34,4 +36,13 @@ public class JPASpringDataModelBuilder implements DataModelBuilder {
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
         return new JPASpringDataModel(typeMapper, name, dataModelFactory);
     }
+    
+    public void setPersistenceProvider(PersistenceProvider pp) {
+        this.persistenceProvider = pp;
+    }
+    
+    @Override
+    public PersistenceProvider getPersistenceProvider() {
+        return this.persistenceProvider;
+    }    
 }

@@ -151,17 +151,17 @@ public interface DataModel {
 	public void sync(Map<String, List<AggregateView>> avVersions);
 
 	/**
-	 * Returns the DataProvider associated with this DataModel.
+	 * Returns the PersistenceProvider associated with this DataModel.
 	 * The same DataModel should be able to work with different data providers.
-	 * @return DataProvider instance
+	 * @return PersistenceProvider instance
 	 */
-	PersistenceProvider getDataProvider();
+	PersistenceProvider getPersistenceProvider();
 	
 	/**
-	 * Set the DataProvider for this DataModel
-	 * @param dataProvider instance
+	 * Set the PersistenceProvider for this DataModel
+	 * @param PersistenceProvider instance
 	 */
-	void setDataProvider(PersistenceProvider dataProvider);
+	void setPersistenceProvider(PersistenceProvider persistenceProvider);
 
 	/**
 	 * Initialize the generators needed for data generating from an Excel file

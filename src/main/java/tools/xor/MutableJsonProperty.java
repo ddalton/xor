@@ -96,6 +96,10 @@ public class MutableJsonProperty extends ExternalProperty {
 	
 	@Override
 	public Converter getConverter() {
+	    // Get the default converter for simple types
+        if(this.converter == null && getType().isDataType() && !isMany()) {
+            this.converter = super.getConverter();
+        }	    
 	    return this.converter;
 	}
 }

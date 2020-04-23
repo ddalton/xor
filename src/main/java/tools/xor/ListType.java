@@ -19,12 +19,12 @@
 
 package tools.xor;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import tools.xor.util.graph.StateGraph;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.JSONObject;
+
+import tools.xor.util.graph.StateGraph;
 
 /**
  * @author Dilip Dalton

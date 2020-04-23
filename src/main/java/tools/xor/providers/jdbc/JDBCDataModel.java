@@ -618,9 +618,9 @@ public abstract class JDBCDataModel extends AbstractDataModel
     }
     
     @Override
-    public PersistenceProvider getDataProvider() {
-        if(this.dataProvider == null) {
-            this.dataProvider = new PersistenceProvider() {
+    public PersistenceProvider getPersistenceProvider() {
+        if(super.getPersistenceProvider() == null) {
+            this.persistenceProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
@@ -630,8 +630,8 @@ public abstract class JDBCDataModel extends AbstractDataModel
                 } 
             };
         }
-        
-        return super.getDataProvider();
+       
+        return this.persistenceProvider;
     }     
 }
 

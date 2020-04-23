@@ -29,9 +29,19 @@ import tools.xor.TypeMapper;
 @Component
 public class SwaggerSpringDataModelBuilder implements DataModelBuilder {
 
+    private PersistenceProvider persistenceProvider;
     private List<String> swaggerFiles = new ArrayList<>();
     private List<String> identifiers = new ArrayList<>();
     private String schemaAnchor; // the path where the schema is present in the JSON document
+    
+    public void setPersistenceProvider(PersistenceProvider pp) {
+        this.persistenceProvider = pp;
+    }
+    
+    @Override
+    public PersistenceProvider getPersistenceProvider() {
+        return this.persistenceProvider;
+    }  
     
     public List<String> getSwaggerFiles() {
         return this.swaggerFiles;

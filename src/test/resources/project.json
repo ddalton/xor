@@ -1,0 +1,42 @@
+{
+  "info": {
+    "title": "Project model",
+    "description": "This is a sample project model including tasks and owners",
+    "version": "1.0.1"
+  },
+  "components": {
+    "schemas": {
+      "Person": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Identifier property"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the person"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The display name of the person"
+          },
+          "iconUrl": {
+            "type": "string",
+            "description": "The profile picture for the person"
+          },
+          "detailedDescription": {
+            "type": "string",
+            "description": "A detailed description about the person"
+          },
+          "description": {
+            "type": "string",
+            "description": "A short description about the person"
+          }
+        },
+        "description": "The Person type"
+      }
+    }
+  }
+}

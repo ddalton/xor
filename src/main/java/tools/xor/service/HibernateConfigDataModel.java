@@ -53,9 +53,9 @@ public class HibernateConfigDataModel extends HibernateDataModel {
 	}
 	
 	@Override
-	public PersistenceProvider getDataProvider() {
-	    if(this.dataProvider == null) {
-	        this.dataProvider = new PersistenceProvider() {
+	public PersistenceProvider getPersistenceProvider() {
+        if(super.getPersistenceProvider() == null) {
+	        this.persistenceProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
                     return new HibernateConfigPO(sessionContext, data);
@@ -63,6 +63,6 @@ public class HibernateConfigDataModel extends HibernateDataModel {
 	        };
 	    }
 	    
-	    return super.getDataProvider();
+	    return this.persistenceProvider;
 	}
 }

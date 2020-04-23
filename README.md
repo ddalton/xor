@@ -1,9 +1,4 @@
-3 goals
-=======
-1. transform class (domain path in attribute, view name in attribute,
-        external path as value)
-2. Populate/create shape object from swagger.json
-3. DQOR - Get rid of QueryType & PropertyType. Instead use ExternalType & ExternalProperty.
+support paging and scrolling
 
 
 What is the need for getSourceClass and getTargetClass?
@@ -16,81 +11,6 @@ why isToExternal?
 getEntityKey and getSurrogateKey methods need to be moved to AbstractType and made static
 
 
-
-
-Big refactoring and getting ready for additional functionality
-==============================================================
-Attribute paths will now be refactored into
-  External
-  Domain
-
-External attribute paths refer to the scope of the object returned/sent to/from the user
-Domain attribute paths refer to the scope of the object retrieved/updated on thepersistent/interacted object/system
-
-   These attribute paths are of type AttributeMeta that contains few pieces of information. 
-   AliasHandler needs to be migrated to AttributeMeta
-
-What this refactoring does is, gets us ready to be more flexible. The following
-transformation can be supported which makes it very powerful:
-
-  External Object Shape <-> Relational model <-> Domain Object shape
-
-It allows us to convert from one object model to another seamlessly.
-
-Couple of powerful examples:
-
-  1.               (External shape) 
-       Object model  <------->  relational
-       Domain shape does not need to be specified. Straight forward use case
-       Examples:
-       SQL/OQL/SP to Object uses reconstitution using id
-
-  2.               (External shape)       (Domain shape) 
-       Object model  <------->  relational  <------->  Object model
-       More complex case - Allows transformation from one object model to
-       another using the relational model as the normalized form.
-       From a performance perspective, we don't allow the Domain shape to contain 2 parallel TO_MANY relationships in order to avoid
-       a cartesian join, when converting to the relational nromalized form.
-       Examples:
-          reconstitution using id <-> object to relational conversion <-> (optional) xpath selection 
-
-NOTE: In most cases - Using the relational model as the normalized form is for query operation. For create/update operation the domain object is directly modifie.
-
-
-
-What is a persistenceorchestrator - Has details on interacting with the database (is associated with the JDBC connection, Hibernate session etc)
-
-Should not store the persistence orchestrator in the settings object, but it should be stored in the DAS object as a thread local object
-
-Instead the settings object should have the DASFactory instance configured for the aggregate manager
-   - The persistenceorchestrator should be created and set on the DAS instance given the DAS name or the default name if one is not provided
-
-Add the das name to the view
-
-update AggregateManager#dbInit to take the dasName
-
-store the PersistenceOrachestrator in the DAS instance and not the AggregateManager
-
-
-
-
-1. Set dasname in view and child views. So DQOR (Dynamic Query Object Reconstitution)
-   can create a single object out of multiple persistence systems.
-   i.e., support different PersistenceOrchestrator for different child views in a view
-   DASFactory will then have the default das name
-   AggregateManager will need to be passed all around (put in settings object)
-     - DASFactory needs to be updated to have
-       create -> getDAS() { getDAS(this.name) }
-       getDAS(name) - creates if not created & retrieves the DAS instance with name 'name'
-2. Complete DefaultQueryShape
-   - Need generator using domain shape to populate data
-   - Create QueryShape to test DQOR
-3. Complete test of multiple child views with its own queries
-4. Test 2 child views, each referring to a differnt DAS
-5. Test view referring to other views
-6. include/skip functionality - currently supported for include/skip child view(s)
-   This can in the future be expanded to a single view and skipping portions of
-   the user provided query. But that would entail a restructuring of the view data type.
 
 
 

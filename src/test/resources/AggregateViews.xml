@@ -155,6 +155,9 @@
 			<function type="FREESTYLE" scope="NOTROOT">
 				<args>WHERE UUID IN (^PLACEHOLDER^)</args>
 			</function>
+            <function type="FREESTYLE">
+                <args> AND NAME > :ORDER_BY_startName ASC AND UUID > :ORDER_BY_startId ASC</args>
+            </function>			
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
@@ -191,12 +194,17 @@
                                 description,
                                 iconUrl,
                                 detailedDescription
-                            FROM tools.xor.db.pm.Task
-                          ORDER BY id]]>
+                            FROM tools.xor.db.pm.Task]]>
             </selectClause>
             <function type="FREESTYLE">
                 <args>WHERE id = :ID_</args>
             </function>
+            <function type="FREESTYLE" include="page">
+                <args> ORDER BY id ASC</args>
+            </function>             
+            <function type="FREESTYLE" include="scroll">
+                <args>WHERE NAME > :ORDER_BY_startName AND UUID > :ORDER_BY_startId ORDER BY NAME, UUID</args>
+            </function>             
         </userOQLQuery>
     </aggregateView>	
 	<aggregateView>

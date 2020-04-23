@@ -68,16 +68,12 @@ public class QueryStringHelper
     {
 
         StringBuilder result = new StringBuilder("");
-
-        Map<String, Object> userParams = settings.getParams();
         List<Function> consolidatedFunctions = getFreestyleFunctions(settings, functions);
 
         for (Function function : consolidatedFunctions) {
-
-            // Filter is skipped
-            if (!function.isFilterIncluded(userParams))
+            if(!Function.doProcess(function, settings)) {
                 continue;
-
+            }
             result.append(function.getQueryString());
         }
 
@@ -101,6 +97,9 @@ public class QueryStringHelper
             // Check if the function is applicable based on root criteria
             if( (function.getScope() == FunctionScope.ROOT && !isRoot) ||
                 (function.getScope() == FunctionScope.NOTROOT && isRoot) ) {
+                continue;
+            }
+            if(!Function.doProcess(function, settings)) {
                 continue;
             }
 

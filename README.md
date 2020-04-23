@@ -1,12 +1,3 @@
-Failure in JPAMutableJsonTest#testChildrenMixTemp
-support paging and scrolling
-using JDBC to populate data
-2 tests:
-1. Paging (offset/skip, top/limit)
-2. Scrolling - order by columns and conditionally add depending on whether the token is set
-
-
-
 Test TO_ONE and TO_MANY using generator and JDBC for swagger schema
 Would have to additionally mark the identifier properties
 

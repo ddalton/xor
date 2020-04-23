@@ -327,7 +327,7 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
             throw new IllegalStateException("Direct addition of query condition is prohibited from Settings");
         }
 
-        Function newFunction = new Function(name, type, FunctionScope.ANY, position, args);
+        Function newFunction = new Function(name, type, FunctionScope.ANY, position, args, null);
         this.function.add(newFunction);
 
         return newFunction;

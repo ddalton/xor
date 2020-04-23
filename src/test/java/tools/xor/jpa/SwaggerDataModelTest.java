@@ -22,7 +22,9 @@ package tools.xor.jpa;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -147,6 +149,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             DataModel model = amSwagger.getModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);
+            Map<String, Object> userParams = new HashMap<>();
+            userParams.put("page", null);
+            settings.setParams(userParams);
             
             // Get the first page
             settings.setOffset(0);
@@ -186,6 +191,71 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     
     @Test
     public void testScrolling() {
-        
+        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if (shape == null) {
+            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+        JDBCType task = (JDBCType) shape.getType("TASK");
+        task.clearGenerators();
+
+        Generator rootidgen = new StringTemplate(new String[] { "ID_[VISITOR_CONTEXT]" });
+        ExtendedProperty rootid = (ExtendedProperty) task.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        Generator namegen = new StringTemplate(new String[] { "NAME_[VISITOR_CONTEXT]" });
+        ExtendedProperty namep = (ExtendedProperty) task.getProperty("NAME");
+        namep.setGenerator(namegen);
+        ExtendedProperty dtype = (ExtendedProperty) task.getProperty("DTYPE");
+        Generator dtypegen = new DefaultGenerator(new String[] { "Task" });
+        dtype.setGenerator(dtypegen);
+
+        // create 200 tasks with a page size of 25
+        // We start at 10000 to avoid any conflict with existing data created by tests
+        // that did not cleanup properly
+        CounterGenerator gensettings = new CounterGenerator(200, 10000);
+        task.addGenerator(gensettings);
+
+        String[] types = new String[] { "TASK" };
+
+        Settings settings = new Settings();
+        // settings.setImportMethod(ImportMethod.CSV);
+        Transaction tx = amJDBC.createTransaction(settings);
+        tx.begin();
+        try {
+            amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+
+            // read page 1
+            settings = new Settings();
+            settings.setView(amSwagger.getView("BASICINFO_OQL_SORT"));
+            DataModel model = amSwagger.getModel();
+            Type taskType = model.getShape().getType("Task");
+            settings.setEntityType(taskType);
+            Map<String, Object> userParams = new HashMap<>();
+            userParams.put("scroll", null);
+            settings.setParams(userParams);
+            
+            // Get the first page
+            settings.setLimit(25);            
+            List<?> toList = amSwagger.query(null, settings);
+            assert (toList.size() == 25);
+            JSONObject first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_10000"));
+
+            // Get the second page
+            Map<String, Object> nextToken = new HashMap<>();
+            nextToken.put("startName", "NAME_10035");
+            nextToken.put("startId", "ID_10035");    
+            settings.setNextToken(nextToken);
+            toList = amSwagger.query(null, settings);
+            assert (toList.size() == 25);
+            first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_10036"));            
+            
+        } finally {
+
+            deleteTaskEntries();
+            tx.rollback();
+            // We don't close as the connection belongs to Spring
+        }        
     }
 }

@@ -75,6 +75,7 @@ import tools.xor.view.BindParameter;
 import tools.xor.view.Function;
 import tools.xor.view.NativeQuery;
 import tools.xor.view.ObjectResolver;
+import tools.xor.view.QueryFragment;
 import tools.xor.view.View;
 import tools.xor.view.ViewType;
 
@@ -811,7 +812,7 @@ public class Settings {
 			throw new IllegalStateException("Direct addition of query condition is prohibited from Settings");
 		}
 
-		Function newFunction = new Function(name, type, FunctionScope.ANY, position, args);
+		Function newFunction = new Function(name, type, FunctionScope.ANY, position, args, null);
 		this.additionalFunctions.add(newFunction);
 
 		return newFunction;
@@ -840,6 +841,20 @@ public class Settings {
 
 	public void setNextToken(Map<String, Object> nextToken) {
 		this.nextToken = nextToken;
+	}
+	
+	public Set<String> getAllParameters() {
+	    Set<String> params = new HashSet<>();
+	    
+	    params.addAll(this.params.keySet());
+	    
+	    if(this.nextToken != null) {
+	        for(String tokenName: this.nextToken.keySet()) {
+	            params.add(QueryFragment.NEXTTOKEN_PARAM_PREFIX + tokenName);
+	        }
+	    }
+	    
+	    return params;
 	}
 
 	public Integer getLimit() {

@@ -19,6 +19,7 @@
 
 package tools.xor.view;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +47,9 @@ public class Function implements Comparable<Function> {
 
 	@XmlAttribute
 	protected String name; // Used in comparison and custom functions
+	
+    @XmlAttribute
+    protected String include; // refers to a user provided parameter. If present, this function is included	
 
 	@XmlAttribute(required = true)
 	protected FunctionType type;
@@ -65,15 +69,16 @@ public class Function implements Comparable<Function> {
 	}
 
 	public Function (Function f) {
-		this(f.name, f.type, f.scope, f.position, f.args);
+		this(f.name, f.type, f.scope, f.position, f.args, f.include);
 	}
 	
-	public Function (String name, FunctionType type, FunctionScope scope, int position, List<String> args) {
+	public Function (String name, FunctionType type, FunctionScope scope, int position, List<String> args, String include) {
 		this.name = name;
 		this.type = type;
 		this.scope = scope;
 		this.args = args;
 		this.position = position;
+		this.include = include;
 
 		init();
 	}	
@@ -176,35 +181,62 @@ public class Function implements Comparable<Function> {
 
 		return all;
 	}
+	
+    /**
+     * Checks to see if a filter is relevant for this query based on the input parameters
+     * 
+     * @param userParams user supplied parameter values
+     * @return true if filter is included
+     */	
+	private boolean isFilterIncluded(Set<String> inputParams) {
+	    inputParams = new HashSet<>(inputParams);
+	    inputParams.add(QueryFragment.PARENT_INVOCATION_ID_PARAM);
+	    
+        for(String parameterName: functionHandler.getParameters()) {
+            if(!inputParams.contains(Settings.encodeParam(parameterName)) ) { // parameter is not set
+                return false;
+            }
+        }
+        
+        if(this.include != null && !inputParams.contains(this.include)) {
+            return false;
+        }
+        
+        return true;
+	}
 
 	/**
-	 * Checks to see if a filter is relevant for this query based on the input parameters
-	 * 
-	 * @param userParams user supplied parameter values
-	 * @return true if filter is included
+	 * Enhances the user supplied parameter with new values based on the result of the transformation
+	 * @param userParams user provided parameters, that may be modified 
 	 */
-	public boolean isFilterIncluded(Map<String, Object> userParams) {
+	private void enhanceUserParams(Map<String, Object> userParams) {
 		
 		for(String parameterName: functionHandler.getParameters()) {
-			if(!userParams.containsKey(Settings.encodeParam(parameterName)) ) { // parameter is not set
-				return false;
-			} else {
-				String key = Settings.encodeParam(parameterName);
-				Object transformedValue = functionHandler.getTransformation(userParams.get(Settings.encodeParam(key)));
-				if(transformedValue != null) {
-					// since the value is changed, we need to refer to it using a new parameter
-					String uniqueSuffix = RandomStringUtils.randomAlphanumeric(5).toUpperCase();
-					key = key + Settings.URI_PATH_DELIMITER + uniqueSuffix;
-					userParams.put(key, transformedValue);
+			String key = Settings.encodeParam(parameterName);
+			Object transformedValue = functionHandler.getTransformation(userParams.get(Settings.encodeParam(key)));
+			if(transformedValue != null) {
+				// since the value is changed, we need to refer to it using a new parameter
+				String uniqueSuffix = RandomStringUtils.randomAlphanumeric(5).toUpperCase();
+				key = key + Settings.URI_PATH_DELIMITER + uniqueSuffix;
+				userParams.put(key, transformedValue);
 
-					// We now have to update the parameter name with the modified parameter name
-					// so the function can use the modfied value
-					functionHandler.updateParamName(parameterName, key);
-				}
+				// We now have to update the parameter name with the modified parameter name
+				// so the function can use the modfied value
+				functionHandler.updateParamName(parameterName, key);
 			}
 		}
-
-		return true;
+	}
+	
+	public static boolean doProcess(Function function, Settings settings) {
+        // Filter is skipped
+        if(!function.isFilterIncluded(settings.getAllParameters())) {
+            return false;
+        }
+        
+        // Enhance user provided parameters if necessary
+        function.enhanceUserParams(settings.getParams());
+        
+        return true;
 	}
 
 	public FunctionHandler getHandler() {

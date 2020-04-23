@@ -192,7 +192,6 @@ public class QueryFromFragments implements QueryBuilderStrategy
     }
 
     protected void checkAndAddFilters(StringBuilder queryString, Settings settings, List<Function> consolidatedFunctions) {
-        Map<String, Object> userParams = settings.getParams();
 
         for(Function function : consolidatedFunctions) {
 
@@ -200,10 +199,9 @@ public class QueryFromFragments implements QueryBuilderStrategy
             if(function.isOrderBy() || !function.isRelevant()) {
                 continue;
             }
-
-            // Filter is skipped
-            if(!function.isFilterIncluded(userParams))
+            if(!Function.doProcess(function, settings)) {
                 continue;
+            }
 
             addWhereStep(queryString);
             queryString.append(function.getQueryString());

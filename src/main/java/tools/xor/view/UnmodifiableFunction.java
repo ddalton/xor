@@ -55,11 +55,6 @@ public class UnmodifiableFunction extends Function
         return function.getAttribute();
     }
 
-    public boolean isFilterIncluded (Map<String, Object> originalFilters)
-    {
-        return function.isFilterIncluded(originalFilters);
-    }
-
     public int getPositionalParamCount() {
         return function.getPositionalParamCount();
     }

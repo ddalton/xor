@@ -143,16 +143,25 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
 
             // read page 1
             settings = new Settings();
-            settings.setOffset(0);
-            settings.setLimit(25);
             settings.setView(amSwagger.getView("BASICINFO_OQL_SORT"));
             DataModel model = amSwagger.getModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);
-            List<?> toList = amSwagger.query(null, settings);
             
-            System.out.println("SWAGGERTEST: " + toList.size());
+            // Get the first page
+            settings.setOffset(0);
+            settings.setLimit(25);            
+            List<?> toList = amSwagger.query(null, settings);
             assert (toList.size() == 25);
+            JSONObject first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_10000"));
+
+            // Get the second page
+            settings.setOffset(25);
+            toList = amSwagger.query(null, settings);
+            assert (toList.size() == 25);
+            first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_10025"));            
             
         } finally {
 

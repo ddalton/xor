@@ -261,4 +261,14 @@ public class ExternalType extends AbstractType {
         
         this.parentTypes.add((ExternalType) value);
     }	
+    
+    @Override
+    public EntityType getParentType() {
+
+        if(this.parentTypes.size() == 1) {
+            return this.parentTypes.get(0);
+        }
+
+        return super.getParentType();
+    }    
 }

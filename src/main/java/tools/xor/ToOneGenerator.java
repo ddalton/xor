@@ -19,13 +19,11 @@
 
 package tools.xor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
-
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Use this if the parent needs to be generated.

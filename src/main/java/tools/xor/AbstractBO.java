@@ -954,14 +954,6 @@ public abstract class AbstractBO implements BusinessObject {
 
 				//System.out.println("propertyDO class: " + propertyDO.getClass() + ", property: " + property.getName());
 				propertyDO = createQueryObject(propertyDO, current, fullPropertyPath, null, null, property.getType(), property, getAnchor(anchor.toString()), qti);
-				/*
-				if(propertyDO == null) { // create and set the collection/map object
-					propertyDO = current.createDataObject(null, property.getType(), property, getAnchor(
-							anchor.toString()));
-				} else if(!BusinessObject.class.isAssignableFrom(propertyDO.getClass())) {
-					propertyDO = objectCreator.createDataObject(propertyDO, property.getType(), current, property, getAnchor(anchor.toString()));
-				}
-				*/
 
 				((ExtendedProperty)property).setValue(current, ((BusinessObject)propertyDO).getInstance());
 				current = (BusinessObject) propertyDO;
@@ -970,6 +962,17 @@ public abstract class AbstractBO implements BusinessObject {
 				// Get the identifier value from the collection element
 				Type elementType = ((ExtendedProperty)property).getElementType();
 				Type domainElementType = ((ExtendedProperty)domainProperty).getElementType();
+				
+				// Is this a collection of simple values
+                if(elementType.isDataType() ) {
+                    // Currently supported only for JSON types
+                    if(current.getInstance() instanceof JSONArray) {
+                        // add it in the order we see it
+                        JSONArray jsonArray = (JSONArray) current.getInstance();  
+                        jsonArray.put(propertyResult.get(fullPropertyPath));
+                    }
+                    return;
+                }
 				
 				// Get by the natural key if there is one
 				Map<String, Object> naturalKeyValues = new HashMap<String, Object>();	

@@ -112,7 +112,15 @@
               },
               "assignedTo": {
                 "$ref": "#/components/schemas/Person"
-              }              
+              },
+              "subTasks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "description": "A list of subtask names"
+              }	      
             }
           }
         ],

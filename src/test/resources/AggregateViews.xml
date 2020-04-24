@@ -225,7 +225,30 @@
                 <args>WHERE id = :ID_</args>
             </function>
         </userOQLQuery>
-    </aggregateView>    
+    </aggregateView>   
+         <aggregateView>
+        <name>BASICINFO_TO_MANY_ENTITY_OQL</name>
+        <attributeList>[BASICINFO]</attributeList>
+        <attributeList>childTasks.id</attributeList>
+        <attributeList>childTasks.name</attributeList> 
+        <userOQLQuery>
+            <selectClause>
+                <![CDATA[SELECT t.id,
+                                t.name,
+                                t.displayName,
+                                t.description,
+                                t.iconUrl,
+                                t.detailedDescription,
+                                st.id,
+                                st.name
+                            FROM tools.xor.db.pm.Task t
+                            LEFT OUTER JOIN t.taskChildren st]]>
+            </selectClause>
+            <function type="FREESTYLE">
+                <args>WHERE id = :ID_</args>
+            </function>
+        </userOQLQuery>
+    </aggregateView>  
     <aggregateView>
         <name>BASICINFO_OQL_SORT</name>
         <attributeList>[BASICINFO]</attributeList>

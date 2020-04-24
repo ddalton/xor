@@ -422,6 +422,77 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     
     @Test
     public void testToManyEntity() {
-        
+        // First create a task with 100 children
+        // We use the generators to create this data
+        // This data is committed by the generators
+
+        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if(shape == null) {
+            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+
+        JDBCType task = (JDBCType)shape.getType("TASK");
+        task.clearGenerators();
+
+        ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+        Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
+        taskparent.setGenerator(parentgen);
+        Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+        ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+        ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+        namep.setGenerator(namegen);
+        ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+        Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+        dtype.setGenerator(dtypegen);
+
+        ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
+                                                                    "0,0:0", // root task
+                                                                    "1,100:100" // root task with 100 children
+        });
+
+        // 101 is the total number of tasks. 1 root task and 100 child tasks
+        CounterGenerator gensettings = new CounterGenerator(101);
+        gensettings.addListener(toonegen);
+        task.addGenerator(gensettings);
+        gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+                (GeneratorRecipient)parentgen));
+
+        String[] types = new String[] {
+            "TASK"
+        };
+
+        Settings settings = new Settings();
+        //settings.setImportMethod(ImportMethod.CSV);
+        Transaction tx = amJDBC.createTransaction(settings);
+        tx.begin();
+        try {
+            // Generate the tasks in the DB
+            amJDBC.generate(shape.getName(), Arrays.asList(types), settings);  
+            
+            // Query using OQL
+            settings = new Settings();
+            settings.setView(aggregateService.getView("BASICINFO_TO_MANY_ENTITY_OQL"));
+            DataModel model = amSwagger.getModel();
+            Type taskType = model.getShape().getType("Task");
+            settings.setEntityType(taskType);  
+            
+            List<?> result = amSwagger.query(null, settings);
+            assert(result.size() == 101);
+            // The first element has 100 subtasks
+            JSONObject first = (JSONObject) result.get(0);
+            JSONArray subTasks = first.getJSONArray("childTasks");
+            assert(subTasks.length() == 100);
+            JSONObject firstSubTask = subTasks.getJSONObject(0);
+            assert(firstSubTask.get("name").equals("NAME_1"));
+            
+        } finally {
+
+            deleteEntries();
+            tx.rollback();
+            // We don't close as the connection belongs to Spring
+        }            
     }    
 }

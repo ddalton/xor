@@ -393,4 +393,8 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
 				}
 			});
 	}
+	
+    public boolean isManaged(Class<?> clazz) {
+        return getEntityManagerFactory().getMetamodel().entity(clazz) != null;
+    }	
 }

@@ -61,7 +61,7 @@ public class QueryFromSQL implements QueryBuilderStrategy
             PersistenceOrchestrator.QueryType.SQL,
             nativeQuery);
 
-        handle.setParams(relevantParams);
+        handle.setBindParams(relevantParams);
 
         // Initialized the selected columns
         nativeQuery.deriveColumns(this.queryTree, handle, settings, this.aggregateTree, this.view);

@@ -19,10 +19,6 @@
 
 package tools.xor.view;
 
-import tools.xor.FunctionScope;
-
-import java.util.Map;
-
 public class UnmodifiableFunction extends Function
 {
     private Function function;

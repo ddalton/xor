@@ -85,7 +85,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         
         // add a date field, big decimal field, boolean field
 
-        aggregateService.create(person, new Settings());
+        person = (Person) aggregateService.create(person, new Settings());
 
         // read the person object using a DataObject
         Settings settings = new Settings();
@@ -170,19 +170,20 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             
         } finally {
 
-            deleteTaskEntries();
+            deleteEntries();
             tx.rollback();
             // We don't close as the connection belongs to Spring
         }
 
     }
     
-    private void deleteTaskEntries() {
+    private void deleteEntries() {
         JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) amJDBC.getPersistenceOrchestrator();
         JDBCSessionContext sc = po.getSessionContext();
 
         try (Statement stmt = sc.getConnection().createStatement()) {
             stmt.execute("DELETE from TASK");
+            stmt.execute("DELETE from PERSON");
             sc.getConnection().commit();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -253,9 +254,101 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             
         } finally {
 
-            deleteTaskEntries();
+            deleteEntries();
             tx.rollback();
             // We don't close as the connection belongs to Spring
         }        
     }
+    
+    @Test
+    public void testToOne() {
+        // Hibernate: insert into Person (createdBy_UUID, createdOn, updatedBy_UUID, updatedOn, version, description, detailedDescription, displayName, iconUrl, isCriticalSystemObject, name, objectId, commonName, email, password, photo, userName, UUID)
+        
+        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if (shape == null) {
+            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+        // Task
+        
+        JDBCType task = (JDBCType) shape.getType("TASK");
+        task.clearGenerators();
+
+        Generator rootidgen = new StringTemplate(new String[] { "ID_[VISITOR_CONTEXT]" });
+        ExtendedProperty rootid = (ExtendedProperty) task.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        Generator namegen = new StringTemplate(new String[] { "NAME_[VISITOR_CONTEXT]" });
+        ExtendedProperty namep = (ExtendedProperty) task.getProperty("NAME");
+        namep.setGenerator(namegen);
+        ExtendedProperty dtype = (ExtendedProperty) task.getProperty("DTYPE");
+        Generator dtypegen = new DefaultGenerator(new String[] { "Task" });
+        dtype.setGenerator(dtypegen);
+        ExtendedProperty assignedTo = (ExtendedProperty) task.getProperty("ASSIGNEDTO_UUID");
+        assignedTo.setGenerator(rootidgen);        
+        
+        // create 200 tasks with a page size of 25
+        // We start at 10000 to avoid any conflict with existing data created by tests
+        // that did not cleanup properly
+        CounterGenerator gensettings = new CounterGenerator(200, 10000);
+        task.addGenerator(gensettings);
+        
+        
+        // Person
+        JDBCType person = (JDBCType) shape.getType("PERSON");
+        person.clearGenerators();   
+        
+        rootidgen = new StringTemplate(new String[] { "ID_[VISITOR_CONTEXT]" });
+        rootid = (ExtendedProperty) person.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        namegen = new StringTemplate(new String[] { "USERNAME_[VISITOR_CONTEXT]" });
+        namep = (ExtendedProperty) person.getProperty("NAME");
+        namep.setGenerator(namegen);  
+        gensettings = new CounterGenerator(200, 10000);
+        person.addGenerator(gensettings);        
+
+        String[] types = new String[] { "PERSON", "TASK" };
+        Settings settings = new Settings();
+        // settings.setImportMethod(ImportMethod.CSV);
+        Transaction tx = amJDBC.createTransaction(settings);
+        tx.begin();
+        try {
+            amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+
+            
+            // Update swagger
+            // Create view with assignedTo relationship
+            
+            // read page 1
+            settings = new Settings();
+            settings.setView(amSwagger.getView("BASICINFO_TO_ONE_OQL"));
+            DataModel model = amSwagger.getModel();
+            Type taskType = model.getShape().getType("Task");
+            settings.setEntityType(taskType);
+            
+            // Get the first page
+            settings.setLimit(25);            
+            List<?> toList = amSwagger.query(null, settings);
+            assert (toList.size() == 25);
+            JSONObject first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_10000"));
+            JSONObject assignedToJson = first.getJSONObject("assignedTo");
+            assert(assignedToJson.get("name").equals("USERNAME_10000"));
+
+        } finally {
+
+            deleteEntries();
+            tx.rollback();
+            // We don't close as the connection belongs to Spring
+        }            
+    }
+    
+    @Test
+    public void testToManyEntity() {
+        
+    }
+    
+    @Test
+    public void testToManySimple() {
+        
+    }    
 }

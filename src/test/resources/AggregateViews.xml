@@ -184,6 +184,28 @@
 		</userOQLQuery>
 	</aggregateView>
     <aggregateView>
+        <name>BASICINFO_TO_ONE_OQL</name>
+        <attributeList>[BASICINFO]</attributeList>
+        <attributeList>assignedTo.name</attributeList>
+        <attributeList>assignedTo.id</attributeList> 
+        <userOQLQuery>
+            <selectClause>
+                <![CDATA[SELECT id,
+                                name,
+                                displayName,
+                                description,
+                                iconUrl,
+                                detailedDescription,
+                                assignedTo.name,
+                                assignedTo.id
+                            FROM tools.xor.db.pm.Task]]>
+            </selectClause>
+            <function type="FREESTYLE">
+                <args>WHERE id = :ID_</args>
+            </function>
+        </userOQLQuery>
+    </aggregateView>		
+    <aggregateView>
         <name>BASICINFO_OQL_SORT</name>
         <attributeList>[BASICINFO]</attributeList>
         <userOQLQuery>

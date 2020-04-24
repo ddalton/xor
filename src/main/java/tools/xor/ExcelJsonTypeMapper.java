@@ -30,14 +30,14 @@ public class ExcelJsonTypeMapper extends MutableJsonTypeMapper {
         super();
     }   
     
-    public ExcelJsonTypeMapper(DataModel das, MapperSide side, String shapeName) 
+    public ExcelJsonTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) 
     {
-        super(das, side, shapeName);
+        super(das, side, shapeName, persistenceManaged);
     }    
 
 	@Override
-	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
-		return new ExcelJsonTypeMapper(das, side, shapeName);
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+		return new ExcelJsonTypeMapper(das, side, shapeName, persistenceManaged);
 	}
 	
 	@Override

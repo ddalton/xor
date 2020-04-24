@@ -19,26 +19,6 @@
 
 package tools.xor;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import tools.xor.operation.DenormalizedQueryOperation;
-import tools.xor.operation.QueryOperation;
-import tools.xor.operation.ReadOperation;
-import tools.xor.service.DataModel;
-import tools.xor.service.Shape;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.Constants;
-import tools.xor.util.Edge;
-import tools.xor.util.IntraQuery;
-import tools.xor.util.ObjectCreator;
-import tools.xor.util.State;
-import tools.xor.util.graph.TypeGraph;
-import tools.xor.view.QueryFragment;
-import tools.xor.view.QueryTree;
-import tools.xor.view.QueryTreeInvocation;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,8 +27,26 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import tools.xor.operation.DenormalizedQueryOperation;
+import tools.xor.operation.QueryOperation;
+import tools.xor.operation.ReadOperation;
+import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
+import tools.xor.util.Edge;
+import tools.xor.util.ObjectCreator;
+import tools.xor.util.State;
+import tools.xor.util.graph.TypeGraph;
+import tools.xor.view.QueryFragment;
+import tools.xor.view.QueryTree;
+import tools.xor.view.QueryTreeInvocation;
 
 public abstract class AbstractBO implements BusinessObject {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
@@ -720,7 +718,7 @@ public abstract class AbstractBO implements BusinessObject {
 		// This is done only for the query operation that retrieves managed objects
 		if(instanceType == null)
 			logger.error("!!!!! instanceType is null for object id: " + id);
-		if(oc.isReadOnly() && oc.getTypeMapper().isDomain(instanceType.getInstanceClass()) && !instanceType.isDataType()) {
+		if(oc.isReadOnly() && oc.getTypeMapper().isDomain(instanceType.getInstanceClass()) && oc.getTypeMapper().isPersistenceManaged() && !instanceType.isDataType()) {
 			propertyInstance = oc.getPersistenceOrchestrator().getCached(instanceType.getInstanceClass(), id);
 			
 			if(propertyInstance != null) {

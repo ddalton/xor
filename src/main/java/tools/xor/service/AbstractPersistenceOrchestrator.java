@@ -78,7 +78,7 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 	@Override
 	public boolean supportsVersionTracking() {
 		return true;
-	}	
+	}
 	
 	@Override
 	public boolean canProcessAggregate() {
@@ -445,4 +445,8 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 
 	@Override
 	public void initForQuery() {}
+	
+    public boolean isManaged(Class<?> clazz) {
+        return false;
+    }
 }

@@ -256,7 +256,7 @@ public interface PersistenceOrchestrator {
      * @param settings containing migrate view details
      * @return results scroll object
      */
-    public EntityScroll getEntityScroll(AggregateManager source, AggregateManager target, Settings settings);
+    EntityScroll getEntityScroll(AggregateManager source, AggregateManager target, Settings settings);
 
     /**
      * Used to migrate database entities from the source to target database.
@@ -267,7 +267,7 @@ public interface PersistenceOrchestrator {
      * @param queueSize used to configure the buffering needed for the migration
      * @return MigrateOperation specific to the target ORM provider
      */
-    public MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize);
+    MigrateOperation getMigrateOperation(AggregateManager source, AggregateManager target, Integer queueSize);
 
     /**
      * Retrieve provider specific OQL join fragment
@@ -275,14 +275,14 @@ public interface PersistenceOrchestrator {
      * @param joinEdge representing the associated property being retrieved
      * @return join fragment
      */
-    public String getOQLJoinFragment(QueryTree queryTree, IntraQuery<QueryFragment> joinEdge);
+    String getOQLJoinFragment(QueryTree queryTree, IntraQuery<QueryFragment> joinEdge);
 
     /**
      * Provider specific construct to control polymorphic object retrieval
      * @param type whose retrieval of subclasses we would like to control
      * @return provider specific polymorphic controls for a class
      */
-    public String getPolymorphicClause(Type type);
+    String getPolymorphicClause(Type type);
 
     /**
      * Invoked as part of the migrate operation, to persist the surrogate key id mapping between
@@ -293,7 +293,7 @@ public interface PersistenceOrchestrator {
      * @param surrogateKeyMap map of the surrogate key values between the source and migrated instances
      *                        in a migration batch
      */
-    public void persistSurrogateMap(Map<String, String> surrogateKeyMap);
+    void persistSurrogateMap(Map<String, String> surrogateKeyMap);
 
     /**
      * Using the migrated Id map information on the target database, the map of the
@@ -303,7 +303,7 @@ public interface PersistenceOrchestrator {
      *              the relationships before it is processed and saved in the target database.
      * @param settings has details on the meta data
      */
-    public void fixRelationships(List<JSONObject> batch, Settings settings);
+    void fixRelationships(List<JSONObject> batch, Settings settings);
 
     /**
      * Query the target database in a migration and find the migrated surrogate id values.
@@ -312,13 +312,13 @@ public interface PersistenceOrchestrator {
      *                           corresponding migrated surrogate ids
      * @return map of source and migrated surrogate ids
      */
-    public Map<String, String> findMigratedSurrogateIds(Set<String> sourceSurrogateIds);
+    Map<String, String> findMigratedSurrogateIds(Set<String> sourceSurrogateIds);
 
     /**
      * We need an active JDBC connection for queries. But we do not need any
      * transaction overhead
      */
-    public void initForQuery();
+    void initForQuery();
 
     /**
      * populate the global temporary table - this data is later used by child queries or
@@ -335,4 +335,11 @@ public interface PersistenceOrchestrator {
 	 *                     If null, then a default size of 36 is used.
 	 */
 	void createQueryJoinTable(Integer stringKeyLen);
+	
+	/**
+	 * Does this class interact with the persistence store and/or is managed by it
+	 * @param clazz java class name
+	 * @return true/false
+	 */
+	boolean isManaged(Class<?> clazz);
 }

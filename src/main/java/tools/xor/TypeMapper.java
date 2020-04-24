@@ -145,9 +145,10 @@ public interface TypeMapper {
      * @param das DataAccessService instance for this type mapper
      * @param direction value
      * @param shapeName name of the domain shape that this mapper is based on
+     * @param persistenceManaged true if the model is managed by a persistence provider
      * @return typemapper instance
      */
-    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName);       
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged);       
 
 	/**
 	 * Check if the given class is in its external form
@@ -276,4 +277,14 @@ public interface TypeMapper {
      * @param type to add
      */
     void addType(EntityType type);
+    
+    /**
+     * Some models are not persistence managed, though they
+     * might be assigned to work with a persistence manager.
+     * For e.g., the swagger model.
+     * We indicate this setting here.
+     *  
+     * @return
+     */
+    boolean isPersistenceManaged();
 }

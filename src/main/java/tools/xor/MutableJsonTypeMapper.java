@@ -82,9 +82,9 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
         super();
     }	
 	
-    public MutableJsonTypeMapper(DataModel das, MapperSide side, String shapeName) 
+    public MutableJsonTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) 
     {
-        super(das, side, shapeName);
+        super(das, side, shapeName, persistenceManaged);
     }	
 
 	public String getDomainPackagePath() {
@@ -243,16 +243,16 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
     }
     
     @Override
-    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
-        MutableJsonTypeMapper mapper = (MutableJsonTypeMapper)createInstance(das, side, shapeName);
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+        MutableJsonTypeMapper mapper = (MutableJsonTypeMapper)createInstance(das, side, shapeName, persistenceManaged);
         mapper.setDomainPackagePath(getDomainPackagePath());
 
         return mapper;        
     }       
 
     @Override
-	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
-		return new MutableJsonTypeMapper(das, side, shapeName);
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+		return new MutableJsonTypeMapper(das, side, shapeName, persistenceManaged);
 	}
 	
 	@Override

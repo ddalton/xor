@@ -34,9 +34,9 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         super();
     }
     
-    public UnchangedTypeMapper(DataModel das, MapperSide side, String shapeName) 
+    public UnchangedTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) 
     {
-        super(das, side, shapeName);
+        super(das, side, shapeName, persistenceManaged);
     }
     
     @Override public Class<?> toDomain (Class<?> externalClass)
@@ -108,8 +108,8 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     }
 
     @Override
-    protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
-        return new UnchangedTypeMapper(das, side, shapeName);
+    protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+        return new UnchangedTypeMapper(das, side, shapeName, persistenceManaged);
     }
     
     @Override 
@@ -118,8 +118,8 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     }   
     
     @Override
-    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
-        return createInstance(das, side, shapeName);
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+        return createInstance(das, side, shapeName, persistenceManaged);
     }     
     
     @Override

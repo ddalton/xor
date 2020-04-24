@@ -8,6 +8,7 @@
     "schemas": {
       "Id": {
         "type": "object",
+        "surrogateKey": "id",
         "properties": {
           "id": {
             "type": "string",
@@ -108,7 +109,10 @@
                 "type": "string",
                 "maxLength": 1024,
                 "description": "The URI for the task entity"
-              }
+              },
+              "assignedTo": {
+                "$ref": "#/components/schemas/Person"
+              }              
             }
           }
         ],

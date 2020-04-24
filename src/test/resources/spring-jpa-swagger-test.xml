@@ -47,7 +47,7 @@
 
 	<!-- Swagger -->
 	<bean id="amSwagger" class="tools.xor.service.AggregateManager">
-		<property name="typeMapper" ref="uctm" />
+		<property name="typeMapper" ref="swaggertm" />
 		<property name="dasFactory" ref="swaggerdm" />
 	</bean>
 
@@ -84,6 +84,10 @@
 	<bean id="jdbcbuilder" class="tools.xor.service.JDBCSpringDataModelBuilder"/>			
 
 	<bean id="uctm" class="tools.xor.UnchangedTypeMapper" />
+	
+	<bean id="swaggertm" class="tools.xor.UnchangedTypeMapper">
+	   <property name="persistenceManaged" value="false" />
+	</bean>
 
 	<!-- DataSource -->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"

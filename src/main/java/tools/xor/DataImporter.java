@@ -31,7 +31,6 @@ import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
 import tools.xor.service.PersistenceOrchestrator;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
-import tools.xor.util.ObjectCreator;
 
 public class DataImporter implements Callable
 {
@@ -51,7 +50,6 @@ public class DataImporter implements Callable
     private ConcurrentLinkedQueue<JSONObject> queue;
     private Settings settings;
     private TypeMapper typeMapper;
-    private ObjectCreator objectCreator;
     private JDBCPersistenceOrchestrator po;
     private DataGenerator dataGenerator;
 
@@ -59,7 +57,6 @@ public class DataImporter implements Callable
         this.queue = queue;
         this.settings = settings;
         this.typeMapper = typeMapper;
-        this.objectCreator = new ObjectCreator(settings, settings.getPersistenceOrchestrator(), typeMapper);
         this.po = (JDBCPersistenceOrchestrator)po;
         this.dataGenerator = dataGenerator;
     }
@@ -95,6 +92,7 @@ public class DataImporter implements Callable
                 if(logger.isDebugEnabled()) {
                     logger.debug("DataImporter#call json: " + json.toString());
                 }
+
                 po.getSessionContext().create(bo, settings, dataGenerator);
 
                 if (i++ % COMMIT_SIZE == 0) {

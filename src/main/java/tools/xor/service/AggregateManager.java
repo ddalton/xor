@@ -92,6 +92,7 @@ import tools.xor.util.excel.ExcelExporter;
 import tools.xor.util.graph.ObjectGraph;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.Function;
+import tools.xor.view.QueryFragment;
 import tools.xor.view.TypeVersion;
 import tools.xor.view.View;
 
@@ -643,6 +644,9 @@ public class AggregateManager implements Xor
 			}
 		}
 		BusinessObject from = oc.createDataObject(entity, fromType, null, null);
+		if(from.getIdentifierValue() != null) {
+		    settings.getParams().put(QueryFragment.ID_PARAMETER_NAME, from.getIdentifierValue());
+		}
 
 		// Get the narrowed class, if this is not an open type
 		if (!(settings.getEntityType() != null && settings.getEntityType().isOpen())) {

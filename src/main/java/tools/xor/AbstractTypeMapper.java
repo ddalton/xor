@@ -38,18 +38,32 @@ public abstract class AbstractTypeMapper implements TypeMapper {
     private String shapeName;
     protected Shape domainShape;
     protected Shape dynamicShape;
-    
+    protected boolean persistenceManaged;
+
     public AbstractTypeMapper()
     {
         this.side = MapperSide.DOMAIN;
+        this.persistenceManaged = true;
     }
     
-    public AbstractTypeMapper(DataModel das, MapperSide side, String shapeName)
+    public AbstractTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged)
     {
+        this();
+        
         this.model = das;
         this.side = side;
         this.shapeName = shapeName;
+        this.persistenceManaged = persistenceManaged;
     }
+    
+    @Override
+    public boolean isPersistenceManaged() {
+        return persistenceManaged;
+    }
+
+    public void setPersistenceManaged(boolean isPersistenceManaged) {
+        this.persistenceManaged = isPersistenceManaged;
+    }    
 
     @Override
 	public DataModel getModel() {
@@ -78,13 +92,14 @@ public abstract class AbstractTypeMapper implements TypeMapper {
      * @param das DataAccessService responsible for powering this TypeMapper instance
      * @param side TypeMapper targeted against EXTERNAL or DOMAIN side
      * @param shapeName name of the shape instance
+     * @param persistenceManaged indicates if the model it represents is managed by a persistence store
      * @return TypeMapper instance
      */
-	abstract protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName);
+	abstract protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged);
 	
     @Override
     public TypeMapper newInstance(MapperSide side, String shapeName) {
-        return newInstance(this.getModel(), side, shapeName);
+        return newInstance(this.getModel(), side, shapeName, isPersistenceManaged());
     } 
 
 	@Override

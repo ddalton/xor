@@ -408,4 +408,8 @@ public abstract class HibernatePersistenceOrchestrator extends AbstractPersisten
 				}
 			});
 	}
+	
+    public boolean isManaged(Class<?> clazz) {
+        return getSession().getSessionFactory().getClassMetadata(clazz) != null;
+    }   	
 }

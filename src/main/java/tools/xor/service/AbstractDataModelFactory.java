@@ -65,7 +65,7 @@ public abstract class AbstractDataModelFactory implements DataModelFactory {
     }	
 	
 	private TypeMapper createTypeMapper(TypeMapper typeMapper) {
-	       return (typeMapper == null) ? new DefaultTypeMapper(null, MapperSide.DOMAIN, null) : typeMapper.newInstance(null, typeMapper.getSide(), typeMapper.getShapeName());
+	       return (typeMapper == null) ? new DefaultTypeMapper(null, MapperSide.DOMAIN, null, true) : typeMapper.newInstance(null, typeMapper.getSide(), typeMapper.getShapeName(), typeMapper.isPersistenceManaged());
 	}
 
 	/**

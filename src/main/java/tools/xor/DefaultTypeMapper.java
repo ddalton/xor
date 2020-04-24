@@ -35,9 +35,9 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
         super();
     }
     
-    public DefaultTypeMapper(DataModel das, MapperSide side, String shapeName) 
+    public DefaultTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) 
     {
-        super(das, side, shapeName);
+        super(das, side, shapeName, persistenceManaged);
     }
     
 	/* (non-Javadoc)
@@ -62,8 +62,8 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
-		return new DefaultTypeMapper(das, side, shapeName);
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+		return new DefaultTypeMapper(das, side, shapeName, persistenceManaged);
 	}
 
 	@Override 
@@ -72,8 +72,8 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	}
     
     @Override 
-    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
-        return createInstance(das, side, shapeName);
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+        return createInstance(das, side, shapeName, persistenceManaged);
     }    
     
     @Override

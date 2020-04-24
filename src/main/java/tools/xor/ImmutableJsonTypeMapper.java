@@ -34,7 +34,6 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import tools.xor.service.DataModel;
-import tools.xor.service.DynamicShape;
 import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ImmutableJsonCreationStrategy;
@@ -78,9 +77,9 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
         super();
     }	
 	
-    public ImmutableJsonTypeMapper(DataModel das, MapperSide side, String shapeName) 
+    public ImmutableJsonTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) 
     {
-        super(das, side, shapeName);
+        super(das, side, shapeName, persistenceManaged);
     }	
 
 	public String getDomainPackagePath() {
@@ -176,8 +175,8 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
-		return new ImmutableJsonTypeMapper(das, side, shapeName);
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+		return new ImmutableJsonTypeMapper(das, side, shapeName, persistenceManaged);
 	}
 	
     @Override 
@@ -186,8 +185,8 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
     }
     
     @Override
-    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
-        ImmutableJsonTypeMapper mapper = (ImmutableJsonTypeMapper)createInstance(das, side, shapeName);
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+        ImmutableJsonTypeMapper mapper = (ImmutableJsonTypeMapper)createInstance(das, side, shapeName, persistenceManaged);
         mapper.setDomainPackagePath(getDomainPackagePath());
 
         return mapper;           

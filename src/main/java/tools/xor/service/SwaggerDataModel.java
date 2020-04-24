@@ -66,14 +66,6 @@ public class SwaggerDataModel extends AbstractDataModel {
         this.schemaAnchor = anchor;
     }
     
-    public List<String> getIdentifiers() {
-        return this.identifiers;
-    }
-    
-    /**
-     * This is of the form <type name>:<key name>
-     * @param identifiers
-     */
     public void setIdentifiers(List<String> identifiers) {
         this.identifiers = identifiers;
     }
@@ -138,6 +130,40 @@ public class SwaggerDataModel extends AbstractDataModel {
         }
         
         defineProperties(shape);
+        
+        for(Type type: shape.getUniqueTypes()) {
+            percolateIdProperty(type);
+        }
+    }
+    
+    private void percolateIdProperty(Type type) {
+        if(type.isDataType()) {
+            return;
+        }
+        MutableJsonType entityType = (MutableJsonType) type;
+        
+        if(entityType.getIdentifierProperty() == null) {
+            String idPropertyName = findIdProperty(entityType);
+            if(idPropertyName != null) {
+                entityType.setIdPropertyName(idPropertyName);
+            }
+        }
+    }
+    
+    private String findIdProperty(ExternalType entityType) {
+        if(entityType.getIdentifierProperty() != null) {
+            return entityType.getIdentifierProperty().getName();
+        }
+        
+        String idPropertyName = null;
+        for(ExternalType parentType: entityType.getParentTypes()) {
+            idPropertyName = findIdProperty(parentType);
+            if(idPropertyName != null) {
+                break;
+            }
+        }
+        
+        return idPropertyName;
     }
     
     private void defineTypes(Shape shape, JSONObject jsonSchema) {
@@ -151,6 +177,10 @@ public class SwaggerDataModel extends AbstractDataModel {
             if(MutableJsonType.class.isAssignableFrom(type.getClass())) {
                 MutableJsonType swaggerType = (MutableJsonType) type;
                 swaggerType.defineProperties(shape);
+                
+                if(idMap.containsKey(swaggerType.getEntityName())) {
+                    swaggerType.setIdPropertyName(idMap.get(swaggerType.getEntityName()));
+                }
             }
         }     
     }    

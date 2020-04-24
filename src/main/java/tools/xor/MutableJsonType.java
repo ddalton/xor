@@ -49,6 +49,7 @@ public class MutableJsonType extends ExternalType {
 	private static final String SWAGGER_PROPERTIES = "properties";
 	private static final String SWAGGER_REF   = "$ref";
 	public static final String  SWAGGER_REF_SEPARATOR = "/";
+	public static final String  SWAGGER_ID_PROPERTY = "surrogateKey";
 	private static final Map<String, Class<?>> SWAGGER_TYPES = new HashMap<>();
 	
 	static {
@@ -95,6 +96,11 @@ public class MutableJsonType extends ExternalType {
                 }
             }
         }
+	}
+	
+	public void setIdPropertyName(String name) {
+	    this.idPropertyName = name;
+	    this.isEmbedded = false;
 	}
 	
 	private String getEntityNameFromRef(JSONObject obj) {
@@ -206,16 +212,27 @@ public class MutableJsonType extends ExternalType {
             // Process each element in the array
             for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
-                if (obj.has(SWAGGER_TYPE)) {
-                    properties = obj.has(SWAGGER_PROPERTIES) ? obj.getJSONObject(SWAGGER_PROPERTIES) : null;
+                if (obj.has(SWAGGER_PROPERTIES)) {
+                    properties = obj.getJSONObject(SWAGGER_PROPERTIES);
+                    
+                    if(obj.has(SWAGGER_ID_PROPERTY)) {
+                        this.idPropertyName = obj.getString(SWAGGER_ID_PROPERTY);
+                    }
+                }
+                if(properties != null) {
                     break;
                 }
             }
+        } else if(swaggerSchema.has(SWAGGER_ID_PROPERTY)) {
+            this.idPropertyName = swaggerSchema.getString(SWAGGER_ID_PROPERTY);            
         }
 
         // process each property
         if (this.parentTypeNames.size() == 0 && properties == null) {
             throw new RuntimeException("Unable to find the properties object or the type has no properties");
+        } else {
+            // this is an entity type and mark it as such
+            this.isDataType = false;
         }
 
         if (properties != null) {

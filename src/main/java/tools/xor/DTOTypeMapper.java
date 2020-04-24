@@ -43,9 +43,9 @@ public class DTOTypeMapper extends AbstractTypeMapper {
         super();
     }
     
-    public DTOTypeMapper(DataModel das, MapperSide side, String shapeName) 
+    public DTOTypeMapper(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) 
     {
-        super(das, side, shapeName);
+        super(das, side, shapeName, persistenceManaged);
     }	
 
 	public String getDomainPackagePath() {
@@ -147,8 +147,8 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	}
 
 	@Override
-	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName) {
-		return new DTOTypeMapper(das, side, shapeName);
+	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+		return new DTOTypeMapper(das, side, shapeName, persistenceManaged);
 	}
 	
     @Override 
@@ -157,8 +157,8 @@ public class DTOTypeMapper extends AbstractTypeMapper {
     }
     
     @Override 
-    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName) {
-        DTOTypeMapper mapper = (DTOTypeMapper)createInstance(das, side, shapeName);
+    public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {
+        DTOTypeMapper mapper = (DTOTypeMapper)createInstance(das, side, shapeName, persistenceManaged);
         mapper.setDomainPackagePath(getDomainPackagePath());
         mapper.setExternalPackagePath(getExternalPackagePath());
 

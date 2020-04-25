@@ -196,7 +196,9 @@ public class DynamicShape extends AbstractShape
      * 
      * @param fileName of the views that are read from a file. If not provided user should register the views using
      *   register method.
-     * @see DynamicShape#register(View, String)
+     * @param domainShape domain shape instance
+     * @param typeMapper instance
+     * @see DynamicShape#register(AggregateView, String)
      */
     public void process(String fileName, DomainShape domainShape, TypeMapper typeMapper) {
         extractTypes(fileName, domainShape, typeMapper);

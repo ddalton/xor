@@ -41,7 +41,7 @@ import tools.xor.util.InterQuery;
  * Glossary:
  * ---------
  * The AggregateTree data structure is a tree of a tree
- * AggregateTree -> QueryTree -> QueryFragment
+ * AggregateTree - QueryTree - QueryFragment
  *
  * AggregateTree
  *   A AggregateTree consists of a tree of QueryTree nodes connected by InterQuery edges.
@@ -180,7 +180,7 @@ import tools.xor.util.InterQuery;
  *
  *     S1[E0]                     S2[E1]
  *    -------------               --------
- *   | name        | ----------> | count  |
+ *   | name        | ---------- | count  |
  *   | description |   details    --------
  *    -------------
  *
@@ -202,10 +202,10 @@ import tools.xor.util.InterQuery;
  *
  * Some of the APIs are:
  * IntraQuery e0;
- * e0.getOuterJoin() -> "LEFT OUTER JOIN class2 E1 ON E1.id = E0.details"
+ * e0.getOuterJoin() - "LEFT OUTER JOIN class2 E1 ON E1.id = E0.details"
  *
  * QueryFragment s2;
- * s2.getSelectList() -> "E1.count"
+ * s2.getSelectList() - "E1.count"
  *
  * The modified QueryTree (with IntraQuery edges) will select additional columns to help with
  * stitching results from different QueryTree instances (broken for optimization reasons)

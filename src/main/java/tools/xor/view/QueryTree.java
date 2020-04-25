@@ -55,8 +55,8 @@ import tools.xor.util.graph.TreeOperations;
  * 
  * The QueryTree is created from the StateTree
  * 
- * StateTree => QueryTree
- *   SubtypeState => QueryFragment
+ * StateTree - QueryTree
+ *   SubtypeState - QueryFragment
  *   
  * For views based on QueryType the mapping is a bit constrained, since the presence of a QueryType
  * usually involves a user provided query. So in this case the StateTree has only one state, the root state.
@@ -436,6 +436,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 
 	/**
 	 * Copy the root fragment and prepare it to become a root in a new QueryTree
+     * @param aggregateTree containing this QueryTree
 	 * @return new QueryFragment copy
 	 */
 	public QueryFragment copyRoot(AggregateTree aggregateTree) {
@@ -712,6 +713,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	 * @param resolver used for setting the values of the parameters
 	 * @param qti containing parent query results
 	 * @param parentEdge not null if this is a child query
+     * @return Query instance for this QueryTree
 	 */
 	protected Query prepare(CallInfo callInfo, ObjectResolver resolver, QueryTreeInvocation qti, InterQuery parentEdge)
 	{

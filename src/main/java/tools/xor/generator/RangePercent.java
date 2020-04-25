@@ -60,7 +60,7 @@ public class RangePercent extends DefaultGenerator
      *
      * Implementation wise, we use a binary tree for efficiency
      *
-     * @param arguments
+     * @param arguments data needed to configure this generator
      */
     public RangePercent (String[] arguments)
     {

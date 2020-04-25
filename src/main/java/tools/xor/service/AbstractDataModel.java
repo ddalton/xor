@@ -244,7 +244,6 @@ public abstract class AbstractDataModel implements DataModel {
 	 * Should be invoked as the final step of the Shape object construction.
 	 * @param shape object being constructed
 	 * @param types that need to processed
-	 * @param externalTypes of types that need to be processed
 	 */
 	protected void initEnd(Shape shape, Collection<Type> types) {
 		((AbstractShape)shape).initEnd(types);

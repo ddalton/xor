@@ -46,14 +46,14 @@ public class SplitToAnchor implements TreeMutatorStrategy
      * Initially the AggregateTree has a single QueryTree
      *
      * 1. Compute the parallel collection count on the QueryTree
-     * 2. Proceed to step 3 if the root node has a collection count > 1.
+     * 2. Proceed to step 3 if the root node has a collection count greater than 1.
      *    The root node is added to the stack for processing.
-     * 3. Check the stack is not empty and the item has a count > 1
-     *    if the count < 2 then pop the item from the stack. Do step 3 until either
-     *    the stack is empty or an item is found whose count > 1.
+     * 3. Check the stack is not empty and the item has a count greater than 1
+     *    if the count less than 2 then pop the item from the stack. Do step 3 until either
+     *    the stack is empty or an item is found whose count greater than 1.
      *    If the stack is empty we are done.
      * 4. Do a DFS on the first item in the stack until a node is found that is the anchor of
-     *    2 parallel collections and none of whose children have a count > 1.
+     *    2 parallel collections and none of whose children have a count greater than 1.
      *    This node represents a CartesianJoin and needs to be split into separate queries.
      *    i.e., a new QueryTree of one of the parallel collection needs to be anchored at this node.
      *    The collection for the new QueryTree can be chosen at random.
@@ -61,7 +61,7 @@ public class SplitToAnchor implements TreeMutatorStrategy
      *    from the AggregateTree root is set on this node.
      * 5. Keep moving up the ancestor and subtract 1 from the parallel collection count
      *    until the root node. While doing this, find the first node encountered that has
-     *    a parallel collection count >= 2 during the decrement process.
+     *    a parallel collection count greater than or equal to 2 during the decrement process.
      *    Push this node on the stack if it is not the same as the current node being processed.
      * 6. Do step 3
      */

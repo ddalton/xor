@@ -210,6 +210,8 @@ public class QueryFragment implements Vertex
      *
      * @param position from which the fields are present
      * @param settings describing the result structure (SHARED or DISTINCT)
+     * @param queryTree instance that contains this fragment
+     * @param aggregateTree that contains the queryTree instance
      * @return the updated position
      */
     public int generateFields(int position, Settings settings, QueryTree queryTree, AggregateTree aggregateTree) {

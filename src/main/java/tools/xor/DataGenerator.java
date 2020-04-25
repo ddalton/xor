@@ -113,9 +113,7 @@ public class DataGenerator
     /**
      * Generate data for all entity types that have the generator settings set on them
      */
-    public Object execute() {
-        Object result = SUCCESS;
-
+    public void execute() {
         if(importMethod == ImportMethod.CSV) {
             for(EntityType entityType: getFlattenedTypes()) {
                 writeHeader(entityType);
@@ -130,8 +128,6 @@ public class DataGenerator
                 processed.add(typename);
             }
         }
-
-        return result;
     }
 
     private void writeHeader(EntityType entityType) {

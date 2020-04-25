@@ -84,7 +84,7 @@ public class BindParameter implements Comparable<BindParameter>
 	 * Create an instance of the BindParameter
 	 * @param position is a required field
 	 * @param name optional
-	 * @return
+	 * @return new BindParameter instance
 	 */
 	public static BindParameter instance(Integer position, String name) {
 		BindParameter bp = new BindParameter();

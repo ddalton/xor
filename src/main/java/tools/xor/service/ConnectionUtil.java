@@ -1,7 +1,6 @@
 package tools.xor.service;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 
 public interface ConnectionUtil
 {
@@ -9,7 +8,7 @@ public interface ConnectionUtil
      * Will get the active connection from an existing transaction
      * Not all providers support directly retrieving the connection.
      *
-     * @return
+     * @return JDBC connection
      */
     Connection getConnection();
 

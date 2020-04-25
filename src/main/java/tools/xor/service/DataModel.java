@@ -88,6 +88,7 @@ public interface DataModel {
      * The shape that is added does not affect the active shape.
      *
      * @param name of the Shape representing the type system
+     * @return shape that was added
      */
     public Shape createShape(String name);	
 
@@ -159,7 +160,7 @@ public interface DataModel {
 	
 	/**
 	 * Set the PersistenceProvider for this DataModel
-	 * @param PersistenceProvider instance
+	 * @param persistenceProvider instance
 	 */
 	void setPersistenceProvider(PersistenceProvider persistenceProvider);
 

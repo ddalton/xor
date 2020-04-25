@@ -59,6 +59,7 @@ public class QueryField implements Comparable<QueryField>
 
     /**
      * Retrieve the OQL query representation of this field.
+     * @param qc QueryCapability instance
      * @return OQL query representation
      */
     public String getOQL(QueryCapability qc) {

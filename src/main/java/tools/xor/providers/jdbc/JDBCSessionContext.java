@@ -228,7 +228,7 @@ public class JDBCSessionContext implements CustomPersister
 
     /**
      * Needed for the current session activities with XOR
-     * @return
+     * @return JDBC connection
      */
     @Override public Connection getConnection() {
 

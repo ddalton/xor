@@ -69,6 +69,7 @@ public interface Shape
 
     /**
      * Used to signal if the Shape has finished being constructed
+     * @param value true or false 
      */
     public void setBuildFinished (boolean value);
 
@@ -78,7 +79,7 @@ public interface Shape
      * A child shape associated with the DAS needs to be created, with the parent shape pointing to this shape.
      * This will help to utilize memory efficiently while sharing shapes across DAS instances.
      * 
-     * @return
+     * @return DataModel associated with this shape
      */
     public DataModel getDAS();
 
@@ -91,7 +92,7 @@ public interface Shape
 
     /**
      * Get the name of the shape
-     * @return
+     * @return shape name
      */
     public String getName();
 
@@ -215,7 +216,7 @@ public interface Shape
     /**
      * Return a list of all the types managed by this shape instance
      * We do not include the parent shape. 
-     * @return
+     * @return set of types
      */
     public Set<Type> getUniqueTypes();
 
@@ -336,7 +337,7 @@ public interface Shape
      * Return the converter for a property. It will find the appropriate converter based on the
      * property type.
      * 
-     * @param property
+     * @param property instance
      * @return converter instance
      */
     public Converter getConverter(ExtendedProperty property);

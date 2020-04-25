@@ -54,7 +54,7 @@ import tools.xor.util.graph.TreeOperations;
  * Suitable for simple requests that do not involve hierarchical structures a.k.a recursion.
  *
  * The mapping is typically:
- * AggregateView -> AggregateTree
+ * AggregateView - AggregateTree
  * 
  * A AggregateTree is a graph that typically represents a tree data structure, where the nodes are QueryTree instances.
  * The TreeTraversal algorithm uses this data structure to execute the queries.

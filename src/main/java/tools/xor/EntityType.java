@@ -367,7 +367,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 
 	/**
 	 * Return the entity specific settings related to data generation
-	 * @return
+	 * @return all the generators for this type
 	 */
 	public List<GeneratorDriver> getGenerators ();
 
@@ -384,7 +384,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 
 	/**
 	 * Set the value for the root entity type
-	 * @param value
+	 * @param value entity type name
 	 */
     void setRootEntityType(String value);
 }

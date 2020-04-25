@@ -184,6 +184,10 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
     /**********************  C O N S T R U C T O R S ***************************/
 
+    /**
+     * Construct a view with a corresponding QueryTree instance
+     * @param queryTree instance
+     */
     public TraversalView(QueryTree queryTree) {
         initQuery(queryTree);
     }
@@ -264,11 +268,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
     public void setJoin(List<Join> join) {
         this.join = join;
-    }
-    
-    @Override
-    public String getDasName() {
-        return this.dasName;
     }
     
     public void setDasName(String name) {
@@ -732,7 +731,6 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
                 if (isCompositionReference(attribute)) {
                     View view = getView(shape, attribute);
                     if(view.isCustom()) {
-                        System.out.println("COMPOSITION VIEW: " + getName() + ", child: " + view.getName());
                         return true;
                     }
                 }

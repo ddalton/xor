@@ -337,7 +337,7 @@ public interface View {
 
 	/**
 	 * Used to check if the view represents a tree or a graph
-	 * @param settings
+	 * @param settings object
 	 * @return true if tree false otherwise
 	 */
 	public boolean isTree(Settings settings);
@@ -381,7 +381,7 @@ public interface View {
 	 * 2. Split to anchor
 	 *
 	 * The default is split to root and this can be changed by setSplitToRoot() method.
-	 * @return
+	 * @return true if we split to root, false otherwise
 	 */
 	boolean isSplitToRoot();
 
@@ -436,12 +436,4 @@ public interface View {
 	 * @return position of result set corresponding to this view
 	 */
 	Integer getResultPosition();
-
-	/**
-	 * Return the name of the DataAccessService instance applicable for this view.
-	 * Useful for DQOR (Dynamic Query Object Reconstitution) objects
-	 * 
-	 * @return
-	 */
-    String getDasName();
 }

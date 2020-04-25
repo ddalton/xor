@@ -254,7 +254,7 @@ public class ObjectCreator {
 	 * @param type of the entity
 	 * @param anchor where this type is anchored. Different type shapes can be present at different
 	 *               anchors.
-	 * @return
+	 * @return businessObject instance
 	 */
 	public BusinessObject findEntity(Object idValue, Map<String, Object> naturalKeyValues, Type type, String anchor) {
 

@@ -110,9 +110,9 @@ public interface Query extends DML {
 
 	/**
 	 * Update the bind parameters
-	 * @param relevantParams
+	 * @param bindParams bind parameters 
 	 */
-	void updateParamMap (List<BindParameter> relevantParams);
+	void updateParamMap (List<BindParameter> bindParams);
 
 	/**
 	 * Checks if the query is an OQL
@@ -128,7 +128,7 @@ public interface Query extends DML {
 
 	/**
 	 * Used if the query needs to run multiple instance of an IN list batch
-	 * @param values > QueryTreeInvocation#MAX_INLIST_SIZE
+	 * @param values list size is greater than QueryTreeInvocation#MAX_INLIST_SIZE
 	 */
 	public void processLargeInList(Set values);
 

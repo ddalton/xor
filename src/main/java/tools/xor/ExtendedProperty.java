@@ -40,7 +40,7 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
 	 * @param name new name, a.k.a alias
 	 * @param type of the property
 	 * @param parentType entity type holding this property
-	 * @return
+	 * @return new property instance
 	 */
 	Property refine (String name, Type type, EntityType parentType);
 
@@ -227,6 +227,7 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
 	/**
 	 * Set the property that contains the index information for a collection element
 	 * This is applicable only if this property represents a collection property
+	 * @param property index property
 	 */
 	public void setIndexPositionProperty(Property property);
 

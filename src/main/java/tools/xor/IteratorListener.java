@@ -39,7 +39,7 @@ import tools.xor.util.graph.StateGraph;
  * DeferredRangePercent and RangePercent have the same implementation
  * but DeferredRangePercent implements IteratorListener and generates its value
  * only as part of the handleEvent call.
- * Whereas RangePercent generates a new value as part of its get<type>value calls.
+ * Whereas RangePercent generates a new value as part of its get..value calls.
  *
  * So DeferredRangePercent is suitable as a source for a GeneratorRecipient and
  * RangePercent is not

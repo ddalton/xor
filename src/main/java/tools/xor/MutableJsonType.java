@@ -70,7 +70,9 @@ public class MutableJsonType extends ExternalType {
 	
 	/**
 	 * Used to support swagger schema
+	 * @param entityName for the type
 	 * @param json schema for the type
+	 * @param idPropertyName identifier property name
 	 */
 	public MutableJsonType(String entityName, JSONObject json, String idPropertyName) {
 	    super(entityName, JSONObject.class);

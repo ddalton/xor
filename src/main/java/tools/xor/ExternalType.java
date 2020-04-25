@@ -99,7 +99,8 @@ public class ExternalType extends AbstractType {
 	 * Create and add a new property to this type.
 	 *
 	 * @param domainProperty domain Property object
-	 * @param shape of the type
+	 * @param dynamicShape shape of the type
+     * @param typeMapper instance
 	 * @return Property object
 	 */
 	public Property defineProperty(Property domainProperty, Shape dynamicShape, TypeMapper typeMapper) {

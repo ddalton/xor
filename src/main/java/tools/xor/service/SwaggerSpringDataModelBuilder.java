@@ -64,8 +64,8 @@ public class SwaggerSpringDataModelBuilder implements DataModelBuilder {
     }
     
     /**
-     * This is of the form <type name>:<key name>
-     * @param identifiers
+     * This is of the form type_name:key_name
+     * @param identifiers list
      */
     public void setIdentifiers(List<String> identifiers) {
         this.identifiers = identifiers;

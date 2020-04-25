@@ -138,7 +138,7 @@ public class Function implements Comparable<Function> {
 
 	/**
 	 * Returns the number of positional parameters in a freestyle function
-	 * @return
+	 * @return count
 	 */
 	public int getPositionalParamCount() {
 		if(this.type == FunctionType.FREESTYLE) {
@@ -153,6 +153,7 @@ public class Function implements Comparable<Function> {
 	 * Identify the mapping between the entity field path and the query alias name
 	 *
 	 * @param queryTree QueryTree for which the alias name is mapped
+	 * @param po persistenceOrchestrator
 	 * @return true if all the names can be normalized, false otherwise
 	 */
 	public boolean normalize(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree, PersistenceOrchestrator po) {

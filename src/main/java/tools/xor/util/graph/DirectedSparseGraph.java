@@ -806,7 +806,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	 * Writes the content of the graph/tree in .dot format.
 	 *
 	 * @param writer to which the content is written
-	 * @throws IOException
+	 * @throws IOException when writing to file
 	 */
 	public void writeDOT(BufferedWriter writer) throws IOException
 	{

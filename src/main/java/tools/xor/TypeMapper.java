@@ -55,14 +55,14 @@ public interface TypeMapper {
     
     /**
      * Have the domainShape be built externally and set on the TypeMapper instance
-     * @param domainShape
+     * @param domainShape instance
      */
     void setDomainShape(Shape domainShape);
     
     /**
      * Allow the dynamicShape to be set programmatically.
      * This is needed for cases where the DynamicShape cannot be inferred from the DomainShape.
-     * @param dynamicShape
+     * @param dynamicShape instance
      */
     void setDynamicShape(Shape dynamicShape);
 
@@ -127,14 +127,14 @@ public interface TypeMapper {
 	
 	/**
 	 * Factory method to create a TypeMapper instance
-	 * @param direction value
+	 * @param side either external or domain
 	 * @return typemapper instance
 	 */
 	public TypeMapper newInstance(MapperSide side);
 	
     /**
      * Factory method to create a TypeMapper instance
-     * @param direction value
+     * @param side either external or domain
      * @param shapeName name of the domain shape that this mapper is based on
      * @return typemapper instance
      */
@@ -143,7 +143,7 @@ public interface TypeMapper {
     /**
      * Factory method to create a TypeMapper instance
      * @param das DataAccessService instance for this type mapper
-     * @param direction value
+     * @param side either external or domain
      * @param shapeName name of the domain shape that this mapper is based on
      * @param persistenceManaged true if the model is managed by a persistence provider
      * @return typemapper instance
@@ -284,7 +284,7 @@ public interface TypeMapper {
      * For e.g., the swagger model.
      * We indicate this setting here.
      *  
-     * @return
+     * @return false if model is not persistence backed, true otherwise
      */
     boolean isPersistenceManaged();
 }

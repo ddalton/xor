@@ -63,7 +63,7 @@ public interface DataModelFactory {
 	/**
 	 * Return the builder for this model.
 	 * 
-	 * @return
+	 * @return DataModelBuilder instance
 	 */
 	DataModelBuilder getDataModelBuilder();
 }

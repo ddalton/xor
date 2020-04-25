@@ -332,7 +332,7 @@ public abstract class JDBCDataModel extends AbstractDataModel
          * the name of the column, else the property name is the name of the foreign key,
          * or a name overridden by the user (ForeignKeyEnhancer).
          *
-         * @return
+         * @return column name as property name
          */
         public String getPropertyName() {
             if(referencingColumns.size() == 1) {

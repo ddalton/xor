@@ -57,23 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Responsible for interacting with various RDBMS implementations.
- *
- * Use the following to test:
- * Oracle
- * <bean id="dataSource" class="oracle.jdbc.pool.OracleDataSource">
- *   <property name="dataSourceName" value="ds"/>
- *   <property name="URL" value="jdbc:oracle:thin:@<hostname>:<port_num>:<SID>"/>
- *   <property name="user" value="dummy_user"/>
- *   <property name="password" value="dummy_pwd"/>
- * </bean>
- *
- * HANA
- *	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
- *    <property name="driverClassName" value="com.sap.db.jdbc.Driver" />
- *    <property name="url" value="jdbc:sap://<hostname>:<port_num>" />
- *    <property name="username" value="user" />
- *    <property name="password" value="password" />
- *  </bean>
+ * Useful to convert values between a specific DB type and JAVA.
  */
 public abstract class DBTranslator
 {
@@ -567,12 +551,13 @@ public abstract class DBTranslator
 
     /**
      * Generate an update statement that works with optimistic concurrency control and no
+     * @param entityType type
      * @param bo Object containing the values to be updated
      * @param isBindParameters false if a literal SQL fragment needs to be produced
      * @return sql string without values
      *
      * For example:
-     *   UPDATE user SET name = "<new_value" WHERE name = "<old_value>" and id = "<id>"
+     *   UPDATE user SET name = "new_value" WHERE name = "old_value" and id = "id_value"
      */
     public String getUpdateSqlFragment(JDBCType entityType, BusinessObject bo, boolean isBindParameters)
     {

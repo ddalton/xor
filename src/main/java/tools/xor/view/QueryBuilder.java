@@ -70,6 +70,8 @@ public class QueryBuilder
      *
      * Query construction is done after the QueryTree(s) have been created,
      * including the necessary splits.
+     * 
+     * @param settings object
      */
     public void construct(Settings settings) {
 
@@ -92,6 +94,7 @@ public class QueryBuilder
      * @param queryTree for which the builder strategy object is returned
      * @param view fallback to view if the QueryTree is not provided
      * @param builder responsible for constructing the queries
+     * @param aggregateTree containing queries for the view
      * @return builder startegy object
      */
     public static QueryBuilderStrategy getBuilderStrategy(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree, View view, QueryBuilder builder, AggregateTree aggregateTree) {

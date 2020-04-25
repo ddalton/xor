@@ -30,15 +30,6 @@ import java.util.List;
  * object graph can be flattened through aliases and doesn't have to mirror the
  * domain object graph
  * 
- * For example: Let us consider the following 2 properties of a QueryType
- * 
- * <function type="ALIAS" name="techtask"> 
- *    <args>taskDetails</args> 
- * </function>
- * <function type="ALIAS" name="mfgPrice"> 
- *    <args>price</args>
- *    <args>Quote</args>
- * </function>
  * 
  * Arguments:
  * argument 0 - original property path

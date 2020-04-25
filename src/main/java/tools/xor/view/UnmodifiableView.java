@@ -321,9 +321,4 @@ public class UnmodifiableView implements View
     {
         return view.getResultPosition();
     }
-
-    @Override
-    public String getDasName() {
-        return view.getDasName();
-    }
 }

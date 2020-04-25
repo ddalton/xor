@@ -225,8 +225,49 @@
                 <args>WHERE id = :ID_</args>
             </function>
         </userOQLQuery>
-    </aggregateView>   
-         <aggregateView>
+    </aggregateView>  
+    <aggregateView>
+        <name>GROUP_TASK_SUBTASKS</name>
+        <attributeList>[BASICINFO_TO_MANY_SIMPLE_MULTI_OQL]</attributeList>
+        <children>
+            <attributeList>[SUBTASK_NAMES]</attributeList>
+        </children>        
+    </aggregateView> 
+    <aggregateView>
+        <name>BASICINFO_TO_MANY_SIMPLE_MULTI_OQL</name>
+        <attributeList>[BASICINFO]</attributeList>
+        <userOQLQuery>
+            <selectClause>
+                <![CDATA[SELECT t.id,
+                                t.name,
+                                t.displayName,
+                                t.description,
+                                t.iconUrl,
+                                t.detailedDescription
+                            FROM tools.xor.db.pm.Task t]]>
+            </selectClause>
+            <function type="FREESTYLE" include="scroll">
+                <args>WHERE t.name > :ORDER_BY_startName AND t.id > :ORDER_BY_startId ORDER BY t.name, t.id</args>
+            </function>            
+        </userOQLQuery>
+    </aggregateView>     
+    <aggregateView>
+        <name>SUBTASK_NAMES</name>
+        <attributeList>id</attributeList>        
+        <attributeList>subTasks</attributeList> 
+        <userOQLQuery>
+            <selectClause>
+                <![CDATA[SELECT t.id,
+                                st.name
+                            FROM tools.xor.db.pm.Task t
+                            LEFT OUTER JOIN t.taskChildren st]]>
+            </selectClause>    
+            <function type="FREESTYLE" include="scroll">
+                <args><![CDATA[WHERE t.name > :ORDER_BY_startName AND t.id > :ORDER_BY_startId AND t.id <= :LAST_PARENT_ID_ ORDER BY t.name, t.id]]></args>
+            </function>  
+        </userOQLQuery>
+    </aggregateView>    
+    <aggregateView>
         <name>BASICINFO_TO_MANY_ENTITY_OQL</name>
         <attributeList>[BASICINFO]</attributeList>
         <attributeList>childTasks.id</attributeList>

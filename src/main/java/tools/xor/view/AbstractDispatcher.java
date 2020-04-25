@@ -145,7 +145,18 @@ public abstract class AbstractDispatcher implements QueryDispatcher
     /*
      * This is a static method since this is also called from the ParallelDispatcher static inner class
      */
-    protected static void executeQuery (AbstractDispatcher disptacher,
+    /**
+     * This is a static method since this is also called from the ParallelDispatcher static inner class
+     * It is responsible for executing the query. The object construction is done in a different step -
+     * reconstitution
+     * 
+     * @param disptacher serial or parallel 
+     * @param query to be executed
+     * @param queryTree modelling the query
+     * @param queryInvocation holding the results of the query executions
+     * @return true if execution was successful, false otherwise
+     */
+    protected static boolean executeQuery (AbstractDispatcher disptacher,
                                         Query query,
                                         QueryTree queryTree,
                                         QueryTreeInvocation queryInvocation) {
@@ -162,6 +173,13 @@ public abstract class AbstractDispatcher implements QueryDispatcher
                 parentEdge = iter.next();
 
                 PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
+                
+                // At this point we check if we need to proceed further depending on whether the parent
+                // query produced any results
+                Set parentIds = queryInvocation.getParentIds(parentEdge);
+                if(parentIds == null || parentIds.isEmpty()) {
+                    return false;
+                }
                 queryInvocation.resolveQuery(parentEdge);
 
                 if(query.isDeferred()) {
@@ -204,5 +222,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
         for(Action action: actions) {
             action.execute(disptacher, queryInvocation, callInfo.getSettings().getPersistenceOrchestrator());
         }
+        
+        return true;
     }
 }

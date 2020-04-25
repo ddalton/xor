@@ -19,14 +19,6 @@
 
 package tools.xor.view;
 
-import tools.xor.AbstractTypeMapper;
-import tools.xor.BusinessObject;
-import tools.xor.EntityKey;
-import tools.xor.EntityType;
-import tools.xor.SurrogateEntityKey;
-import tools.xor.Type;
-import tools.xor.util.InterQuery;
-
 import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.HashSet;
@@ -38,6 +30,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+
+import tools.xor.AbstractTypeMapper;
+import tools.xor.BusinessObject;
+import tools.xor.EntityKey;
+import tools.xor.SurrogateEntityKey;
+import tools.xor.Type;
+import tools.xor.util.InterQuery;
 
 /**
  * Used to hold temporary results during the execution of a QueryTree
@@ -52,6 +51,7 @@ public class QueryTreeInvocation
                                                // subquery is the only option supported for composite key.
                                                //   A QueryTree can have different sets of parentIdList since
                                                // 2 InterQuery edges might have different source fragments
+    private Map<QueryTree, Object> lastParentId; // useful for result scrolling functionality
 
     private Map<Query, Set> idList;           // ids needed for the QueryFragment.PARENT_INLIST parameter
                                               // If a query does not have an entry here after resolveQuery
@@ -74,6 +74,7 @@ public class QueryTreeInvocation
     public QueryTreeInvocation() {
         // These fields will concurrently be updated/accessed if using ParallelDispatcher
         this.parentIdList = new ConcurrentHashMap<>();
+        this.lastParentId = new ConcurrentHashMap<>();
         this.idList = new ConcurrentHashMap<>();
         this.visitors = new ConcurrentHashMap<>();
         this.visitorsByPath = new ConcurrentHashMap<>();
@@ -98,6 +99,14 @@ public class QueryTreeInvocation
     public String getInvocationId (QueryTree queryTree) {
         return invocationIds.get(queryTree);
     }
+    
+    public Object getLastParentId(QueryTree queryTree) {
+        return this.lastParentId.get(queryTree);
+    }    
+    
+    public Set getParentIds(InterQuery edge) {
+        return this.parentIdList.get(edge.getSource());
+    }       
 
     public static byte[] getBytesFromUUID(UUID uuid) {
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
@@ -177,11 +186,7 @@ public class QueryTreeInvocation
 
         }
         queryTree.getQuery().setQueryString(queryString);
-    }
-
-    public Set getParentIds(InterQuery edge) {
-        return this.parentIdList.get(edge.getSource());
-    }
+    } 
 
     private String deriveSubquery(InterQuery edge, String oql) {
         // We need to select only the parent id from the original parent oql
@@ -257,10 +262,14 @@ public class QueryTreeInvocation
     }
 
     public static class QueryVisitor {
-        Set ids = new HashSet<>();
+        // This is a list because to support scrolling we need to
+        // know the last id
+        List ids = new LinkedList<>();
 
         public void addId(Object id) {
-            ids.add(id);
+            if(id != null) {
+                ids.add(id);
+            }
         }
     }
 
@@ -290,7 +299,10 @@ public class QueryTreeInvocation
             QueryFragment source = outgoing.getSource();
             if(visitors.containsKey(source)) {
                 QueryVisitor visitor = visitors.get(source);
-                parentIdList.put(source, visitor.ids);
+                parentIdList.put(source, new HashSet<>(visitor.ids));
+                if(visitor.ids.size() > 0) {
+                    lastParentId.put(qt, visitor.ids.get(visitor.ids.size()-1));
+                }
 
                 // Now we no longer need this visitor as it has been processed
                 visitors.remove(source);

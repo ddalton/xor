@@ -116,7 +116,7 @@ public class DenormalizedQueryOperation extends AbstractOperation {
 
 	public void preProcess(Settings settings, Query query)
 	{
-		super.preProcess(settings, query);
+		super.preProcess(settings, query, true);
 	}
 
 	@Override

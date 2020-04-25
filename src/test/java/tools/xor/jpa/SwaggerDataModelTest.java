@@ -44,7 +44,6 @@ import tools.xor.Settings;
 import tools.xor.ToOneGenerator;
 import tools.xor.Type;
 import tools.xor.db.base.Person;
-import tools.xor.db.pm.Task;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
 import tools.xor.generator.GeneratorRecipient;
@@ -495,4 +494,115 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // We don't close as the connection belongs to Spring
         }            
     }    
+    
+    @Test
+    public void testToManySimpleMulti() {
+        // First create a task with 100 children
+        // We use the generators to create this data
+        // This data is committed by the generators
+
+        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if(shape == null) {
+            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+
+        JDBCType task = (JDBCType)shape.getType("TASK");
+        task.clearGenerators();
+
+        ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+        Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
+        taskparent.setGenerator(parentgen);
+        Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+        ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+        ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+        namep.setGenerator(namegen);
+        ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+        Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+        dtype.setGenerator(dtypegen);
+
+        ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
+                                                                    "0,0:0", // root task
+                                                                    "1,100:100" // root task with 100 children
+        });
+
+        // 101 is the total number of tasks. 1 root task and 100 child tasks
+        CounterGenerator gensettings = new CounterGenerator(101);
+        gensettings.addListener(toonegen);
+        task.addGenerator(gensettings);
+        gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+                (GeneratorRecipient)parentgen));
+
+        String[] types = new String[] {
+            "TASK"
+        };
+
+        Settings settings = new Settings();
+        //settings.setImportMethod(ImportMethod.CSV);
+        Transaction tx = amJDBC.createTransaction(settings);
+        tx.begin();
+        try {
+            // Generate the tasks in the DB
+            amJDBC.generate(shape.getName(), Arrays.asList(types), settings);  
+            
+            // Query using OQL
+            settings = new Settings();
+            settings.setView(aggregateService.getView("GROUP_TASK_SUBTASKS"));
+            DataModel model = amSwagger.getModel();
+            Type taskType = model.getShape().getType("Task");
+            settings.setEntityType(taskType);  
+            Map<String, Object> userParams = new HashMap<>();
+            userParams.put("scroll", null);
+            settings.setParams(userParams);
+            
+            // Get first page
+            settings.setLimit(25);
+            Map<String, Object> nextToken = new HashMap<>();
+            //nextToken.put("startName", "NAME_0");
+            //nextToken.put("startId", "ID_0");   
+            //settings.setNextToken(nextToken);
+            
+            // TODO: Limit should apply only to the root query
+            
+            List<?> toList = amSwagger.query(null, settings);
+            assert (toList.size() == 25);
+            JSONObject first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_0"));
+            JSONArray subTasks = first.getJSONArray("subTasks");
+            assert(subTasks.length() == 100);            
+            
+            // Get second page
+            nextToken = new HashMap<>();
+            nextToken.put("startName", "NAME_45");
+            nextToken.put("startId", "ID_45");    
+            settings.setNextToken(nextToken);
+            toList = amSwagger.query(null, settings);
+            assert (toList.size() == 25);     
+            
+            first = (JSONObject) toList.get(0);
+            assert (first.get("name").equals("NAME_46"));             
+            
+        } finally {
+
+            deleteEntries();
+            tx.rollback();
+            // We don't close as the connection belongs to Spring
+        }              
+    }    
+    
+    @Test
+    public void negativeTest() {
+        
+        // Query using OQL
+        Settings settings = new Settings();
+        settings.setView(aggregateService.getView("BASICINFO_TO_MANY_SIMPLE_MULTI_OQL"));
+        DataModel model = amSwagger.getModel();
+        Type taskType = model.getShape().getType("Task");
+        settings.setEntityType(taskType);  
+        
+        List<?> result = amSwagger.query(null, settings);
+        assert(result.size() == 0);        
+    }
 }

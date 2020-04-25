@@ -703,11 +703,20 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return this.fields;
 	}
 
+	/**
+	 * This method prepares the query with the necessary parameter values. This includes setting the parameters from a 
+	 * parent query.
+	 * If the parent query is present then we expect at this point for it to have results.
+	 *  
+	 * @param callInfo containing user settings
+	 * @param resolver used for setting the values of the parameters
+	 * @param qti containing parent query results
+	 * @param parentEdge not null if this is a child query
+	 */
 	protected Query prepare(CallInfo callInfo, ObjectResolver resolver, QueryTreeInvocation qti, InterQuery parentEdge)
 	{
 		if(query != null) {
 			resolver.preProcess(this, callInfo.getSettings(), qti, parentEdge);
-
 		}
 
 		return query;

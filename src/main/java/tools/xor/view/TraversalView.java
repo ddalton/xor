@@ -727,18 +727,18 @@ public class TraversalView implements Comparable<TraversalView>, Vertex, View {
 
     @Override
     public boolean isCompositionView() {
-
         if(getAttributeList() != null) {
             for (String attribute : getAttributeList()) {
                 if (isCompositionReference(attribute)) {
                     View view = getView(shape, attribute);
                     if(view.isCustom()) {
+                        System.out.println("COMPOSITION VIEW: " + getName() + ", child: " + view.getName());
                         return true;
                     }
                 }
             }
         }
-
+        
         return false;
     }
 

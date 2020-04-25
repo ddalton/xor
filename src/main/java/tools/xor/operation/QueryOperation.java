@@ -141,7 +141,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 	@Override
 	public void preProcess(QueryTree queryTree, Settings settings, QueryTreeInvocation qti, InterQuery parentEdge) {
 		Query query = queryTree.getQuery();
-		super.preProcess(settings, query);
+		super.preProcess(settings, query, parentEdge == null);
 
 		if(getEntity().getIdentifierValue() != null && query.hasParameter(QueryFragment.ID_PARAMETER_NAME)) {
 			query.setParameter(QueryFragment.ID_PARAMETER_NAME, getEntity().getIdentifierValue());
@@ -163,6 +163,11 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 			String invocationId = qti.getOrCreateInvocationId(queryTree);
 			query.setParameter(QueryFragment.INVOCATION_ID_PARAM, invocationId);
 		}
+		
+        if(query.hasParameter(QueryFragment.LAST_PARENT_ID_PARAM)) {
+            Object lastParentId = qti.getLastParentId(queryTree);
+            query.setParameter(QueryFragment.LAST_PARENT_ID_PARAM, lastParentId);
+        }		
 
 		// initialize the query with the selected columns
 		query.prepare((EntityType)entity.getType(), queryTree);

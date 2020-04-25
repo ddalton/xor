@@ -50,7 +50,7 @@ public abstract class QuerySupport
     }
 
     public void deriveColumns(QueryTree queryTree, QueryHandle handle, Settings settings, AggregateTree aggregateTree, View view) {
-        if(queryTree != null && !queryTree.getAggregateType().isOpen()) {
+        if(queryTree != null) {
             queryTree.generateFields(settings, aggregateTree);
             handle.setColumns(queryTree.getSelectedColumns());
         } else {

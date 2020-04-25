@@ -191,6 +191,7 @@ public class Function implements Comparable<Function> {
 	private boolean isFilterIncluded(Set<String> inputParams) {
 	    inputParams = new HashSet<>(inputParams);
 	    inputParams.add(QueryFragment.PARENT_INVOCATION_ID_PARAM);
+	    inputParams.add(QueryFragment.LAST_PARENT_ID_PARAM);
 	    
         for(String parameterName: functionHandler.getParameters()) {
             if(!inputParams.contains(Settings.encodeParam(parameterName)) ) { // parameter is not set

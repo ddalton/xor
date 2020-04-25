@@ -80,7 +80,7 @@ public abstract class AbstractOperation implements Operation {
 		return ci.getParentInputEntity();
 	}
 
-	public void preProcess(Settings settings, Query query)
+	public void preProcess(Settings settings, Query query, boolean isRoot)
 	{
 		Map<String, Object> params = new HashMap<>();
 		if(settings.getParams() != null) {
@@ -110,7 +110,7 @@ public abstract class AbstractOperation implements Operation {
 		// pagination
 		if (settings.getOffset() != null)
 			query.setFirstResult(settings.getOffset());
-		if (settings.getLimit() != null)
+		if (settings.getLimit() != null && isRoot)
 			query.setMaxResults(settings.getLimit());
 	}
 }

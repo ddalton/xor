@@ -70,7 +70,7 @@ public interface Generator
      * Since we use an integer for id generation and we would like
      * to support null parents when generating child elements.
      *
-     * @see CollectionOwnerGenerator
+     * @see tools.xor.CollectionOwnerGenerator
      *
      * @param visitor contains data pertaining to the calling context
      * @return int value.

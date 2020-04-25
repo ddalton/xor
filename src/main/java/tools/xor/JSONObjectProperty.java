@@ -48,13 +48,11 @@ public class JSONObjectProperty
 
     /**
      * Find the built-in converters based on the provided class
-     * New converters can be added directly to the Shape containing the type to override the
-     * converter behavior.
+     * New converters can be registered to the Shape containing the type to 
+     * override the converter behavior.
      * 
      * @param clazz for which the built-in converter needs to be found
      * @return built-in converter
-     * 
-     * @see tools.xor.service.Shape#registerConverter(Class, Converter)
      */
     public static Converter findConverter(Class<?> clazz) {
         if(convertersByClass.containsKey(clazz)) {

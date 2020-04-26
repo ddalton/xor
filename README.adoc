@@ -1,0 +1,22 @@
+XOR is a framework, that allows easy interaction with an RDBMS through an Object Oriented Model.
+The Object Oriented Model can be built in a few ways.
+* Swagger schema
+* JPA meta model
+* JDBC model 
+
+The transformation between the Object Oriented Model and the Relational Model is accomplished
+with the help of views. Views are XML files that describe how the fields are mapped between the models.
+XOR takes advantage of the ORM layer when possible. The ORM layer can be bypassed in order to achieve higher performance.
+
+== Json representation
+The APIs can work directly with Json data which allows rapid prototyping and development of REST APIs.
+If working with an ORM layer, the intricacies of the ORM behavior is shielded from the user.
+Issues related to lazy initialization are avoided.
+
+== Database independence
+When using the JDBC model, the database modeller is free to use the best model needed for the application.
+Constraints imposed by the ORM can be avoided, since an ORM layer is not used with this model.
+This allows for a clean database design.
+
+== License
+This project is licensed under https://apache.org/licenses/LICENSE-2.0[Apache 2.0 license].

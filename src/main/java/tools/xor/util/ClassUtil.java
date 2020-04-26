@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.persistence.Access;
 import javax.sql.DataSource;
 
-import jdk.nashorn.internal.runtime.JSONListAdapter;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.hibernate.proxy.HibernateProxy;
@@ -59,10 +58,8 @@ import org.springframework.stereotype.Component;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
-import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.view.AggregateView;
 import tools.xor.view.View;
 
 @Component

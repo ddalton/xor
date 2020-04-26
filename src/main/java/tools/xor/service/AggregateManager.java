@@ -48,7 +48,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
-import org.springframework.stereotype.Component;
 
 import tools.xor.AbstractBO;
 import tools.xor.AbstractType;
@@ -96,7 +95,6 @@ import tools.xor.view.QueryFragment;
 import tools.xor.view.TypeVersion;
 import tools.xor.view.View;
 
-@Component
 public class AggregateManager implements Xor
 {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

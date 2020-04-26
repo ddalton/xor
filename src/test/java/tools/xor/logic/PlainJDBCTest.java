@@ -19,7 +19,7 @@
 
 package tools.xor.logic;
 
-import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
@@ -67,7 +67,7 @@ public class PlainJDBCTest
 		BasicDataSource bds = (BasicDataSource) dataSource;
 
 		System.out.println("**************** DATASOURCE ***************");
-		System.out.println("Max Active: " + bds.getMaxActive());
+		System.out.println("Max Active: " + bds.getMaxTotal());
 		System.out.println("Max Idle: " + bds.getMaxIdle());
 		System.out.println("Min Idle: " + bds.getMinIdle());
 		System.out.println("Num Active: " + bds.getNumActive());

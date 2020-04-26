@@ -1,17 +1,17 @@
 package tools.xor.util;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
+//import org.apache.commons.configuration2.PropertiesConfiguration;
+//import org.apache.commons.configuration2.builder.fluent.Configurations;
 
 import java.io.File;
 
-public class ApplicationConfiguration
-{
+public class ApplicationConfiguration {
     private final static ApplicationConfiguration INSTANCE = new ApplicationConfiguration();
 
     private final static String XOR_CONFIG_FILENAME = "xor.properties";
 
-    public static ApplicationConfiguration getInstance ()
-    {
+    public static ApplicationConfiguration getInstance() {
         return INSTANCE;
     }
 
@@ -20,12 +20,18 @@ public class ApplicationConfiguration
     static {
         try {
             File propertiesFile = new File(
-                getInstance().getClass().getClassLoader().getResource(
-                    XOR_CONFIG_FILENAME).getFile());
+                    getInstance().getClass().getClassLoader().getResource(XOR_CONFIG_FILENAME).getFile());
+
             getInstance().setConfiguration(new PropertiesConfiguration(propertiesFile));
-        }
-        catch (Exception e) {
-            //throw ClassUtil.wrapRun(e);
+            /* New PropertiesConfiguration. Old one above is for backwards compatibility.
+             * ========================================================================== 
+             * Configurations configs = new Configurations();
+             * PropertiesConfiguration config = configs.properties(propertiesFile);
+             * 
+             * getInstance().setConfiguration(config);
+             */
+        } catch (Exception e) {
+            // throw ClassUtil.wrapRun(e);
             // Empty
             getInstance().setConfiguration(new PropertiesConfiguration());
         }
@@ -35,8 +41,7 @@ public class ApplicationConfiguration
         this.configuration = config;
     }
 
-    public static PropertiesConfiguration config ()
-    {
+    public static PropertiesConfiguration config() {
         return getInstance().configuration;
     }
 }

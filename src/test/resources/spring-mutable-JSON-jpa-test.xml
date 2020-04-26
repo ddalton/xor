@@ -73,7 +73,7 @@
 	
 
 	<!-- DataSource -->
-	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
 		destroy-method="close">
 		<property name="driverClassName" value="${test.connection.driverClass}" />
 		<property name="url" value="${test.connection.url}" />

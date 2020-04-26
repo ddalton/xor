@@ -1,27 +1,23 @@
 package tools.xor.service;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import tools.xor.AggregateAction;
-import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.RelationshipType;
-import tools.xor.Settings;
-import tools.xor.providers.jdbc.JDBCBatchContext;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.Constants;
-import tools.xor.util.graph.TypeGraph;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+
+import tools.xor.AggregateAction;
+import tools.xor.EntityType;
+import tools.xor.Settings;
+import tools.xor.providers.jdbc.JDBCBatchContext;
+import tools.xor.util.Constants;
+import tools.xor.util.graph.TypeGraph;
 
 /**
  * This class represents an implementation of the XOR REST api.

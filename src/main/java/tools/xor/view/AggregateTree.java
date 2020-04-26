@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import org.antlr.stringtemplate.language.ArrayWrappedInList;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -40,7 +39,6 @@ import tools.xor.service.AggregateManager;
 import tools.xor.util.Constants;
 import tools.xor.util.DFAtoNFA;
 import tools.xor.util.InterQuery;
-import tools.xor.util.IntraQuery;
 import tools.xor.util.graph.TreeOperations;
 
 /**

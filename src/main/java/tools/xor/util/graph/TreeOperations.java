@@ -19,13 +19,6 @@
 
 package tools.xor.util.graph;
 
-import org.hibernate.internal.util.collections.IdentitySet;
-import tools.xor.Settings;
-import tools.xor.util.DFAtoNFA;
-import tools.xor.util.Edge;
-import tools.xor.util.Vertex;
-import tools.xor.view.ReconstituteVisitor;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,8 +28,13 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
+
+import tools.xor.Settings;
+import tools.xor.util.DFAtoNFA;
+import tools.xor.util.Edge;
+import tools.xor.util.Vertex;
+import tools.xor.view.ReconstituteVisitor;
 
 public class TreeOperations<V extends Vertex, E extends Edge<V>> extends DirectedSparseGraph<V, E> implements Tree<V, E>
 {

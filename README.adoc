@@ -1,5 +1,6 @@
 XOR is a framework, that allows easy interaction with an RDBMS through an Object Oriented Model.
-The Object Oriented Model can be built in a few ways.
+The Object Oriented Model can be built in a few ways:
+
 * Swagger schema
 * JPA meta model
 * JDBC model 

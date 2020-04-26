@@ -1006,6 +1006,10 @@ public class BindParameter implements Comparable<BindParameter>
 
 		return typeValue;
 	}
+	
+	public Integer getPosition() {
+	    return this.position;
+	}
 
 	private static SQLConverter getSQLConverter(DBTranslator translator, int typeValue) {
 		SQLConverter result = translator.getSQLConverter(typeValue);

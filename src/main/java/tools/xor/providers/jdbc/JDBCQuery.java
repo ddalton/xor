@@ -250,5 +250,14 @@ public class JDBCQuery extends AbstractQuery
 	public boolean isDeferred() {
 		return this.preparedStatement == null;
 	}
+	
+	/* 
+	 * JDBC query does not support ordinal parameter, so we return the legacy parameter placeholder representation
+	 * (non-Javadoc)
+	 * @see tools.xor.view.AbstractQuery#getOrdinalParameter(tools.xor.view.BindParameter)
+	 */
+    protected String getOrdinalParameter(BindParameter bindParam) {
+        return "?";
+    }	
 }
 

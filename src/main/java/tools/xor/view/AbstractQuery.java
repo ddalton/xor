@@ -256,6 +256,7 @@ public abstract class AbstractQuery implements Query {
 		int position = 1; // JDBC param number starts from 1
 		while (matcher.find()) {
 			//System.out.println("Full match: " + matcher1.group(0));
+		    
 			if(matcher.group(1) != null) {
 				String paramName = matcher.group(1);
 
@@ -266,12 +267,20 @@ public abstract class AbstractQuery implements Query {
 					positionByName.put(paramName, params);
 				}
 
-				params.add(BindParameter.instance(position++, paramName));
+				BindParameter bindParam = BindParameter.instance(position++, paramName);
+				params.add(bindParam);
+				// Create an ordinal parameter as required by JPQL
+	            matcher.appendReplacement(modifiedSQL, getOrdinalParameter(bindParam));
+			} else {
+			    logger.error("Problem in extracting the parameter: " + getQueryString());
 			}
-			matcher.appendReplacement(modifiedSQL, "?");
 		}
 		matcher.appendTail(modifiedSQL);
 
 		return modifiedSQL.toString();
+	}
+	
+	protected String getOrdinalParameter(BindParameter bindParam) {
+	    return "?"+bindParam.getPosition();
 	}
 }

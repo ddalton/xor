@@ -19,8 +19,17 @@
 
 package tools.xor.view;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
@@ -30,15 +39,6 @@ import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.AscHandler;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public class QueryFromFragments implements QueryBuilderStrategy
 {

@@ -154,6 +154,7 @@ public interface DataModel {
 	/**
 	 * Returns the PersistenceProvider associated with this DataModel.
 	 * The same DataModel should be able to work with different data providers.
+	 * For e.g., JPA, JDBC etc
 	 * @return PersistenceProvider instance
 	 */
 	PersistenceProvider getPersistenceProvider();
@@ -163,6 +164,27 @@ public interface DataModel {
 	 * @param persistenceProvider instance
 	 */
 	void setPersistenceProvider(PersistenceProvider persistenceProvider);
+	
+	/**
+	 * Get the persistence util specific to a persistence provider.
+	 * A persistence provider might support multiple implementations and the
+	 * PersistenceUtil encapsulates the specifics of a particular implementation.
+	 * 
+	 * A persistence provider might not support multiple implementations, so
+	 * this is optional.
+	 * 
+	 * @return PersistenceUtil instance
+	 */
+	default PersistenceUtil getPersistenceUtil() { return null; }
+	
+	/**
+	 * Set the PersistenceUtil for this DataModel and PersistenceProvider.
+     * A persistence provider might not support multiple implementations, so
+     * this is optional.
+     * 
+	 * @param persistenceUtil instance
+	 */
+	default void setPersistenceUtil(PersistenceUtil persistenceUtil) {  }
 
 	/**
 	 * Initialize the generators needed for data generating from an Excel file

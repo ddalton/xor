@@ -30,4 +30,13 @@ public interface PersistenceProvider {
      * @return PersistenceOrchestrator object
      */
     PersistenceOrchestrator createPO(Object sessionContext, Object data);    
+    
+    /**
+     * Set the PersistenceUtil for this PersistenceProvider.
+     * A persistence provider might not support multiple implementations, so
+     * this is optional.
+     * 
+     * @param persistenceUtil instance
+     */
+    default void setPersistenceUtil(PersistenceUtil persistenceUtil) {  }    
 }

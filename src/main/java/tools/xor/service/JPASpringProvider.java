@@ -21,6 +21,8 @@ package tools.xor.service;
 
 public class JPASpringProvider implements PersistenceProvider {
 
+    private PersistenceUtil persistenceUtil;
+    
     /**
      * Creates the PersistenceOrchestrator appropriate for this DataModel
      * @param sessionContext required if manually creating the session/entityManager
@@ -29,6 +31,15 @@ public class JPASpringProvider implements PersistenceProvider {
      * @return PersistenceOrchestrator object
      */
     public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-        return new JPASpringPO(sessionContext, data);
+        PersistenceOrchestrator po = new JPASpringPO(sessionContext, data);
+        ((JPASpringPO)po).setPersistenceUtil(persistenceUtil);
+        
+        return po;
+    }
+    
+    @Override
+    public
+    void setPersistenceUtil(PersistenceUtil persistenceUtil) {
+        this.persistenceUtil = persistenceUtil;
     }
 }

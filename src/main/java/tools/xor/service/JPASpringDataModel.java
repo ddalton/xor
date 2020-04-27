@@ -51,6 +51,7 @@ public class JPASpringDataModel extends JPADataModel {
     public PersistenceProvider getPersistenceProvider() {
         if(super.getPersistenceProvider() == null) {
             this.persistenceProvider = new JPASpringProvider();
+            this.persistenceProvider.setPersistenceUtil(getPersistenceUtil());
         }
         
         return this.persistenceProvider;

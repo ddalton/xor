@@ -43,9 +43,21 @@ import tools.xor.TypeMapper;
  */
 public abstract class JPADataModel extends AbstractDataModel {
 
-	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
+	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public JPADataModel(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
+	private PersistenceUtil persistenceUtil;
+	
+	@Override
+	public PersistenceUtil getPersistenceUtil() {
+        return persistenceUtil;
+    }
+
+	@Override
+    public void setPersistenceUtil(PersistenceUtil persistenceUtil) {
+        this.persistenceUtil = persistenceUtil;
+    }
+
+    public JPADataModel(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
 		super(dasFactory, typeMapper);
 	}
 	

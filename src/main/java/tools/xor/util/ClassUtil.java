@@ -39,17 +39,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.persistence.Access;
 import javax.sql.DataSource;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.proxy.LazyInitializer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.EncodedResource;
@@ -130,29 +126,6 @@ public class ClassUtil {
 
 		return result;
 	}	
-
-	public static Object getTargetObject(Object object) {
-		Object result = object;
-
-		// Hibernate based implementation, safe to initialize the proxy since we need its data
-		// Allow user to override this behavior
-		if (object instanceof HibernateProxy) {
-			while(object instanceof HibernateProxy) {
-				HibernateProxy proxy = (HibernateProxy) object; 
-				LazyInitializer li = proxy.getHibernateLazyInitializer();
-				object = li.getImplementation();
-			}		
-			return object;
-		} else if (AopUtils.isJdkDynamicProxy(object)) {
-			try {
-				return ((Advised)object).getTargetSource().getTarget();
-			} catch(Exception e) {
-				throw wrapRun(e);
-			}
-		}
-
-		return result;
-	}
 
 	/**
 	 * Invoke the given method as a privileged action, if necessary.
@@ -253,53 +226,8 @@ public class ClassUtil {
 			return new RuntimeException(e);
 	}
 
-	public static tools.xor.AccessType getAccessStrategy(org.hibernate.cfg.AccessType type) {
-		if ( org.hibernate.cfg.AccessType.PROPERTY.equals( type ) ) {
-			return tools.xor.AccessType.PROPERTY;
-		}
-		else if ( org.hibernate.cfg.AccessType.FIELD.equals( type ) ) {
-			return tools.xor.AccessType.FIELD;
-		}
-		else {
-			return tools.xor.AccessType.PROPERTY;
-		}
-	}	
-
 	public static PersistenceType getAccessStrategy(String accessType) {
 		return PersistenceType.valueOf(accessType);
-	}	
-
-	public static tools.xor.AccessType getHibernateAccessType(Class<?> instanceClass) {
-		org.hibernate.cfg.AccessType classDefinedAccessType;
-
-		org.hibernate.cfg.AccessType hibernateDefinedAccessType = org.hibernate.cfg.AccessType.DEFAULT;
-		org.hibernate.cfg.AccessType jpaDefinedAccessType = org.hibernate.cfg.AccessType.DEFAULT;
-
-		org.hibernate.annotations.AccessType accessTypeAnno = instanceClass.getAnnotation( org.hibernate.annotations.AccessType.class );
-		if ( accessTypeAnno != null ) {
-			hibernateDefinedAccessType = org.hibernate.cfg.AccessType.getAccessStrategy( accessTypeAnno.value() );
-		}
-
-		Access accessAnno = instanceClass.getAnnotation( Access.class );
-		if ( accessAnno != null ) {
-			jpaDefinedAccessType = org.hibernate.cfg.AccessType.getAccessStrategy( accessAnno.value() );
-		}
-
-		if ( hibernateDefinedAccessType != org.hibernate.cfg.AccessType.DEFAULT
-				&& jpaDefinedAccessType != org.hibernate.cfg.AccessType.DEFAULT
-				&& hibernateDefinedAccessType != jpaDefinedAccessType ) {
-			throw new RuntimeException(
-					"@PersistenceType and @Access specified with contradicting values. Use of @Access only is recommended. "
-					);
-		}
-
-		if ( hibernateDefinedAccessType != org.hibernate.cfg.AccessType.DEFAULT ) {
-			classDefinedAccessType = hibernateDefinedAccessType;
-		}
-		else {
-			classDefinedAccessType = jpaDefinedAccessType;
-		}
-		return ClassUtil.getAccessStrategy(classDefinedAccessType);		
 	}	
 
 	public static int getDimensionCount(Object array) {

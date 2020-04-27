@@ -37,6 +37,7 @@ public class JPAXmlDataModel extends JPADataModel {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
 	private EntityManagerFactory emf;
+    private PersistenceUtil      persistenceUtil;	
 	
 	public JPAXmlDataModel(TypeMapper typeMapper, String name, DataModelFactory dasFactory) {
 		super(typeMapper, name, dasFactory);
@@ -49,7 +50,11 @@ public class JPAXmlDataModel extends JPADataModel {
             this.persistenceProvider = new PersistenceProvider() {
                 @Override
                 public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-                    return new JPAPersistenceXMLPO(sessionContext, data);
+                    
+                    PersistenceOrchestrator po = new JPAPersistenceXMLPO(sessionContext, data);
+                    ((JPAPersistenceXMLPO)po).setPersistenceUtil(persistenceUtil);
+                    
+                    return po;                    
                 } 
             };
         }
@@ -61,4 +66,10 @@ public class JPAXmlDataModel extends JPADataModel {
 	public EntityManagerFactory getEmf() {
 		return this.emf;
 	}
+    
+    @Override
+    public
+    void setPersistenceUtil(PersistenceUtil persistenceUtil) {
+        this.persistenceUtil = persistenceUtil;
+    }	
 }

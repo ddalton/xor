@@ -34,15 +34,7 @@ public class SpringDAOFactory implements DAOFactory {
 	protected AutowireCapableBeanFactory beanFactory;
 
 	public <T> DAOTemplate<T> create() {
-			DAOTemplate<T> result = null;
-
-			try { // HibernateDAS
-				result = new HibernateDAOTemplate<T>();
-				beanFactory.autowireBean(result);
-				return result;
-			} catch(BeanCreationException e) {
-				logger.warn("Hibernate configuration not found, hence cannot create a HibernateDAOTemplate instance");				
-			}		
+			DAOTemplate<T> result = null;		
 			
 			try { // JPADataAccessService
 				result = new JPADAOTemplate<T>();

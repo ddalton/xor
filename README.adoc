@@ -4,9 +4,9 @@ It is powered using a meta model to make decisions.
 
 In a typical J2EE environment, a development team has to interact with the following 3 data models:
 
-1. UI model - For e.g., schema section in swagger for REST APIs
-2. Business logic model - For e.g., Business logic classes modelled in an ORM 
-3. Database model - For e.g., tables and foreign keys in an RDBMS
+1. *UI model* - For e.g., schema section in swagger for REST APIs
+2. *Java model* - For e.g., Business logic classes modelled in an ORM 
+3. *Database model* - For e.g., tables and foreign keys in an RDBMS
 
 Support comes out of the box for Swagger, JPA and JDBC representations for these models. It is possible for other models to be plugged into this architecture.
 

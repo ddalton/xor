@@ -3,6 +3,7 @@ XOR is a tool designed to address performance concerns related to persistence in
 It is powered using a meta model to make decisions.
 
 In a typical J2EE environment, a development team has to interact with the following 3 data models:
+
 1. UI model - For e.g., schema section in swagger for REST APIs
 2. Business logic model - For e.g., Business logic classes modelled in an ORM 
 3. Database model - For e.g., tables and foreign keys in an RDBMS
@@ -30,6 +31,7 @@ against the RDBMS using the UI model, thereby bypassing transformation #2.
 
 == Data generation
 There are many cases when it is necessary to have a large data set against a J2EE application. Some of the cases are:
+
 * Troubleshoot a performance issue when access to the customer's data is not permitted
 * Create a large data set for performance testing
 
@@ -37,6 +39,7 @@ As shown in the diagram above, transformation #2 puts a large overhead when popu
 XOR allows the user to directly access the JDBC model and generate data as needed. 
 It supports the concept of generators for each field. 
 A generator can specify how the data needs to be populated for e.g., 
+
 * Data for simple data types 
 * Data needed to model association relationships 
 * Data needed to model inheritance relationships.

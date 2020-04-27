@@ -1,25 +1,49 @@
 = XOR
+XOR is a tool designed to address performance concerns related to persistence in a J2EE environment.
+It is powered using a meta model to make decisions.
 
-XOR is a framework, that allows easy interaction with an RDBMS through an Object Oriented Model.
-The Object Oriented Model can be built in a few ways:
+In a typical J2EE environment, a development team has to interact with the following 3 data models:
+1. UI model - For e.g., schema section in swagger for REST APIs
+2. Business logic model - For e.g., Business logic classes modelled in an ORM 
+3. Database model - For e.g., tables and foreign keys in an RDBMS
 
-* Swagger schema
-* JPA meta model
-* JDBC model 
+Support comes out of the box for Swagger, JPA and JDBC representations for these models. It is possible for other models to be plugged into this architecture.
 
-The transformation between the Object Oriented Model and the Relational Model is accomplished
-with the help of views. Views are XML files that describe how the fields are mapped between the models.
-XOR takes advantage of the ORM layer when possible. The ORM layer can be bypassed in order to achieve higher performance.
+= Use cases
+In a J2EE environment, a couple use case patterns rise to the top in terms of performance related to persistence.
 
-== Json representation
-The APIs can work directly with Json data which allows rapid prototyping and development of REST APIs.
-If working with an ORM layer, the intricacies of the ORM behavior is shielded from the user.
-Issues related to lazy initialization are avoided.
+== Data retrieval
+When a UI needs to retrieve data to populate its model it has to go through 2 transformations
+  
+       +------------+     1     +--------------+    2     +---------------+
+       |  UI Model  |---------->|  JPA model   |--------->|   JDBC model  |      
+       +------------+           +--------------+          +---------------+
 
-== Database independence
-When using the JDBC model, the database modeller is free to use the best model needed for the application.
-Constraints imposed by the ORM can be avoided, since an ORM layer is not used with this model.
-This allows for a clean database design.
+Transformation #1 is usually straightforward, as it is a mapping from a Java object to a JSON object and 
+can be done in-memory.
+Transformation #2 is where most of the performance issues occur. This happens because the ORM layer tries
+to hide most of the complexity between the Object Oriented to the Relational model mapping.
+Depending on how this mapping is done and how complex the business model is, some queries can perform
+very badly.
+XOR addresses this issue by allowing the web developer to express the data retrieval request directly
+against the RDBMS using the UI model, thereby bypassing transformation #2.
+
+== Data generation
+There are many cases when it is necessary to have a large data set against a J2EE application. Some of the cases are:
+* Troubleshoot a performance issue when access to the customer's data is not permitted
+* Create a large data set for performance testing
+
+As shown in the diagram above, transformation #2 puts a large overhead when populating the database.
+XOR allows the user to directly access the JDBC model and generate data as needed. 
+It supports the concept of generators for each field. 
+A generator can specify how the data needs to be populated for e.g., 
+* Data for simple data types 
+* Data needed to model association relationships 
+* Data needed to model inheritance relationships.
+
+As you can see in both the above use cases, performance concerns are addressed by reducing the number of transformations that data needs to go through. 
+XOR allows the user to work with the data model closest to the task at hand.
+We improved the performance for the Data retrieval use case by working with the UI model and for the Data generation use case by working with the JDBC model.
 
 == License
 This project is licensed under https://apache.org/licenses/LICENSE-2.0[Apache 2.0 license].

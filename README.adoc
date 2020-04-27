@@ -46,6 +46,13 @@ A generator can specify how the data needs to be populated for e.g.,
 * Data needed to model association relationships 
 * Data needed to model inheritance relationships.
 
+= Uniform type interface
+
+The access to the above 3 models is exposed through XOR using a common type system. This type system models the data as JSON objects.
+For example, in the UI model the XOR tool is initialized with the swagger schema and for the JDBC model, it is initialized by reading the tables and foreign keys using the appropriate database dialect.
+
+This architecture allows XOR to also be used as a data migration tool between incompatible models, as long as the necessary data conversion is performed on the JSON object to match the type appropriate for each model.
+
 = Takeaway
 
 As you can see in both the above data patterns, performance concerns are addressed by reducing the number of transformations that data has to go through. 

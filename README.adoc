@@ -32,10 +32,10 @@ XOR addresses this issue by allowing the web developer to express the data retri
 against the RDBMS using the UI model, thereby bypassing transformation #2.
 
 == Data generation
-There are many cases when it is necessary to have a large data set against a J2EE application. Some of the cases are:
+There are many times when we need to generate a large amount of data in a reasonable time:
 
 * Troubleshoot a performance issue when access to the customer's data is not permitted
-* Create a large data set for performance testing
+* Create a large data set for performance testing and the model is rapidly evolving
 
 As shown in the diagram above, transformation #2 puts a large overhead when populating the database.
 XOR allows the user to directly access the JDBC model and generate data as needed. 
@@ -48,7 +48,7 @@ A generator can specify how the data needs to be populated for e.g.,
 
 As you can see in both the above use cases, performance concerns are addressed by reducing the number of transformations that data needs to go through. 
 XOR allows the user to work with the data model closest to the task at hand.
-We improve the performance for the Data retrieval use case by working with the UI model and for the Data generation use case by working with the JDBC model.
+We improve the performance for the Data retrieval pattern by working with the UI model and for the Data generation pattern by working with the JDBC model.
 
 == License
 This project is licensed under https://apache.org/licenses/LICENSE-2.0[Apache 2.0 license].

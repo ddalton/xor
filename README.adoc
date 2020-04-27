@@ -1,4 +1,5 @@
 = XOR
+
 XOR is a tool designed to address performance concerns related to persistence in a J2EE environment.
 It is powered using a meta model to make decisions.
 
@@ -11,7 +12,7 @@ In a typical J2EE environment, a development team has to interact with the follo
 Support comes out of the box for Swagger, JPA and JDBC representations for these models. It is possible for other models to be plugged into this architecture.
 
 = Use cases
-In a J2EE environment, a couple use case patterns rise to the top in terms of performance related to persistence.
+A couple use case patterns rise to the top in terms of performance related to persistence.
 
 == Data retrieval
 When a UI needs to retrieve data to populate its model it has to go through 2 transformations

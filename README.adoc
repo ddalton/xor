@@ -46,7 +46,9 @@ A generator can specify how the data needs to be populated for e.g.,
 * Data needed to model association relationships 
 * Data needed to model inheritance relationships.
 
-As you can see in both the above use cases, performance concerns are addressed by reducing the number of transformations that data needs to go through. 
+= Takeaway
+
+As you can see in both the above data patterns, performance concerns are addressed by reducing the number of transformations that data has to go through. 
 XOR allows the user to work with the data model closest to the task at hand.
 We improve the performance for the Data retrieval pattern by working with the UI model and for the Data generation pattern by working with the JDBC model.
 

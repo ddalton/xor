@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.json.Json;
+
+import org.json.JSONObject;
+
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.JSONObjectProperty.Converter;
@@ -74,14 +78,14 @@ public interface Shape
     public void setBuildFinished (boolean value);
 
     /**
-     * Return the DAS associated with this shape. 
-     * It is possible that the DAS is null. That means that the shape is applicable to more than 1 DAS.
-     * A child shape associated with the DAS needs to be created, with the parent shape pointing to this shape.
-     * This will help to utilize memory efficiently while sharing shapes across DAS instances.
+     * Return the DataModel associated with this shape. 
+     * It is possible that the DataModel is null. That means that the shape is applicable to more than 1 DataModel.
+     * A child shape associated with the DataModel needs to be created, with this being the parent shape.
+     * This will help to utilize memory efficiently while sharing shapes across DataModel instances.
      * 
      * @return DataModel associated with this shape
      */
-    public DataModel getDAS();
+    public DataModel getDataModel();
 
     /**
      * Returns the type of Shape object being created. Whether it has a copy of the properties from
@@ -341,4 +345,10 @@ public interface Shape
      * @return converter instance
      */
     public Converter getConverter(ExtendedProperty property);
+    
+    /**
+     * Export the shape contents in the form of a Json Schema
+     * @return json schema object
+     */
+    public JSONObject getJsonSchema();
 }

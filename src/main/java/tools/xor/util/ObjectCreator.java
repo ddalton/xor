@@ -84,16 +84,16 @@ public class ObjectCreator {
 	private Map<BusinessObject, List<EntityKey>> naturalKeyRegistrations = new Reference2ReferenceOpenHashMap<BusinessObject, List<EntityKey>>();
 
 
-	private DataModel              das;
-	private Shape                          shape;
-	private PersistenceOrchestrator        persistenceOrchestrator;
-	private TypeMapper                     typeMapper;
-	private boolean                        share; // when registering if another object with the same id and type is found, it will be returned
-	private CreationStrategy               creationStrategy; // JSON or POJO?
-	private boolean                        readOnly; // The objects are read only
-	private ObjectGraph                    objectGraph; // represents the Object graph of the object we need to persist
-	private BusinessObject                 root; // represents the root object
-	private Settings                       settings; // the criteria under which this instance operates
+	private DataModel               dataModel;
+	private Shape                   shape;
+	private PersistenceOrchestrator persistenceOrchestrator;
+	private TypeMapper              typeMapper;
+	private boolean                 share; // when registering if another object with the same id and type is found, it will be returned
+	private CreationStrategy        creationStrategy; // JSON or POJO?
+	private boolean                 readOnly; // The objects are read only
+	private ObjectGraph             objectGraph; // represents the Object graph of the object we need to persist
+	private BusinessObject          root; // represents the root object
+	private Settings                settings; // the criteria under which this instance operates
 
 	public ObjectCreator(Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
 		this.settings = settings;
@@ -102,7 +102,7 @@ public class ObjectCreator {
 		this.creationStrategy = this.typeMapper.getCreationStrategy(this);
 		
 		this.shape = this.typeMapper.getShape();
-		this.das = this.typeMapper.getModel();
+		this.dataModel = this.typeMapper.getModel();
 	}
 
 	public Settings getSettings() {
@@ -142,8 +142,8 @@ public class ObjectCreator {
 		return this.shape;
 	}
 
-	public DataModel getDAS() {
-		return das;
+	public DataModel getDataModel() {
+		return dataModel;
 	} 
 
 	public TypeMapper getTypeMapper() {
@@ -817,7 +817,7 @@ public class ObjectCreator {
 
 			// Give opportunity for reference objects to have any post processing done by the DAS
 			if(targetInstance != null) {
-				das.postProcess(targetInstance, ci.getSettings().isAutoWire());
+				dataModel.postProcess(targetInstance, ci.getSettings().isAutoWire());
 			}
 		} catch (Exception e) {
 			throw ClassUtil.wrapRun(e);

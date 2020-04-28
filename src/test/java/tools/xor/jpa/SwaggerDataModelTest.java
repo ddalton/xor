@@ -605,4 +605,10 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         List<?> result = amSwagger.query(null, settings);
         assert(result.size() == 0);        
     }
+    
+    @Test
+    public void jsonSchemaTest() {
+        JSONObject json = aggregateService.getModel().getShape().getJsonSchema();
+        System.out.println("JPA Model: " + json.toString());
+    }
 }

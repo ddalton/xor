@@ -552,6 +552,7 @@ public abstract class JDBCDataModel extends AbstractDataModel
 		
 		List<TableInfo> tables = defineTypes(shape, entityNames);
 		
+		// Only if the table is denormalized do we do this
         for(TableInfo table: tables) {
             setSuperType(table, shape);
         }

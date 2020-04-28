@@ -90,4 +90,9 @@ public class JPAAggregatePathsTest extends DefaultAggregatePaths {
 	public void checkJSON() {
 		super.checkJSON();
 	}
+	
+	@Test
+	public void checkStateGraph() {
+	    super.checkStateGraph();
+	}
 }

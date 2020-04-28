@@ -351,6 +351,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	}
 
 	protected void collectProperties(List<Property> properties, V vertex) {
+	    if(vertex != null) {
+	        
+	    /*
 		while(vertex != null) {
 			V parent = null;
 			for (Edge e : getInEdges(vertex)) {
@@ -362,13 +365,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					break;
 				}
 			}
-
+*/
 			// For a state graph the vertex contains only direct properties
 			for (String simpleAttribute : vertex.getAttributes()) {
 				properties.add(vertex.getType().getProperty(simpleAttribute));
 			}
 
-			vertex = parent;
+			//vertex = parent;
 		}
 	}
 

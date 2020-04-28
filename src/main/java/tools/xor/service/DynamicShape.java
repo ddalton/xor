@@ -61,7 +61,7 @@ public class DynamicShape extends AbstractShape
     
     public DynamicShape(String name, Shape parent, Shape domainShape, TypeMapper typeMapper) {
         // We are going to create the dynamic shape from the provided domain shape
-        super(name, parent, domainShape.getDAS());
+        super(name, parent, domainShape.getDataModel());
         
         // Create the types belonging to this shape
         createTypes(domainShape, typeMapper);
@@ -75,7 +75,7 @@ public class DynamicShape extends AbstractShape
             }
             Class<?> externalClass = typeMapper.toExternal(type.getInstanceClass());
             if(externalClass != null) {
-                ExternalType externalType = getDAS().getTypeMapper().createExternalType(
+                ExternalType externalType = getDataModel().getTypeMapper().createExternalType(
                     (EntityType)type,
                     externalClass);
                 externalType.setDomainTypeName(((EntityType)type).getEntityName());

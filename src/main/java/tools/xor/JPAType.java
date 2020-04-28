@@ -20,7 +20,6 @@
 package tools.xor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -29,13 +28,13 @@ import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.EmbeddableType;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.SingularAttribute;
+import javax.persistence.metamodel.IdentifiableType;
+import javax.persistence.metamodel.ManagedType;
 import javax.persistence.metamodel.Type.PersistenceType;
-import javax.swing.text.html.parser.Entity;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import tools.xor.service.JPADataModel;
 import tools.xor.service.Shape;
 
 public class JPAType extends AbstractType {
@@ -67,16 +66,25 @@ public class JPAType extends AbstractType {
 		else
 			return getName();
 	}	
+	
+	public javax.persistence.metamodel.Type<?> getProviderType() {
+	    return this.persistenceType;
+	}
 
-	protected Iterator<?> getPropertyIterator() {
-		if(persistenceType.getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
-			return ((EntityType<?>)persistenceType).getAttributes().iterator();
-		} else if(persistenceType.getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {
-			return ((EmbeddableType<?>)persistenceType).getAttributes().iterator();
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}	
+    protected Iterator<?> getPropertyIterator() {
+        if (persistenceType.getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            //return ((EntityType<?>) persistenceType).getAttributes().iterator();
+            return ((EntityType<?>)persistenceType).getDeclaredAttributes().iterator();
+        } else if (persistenceType
+                .getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.MAPPED_SUPERCLASS) {
+            return ((IdentifiableType<?>) persistenceType).getAttributes().iterator();
+        } else if (persistenceType
+                .getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {
+            return ((EmbeddableType<?>) persistenceType).getAttributes().iterator();
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
 
 	@Override
 	public List<Type> getEmbeddableTypes() {
@@ -109,18 +117,12 @@ public class JPAType extends AbstractType {
 		return getInstanceClass().isAssignableFrom(object.getClass());
 	}
 
+	@Override
 	public void defineProperties (Shape shape)
 	{
-		// If the properties are already defined then return
-		if (shape.getProperties(this) != null) {
-			return;
-		}
-
-		JPAType superType = (JPAType)getParentType();
-		// Ensure that the properties has been populated for the supertype
-		if(superType != null) {
-			superType.defineProperties(shape);
-		}
+	    if(!createdSuperTypeProperties()) {
+	        return;
+	    }
 
 		Iterator<?> attribIter = getPropertyIterator();
 		while (attribIter.hasNext()) {
@@ -133,26 +135,35 @@ public class JPAType extends AbstractType {
 			Type propertyType = getShape().getType(attribute.getJavaType());
 			JPAProperty property = new JPAProperty(attribute, propertyType, this);
 
+			if(property.getName().equals("id")) {
+			    System.out.println("Type: " + getName() + ", property: " + property.getName() + ", isId: " + property.isIdentifier()) ;
+			}
+			
 			if(isSuperTypeProperty(attribute.getName())) {
-				if(!(property.isIdentifier() || property.isVersion())) {
-					continue;
-				}
+			    continue;
 			}
-
-			if (property.isIdentifier()) {
-				identifierProperty = property;
-				logger.debug("JPA Identifier attribute name: " + identifierProperty.getName());
-			}
-			if (property.isVersion()) {
-				versionProperty = property;
-				logger.debug("JPA version attribute name: " + versionProperty.getName());
-			}
-			property.init(shape);
-
-			shape.addProperty(property);
+			
+            if (property.isIdentifier()) {
+                identifierProperty = property;
+                logger.debug("JPA Identifier attribute name: " + identifierProperty.getName());
+            }
+            if (property.isVersion()) {
+                versionProperty = property;
+                logger.debug("JPA version attribute name: " + versionProperty.getName());
+            }			
+            
+            property.init(shape);
+            shape.addProperty(property);
 		}
-
-		initAccessType();
+		
+		JPAType parentType = (JPAType)getParentType();
+		// Set it from the superType to enable sharing of id and version property
+	    if(parentType != null && parentType.getIdentifierProperty() != null) {
+	        identifierProperty = (JPAProperty) parentType.getIdentifierProperty();
+	    }
+        if(parentType != null && parentType.getVersionProperty() != null) {
+            versionProperty = (JPAProperty) parentType.getVersionProperty();
+        }
 	}
 
 	public void setOpposite(Shape shape) {
@@ -190,7 +201,7 @@ public class JPAType extends AbstractType {
 		List<Property> result = new ArrayList<Property>();
 
 		if(getEntityType().getPersistenceType() != javax.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {		
-			Set<?> declaredAttributes = ((EntityType<?>)persistenceType).getDeclaredAttributes();
+			Set<?> declaredAttributes = ((ManagedType<?>)persistenceType).getDeclaredAttributes();
 			Iterator<?> attribIter = declaredAttributes.iterator();		
 			while(attribIter.hasNext()) {
 				Attribute<?, ?> attribute = (Attribute<?, ?>) attribIter.next();
@@ -221,7 +232,7 @@ public class JPAType extends AbstractType {
 		return this.persistenceType;
 	}
 
-	protected void initAccessType() {
+	public void initAccessType() {
 		javax.persistence.Access accessAnno = getInstanceClass().getAnnotation( javax.persistence.Access.class );
 		if ( accessAnno != null ) {
 			accessType = AccessType.valueOf(accessAnno.value().name());

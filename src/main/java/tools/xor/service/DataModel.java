@@ -32,6 +32,9 @@ import tools.xor.view.AggregateView;
 import tools.xor.view.QueryTransformer;
 
 /**
+ * The DataModel represents the logical schema in the form of types and properties.
+ * It is comprised of one or more shapes to represent either multi-tenants in a multi-tenant 
+ * system or categorized by any other means.
  * 
  * @author Dilip Dalton
  *

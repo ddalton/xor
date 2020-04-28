@@ -934,7 +934,7 @@ public abstract class AbstractBO implements BusinessObject {
 						String narrowToType = (String) propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.ENTITY_TYPE_ATTRIBUTE);
 						EntityType objectType = (EntityType) property.getType();
 						if(narrowToType != null)
-							objectType = (EntityType) getObjectCreator().getDAS().getShape().getType(
+							objectType = (EntityType) getObjectCreator().getDataModel().getShape().getType(
 								narrowToType);
 
 						propertyDO = createQueryObject(null, current, fullPropertyPath, idValue, naturalKeyValues, objectType, property, getAnchor(anchor.toString()), qti);
@@ -1552,7 +1552,7 @@ public abstract class AbstractBO implements BusinessObject {
 		}
 		
 		try {
-			Type targetType = getObjectCreator().getDAS().getType(typeMapper.getShape(), settings.getNarrowedClass(), settings.getEntityType());
+			Type targetType = getObjectCreator().getDataModel().getType(typeMapper.getShape(), settings.getNarrowedClass(), settings.getEntityType());
 			callInfo.setOutput(callInfo.getOperation().createTarget(callInfo, targetType));
 			
 			// Needed to hold references to open property created objects

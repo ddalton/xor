@@ -27,10 +27,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 import tools.xor.AbstractType;
 import tools.xor.EntityType;
@@ -93,7 +95,7 @@ public abstract class AbstractShape implements Shape
     }
     
     @Override
-    public DataModel getDAS() {
+    public DataModel getDataModel() {
         return das;
     }
 
@@ -135,7 +137,7 @@ public abstract class AbstractShape implements Shape
 
     @Override
     public boolean hasType(EntityType entityType) {
-        if(entityType.isDomainType() && types.containsKey(entityType.getName())) {
+        if(entityType.isDomainType() && types.containsKey(entityType.getEntityName())) {
             return true;
         }
 
@@ -187,19 +189,44 @@ public abstract class AbstractShape implements Shape
     @Override
     public void addType(Type type) {
         addType(type.getName(), type);   
+        
+        if(type instanceof EntityType) {
+            addType(((EntityType)type).getEntityName(), type);
+        }
     }    
 
     @Override
     public Map<String, Property> getProperties(EntityType type) {
+        // Important this is null, as this is used to check for existence of properties
         Map<String, Property> result = null;
 
-        if(this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+        if (this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
             result = parent.getProperties(type);
         }
-
+        
+        Stack<EntityType> ancestors = new Stack<>();
+        EntityType current = type;
+        while(current != null) {
+            ancestors.add(current);
+            current = current.getParentType();
+        }
+        
+        while(!ancestors.isEmpty()) {
+            current = ancestors.pop();
+            Map<String, Property> directProperties = getDirectProperties(current);
+            if (directProperties != null) {
+                if (result == null) {
+                    // We are modifying the result so make a copy
+                    result = new LinkedHashMap<>();
+                }
+                result.putAll(directProperties);
+            }            
+        }
+        
+        /*
         Map<String, Property> directProperties = getDirectProperties(type);
-        if(directProperties != null) {
-            if(result != null) {
+        if (directProperties != null) {
+            if (result != null) {
                 // We are modifying the result so make a copy
                 result = new LinkedHashMap<>(result);
                 result.putAll(directProperties);
@@ -207,7 +234,7 @@ public abstract class AbstractShape implements Shape
                 result = directProperties;
             }
         }
-
+        */
         return result == null ? null : Collections.unmodifiableMap(result);
     }
 
@@ -247,7 +274,7 @@ public abstract class AbstractShape implements Shape
 
     @Override
     public Map<String, Property> getDirectProperties(EntityType type) {
-        return allProperties.get(type.getName());
+        return allProperties.get(type.getEntityName());
     }
 
     @Override
@@ -259,10 +286,12 @@ public abstract class AbstractShape implements Shape
     @Override
     public void addProperty (EntityType type, Property property)
     {
-        Map<String, Property> properties = allProperties.get(type.getName());
+
+//            System.out.println(String.format("Adding property %s to type %s", property.getName(), type.getEntityName()));
+        Map<String, Property> properties = allProperties.get(type.getEntityName());
         if (properties == null) {
             properties = new LinkedHashMap<>();
-            allProperties.put(type.getName(), properties);
+            allProperties.put(type.getEntityName(), properties);
         }
         properties.put(property.getName(), property);
     }
@@ -275,8 +304,8 @@ public abstract class AbstractShape implements Shape
 
     @Override
     public void removeProperty (EntityType type, Property openProperty) {
-        if (allProperties.containsKey(type.getName())) {
-            allProperties.get(type.getName()).remove(openProperty.getName());
+        if (allProperties.containsKey(type.getEntityName())) {
+            allProperties.get(type.getEntityName()).remove(openProperty.getName());
         }
     }
 
@@ -555,5 +584,61 @@ public abstract class AbstractShape implements Shape
             return convertersByClass.get(property.getType().getInstanceClass());
         }       
         return null;
+    }
+    
+    private String getSchemaURI() {
+        // This can be externalized
+        StringBuilder sb = new StringBuilder("http://localhost/");
+        sb.append(getName());
+        
+        return sb.toString();
+    }
+    
+    private String getJsonId(Type type) {
+        return "#" + ((EntityType)type).getEntityName();
+    }
+    
+    private void processParentTypes(JSONObject definitions, Type parent) {
+        if(parent == null || !(parent instanceof EntityType)) {
+            return;
+        }
+        if(parent.getParentTypes() == null) {
+            return;
+        }
+        
+        EntityType type = (EntityType) parent;
+        if(!definitions.has(type.getEntityName())) {
+            definitions.put(type.getEntityName(), processType(type));
+        }
+        
+        for(Type parentType: parent.getParentTypes()) {
+            processParentTypes(definitions, parentType);
+        }
+    }
+    
+    private JSONObject processType(EntityType type) {
+        JSONObject jsonType = new JSONObject();
+        jsonType.put("$id", getJsonId(type));
+        
+        return jsonType;
+    }
+    
+    @Override
+    public JSONObject getJsonSchema() {
+        
+        JSONObject json = new JSONObject();
+        json.put("$schema", getSchemaURI());
+        JSONObject definitions = new JSONObject();
+        json.put("definitions", definitions);
+        
+        for(Type type: getUniqueTypes()) {
+            if(type.isDataType()) {
+                continue;
+            }
+            definitions.put(((EntityType)type).getEntityName(), processType((EntityType) type));
+            processParentTypes(definitions, type);
+        }
+        
+        return json;
     }
 }

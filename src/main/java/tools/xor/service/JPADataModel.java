@@ -20,14 +20,14 @@
 package tools.xor.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
+import javax.persistence.metamodel.ManagedType;
 import javax.persistence.metamodel.Metamodel;
+import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -75,27 +75,25 @@ public abstract class JPADataModel extends AbstractDataModel {
 	private void defineTypes(Shape shape, Set<String> entityNames) {
 		
 		Metamodel metaModel = getEmf().getMetamodel();
-		Set<EntityType<?>> providerEntities = metaModel.getEntities();
-		List<EntityType<?>> filteredEntities = new ArrayList<>();
+		Set<ManagedType<?>> providerEntities = metaModel.getManagedTypes();
+		List<ManagedType<?>> filteredEntities = new ArrayList<>();
 		
 		if(entityNames != null && !entityNames.isEmpty()) {
-			Map<String, EntityType<?>> providerEntityMap = new HashMap<>();
-			for(EntityType<?> entityType: providerEntities) {
-				providerEntityMap.put(entityType.getJavaType().getName(), entityType);
-			}
-			
-			for(String entityName: entityNames) {
-				if(providerEntityMap.containsKey(entityName)) {
-					filteredEntities.add(providerEntityMap.get(entityName));
-				}
-			}
+	        for(ManagedType<?> managedType: providerEntities) {
+	            if(managedType.getPersistenceType() == PersistenceType.ENTITY) {
+	                if(!entityNames.contains(((EntityType<?>)managedType).getName())) {
+	                    continue;
+	                }
+	            }
+	            filteredEntities.add(managedType);
+	        }
 		} else {
 			filteredEntities = new ArrayList(providerEntities);
 		}
 		
 		logger.info("Getting the list of JPA mapped classes");  		
-		for(EntityType<?> classMapping: filteredEntities){ 
-			logger.debug("     Adding JPA persisted class: " + classMapping.getName());
+		for(ManagedType<?> classMapping: filteredEntities){ 
+			logger.debug("     Adding JPA persisted class: " + classMapping.getJavaType().getName());
 			defineType(classMapping, shape);
 		}	
 	}
@@ -114,7 +112,7 @@ public abstract class JPADataModel extends AbstractDataModel {
 		postProcess(shape, extension, shape.getUniqueTypes(), false);		
 	}
 
-	protected void defineType(EntityType<?> classMapping, Shape shape) {
+	protected void defineType(ManagedType<?> classMapping, Shape shape) {
 		JPAType dataType = new JPAType(classMapping);
 		logger.debug("Defined data type: " + dataType.getName());
 		shape.addType(classMapping.getJavaType().getName(), dataType);
@@ -129,6 +127,7 @@ public abstract class JPADataModel extends AbstractDataModel {
 			if(JPAType.class.isAssignableFrom(type.getClass())) {
 				JPAType jPAType = (JPAType) type;
 				jPAType.defineProperties(shape);
+		        jPAType.initAccessType();
 			}
 		}
 

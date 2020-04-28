@@ -19,20 +19,20 @@
 
 package tools.xor;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-import tools.xor.providers.jdbc.JDBCDataModel;
-import tools.xor.service.Shape;
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import tools.xor.providers.jdbc.JDBCDataModel;
+import tools.xor.service.Shape;
 
 /**
  * An OpenType represents a custom type that is a composition of properties from other
@@ -71,16 +71,25 @@ public class JDBCType extends AbstractType {
     public List<String> getPrimaryKeys() {
         return this.tableInfo.getPrimaryKeys();
     }
+    
+    @Override
+    public List <Property> getDeclaredProperties() {
+        Map<String, Property> propertyMap = getShape().getDirectProperties(this);
+        if(propertyMap == null) {
+            return null;
+        }
 
+        return new ArrayList<>(propertyMap.values());
+    }    
+
+    @Override
     public void defineProperties (Shape shape)
     {
-        // If the properties are already defined then return
-        if (shape.getProperties(this) != null) {
-            setIdentifierProperty();
+        if(!createdSuperTypeProperties()) {
             return;
         }
 
-        JDBCDataModel das = (JDBCDataModel)getShape().getDAS();
+        JDBCDataModel das = (JDBCDataModel)getShape().getDataModel();
         // Key is column name and value is java type
         for(JDBCDataModel.ColumnInfo column: das.getTable(getTableName()).getBasicColumns()) {
             Type propertyType = getShape().getType(column.getType());

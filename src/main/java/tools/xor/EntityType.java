@@ -387,4 +387,11 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
 	 * @param value entity type name
 	 */
     void setRootEntityType(String value);
+    
+    /**
+     * Create the properties for this type on 
+     * the provided shape instance
+     * @param shape containing the properties for this type
+     */
+    default void defineProperties(Shape shape) {}
 }

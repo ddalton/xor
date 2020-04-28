@@ -44,21 +44,21 @@ public class MutableJsonType extends ExternalType {
 	
 	private static final String SWAGGER_ALLOF = "allOf";
 	private static final String SWAGGER_TYPE  = "type";
-    private static final String SWAGGER_ARRAY_TYPE  = "array";
+    private static final String JSON_ARRAY_TYPE  = "array";
     private static final String SWAGGER_ITEMS  = "items";
 	private static final String SWAGGER_PROPERTIES = "properties";
 	private static final String SWAGGER_REF   = "$ref";
 	public static final String  SWAGGER_REF_SEPARATOR = "/";
 	public static final String  SWAGGER_ID_PROPERTY = "surrogateKey";
-	private static final Map<String, Class<?>> SWAGGER_TYPES = new HashMap<>();
+	private static final Map<String, Class<?>> JSON_TYPES = new HashMap<>();
 	
 	static {
-	    SWAGGER_TYPES.put("string", String.class);
-	    SWAGGER_TYPES.put("number", BigDecimal.class);
-	    SWAGGER_TYPES.put("integer", Integer.class);
-	    SWAGGER_TYPES.put("boolean", boolean.class);
-	    SWAGGER_TYPES.put(SWAGGER_ARRAY_TYPE, List.class);
-	    SWAGGER_TYPES.put("object", Object.class);
+	    JSON_TYPES.put("string", String.class);
+	    JSON_TYPES.put("number", BigDecimal.class);
+	    JSON_TYPES.put("integer", Integer.class);
+	    JSON_TYPES.put("boolean", boolean.class);
+	    JSON_TYPES.put(JSON_ARRAY_TYPE, List.class);
+	    JSON_TYPES.put("object", Object.class);
 	}
 	
 	private List<String> parentTypeNames;
@@ -249,15 +249,15 @@ public class MutableJsonType extends ExternalType {
                     String toOneEntityName = getEntityNameFromRef(obj);
                     propertyType = getShape().getType(toOneEntityName);
                 } else if (obj.has(SWAGGER_TYPE)) {
-                    propertyType = getShape().getType(SWAGGER_TYPES.get(obj.get(SWAGGER_TYPE)));
-                    if (SWAGGER_ARRAY_TYPE.equals(obj.get(SWAGGER_TYPE))) {
+                    propertyType = getShape().getType(JSON_TYPES.get(obj.get(SWAGGER_TYPE)));
+                    if (JSON_ARRAY_TYPE.equals(obj.get(SWAGGER_TYPE))) {
                         // look for the items object
                         JSONObject items = obj.getJSONObject(SWAGGER_ITEMS);
                         // to many entity relationship
                         if (items.has(SWAGGER_REF)) {
                             elementType = getShape().getType(getEntityNameFromRef(items));
                         } else {
-                            Class<?> simpleType = SWAGGER_TYPES.get(items.get(SWAGGER_TYPE));
+                            Class<?> simpleType = JSON_TYPES.get(items.get(SWAGGER_TYPE));
                             elementType = getShape().getType(simpleType);
                         }
                     }

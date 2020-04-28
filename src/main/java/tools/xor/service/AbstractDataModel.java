@@ -179,18 +179,21 @@ public abstract class AbstractDataModel implements DataModel {
 		}
 		
 		for(EntityType type: entityTypes) {
-			
-			// Initialize supertype if applicable
-			Class<?> clazz = type.getInstanceClass();
-			while(clazz != Object.class) {
-				Type superType = shape.getType(clazz.getSuperclass().getName());
-				if(superType != null) {
-					type.setParentType((EntityType) superType);
-					break;
-				}
-				clazz = clazz.getSuperclass();
-			}
+			initParentType(type, shape);
 		}
+	}
+	
+	protected void initParentType(EntityType type, Shape shape) {
+        // Initialize supertype if applicable
+        Class<?> clazz = type.getInstanceClass();
+        while(clazz != Object.class) {
+            Type superType = shape.getType(clazz.getSuperclass().getName());
+            if(superType != null) {
+                type.setParentType((EntityType) superType);
+                break;
+            }
+            clazz = clazz.getSuperclass();
+        }	    
 	}
 
 	@Override

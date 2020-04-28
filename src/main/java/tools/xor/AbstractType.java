@@ -1003,6 +1003,7 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public List<Property> getProperties() {
 		Map<String, Property> propertyMap = getShape().getProperties(this);
+		// Returning null is significant as there is logic around it
 		if(propertyMap == null) {
 			return null;
 		}
@@ -1092,11 +1093,7 @@ public abstract class AbstractType implements EntityType {
 			if(path.startsWith(Constants.XOR.IDREF)) {
 				path = path.substring(Constants.XOR.IDREF.length());
 			}
-			result = getShape().getProperty(this, path);
-			
-			if(result == null && getShape().getProperties(this) == null) {
-				throw new IllegalStateException("Properties not set for type: " + getName() + " with class: " + getInstanceClass().getName());
-			}				
+			result = getShape().getProperty(this, path);				
 		} else {
 			Property property = getProperty(path.substring(0, delim));
 			if(property == null) {
@@ -1113,11 +1110,7 @@ public abstract class AbstractType implements EntityType {
 			result = propertyType.getProperty(path.substring(delim+1));
 		}
 
-		if (result != null) {
-			return result;
-		}
-
-		return null;
+		return result;
 	}	
 	
 	@Override
@@ -1386,5 +1379,24 @@ public abstract class AbstractType implements EntityType {
 		}
 
 		return result;
+	}
+	
+	/**
+	 * Populate the properties of the super type if needed
+	 * @return true if the supertype was created false otherwise
+	 */
+	protected boolean createdSuperTypeProperties() {
+	       // If the properties are already defined then return
+        if (shape.getDirectProperties(this) != null) {
+            return false;
+        }
+
+        EntityType parentType = getParentType();
+        // Ensure that the properties has been populated for the supertype
+        if(parentType != null) {
+            parentType.defineProperties(shape);
+        }
+        
+        return true;
 	}
 }

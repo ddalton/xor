@@ -94,7 +94,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		this.entity = (BusinessObject) callInfo.getInput();
 		assert entity != null : "Entity information is required.";
 
-		DataModel das = this.entity.getObjectCreator().getDAS();
+		DataModel das = this.entity.getObjectCreator().getDataModel();
 		
 		// Always use the REFERENCE type
 		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedType(

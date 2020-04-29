@@ -1695,7 +1695,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 	@Override
 	public boolean isDomainType() {
-		return objectCreator.getTypeMapper().isDomain(getType().getInstanceClass());
+		return objectCreator.getTypeMapper().isDomain(getType().getName());
 	}
 
 	@Override

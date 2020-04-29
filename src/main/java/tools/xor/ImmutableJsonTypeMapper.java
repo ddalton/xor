@@ -189,11 +189,6 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
         return JsonObject.class.getName();        
     }	
 	
-	@Override
-	public boolean isExternal(Class<?> clazz) {
-		return clazz.isAssignableFrom(JsonValue.class);
-	}
-	
     @Override
     public boolean isExternal(String typeName) {
         if(typeName != null) {

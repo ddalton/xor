@@ -74,7 +74,7 @@ public class DTOTypeMapper extends AbstractTypeMapper {
         try {
             Class<?> externalClass = Class.forName(name);
             if (externalClass.isArray())
-                if (isExternal(externalClass.getComponentType()))
+                if (isExternal(externalClass.getComponentType().getName()))
                     throw new RuntimeException("Array of entity is not supported");
                 else
                     return externalClass;
@@ -117,12 +117,12 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	@Override
 	public Class<?> toExternal(Class<?> domainClass) {
 		if(domainClass.isArray())
-			if(isExternal(domainClass.getComponentType()))
+			if(isExternal(domainClass.getComponentType().getName()))
 					throw new RuntimeException("Array of entity is not supported");
 			else
 				return domainClass;		
 		
-		if(isExternal(domainClass) || domainClass.isPrimitive())
+		if(isExternal(domainClass.getName()) || domainClass.isPrimitive())
 			return domainClass;
 		
 		String fullClassName = domainClass.getCanonicalName();
@@ -150,12 +150,12 @@ public class DTOTypeMapper extends AbstractTypeMapper {
             Class<?> domainClass = Class.forName(name);
             
             if(domainClass.isArray())
-                if(isExternal(domainClass.getComponentType()))
+                if(isExternal(domainClass.getComponentType().getName()))
                         throw new RuntimeException("Array of entity is not supported");
                 else
                     return domainClass;     
             
-            if(isExternal(domainClass) || domainClass.isPrimitive())
+            if(isExternal(domainClass.getName()) || domainClass.isPrimitive())
                 return domainClass;
             
             String fullClassName = domainClass.getCanonicalName();
@@ -175,11 +175,6 @@ public class DTOTypeMapper extends AbstractTypeMapper {
         }
 
         return null;            
-	}
-	
-	@Override
-	public boolean isExternal(Class<?> clazz) {
-		return (clazz.getCanonicalName().startsWith(externalPackagePath) && clazz.getCanonicalName().endsWith(DTO_SUFFIX));
 	}
 	
     @Override

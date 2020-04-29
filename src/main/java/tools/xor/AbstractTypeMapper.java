@@ -124,11 +124,6 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	public void setSide(MapperSide direction) {
 		this.side = direction;
 	}	
-	
-	@Override
-	public boolean isExternal(Class<?> clazz) {
-		return true;
-	}
 
 	@Override
 	public boolean isExternal(String typeName) {

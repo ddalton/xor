@@ -267,13 +267,6 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
     }	
 	
 	@Override
-	public boolean isExternal(Class<?> clazz) {
-		return clazz.isAssignableFrom(JSONObject.class) ||
-				clazz.isAssignableFrom(JSONArray.class) ||
-				unchanged.contains(clazz);
-	}
-	
-	@Override
     public boolean isExternal(String typeName) {
 	    return unchangedNames.contains(typeName) || JSONObject.class.getName().equals(typeName) || JSONArray.class.getName().equals(typeName);
 	}

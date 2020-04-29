@@ -57,12 +57,6 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     public String getMappedType(String typeName, CallInfo callInfo) {
         return typeName;
     }
-
-    @Override
-    public boolean isExternal(Class<?> clazz)
-    {
-        return true;
-    }
     
     @Override
     public boolean isExternal(String typeName) {

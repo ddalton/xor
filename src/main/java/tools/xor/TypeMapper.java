@@ -148,13 +148,6 @@ public interface TypeMapper {
      * @return typemapper instance
      */
     public TypeMapper newInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged);       
-
-	/**
-	 * Check if the given class is in its external form
-	 * @param clazz value
-	 * @return true if external form of the class
-	 */
-	@Deprecated public boolean isExternal(Class<?> clazz);
 	
     /**
      * Check if the given type is in its external form

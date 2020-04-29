@@ -63,6 +63,12 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	public void setExternalPackagePath(String externalPackagePath) {
 		this.externalPackagePath = externalPackagePath;
 	}
+	
+	@Override
+    public String toDomain(String typeName) {
+        Class<?> domainClass = getDomainClass(typeName);
+        return domainClass == null ? null : domainClass.getName();
+    }
 
 	/* (non-Javadoc)
 	 * @see TypeMapper#toDomain(java.lang.Class)
@@ -101,6 +107,41 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 
 		return null;
 	}
+	
+    private Class<?> getDomainClass(String name) {
+        try {
+            Class<?> externalClass = Class.forName(name);
+            if (externalClass.isArray())
+                if (isExternal(externalClass.getComponentType()))
+                    throw new RuntimeException("Array of entity is not supported");
+                else
+                    return externalClass;
+
+            if (isDomain(externalClass) || externalClass.isPrimitive())
+                return externalClass;
+
+            String fullClassName = externalClass.getCanonicalName();
+            String toClassName = fullClassName;
+
+            if (fullClassName.startsWith(externalPackagePath))
+                // Change the package to the Domain package
+                toClassName = fullClassName.replaceFirst(externalPackagePath, domainPackagePath);
+
+            if (toClassName.endsWith(DTO_SUFFIX) && toClassName.startsWith(domainPackagePath)) {
+                // Remove the VO_SUFFIX
+                int toNameLen = toClassName.length();
+                StringBuilder toNameBuf = (new StringBuilder(toClassName)).delete(toNameLen - DTO_SUFFIX.length(),
+                        toNameLen);
+                toClassName = toNameBuf.toString();
+            }
+
+            return Class.forName(toClassName);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
 	/* (non-Javadoc)
 	 * @see TypeMapper#toExternal(java.lang.Class)

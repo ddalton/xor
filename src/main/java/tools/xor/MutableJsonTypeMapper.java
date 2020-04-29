@@ -39,8 +39,6 @@ import tools.xor.util.ObjectCreator;
 public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	
 	private String domainPackagePath;
-    private Shape domainShape;
-    private Shape dynamicShape;	
 	
 	private static final Set<Class<?>> unchanged = new HashSet<Class<?>>();
 	
@@ -94,6 +92,27 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	public void setDomainPackagePath(String domainPackagePath) {
 		this.domainPackagePath = domainPackagePath;
 	}
+	
+    @Override
+    public String toDomain(String typeName) {
+        if (domainShape != null) {
+            Type domainType = this.domainShape.getType(typeName);
+            if (domainType != null) {
+                return domainType.getName();
+            }
+        } else {
+            try {
+                Class<?> externalClass = Class.forName(typeName);
+                if (isDomain(externalClass)) {
+                    return typeName;
+                }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }	
 
 	@Override
 	public Class<?> toDomain(Class<?> externalClass) {

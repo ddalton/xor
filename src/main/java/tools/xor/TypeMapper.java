@@ -65,14 +65,23 @@ public interface TypeMapper {
      * @param dynamicShape instance
      */
     void setDynamicShape(Shape dynamicShape);
-
+    
+    /**
+     * We need to find the domain form of the type.
+     * If the provided name is a domain type name, then it is returned back unchanged.
+     * 
+     * @param name or entityName of the type whose corresponding domain form needs to be returned
+     * @return the domain type name/entityName corresponding to given name
+     */
+    public String toDomain(String typeName);
+    
 	/**
 	 * We need to find the domain form of the class
 	 * 
 	 * @param externalClass the class whose corresponding domain form needs to be returned
 	 * @return the domain class corresponding to externalClass
 	 */
-	public Class<?> toDomain(Class<?> externalClass);
+	@Deprecated public Class<?> toDomain(Class<?> externalClass);
 	
 	/**
 	 * If the domain class could not be found from the given class, then try to 

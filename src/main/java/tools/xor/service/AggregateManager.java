@@ -456,18 +456,24 @@ public class AggregateManager implements Xor
 			DataModel das = getModel();
 
 			Class<?> domainClass = settings.getEntityClass();
+			String entityTypeName = null;
 			if (domainClass == null && inputObjectClass != null) {
-				try {
-					domainClass = das.getTypeMapper().toDomain(inputObjectClass);
-				}
-				catch (UnsupportedOperationException e) {
-					domainClass = null;
-				}
+			    entityTypeName = das.getTypeMapper().toDomain(inputObjectClass.getName());
+			    if(entityTypeName != null) {
+			        try {
+			            domainClass = Class.forName(entityTypeName);
+			        } catch (ClassNotFoundException e) {
+			            e.printStackTrace();
+			        }   
+			        settings.setEntityClass(domainClass);
+			    }
+			} else if(domainClass != null) {
+			    entityTypeName = domainClass.getName();
 			}
 
 			// check if the view is a built-in view. The domain class can be inferred from
 			// the view name
-			if(domainClass == null) {
+			if(entityTypeName == null) {
 				domainClass = settings.getView().inferDomainClass();
 				settings.setEntityClass(domainClass);
 			}
@@ -475,8 +481,10 @@ public class AggregateManager implements Xor
 			if (domainClass == null) {
 				throw new RuntimeException(
 					"Unable to identify the type on which to perform the operation. Need to explicitly specify the domain type.");
+			} else {
+			    entityTypeName = domainClass.getName();
 			}
-			Type entityType = das.getShape().getType(domainClass.getName());
+			Type entityType = das.getShape().getType(entityTypeName);
 			if(entityType == null) {
 			    throw new RuntimeException("EntityType needs to be provided in the settings");
 			}

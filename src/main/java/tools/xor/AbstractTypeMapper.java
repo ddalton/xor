@@ -111,6 +111,10 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo) {
 		return toDomain(externalClass);
 	}	
+	
+    public String toDomain(String typeName) {
+        return typeName;
+    }
 
 	@Override
 	public MapperSide getSide() {

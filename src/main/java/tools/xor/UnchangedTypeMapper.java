@@ -59,11 +59,6 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         return externalClass;
     }
 
-    @Override public Class<?> toDomain(Type type)
-    {
-        return type.getInstanceClass();
-    }
-
     @Override public Class<?> toExternal(Class<?> domainClass)
     {
         return domainClass;

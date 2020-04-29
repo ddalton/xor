@@ -138,14 +138,6 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 
         return result;
     }		
-	
-	@Override
-	/**
-	 * Return the domain class from the external type
-	 */
-	public Class<?> toDomain(Type type) {
-		throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
-	}	
 
 	@Override
 	/**

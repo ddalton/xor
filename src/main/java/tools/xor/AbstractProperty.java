@@ -460,7 +460,9 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		// getterMethod from getContainingType 
 
 		getterMethod = getContainingType().getGetterMethod(getName());
-		logger.debug("Class name: " + instanceClass.getName() + ", property name: " + getName());
+		if(instanceClass != null) {
+		    logger.debug("Class name: " + instanceClass.getName() + ", property name: " + getName());
+		}
 
 		initBusinessLogicAnnotations();
 		

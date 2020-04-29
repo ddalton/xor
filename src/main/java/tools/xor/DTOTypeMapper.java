@@ -182,6 +182,11 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 		return (clazz.getCanonicalName().startsWith(externalPackagePath) && clazz.getCanonicalName().endsWith(DTO_SUFFIX));
 	}
 	
+    @Override
+    public boolean isExternal(String typeName) {
+        return (typeName.startsWith(externalPackagePath) && typeName.endsWith(DTO_SUFFIX));
+    }	
+	
 	@Override
 	public boolean isDomain(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(domainPackagePath) && !clazz.getCanonicalName().endsWith(DTO_SUFFIX));

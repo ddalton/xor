@@ -365,12 +365,6 @@ public interface BusinessObject extends DataObject, ObjectGraph.StateComparator.
 	public Type getDomainType();
 
 	/**
-	 * Get the external type object, i.e., the VO class 
-	 * @return the external type of this object
-	 */
-	public Type getExternalType();
-
-	/**
 	 * Link all the reverse side (non-cascade side) of the bi-directional references
 	 */
 	public void linkBackPointer();

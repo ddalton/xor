@@ -194,6 +194,23 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 		return clazz.isAssignableFrom(JsonValue.class);
 	}
 	
+    @Override
+    public boolean isExternal(String typeName) {
+        if(typeName != null) {
+            Class<?> externalClass;
+            try {
+                externalClass = Class.forName(typeName);
+                if(externalClass != null && externalClass.isAssignableFrom(JsonValue.class)) {
+                    return true;
+                }                
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        throw new RuntimeException("Type name is null: " + typeName);
+    }   	
+	
 	@Override
 	public boolean isDomain(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(domainPackagePath));

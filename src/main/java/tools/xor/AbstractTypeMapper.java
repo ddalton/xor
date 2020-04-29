@@ -129,6 +129,11 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	public boolean isExternal(Class<?> clazz) {
 		return true;
 	}
+
+	@Override
+	public boolean isExternal(String typeName) {
+	    return true;
+	}
 	
 	@Override
 	public boolean isDomain(Class<?> clazz) {
@@ -462,13 +467,17 @@ public abstract class AbstractTypeMapper implements TypeMapper {
         ((OpenType)type).setProperty();
         getDomainShape().addType(type.getName(), type);
 
-        Class<?> externalClass = getModel().getTypeMapper().toExternal(type.getInstanceClass());
-        if(externalClass != null) {
-            ExternalType externalType = getModel().getTypeMapper().createExternalType(
-                type,
-                externalClass);
-            getDynamicShape().addType(externalType.getName(), externalType);
-            externalType.setProperty(getDomainShape(), getDynamicShape(), this);
+        String externalClassName = getModel().getTypeMapper().toExternal(type.getInstanceClass() == null ? null : type.getInstanceClass().getName());
+        try {
+            Class<?> externalClass = Class.forName(externalClassName);
+            if (externalClass != null) {
+                ExternalType externalType = getModel().getTypeMapper().createExternalType(type, externalClass);
+                getDynamicShape().addType(externalType.getName(), externalType);
+                externalType.setProperty(getDomainShape(), getDynamicShape(), this);
+            }
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }        
     }
 }

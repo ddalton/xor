@@ -1704,11 +1704,6 @@ public abstract class AbstractBO implements BusinessObject {
 	}
 
 	@Override
-	public Type getExternalType() {
-		return getObjectCreator().getShape().getType(getObjectCreator().getTypeMapper().toExternal(getType().getInstanceClass()));
-	}
-
-	@Override
 	public void linkBackPointer() {
 		for(Property p: getType().getProperties()) {	
 			ExtendedProperty property = (ExtendedProperty) p;

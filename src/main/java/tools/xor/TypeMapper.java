@@ -73,15 +73,7 @@ public interface TypeMapper {
      * @param name or entityName of the type whose corresponding domain form needs to be returned
      * @return the domain type name/entityName corresponding to given name
      */
-    String toDomain(String typeName);
-    
-    /**
-     * Return the external type name of the domain type name
-     * 
-     * @param domain type name whose corresponding external type needs to be found
-     * @return the external type name for the domain type name
-     */
-    String toExternal(String domainTypeName);    
+    String toDomain(String typeName);   
     
     /**
      * If the domain class could not be found from the given class, then try to 
@@ -91,7 +83,15 @@ public interface TypeMapper {
      * @param bo BusinessObject
      * @return the domain type name
      */    
-    String toDomain(String externalTypeName, BusinessObject bo);    
+    String toDomain(String externalTypeName, BusinessObject bo);  
+    
+    /**
+     * Return the external type name of the domain type name
+     * 
+     * @param domain type name whose corresponding external type needs to be found
+     * @return the external type name for the domain type name
+     */
+    String toExternal(String domainTypeName);     
 
 	/**
 	 * Return the external form of the class
@@ -154,14 +154,21 @@ public interface TypeMapper {
 	 * @param clazz value
 	 * @return true if external form of the class
 	 */
-	public boolean isExternal(Class<?> clazz);
+	@Deprecated public boolean isExternal(Class<?> clazz);
+	
+    /**
+     * Check if the given type is in its external form
+     * @param typeName type nname
+     * @return true if external form of the class
+     */
+    boolean isExternal(String typeName);	
 	
 	/**
 	 * Check if the given class is in its domain form
 	 * @param clazz value
 	 * @return true if domain form of the class
 	 */
-	public boolean isDomain(Class<?> clazz);
+	@Deprecated public boolean isDomain(Class<?> clazz);
 	
 	/**
      * Check if the given type name is in its domain form
@@ -183,7 +190,7 @@ public interface TypeMapper {
 	 * @param derivedClass external java class
 	 * @return external type
 	 */
-	public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass);
+	@Deprecated public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass);
 
 	/**
 	 * Allow the typemapper to specify a custom name for the external type
@@ -194,7 +201,7 @@ public interface TypeMapper {
 	 * @param domainType domain type
 	 * @return external name
 	 */
-	public String getExternalTypeName(Class<?> inputClass, EntityType domainType);
+	@Deprecated public String getExternalTypeName(Class<?> inputClass, EntityType domainType);
 
 	/** 
 	 * Flag that denotes if the object needs to be read after the child properties are processed
@@ -208,7 +215,7 @@ public interface TypeMapper {
 	 * @param clazz input
 	 * @return true if the clazz supports creating open properties e.g., JSONObject
 	 */
-	public boolean isOpen(Class<?> clazz);
+	@Deprecated public boolean isOpen(Class<?> clazz);
 	
 	/**
 	 * Get the EntityKey object that is used as the key in the ObjectCreator

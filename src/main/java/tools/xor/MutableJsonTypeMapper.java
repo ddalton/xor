@@ -274,11 +274,16 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	}
 	
 	@Override
+    public boolean isExternal(String typeName) {
+	    return unchangedNames.contains(typeName) || JSONObject.class.getName().equals(typeName) || JSONArray.class.getName().equals(typeName);
+	}
+	
+	@Override
 	public boolean isDomain(Class<?> clazz) {
 		if(domainPackagePath == null) {
 			return super.isDomain(clazz);
 		}
-		return (clazz.getCanonicalName().startsWith(domainPackagePath));
+		return (clazz != null && clazz.getCanonicalName().startsWith(domainPackagePath));
 	}	
 	
     @Override

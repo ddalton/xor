@@ -100,12 +100,7 @@ public abstract class AbstractTypeMapper implements TypeMapper {
     @Override
     public TypeMapper newInstance(MapperSide side, String shapeName) {
         return newInstance(this.getModel(), side, shapeName, isPersistenceManaged());
-    } 
-	
-	@Override
-	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo) {
-		return toDomain(externalClass);
-	}	
+    } 	
 	
 	@Override
     public String toDomain(String externalTypeName, BusinessObject bo) {

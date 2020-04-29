@@ -92,24 +92,6 @@ public interface TypeMapper {
      * @return the domain type name
      */    
     String toDomain(String externalTypeName, BusinessObject bo);    
-    
-	/**
-	 * We need to find the domain form of the class
-	 * 
-	 * @param externalClass the class whose corresponding domain form needs to be returned
-	 * @return the domain class corresponding to externalClass
-	 */
-	@Deprecated public Class<?> toDomain(Class<?> externalClass);
-	
-	/**
-	 * If the domain class could not be found from the given class, then try to 
-	 * infer it from the provided BusinessObject 
-	 * 
-	 * @param externalClass external java class
-	 * @param bo BusinessObject
-	 * @return the domain java class
-	 */
-	@Deprecated public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);
 
 	/**
 	 * Return the external form of the class

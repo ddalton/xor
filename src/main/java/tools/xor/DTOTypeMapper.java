@@ -70,44 +70,6 @@ public class DTOTypeMapper extends AbstractTypeMapper {
         return domainClass == null ? null : domainClass.getName();
     }
 
-	/* (non-Javadoc)
-	 * @see TypeMapper#toDomain(java.lang.Class)
-	 */
-	@Override
-	public Class<?> toDomain(Class<?> externalClass) {
-		if(externalClass.isArray())
-			if(isExternal(externalClass.getComponentType()))
-					throw new RuntimeException("Array of entity is not supported");
-			else
-				return externalClass;
-		
-		if(isDomain(externalClass) || externalClass.isPrimitive())
-			return externalClass;
-		
-		String fullClassName = externalClass.getCanonicalName();
-		String toClassName = fullClassName;
-
-		if(fullClassName.startsWith(externalPackagePath))
-			// Change the package to the Domain package
-			toClassName = fullClassName.replaceFirst(externalPackagePath, domainPackagePath);  
-
-		if(toClassName.endsWith(DTO_SUFFIX) && toClassName.startsWith(domainPackagePath)) {
-			// Remove the VO_SUFFIX
-			int toNameLen = toClassName.length();
-			StringBuilder toNameBuf = (new StringBuilder(toClassName)).delete(
-					toNameLen - DTO_SUFFIX.length(), toNameLen); 
-			toClassName = toNameBuf.toString();		
-		}
-
-		try {
-			return Class.forName(toClassName);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}	
-
-		return null;
-	}
-	
     private Class<?> getDomainClass(String name) {
         try {
             Class<?> externalClass = Class.forName(name);

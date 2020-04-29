@@ -44,20 +44,10 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         return typeName;
     }
     
-    @Override public Class<?> toDomain (Class<?> externalClass)
-    {
-        return externalClass;
-    }
-    
     @Override
     public String toDomain(String externalTypeName, BusinessObject bo) {
         return externalTypeName;
     }    
-
-    @Override public Class<?> toDomain (Class<?> externalClass, BusinessObject bo)
-    {
-        return externalClass;
-    }
 
     @Override public Class<?> toExternal(Class<?> domainClass)
     {

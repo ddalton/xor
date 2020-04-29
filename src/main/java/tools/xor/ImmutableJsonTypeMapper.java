@@ -100,14 +100,6 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
         }
         return typeName;	    
 	}
-
-	@Override
-	public Class<?> toDomain(Class<?> externalClass) {
-		if(!isDomain(externalClass)) {
-			throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
-		}
-		return externalClass;
-	}
 	
     public String getMappedType(String typeName, CallInfo callInfo) {
         String result = null;

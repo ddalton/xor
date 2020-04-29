@@ -62,7 +62,7 @@ public class DataObjectList {
 	 * @param fallback type of the element, usually a parent type as defined in the domain model.
 	 * @return
 	 */
-	private Type getNarrowedElementType (Object element, Type fallback)
+	private Type getElementTypeDowncast (Object element, Type fallback)
 	{
 		// This method is only applicable for EntityType
 		if( !(fallback instanceof EntityType) ) {
@@ -209,7 +209,7 @@ public class DataObjectList {
 						try {
 							BusinessObject collectionElement = dataObject.createDataObject(
 								element,
-								getNarrowedElementType(element, type));
+								getElementTypeDowncast(element, type));
 							collectionElement.setContainer(collectionDataObject);
 							collectionElement.setContainmentProperty(null);
 							result.add(collectionElement);
@@ -221,7 +221,7 @@ public class DataObjectList {
 					BusinessObject collectionElement =
 						objectCreator.createDataObject(
 							element,
-							getNarrowedElementType(element, type),
+							getElementTypeDowncast(element, type),
 							collectionDataObject,
 							null);
 					result.add(collectionElement);

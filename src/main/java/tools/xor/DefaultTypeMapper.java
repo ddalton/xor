@@ -44,14 +44,6 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
     public String toDomain(String typeName) {
         return typeName;
     }    
-    
-	/* (non-Javadoc)
-	 * @see TypeMapper#toReference(java.lang.Class)
-	 */
-	@Override
-	public Class<?> toDomain(Class<?> externalClass) {
-		return externalClass;
-	}
 	
 	public String toExternal(String typeName) {
 	    return typeName;

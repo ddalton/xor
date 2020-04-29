@@ -172,11 +172,14 @@ public abstract class AbstractPersistenceOrchestrator implements PersistenceOrch
 			} else {
 				Serializable id = (Serializable)identifierProperty.getValue(from);
 				if (id != null && !"".equals(id)) {
-					Class<?> desiredClass = typeMapper.toDomain(
+					String typeName = typeMapper.toDomain(
 						type.isDomainType() ?
-							type.getInstanceClass() :
-							typeMapper.getDomainShape().getType(type.getEntityName()).getInstanceClass(), from);
-					persistentObject = findById(desiredClass, id);
+							type.getName() :
+							typeMapper.getDomainShape().getType(type.getEntityName()).getInstanceClass().getName(), from);
+					Type domainType = typeMapper.getDomainShape().getType(typeName);
+					if(domainType != null) {
+					    persistentObject = findById(domainType, id);
+					}
 				}
 			}
 		}

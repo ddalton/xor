@@ -50,4 +50,9 @@ public class ArrayType extends SimpleType {
 						   StateGraph.ObjectGenerationVisitor visitor) {
 		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_ARRAY_TYPE;
+    }	
 }

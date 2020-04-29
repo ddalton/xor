@@ -19,17 +19,16 @@
 
 package tools.xor;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-import tools.xor.generator.DateRange;
-import tools.xor.generator.Generator;
-import tools.xor.generator.Range;
-import tools.xor.util.graph.StateGraph;
-
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import tools.xor.generator.Generator;
+import tools.xor.util.graph.StateGraph;
 
 /**
  * @author Dilip Dalton
@@ -91,4 +90,9 @@ public class DateType extends SimpleType {
 		long  range = getMax() - getMin();
 		return new Date((long) (getMin() + (Math.random() * range)));
 	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_STRING_TYPE;
+    }	
 }

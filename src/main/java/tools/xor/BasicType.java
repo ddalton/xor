@@ -35,14 +35,14 @@ public interface BasicType extends Type {
 	 * Assists in finding the actual class for each of the elements in a property path
 	 * @return ClassResolver 
 	 */
-	public ClassResolver getClassResolver();
+	ClassResolver getClassResolver();
 	
 	/**
 	 * The type knows how to create a new instance
 	 * @param instance prototype whose className is used if necessary to create the new object
 	 * @return new object instance
 	 */
-	public Object newInstance(Object instance);
+	Object newInstance(Object instance);
 	
 	/**
 	 * Generates object(s) based on the property settings and also the general setting.
@@ -55,9 +55,15 @@ public interface BasicType extends Type {
 	 * @param visitor used to find limits
 	 * @return the generated object
 	 */
-	public Object generate (Settings settings,
+	Object generate (Settings settings,
 							Property property,
 							JSONObject rootedAt,
 							List<JSONObject> entitiesToChooseFrom,
 							StateGraph.ObjectGenerationVisitor visitor);
+	
+	/**
+	 * Returns the type according to Json schema
+	 * @return Json type
+	 */
+	String getJsonType();
 }

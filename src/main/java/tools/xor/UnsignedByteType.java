@@ -58,4 +58,9 @@ public class UnsignedByteType extends SimpleType {
         short range = (short) (getMax() - getMin());
         return (short) (getMin() + (Math.random() * range));
     }
+    
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }    
 }

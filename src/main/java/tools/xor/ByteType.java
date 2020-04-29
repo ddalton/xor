@@ -65,5 +65,10 @@ public class ByteType extends SimpleType {
 		// The different can overflow, so we use the next higher type
 		short range = (short) (getMax() - getMin());
 		return (byte) (getMin() + (Math.random() * range));
-	}		
+	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

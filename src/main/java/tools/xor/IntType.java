@@ -66,4 +66,9 @@ public class IntType extends SimpleType {
 		long range = getMax() - getMin();
 		return getMin() + ((int)(Math.random() * range));
 	}		
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

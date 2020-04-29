@@ -63,5 +63,10 @@ public class FloatType extends SimpleType {
 		}
 		float range = getMax() - getMin();
 		return getMin() + ((float)(Math.random() * range));
-	}		
+	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

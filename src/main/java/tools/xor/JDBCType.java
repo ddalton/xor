@@ -332,11 +332,6 @@ public class JDBCType extends AbstractType {
     }
 
     @Override
-    public List<Type> getParentTypes() {
-        return new ArrayList<Type>();
-    }
-
-    @Override
     public List<?> getAliasNames() {
         return new ArrayList<String>();
     }

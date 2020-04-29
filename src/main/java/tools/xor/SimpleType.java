@@ -258,4 +258,9 @@ public class SimpleType implements BasicType {
 
 		return result;
 	}
+
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_STRING_TYPE;
+    }
 }

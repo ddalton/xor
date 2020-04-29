@@ -67,4 +67,9 @@ public class LongType extends SimpleType {
 		long range = maximum - minimum;
 		return (long) (minimum + (Math.random() * range));
 	}		
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

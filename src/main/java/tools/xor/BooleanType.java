@@ -35,4 +35,9 @@ public class BooleanType extends SimpleType {
 						   StateGraph.ObjectGenerationVisitor visitor) {
 		return (Math.random()*Integer.MAX_VALUE)%2 == 0 ? Boolean.TRUE : Boolean.FALSE;
 	}		
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_BOOLEAN_TYPE;
+    }	
 }

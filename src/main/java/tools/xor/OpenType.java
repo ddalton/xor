@@ -126,11 +126,6 @@ public class OpenType extends AbstractType {
 	}
 
 	@Override
-	public List<Type> getParentTypes() {
-		return new ArrayList<Type>();
-	}
-
-	@Override
 	public List<Property> getDeclaredProperties() {
 		return getProperties();
 	}

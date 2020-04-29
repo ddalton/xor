@@ -394,4 +394,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
      * @param shape containing the properties for this type
      */
     default void defineProperties(Shape shape) {}
+    
+    @Override
+    default String getJsonType() { return MutableJsonType.JSON_OBJECT_TYPE; }
 }

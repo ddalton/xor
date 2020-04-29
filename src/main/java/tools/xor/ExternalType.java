@@ -181,9 +181,9 @@ public class ExternalType extends AbstractType {
 
 	public void initParentTypes(EntityType domainType, TypeMapper typeMapper) {
         if (domainType.getParentTypes() != null) {
-            for (Type baseType : domainType.getParentTypes()) {
-                Class<?> externalClass = typeMapper.toExternal(baseType.getInstanceClass());
-                Type externalType = getShape().getType(externalClass);
+            for (Type parentType : domainType.getParentTypes()) {
+                String parentEntityName = ((EntityType)parentType).getEntityName();
+                Type externalType = getShape().getType(parentEntityName);
 
                 this.parentTypes.add((ExternalType) externalType);
             }

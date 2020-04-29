@@ -19,12 +19,12 @@
 
 package tools.xor;
 
-import org.json.JSONArray;
+import java.util.List;
+
 import org.json.JSONObject;
+
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
-
-import java.util.List;
 
 /**
  * @author Dilip Dalton
@@ -46,4 +46,9 @@ public class CollectionType extends SimpleType {
 						   StateGraph.ObjectGenerationVisitor visitor) {
 		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_ARRAY_TYPE;
+    }	
 }

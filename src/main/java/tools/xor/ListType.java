@@ -45,5 +45,10 @@ public class ListType extends SimpleType {
 	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
 						   StateGraph.ObjectGenerationVisitor visitor) {
 		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom, visitor);
-	}		
+	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_ARRAY_TYPE;
+    }	
 }

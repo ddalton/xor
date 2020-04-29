@@ -19,16 +19,15 @@
 
 package tools.xor;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import tools.xor.util.graph.StateGraph;
-
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.json.JsonArray;
+
+import org.json.JSONObject;
+
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import tools.xor.util.graph.StateGraph;
 
 /**
  * @author Dilip Dalton
@@ -60,4 +59,9 @@ public class SetType extends SimpleType {
 						   StateGraph.ObjectGenerationVisitor visitor) {
 		return super.generateArray(settings, property, rootedAt, entitiesToChooseFrom, visitor);
 	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_ARRAY_TYPE;
+    }	
 }

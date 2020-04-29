@@ -19,13 +19,13 @@
 
 package tools.xor;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import tools.xor.util.graph.StateGraph;
-
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import tools.xor.util.graph.StateGraph;
 
 
 /**
@@ -57,4 +57,9 @@ public class MapType extends SimpleType {
 		
 		return result;
 	}		
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_OBJECT_TYPE;
+    }	
 }

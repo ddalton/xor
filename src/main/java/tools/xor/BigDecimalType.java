@@ -85,5 +85,10 @@ public class BigDecimalType extends SimpleType {
 		result = result.setScale(scale, RoundingMode.HALF_UP);
 
 		return result;
-	}		
+	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

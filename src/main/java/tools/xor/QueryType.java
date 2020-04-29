@@ -164,11 +164,6 @@ public class QueryType extends AbstractType {
     }
 
     @Override
-    public List<Type> getParentTypes() {
-        return new ArrayList<>();
-    }
-
-    @Override
     public List<Property> getDeclaredProperties() {
         return getProperties();
     }

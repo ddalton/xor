@@ -42,23 +42,32 @@ import tools.xor.service.Shape;
 public class MutableJsonType extends ExternalType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	private static final String SWAGGER_ALLOF = "allOf";
-	private static final String SWAGGER_TYPE  = "type";
-    private static final String JSON_ARRAY_TYPE  = "array";
-    private static final String SWAGGER_ITEMS  = "items";
-	private static final String SWAGGER_PROPERTIES = "properties";
-	private static final String SWAGGER_REF   = "$ref";
+	public static final String SWAGGER_ALLOF = "allOf";
+	public static final String SWAGGER_TYPE  = "type";
+	public static final String SWAGGER_ITEMS  = "items";
+	public static final String SWAGGER_PROPERTIES = "properties";
+	public static final String SWAGGER_REQUIRED = "required";
+	public static final String SWAGGER_REF   = "$ref";
 	public static final String  SWAGGER_REF_SEPARATOR = "/";
 	public static final String  SWAGGER_ID_PROPERTY = "surrogateKey";
+	
+	public static final String JSON_STRING_TYPE  = "string";
+	public static final String JSON_NUMBER_TYPE  = "number";
+	public static final String JSON_INTEGER_TYPE  = "integer";
+	public static final String JSON_BOOLEAN_TYPE  = "boolean";
+	public static final String JSON_ARRAY_TYPE  = "array";
+	public static final String JSON_OBJECT_TYPE  = "object";
 	private static final Map<String, Class<?>> JSON_TYPES = new HashMap<>();
 	
+	
+	
 	static {
-	    JSON_TYPES.put("string", String.class);
-	    JSON_TYPES.put("number", BigDecimal.class);
-	    JSON_TYPES.put("integer", Integer.class);
-	    JSON_TYPES.put("boolean", boolean.class);
+	    JSON_TYPES.put(JSON_STRING_TYPE, String.class);
+	    JSON_TYPES.put(JSON_NUMBER_TYPE, BigDecimal.class);
+	    JSON_TYPES.put(JSON_INTEGER_TYPE, Integer.class);
+	    JSON_TYPES.put(JSON_BOOLEAN_TYPE, boolean.class);
 	    JSON_TYPES.put(JSON_ARRAY_TYPE, List.class);
-	    JSON_TYPES.put("object", Object.class);
+	    JSON_TYPES.put(JSON_OBJECT_TYPE, Object.class);
 	}
 	
 	private List<String> parentTypeNames;
@@ -199,6 +208,34 @@ public class MutableJsonType extends ExternalType {
 			dynamicShape.addProperty(dynamicProperty);
 		}
 	}
+	
+    public void defineRequired() {
+        JSONArray required = swaggerSchema.has(SWAGGER_REQUIRED) ? swaggerSchema.getJSONArray(SWAGGER_REQUIRED)
+                : null;
+        
+        if (required == null && swaggerSchema.has(SWAGGER_ALLOF)) {
+            JSONArray array = swaggerSchema.getJSONArray(SWAGGER_ALLOF);
+            
+            // Process each element in the array
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                if (obj.has(SWAGGER_REQUIRED)) {
+                    required = obj.getJSONArray(SWAGGER_REQUIRED);
+                }
+                if(required != null) {
+                    break;
+                }
+            }
+        }
+        
+        if(required != null) {
+            for(int i = 0; i < required.length(); i++) {
+                String propertyName = required.getString(i);
+                MutableJsonProperty property = (MutableJsonProperty) getProperty(propertyName);
+                property.setNullable(true);    
+            }
+        }
+    }
 	
 	/**
 	 * Used to define the swagger type properties

@@ -65,4 +65,9 @@ public class DoubleType extends SimpleType {
 		double range = getMax() - getMin();
 		return getMin() + (Math.random() * range);
 	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

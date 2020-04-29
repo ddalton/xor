@@ -307,7 +307,18 @@ public abstract class AbstractType implements EntityType {
 	@Override
 	public void setParentType(EntityType value) {
 		this.superTypeName = value.getEntityName();
-	}	
+	}
+	
+    @Override
+    public List<? extends Type> getParentTypes() {
+        List<Type> parentTypes = new ArrayList<>();
+        Type parentType = getParentType();
+        if(parentType != null) {
+            parentTypes.add(parentType);
+        }
+        
+        return parentTypes;
+    }
 	
 	@Override
 	public Set<EntityType> getSubtypes() {

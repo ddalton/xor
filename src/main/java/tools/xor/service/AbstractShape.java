@@ -32,12 +32,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tools.xor.AbstractType;
+import tools.xor.BasicType;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.JSONObjectProperty.Converter;
+import tools.xor.MutableJsonType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SimpleTypeFactory;
@@ -594,10 +597,6 @@ public abstract class AbstractShape implements Shape
         return sb.toString();
     }
     
-    private String getJsonId(Type type) {
-        return "#" + ((EntityType)type).getEntityName();
-    }
-    
     private void processParentTypes(JSONObject definitions, Type parent) {
         if(parent == null || !(parent instanceof EntityType)) {
             return;
@@ -617,11 +616,75 @@ public abstract class AbstractShape implements Shape
     }
     
     private JSONObject processType(EntityType type) {
-        JSONObject jsonType = new JSONObject();
-        jsonType.put("$id", getJsonId(type));
+        JSONObject typeJson = new JSONObject();
+
+        boolean hasParent = type.getParentType() != null;
+        JSONObject currentJson = hasParent ? new JSONObject() : typeJson;
+        if(hasParent) {
+            JSONArray contents = new JSONArray();
+            contents.put(currentJson);
+            typeJson.put(MutableJsonType.SWAGGER_ALLOF, contents);
+            
+            for(Type parentType: type.getParentTypes()) {
+                JSONObject parentJson = new JSONObject();
+                contents.put(parentJson);
+                String entityName = parentType instanceof EntityType ? ((EntityType)parentType).getEntityName() : parentType.getName();
+                parentJson.put(MutableJsonType.SWAGGER_REF, getJsonId(entityName) );
+            }
+        }
         
-        return jsonType;
+        currentJson.put("$id", getJsonId(((EntityType)type).getEntityName()));
+        currentJson.put(MutableJsonType.SWAGGER_TYPE, "object");
+        
+        // populate properties  
+        Map<String, Property> propertyMap = getDirectProperties(type);
+        if(propertyMap != null && propertyMap.size() > 0) {
+            JSONObject propertiesJson = new JSONObject();
+            currentJson.put(MutableJsonType.SWAGGER_PROPERTIES, propertiesJson);
+           
+            Set<String> required = new HashSet<>();
+            for(Map.Entry<String, Property> entry: getDirectProperties(type).entrySet()) {
+                
+                Property property = entry.getValue();
+                if(!property.isNullable()) {
+                    required.add(property.getName());
+                }
+                
+                JSONObject propertyJson = new JSONObject();
+                propertiesJson.put(entry.getKey(), propertyJson);
+                
+                String propertyType = ((BasicType)property.getType()).getJsonType();
+                propertyJson.put(MutableJsonType.SWAGGER_TYPE, propertyType);
+                
+                if(propertyType.equals(MutableJsonType.JSON_ARRAY_TYPE)) {
+                    JSONObject itemsJson = new JSONObject();
+                    propertyJson.put(MutableJsonType.SWAGGER_ITEMS, itemsJson);
+                    
+                    Type elementType = ((ExtendedProperty)property).getElementType();
+                    if(elementType.isDataType()) {
+                        itemsJson.put(MutableJsonType.SWAGGER_TYPE, ((BasicType)elementType).getJsonType());
+                    } else {
+                        itemsJson.put(MutableJsonType.SWAGGER_REF, getJsonId(((EntityType)elementType).getEntityName()));
+                    }
+                }
+            }
+            
+            if(!required.isEmpty()) {
+                JSONArray requiredJson = new JSONArray();
+                for(String propertyName: required) {
+                    requiredJson.put(propertyName);
+                }
+                
+                currentJson.put(MutableJsonType.SWAGGER_REQUIRED, requiredJson);
+            }
+        }
+        
+        return typeJson;
     }
+    
+    private String getJsonId(String entityName) {
+        return "#" + entityName;
+    }    
     
     @Override
     public JSONObject getJsonSchema() {

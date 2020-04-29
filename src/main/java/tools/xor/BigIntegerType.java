@@ -68,4 +68,9 @@ public class BigIntegerType extends SimpleType {
 		long range = maximum.longValue() - minimum.longValue();
 		return new BigInteger((new Long((long) (minimum.longValue() + (Math.random() * range)))).toString());
 	}		
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

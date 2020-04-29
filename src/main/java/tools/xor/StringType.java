@@ -85,4 +85,9 @@ public class StringType extends SimpleType {
 			return RandomStringUtils.randomAlphanumeric(getLength((Integer) visitor.getContext()));
 		}
 	}	
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_STRING_TYPE;
+    }	
 }

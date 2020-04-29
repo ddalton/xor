@@ -102,4 +102,8 @@ public class MutableJsonProperty extends ExternalProperty {
         }	    
 	    return this.converter;
 	}
+	
+	public void setNullable(boolean value) {
+	    this.isNullable = value;
+	}
 }

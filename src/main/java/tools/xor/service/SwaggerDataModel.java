@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -133,6 +134,10 @@ public class SwaggerDataModel extends AbstractDataModel {
         
         for(Type type: shape.getUniqueTypes()) {
             percolateIdProperty(type);
+            
+            if(type instanceof MutableJsonType) {
+                ((MutableJsonType)type).defineRequired();
+            }
         }
     }
     
@@ -167,8 +172,10 @@ public class SwaggerDataModel extends AbstractDataModel {
     }
     
     private void defineTypes(Shape shape, JSONObject jsonSchema) {
-        for(String entityTypeName: JSONObject.getNames(jsonSchema)) {          
-            shape.addType(entityTypeName, new MutableJsonType(entityTypeName, jsonSchema.getJSONObject(entityTypeName), idMap.get(entityTypeName)));
+        for(String entityTypeName: JSONObject.getNames(jsonSchema)) {   
+            JSONObject typeJson = jsonSchema.getJSONObject(entityTypeName);
+            MutableJsonType type = new MutableJsonType(entityTypeName, typeJson, idMap.get(entityTypeName));
+            shape.addType(entityTypeName, type);
         }
     }
 

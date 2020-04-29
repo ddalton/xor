@@ -19,9 +19,6 @@
 
 package tools.xor;
 
-import tools.xor.service.DataModel;
-import tools.xor.service.Shape;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -30,6 +27,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import tools.xor.service.Shape;
 
 /**
  * @author Dilip Dalton

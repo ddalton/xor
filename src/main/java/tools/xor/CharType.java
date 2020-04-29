@@ -64,5 +64,10 @@ public class CharType extends SimpleType {
 
 		char range = (char) (getMax() - getMin());
 		return (char) (getMin() + (Math.random() * range));
-	}		
+	}
+	
+    @Override
+    public String getJsonType() {
+        return MutableJsonType.JSON_NUMBER_TYPE;
+    }	
 }

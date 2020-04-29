@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,18 +35,16 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import tools.xor.service.DataModel;
-import tools.xor.service.Shape;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ImmutableJsonCreationStrategy;
 import tools.xor.util.ObjectCreator;
 
 public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	
-	private String domainPackagePath;
-    private Shape domainShape;
-    private Shape dynamicShape; 	
+	private String domainPackagePath;	
 	
 	private static final Map<Class<?>, Class<?>> javaToJson = new HashMap<Class<?>, Class<?>>();
+	private static final Map<String, String> javaClassNameToJson = new HashMap<String, String>();
 	
 	static {
 		javaToJson.put(String.class, JsonString.class);
@@ -70,7 +69,11 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 		javaToJson.put(int.class, JsonNumber.class);
 		javaToJson.put(long.class, JsonNumber.class);
 		javaToJson.put(float.class, JsonNumber.class);
-		javaToJson.put(double.class, JsonNumber.class);		
+		javaToJson.put(double.class, JsonNumber.class);	
+		
+		for(Class<?> javaClass: javaToJson.keySet()) {
+		    javaClassNameToJson.put(javaClass.getName(), javaToJson.get(javaClass).getName());
+		}
 	}
 	
     public ImmutableJsonTypeMapper() {
@@ -89,6 +92,14 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	public void setDomainPackagePath(String domainPackagePath) {
 		this.domainPackagePath = domainPackagePath;
 	}
+	
+	@Override
+	public String toDomain(String typeName) {
+        if(!isDomain(typeName)) {
+            throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
+        }
+        return typeName;	    
+	}
 
 	@Override
 	public Class<?> toDomain(Class<?> externalClass) {
@@ -98,36 +109,35 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 		return externalClass;
 	}
 	
-	@Override
-	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
-		Class<?> result = null;
+    public String getMappedType(String typeName, CallInfo callInfo) {
+        String result = null;
 
-		switch(getSide()) {
-		case EXTERNAL:			
-			result = toExternal(clazz);
-			break;
-		case DOMAIN:		
-			try {
-				result = toDomain(clazz);
-			} catch (UnsupportedOperationException e) {
-				if(callInfo.getInputProperty() != null) {
-                    Property domainProperty = getDomainProperty(callInfo.getInputProperty().getContainingType().getEntityName(), callInfo.getInputProperty().getName());				    
-					result = domainProperty.getType().getInstanceClass();
-				} else {
-					// Collection, so go to the owner and get the element type
-					ExtendedProperty property = callInfo.getParent().getInputProperty();
+        switch(getSide()) {
+        case EXTERNAL:          
+            result = toExternal(typeName);
+            break;
+        case DOMAIN:        
+            try {
+                result = toDomain(typeName);
+            } catch (UnsupportedOperationException e) {
+                if(callInfo.getInputProperty() != null) {
+                    Property domainProperty = getDomainProperty(callInfo.getInputProperty().getContainingType().getEntityName(), callInfo.getInputProperty().getName());                    
+                    result = domainProperty.getType().getName();
+                } else {
+                    // Collection, so go to the owner and get the element type
+                    ExtendedProperty property = callInfo.getParent().getInputProperty();
                     Property domainProperty = getDomainProperty(property.getContainingType().getEntityName(), property.getName());
-					result = ((ExtendedProperty)domainProperty).getElementType().getInstanceClass();
-				}
-			}
-			break;
-		default:
-			result = clazz;
-			break;
-		}
+                    result = ((ExtendedProperty)domainProperty).getElementType().getName();
+                }
+            }
+            break;
+        default:
+            result = typeName;
+            break;
+        }
 
-		return result;
-	}		
+        return result;
+    }		
 	
 	@Override
 	/**
@@ -164,6 +174,37 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 		return JsonObject.class;		
 	}
 	
+    @Override
+    /**
+     * Handle the interpretation of returning the following classes:
+     * 
+     * JsonObject
+     * JsonArray
+     * JsonNumber
+     * JsonString
+     * JsonValue.TRUE
+     * JsonValue.FALSE
+     * JsonValue.NULL
+     */
+    public String toExternal(String typeName) {
+        
+        if(javaClassNameToJson.containsKey(typeName)) {
+            return javaClassNameToJson.get(typeName);
+        }
+        
+        Class<?> domainClass;
+        try {
+            domainClass = Class.forName(typeName);
+            if(Collection.class.isAssignableFrom(domainClass)) {
+                return JsonArray.class.getName();
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }        
+        
+        return JsonObject.class.getName();        
+    }	
+	
 	@Override
 	public boolean isExternal(Class<?> clazz) {
 		return clazz.isAssignableFrom(JsonValue.class);
@@ -173,6 +214,11 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	public boolean isDomain(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(domainPackagePath));
 	}
+	
+    @Override
+    public boolean isDomain(String typeName) {
+        return (typeName.startsWith(domainPackagePath));
+    }	
 
 	@Override
 	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {

@@ -142,6 +142,12 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 
         return null;
     }
+    
+    @Override
+    public String toExternal(String typeName) {
+        Class<?> externalClass = getExternalClass(typeName);
+        return externalClass == null ? null : externalClass.getName();
+    }
 
 	/* (non-Javadoc)
 	 * @see TypeMapper#toExternal(java.lang.Class)
@@ -177,6 +183,38 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 		return null;		
 	}
 	
+	private Class<?> getExternalClass(String name) {
+        try {
+            Class<?> domainClass = Class.forName(name);
+            
+            if(domainClass.isArray())
+                if(isExternal(domainClass.getComponentType()))
+                        throw new RuntimeException("Array of entity is not supported");
+                else
+                    return domainClass;     
+            
+            if(isExternal(domainClass) || domainClass.isPrimitive())
+                return domainClass;
+            
+            String fullClassName = domainClass.getCanonicalName();
+            String toClassName = fullClassName;
+
+            if(fullClassName.startsWith(domainPackagePath))
+                // Change the package to the external package
+                toClassName = fullClassName.replaceFirst(domainPackagePath, externalPackagePath);  
+
+            if(!toClassName.endsWith(DTO_SUFFIX) && toClassName.startsWith(externalPackagePath))
+                // Adjust the class name to the VO class name
+                toClassName = toClassName.concat(DTO_SUFFIX);                              
+
+            return Class.forName(toClassName);            
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;            
+	}
+	
 	@Override
 	public boolean isExternal(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(externalPackagePath) && clazz.getCanonicalName().endsWith(DTO_SUFFIX));
@@ -186,6 +224,11 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	public boolean isDomain(Class<?> clazz) {
 		return (clazz.getCanonicalName().startsWith(domainPackagePath) && !clazz.getCanonicalName().endsWith(DTO_SUFFIX));
 	}
+	
+    @Override
+    public boolean isDomain(String typeName) {
+        return (typeName.startsWith(domainPackagePath) && !typeName.endsWith(DTO_SUFFIX));
+    }	
 
 	@Override
 	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {

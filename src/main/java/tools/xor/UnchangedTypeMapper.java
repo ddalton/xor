@@ -39,10 +39,20 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         super(das, side, shapeName, persistenceManaged);
     }
     
+    @Override public String toDomain (String typeName)
+    {
+        return typeName;
+    }
+    
     @Override public Class<?> toDomain (Class<?> externalClass)
     {
         return externalClass;
     }
+    
+    @Override
+    public String toDomain(String externalTypeName, BusinessObject bo) {
+        return externalTypeName;
+    }    
 
     @Override public Class<?> toDomain (Class<?> externalClass, BusinessObject bo)
     {
@@ -58,10 +68,9 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     {
         return domainClass;
     }
-
-    public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo)
-    {
-        return clazz;
+    
+    public String getMappedType(String typeName, CallInfo callInfo) {
+        return typeName;
     }
 
     @Override
@@ -75,6 +84,11 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     {
         return true;
     }
+    
+    @Override
+    public boolean isDomain(String typeName) {
+        return true;
+    }       
 
     @Override
     public CreationStrategy getCreationStrategy(ObjectCreator oc)

@@ -116,11 +116,11 @@ public interface DataModel {
 	 * for the default shape.
 	 *
 	 * @param shape of the type system
-	 * @param clazz the java class whose Type object we need. Usually this is the desired class.
+	 * @param typeName the type name whose Type object we need.
 	 * @param type the type to fallback on
 	 * @return the type object
 	 */
-	public Type getType(Shape shape, Class<?> clazz, Type type);
+	public Type getType(Shape shape, String typeName, Type type);
 	
 	/**
 	 * This method uses the persistence mechanism to do any post-processing activity

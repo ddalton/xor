@@ -489,8 +489,8 @@ public abstract class JDBCDataModel extends AbstractDataModel
     public abstract DataSource getDataSource();
 
     @Override
-    public Type getType(Shape shape, Class<?> clazz, Type type) {
-        // The clazz is JSONObject, so it is better to use type as fallback
+    public Type getType(Shape shape, String typeName, Type type) {
+        // The typeName is JSONObject, so it is better to use type as fallback
         // as it is more specific
         return type;
     }

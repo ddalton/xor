@@ -76,14 +76,14 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		return entity;
 	}
 	
-	protected tools.xor.Type getNarrowedType (DataModel das, Settings settings) {
+	protected tools.xor.Type getDowncast (DataModel das, Settings settings) {
 		TypeMapper typeMapper = das.getTypeMapper();
 
 		if(typeMapper instanceof UnchangedTypeMapper) {
 			return settings.getEntityType();
 		}
 
-		return das.getShape().getType(typeMapper.toDomain(settings.getNarrowedClass()));
+		return das.getShape().getType(typeMapper.toDomain(settings.getDowncastName()));
 	}
 
 	protected void validate() {
@@ -97,7 +97,7 @@ public class QueryOperation extends TreeTraversal implements ObjectResolver
 		DataModel das = this.entity.getObjectCreator().getDataModel();
 		
 		// Always use the REFERENCE type
-		tools.xor.Type referenceType = (callInfo.getSettings().getNarrowedClass() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getNarrowedType(
+		tools.xor.Type referenceType = (callInfo.getSettings().getDowncastName() == null) ? ((BusinessObject) callInfo.getInput()).getDomainType() : getDowncast(
 			das,
 			callInfo.getSettings());
 		AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = callInfo.getSettings().getView().getAggregateTree(

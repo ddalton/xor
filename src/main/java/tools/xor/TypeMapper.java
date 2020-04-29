@@ -73,7 +73,25 @@ public interface TypeMapper {
      * @param name or entityName of the type whose corresponding domain form needs to be returned
      * @return the domain type name/entityName corresponding to given name
      */
-    public String toDomain(String typeName);
+    String toDomain(String typeName);
+    
+    /**
+     * Return the external type name of the domain type name
+     * 
+     * @param domain type name whose corresponding external type needs to be found
+     * @return the external type name for the domain type name
+     */
+    String toExternal(String domainTypeName);    
+    
+    /**
+     * If the domain class could not be found from the given class, then try to 
+     * infer it from the provided BusinessObject 
+     * 
+     * @param externalTypeName external type name
+     * @param bo BusinessObject
+     * @return the domain type name
+     */    
+    String toDomain(String externalTypeName, BusinessObject bo);    
     
 	/**
 	 * We need to find the domain form of the class
@@ -91,7 +109,7 @@ public interface TypeMapper {
 	 * @param bo BusinessObject
 	 * @return the domain java class
 	 */
-	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);
+	@Deprecated public Class<?> toDomain(Class<?> externalClass, BusinessObject bo);
 
 	/**
 	 * This is a more flexible form of getting the
@@ -101,7 +119,7 @@ public interface TypeMapper {
 	 * @param  type external
 	 * @return the domain java class
 	 */
-	public Class<?> toDomain(Type type);
+	@Deprecated public Class<?> toDomain(Type type);
 
 	/**
 	 * Return the external form of the class
@@ -109,7 +127,7 @@ public interface TypeMapper {
 	 * @param domainClass the class whose corresponding external class needs to be found
 	 * @return the external class of domainClass
 	 */
-	public Class<?> toExternal(Class<?> domainClass);
+	@Deprecated public Class<?> toExternal(Class<?> domainClass);
 
 	/**
 	 * Describes what form corresponds to the source and target types
@@ -127,12 +145,12 @@ public interface TypeMapper {
 	public void setSide(MapperSide side);	
 	
 	/**
-	 * Returns the correct form of the class given an input class basedo on the MapperSide value
+	 * Returns the correct type name given an input class based on the MapperSide value
 	 * @param clazz input
 	 * @param callInfo Need this object to obtain the property or the parent property in case property is null
-	 * @return class based on the MapperSide value
+	 * @return type name based on the MapperSide value
 	 */
-	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo);	
+	public String getMappedType(String typeName, CallInfo callInfo);	
 	
 	/**
 	 * Factory method to create a TypeMapper instance
@@ -172,6 +190,13 @@ public interface TypeMapper {
 	 * @return true if domain form of the class
 	 */
 	public boolean isDomain(Class<?> clazz);
+	
+	/**
+     * Check if the given type name is in its domain form
+     * @param typeName name
+     * @return true if domain type name
+     */
+    public boolean isDomain(String typeName);
 	
 	/**
 	 * Get the associated creation strategy

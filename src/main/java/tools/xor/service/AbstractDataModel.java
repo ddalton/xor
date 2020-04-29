@@ -157,8 +157,8 @@ public abstract class AbstractDataModel implements DataModel {
 	}
 
 	@Override
-	public Type getType(Shape shape, Class<?> clazz, Type type) {
-		return clazz != null ? shape.getType(clazz) : type;
+	public Type getType(Shape shape, String typeName, Type type) {
+		return typeName != null ? shape.getType(typeName) : type;
 	}
 
 	/**

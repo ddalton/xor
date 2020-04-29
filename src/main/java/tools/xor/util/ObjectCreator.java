@@ -171,6 +171,19 @@ public class ObjectCreator {
 
 		return typeMapper.getDomainShape().getType(clazz);		
 	}
+	
+    public Type getType(String typeName, Type domainType) {
+        // We have the same type for JDBC
+        if (getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+            return domainType;
+        }
+
+        if (domainType != null && domainType instanceof EntityType) {
+            return shape.getType(((EntityType) domainType).getEntityName());
+        } else {
+            return shape.getType(typeName);
+        }
+    }	
 
     public Type getType(Class<?> inputClass, Type domainType) {
         // We have the same type for JDBC
@@ -709,7 +722,12 @@ public class ObjectCreator {
 				//targetInstanceClass = sourceInstance != null ? ClassUtil.getUnEnhanced(sourceInstance.getClass()) : null;
 
 				if(domainEntityType == null) {
-					targetInstanceClass = typeMapper.getMappedClass(sourceInstance.getClass(), ci);
+                    if (sourceInstance != null) {
+                        String mappedClassName = typeMapper.getMappedType(sourceInstance.getClass().getName(), ci);
+                        targetInstanceClass = mappedClassName != null ? Class.forName(mappedClassName) : null;
+                    } else {
+                        targetInstanceClass = typeMapper.toExternal((Class<?>)null);
+                    }
 				} else {
 					if(typeMapper.isExternalSide()) {
 						

@@ -40,12 +40,21 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
         super(das, side, shapeName, persistenceManaged);
     }
     
+    @Override
+    public String toDomain(String typeName) {
+        return typeName;
+    }    
+    
 	/* (non-Javadoc)
 	 * @see TypeMapper#toReference(java.lang.Class)
 	 */
 	@Override
 	public Class<?> toDomain(Class<?> externalClass) {
 		return externalClass;
+	}
+	
+	public String toExternal(String typeName) {
+	    return typeName;
 	}
 
 	/* (non-Javadoc)
@@ -56,10 +65,9 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 		return referenceClass;		
 	}	
 	
-	@Override
-	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
-		return clazz;
-	}
+    public String getMappedType(String typeName, CallInfo callInfo) {
+        return typeName;
+    }
 
 	@Override
 	protected TypeMapper createInstance(DataModel das, MapperSide side, String shapeName, boolean persistenceManaged) {

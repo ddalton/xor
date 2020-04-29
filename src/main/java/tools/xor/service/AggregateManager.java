@@ -656,7 +656,7 @@ public class AggregateManager implements Xor
 
 		// Get the narrowed class, if this is not an open type
 		if (!(settings.getEntityType() != null && settings.getEntityType().isOpen())) {
-			settings.initNarrowClass(getTypeNarrower(), entity, typeMapper);
+			settings.initDowncast(getTypeNarrower(), entity, typeMapper);
 		}
 
 		List<?> dataObjects = from.query(settings);

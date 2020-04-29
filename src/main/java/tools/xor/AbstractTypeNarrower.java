@@ -56,9 +56,9 @@ public abstract class AbstractTypeNarrower implements TypeNarrower {
 	 * to provide custom behavior.
 	 */
 	@Override
-	public Class<?> narrow(Shape shape, Object entity, View view) {
+	public String downcast(Shape shape, Object entity, View view) {
 		Class<?> entityClass = ClassUtil.getUnEnhanced(entity.getClass());
 
-		return entityClass;
+		return entityClass == null ? null : entityClass.getName();
 	}
 }

@@ -25,7 +25,7 @@ import tools.xor.view.View;
 
 public interface TypeNarrower {
 
-	public Class<?> narrow(Shape shape, Object entity, View view);
+	public String downcast(Shape shape, Object entity, View view);
 
 	public void setAggregateManager(AggregateManager aggregateManager);
 	

@@ -21,6 +21,7 @@ package tools.xor;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,7 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	private String domainPackagePath;
 	
 	private static final Set<Class<?>> unchanged = new HashSet<Class<?>>();
+	private static final Set<String> unchangedNames = new HashSet<>();
 	
 	static {
 		unchanged.add(String.class);
@@ -65,7 +67,11 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		unchanged.add(int.class);
 		unchanged.add(long.class);
 		unchanged.add(float.class);
-		unchanged.add(double.class);		
+		unchanged.add(double.class);	
+		
+		for(Class<?> clazz: unchanged) {
+		    unchangedNames.add(clazz.getName());
+		}
 	}
 
 	public static synchronized void addUnchanged(Class clazz) {
@@ -135,6 +141,36 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
 	}
 	
+    @Override
+    public String toDomain(String externalTypeName, BusinessObject bo) {
+        Class<?> externalClass = null;
+        try {
+            externalClass = Class.forName(externalTypeName);
+        } catch (ClassNotFoundException e) {
+            throw new UnsupportedOperationException("Cannot resolve the domain class from the external type name: " + externalTypeName);
+        }
+        if(!isDomain(externalClass)) {
+            if(bo != null && bo.getInstance() != null) {
+                if(bo.getInstance() instanceof JSONObject) {
+                    JSONObject jsonObject = (JSONObject) bo.getInstance();
+                    Class<?> domainClass = getEntityClass(jsonObject);
+                    return domainClass != null ? domainClass.getName() : null;
+                } else if(bo.getInstance() instanceof JSONArray) {
+                    JSONObject container = (JSONObject) ((BusinessObject)bo.getContainer()).getInstance();
+                    Property containmentProperty = bo.getContainmentProperty();
+                    if(container != null && containmentProperty != null) {
+                        String collectionTypeKey = ExcelJsonCreationStrategy.getCollectionTypeKey(containmentProperty);
+                        if(container.has(collectionTypeKey)) {
+                            return container.getString(collectionTypeKey);
+                        }
+                    }
+                }
+            } 
+            throw new UnsupportedOperationException("Cannot resolve the domain class from a JSON object");
+        }
+        return externalTypeName;        
+    }	
+	
 	@Override
 	public Class<?> toDomain(Class<?> externalClass, BusinessObject bo) {
 		if(!isDomain(externalClass)) {
@@ -163,45 +199,44 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		return externalClass;
 	}	
 	
-	@Override
-	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
-		Class<?> result = null;
+    public String getMappedType(String typeName, CallInfo callInfo) {
+        String result = null;
 
-		switch(getSide()) {
-		case EXTERNAL:		
-			result = toExternal(clazz);
-			break;
-		case DOMAIN:
-			try {
-				result = toDomain(clazz, (BusinessObject) callInfo.getInput());
-			} catch (UnsupportedOperationException e) {
-				if(callInfo.getInputProperty() != null) {
-                    Property domainProperty = getDomainProperty(callInfo.getInputProperty().getContainingType().getEntityName(), callInfo.getInputProperty().getName());				    
-					result = domainProperty.getType().getInstanceClass();
-				} else {
-					if(callInfo.getParent() == null) {
-						throw new RuntimeException("Unable to infer the entity type, provide this information using XOR:type field");
-					}
-					// Collection, so go to the owner and get the element type
-					ExtendedProperty property = callInfo.getParent().getInputProperty();
-					Type type = null;
-					if(property == null && callInfo.getParent().isBulkInput()) {
-						type = callInfo.getSettings().getEntityType();
-					} else {
-	                    Property domainProperty = getDomainProperty(property.getContainingType().getEntityName(), property.getName());					    
-						type = ((ExtendedProperty)domainProperty).getElementType();
-					}
-					result = type.getInstanceClass();
-				}
-			}
-			break;
-		default:
-			result = clazz;
-			break;
-		}
+        switch(getSide()) {
+        case EXTERNAL:      
+            result = toExternal(typeName);
+            break;
+        case DOMAIN:
+            try {
+                result = toDomain(typeName, (BusinessObject) callInfo.getInput());
+            } catch (UnsupportedOperationException e) {
+                if(callInfo.getInputProperty() != null) {
+                    Property domainProperty = getDomainProperty(callInfo.getInputProperty().getContainingType().getEntityName(), callInfo.getInputProperty().getName());                    
+                    result = domainProperty.getType().getName();
+                } else {
+                    if(callInfo.getParent() == null) {
+                        throw new RuntimeException("Unable to infer the entity type, provide this information using XOR:type field");
+                    }
+                    // Collection, so go to the owner and get the element type
+                    ExtendedProperty property = callInfo.getParent().getInputProperty();
+                    Type type = null;
+                    if(property == null && callInfo.getParent().isBulkInput()) {
+                        type = callInfo.getSettings().getEntityType();
+                    } else {
+                        Property domainProperty = getDomainProperty(property.getContainingType().getEntityName(), property.getName());                      
+                        type = ((ExtendedProperty)domainProperty).getElementType();
+                    }
+                    result = type.getName();
+                }
+            }
+            break;
+        default:
+            result = typeName;
+            break;
+        }
 
-		return result;
-	}		
+        return result;        
+    }	
 	
 	@Override
 	/**
@@ -241,6 +276,39 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 		return JSONObject.class;		
 	}
 	
+    @Override
+    /**
+     * Handle the interpretation of returning the following classes:
+     * 
+     * JsonObject
+     * JsonArray
+     * JsonNumber
+     * JsonString
+     * JsonValue.TRUE
+     * JsonValue.FALSE
+     * JsonValue.NULL
+     */
+    public String toExternal(String typeName) {
+
+        if(typeName != null) {
+            if (unchangedNames.contains(typeName)) {
+                return typeName;
+            }
+
+            Class<?> domainClass;
+            try {
+                domainClass = Class.forName(typeName);
+                if(Collection.class.isAssignableFrom(domainClass)) {
+                    return JSONArray.class.getName();
+                }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return JSONObject.class.getName();        
+    }	
+	
 	@Override
 	public boolean isExternal(Class<?> clazz) {
 		return clazz.isAssignableFrom(JSONObject.class) ||
@@ -254,7 +322,15 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 			return super.isDomain(clazz);
 		}
 		return (clazz.getCanonicalName().startsWith(domainPackagePath));
-	}		
+	}	
+	
+    @Override
+    public boolean isDomain(String typeName) {
+        if(domainPackagePath == null) {
+            return super.isDomain(typeName);
+        }
+        return (typeName.startsWith(domainPackagePath));
+    }   	
 	
     @Override 
     public TypeMapper newInstance(MapperSide side) {

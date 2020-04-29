@@ -177,7 +177,7 @@ public class Settings {
 	
 	private List<Function> additionalFunctions = new ArrayList<Function>();
 
-	private Class<?> narrowedClass;
+	private String downcastName;
 	
 	private List<String> tags = new ArrayList<String>();
 	
@@ -379,12 +379,12 @@ public class Settings {
 		return this.tags;
 	}
 
-	public Class<?> getNarrowedClass() {
-		return narrowedClass;
+	public String getDowncastName() {
+		return this.downcastName;
 	}
 
-	public void setNarrowedClass(Class<?> narrowedClass) {
-		this.narrowedClass = narrowedClass;
+	public void setDowncastName(String typeName) {
+		this.downcastName = typeName;
 	}
 
 	public AssociationStrategy getAssociationStrategy() {
@@ -741,7 +741,7 @@ public class Settings {
 		params.put(name, value);
 	}
 
-	public void initNarrowClass(TypeNarrower typeNarrower, Object entity, TypeMapper typeMapper)
+	public void initDowncast(TypeNarrower typeNarrower, Object entity, TypeMapper typeMapper)
 	{
 		if(getView() == null)
 			return;
@@ -751,8 +751,8 @@ public class Settings {
 				if(getShape() == null) {
 					throw new RuntimeException("Shape needs to be provided in settings!");
 				}
-				narrowedClass = typeNarrower.narrow(getShape(), entity, getView());
-				if (narrowedClass == null) {
+				this.downcastName = typeNarrower.downcast(getShape(), entity, getView());
+				if (downcastName == null) {
 					throw new IllegalArgumentException(
 						"The entityClass is not applicable for this view. Check if the entity object for the correct class was passed in.");
 				}
@@ -761,10 +761,8 @@ public class Settings {
 					"Type narrowing is not supported on a view containing RegEx attributes. Use read() instead of query().");
 			}
 		} else {
-			narrowedClass = getEntityType().getInstanceClass();
+			downcastName = getEntityType().getName();
 		}
-		
-		narrowedClass = typeMapper.toDomain(narrowedClass);
 	}
 
 	public List<Function> getAdditionalFunctions () {

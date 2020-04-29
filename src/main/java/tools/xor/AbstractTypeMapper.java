@@ -112,7 +112,16 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 		return toDomain(externalClass);
 	}	
 	
+	@Override
+    public String toDomain(String externalTypeName, BusinessObject bo) {
+	    return toDomain(externalTypeName);
+	}
+	
     public String toDomain(String typeName) {
+        return typeName;
+    }
+    
+    public String toExternal(String typeName) {
         return typeName;
     }
 
@@ -137,23 +146,28 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}	
 	
 	@Override
-	public Class<?> getMappedClass(Class<?> clazz, CallInfo callInfo) {
-		Class<?> result = null;
+	public boolean isDomain(String typeName) {
+	    return true;
+	}
+	
+    @Override
+    public String getMappedType(String typeName, CallInfo callInfo) {
+        String result = null;
 
-		switch(getSide()) {
-		case EXTERNAL:			
-			result = toExternal(clazz);
-			break;
-		case DOMAIN:			
-			result = toDomain(clazz);
-			break;
-		default:
-			result = clazz;
-			break;
-		}
+        switch(getSide()) {
+        case EXTERNAL:          
+            result = toExternal(typeName);
+            break;
+        case DOMAIN:            
+            result = toDomain(typeName);
+            break;
+        default:
+            result = typeName;
+            break;
+        }
 
-		return result;
-	}	
+        return result;
+    }   	
 	
 	public boolean isExternalSide() {
 		return getSide() == MapperSide.EXTERNAL;

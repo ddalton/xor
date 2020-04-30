@@ -92,6 +92,10 @@ A model can be in involved in one or both of the following roles
 
 A type mapper is configured to help in the data transformation between the models.
 A few built-in type mappers are supported and this is an area of improvement where enhancements will allow more complex type mappings.
+Two ways of configuring the type mappers are currently provided.
+
+1. Implement a custom type mapper or use one of the built-in Java type mappers. Used mainly for CRUD operations.
+2. Specify the type mapping in an XML file. Used in query operation, where one can specify OQL or SQL queries.
 
 Fig 2. above gives an example of a prescribed model (e.g., swagger) configured as the EXTERNAL model and a derived model (e.g., JPA) configured as the DOMAIN model.
 

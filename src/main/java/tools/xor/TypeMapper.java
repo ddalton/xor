@@ -157,13 +157,6 @@ public interface TypeMapper {
     boolean isExternal(String typeName);	
 	
 	/**
-	 * Check if the given class is in its domain form
-	 * @param clazz value
-	 * @return true if domain form of the class
-	 */
-	@Deprecated public boolean isDomain(Class<?> clazz);
-	
-	/**
      * Check if the given type name is in its domain form
      * @param typeName name
      * @return true if domain type name

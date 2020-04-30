@@ -131,11 +131,6 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}
 	
 	@Override
-	public boolean isDomain(Class<?> clazz) {
-		return true;
-	}	
-	
-	@Override
 	public boolean isDomain(String typeName) {
 	    return true;
 	}

@@ -62,12 +62,6 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     public boolean isExternal(String typeName) {
         return true;
     }    
-
-    @Override
-    public boolean isDomain(Class<?> clazz)
-    {
-        return true;
-    }
     
     @Override
     public boolean isDomain(String typeName) {

@@ -206,11 +206,6 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
         throw new RuntimeException("Type name is null: " + typeName);
     }   	
 	
-	@Override
-	public boolean isDomain(Class<?> clazz) {
-		return (clazz.getCanonicalName().startsWith(domainPackagePath));
-	}
-	
     @Override
     public boolean isDomain(String typeName) {
         return (typeName.startsWith(domainPackagePath));

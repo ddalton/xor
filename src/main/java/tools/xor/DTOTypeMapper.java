@@ -79,7 +79,7 @@ public class DTOTypeMapper extends AbstractTypeMapper {
                 else
                     return externalClass;
 
-            if (isDomain(externalClass) || externalClass.isPrimitive())
+            if (isDomain(externalClass.getName()) || externalClass.isPrimitive())
                 return externalClass;
 
             String fullClassName = externalClass.getCanonicalName();
@@ -181,11 +181,6 @@ public class DTOTypeMapper extends AbstractTypeMapper {
     public boolean isExternal(String typeName) {
         return (typeName.startsWith(externalPackagePath) && typeName.endsWith(DTO_SUFFIX));
     }	
-	
-	@Override
-	public boolean isDomain(Class<?> clazz) {
-		return (clazz.getCanonicalName().startsWith(domainPackagePath) && !clazz.getCanonicalName().endsWith(DTO_SUFFIX));
-	}
 	
     @Override
     public boolean isDomain(String typeName) {

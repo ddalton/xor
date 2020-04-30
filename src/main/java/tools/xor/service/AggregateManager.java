@@ -618,7 +618,7 @@ public class AggregateManager implements Xor
 	private MapperSide findSide(Object entity, Settings settings) {
         MapperSide side = MapperSide.EXTERNAL;
         if ((settings.getEntityType() != null && settings.getEntityType().isOpen()) ||
-            getModel().getTypeMapper().isDomain(getEntityClass(entity, settings))) 
+            getModel().getTypeMapper().isDomain(getEntityClass(entity, settings).getName())) 
         {
             side = MapperSide.DOMAIN;
         }

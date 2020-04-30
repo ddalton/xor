@@ -743,7 +743,7 @@ public class ObjectCreator {
 			}
 
 			Type targetType = null;
-			if(sourceInstance != null && typeMapper.isDomain( ClassUtil.getUnEnhanced(sourceInstance.getClass()))) {
+			if(sourceInstance != null && typeMapper.isDomain( ClassUtil.getUnEnhanced(sourceInstance.getClass()).getName())) {
 				Type domainType = getDomainType((BusinessObject)ci.getInput());
 				if(typeMapper.isOpen(targetInstanceClass)) {
 					if(domainEntityType != null) {

@@ -176,18 +176,7 @@ public interface TypeMapper {
 	 * @param derivedClass external java class
 	 * @return external type
 	 */
-	@Deprecated public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass);
-
-	/**
-	 * Allow the typemapper to specify a custom name for the external type
-	 * This is necessary for examples like JsonObject where there is not much information
-	 * without knowing the domain class that it represents
-	 * 
-	 * @param inputClass external class
-	 * @param domainType domain type
-	 * @return external name
-	 */
-	@Deprecated public String getExternalTypeName(Class<?> inputClass, EntityType domainType);
+	public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass);
 
 	/** 
 	 * Flag that denotes if the object needs to be read after the child properties are processed

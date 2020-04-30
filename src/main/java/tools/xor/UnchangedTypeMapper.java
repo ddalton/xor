@@ -80,11 +80,6 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
     }
 
     @Override
-    public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
-        return domainType.getName();
-    }
-
-    @Override
     public boolean immutable() {
         return false;
     }

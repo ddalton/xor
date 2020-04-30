@@ -203,11 +203,6 @@ public abstract class AbstractTypeMapper implements TypeMapper {
 	}
 	
 	@Override
-	public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
-		return inputClass.getName();
-	}
-	
-	@Override
 	public boolean immutable() {
 		return false;
 	}

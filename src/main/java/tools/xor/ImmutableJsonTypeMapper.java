@@ -243,12 +243,7 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	@Override
 	public ExternalType createExternalType(EntityType domainType, Class<?> derivedClass) {
 		return new ImmutableJsonType(domainType, derivedClass);
-	}	
-	
-	@Override
-	public String getExternalTypeName(Class<?> inputClass, EntityType domainType) {
-		return domainType.getEntityName();
-	}	
+	}		
 	
 	@Override
 	public boolean immutable() {

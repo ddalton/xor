@@ -1,7 +1,7 @@
 = XOR
 :hardbreaks:
 
-XOR is a tool that allows users to perform CRUDQ (Create, Read, Update, Delete, Query) operations over a Data Model using a uniform interface over a meta model of the Data model. It has mechanisms to allow a user to control how some of these operations are implemented. This allows it to address performance concerns related to persistence in a J2EE environment.
+XOR is a tool that allows users to perform CRUDQ (Create, Read, Update, Delete, Query) operations against a Data Model using a uniform interface. It has mechanisms to allow a user to control how some of these operations are implemented. This allows it to address performance concerns related to persistence in a J2EE environment.
 
 In a typical J2EE environment, a development team has to interact with the following 3 data models:
 
@@ -20,6 +20,8 @@ When a UI needs to retrieve data to populate its model it has to go through 2 tr
        +------------+     1     +--------------+    2     +---------------+
        |  UI Model  |---------->|  JPA model   |--------->|   JDBC model  |      
        +------------+           +--------------+          +---------------+
+               
+                       Fig 1. Example of a data flow involving all 3 models
 
 Transformation #1 is usually straightforward, as it is a mapping from a Java object to a JSON object and 
 can be done in-memory.
@@ -73,7 +75,25 @@ The configuration is directly tied to the architecture of XOR.
 XOR is a data transformation tool, taking data from one model representation and transforming it to data in another model representation.
 Below is the anatomy of the transformation process
 
+                            prescribed                          derived
+                    +-----------------+                +---------------+
+      USER <------> |  EXTERNAL       | <------------> |   DOMAIN      | <--------->  DATABASE
+                    +-----------------+                +---------------+
+                             ^                                 ^
+                             |             typeMapper          |
+                             +----------------------------------
 
+                  Fig 2: Transformation between prescribed and derived models
+
+A model can be in involved in one or both of the following roles
+
+1. *EXTERNAL* - The audience for this model is the end user
+2. *DOMAIN* - The audience for this model is the database
+
+A type mapper is configured to help in the data transformation between the models.
+A few built-in type mappers are supported and this is an area of improvement where enhancements will allow more complex type mappings.
+
+Fig 2. above gives an example of a prescribed model (e.g., swagger) configured as the EXTERNAL model and a derived model (e.g., JPA) configured as the DOMAIN model.
 
 = Takeaway
 

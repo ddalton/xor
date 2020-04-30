@@ -19,6 +19,11 @@
 
 package tools.xor;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -66,13 +71,12 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 	
 	@Override
     public String toDomain(String typeName) {
-        Class<?> domainClass = getDomainClass(typeName);
+        Class<?> domainClass = getDomainClass(getJavaClass(typeName));
         return domainClass == null ? null : domainClass.getName();
     }
 
-    private Class<?> getDomainClass(String name) {
+    private Class<?> getDomainClass(Class<?> externalClass) {
         try {
-            Class<?> externalClass = Class.forName(name);
             if (externalClass.isArray())
                 if (isExternal(externalClass.getComponentType().getName()))
                     throw new RuntimeException("Array of entity is not supported");
@@ -107,15 +111,13 @@ public class DTOTypeMapper extends AbstractTypeMapper {
     
     @Override
     public String toExternal(String typeName) {
-        Class<?> externalClass = getExternalClass(typeName);
+        Class<?> externalClass = getExternalClass(getJavaClass(typeName));
         return externalClass == null ? null : externalClass.getName();
     }
 
-	/* (non-Javadoc)
-	 * @see TypeMapper#toExternal(java.lang.Class)
-	 */
 	@Override
-	public Class<?> toExternal(Class<?> domainClass) {
+	public Class<?> toExternal(Type type) {
+	    Class<?> domainClass = type.getInstanceClass();
 		if(domainClass.isArray())
 			if(isExternal(domainClass.getComponentType().getName()))
 					throw new RuntimeException("Array of entity is not supported");
@@ -145,10 +147,8 @@ public class DTOTypeMapper extends AbstractTypeMapper {
 		return null;		
 	}
 	
-	private Class<?> getExternalClass(String name) {
+	private Class<?> getExternalClass(Class<?> domainClass) {
         try {
-            Class<?> domainClass = Class.forName(name);
-            
             if(domainClass.isArray())
                 if(isExternal(domainClass.getComponentType().getName()))
                         throw new RuntimeException("Array of entity is not supported");

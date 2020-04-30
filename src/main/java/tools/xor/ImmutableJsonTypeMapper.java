@@ -143,8 +143,10 @@ public class ImmutableJsonTypeMapper extends AbstractTypeMapper {
 	 * JsonValue.FALSE
 	 * JsonValue.NULL
 	 */
-	public Class<?> toExternal(Class<?> domainClass) {
+	public Class<?> toExternal(Type type) {
 		
+	    Class<?> domainClass = type.getInstanceClass();
+	    
 		if(javaToJson.containsKey(domainClass)) {
 			return javaToJson.get(domainClass);
 		}

@@ -20,7 +20,9 @@
 package tools.xor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import tools.xor.service.DataModel;
 import tools.xor.service.DynamicShape;
@@ -39,6 +41,20 @@ public abstract class AbstractTypeMapper implements TypeMapper {
     protected Shape domainShape;
     protected Shape dynamicShape;
     protected boolean persistenceManaged;
+    
+    protected static final Map<String, Class<?>> primitives = new HashMap<>();
+    
+    static {
+        // primitives
+            primitives.put(boolean.class.getName(), boolean.class);
+            primitives.put(char.class.getName(), char.class);
+            primitives.put(byte.class.getName(), byte.class);
+            primitives.put(short.class.getName(), short.class);
+            primitives.put(int.class.getName(), int.class);
+            primitives.put(long.class.getName(), long.class);
+            primitives.put(float.class.getName(), float.class);
+            primitives.put(double.class.getName(), double.class);
+    }    
 
     public AbstractTypeMapper()
     {
@@ -55,6 +71,20 @@ public abstract class AbstractTypeMapper implements TypeMapper {
         this.shapeName = shapeName;
         this.persistenceManaged = persistenceManaged;
     }
+    
+    protected Class<?> getJavaClass(String name) {
+        try {
+            Class<?> clazz = primitives.get(name);
+            if (clazz == null) {
+                clazz = Class.forName(name);
+            }
+            return clazz;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }   
     
     @Override
     public boolean isPersistenceManaged() {

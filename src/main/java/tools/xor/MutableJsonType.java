@@ -155,7 +155,7 @@ public class MutableJsonType extends ExternalType {
 	@Override
 	public Property defineProperty(Property domainProperty, Shape dynamicShape, TypeMapper typeMapper) {
 	    
-		Class<?> externalClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
+		Class<?> externalClass = typeMapper.toExternal(domainProperty.getType());
 		if(externalClass == null) {
 			throw new RuntimeException("The dynamic type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 		}
@@ -174,7 +174,7 @@ public class MutableJsonType extends ExternalType {
             elementType = dynamicShape.getType(elementTypeName);		    
 		}		
 		if(propertyType == null) {
-			Class<?> propertyClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
+			Class<?> propertyClass = typeMapper.toExternal(domainProperty.getType());
 			logger.debug("Name: " + domainProperty.getName() + ", Domain class: " + domainProperty.getType().getInstanceClass().getName() + ", property class: " + propertyClass.getName());
 			propertyType = dynamicShape.getType(propertyClass);
 		}

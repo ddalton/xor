@@ -726,12 +726,12 @@ public class ObjectCreator {
                         String mappedClassName = typeMapper.getMappedType(sourceInstance.getClass().getName(), ci);
                         targetInstanceClass = mappedClassName != null ? Class.forName(mappedClassName) : null;
                     } else {
-                        targetInstanceClass = typeMapper.toExternal((Class<?>)null);
+                        targetInstanceClass = typeMapper.toExternal((Type)null);
                     }
 				} else {
 					if(typeMapper.isExternalSide()) {
 						
-						targetInstanceClass = typeMapper.toExternal(domainEntityType.getInstanceClass());
+						targetInstanceClass = typeMapper.toExternal(domainEntityType);
 						//Class<?> externalClass = typeMapper.toExternal(domainEntityType.getInstanceClass());
 						//instanceClass = das.getExternalType(typeMapper.getExternalTypeName(externalClass, domainEntityType)).getInstanceClass();
 					} else {

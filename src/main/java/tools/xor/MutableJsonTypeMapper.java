@@ -210,8 +210,10 @@ public class MutableJsonTypeMapper extends AbstractTypeMapper {
 	 * JsonValue.FALSE
 	 * JsonValue.NULL
 	 */
-	public Class<?> toExternal(Class<?> domainClass) {
+	public Class<?> toExternal(Type type) {
 
+	    Class<?> domainClass = type == null ? null : type.getInstanceClass();
+	    
 		// domainClass can be null for an open type
 		if(domainClass != null) {
 			if (getUnchanged().contains(domainClass)) {

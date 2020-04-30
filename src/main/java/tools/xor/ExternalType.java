@@ -105,7 +105,7 @@ public class ExternalType extends AbstractType {
 	 */
 	public Property defineProperty(Property domainProperty, Shape dynamicShape, TypeMapper typeMapper) {
         
-		Class<?> externalClass = typeMapper.toExternal(domainProperty.getType().getInstanceClass());
+		Class<?> externalClass = typeMapper.toExternal(domainProperty.getType());
 		if(externalClass == null)
 			throw new RuntimeException("The external type is missing for the following domain class: " + domainProperty.getType().getInstanceClass().getName());
 

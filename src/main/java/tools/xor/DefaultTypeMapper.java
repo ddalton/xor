@@ -49,12 +49,9 @@ public class DefaultTypeMapper extends AbstractTypeMapper {
 	    return typeName;
 	}
 
-	/* (non-Javadoc)
-	 * @see TypeMapper#toExternal(java.lang.Class)
-	 */
 	@Override
-	public Class<?> toExternal(Class<?> referenceClass) {
-		return referenceClass;		
+	public Class<?> toExternal(Type type) {
+		return type.getInstanceClass();		
 	}	
 	
     public String getMappedType(String typeName, CallInfo callInfo) {

@@ -37,11 +37,9 @@ import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.service.Shape.ShapeStrategy;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.AggregateViews;
-import tools.xor.view.View;
 
 /**
  * Represents the external type system
@@ -73,7 +71,7 @@ public class DynamicShape extends AbstractShape
             if(SimpleType.class.isAssignableFrom(type.getClass()) || type.isOpen()) {
                 continue;
             }
-            Class<?> externalClass = typeMapper.toExternal(type.getInstanceClass());
+            Class<?> externalClass = typeMapper.toExternal(type);
             if(externalClass != null) {
                 ExternalType externalType = getDataModel().getTypeMapper().createExternalType(
                     (EntityType)type,

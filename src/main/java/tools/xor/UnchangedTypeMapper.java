@@ -49,9 +49,9 @@ public class UnchangedTypeMapper extends AbstractTypeMapper
         return externalTypeName;
     }    
 
-    @Override public Class<?> toExternal(Class<?> domainClass)
+    @Override public Class<?> toExternal(Type type)
     {
-        return domainClass;
+        return type.getInstanceClass();
     }
     
     public String getMappedType(String typeName, CallInfo callInfo) {

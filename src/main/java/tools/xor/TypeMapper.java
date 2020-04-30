@@ -96,10 +96,10 @@ public interface TypeMapper {
 	/**
 	 * Return the external form of the class
 	 * 
-	 * @param domainClass the class whose corresponding external class needs to be found
-	 * @return the external class of domainClass
+	 * @param type the type whose corresponding external class needs to be found
+	 * @return the external class of type
 	 */
-	@Deprecated public Class<?> toExternal(Class<?> domainClass);
+	public Class<?> toExternal(Type type);
 
 	/**
 	 * Describes what form corresponds to the source and target types

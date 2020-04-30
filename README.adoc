@@ -1,13 +1,12 @@
 = XOR
 :hardbreaks:
 
-XOR is a tool designed to address performance concerns related to persistence in a J2EE environment.
-It is powered using a meta model to make decisions.
+XOR is a tool that allows users to perform CRUDQ (Create, Read, Update, Delete, Query) operations over a Data Model using a uniform interface over a meta model of the Data model. It has mechanisms to allow a user to control how some of these operations are implemented. This allows it to address performance concerns related to persistence in a J2EE environment.
 
 In a typical J2EE environment, a development team has to interact with the following 3 data models:
 
 1. *UI model* - Schema section in swagger for REST APIs
-2. *Java model* - Business logic classes modelled in an ORM 
+2. *Java model* - Business logic classes modeled in an ORM 
 3. *Database model* - Tables and foreign keys in an RDBMS
 
 Support comes out of the box for Swagger, JPA and JDBC representations for these models. It is possible for other models to be plugged into this architecture.
@@ -52,6 +51,29 @@ The access to the above 3 models is exposed through XOR using a common type syst
 For example, in the UI model the XOR tool is initialized with the swagger schema and for the JDBC model, it is initialized by reading the tables and foreign keys using the appropriate database dialect.
 
 This architecture allows XOR to also be used as a data migration tool between incompatible models, as long as the necessary data conversion is performed on the JSON object to match the type appropriate for each model.
+
+= Configuration
+
+Depending on the use case configuration requirements to use XOR varies.
+Before we address the configuration requirements we need to understand the following concepts
+
+== Model classification
+
+A data model can be one of 2 forms depending on how it is created
+
+1. *Prescribed* - User specifies the model. For e.g., swagger or JSON schema document
+2. *Derived* - The model is derived from another model. For e.g., JPA metadata or RDBMS catalog
+
+XOR works with models of any of the above 2 forms transparently since it uses a uniform type interface. 
+But the CRUDQ operations on a Prescribed model might be limited, depending on the configuration.
+
+== Architecture
+
+The configuration is directly tied to the architecture of XOR. 
+XOR is a data transformation tool, taking data from one model representation and transforming it to data in another model representation.
+Below is the anatomy of the transformation process
+
+
 
 = Takeaway
 

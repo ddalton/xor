@@ -35,7 +35,7 @@ import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.generator.Generator;
 import tools.xor.generator.RangePercent;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
@@ -342,8 +342,8 @@ public class PlainJDBCTest
 
 		DataModel das = am.getDataModel();
 
-		am.dbInit(null);
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		am.configure(null);
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		Settings settings = das.settings().json(jsonString).build();
@@ -363,8 +363,8 @@ public class PlainJDBCTest
 		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.dbInit(null);
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		am.configure(null);
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		JSONObject address = new JSONObject().put("ID", "A108");
@@ -376,7 +376,7 @@ public class PlainJDBCTest
 		json.put("ADDRESS", new JSONObject().put("ID", "A108"));
 
 		Settings settings = new Settings();
-		JDBCSessionContext context = new JDBCSessionContext((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator(), null);
+		JDBCSessionContext context = new JDBCSessionContext((JDBCDataStore)am.getDataStore(), null);
 		context.process(address, (EntityType) shape.getType("address"));
 		settings.setSessionContext(context);
 
@@ -401,8 +401,8 @@ public class PlainJDBCTest
 		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.dbInit(null);
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		am.configure(null);
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		JSONObject json = new JSONObject();
@@ -442,9 +442,9 @@ public class PlainJDBCTest
 		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.dbInit(null);
+		am.configure(null);
 
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		JSONObject json = new JSONObject();
@@ -480,8 +480,8 @@ public class PlainJDBCTest
 		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.dbInit(null);
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		am.configure(null);
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		// create library
@@ -536,8 +536,8 @@ public class PlainJDBCTest
 		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.dbInit(null);
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		am.configure(null);
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		// create library
@@ -584,8 +584,8 @@ public class PlainJDBCTest
 		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
-		am.dbInit(null);
-		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+		am.configure(null);
+		JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
 		sc.beginTransaction();
 
 		// create library

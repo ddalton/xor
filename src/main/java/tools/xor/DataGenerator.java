@@ -24,7 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import tools.xor.providers.jdbc.ImportMethod;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.DataModelFactory;
 import tools.xor.service.Shape;
@@ -158,7 +158,7 @@ public class DataGenerator
         // Create the importers
         List<Future> importJobs = new ArrayList<Future>();
         for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
-            JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
+            JDBCDataStore po = (JDBCDataStore)dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
             po.getSessionContext().setImportMethod(importMethod);
             if(importMethod == ImportMethod.CSV && IMPORTER_POOL_SIZE > 1)
             {
@@ -183,7 +183,7 @@ public class DataGenerator
                 settings,
                 null);
 
-            JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator();
+            JDBCDataStore po = (JDBCDataStore)settings.getPersistenceOrchestrator();
             JDBCSessionContext sc = po.getSessionContext();
             sc.beginTransaction();
 

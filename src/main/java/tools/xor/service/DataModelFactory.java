@@ -50,7 +50,7 @@ public interface DataModelFactory {
 	 * @param sessionContext session related data
 	 * @return PersistenceOrchestrator instance
 	 */
-	PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext);
+	DataStore createPersistenceOrchestrator (Object sessionContext);
 	
 	/**
 	 * Used to inject dependencies for an object managed by a Dependency injection framework

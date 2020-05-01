@@ -34,7 +34,7 @@ import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.RelationshipType;
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
@@ -75,7 +75,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
         }
 
         QueryHandle handle = new QueryHandle(oql.toString(),
-            PersistenceOrchestrator.QueryType.OQL,
+            DataStore.QueryType.OQL,
             null);
 
         // Initialized the selected columns
@@ -86,7 +86,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
     private String constructOQL(Settings settings) {
 
-        PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
+        DataStore po = settings.getPersistenceOrchestrator();
         QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
 
         // SELECT clause
@@ -167,7 +167,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
             QueryTree parent = edge.getStart();
 
             // Since we are constructing an OQL query, the parent query should also be of the same type
-            if (edge != null && parent.getQueryHandle() != null && parent.getQueryHandle().getQueryType() == PersistenceOrchestrator.QueryType.OQL) {
+            if (edge != null && parent.getQueryHandle() != null && parent.getQueryHandle().getQueryType() == DataStore.QueryType.OQL) {
                 addWhereStep(queryString);
                 queryString.append(qp.getRoot().getId()).append(" IN ( ").append(Query.INTERQUERY_JOIN_PLACEHOLDER).append(
                     ")");
@@ -373,7 +373,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
     private String buildOrderClause(Settings settings, List<Function> consolidatedFunctions) {
 
-        PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
+        DataStore po = settings.getPersistenceOrchestrator();
         QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree = this.queryTree;
 
         // We need ORDER BY clauses for all collection properties so that they are

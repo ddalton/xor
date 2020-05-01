@@ -55,9 +55,9 @@ import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
 import tools.xor.providers.jdbc.CustomPersister;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.service.DataModel;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.Shape;
 import tools.xor.util.graph.ObjectGraph;
 
@@ -86,7 +86,7 @@ public class ObjectCreator {
 
 	private DataModel               dataModel;
 	private Shape                   shape;
-	private PersistenceOrchestrator persistenceOrchestrator;
+	private DataStore dataStore;
 	private TypeMapper              typeMapper;
 	private boolean                 share; // when registering if another object with the same id and type is found, it will be returned
 	private CreationStrategy        creationStrategy; // JSON or POJO?
@@ -95,9 +95,9 @@ public class ObjectCreator {
 	private BusinessObject          root; // represents the root object
 	private Settings                settings; // the criteria under which this instance operates
 
-	public ObjectCreator(Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
+	public ObjectCreator(Settings settings, DataStore po, TypeMapper typeMapper) {
 		this.settings = settings;
-		this.persistenceOrchestrator = po;
+		this.dataStore = po;
 		this.typeMapper = typeMapper;
 		this.creationStrategy = this.typeMapper.getCreationStrategy(this);
 		
@@ -125,13 +125,13 @@ public class ObjectCreator {
 		this.share = share;
 	}	
 	
-	public PersistenceOrchestrator getPersistenceOrchestrator() {
-		return persistenceOrchestrator;
+	public DataStore getDataStore() {
+		return dataStore;
 	}
 
-	public void setPersistenceOrchestrator(
-			PersistenceOrchestrator persistenceOrchestrator) {
-		this.persistenceOrchestrator = persistenceOrchestrator;
+	public void setDataStore(
+			DataStore dataStore) {
+		this.dataStore = dataStore;
 	}	
 	
 	public CreationStrategy getCreationStrategy() {
@@ -162,7 +162,7 @@ public class ObjectCreator {
 	 */
 	public Type getDomainType(BusinessObject bo) {
 		// We have the same type for JDBC
-		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+		if(getDataStore() instanceof JDBCDataStore) {
 			return bo.getType();
 		}
 
@@ -174,7 +174,7 @@ public class ObjectCreator {
 	
     public Type getType(String typeName, Type domainType) {
         // We have the same type for JDBC
-        if (getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+        if (getDataStore() instanceof JDBCDataStore) {
             return domainType;
         }
 
@@ -187,7 +187,7 @@ public class ObjectCreator {
 
     public Type getType(Class<?> inputClass, Type domainType) {
         // We have the same type for JDBC
-        if (getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
+        if (getDataStore() instanceof JDBCDataStore) {
             return domainType;
         }
 
@@ -524,7 +524,7 @@ public class ObjectCreator {
 		// We don't want this swizzled out object to be saved for any reason
 		Set objectsToClear = new HashSet();
 		objectsToClear.add(temporaryDomainObject);
-		getPersistenceOrchestrator().clear(objectsToClear);
+		getDataStore().clear(objectsToClear);
 	}
 
 	/**
@@ -906,8 +906,8 @@ public class ObjectCreator {
 	}
 	
 	public void persistGraph(Settings settings) {
-		if(settings.getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-			CustomPersister cp = ((JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator()).getSessionContext();
+		if(settings.getPersistenceOrchestrator() instanceof JDBCDataStore) {
+			CustomPersister cp = ((JDBCDataStore)settings.getPersistenceOrchestrator()).getSessionContext();
 			cp.persistGraph(this, settings);
 		} else {
 			objectGraph.persistGraph(this, settings);
@@ -915,8 +915,8 @@ public class ObjectCreator {
 	}
 
 	public void deleteGraph(Settings settings) {
-		if(settings.getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-			CustomPersister cp = ((JDBCPersistenceOrchestrator)settings.getPersistenceOrchestrator()).getSessionContext();
+		if(settings.getPersistenceOrchestrator() instanceof JDBCDataStore) {
+			CustomPersister cp = ((JDBCDataStore)settings.getPersistenceOrchestrator()).getSessionContext();
 			cp.deleteGraph(this, settings);
 		} else {
 			objectGraph.deleteGraph(this, settings);

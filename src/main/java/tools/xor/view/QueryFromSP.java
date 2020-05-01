@@ -20,7 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 import java.util.ArrayList;
 
@@ -45,14 +45,14 @@ public class QueryFromSP implements QueryBuilderStrategy
         if(querySP != null) {
             handle = new QueryHandle(
                 querySP.getName(),
-                PersistenceOrchestrator.QueryType.SP,
+                DataStore.QueryType.SP,
                 querySP);
 
             querySP.deriveColumns(this.queryTree, handle, settings, this.aggregateTree, this.view);
         } else {
             handle = new QueryHandle(
                 null,
-                PersistenceOrchestrator.QueryType.SP_MULTI,
+                DataStore.QueryType.SP_MULTI,
                 null);
 
             handle.setColumns(new ArrayList<>(view.getAttributeList()));

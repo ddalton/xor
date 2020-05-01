@@ -114,7 +114,7 @@ public class MigrateOperation extends GraphTraversal
                 // This requires building the appropriate OQL/SQL
                 // Build a JSON object out of this result for each row
                 // and put it in the queue
-                target.dbInit(settings);
+                target.configure(settings);
                 EntityScroll<JSONObject> entityCursor = getEntityScroll();
                 while (entityCursor.hasNext()) {
                     JSONObject jsonObject = entityCursor.next();
@@ -135,7 +135,7 @@ public class MigrateOperation extends GraphTraversal
         }
 
         protected EntityScroll<JSONObject> getEntityScroll() {
-            return target.getPersistenceOrchestrator().getEntityScroll(source, target, settings);
+            return target.getDataStore().getEntityScroll(source, target, settings);
         }
     }
 
@@ -166,7 +166,7 @@ public class MigrateOperation extends GraphTraversal
 
                 try {
                     // Ensure the PersistenceOrchestrator is initialized
-                    target.dbInit(settings);
+                    target.configure(settings);
 
                     // Create a batch of objects from the queue
                     List<JSONObject> batch = new ArrayList<>(CONSUMER_BATCH_SIZE);
@@ -222,7 +222,7 @@ public class MigrateOperation extends GraphTraversal
             }
 
             // Fix foreign key relationships using XORSURROGATEMAP
-            target.getPersistenceOrchestrator().fixRelationships(batch, settings);
+            target.getDataStore().fixRelationships(batch, settings);
 
             // create the entities in the target database
             List migratedBatch = (List)target.create(batch, settings);

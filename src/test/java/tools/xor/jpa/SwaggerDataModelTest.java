@@ -50,7 +50,7 @@ import tools.xor.generator.GeneratorRecipient;
 import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultQueryOperation;
 import tools.xor.providers.jdbc.JDBCDataModel;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
@@ -181,7 +181,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     }
     
     private void deleteEntries() {
-        JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) amJDBC.getPersistenceOrchestrator();
+        JDBCDataStore po = (JDBCDataStore) amJDBC.getDataStore();
         JDBCSessionContext sc = po.getSessionContext();
 
         try (Statement stmt = sc.getConnection().createStatement()) {

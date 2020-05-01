@@ -20,7 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 public class QueryFromOQL implements QueryBuilderStrategy
 {
@@ -53,7 +53,7 @@ public class QueryFromOQL implements QueryBuilderStrategy
 
         QueryHandle handle = new QueryHandle(
             queryString.toString(),
-            PersistenceOrchestrator.QueryType.OQL,
+            DataStore.QueryType.OQL,
             oqlQuery);
 
         // Initialized the selected columns

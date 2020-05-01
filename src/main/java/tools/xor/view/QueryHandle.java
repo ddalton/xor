@@ -1,6 +1,6 @@
 package tools.xor.view;
 
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 import java.util.List;
 import java.util.Set;
@@ -8,12 +8,12 @@ import java.util.Set;
 public class QueryHandle
 {
     private final String queryString;
-    private final PersistenceOrchestrator.QueryType queryType;
+    private final DataStore.QueryType queryType;
     private final Object queryInput;
     private List<String> columns;
     private List<BindParameter> bindParams;
 
-    public QueryHandle(String queryString, PersistenceOrchestrator.QueryType queryType, Object queryInput) {
+    public QueryHandle(String queryString, DataStore.QueryType queryType, Object queryInput) {
         this.queryString = queryString;
         this.queryType = queryType;
         this.queryInput = queryInput;
@@ -23,7 +23,7 @@ public class QueryHandle
         return this.queryString;
     }
 
-    public PersistenceOrchestrator.QueryType getQueryType() {
+    public DataStore.QueryType getQueryType() {
         return this.queryType;
     }
 
@@ -47,7 +47,7 @@ public class QueryHandle
         return this.bindParams;
     }   
 
-    public Query create(PersistenceOrchestrator po) {
+    public Query create(DataStore po) {
         Query query = po.getQuery(queryString, queryType, queryInput);
 
         if(columns != null) {

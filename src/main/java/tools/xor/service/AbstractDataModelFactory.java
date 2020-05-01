@@ -106,8 +106,8 @@ public abstract class AbstractDataModelFactory implements DataModelFactory {
 	}
 
 	@Override
-	public PersistenceOrchestrator createPersistenceOrchestrator (Object sessionContext) {
-		PersistenceOrchestrator result;
+	public DataStore createPersistenceOrchestrator (Object sessionContext) {
+		DataStore result;
 
 		if(models.get(name) == null) {
 			this.create(aggregateManager.getTypeMapper());

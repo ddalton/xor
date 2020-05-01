@@ -466,7 +466,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 			if(settings.getDetector() != null) {
 				settings.getDetector().investigate(root.getInstance());
 			}
-			objectCreator.getPersistenceOrchestrator().saveOrUpdate(root.getInstance());
+			objectCreator.getDataStore().saveOrUpdate(root.getInstance());
 		}
 
 		if(logger.isDebugEnabled()) {
@@ -484,7 +484,7 @@ public class ObjectGraph<V extends BusinessObject, E extends BusinessEdge> exten
 		Collections.reverse(aggregateRoots);
 
 		for(V root: aggregateRoots) {
-			objectCreator.getPersistenceOrchestrator().delete(root.getInstance());
+			objectCreator.getDataStore().delete(root.getInstance());
 		}
 
 		if(logger.isDebugEnabled()) {

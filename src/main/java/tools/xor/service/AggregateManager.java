@@ -77,7 +77,7 @@ import tools.xor.operation.DenormalizedQueryOperation;
 import tools.xor.operation.MigrateOperation;
 import tools.xor.providers.jdbc.CustomPersister;
 import tools.xor.providers.jdbc.JDBCDataModel;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.exim.CSVExportImport;
 import tools.xor.service.exim.ExcelExportImport;
@@ -117,9 +117,9 @@ public class AggregateManager implements Xor
 	private String viewsDirectory;
 	private ForeignKeyEnhancer foreignKeyEnhancer = new DefaultForeignKeyEnhancer();
 
-	// This is maintained per thread, because the persistence orchestrator holds
+	// This is maintained per thread, because the dataStore holds
 	// the session that is thread specific
-	private ThreadLocal<PersistenceOrchestrator> persistenceOrchestrator = new ThreadLocal<PersistenceOrchestrator>();
+	private ThreadLocal<DataStore> dataStore = new ThreadLocal<DataStore>();
 
 	// Custom type mapper to map between differnt types. 
 	// NOTE: The user is restricted from changing the path specified in the MetaModel.
@@ -179,6 +179,7 @@ public class AggregateManager implements Xor
 		return dataModelFactory;
 	}
 
+	@Override
 	public void setDataModelFactory (DataModelFactory dasFactory)
 	{
 		this.dataModelFactory = dasFactory;
@@ -305,29 +306,32 @@ public class AggregateManager implements Xor
 		return typeMapper;
 	}
 
-	public void setTypeMapper (TypeMapper customTypeMapper)
+	@Override
+	public void setTypeMapper (TypeMapper typeMapper)
 	{
-		this.typeMapper = customTypeMapper;
+		this.typeMapper = typeMapper;
 	}
 
-	public PersistenceOrchestrator getPersistenceOrchestrator ()
+	@Override
+	public DataStore getDataStore ()
 	{
-		return persistenceOrchestrator.get();
+		return dataStore.get();
 	}
 
 	/**
-	 * This method sets the current persistence orchestrator, irrespective
+	 * This method sets the current dataStore, irrespective
 	 * of whether the thread had one previously. This way we do
-	 * not have to bother about clearing an obsolete persistence orchestrator
+	 * not have to bother about clearing an obsolete dataStore.
 	 *
 	 * @param po value to set
 	 */
-	public void setPersistenceOrchestrator (
-		PersistenceOrchestrator po)
+	public void setDataStore (
+		DataStore po)
 	{
-		this.persistenceOrchestrator.set(po);
+		this.dataStore.set(po);
 	}
 
+	@Override
 	public DataModel getDataModel ()
 	{
 		return dataModelFactory.create(this.typeMapper);
@@ -351,10 +355,10 @@ public class AggregateManager implements Xor
 		FlushHandler (Settings settings)
 		{
 			this.settings = settings;
-			oldFlushMode = getPersistenceOrchestrator().disableAutoFlush();
+			oldFlushMode = getDataStore().disableAutoFlush();
 
-			if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-				JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) getPersistenceOrchestrator();
+			if(getDataStore() instanceof JDBCDataStore) {
+				JDBCDataStore po = (JDBCDataStore) getDataStore();
 				try {
 					CustomPersister cp = po.getSessionContext();
 					if(cp.getConnection() != null && !cp.getConnection().isClosed()) {
@@ -387,14 +391,14 @@ public class AggregateManager implements Xor
 				return (businessObject != null) ? businessObject.getInstance() : null;
 			} finally {
 				if(oldFlushMode != null) {
-					getPersistenceOrchestrator().setFlushMode(oldFlushMode);
+					getDataStore().setFlushMode(oldFlushMode);
 				}
 				if (settings.doPostFlush()) {
-					getPersistenceOrchestrator().flush();
+					getDataStore().flush();
 				}
 
-				if(!existingTransaction && getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-					JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator) getPersistenceOrchestrator();
+				if(!existingTransaction && getDataStore() instanceof JDBCDataStore) {
+					JDBCDataStore po = (JDBCDataStore) getDataStore();
 					po.getSessionContext().commit();
 					po.getSessionContext().close();
 				}
@@ -403,38 +407,39 @@ public class AggregateManager implements Xor
 	}
 
 	public Transaction createTransaction(Settings settings) {
-		dbInit(settings);
+		configure(settings);
 
-		if(getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)getPersistenceOrchestrator();
+		if(getDataStore() instanceof JDBCDataStore) {
+			JDBCDataStore po = (JDBCDataStore)getDataStore();
 			JDBCSessionContext sc = po.getSessionContext();
 			return new JDBCTransaction(sc);
-		} else if (getPersistenceOrchestrator() instanceof JPAPersistenceXMLPO) {
-			JPAPersistenceXMLPO jpaPO = (JPAPersistenceXMLPO) getPersistenceOrchestrator();
+		} else if (getDataStore() instanceof JPAPersistenceXMLPO) {
+			JPAPersistenceXMLPO jpaPO = (JPAPersistenceXMLPO) getDataStore();
 			return new JPAManualTransaction(jpaPO.getEntityManager().getTransaction());
-		} else if (getPersistenceOrchestrator() instanceof JPASpringPO) {
-			JPASpringPO jpaPO = (JPASpringPO) getPersistenceOrchestrator();
+		} else if (getDataStore() instanceof JPASpringPO) {
+			JPASpringPO jpaPO = (JPASpringPO) getDataStore();
 			return new JPATransaction(jpaPO.getTxManager());
 		} else {
 			throw new UnsupportedOperationException("beginTransaction is supported only on JDBC provider");
 		}
 	}
 
-	public void dbInit (Settings settings) {
+	@Override
+	public void configure (Settings settings) {
 
-		if (getPersistenceOrchestrator() == null) {
-			setPersistenceOrchestrator(dataModelFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
+		if (getDataStore() == null) {
+			setDataStore(dataModelFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
 		}
 		if(settings != null) {
 			if(settings.getPersistenceOrchestrator() == null) {
 				settings.setAggregateManager(this);
-				settings.initPersistenceOrchestrator(getPersistenceOrchestrator());
+				settings.initPersistenceOrchestrator(getDataStore());
 				if (settings.getSessionContext() != null
-					&& getPersistenceOrchestrator() instanceof JDBCPersistenceOrchestrator) {
-					JDBCPersistenceOrchestrator po = ((JDBCPersistenceOrchestrator)getPersistenceOrchestrator());
+					&& getDataStore() instanceof JDBCDataStore) {
+					JDBCDataStore po = ((JDBCDataStore)getDataStore());
 					po.getSessionContext().init((JDBCSessionContext)settings.getSessionContext());
 				}
-			} else if(settings.getPersistenceOrchestrator() != getPersistenceOrchestrator()) {
+			} else if(settings.getPersistenceOrchestrator() != getDataStore()) {
 				throw new IllegalStateException("PersistenceOrchestrator in settings is different from AggregateManager!");
 			}
 		}
@@ -444,7 +449,7 @@ public class AggregateManager implements Xor
 	{
 		Class<?> inputObjectClass = getEntityClass(inputObject, settings);
 
-		dbInit(settings);
+		configure(settings);
 
 		if (settings.getAssociationStrategy() == null) {
 			settings.setAssociationStrategy(associationStrategy);
@@ -523,7 +528,7 @@ public class AggregateManager implements Xor
 		}
 
 		if (settings.doPreClear()) {
-			getPersistenceOrchestrator().clear();
+			getDataStore().clear();
 		}
 	}
 
@@ -560,7 +565,7 @@ public class AggregateManager implements Xor
             TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
             ObjectCreator oc = new ObjectCreator(
                 settings,
-                getPersistenceOrchestrator(),
+                getDataStore(),
                 typeMapper);		    
 
 			BusinessObject from = oc.createDataObject(
@@ -602,7 +607,7 @@ public class AggregateManager implements Xor
 
 	@Override
 	public Object dml(Settings settings) {
-		dbInit(settings);
+		configure(settings);
 
 		AbstractOperation operation = null;
 		if(settings.getAction() == AggregateAction.READ) {
@@ -632,13 +637,13 @@ public class AggregateManager implements Xor
 		checkAndSet(settings, entity);
 
 		if (settings.doPreFlush())
-			getPersistenceOrchestrator().flush();
+			getDataStore().flush();
 
 		MapperSide side = findSide(entity, settings);
         TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
         ObjectCreator oc = new ObjectCreator(
             settings,
-            getPersistenceOrchestrator(),
+            getDataStore(),
             typeMapper);            
 		oc.setReadOnly(true);
 
@@ -699,7 +704,7 @@ public class AggregateManager implements Xor
 		    TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
 			ObjectCreator oc = new ObjectCreator(
 				settings,
-				getPersistenceOrchestrator(),
+				getDataStore(),
 				typeMapper);
 
 			BusinessObject from = oc.createDataObject(
@@ -730,7 +735,7 @@ public class AggregateManager implements Xor
         TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(
             settings,
-            getPersistenceOrchestrator(),
+            getDataStore(),
             typeMapper);   		
 
 		BusinessObject from = oc.createDataObject(
@@ -784,14 +789,14 @@ public class AggregateManager implements Xor
 		checkAndSet(settings, entity);
 
 		if (settings.doPreRefresh()) {
-			getPersistenceOrchestrator().refresh(entity);
+			getDataStore().refresh(entity);
 		}
 
 		MapperSide side = findSide(entity, settings);
         TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
         ObjectCreator oc = new ObjectCreator(
             settings,
-            getPersistenceOrchestrator(),
+            getDataStore(),
             typeMapper);  		
 		oc.setReadOnly(true);
 
@@ -842,7 +847,7 @@ public class AggregateManager implements Xor
         TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(
             settings,
-            getPersistenceOrchestrator(),
+            getDataStore(),
             typeMapper);    		
 		oc.setReadOnly(true);
 
@@ -1023,7 +1028,7 @@ public class AggregateManager implements Xor
 	        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
 	        ObjectCreator oc = new ObjectCreator(
 	            settings,
-	            getPersistenceOrchestrator(),
+	            getDataStore(),
 	            typeMapper);        		    
 
 			BusinessObject from = oc.createDataObject(
@@ -1042,12 +1047,6 @@ public class AggregateManager implements Xor
 		}
 
 		return flushHandler.instance();
-	}
-
-	@Override
-	public Object update (Object inputObject, Class<?> entityClass)
-	{
-		return update(inputObject, getDataModel().settings().aggregate(entityClass).build());
 	}
 
 	private String[] getEntitiesArray(String propertyName) {
@@ -1083,8 +1082,8 @@ public class AggregateManager implements Xor
 			throw new IllegalArgumentException("Source database needs to be provided");
 		}
 
-		dbInit(settings);
-		MigrateOperation operation = getPersistenceOrchestrator().getMigrateOperation(
+		configure(settings);
+		MigrateOperation operation = getDataStore().getMigrateOperation(
 			source,
 			this,
 			null);
@@ -1144,7 +1143,7 @@ public class AggregateManager implements Xor
 
 		// Create a new operation for each entity,so we don't mix different entities
 		// in the same queue
-		operation = getPersistenceOrchestrator().getMigrateOperation(source, this, null);
+		operation = getDataStore().getMigrateOperation(source, this, null);
 		operation.execute(settings);
 	}
 
@@ -1161,7 +1160,7 @@ public class AggregateManager implements Xor
             TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
             ObjectCreator oc = new ObjectCreator(
                 settings,
-                getPersistenceOrchestrator(),
+                getDataStore(),
                 typeMapper);		    
 
 			BusinessObject from = oc.createDataObject(
@@ -1230,7 +1229,7 @@ public class AggregateManager implements Xor
         TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(
             settings,
-            getPersistenceOrchestrator(),
+            getDataStore(),
             typeMapper);	    
 
 		BusinessObject bo = oc.createDataObject(
@@ -1254,11 +1253,11 @@ public class AggregateManager implements Xor
 		// a short-circuit attach, i.e., avoid going to the Database
 		// NOTE: Not all persistence managers support this and in that case
 		// an exception is thrown and the update method should be used instead.
-		Object instance = getPersistenceOrchestrator().getCached(
+		Object instance = getDataStore().getCached(
 			bo.getDomainType().getInstanceClass(),
 			bo.getIdentifierValue());
 		if(instance == null) {
-			getPersistenceOrchestrator().attach(bo, snapshotBO, settings);
+			getDataStore().attach(bo, snapshotBO, settings);
 		}
 	}
 
@@ -1514,7 +1513,7 @@ public class AggregateManager implements Xor
             TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
             ObjectCreator oc = new ObjectCreator(
                 settings,
-                getPersistenceOrchestrator(),
+                getDataStore(),
                 typeMapper);			
 
 			// The Excel should have a single sheet containing the denormalized data
@@ -1600,7 +1599,7 @@ public class AggregateManager implements Xor
 		TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN, name);
 
 		// Generate the data
-		dbInit(settings);
+		configure(settings);
 		(new DataGenerator(types, typeMapper, settings, getDataModelFactory())).execute();
 	}
 }

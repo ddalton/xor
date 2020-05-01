@@ -30,7 +30,7 @@ import tools.xor.JDBCType;
 import tools.xor.JSONObjectProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.service.AbstractPersistenceOrchestrator;
+import tools.xor.service.AbstractDataStore;
 import tools.xor.service.ForeignKeyEnhancer;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
@@ -816,17 +816,17 @@ public abstract class DBTranslator
         StringBuilder builder = new StringBuilder(String.format("CREATE GLOBAL TEMPORARY TABLE %s (", QueryJoinAction.JOIN_TABLE_NAME));
         // We use the DECIMAL data type to store numbers as it is a ANSI type
         // 20 digits is sufficient to store a long value
-        builder.append(String.format(" %s DECIMAL(20), ", AbstractPersistenceOrchestrator.QUERYJOIN_ID_INT_COL));
+        builder.append(String.format(" %s DECIMAL(20), ", AbstractDataStore.QUERYJOIN_ID_INT_COL));
 
         // 36 is sufficient to store a GUID value
         if(stringKeyLen == null) {
             stringKeyLen = 36;
         }
-        builder.append(String.format(" %s VARCHAR(%s), ", AbstractPersistenceOrchestrator.QUERYJOIN_ID_STR_COL, stringKeyLen));
+        builder.append(String.format(" %s VARCHAR(%s), ", AbstractDataStore.QUERYJOIN_ID_STR_COL, stringKeyLen));
 
         // 36 is sufficient to store a GUID value
         // We control the population of this column
-        builder.append(String.format(" %s VARCHAR(32) ", AbstractPersistenceOrchestrator.QUERYJOIN_INVOC_COL));
+        builder.append(String.format(" %s VARCHAR(32) ", AbstractDataStore.QUERYJOIN_INVOC_COL));
 
         builder.append(" ) ");
 

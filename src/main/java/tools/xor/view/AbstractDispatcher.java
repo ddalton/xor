@@ -22,7 +22,7 @@ package tools.xor.view;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ReconstituteRecordVisitor;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
 
@@ -172,7 +172,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
             if (iter.hasNext()) {
                 parentEdge = iter.next();
 
-                PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
+                DataStore po = callInfo.getSettings().getPersistenceOrchestrator();
                 
                 // At this point we check if we need to proceed further depending on whether the parent
                 // query produced any results

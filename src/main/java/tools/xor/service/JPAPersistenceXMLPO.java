@@ -24,7 +24,7 @@ import javax.persistence.EntityManagerFactory;
 
 import tools.xor.util.JPAUtil;
 
-public class JPAPersistenceXMLPO extends JPAPersistenceOrchestrator {
+public class JPAPersistenceXMLPO extends JPADataStore {
 	
 	private EntityManager entityManager;
 	private String        puName;

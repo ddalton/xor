@@ -54,7 +54,7 @@ import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 
-public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrchestrator
+public abstract class JPADataStore extends AbstractDataStore
 {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
@@ -73,11 +73,11 @@ public abstract class JPAPersistenceOrchestrator extends AbstractPersistenceOrch
         this.persistenceUtil = persistenceUtil;
     }	
 
-	public JPAPersistenceOrchestrator ()
+	public JPADataStore ()
 	{
 	}
 
-	public JPAPersistenceOrchestrator (Object sessionContext, Object data)
+	public JPADataStore (Object sessionContext, Object data)
 	{
 		this();
 	}

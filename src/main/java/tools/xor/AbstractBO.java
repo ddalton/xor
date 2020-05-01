@@ -719,7 +719,7 @@ public abstract class AbstractBO implements BusinessObject {
 		if(instanceType == null)
 			logger.error("!!!!! instanceType is null for object id: " + id);
 		if(oc.isReadOnly() && oc.getTypeMapper().isDomain(instanceType.getName()) && oc.getTypeMapper().isPersistenceManaged() && !instanceType.isDataType()) {
-			propertyInstance = oc.getPersistenceOrchestrator().getCached(instanceType.getInstanceClass(), id);
+			propertyInstance = oc.getDataStore().getCached(instanceType.getInstanceClass(), id);
 			
 			if(propertyInstance != null) {
 				logger.info("Found in cache for type: " + instanceType.getInstanceClass().getName() + " and id: " + id.toString());
@@ -1475,7 +1475,7 @@ public abstract class AbstractBO implements BusinessObject {
         TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
         ObjectCreator oc = new ObjectCreator(
             settings,
-            getObjectCreator().getPersistenceOrchestrator(),
+            getObjectCreator().getDataStore(),
             typeMapper);		
 		return oc.createTarget(callInfo);
 	}
@@ -1491,7 +1491,7 @@ public abstract class AbstractBO implements BusinessObject {
 
 		// Create an object creator for the target root
         TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.EXTERNAL);        
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDataStore(), typeMapper);
 		oc.setReadOnly(true);
 		
 		callInfo.setOutputObjectCreator(oc);
@@ -1540,7 +1540,7 @@ public abstract class AbstractBO implements BusinessObject {
 		callInfo.setSettings(settings);		
 
         TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(settings.doBaseline() ? MapperSide.DOMAIN : MapperSide.EXTERNAL);        
-        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDataStore(), typeMapper);
 		oc.setReadOnly(true);
 		oc.setShare(true);
 		

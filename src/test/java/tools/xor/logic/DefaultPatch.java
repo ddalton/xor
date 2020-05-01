@@ -107,7 +107,7 @@ public class DefaultPatch extends AbstractDBTest {
 		// managed instance
 		Set<Object> objects = new HashSet<>();
 		objects.add(consultant);
-		aggregateManager.getPersistenceOrchestrator().clear(objects);
+		aggregateManager.getDataStore().clear(objects);
 		
 		return result;
 	}
@@ -162,7 +162,7 @@ public class DefaultPatch extends AbstractDBTest {
 		// managed instance
 		Set<Object> objects = new HashSet<>();
 		objects.addAll(consultants);
-		aggregateManager.getPersistenceOrchestrator().clear(objects);
+		aggregateManager.getDataStore().clear(objects);
 
 		return toList;
 	}
@@ -267,7 +267,7 @@ public class DefaultPatch extends AbstractDBTest {
 
 		Set<Object> objects = new HashSet<>();
 		objects.add(managedConsultant);
-		aggregateManager.getPersistenceOrchestrator().clear(objects);
+		aggregateManager.getDataStore().clear(objects);
 
 		result.setName(consultant.getName());
 		result.setDisplayName(consultant.getDisplayName());

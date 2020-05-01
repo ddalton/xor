@@ -1,6 +1,6 @@
 package tools.xor.view;
 
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
@@ -40,7 +40,7 @@ public class QueryJoinAction implements Action
         return result;
     }
 
-    @Override public void execute (AbstractDispatcher dispatcher, QueryTreeInvocation qti, PersistenceOrchestrator po)
+    @Override public void execute (AbstractDispatcher dispatcher, QueryTreeInvocation qti, DataStore po)
     {
         // To make it work with all types of parent queries, we
         // will batch insert the values into the temp table

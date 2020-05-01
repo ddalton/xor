@@ -28,7 +28,7 @@ public class DefaultAssociationStrategy implements AssociationStrategy {
 
 	@Override
 	public Object execute(CallInfo callInfo, ObjectCreator oc) {
-		return oc.getPersistenceOrchestrator().getPersistentObject(callInfo, oc.getTypeMapper());
+		return oc.getDataStore().getPersistentObject(callInfo, oc.getTypeMapper());
 	}
 
 	@Override

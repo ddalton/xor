@@ -2,7 +2,7 @@ package tools.xor.view;
 
 import tools.xor.Type;
 import tools.xor.service.DomainShape;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.Shape;
 import tools.xor.util.InterQuery;
 

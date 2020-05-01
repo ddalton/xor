@@ -39,7 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface PersistenceOrchestrator {
+/**
+ * Interface XOR uses to interact with persistent storage such as an RDBMS
+ * @author i844711
+ *
+ */
+public interface DataStore {
 
     public enum QueryType {
         OQL,

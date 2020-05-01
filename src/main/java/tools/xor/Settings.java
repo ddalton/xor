@@ -59,9 +59,9 @@ import tools.xor.core.Interceptor;
 import tools.xor.custom.AssociationStrategy;
 import tools.xor.custom.DetailStrategy;
 import tools.xor.providers.jdbc.ImportMethod;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.service.AggregateManager;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
@@ -246,9 +246,9 @@ public class Settings {
 		return this.aggregateManager;
 	}
 
-	public PersistenceOrchestrator getPersistenceOrchestrator ()
+	public DataStore getPersistenceOrchestrator ()
 	{
-		return this.aggregateManager == null ? null : this.aggregateManager.getPersistenceOrchestrator();
+		return this.aggregateManager == null ? null : this.aggregateManager.getDataStore();
 	}
 
 	public void setAggregateManager(AggregateManager aggregateManager) {
@@ -258,9 +258,9 @@ public class Settings {
 	/*
 	 * we need to get the persistence orchestrator specific to that thread
 	 */
-	public void initPersistenceOrchestrator (PersistenceOrchestrator persistenceOrchestrator)
+	public void initPersistenceOrchestrator (DataStore persistenceOrchestrator)
 	{
-		if(persistenceOrchestrator instanceof JDBCPersistenceOrchestrator) {
+		if(persistenceOrchestrator instanceof JDBCDataStore) {
 
 			// Need this to be true for JDBCPersistenceOrchestrator
 			this.postFlush = true;
@@ -1584,7 +1584,7 @@ public class Settings {
 			return null;
 	}
 
-	public static boolean doSQL(PersistenceOrchestrator po) {
-		return po instanceof JDBCPersistenceOrchestrator;
+	public static boolean doSQL(DataStore po) {
+		return po instanceof JDBCDataStore;
 	}
 }

@@ -41,7 +41,7 @@ import tools.xor.EntityType;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
@@ -108,7 +108,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		this.handle = handle;
 	}
 
-	public Query createQuery(PersistenceOrchestrator po) {
+	public Query createQuery(DataStore po) {
 		if(this.query != null) {
 			return query;
 		}
@@ -678,7 +678,7 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	 * @param po persistence orchestrator
 	 * @return OQL name
 	 */
-	public String getOQLName(String path, PersistenceOrchestrator po) {
+	public String getOQLName(String path, DataStore po) {
 		if(getRoot().getAncestorPath() == null || path.startsWith(getRoot().getAncestorPath())) {
 			QueryField field = findField(path);
 			if(field == null) {

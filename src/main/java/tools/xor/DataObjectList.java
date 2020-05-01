@@ -29,7 +29,7 @@ import java.util.Set;
 import org.json.JSONArray;
 
 import org.json.JSONObject;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 
@@ -167,7 +167,7 @@ public class DataObjectList {
 
 			// Bulk load the collection of references
 			if(collectionProperty != null && ((ExtendedProperty)collectionProperty).isCollectionOfReferences()) {
-				PersistenceOrchestrator po = dataObject.getObjectCreator().getPersistenceOrchestrator();
+				DataStore po = dataObject.getObjectCreator().getDataStore();
 				List persistedInstances = po.findByIds((EntityType)type, toBeLoaded);
 				if(persistedInstances != null) {
 

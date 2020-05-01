@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class AbstractPersistenceOrchestrator implements PersistenceOrchestrator {
+public abstract class AbstractDataStore implements DataStore {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
 	// Valid if the surrogate id is a global id

@@ -30,8 +30,8 @@ public class JPASpringProvider implements PersistenceProvider {
      *        persistence unit name
      * @return PersistenceOrchestrator object
      */
-    public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-        PersistenceOrchestrator po = new JPASpringPO(sessionContext, data);
+    public DataStore createPO(Object sessionContext, Object data) {
+        DataStore po = new JPASpringPO(sessionContext, data);
         ((JPASpringPO)po).setPersistenceUtil(persistenceUtil);
         
         return po;

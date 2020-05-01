@@ -42,7 +42,7 @@ import tools.xor.TypeMapper;
 import tools.xor.service.AbstractDataModel;
 import tools.xor.service.DataModelFactory;
 import tools.xor.service.PersistenceProvider;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
@@ -623,8 +623,8 @@ public abstract class JDBCDataModel extends AbstractDataModel
         if(super.getPersistenceProvider() == null) {
             this.persistenceProvider = new PersistenceProvider() {
                 @Override
-                public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-                    JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
+                public DataStore createPO(Object sessionContext, Object data) {
+                    JDBCDataStore po = new JDBCDataStore((JDBCSessionContext)sessionContext, data);
                     po.setDataSource(getDataSource());
 
                     return po;

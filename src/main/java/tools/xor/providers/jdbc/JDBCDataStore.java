@@ -27,7 +27,7 @@ import tools.xor.Property;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
-import tools.xor.service.AbstractPersistenceOrchestrator;
+import tools.xor.service.AbstractDataStore;
 import tools.xor.service.QueryCapability;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.NativeQuery;
@@ -37,8 +37,8 @@ import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.StoredProcedure;
 import tools.xor.view.StoredProcedureQuery;
 
-public class JDBCPersistenceOrchestrator
-	extends AbstractPersistenceOrchestrator
+public class JDBCDataStore
+	extends AbstractDataStore
 {
 	private DataSource dataSource;
 	private JDBCSessionContext context;
@@ -57,10 +57,10 @@ public class JDBCPersistenceOrchestrator
 		this.dataSource = dataSource;
 	}
 
-	public JDBCPersistenceOrchestrator() {
+	public JDBCDataStore() {
 	}
 
-	public JDBCPersistenceOrchestrator(JDBCSessionContext context, Object data) {
+	public JDBCDataStore(JDBCSessionContext context, Object data) {
 		this.context = new JDBCSessionContext(this, context);
 	}
 

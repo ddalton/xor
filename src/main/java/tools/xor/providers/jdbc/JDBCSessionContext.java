@@ -73,7 +73,7 @@ public class JDBCSessionContext implements CustomPersister
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 
     private DBTranslator dbTranslator;
-    private JDBCPersistenceOrchestrator po;
+    private JDBCDataStore po;
     private ImportMethod importMethod = ImportMethod.PREPARED_STATEMENT; // use prepared statement batch if order does not matter
     private Statement statement;
     //private Set<PreparedStatement> preparedInsert = new HashSet<>();
@@ -145,7 +145,7 @@ public class JDBCSessionContext implements CustomPersister
         };
     }
 
-    public JDBCSessionContext(JDBCPersistenceOrchestrator po, JDBCSessionContext context) {
+    public JDBCSessionContext(JDBCDataStore po, JDBCSessionContext context) {
         this.po = po;
 
         init(context);

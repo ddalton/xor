@@ -54,12 +54,12 @@ import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.providers.jdbc.DBType;
 import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCDataModel;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AbstractDataModel;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
@@ -94,8 +94,8 @@ public class HanaPerf1Test
     @Before
     public void setup() throws SQLException
     {
-        am.dbInit(new Settings());
-        JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
+        am.configure(new Settings());
+        JDBCDataStore po = (JDBCDataStore)am.getDataStore();
         JDBCSessionContext sc = po.getSessionContext();
         sc.beginTransaction();
 
@@ -622,8 +622,8 @@ public class HanaPerf1Test
     public void testQuery1() {
 
         if(importMethod == ImportMethod.PREPARED_STATEMENT) {
-            am.dbInit(new Settings());
-            JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
+            am.configure(new Settings());
+            JDBCDataStore po = (JDBCDataStore)am.getDataStore();
             JDBCSessionContext sc = po.getSessionContext();
             sc.beginTransaction();
 
@@ -677,9 +677,9 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         settings.setView(view);
         settings.init(shape);
 
-        am.dbInit(settings);
+        am.configure(settings);
 
-        JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
+        JDBCDataStore po = (JDBCDataStore)am.getDataStore();
         JDBCSessionContext sc = po.getSessionContext();
 
         sc.beginTransaction();
@@ -746,9 +746,9 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         settings.setView(view);
         settings.init(shape);
 
-        am.dbInit(settings);
+        am.configure(settings);
 
-        JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator();
+        JDBCDataStore po = (JDBCDataStore)am.getDataStore();
         JDBCSessionContext sc = po.getSessionContext();
 
         sc.beginTransaction();
@@ -795,7 +795,7 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         }
     }
 
-    private void update(List<JSONObject> users, List<JSONObject> originalUsers, EntityType entityType, JDBCSessionContext sc, Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
+    private void update(List<JSONObject> users, List<JSONObject> originalUsers, EntityType entityType, JDBCSessionContext sc, Settings settings, DataStore po, TypeMapper typeMapper) {
         ObjectCreator oc = new ObjectCreator(settings, po, typeMapper);        
         for(int i = 0; i < users.size(); i++) {
             BusinessObject bo = new ImmutableBO(entityType, null, null, oc);
@@ -807,7 +807,7 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
         }
     }
 
-    private void delete(List<JSONObject> bids, EntityType entityType, JDBCSessionContext sc, Settings settings, PersistenceOrchestrator po, TypeMapper typeMapper) {
+    private void delete(List<JSONObject> bids, EntityType entityType, JDBCSessionContext sc, Settings settings, DataStore po, TypeMapper typeMapper) {
         ObjectCreator oc = new ObjectCreator(settings, po, typeMapper);
         for(int i = 0; i < bids.size(); i++) {
             BusinessObject bo = new ImmutableBO(entityType, null, null, oc);

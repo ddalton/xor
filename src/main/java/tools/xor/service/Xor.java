@@ -3,10 +3,10 @@ package tools.xor.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.util.List;
 
 import tools.xor.Settings;
+import tools.xor.TypeMapper;
 
 public interface Xor {
 	
@@ -15,7 +15,7 @@ public interface Xor {
 	 * @param   settings       User specified settings
 	 * @return The persistence managed object
 	 */
-	public Object create(Object inputObject, Settings settings);
+	Object create(Object inputObject, Settings settings);
 
 	/**
 	 * Performs object conversion by taking an object based on the External model
@@ -24,7 +24,7 @@ public interface Xor {
 	 * @param settings The user provided settings
 	 * @return Domain model object
 	 */
-	public Object toDomain(Object entity, Settings settings);
+	Object toDomain(Object entity, Settings settings);
 
 	/**
 	 * Performs object conversion by taking an object based on the Domain model
@@ -33,7 +33,7 @@ public interface Xor {
 	 * @param settings The user provided settings
 	 * @return External model object
 	 */
-	public Object toExternal (Object entity, Settings settings);
+	Object toExternal (Object entity, Settings settings);
 
 	/**
 	 * This method returns the object in external form such as JSONObject
@@ -43,22 +43,14 @@ public interface Xor {
 	 * @param settings      User specified settings
 	 * @return External model object
 	 */
-	public Object read(Object inputObject, Settings settings);
+	Object read(Object inputObject, Settings settings);
 
 	/**
 	 * @param   inputObject    The input object from the user in external form
 	 * @param   settings       User specified settings
 	 * @return The persistence managed object
 	 */
-	public Object update(Object inputObject, Settings settings);
-	
-	/**
-	 * @param   inputObject  The input object from the user in external form
-	 * @param   entityClass  The entity class of the object to be created
-	 *                       This is different from the class of the input object as that can be JSONObject
-	 * @return The persistence managed object
-	 */	
-	public Object update(Object inputObject, Class<?> entityClass);
+	Object update(Object inputObject, Settings settings);
 
 	/**
 	 * Migrates entities from the source database to the (current) target database.
@@ -69,13 +61,13 @@ public interface Xor {
 	 * @param source database
 	 * @param settings containing user provided data
 	 */
-	public void migrate(AggregateManager source, Settings settings);
+	void migrate(AggregateManager source, Settings settings);
 
 	/**
 	 * @param inputObject  The persistence managed object that needs to be deleted
 	 * @param settings     User specified settings
 	 */
-	public void delete(Object inputObject, Settings settings);
+	void delete(Object inputObject, Settings settings);
 	
 	/**
 	 * Optimized form of update where the user can specify the how much of an object to update
@@ -108,7 +100,7 @@ public interface Xor {
 	 * @param   settings       User specified settings
 	 * @return list of persistence managed objects
 	 */	
-	public List patch(List inputObject, List inputSnapshot, Settings settings);
+	List patch(List inputObject, List inputSnapshot, Settings settings);
 	
 	/**
 	 * Get a list of the objects in external form
@@ -120,14 +112,14 @@ public interface Xor {
 	 * @param settings User specified settings
 	 * @return The result of the query
 	 */
-	public List<?> query(Object inputObject, Settings settings);
+	List<?> query(Object inputObject, Settings settings);
 
 	/**
 	 * Executes DML (INSERT, UPDATE, SELECT and DELETE) queries against the DB
 	 * @param settings object
 	 * @return list for query and int for the rest
 	 */
-	public Object dml(Settings settings);
+	Object dml(Settings settings);
 
 	/**
 	 * @param   entity       The input object from the user in managed form
@@ -135,14 +127,14 @@ public interface Xor {
 	 * @return A persistence managed object that is a copy of the input entity
 	 * @see Xor#patch(List, List,  Settings)
 	 */	
-	public Object clone(Object entity, Settings settings);	
+	Object clone(Object entity, Settings settings);	
 	
 	/**
 	 * Exports the data in excel format
 	 * @param outputStream OutputStream of the Excel file
 	 * @param settings from the user
 	 */
-	public void exportDenormalized(OutputStream outputStream, Settings settings);
+	void exportDenormalized(OutputStream outputStream, Settings settings);
 
 	/**
 	 * Imports the denormalized excel
@@ -150,7 +142,7 @@ public interface Xor {
 	 * @param settings from the user
 	 * @throws IOException if an error was encoutered while operating the inputstream
 	 */
-	public void importDenormalized (InputStream is, Settings settings) throws
+	void importDenormalized (InputStream is, Settings settings) throws
 		IOException;
 
 	/**
@@ -161,7 +153,7 @@ public interface Xor {
 	 * @param settings from the user
 	 * @throws IOException if an error was encoutered while operating the OutputStream
 	 */
-	public void exportAggregate(String filePath, Object inputObject, Settings settings) throws IOException ;
+	void exportAggregate(String filePath, Object inputObject, Settings settings) throws IOException ;
 	
 	/**
 	 * Import the aggregate expressed in an Excel file
@@ -171,7 +163,7 @@ public interface Xor {
 	 * @return the id of the created object
 	 * @throws IOException  if an error was encoutered while operating the inputstream
 	 */
-	public Object importAggregate(String filePath, Settings settings) throws IOException;
+	Object importAggregate(String filePath, Settings settings) throws IOException;
 
 	/**
 	 * Generate data based on the shape
@@ -179,5 +171,41 @@ public interface Xor {
 	 * @param types in topological order
 	 * @param settings user settings
 	 */
-	public void generate(String name, List<String> types, Settings settings);
+	void generate(String name, List<String> types, Settings settings);
+	
+	/**
+	 * Any configuration needed for the PersistenceOrchestrator is done at this step.
+	 * 
+	 * @param settings user provided settings
+	 */
+	void configure (Settings settings);	
+	
+	/**
+	 * Return the DataStore instance corresponding to the DataModel.
+	 * A prescribed DataModel may not have a DataStore instance.
+	 *  
+	 * @return DataStore instance
+	 */
+	DataStore getDataStore ();	
+	
+	/**
+	 * Return the DataModel instance exposed by this interface
+	 * @return DataModel instance.
+	 */
+	DataModel getDataModel ();
+	
+	/** 
+	 * Set the factory object responsible for creating the DataModel instance.
+	 * 
+	 * @param factory DataModel creator
+	 */
+	void setDataModelFactory (DataModelFactory factory);	
+	
+	/**
+	 * Initialize the XOR framework the the TypeMapper instance.
+	 * The TypeMapper is the glue between 2 XOR instances.
+	 * 
+	 * @param typeMapper instance
+	 */
+	void setTypeMapper (TypeMapper typeMapper);
 }

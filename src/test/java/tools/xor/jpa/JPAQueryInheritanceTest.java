@@ -28,8 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.Settings;
 import tools.xor.logic.DefaultQueryInheritance;
-import tools.xor.service.JPAPersistenceOrchestrator;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.JPADataStore;
+import tools.xor.service.DataStore;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;

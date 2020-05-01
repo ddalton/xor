@@ -86,7 +86,7 @@ public class MutableBO extends AbstractBO {
 
 		// Create an object creator for the target root
         TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
-        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);		
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDataStore(), typeMapper);		
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
@@ -117,7 +117,7 @@ public class MutableBO extends AbstractBO {
 
 		// Create an object creator for the target root
 		TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
-		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
+		ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDataStore(), typeMapper);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		ModifyOperation operation = new ModifyOperation();
@@ -155,7 +155,7 @@ public class MutableBO extends AbstractBO {
 
 		// Create an object creator for the target root
         TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
-        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDataStore(), typeMapper);
 		oc.setShare(true);
 		callInfo.setOutputObjectCreator(oc);
 		DeleteOperation operation = new DeleteOperation();
@@ -183,7 +183,7 @@ public class MutableBO extends AbstractBO {
 
 		// Create an object creator for the target root
         TypeMapper typeMapper = getObjectCreator().getTypeMapper().newInstance(MapperSide.DOMAIN);
-        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getPersistenceOrchestrator(), typeMapper);		
+        ObjectCreator oc = new ObjectCreator(settings, getObjectCreator().getDataStore(), typeMapper);		
 		callInfo.setOutputObjectCreator(oc);
 		CloneOperation operation = new CloneOperation();
 		callInfo.setOperation(operation);

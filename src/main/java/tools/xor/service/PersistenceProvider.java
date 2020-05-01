@@ -19,7 +19,7 @@
 
 package tools.xor.service;
 
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 public interface PersistenceProvider {
     /**
@@ -29,7 +29,7 @@ public interface PersistenceProvider {
      *        persistence unit name
      * @return PersistenceOrchestrator object
      */
-    PersistenceOrchestrator createPO(Object sessionContext, Object data);    
+    DataStore createPO(Object sessionContext, Object data);    
     
     /**
      * Set the PersistenceUtil for this PersistenceProvider.

@@ -33,7 +33,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.FreestyleHandler;
 import tools.xor.view.expression.FunctionHandler;
@@ -156,7 +156,7 @@ public class Function implements Comparable<Function> {
 	 * @param po persistenceOrchestrator
 	 * @return true if all the names can be normalized, false otherwise
 	 */
-	public boolean normalize(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree, PersistenceOrchestrator po) {
+	public boolean normalize(QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree, DataStore po) {
 		boolean all = true;
 
 		for(String path: functionHandler.getAttributes()) {

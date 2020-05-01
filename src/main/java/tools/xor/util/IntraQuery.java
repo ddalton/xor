@@ -22,7 +22,7 @@ package tools.xor.util;
 import tools.xor.JDBCProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
@@ -55,7 +55,7 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
         return super.getDisplayName();
     }
 
-    public String getJoinClause(QueryTree queryTree, PersistenceOrchestrator po) {
+    public String getJoinClause(QueryTree queryTree, DataStore po) {
         String className = getEnd().getEntityType().getEntityName();
 
         if(Settings.doSQL(po)) {

@@ -38,7 +38,7 @@ public interface PersistenceUtil {
      * @param po PersistenceOrchestrator instance
      * @return handle to Blob instance
      */
-    Blob createBlob(PersistenceOrchestrator po);
+    Blob createBlob(DataStore po);
     
     /**
      * Create a JDBC Statement object for the given stored procedure.
@@ -47,7 +47,7 @@ public interface PersistenceUtil {
      * 
      * @param sp storedProcedure instance
      */
-    void createStatement (PersistenceOrchestrator po, final StoredProcedure sp);
+    void createStatement (DataStore po, final StoredProcedure sp);
     
     /**
      * Insert records into the Query Join Table used by stored procedures for efficient 
@@ -56,12 +56,12 @@ public interface PersistenceUtil {
      * @param invocationId unique id for the query
      * @param ids to be saved in the table
      */
-    void saveQueryJoinTable (PersistenceOrchestrator po, String invocationId, Set ids);
+    void saveQueryJoinTable (DataStore po, String invocationId, Set ids);
     
     /**
      * Create the query join table in the persistence store.
      * @param po PersistenceOrchestrator instance
      * @param stringKeyLen size of the string field used to represent the id
      */
-    void createQueryJoinTable(PersistenceOrchestrator po, final Integer stringKeyLen);
+    void createQueryJoinTable(DataStore po, final Integer stringKeyLen);
 }

@@ -61,7 +61,7 @@ import tools.xor.providers.jdbc.DBTranslator;
 import tools.xor.providers.jdbc.DBType;
 import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCDataModel;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
@@ -816,7 +816,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		} finally {
 
-			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCDataStore po = (JDBCDataStore)amJDBC.getDataStore();
 			JDBCSessionContext sc = po.getSessionContext();
 
 			try (Statement stmt = sc.getConnection().createStatement()) {
@@ -1018,7 +1018,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		} finally {
 
-			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCDataStore po = (JDBCDataStore)amJDBC.getDataStore();
 			JDBCSessionContext sc = po.getSessionContext();
 
 			try (Statement stmt = sc.getConnection().createStatement()) {
@@ -1114,7 +1114,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		} finally {
 
-			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCDataStore po = (JDBCDataStore)amJDBC.getDataStore();
 			JDBCSessionContext sc = po.getSessionContext();
 
 			try (Statement stmt = sc.getConnection().createStatement()) {
@@ -1181,7 +1181,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			// Generate the tasks in the DB
 			amJDBC.generate(jdbcShape.getName(), Arrays.asList(types), settings);
 
-			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCDataStore po = (JDBCDataStore)amJDBC.getDataStore();
 			po.createQueryJoinTable(null);
 			jdbcShape.signalEvent(); // update the types in the shape table
 
@@ -1215,7 +1215,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 		} finally {
 
-			JDBCPersistenceOrchestrator po = (JDBCPersistenceOrchestrator)amJDBC.getPersistenceOrchestrator();
+			JDBCDataStore po = (JDBCDataStore)amJDBC.getDataStore();
 			JDBCSessionContext sc = po.getSessionContext();
 
 			try (Statement stmt = sc.getConnection().createStatement()) {

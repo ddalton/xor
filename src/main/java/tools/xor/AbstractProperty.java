@@ -59,7 +59,7 @@ import tools.xor.annotation.XorResult;
 import tools.xor.annotation.XorVersion;
 import tools.xor.event.PropertyEvent;
 import tools.xor.generator.Generator;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -760,7 +760,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 						}
 					}					
 					
-					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
+					DataStore po = bo.getObjectCreator().getDataStore();
 					if(value == null) {
 						if(idValue != null) {
 							value = po.findById(getType().getInstanceClass(), idValue);
@@ -779,7 +779,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					} 
 
 					// Return a collection of elements. Right now we support only Set. 
-					PersistenceOrchestrator po = bo.getObjectCreator().getPersistenceOrchestrator();
+					DataStore po = bo.getObjectCreator().getDataStore();
 					if(this.keyFields != null && this.keyFields.size() > 0) {
 						value = po.getCollection(
 							this.getElementType(),
@@ -897,7 +897,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 					} else if(XorResult.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = resultPreviousCallback;
 					} else if(XorDataService.class.isAssignableFrom(annotation.getClass())) {
-						result[i] = event.getDomainParent().getObjectCreator().getPersistenceOrchestrator();
+						result[i] = event.getDomainParent().getObjectCreator().getDataStore();
 					} else if(XorExternalData.class.isAssignableFrom(annotation.getClass())) {
 						result[i] = event.getSettings().getExternalData();
 					}

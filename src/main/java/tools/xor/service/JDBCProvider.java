@@ -21,9 +21,9 @@ package tools.xor.service;
 
 import javax.sql.DataSource;
 
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 public class JDBCProvider implements PersistenceProvider {
     private DataSource dataSource;
@@ -43,8 +43,8 @@ public class JDBCProvider implements PersistenceProvider {
      *        persistence unit name
      * @return PersistenceOrchestrator object
      */
-    public PersistenceOrchestrator createPO(Object sessionContext, Object data) {
-        JDBCPersistenceOrchestrator po = new JDBCPersistenceOrchestrator((JDBCSessionContext)sessionContext, data);
+    public DataStore createPO(Object sessionContext, Object data) {
+        JDBCDataStore po = new JDBCDataStore((JDBCSessionContext)sessionContext, data);
         po.setDataSource(getDataSource());
 
         return po;        

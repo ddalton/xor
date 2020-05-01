@@ -1,7 +1,7 @@
 package tools.xor.view;
 
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 /**
  * Interface for any actions that need to be executed while processing an AggregateTree
@@ -14,7 +14,7 @@ public interface Action
      * @param qti needed to get the invocation id and any parent ids
      * @param po used to populate the temp join table
      */
-    void execute(AbstractDispatcher dispatcher, QueryTreeInvocation qti, PersistenceOrchestrator po);
+    void execute(AbstractDispatcher dispatcher, QueryTreeInvocation qti, DataStore po);
 
     Action copy(Object context);
 }

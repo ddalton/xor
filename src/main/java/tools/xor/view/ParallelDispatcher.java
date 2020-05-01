@@ -21,7 +21,7 @@ package tools.xor.view;
 
 import tools.xor.CallInfo;
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
@@ -93,9 +93,9 @@ public class ParallelDispatcher extends AbstractDispatcher implements Callback
             Settings settings = dispatcher.callInfo.getSettings();
 
             // Ensure we have initialized for DB access for the current thread
-            settings.getAggregateManager().dbInit(settings);
+            settings.getAggregateManager().configure(settings);
 
-            PersistenceOrchestrator po = settings.getPersistenceOrchestrator();
+            DataStore po = settings.getPersistenceOrchestrator();
             po.initForQuery();
 
             Query query = queryTree.createQuery(po);

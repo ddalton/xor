@@ -20,7 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.CallInfo;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 import tools.xor.util.InterQuery;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class SerialDispatcher extends AbstractDispatcher
      */
     @Override
     protected void executeQueries(List<QueryTree> queries, QueryTreeInvocation queryInvocation) {
-        PersistenceOrchestrator po = callInfo.getSettings().getPersistenceOrchestrator();
+        DataStore po = callInfo.getSettings().getPersistenceOrchestrator();
 
         while(!queries.isEmpty()) {
             QueryTree queryTree = queries.remove(0);

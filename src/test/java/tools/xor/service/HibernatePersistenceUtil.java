@@ -62,7 +62,7 @@ public class HibernatePersistenceUtil implements PersistenceUtil {
     }    
     
     @Override
-    public Blob createBlob(PersistenceOrchestrator po) {
+    public Blob createBlob(DataStore po) {
         BlobCreator blobCreator = new BlobCreator();
         
         Work work = new Work()
@@ -72,13 +72,13 @@ public class HibernatePersistenceUtil implements PersistenceUtil {
                 blobCreator.execute(connection);              
             }
         };       
-        execute(work, ((JPAPersistenceOrchestrator)po).getEntityManager());        
+        execute(work, ((JPADataStore)po).getEntityManager());        
 
         return blobCreator.getBlob();
     }
 
     @Override
-    public void createStatement(PersistenceOrchestrator po, StoredProcedure sp) {
+    public void createStatement(DataStore po, StoredProcedure sp) {
         Work work = new Work()
         {
             @Override
@@ -103,24 +103,24 @@ public class HibernatePersistenceUtil implements PersistenceUtil {
                 }                
             }
         };       
-        execute(work, ((JPAPersistenceOrchestrator)po).getEntityManager());
+        execute(work, ((JPADataStore)po).getEntityManager());
     }
 
     @Override
-    public void saveQueryJoinTable(PersistenceOrchestrator po, String invocationId, Set ids) {
+    public void saveQueryJoinTable(DataStore po, String invocationId, Set ids) {
         Work work = new Work()
         {
             @Override
             public void execute (Connection connection) throws SQLException
             {
-                ((JPAPersistenceOrchestrator)po).saveQueryJoinTable(connection, invocationId, ids);
+                ((JPADataStore)po).saveQueryJoinTable(connection, invocationId, ids);
             }
         };
-        execute(work, ((JPAPersistenceOrchestrator)po).getEntityManager());        
+        execute(work, ((JPADataStore)po).getEntityManager());        
     }
 
     @Override
-    public void createQueryJoinTable(PersistenceOrchestrator po, Integer stringKeyLen) {
+    public void createQueryJoinTable(DataStore po, Integer stringKeyLen) {
         Work work = new Work()
         {
             @Override
@@ -141,6 +141,6 @@ public class HibernatePersistenceUtil implements PersistenceUtil {
                 }
             }
         };
-        execute(work, ((JPAPersistenceOrchestrator)po).getEntityManager());        
+        execute(work, ((JPADataStore)po).getEntityManager());        
     }
 }

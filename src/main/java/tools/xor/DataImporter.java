@@ -27,8 +27,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
+import tools.xor.service.DataStore;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 
@@ -50,14 +50,14 @@ public class DataImporter implements Callable
     private ConcurrentLinkedQueue<JSONObject> queue;
     private Settings settings;
     private TypeMapper typeMapper;
-    private JDBCPersistenceOrchestrator po;
+    private JDBCDataStore po;
     private DataGenerator dataGenerator;
 
-    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, PersistenceOrchestrator po, TypeMapper typeMapper, Settings settings) {
+    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, DataStore po, TypeMapper typeMapper, Settings settings) {
         this.queue = queue;
         this.settings = settings;
         this.typeMapper = typeMapper;
-        this.po = (JDBCPersistenceOrchestrator)po;
+        this.po = (JDBCDataStore)po;
         this.dataGenerator = dataGenerator;
     }
 

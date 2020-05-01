@@ -33,7 +33,7 @@ import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
 import tools.xor.Settings;
 import tools.xor.providers.jdbc.JDBCDataModel;
-import tools.xor.providers.jdbc.JDBCPersistenceOrchestrator;
+import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
@@ -412,8 +412,8 @@ public class TwitterJDBCTest
         DataModel das = am.getDataModel();
         Shape shape = das.getShape();
 
-        am.dbInit(null);
-        JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
+        am.configure(null);
+        JDBCSessionContext sc = ((JDBCDataStore)am.getDataStore()).getSessionContext();
         sc.beginTransaction();
 
         // TODO: ID should be propagated in a composition relationship

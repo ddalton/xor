@@ -20,7 +20,7 @@
 package tools.xor.view;
 
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class QueryFromSQL implements QueryBuilderStrategy
 
         QueryHandle handle = new QueryHandle(
             queryString.toString(),
-            PersistenceOrchestrator.QueryType.SQL,
+            DataStore.QueryType.SQL,
             nativeQuery);
 
         handle.setBindParams(relevantParams);

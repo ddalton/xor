@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import tools.xor.Settings;
-import tools.xor.service.PersistenceOrchestrator;
+import tools.xor.service.DataStore;
 
 public interface Query extends DML {
 
@@ -34,13 +34,13 @@ public interface Query extends DML {
 		return queryString.contains(Query.INTERQUERY_JOIN_PLACEHOLDER);
 	}
 
-	public static PersistenceOrchestrator.QueryType getQueryType(Query query) {
+	public static DataStore.QueryType getQueryType(Query query) {
 		if(query.isOQL()) {
-			return PersistenceOrchestrator.QueryType.OQL;
+			return DataStore.QueryType.OQL;
 		} else if(query.isSQL()) {
-			return PersistenceOrchestrator.QueryType.SQL;
+			return DataStore.QueryType.SQL;
 		} else {
-			return PersistenceOrchestrator.QueryType.SP;
+			return DataStore.QueryType.SP;
 		}
 	}
 

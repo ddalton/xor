@@ -45,10 +45,10 @@ public class DefaultQueryShape {
 
     @Test
     public void queryTaskSimpleOQL() {
-        DynamicShape shape = new DynamicShape("TaskModel", null, aggregateManager.getModel());
+        DynamicShape shape = new DynamicShape("TaskModel", null, aggregateManager.getDataModel());
         shape.process("QueryShapeViews.xml", null, null);
-        aggregateManager.getModel().addShape(shape);
-        aggregateManager.getModel().setActive(shape);
+        aggregateManager.getDataModel().addShape(shape);
+        aggregateManager.getDataModel().setActive(shape);
         
         // read the person object using a DataObject
         Settings settings = new Settings();

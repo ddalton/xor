@@ -32,7 +32,7 @@ public class DefaultDataAccessService {
 	protected AggregateManager aggregateManager;
 	
 	public void defineMeta() {
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 
 		// List the declared properties
 		for(Type type: das.getShape().getUniqueTypes()) {

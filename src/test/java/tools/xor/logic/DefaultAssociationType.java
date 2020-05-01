@@ -41,7 +41,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	 * Test OneToMany mappedBy
 	 */
 	public void checkOneToMany() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty taskChildren = (ExtendedProperty) taskType.getProperty("taskChildren");
@@ -54,7 +54,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	 * Test OneToOne mappedBy
 	 */
 	public void checkOneToOne() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 		
 		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty quote = (ExtendedProperty) taskType.getProperty("quote");
@@ -67,7 +67,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	 * Test ManyToMany mappedBy
 	 */
 	public void checkManyToMany() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Project.class);
 		ExtendedProperty managers = (ExtendedProperty) taskType.getProperty("managers");
@@ -78,7 +78,7 @@ public class DefaultAssociationType extends AbstractDBTest {
 	
 
 	public void checkManyToOne() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type employee = das.getShape().getType(Employee.class);
 		ExtendedProperty createdBy = (ExtendedProperty) employee.getProperty("createdBy");

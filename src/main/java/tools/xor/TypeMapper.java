@@ -70,7 +70,7 @@ public interface TypeMapper {
      * We need to find the domain form of the type.
      * If the provided name is a domain type name, then it is returned back unchanged.
      * 
-     * @param name or entityName of the type whose corresponding domain form needs to be returned
+     * @param typeName entityName of the type whose corresponding domain form needs to be returned
      * @return the domain type name/entityName corresponding to given name
      */
     String toDomain(String typeName);   
@@ -88,7 +88,7 @@ public interface TypeMapper {
     /**
      * Return the external type name of the domain type name
      * 
-     * @param domain type name whose corresponding external type needs to be found
+     * @param domainTypeName type name whose corresponding external type needs to be found
      * @return the external type name for the domain type name
      */
     String toExternal(String domainTypeName);     
@@ -117,8 +117,8 @@ public interface TypeMapper {
 	public void setSide(MapperSide side);	
 	
 	/**
-	 * Returns the correct type name given an input class based on the MapperSide value
-	 * @param clazz input
+	 * Returns the correct type name based on the MapperSide value given the entity name 
+	 * @param typeName input
 	 * @param callInfo Need this object to obtain the property or the parent property in case property is null
 	 * @return type name based on the MapperSide value
 	 */

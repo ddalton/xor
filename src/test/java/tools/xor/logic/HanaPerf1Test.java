@@ -118,7 +118,7 @@ public class HanaPerf1Test
 
     private void addAdditionalRelationships()
     {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
 
         SchemaExtension relationshipExtension = new SchemaExtension()
         {
@@ -664,9 +664,9 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
 
     //@Test
     public void deleteBaseId() {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
         Shape shape = das.getShape(AbstractDataModel.RELATIONAL_SHAPE);
-        TypeMapper typeMapper = am.getModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        TypeMapper typeMapper = am.getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
         typeMapper.setDomainShape(shape);
 
         Settings settings = new Settings();
@@ -732,9 +732,9 @@ select count(rootid) from US_BASEIDTAB  where rootid in (select rootid from priv
     }
 
     public void updateUser(int offset) {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
         Shape shape = das.getShape(AbstractDataModel.RELATIONAL_SHAPE);
-        TypeMapper typeMapper = am.getModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
+        TypeMapper typeMapper = am.getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
         typeMapper.setDomainShape(shape);
 
         Settings settings = new Settings();

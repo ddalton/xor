@@ -39,7 +39,7 @@ public class DefaultModifyOneToOne extends AbstractDBTest {
 	protected AggregateManager aggregateManager;
 	
 	protected void checkBidirMapping() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		EntityType projectType = (EntityType) das.getShape().getType(Project.class);
 		ExtendedProperty fs = (ExtendedProperty) projectType.getProperty("financialSummary");
@@ -57,7 +57,7 @@ public class DefaultModifyOneToOne extends AbstractDBTest {
 	}
 	
 	protected void checkSingleMapping() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		EntityType personType = (EntityType) das.getShape().getType(Person.class);
 		ExtendedProperty address = (ExtendedProperty) personType.getProperty("address");

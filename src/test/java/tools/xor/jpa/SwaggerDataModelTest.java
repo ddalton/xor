@@ -76,7 +76,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
 
     @Test
     public void buildModel() {
-        DataModel model = amSwagger.getModel();
+        DataModel model = amSwagger.getDataModel();
         System.out.println("It was successful!");
 
         // create person
@@ -113,9 +113,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     
     @Test
     public void testPaging() {
-        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
         if (shape == null) {
-            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
         }
 
         JDBCType task = (JDBCType) shape.getType("TASK");
@@ -149,7 +149,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // read page 1
             settings = new Settings();
             settings.setView(amSwagger.getView("BASICINFO_OQL_SORT"));
-            DataModel model = amSwagger.getModel();
+            DataModel model = amSwagger.getDataModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);
             Map<String, Object> userParams = new HashMap<>();
@@ -195,9 +195,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     
     @Test
     public void testScrolling() {
-        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
         if (shape == null) {
-            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
         }
 
         JDBCType task = (JDBCType) shape.getType("TASK");
@@ -231,7 +231,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // read page 1
             settings = new Settings();
             settings.setView(amSwagger.getView("BASICINFO_OQL_SORT"));
-            DataModel model = amSwagger.getModel();
+            DataModel model = amSwagger.getDataModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);
             Map<String, Object> userParams = new HashMap<>();
@@ -267,9 +267,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     public void testToOne() {
         // Hibernate: insert into Person (createdBy_UUID, createdOn, updatedBy_UUID, updatedOn, version, description, detailedDescription, displayName, iconUrl, isCriticalSystemObject, name, objectId, commonName, email, password, photo, userName, UUID)
         
-        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
         if (shape == null) {
-            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
         }
 
         // Task
@@ -324,7 +324,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // read page 1
             settings = new Settings();
             settings.setView(amSwagger.getView("BASICINFO_TO_ONE_OQL"));
-            DataModel model = amSwagger.getModel();
+            DataModel model = amSwagger.getDataModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);
             
@@ -351,9 +351,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         // We use the generators to create this data
         // This data is committed by the generators
 
-        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
         if(shape == null) {
-            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
         }
 
 
@@ -400,7 +400,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // Query using OQL
             settings = new Settings();
             settings.setView(aggregateService.getView("BASICINFO_TO_MANY_SIMPLE_OQL"));
-            DataModel model = amSwagger.getModel();
+            DataModel model = amSwagger.getDataModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);  
             
@@ -425,9 +425,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         // We use the generators to create this data
         // This data is committed by the generators
 
-        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
         if(shape == null) {
-            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
         }
 
 
@@ -474,7 +474,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // Query using OQL
             settings = new Settings();
             settings.setView(aggregateService.getView("BASICINFO_TO_MANY_ENTITY_OQL"));
-            DataModel model = amSwagger.getModel();
+            DataModel model = amSwagger.getDataModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);  
             
@@ -501,9 +501,9 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         // We use the generators to create this data
         // This data is committed by the generators
 
-        Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
         if(shape == null) {
-            shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
         }
 
 
@@ -550,7 +550,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
             // Query using OQL
             settings = new Settings();
             settings.setView(aggregateService.getView("GROUP_TASK_SUBTASKS"));
-            DataModel model = amSwagger.getModel();
+            DataModel model = amSwagger.getDataModel();
             Type taskType = model.getShape().getType("Task");
             settings.setEntityType(taskType);  
             Map<String, Object> userParams = new HashMap<>();
@@ -598,7 +598,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
         // Query using OQL
         Settings settings = new Settings();
         settings.setView(aggregateService.getView("BASICINFO_TO_MANY_SIMPLE_MULTI_OQL"));
-        DataModel model = amSwagger.getModel();
+        DataModel model = amSwagger.getDataModel();
         Type taskType = model.getShape().getType("Task");
         settings.setEntityType(taskType);  
         
@@ -608,7 +608,7 @@ public class SwaggerDataModelTest extends DefaultQueryOperation {
     
     @Test
     public void jsonSchemaTest() {
-        JSONObject json = aggregateService.getModel().getShape().getJsonSchema();
+        JSONObject json = aggregateService.getDataModel().getShape().getJsonSchema();
         System.out.println("JPA Model: " + json.toString());
     }
 }

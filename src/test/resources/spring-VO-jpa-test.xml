@@ -34,7 +34,7 @@
 		</property>		
 		<property name="typeMapper" ref="typeMapper" />		
 		<property name="associationStrategy" ref="associationStrategy" />	
-		<property name="dasFactory" ref="vojpadas" />				
+		<property name="dataModelFactory" ref="vojpadas" />				
 	</bean>		
 	
 	<bean id="vojpadas"

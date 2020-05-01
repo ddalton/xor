@@ -29,7 +29,7 @@ public class DefaultTopoSortTest {
      * Test for a binary strongly connected component.
      */
 	public void testCategoryOrder() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type chapterType = das.getShape().getType(Chapter.class);
 		Type categoryType = das.getShape().getType(MetaEntityType.class);

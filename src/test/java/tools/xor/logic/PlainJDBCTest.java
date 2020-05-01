@@ -132,7 +132,7 @@ public class PlainJDBCTest
 			System.out.println("[Commit seed data - " + ((time4 - time3) / 1000) + " μs");
 
 			// build the shape
-			am.getModel().createShape(SHAPE_NAME);
+			am.getDataModel().createShape(SHAPE_NAME);
 		}
 	}
 
@@ -333,14 +333,14 @@ public class PlainJDBCTest
 		long time2 = System.nanoTime();
 		System.out.println("[Drop tables - " + ((time2 - time1) / 1000) + " μs");
 
-		am.getModel().removeShape(SHAPE_NAME);
+		am.getDataModel().removeShape(SHAPE_NAME);
 	}
 
 	@Test
 	public void jsonSelect() {
 		String jsonString = "{ \"normalized\": false, \"view\" : { \"attributeList\" : [\"count\"], \"nativeQuery\" : { \"selectClause\": \"SELECT count(*) FROM librarian\" } } }";
 
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 
 		am.dbInit(null);
 		JDBCSessionContext sc = ((JDBCPersistenceOrchestrator)am.getPersistenceOrchestrator()).getSessionContext();
@@ -360,7 +360,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void selectView() {
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -398,7 +398,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void queryEntity() {
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -439,7 +439,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void queryCollection() {
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -477,7 +477,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void queryManyToMany() {
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -533,7 +533,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void testDeeplyNested() {
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);
@@ -581,7 +581,7 @@ public class PlainJDBCTest
 
 	@Test
 	public void testDeeplyNested2() {
-		DataModel das = am.getModel();
+		DataModel das = am.getDataModel();
 		Shape shape = das.getShape(SHAPE_NAME);
 
 		am.dbInit(null);

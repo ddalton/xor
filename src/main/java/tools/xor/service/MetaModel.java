@@ -39,7 +39,7 @@ public class MetaModel {
 	}
 
 	protected DataModel getDAS() {
-		DataModel das = am.getDasFactory().create(am.getTypeMapper());
+		DataModel das = am.getDataModelFactory().create(am.getTypeMapper());
 
 		return das;
 	}

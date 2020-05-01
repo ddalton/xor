@@ -49,7 +49,6 @@ import org.json.JSONObject;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.EncodedResource;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
 
 import tools.xor.BusinessObject;

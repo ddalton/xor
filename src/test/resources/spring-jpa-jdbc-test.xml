@@ -31,7 +31,7 @@
 	<bean id="aggregateManager"
 		class="tools.xor.service.AggregateManager">
 		<property name="associationStrategy" ref="associationStrategy" />	
-		<property name="dasFactory" ref="jpadas" />	
+		<property name="dataModelFactory" ref="jpadas" />	
 		<property name="viewsDirectory" value="views" />
 	</bean>		
 	
@@ -50,7 +50,7 @@
 	<bean id="amJDBCjpa"
 		  class="tools.xor.service.AggregateManager">
 		<property name="typeMapper" ref="uctm" />
-		<property name="dasFactory" ref="jdbcdas" />
+		<property name="dataModelFactory" ref="jdbcdas" />
 		<property name="persistenceType" value="JDBC" />
 	</bean>
 

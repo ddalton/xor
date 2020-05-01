@@ -68,7 +68,7 @@ public class AggregateViews {
 		}
 		
 		// merge the new views with existing views
-		am.getModel().sync(avVersions);
+		am.getDataModel().sync(avVersions);
 	}
 	
 }

@@ -103,7 +103,7 @@ public class AggregateManager implements Xor
 
 	private static int BULK_BATCH_SIZE = 1000; // Flush the session for every batch to reduce memory pressure during bulk CSV import
 
-	private DataModelFactory dasFactory;
+	private DataModelFactory dataModelFactory;
 	private List<String> viewFiles;           // A list of files to read the view information from
 	private List<TypeVersion> typeVersions;        // A list of the types and the versions it is valid it
 	private int viewVersion = TypeVersion.MIN_VERSION_VALUE;
@@ -159,12 +159,12 @@ public class AggregateManager implements Xor
 			typeNarrower.setAggregateManager(this);
 		}
 
-		if (dasFactory != null) {
+		if (dataModelFactory != null) {
 			metaModel = new MetaModel(this);
-			dasFactory.setAggregateManager(this);
+			dataModelFactory.setAggregateManager(this);
 			
 			// create or make a copy if typeMapper already initialized
-		    typeMapper = this.getModel().getTypeMapper();
+		    typeMapper = this.getDataModel().getTypeMapper();
 		}
 		else {
 			logger.error(
@@ -174,14 +174,14 @@ public class AggregateManager implements Xor
 		reloadViews();
 	}
 
-	public DataModelFactory getDasFactory ()
+	public DataModelFactory getDataModelFactory ()
 	{
-		return dasFactory;
+		return dataModelFactory;
 	}
 
-	public void setDasFactory (DataModelFactory dasFactory)
+	public void setDataModelFactory (DataModelFactory dasFactory)
 	{
-		this.dasFactory = dasFactory;
+		this.dataModelFactory = dasFactory;
 	}
 
 	public MetaModel getMetaModel ()
@@ -328,9 +328,9 @@ public class AggregateManager implements Xor
 		this.persistenceOrchestrator.set(po);
 	}
 
-	public DataModel getModel ()
+	public DataModel getDataModel ()
 	{
-		return dasFactory.create(this.typeMapper);
+		return dataModelFactory.create(this.typeMapper);
 	}
 
 	public Settings getSettings ()
@@ -423,7 +423,7 @@ public class AggregateManager implements Xor
 	public void dbInit (Settings settings) {
 
 		if (getPersistenceOrchestrator() == null) {
-			setPersistenceOrchestrator(dasFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
+			setPersistenceOrchestrator(dataModelFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
 		}
 		if(settings != null) {
 			if(settings.getPersistenceOrchestrator() == null) {
@@ -453,7 +453,7 @@ public class AggregateManager implements Xor
 		if (settings.getEntityType() == null) {
 
 			// Try to infer the type from the input object
-			DataModel das = getModel();
+			DataModel das = getDataModel();
 
 			Class<?> domainClass = settings.getEntityClass();
 			String entityTypeName = null;
@@ -551,13 +551,13 @@ public class AggregateManager implements Xor
 	{
 		owLogger.debug("Performing clone operation");
 		checkAndSet(settings, entity);
-		DataModel das = getModel();
+		DataModel das = getDataModel();
 
 		// Not necessary as we manage the back-pointers
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
-            TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
+            TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN);
             ObjectCreator oc = new ObjectCreator(
                 settings,
                 getPersistenceOrchestrator(),
@@ -618,7 +618,7 @@ public class AggregateManager implements Xor
 	private MapperSide findSide(Object entity, Settings settings) {
         MapperSide side = MapperSide.EXTERNAL;
         if ((settings.getEntityType() != null && settings.getEntityType().isOpen()) ||
-            getModel().getTypeMapper().isDomain(getEntityClass(entity, settings).getName())) 
+            getDataModel().getTypeMapper().isDomain(getEntityClass(entity, settings).getName())) 
         {
             side = MapperSide.DOMAIN;
         }
@@ -635,7 +635,7 @@ public class AggregateManager implements Xor
 			getPersistenceOrchestrator().flush();
 
 		MapperSide side = findSide(entity, settings);
-        TypeMapper typeMapper = getModel().getTypeMapper().newInstance(side);
+        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
         ObjectCreator oc = new ObjectCreator(
             settings,
             getPersistenceOrchestrator(),
@@ -682,7 +682,7 @@ public class AggregateManager implements Xor
 	 */
 	public View getView (String viewName)
 	{
-		return getModel().getShape().getView(viewName);
+		return getDataModel().getShape().getView(viewName);
 	}
 
 	@Override
@@ -696,7 +696,7 @@ public class AggregateManager implements Xor
 
 		try {
 		    MapperSide side = findSide(entity, settings);
-		    TypeMapper typeMapper = getModel().getTypeMapper().newInstance(side);
+		    TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
 			ObjectCreator oc = new ObjectCreator(
 				settings,
 				getPersistenceOrchestrator(),
@@ -727,7 +727,7 @@ public class AggregateManager implements Xor
 		owLogger.debug("Performing object conversion from External to Domain");
 		checkAndSet(settings, entity);
 
-        TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(
             settings,
             getPersistenceOrchestrator(),
@@ -788,7 +788,7 @@ public class AggregateManager implements Xor
 		}
 
 		MapperSide side = findSide(entity, settings);
-        TypeMapper typeMapper = getModel().getTypeMapper().newInstance(side);
+        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
         ObjectCreator oc = new ObjectCreator(
             settings,
             getPersistenceOrchestrator(),
@@ -839,7 +839,7 @@ public class AggregateManager implements Xor
 		owLogger.debug("Performing object conversion from Domain to External");
 		checkAndSet(settings, entity);
 
-        TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(
             settings,
             getPersistenceOrchestrator(),
@@ -1020,7 +1020,7 @@ public class AggregateManager implements Xor
 
 		try {
 		    MapperSide side = findSide(entity, settings);
-	        TypeMapper typeMapper = getModel().getTypeMapper().newInstance(side);
+	        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(side);
 	        ObjectCreator oc = new ObjectCreator(
 	            settings,
 	            getPersistenceOrchestrator(),
@@ -1047,7 +1047,7 @@ public class AggregateManager implements Xor
 	@Override
 	public Object update (Object inputObject, Class<?> entityClass)
 	{
-		return update(inputObject, getModel().settings().aggregate(entityClass).build());
+		return update(inputObject, getDataModel().settings().aggregate(entityClass).build());
 	}
 
 	private String[] getEntitiesArray(String propertyName) {
@@ -1158,7 +1158,7 @@ public class AggregateManager implements Xor
 		FlushHandler flushHandler = new FlushHandler(settings);
 
 		try {
-            TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+            TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
             ObjectCreator oc = new ObjectCreator(
                 settings,
                 getPersistenceOrchestrator(),
@@ -1218,7 +1218,7 @@ public class AggregateManager implements Xor
 
 	private Shape getShape(Settings settings) {
 		if(settings.getShape() == null) {
-			return getModel().getShape();
+			return getDataModel().getShape();
 		}
 
 		return settings.getShape();
@@ -1227,7 +1227,7 @@ public class AggregateManager implements Xor
 	private void attach(Object entity, Object snapshot, Settings settings) {
 
 		// attach it to the persistence layer
-        TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
         ObjectCreator oc = new ObjectCreator(
             settings,
             getPersistenceOrchestrator(),
@@ -1403,7 +1403,7 @@ public class AggregateManager implements Xor
 		public AggregateManagerBuilder init (AggregateManager other)
 		{
 
-			this.nestedDasFactory = other.getDasFactory();
+			this.nestedDasFactory = other.getDataModelFactory();
 			this.nestedAutoFlushNative = other.isAutoFlushNative();
 			this.nestedInterceptor = other.getInterceptor();
 			this.nestedAssociationStrategy = other.getAssociationStrategy();
@@ -1421,7 +1421,7 @@ public class AggregateManager implements Xor
 			AggregateManager result = new AggregateManager();
 
 			if (nestedDasFactory != null)
-				result.setDasFactory(nestedDasFactory);
+				result.setDataModelFactory(nestedDasFactory);
 
 			result.setAutoFlushNative(nestedAutoFlushNative);
 
@@ -1511,7 +1511,7 @@ public class AggregateManager implements Xor
 			// clone the task object using a DataObject
 
 			// Create an object creator for the target root
-            TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+            TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
             ObjectCreator oc = new ObjectCreator(
                 settings,
                 getPersistenceOrchestrator(),
@@ -1597,10 +1597,10 @@ public class AggregateManager implements Xor
 	@Override
 	public void generate (String name, List<String> types, Settings settings)
 	{
-		TypeMapper typeMapper = getModel().getTypeMapper().newInstance(MapperSide.DOMAIN, name);
+		TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN, name);
 
 		// Generate the data
 		dbInit(settings);
-		(new DataGenerator(types, typeMapper, settings, getDasFactory())).execute();
+		(new DataGenerator(types, typeMapper, settings, getDataModelFactory())).execute();
 	}
 }

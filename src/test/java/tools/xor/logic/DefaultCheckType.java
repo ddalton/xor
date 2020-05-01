@@ -56,7 +56,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	private static final String TASK_NAME = "SETUP_DSL";
 	
 	protected void checkPath() {
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		
 		// create person
 		Technician owner = new Technician();
@@ -118,7 +118,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}
 
 	protected void checkOrder() {
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		
 		EntityType chapterT = (EntityType) das.getShape().getType(Chapter.class);
 		EntityType chapterTT = (EntityType) das.getShape().getType(ChapterType.class);
@@ -129,7 +129,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}
 	
 	protected void checkReflectionGetter() {
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		
 		// Create Task
 		Task task = new Task();
@@ -161,7 +161,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}
 	
 	protected void checkReflectionSetter() {
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		
 		// Create Task
 		Task task = new Task();
@@ -192,7 +192,7 @@ public class DefaultCheckType extends AbstractDBTest {
 	}	
 	
 	protected void generateSimple() {
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		EntityType addressType = (EntityType) das.getShape().getType(AddressEntity.class);
 		
 		JSONObject address = (JSONObject) addressType.generate(new Settings(), null, null, null, new StateGraph.ObjectGenerationVisitor(new HashMap<JSONObject, State>(), new Settings(), null));

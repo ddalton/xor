@@ -41,7 +41,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	 */
 	@Test
 	public void testCreateBranches1() {	
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		View view = aggregateManager.getView("TASKCHILDREN");
@@ -58,7 +58,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	 */
 	@Test
 	public void testCreateBranches2() {	
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		View view = aggregateManager.getView("TASKSET");
@@ -74,7 +74,7 @@ public class DefaultViewBranch extends AbstractDBTest {
 	
 	//@Test
 	public void testTaskFull() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		View view = das.getShape().getView((EntityType) taskType);

@@ -19,10 +19,22 @@
 
 package tools.xor.service;
 
+import javax.sql.DataSource;
+
 import tools.xor.TypeMapper;
 import tools.xor.providers.jdbc.JDBCConfigDataModel;
 
 public class JDBCConfigDataModelBuilder implements DataModelBuilder {
+
+    DataSource dataSource;
+    
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     /**
      * Build the DataModel and initialize it with the provided TypeMapper instance
@@ -30,6 +42,9 @@ public class JDBCConfigDataModelBuilder implements DataModelBuilder {
      * @return DataModel instance
      */
     public DataModel build(String name, TypeMapper typeMapper, AbstractDataModelFactory dataModelFactory) {
-        return new JDBCConfigDataModel(dataModelFactory, typeMapper);
+        JDBCConfigDataModel model = new JDBCConfigDataModel(dataModelFactory, typeMapper);
+        model.setDataSource(getDataSource());
+        
+        return model;
     }
 }

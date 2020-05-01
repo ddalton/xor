@@ -28,7 +28,7 @@
 	<bean id="aggregateManager"
 		class="tools.xor.service.AggregateManager">
 		<property name="associationStrategy" ref="associationStrategy" />	
-		<property name="dasFactory" ref="jpadas" />	
+		<property name="dataModelFactory" ref="jpadas" />	
 	</bean>		
 	
 	<bean id="jpadas"

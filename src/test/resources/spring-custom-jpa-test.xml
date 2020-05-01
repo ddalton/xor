@@ -33,7 +33,7 @@
 			</list>
 		</property>
 		<property name="associationStrategy" ref="associationStrategy" />	
-		<property name="dasFactory" ref="customjpadas" />			
+		<property name="dataModelFactory" ref="customjpadas" />			
 	</bean>		
 	
 	<bean id="customjpadas"

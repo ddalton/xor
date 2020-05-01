@@ -35,7 +35,7 @@ public class DefaultNarrowing extends AbstractDBTest {
 	protected AggregateManager aggregateManager;
 
 	public void checkNarrowing() {	
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type technicianType = das.getShape().getType(Technician.class);
 		ExtendedProperty rate = (ExtendedProperty) technicianType.getProperty("rate");		

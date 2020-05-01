@@ -34,7 +34,7 @@ public class DefaultIdVersion {
 	protected AggregateManager aggregateManager;
 	
 	public void checkId() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property id = taskType.getProperty("id");
@@ -46,7 +46,7 @@ public class DefaultIdVersion {
 	}
 	
 	public void checkVersion() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property version = taskType.getProperty("version");

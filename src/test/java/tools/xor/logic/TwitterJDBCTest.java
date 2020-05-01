@@ -61,7 +61,7 @@ public class TwitterJDBCTest
     protected DataSource dataSource;
 
     private void addAdditionalRelationships() {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
 
         SchemaExtension extension = new SchemaExtension()
         {
@@ -403,13 +403,13 @@ public class TwitterJDBCTest
             connection.commit();
         }
 
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
         das.removeShape("_DEFAULT_");
     }
 
     @Test
     public void testUrlCreate() {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
         Shape shape = das.getShape();
 
         am.dbInit(null);
@@ -487,7 +487,7 @@ public class TwitterJDBCTest
 
     @Test
     public void testCompositionCreate() {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
         Shape shape = das.getShape();
 
         JSONObject tweet = getTweet(false, 10001);
@@ -502,7 +502,7 @@ public class TwitterJDBCTest
 
     @Test
     public void testInheritanceCreate() {
-        DataModel das = am.getModel();
+        DataModel das = am.getDataModel();
         Shape shape = das.getShape();
 
         // Create a quotetweet object

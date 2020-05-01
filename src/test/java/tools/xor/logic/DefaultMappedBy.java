@@ -49,7 +49,7 @@ public class DefaultMappedBy {
 	 * Test OneToMany mappedBy
 	 */
 	public void checkOneToMany() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty taskChildren = (ExtendedProperty) taskType.getProperty("taskChildren");
@@ -72,7 +72,7 @@ public class DefaultMappedBy {
 	 * Test OneToOne mappedBy
 	 */
 	public void checkOneToOne() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		ExtendedProperty quote = (ExtendedProperty) taskType.getProperty("quote");
@@ -103,7 +103,7 @@ public class DefaultMappedBy {
 	 * Test ManyToMany mappedBy
 	 */
 	public void checkManyToMany() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Project.class);
 		ExtendedProperty managers = (ExtendedProperty) taskType.getProperty("managers");
@@ -128,7 +128,7 @@ public class DefaultMappedBy {
 	 * Test embedded version of OneToOne
 	 */
 	public void checkOneToOneEmbedded() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type employee = das.getShape().getType(Employee.class);
 		ExtendedProperty parkingSpot = (ExtendedProperty) employee.getProperty("location.parkingSpot");
@@ -150,7 +150,7 @@ public class DefaultMappedBy {
 	}	
 
 	public void checkImmutable() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 		EntityType metaEntityState = (EntityType) das.getShape().getType(MetaEntityState.class);
 		Annotation annotation = metaEntityState.getClassAnnotation(XorEntity.class);
 		
@@ -163,7 +163,7 @@ public class DefaultMappedBy {
 	}
 	
 	public void checkListIndex() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type task = das.getShape().getType(Task.class);
 		ExtendedProperty dependants = (ExtendedProperty) task.getProperty("dependants");

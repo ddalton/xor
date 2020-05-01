@@ -87,7 +87,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 
 		//entityManager.persist(d);
 
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		Settings settings = das.settings().base(Department.class)
 			.expand(new AssociationSetting(Head.class))
 			.build();
@@ -111,7 +111,7 @@ public class JPAMappedByTest extends DefaultMappedBy {
 		d.setName("Mathematics");
 		d.setHead(h);
 
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		Type deptType = das.getShape().getType(Department.class);
 		Settings settings = new Settings();
 		settings.setPostFlush(true);

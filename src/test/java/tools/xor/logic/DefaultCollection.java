@@ -35,7 +35,7 @@ public class DefaultCollection {
 	protected AggregateManager aggregateManager;
 	
 	public void checkSet() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property children = taskType.getProperty("taskChildren");
@@ -46,7 +46,7 @@ public class DefaultCollection {
 	}
 
 	public void checkList() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		Property dependencies = taskType.getProperty("dependants");
@@ -57,7 +57,7 @@ public class DefaultCollection {
 	}	
 	
 	public void checkMap() {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type prjType = das.getShape().getType(Project.class);
 		Property subProjects = prjType.getProperty("subProjects");

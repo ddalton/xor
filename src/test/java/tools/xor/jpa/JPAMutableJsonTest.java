@@ -166,7 +166,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 	@Test
 	public void checkOpenField() throws JSONException {
-		DataModel das = aggregateService.getModel();
+		DataModel das = aggregateService.getDataModel();
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		ExtendedProperty openProperty = new JPAProperty("ItemList", das.getShape().getType(Object.class), taskType);
 		aggregateService.getTypeMapper().addProperty(openProperty);
@@ -205,19 +205,19 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	
 	@Test
 	public void checkOpenFieldEntityToOne() {
-		setupOpenField(aggregateService.getModel());
+		setupOpenField(aggregateService.getDataModel());
 		super.checkOpenFieldEntityToOne();		
 	}
 	
 	@Test
 	public void checkOpenFieldEntityToOneGrandchild() {	
-		setupOpenField(aggregateService.getModel());
+		setupOpenField(aggregateService.getDataModel());
 		super.checkOpenFieldEntityToOneGrandchild();			
 	}
 	
 	@Test
 	public void checkOpenFieldQuery() {	
-		setupOpenField(aggregateService.getModel());
+		setupOpenField(aggregateService.getDataModel());
 		super.checkOpenFieldQuery();			
 	}	
 			
@@ -228,7 +228,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	
 	@Test
 	public void checkOpenFieldPaging() {
-		setupOpenField(aggregateService.getModel());		
+		setupOpenField(aggregateService.getDataModel());		
 		super.checkOpenFieldPaging();
 	}
 
@@ -240,11 +240,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			return;
 		}
 		
-		EntityType stype = (EntityType) aggregateManager.getModel().getShape().getType(S.class);
+		EntityType stype = (EntityType) aggregateManager.getDataModel().getShape().getType(S.class);
 		stype.setNaturalKey(new String[]{"supplierNo"});
-		EntityType ptype = (EntityType) aggregateManager.getModel().getShape().getType(P.class);
+		EntityType ptype = (EntityType) aggregateManager.getDataModel().getShape().getType(P.class);
 		ptype.setNaturalKey(new String[]{"partNo"});	
-		EntityType sptype = (EntityType) aggregateManager.getModel().getShape().getType(SP.class);
+		EntityType sptype = (EntityType) aggregateManager.getDataModel().getShape().getType(SP.class);
 		sptype.setNaturalKey(new String[]{"supplierNo", "partNo"});		
 
 		S1 = new tools.xor.db.sp.S("S1", "Smith", 20, "London");
@@ -301,7 +301,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	}
 	
 	private void createSPProperty() {
-        DataModel das = aggregateService.getModel();		
+        DataModel das = aggregateService.getDataModel();		
         EntityType partType = (EntityType) das.getShape().getType(P.class);
         if(partType.getProperty("supplierParts") == null) {
             ExtendedProperty openProperty = new JPAProperty("supplierParts", das.getShape().getType(Set.class), partType, RelationshipType.TO_MANY, (EntityType) das.getShape().getType(SP.class));
@@ -417,7 +417,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	@Test(expected = javax.persistence.PersistenceException.class)
 	public void checkReferenceSemantics () throws JSONException
 	{
-		DataModel das = aggregateService.getModel();
+		DataModel das = aggregateService.getDataModel();
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
 		Property openProperty = taskType.getProperty("ItemList");
 		if(openProperty != null) {
@@ -463,7 +463,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		entityManager.persist(task);
 
 		// Read the task object using the built-in basic view
-		DataModel das = aggregateService.getModel();
+		DataModel das = aggregateService.getDataModel();
 		EntityType taskType = (EntityType)das.getShape().getType(Task.class);
 		Settings settings = new Settings();
 		settings.setView(das.getShape().getBaseView(taskType));
@@ -497,7 +497,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 
 		// First create a natural key for Task based on name
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		EntityType externalTask = (EntityType)das.getShape().getType(Task.class);
 		EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
 		String[] key = { "name" };
@@ -552,7 +552,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	{
 
 		// First create a natural key for Task based on name
-		DataModel das = aggregateManager.getModel();
+		DataModel das = aggregateManager.getDataModel();
 		//EntityType domainTask = (EntityType)das.getShape().getType(Task.class);
         EntityType domainTask = (EntityType)das.getTypeMapper().getDomainShape().getType(Task.class);
         EntityType externalTask = (EntityType)das.getTypeMapper().getDynamicShape().getType(domainTask.getEntityName());		
@@ -617,14 +617,14 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	public void queryEntity() throws Exception
 	{
 		Settings settings = new Settings();
-		settings.setEntityType(aggregateService.getModel().getShape().getType(Task.class));
-		settings.init(aggregateService.getModel().getShape());
+		settings.setEntityType(aggregateService.getDataModel().getShape().getType(Task.class));
+		settings.init(aggregateService.getDataModel().getShape());
 
 		aggregateService.importCSV("bulk/", settings);
 
 		// query the task object
 		settings = new Settings();
-		settings.setEntityType(aggregateService.getModel().getShape().getType(Task.class));
+		settings.setEntityType(aggregateService.getDataModel().getShape().getType(Task.class));
 		settings.setView(aggregateService.getView("TASKCHILDREN"));
 		List<?> result = aggregateService.query(null, settings);
 
@@ -697,9 +697,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// task with 1500 dependents
 		// use the generator to do this
 
-		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+			shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -777,7 +777,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 
 			View view = aggregateService.getView("PARALLEL_QUERY");
 			view = view.copy();
-			DataModel das = aggregateManager.getModel();
+			DataModel das = aggregateManager.getDataModel();
 			Shape ormShape = das.getShape();
 
 			// We use splitToAnchor strategy
@@ -847,9 +847,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		entityManager.flush();
 
 
-		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+			shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 		JDBCType pTask = (JDBCType)shape.getType("TASK");
 
@@ -923,9 +923,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	 */
 	@Test
 	public void testSubtypeSubquery() {
-		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+			shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -1003,7 +1003,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			settings = new Settings();
 			settings.setView(priorityView);
 
-			shape = aggregateService.getModel().getShape();
+			shape = aggregateService.getDataModel().getShape();
 			Type type = shape.getType(Task.class);
 			settings.setEntityType(type);
 			settings.init(shape);
@@ -1039,9 +1039,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// We use the generators to create this data
 		// This data is committed by the generators
 
-		Shape shape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+		Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(shape == null) {
-			shape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+			shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -1088,7 +1088,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			// Query using the mix view
 			settings = new Settings();
 			settings.setView(aggregateService.getView("TASKCHILDRENMIX"));
-			shape = aggregateService.getModel().getShape();
+			shape = aggregateService.getDataModel().getShape();
 			Type type = shape.getType(Task.class);
 			settings.setEntityType(type);
 			settings.init(shape);
@@ -1135,9 +1135,9 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		// We use the generators to create this data
 		// This data is committed by the generators
 
-		Shape jdbcShape = amJDBC.getModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+		Shape jdbcShape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
 		if(jdbcShape == null) {
-			jdbcShape = amJDBC.getModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+			jdbcShape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
 		}
 
 
@@ -1188,7 +1188,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			// Query using the mix view
 			settings = new Settings();
 			settings.setView(aggregateService.getView("TASKCHILDRENMIXTEMP"));
-			Shape shape = aggregateService.getModel().getShape();
+			Shape shape = aggregateService.getDataModel().getShape();
 			((DomainShape)shape).setJDBCShape(jdbcShape);
 			Type type = shape.getType(Task.class);
 			settings.setEntityType(type);

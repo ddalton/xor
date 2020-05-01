@@ -50,7 +50,7 @@ public class XSDGeneratorTest {
 	
 	@Test
 	public void testHeader() throws Exception {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type personType = das.getShape().getType(Person.class);
 		logger.info("Task XSD document: " + (new XSDGenerator()).generate(new XSDVisitor(), personType));
@@ -58,7 +58,7 @@ public class XSDGeneratorTest {
 
 	@Test
 	public void testTask() throws Exception {
-		DataModel das = aggregateManager.getModel(); 
+		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
 		logger.info("Task XSD document: " + (new XSDGenerator()).generate(new XSDVisitor(), taskType));

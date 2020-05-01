@@ -26,7 +26,7 @@
 	<bean id="aggregateManager"
 		  class="tools.xor.service.AggregateManager">
                 <property name="typeMapper" ref="typeMapper" />
-		<property name="dasFactory" ref="jdbcdas" />
+		<property name="dataModelFactory" ref="jdbcdas" />
 		<property name="persistenceType" value="JDBC" />
 	</bean>
 

@@ -226,6 +226,39 @@ public class JSONObjectProperty
             }
         );
         convertersByClass.put(int.class, convertersByClass.get(Integer.class)); // primitive
+        
+        
+        convertersByClass.put(Byte.class,
+                new AbstractConverter() {
+
+                    @Override
+                    public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
+                        return new Integer(jsonObject.getInt(key)).byteValue();
+                    }
+
+                    @Override
+                    public void add(Settings settings, JSONArray jsonArray, Object object) {
+                        jsonArray.put((Byte) object);
+                    }
+                }
+            );        
+        convertersByClass.put(byte.class, convertersByClass.get(Integer.class));
+        
+        convertersByClass.put(Short.class,
+                new AbstractConverter() {
+
+                    @Override
+                    public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
+                        return new Integer(jsonObject.getInt(key)).shortValue();
+                    }
+
+                    @Override
+                    public void add(Settings settings, JSONArray jsonArray, Object object) {
+                        jsonArray.put((Short) object);
+                    }
+                }
+            );        
+        convertersByClass.put(short.class, convertersByClass.get(Integer.class));
 
         convertersByClass.put(Long.class,
             new AbstractConverter() {
@@ -288,7 +321,7 @@ public class JSONObjectProperty
                         }
                         catch (ParseException e) {
                             logger.warn(
-                                "DynamicProperty#getObject problem parsing date string: "
+                                "Problem parsing date string: "
                                     + dateString + ", message: " + e.getMessage());
                             return null;
                         }
@@ -407,7 +440,7 @@ public class JSONObjectProperty
             }
         } else {
             // This is at INFO level, because on read we try to read from the JsonObjectBuilder which is not allowed
-            logger.info("DynamicProperty#getValue dataObject instance is not a JsonObject " + instance.getClass().getName());
+            logger.info("DataObject instance is not a JsonObject " + instance.getClass().getName());
             return null;
         }
     }
@@ -426,7 +459,7 @@ public class JSONObjectProperty
             }
         } else {
             // This is at INFO level, because on read we try to read from the JsonObjectBuilder which is not allowed
-            logger.info("DynamicProperty#getValue dataObject instance is not a JsonObject " + instance.getClass().getName());
+            logger.info("DataObject instance is not a JsonObject " + instance.getClass().getName());
             return null;
         }
 
@@ -443,7 +476,7 @@ public class JSONObjectProperty
                 throw ClassUtil.wrapRun(e);
             }
         } else {
-            logger.error("DynamicProperty#setValue dataObject instance is not a JsonObject");
+            logger.error("DataObject instance is not a JsonObject");
         }
     }
     
@@ -478,7 +511,7 @@ public class JSONObjectProperty
             return getConverter().toDomain(settings, jsonObject, this.property, key);
         } else {
             if(logger.isDebugEnabled()) {
-                logger.debug("DynamicProperty#toDomain: Unknown converter for " + getType().getInstanceClass()
+                logger.debug("Unknown converter for " + getType().getInstanceClass()
                         + ", type name: " + getType().getName());
             }
             return jsonObject.get(key);
@@ -489,7 +522,7 @@ public class JSONObjectProperty
     public void addElement(BusinessObject dataObject, Object element) {
 
         if(!JSONArray.class.isAssignableFrom( dataObject.getInstance().getClass())) {
-            throw new IllegalArgumentException("DynamicProperty#addElement dataObject instance "
+            throw new IllegalArgumentException("DataObject instance "
                 + dataObject.getInstance().getClass() + " is not of type JSONArray");
         }
 
@@ -503,14 +536,14 @@ public class JSONObjectProperty
             } else if (JSONArray.class.isAssignableFrom(element.getClass())) {
                 convertersByClass.get(JSONArray.class).add(dataObject.getSettings(), jsonArray, element);
             } else {
-                logger.error("DynamicProperty#addElement element " + element.getClass() + " is not of type JsonValue/JsonObjectBuilder/JsonArrayBuilder");
+                logger.error("Element " + element.getClass() + " is not of type JsonValue/JsonObjectBuilder/JsonArrayBuilder");
             }
         }
     }
 
     public void addMapEntry(Object dataObject, Object key, Object value) {
         if(!JSONObject.class.isAssignableFrom(((BusinessObject) dataObject).getInstance().getClass())) {
-            throw new IllegalArgumentException("DynamicProperty#addMapEntry dataObject is not of type JSONObject");
+            throw new IllegalArgumentException("DataObject is not of type JSONObject");
         }
 
         JSONObject jsonObject = (JSONObject) ((BusinessObject) dataObject).getInstance();

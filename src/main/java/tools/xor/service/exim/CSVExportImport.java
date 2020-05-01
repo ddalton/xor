@@ -1,5 +1,19 @@
 package tools.xor.service.exim;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -7,24 +21,13 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.EncryptedDocumentException;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class CSVExportImport extends AbstractExportImport
 {
@@ -54,9 +57,10 @@ public class CSVExportImport extends AbstractExportImport
 
     @Override
     protected Map<String, Integer> getHeader (String path, String name) throws IOException
-    {
-        try(Reader entitySheet = new FileReader(path + name + Constants.XOR.CSV_FILE_SUFFIX);
-        CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader())) {
+    {        
+        try(InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path + name + Constants.XOR.CSV_FILE_SUFFIX);
+                Reader entitySheet = new InputStreamReader(is);
+                CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader())) {
             Map<String, Integer> headerMap = parser.getHeaderMap();
 
             return headerMap;
@@ -190,7 +194,9 @@ public class CSVExportImport extends AbstractExportImport
 
     private boolean hasRelationships(String path) {
         String relationshipFilePath = path + Constants.XOR.CSV_INDEX_SHEET;
-        File file = new File(relationshipFilePath);
+        URL resource = Thread.currentThread().getContextClassLoader().getResource(relationshipFilePath);           
+        File file = new File(resource.getPath());        
+
         if(!file.exists()) {
             // Relationships are not required
             return false;
@@ -206,30 +212,24 @@ public class CSVExportImport extends AbstractExportImport
             return;
         }
 
-        Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
-        CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());
-
-        try {
-            for (
-                CSVRecord csvRecord
-                : parser)
+        try(InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path + Constants.XOR.CSV_INDEX_SHEET);
+                Reader indexSheet = new InputStreamReader(is);        
+                CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader());) {
+            for (CSVRecord csvRecord : parser)
 
             {
                 String entityInfo = csvRecord.get(1);
-                Reader sheet = new FileReader(
-                    path + csvRecord.get(0) + Constants.XOR.CSV_FILE_SUFFIX);
-                CSVParser sheetParser = new CSVParser(sheet, CSVFormat.DEFAULT.withHeader());
-                Map<String, Integer> sheetHeaderMap = sheetParser.getHeaderMap();
+                try (InputStream isc = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream(path + csvRecord.get(0) + Constants.XOR.CSV_FILE_SUFFIX);
+                        Reader sheet = new InputStreamReader(isc);
+                        CSVParser sheetParser = new CSVParser(sheet, CSVFormat.DEFAULT.withHeader());) {
+                    Map<String, Integer> sheetHeaderMap = sheetParser.getHeaderMap();
 
-                addProperties(
-                    getProperty(entityInfo).getName() + Settings.PATH_DELIMITER,
-                    attrPath,
-                    sheetHeaderMap
-                );
+                    addProperties(getProperty(entityInfo).getName() + Settings.PATH_DELIMITER, attrPath,
+                            sheetHeaderMap);
+                }
             }
-        } finally {
-            parser.close();
-        }
+        } 
     }
 
     @Override public Object importAggregate (String filePath, Settings settings) throws IOException
@@ -241,7 +241,8 @@ public class CSVExportImport extends AbstractExportImport
                 throw new IllegalArgumentException("filePath is required and needs to point to a directory.");
             }
 
-            File folder = new File(filePath);
+            URL resource = Thread.currentThread().getContextClassLoader().getResource(filePath);           
+            File folder = new File(resource.getPath());
             if(!folder.isDirectory()) {
                 throw new IllegalArgumentException("filePath " + filePath + " should represent a directory name.");
             }
@@ -250,7 +251,8 @@ public class CSVExportImport extends AbstractExportImport
                 filePath += File.separator;
             }
 
-            Reader entitySheet = new FileReader(filePath + Constants.XOR.CSV_ENTITY_SHEET);
+            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath + Constants.XOR.CSV_ENTITY_SHEET);
+            Reader entitySheet = new InputStreamReader(is);
             CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader());
 
             try {
@@ -349,9 +351,9 @@ public class CSVExportImport extends AbstractExportImport
         Map<String, JSONObject> idMap) throws IOException
     {
         // Ensure we have the XOR.id column in the entity sheet
-        // Ensure we have the XOR.id column in the entity sheet
-        try(Reader entitySheet = new FileReader(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
-        CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader())) {
+        try(InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
+                Reader entitySheet = new InputStreamReader(is);
+                CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader())) {
 
             // Get the entity class name
             Map<String, Integer> colMap = parser.getHeaderMap();
@@ -399,8 +401,9 @@ public class CSVExportImport extends AbstractExportImport
         }
 
         // First find all the entity sheets
-        try(Reader indexSheet = new FileReader(path + Constants.XOR.CSV_INDEX_SHEET);
-            CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader())) {
+        try(InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path + Constants.XOR.CSV_INDEX_SHEET);
+                Reader indexSheet = new InputStreamReader(is);
+                CSVParser parser = new CSVParser(indexSheet, CSVFormat.DEFAULT.withHeader())) {
 
             for (
                 CSVRecord csvRecord
@@ -424,8 +427,9 @@ public class CSVExportImport extends AbstractExportImport
         IOException
     {
         // Ensure we have the XOR.id column in the entity sheet
-        try (Reader entitySheet = new FileReader(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
-        CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader())) {
+        try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path + sheetName + Constants.XOR.CSV_FILE_SUFFIX);
+                Reader entitySheet = new InputStreamReader(is);
+                CSVParser parser = new CSVParser(entitySheet, CSVFormat.DEFAULT.withHeader())) {
 
 
             // Get the entity class name

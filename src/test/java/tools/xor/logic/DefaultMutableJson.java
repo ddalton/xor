@@ -1126,7 +1126,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	protected void generateMediumSizedDomainEntity() throws IOException
 	{
 		DataModel das = aggregateManager.getDataModel();
-		InputStream inputStream = new FileInputStream("DomainValues.xlsx");
+		InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("DomainValues.xlsx");
 		das.initGenerators(inputStream);
 
 		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
@@ -1319,7 +1319,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 
 			assert(persistedEmployee.getLocation() != null);
 
-			aggregateService.exportAggregate("EmployeeRandomMedium.xlsx", persistedEmployee, settings);
+			aggregateService.exportAggregate("src/test/resources/EmployeeRandomMedium.xlsx", persistedEmployee, settings);
 
 			aggregateService.delete(persistedEmployee, settings);
 
@@ -1550,7 +1550,7 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	public void generateBoundedPersonObjectGraph() throws FileNotFoundException
 	{
 		DataModel das = aggregateManager.getDataModel();
-		InputStream inputStream = new FileInputStream("BoundedPerson.xlsx");
+		InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("BoundedPerson.xlsx");
 		das.initGenerators(inputStream);
 
 		EntityType taskType = (EntityType)das.getShape().getType(Task.class);

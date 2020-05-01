@@ -40,8 +40,8 @@ import java.util.Stack;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.annotation.XorAfter;

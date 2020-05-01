@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,14 +162,11 @@ public class DefaultAggregatePaths extends AbstractDBTest {
 		Type patent = das.getShape().getType(Patent.class);
 		paths = AggregatePropertyPaths.enumerateRegEx(patent, das.getShape());
 		// Print the paths
-		Level oldLevel = logger.getLevel();
-		//logger.setLevel(Level.DEBUG);
 		StringBuilder pathstr = new StringBuilder("\n");
 		for(String p: paths) {
 			pathstr.append(p + "\n");
 		}
 		logger.debug(pathstr);
-		logger.setLevel(oldLevel);
 	}	
 
 	@Test

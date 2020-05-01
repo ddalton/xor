@@ -19,7 +19,7 @@
 
 package tools.xor.generator;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import tools.xor.HierarchyGenerator;
 import tools.xor.Property;
 import tools.xor.SharedCounterGenerator;

@@ -46,8 +46,8 @@ import javax.persistence.MapKey;
 import javax.persistence.OrderBy;
 import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import tools.xor.JSONObjectProperty.Converter;
 import tools.xor.annotation.XorAlways;

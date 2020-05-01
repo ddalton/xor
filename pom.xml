@@ -140,7 +140,7 @@
             <id>release-sign-artifacts</id>
             <activation>
                 <property>
-                    <name>performRelease</name>
+                    <name>release</name>
                     <value>true</value>
                 </property>
             </activation>
@@ -192,19 +192,24 @@
             <version>2.0.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>1.10</version>
-        </dependency>
-
-        <!-- Using the above older library for applications needing
-             backward compatibility
          <dependency>
              <groupId>org.apache.commons</groupId>
              <artifactId>commons-configuration2</artifactId>
              <version>2.0</version>
-         </dependency-->
+         </dependency>
+
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.glassfish</groupId>
@@ -219,9 +224,15 @@
         </dependency>
 
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.11.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.11.1</version>
         </dependency>
 
         <dependency>

@@ -19,7 +19,7 @@
 
 package tools.xor;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 

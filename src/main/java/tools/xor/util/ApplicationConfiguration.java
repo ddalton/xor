@@ -1,8 +1,7 @@
 package tools.xor.util;
 
-import org.apache.commons.configuration.PropertiesConfiguration;
-//import org.apache.commons.configuration2.PropertiesConfiguration;
-//import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
 
 import java.io.File;
 
@@ -21,18 +20,13 @@ public class ApplicationConfiguration {
         try {
             File propertiesFile = new File(
                     getInstance().getClass().getClassLoader().getResource(XOR_CONFIG_FILENAME).getFile());
-
-            getInstance().setConfiguration(new PropertiesConfiguration(propertiesFile));
-            /* New PropertiesConfiguration. Old one above is for backwards compatibility.
-             * ========================================================================== 
-             * Configurations configs = new Configurations();
-             * PropertiesConfiguration config = configs.properties(propertiesFile);
-             * 
-             * getInstance().setConfiguration(config);
-             */
+ 
+             Configurations configs = new Configurations();
+             PropertiesConfiguration config = configs.properties(propertiesFile);
+              
+             getInstance().setConfiguration(config);
         } catch (Exception e) {
-            // throw ClassUtil.wrapRun(e);
-            // Empty
+            // Create an empty configuration for installations not having the file
             getInstance().setConfiguration(new PropertiesConfiguration());
         }
     }

@@ -22,8 +22,8 @@ package tools.xor;
 import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import tools.xor.operation.CloneOperation;
 import tools.xor.operation.DeleteOperation;

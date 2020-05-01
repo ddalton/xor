@@ -20,8 +20,8 @@
 package tools.xor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import tools.xor.action.CollectionUpdateAction;
 import tools.xor.action.ElementAction;
 import tools.xor.action.Executable;

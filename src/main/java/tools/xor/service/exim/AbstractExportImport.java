@@ -2,6 +2,8 @@ package tools.xor.service.exim;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tools.xor.BusinessObject;
@@ -11,6 +13,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.service.AggregateManager;
+import tools.xor.service.exim.AbstractExportImport.EntityStructure;
 import tools.xor.util.Constants;
 import tools.xor.util.ExcelJsonCreationStrategy;
 import tools.xor.view.AggregateView;
@@ -44,6 +47,78 @@ public abstract class AbstractExportImport implements ExportImport
             throw new RuntimeException("Import/Export can only work with ExcelJsonTypeMapper");
         }
     }
+    
+    protected static boolean isEmbeddedPath (String propertyPath)
+    {
+        if (propertyPath.indexOf(Settings.PATH_DELIMITER) != -1 &&
+            !propertyPath.startsWith(Constants.XOR.XOR_PATH_PREFIX)) {
+            return true;
+        }
+
+        return false;
+    }    
+    
+    protected static void setEmbeddableValue (JSONObject base, String path, String value)
+    {
+        setEmbeddableValue(base, path, value, null);
+    }
+
+    public static void setEmbeddableValue (JSONObject base,
+                                            String path,
+                                            Object value,
+                                            String replacedProperty)
+    {
+        JSONObject embeddable = base;
+
+        // Loop through each part of the path
+        while (path.indexOf(Settings.PATH_DELIMITER) != -1) {
+            String rootpart = path.substring(0, path.indexOf(Settings.PATH_DELIMITER));
+            if (base.has(rootpart)) {
+                embeddable = base.getJSONObject(rootpart);
+            }
+            else {
+                embeddable = new JSONObject();
+                base.put(rootpart, embeddable);
+            }
+
+            path = path.substring(rootpart.length() + 1);
+        }
+        embeddable.put(path, value);
+        if (replacedProperty != null) {
+            embeddable.remove(replacedProperty);
+        }
+    } 
+    
+    public static JSONObject getJSON (Map<String, Integer> colMap, Row row)
+    {
+        JSONObject entity = new JSONObject();
+
+        for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+            Cell cell = row.getCell(entry.getValue(), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            if (isEmbeddedPath(entry.getKey())) {
+                if(cell != null) {
+                    setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
+                }
+            }
+            else {
+                // set direct value
+                if (cell != null) {
+                    try {
+                        entity.put(entry.getKey(), cell.getStringCellValue());
+                    }
+                    catch (Exception e) {
+                        // Numeric entry
+                        entity.put(entry.getKey(), cell.getNumericCellValue());
+                    }
+                }
+                else {
+                    // Skip processing null values
+                }
+            }
+        }
+
+        return entity;
+    }      
 
     protected Map<String, JSONObject> parseEntities(String path,
                                                   Map<String, String> entitySheets,
@@ -174,7 +249,9 @@ public abstract class AbstractExportImport implements ExportImport
             sheetMap.put(entry.getKey(), sheetName);
             writeEntity(sheetName, entry.getValue(), null);
         }
-        writeRelationshipMap(filePath, sheetMap);
+        writeRelationshipMap(sheetMap);
+        
+        finishExport(filePath);
     }
 
     /**
@@ -187,6 +264,15 @@ public abstract class AbstractExportImport implements ExportImport
 
         List<String> properties;
         Set<String> required;
+        Map<String, EntityType> subTypeMap;
+
+        public Map<String, EntityType> getSubTypeMap() {
+            return subTypeMap;
+        }
+
+        public void setSubTypeMap(Map<String, EntityType> subTypeMap) {
+            this.subTypeMap = subTypeMap;
+        }
 
         public Set<String> getRequired ()
         {
@@ -208,13 +294,13 @@ public abstract class AbstractExportImport implements ExportImport
             this.properties = properties;
         }
 
-        private void extractSubTypes(List<BusinessObject> boList, Map<String, Type> subTypeMap) {
+        private void extractSubTypes(List<BusinessObject> boList, Map<String, EntityType> subTypeMap) {
 
             for (BusinessObject bo : boList) {
                 if (bo.getContainmentProperty() != null && bo.getContainmentProperty().isMany()) {
                     extractSubTypes(bo.getList(), subTypeMap);
                 } else {
-                    Type type = bo.getType();
+                    EntityType type = (EntityType) bo.getType();
                     if(!subTypeMap.containsKey(type.getName())) {
                         subTypeMap.put(type.getName(), type);
                     }
@@ -222,7 +308,7 @@ public abstract class AbstractExportImport implements ExportImport
             }
         }
 
-        private void process(Map<String, Type> subTypeMap) {
+        private void process(Map<String, EntityType> subTypeMap) {
 
             this.properties = new ArrayList<>();
             Map<Type, Set<String>> propertyMap = new HashMap<>();
@@ -274,7 +360,8 @@ public abstract class AbstractExportImport implements ExportImport
         public static EntityStructure construct(List<BusinessObject> boList) {
             EntityStructure es = new EntityStructure();
 
-            Map<String, Type> subTypeMap = new HashMap<String, Type>();
+            Map<String, EntityType> subTypeMap = new HashMap<String, EntityType>(); 
+            es.setSubTypeMap(subTypeMap);
             es.extractSubTypes(boList, subTypeMap);
             es.process(subTypeMap);
 
@@ -292,15 +379,12 @@ public abstract class AbstractExportImport implements ExportImport
 
         EntityStructure entityStructure = EntityStructure.construct(boList);
 
+        // Get all the header columns.
+        // Since subtypes might have additional columns we check the type of each BusinessObject instance
         EntityType entityType = null;
         if (setupEntity(sheetName) ) {
-            propertyColIndex = new HashMap<String, Integer>();
-            int colNo = 0;
-            for (String propertyPath : entityStructure.getProperties()) {
-                if (!propertyColIndex.containsKey(propertyPath)) {
-                    propertyColIndex.put(propertyPath, colNo++);
-                }
-            }
+            setupPropertyColumns(entityStructure);
+            writeEntityHeader(sheetName, entityStructure);            
         }
 
         for (BusinessObject bo : boList) {
@@ -386,20 +470,15 @@ public abstract class AbstractExportImport implements ExportImport
                     writeEntityItemPropertyValue(value.toString());
                 }
             }
-            finishupItem();
         }
+        finishEntity();        
 
         if(entityType == null) {
             logger.warn("EntityType is missing - Check if all data has been loaded/read from DB.");
         }
-
-        // EntityType can be null if the collection is empty
-        if(entityType != null) {
-            writeEntityHeader(sheetName, entityType);
-        }
     }
 
-    protected void writeRelationshipMap (String filePath, Map<String, String> sheetMap) throws
+    protected void writeRelationshipMap (Map<String, String> sheetMap) throws
         IOException
     {
         setupRelationship();
@@ -512,7 +591,7 @@ public abstract class AbstractExportImport implements ExportImport
                     String reference = property.substring(Constants.XOR.IDREF.length());
 
                     // replace the object reference with actual reference
-                    am.setEmbeddableValue(entity, reference, toOne, property);
+                    setEmbeddableValue(entity, reference, toOne, property);
                 }
             }
         }
@@ -520,38 +599,19 @@ public abstract class AbstractExportImport implements ExportImport
 
     /**
      * Re-orders the property paths so that the required columns are at the beginning
-     * @param propertyPaths that need to be re-ordered
-     * @param type of the entity
+     * @param entityStructure structure that contains the properties for the entity
      * @return the set of required columns
      */
-    protected Set<String> setupPropertyColumns(List<String> propertyPaths, Type type) {
-        EntityType entityType = (EntityType) type;
-
-        List<String> requiredPropertyPaths = new ArrayList<>();
-        List<String> nullablePropertyPaths = new ArrayList<>();
-        // Move required columns to the beginning
-        for(String pp: propertyPaths) {
-            //Property p = entityType.getProperty(pp);
-            //if (p != null && !p.isNullable()) {
-            if(!entityType.isNullable(pp)) {
-                requiredPropertyPaths.add(pp);
-            } else {
-                nullablePropertyPaths.add(pp);
-            }
-        }
-        propertyPaths = new ArrayList<>(requiredPropertyPaths);
-        propertyPaths.addAll(nullablePropertyPaths);
+    protected void setupPropertyColumns(EntityStructure entityStructure) {
 
         propertyColIndex = new HashMap<String, Integer>();
 
         int colNo = 0;
-        for (String propertyPath : propertyPaths) {
+        for (String propertyPath : entityStructure.getProperties()) {
             if (!propertyColIndex.containsKey(propertyPath)) {
                 propertyColIndex.put(propertyPath, colNo++);
             }
         }
-
-        return new HashSet<String>(requiredPropertyPaths);
     }
 
     protected String getId (JSONObject json)
@@ -584,6 +644,8 @@ public abstract class AbstractExportImport implements ExportImport
      * @return false if setup for the given name has already been performed, true otherwise
      */
     protected abstract boolean setupEntity (String name);
+    
+    protected abstract void finishEntity ();    
 
     protected abstract void setupRelationship ();
 
@@ -591,7 +653,7 @@ public abstract class AbstractExportImport implements ExportImport
 
     protected abstract void prepareItem ();
 
-    protected abstract void finishupItem ();
+    protected abstract void finishItem ();
 
     protected abstract void writeRelationshipItem (String name, String entityInfo);
 
@@ -599,8 +661,11 @@ public abstract class AbstractExportImport implements ExportImport
 
     protected abstract void writeEntityItemPropertyValue (String value);
 
-    protected abstract void writeEntityHeader (String sheetName, EntityType entityType);
+    protected abstract void writeEntityHeader (String sheetName, EntityStructure entityStructure);
 
     protected abstract void setupExport (String filePath) throws
         IOException;
+    
+    protected abstract void finishExport (String filePath) throws
+    IOException;    
 }

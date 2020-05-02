@@ -40,13 +40,6 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
 
 import tools.xor.AbstractBO;
@@ -881,18 +874,6 @@ public class AggregateManager implements Xor
 		exim.exportAggregate(filePath, inputObject, settings);
 	}
 
-	private Map<String, Integer> getHeaderMap (Sheet sheet)
-	{
-		Map<String, Integer> colMap = new HashMap<String, Integer>();
-		Row headerRow = sheet.getRow(0);
-		for (int i = 0; i < headerRow.getLastCellNum(); i++) {
-			Cell headerCell = headerRow.getCell(i);
-			colMap.put(headerCell.getStringCellValue(), i);
-		}
-
-		return colMap;
-	}
-
 	@Override
 	/**
 	 *  For now we handle only one aggregate entity in the document. 
@@ -905,106 +886,6 @@ public class AggregateManager implements Xor
 	{
 		ExportImport exim = new ExcelExportImport(this);
 		return exim.importAggregate(filePath, settings);
-	}
-
-	private static boolean isEmbeddedPath (String propertyPath)
-	{
-		if (propertyPath.indexOf(Settings.PATH_DELIMITER) != -1 &&
-			!propertyPath.startsWith(Constants.XOR.XOR_PATH_PREFIX)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	public static JSONObject getJSON (Map<String, Integer> colMap, CSVRecord row)
-	{
-		JSONObject entity = new JSONObject();
-
-		for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
-			String value = row.get(entry.getValue());
-			if (isEmbeddedPath(entry.getKey())) {
-				setEmbeddableValue(entity, entry.getKey(), value);
-			}
-			else {
-				// set direct value
-				if (value != null) {
-					//if(NumberUtils.isNumber(value)) {
-					//	entity.put(entry.getKey(), NumberUtils.toDouble(value));
-					//} else {
-						entity.put(entry.getKey(), value);
-					//}
-				}
-				else {
-					//entity.put(entry.getKey(), JSONObject.NULL);
-					entity.put(entry.getKey(), "");
-				}
-			}
-		}
-
-		return entity;
-	}
-
-	public static JSONObject getJSON (Map<String, Integer> colMap, Row row)
-	{
-		JSONObject entity = new JSONObject();
-
-		for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
-			Cell cell = row.getCell(entry.getValue(), Row.RETURN_BLANK_AS_NULL);
-			if (isEmbeddedPath(entry.getKey())) {
-				if(cell != null) {
-					setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
-				}
-			}
-			else {
-				// set direct value
-				if (cell != null) {
-					try {
-						entity.put(entry.getKey(), cell.getStringCellValue());
-					}
-					catch (Exception e) {
-						// Numeric entry
-						entity.put(entry.getKey(), cell.getNumericCellValue());
-					}
-				}
-				else {
-					// Skip processing null values
-				}
-			}
-		}
-
-		return entity;
-	}
-
-	private static void setEmbeddableValue (JSONObject base, String path, String value)
-	{
-		setEmbeddableValue(base, path, value, null);
-	}
-
-	public static void setEmbeddableValue (JSONObject base,
-											String path,
-											Object value,
-											String replacedProperty)
-	{
-		JSONObject embeddable = base;
-
-		// Loop through each part of the path
-		while (path.indexOf(Settings.PATH_DELIMITER) != -1) {
-			String rootpart = path.substring(0, path.indexOf(Settings.PATH_DELIMITER));
-			if (base.has(rootpart)) {
-				embeddable = base.getJSONObject(rootpart);
-			}
-			else {
-				embeddable = new JSONObject();
-				base.put(rootpart, embeddable);
-			}
-
-			path = path.substring(rootpart.length() + 1);
-		}
-		embeddable.put(path, value);
-		if (replacedProperty != null) {
-			embeddable.remove(replacedProperty);
-		}
 	}
 
 	@Override
@@ -1453,41 +1334,8 @@ public class AggregateManager implements Xor
 	@Override
 	public void exportDenormalized (OutputStream outputStream, Settings settings)
 	{
-
-		// Make sure this is a denormalized query
-		settings.setDenormalized(true);
-		List<?> result = query(null, settings);
-
-		// Currently only address one sheet, additional sheets will handle
-		// dependencies
-		ExcelExporter e = new ExcelExporter(outputStream, settings);
-
-		// The first row is the column names
-		e.writeRow(result.get(0));
-
-		for (int i = 1; i < result.size(); i++) {
-			e.writeRow(result.get(i));
-		}
-		// TODO: add validation support
-		e.writeValidations();
-
-		e.finish();
-	}
-
-	private static Object getCellValue (Cell cell)
-	{
-		if (cell != null) {
-			try {
-				return cell.getStringCellValue();
-			}
-			catch (Exception e) {
-				// Numeric entry
-				return cell.getNumericCellValue();
-			}
-		}
-		else {
-			return "";
-		}
+        ExcelExportImport exim = new ExcelExportImport(this);
+        exim.exportDenormalized(outputStream, settings);
 	}
 
 	public void importCSV (String filePath, Settings settings) throws Exception
@@ -1501,82 +1349,8 @@ public class AggregateManager implements Xor
 	public void importDenormalized (InputStream is, Settings settings) throws
 		IOException
 	{
-
-		try {
-			Workbook wb = WorkbookFactory.create(is);
-
-			// First create the object based on the denormalized values
-			// The callInfo should have root BusinessObject
-			// clone the task object using a DataObject
-
-			// Create an object creator for the target root
-            TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
-            ObjectCreator oc = new ObjectCreator(
-                settings,
-                getDataStore(),
-                typeMapper);			
-
-			// The Excel should have a single sheet containing the denormalized data
-			// Create a JSONObject for each row
-			Sheet entitySheet = wb.getSheetAt(0);
-			Map<String, Integer> colMap = getHeaderMap(wb.getSheetAt(0));
-
-			Map<BusinessObject, Object> roots = new IdentityHashMap<BusinessObject, Object>();
-			for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
-				Row row = entitySheet.getRow(i);
-
-				Property idProperty = ((EntityType)settings.getEntityType()).getIdentifierProperty();
-				String idName = idProperty.getName();
-				if(!colMap.containsKey(idName)) {
-					throw new RuntimeException("The Excel sheet needs to have the entity identifier column");
-				}
-
-				// TODO: Create a JSON object and then extract the value with the correct type
-				Object idValue = getCellValue(row.getCell(colMap.get(idName)));
-				if(idProperty.getType() instanceof SimpleType) {
-					idValue = ((SimpleType)idProperty.getType()).unmarshall(idValue.toString());
-				}
-
-				// Get a child business object of the same type
-				// TODO: Get by user key
-				//EntityKey ek = oc.getTypeMapper().getEntityKey(idValue, settings.getEntityType());
-				EntityKey ek = oc.getTypeMapper().getSurrogateKey(idValue, settings.getEntityType());
-				BusinessObject bo = oc.getByEntityKey(ek, settings.getEntityType());
-				if (bo == null) {
-					
-					bo = oc.createDataObject(
-						AbstractBO.createInstance(oc, idValue, settings.getEntityType()),
-						settings.getEntityType(),
-						null,
-						null);
-					BusinessObject potentialRoot = (BusinessObject)bo.getRootObject();
-					if(!roots.containsKey(potentialRoot)) {
-						roots.put(potentialRoot, null);
-					}
-				}
-
-				for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
-					Cell cell = row.getCell(entry.getValue());
-					Object cellValue = getCellValue(cell);
-					Property property = (settings.getEntityType()).getProperty(entry.getKey());
-					cellValue = ((SimpleType)property.getType()).unmarshall(cellValue.toString());
-					bo.set(entry.getKey(), cellValue);
-				}
-			}
-			for(BusinessObject root: roots.keySet()) {
-				this.update(root.getInstance(), settings);
-			}
-
-		}
-		catch (EncryptedDocumentException e) {
-			throw new RuntimeException("Document is encrypted, provide a decrypted inputstream", e);
-		}
-		catch (InvalidFormatException e) {
-			throw new RuntimeException("The provided inputstream is not valid. ", e);
-		}
-		catch (Exception e) {
-			throw new RuntimeException("An error occurred during update.", e);
-		}
+	    ExcelExportImport exim = new ExcelExportImport(this);
+	    exim.importDenormalized(is, settings);
 	}
 
 	public File getGeneratedViewsDirectory() {

@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -42,7 +41,7 @@ public class ExcelBook implements IBook {
 	public ExcelBook(InputStream is) {
 		try {
 			wb = (SXSSFWorkbook) WorkbookFactory.create(is);
-		} catch (InvalidFormatException | EncryptedDocumentException | IOException e) {
+		} catch (EncryptedDocumentException | IOException e) {
 			throw new RuntimeException("The provided inputstream is not valid. " + e.getMessage());
 		}		
 	}

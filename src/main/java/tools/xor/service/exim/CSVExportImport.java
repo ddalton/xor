@@ -22,9 +22,7 @@ import org.apache.poi.EncryptedDocumentException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import tools.xor.EntityType;
 import tools.xor.Settings;
-import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
@@ -41,6 +39,34 @@ public class CSVExportImport extends AbstractExportImport
     {
         super(am);
     }
+    
+    public static JSONObject getJSON (Map<String, Integer> colMap, CSVRecord row)
+    {
+        JSONObject entity = new JSONObject();
+
+        for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+            String value = row.get(entry.getValue());
+            if (isEmbeddedPath(entry.getKey())) {
+                setEmbeddableValue(entity, entry.getKey(), value);
+            }
+            else {
+                // set direct value
+                if (value != null) {
+                    //if(NumberUtils.isNumber(value)) {
+                    //  entity.put(entry.getKey(), NumberUtils.toDouble(value));
+                    //} else {
+                        entity.put(entry.getKey(), value);
+                    //}
+                }
+                else {
+                    //entity.put(entry.getKey(), JSONObject.NULL);
+                    entity.put(entry.getKey(), "");
+                }
+            }
+        }
+
+        return entity;
+    }    
 
     protected void setupExport (String filePath) throws
         IOException {
@@ -53,6 +79,12 @@ public class CSVExportImport extends AbstractExportImport
         }
 
         file.mkdirs();
+    }
+    
+    @Override
+    protected void finishExport (String filePath) throws
+    IOException {
+        // No-op
     }
 
     @Override
@@ -91,8 +123,8 @@ public class CSVExportImport extends AbstractExportImport
     }
 
     @Override
-    protected Set<String> setupPropertyColumns(List<String> propertyPaths, Type type) {
-        Set<String> result = super.setupPropertyColumns(propertyPaths, type);
+    protected void setupPropertyColumns(EntityStructure entityStructure) {
+        super.setupPropertyColumns(entityStructure);
 
         Object [] FILE_HEADER = new String[propertyColIndex.size()];
 
@@ -106,8 +138,6 @@ public class CSVExportImport extends AbstractExportImport
         } catch (IOException ioe) {
             throw ClassUtil.wrapRun(ioe);
         }
-
-        return result;
     }
 
     @Override
@@ -119,15 +149,28 @@ public class CSVExportImport extends AbstractExportImport
     protected void prepareItem() {
         entityRecord = new ArrayList();
     }
-
+    
     @Override
-    protected void finishupItem () {
+    protected void finishItem () {
         try {
-            csvPrinter.printRecord(entityRecord);
+            csvPrinter.printRecord(entityRecord);            
         }
         catch (IOException e) {
             throw ClassUtil.wrapRun(e);
         }
+    }        
+
+    @Override
+    protected void finishEntity () {
+        try {
+            if(csvPrinter != null) {            
+                csvPrinter.close();
+                csvPrinter = null;
+            }
+        }
+        catch (IOException e) {
+            ClassUtil.wrapRun(e);
+        }            
     }
 
     @Override
@@ -148,16 +191,8 @@ public class CSVExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void writeEntityHeader (String sheetName, EntityType entityType) {
-        if(csvPrinter != null) {
-            try {
-                csvPrinter.close();
-                csvPrinter = null;
-            }
-            catch (IOException e) {
-                ClassUtil.wrapRun(e);
-            }
-        }
+    protected void writeEntityHeader (String sheetName, EntityStructure entityStructure) {
+         // No-op
     }
 
     @Override
@@ -370,7 +405,7 @@ public class CSVExportImport extends AbstractExportImport
                 : parser)
 
             {
-                JSONObject collectionEntryJSON = am.getJSON(colMap, csvRecord);
+                JSONObject collectionEntryJSON = getJSON(colMap, csvRecord);
                 String key = getCollectionKey(
                     collectionEntryJSON.getString(Constants.XOR.OWNER_ID),
                     entityInfo);
@@ -443,7 +478,7 @@ public class CSVExportImport extends AbstractExportImport
                 : parser)
 
             {
-                JSONObject entityJSON = am.getJSON(colMap, csvRecord);
+                JSONObject entityJSON = getJSON(colMap, csvRecord);
                 idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
             }
         }

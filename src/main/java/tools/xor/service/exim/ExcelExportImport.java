@@ -4,8 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +15,10 @@ import java.util.Set;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
@@ -22,26 +26,36 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import tools.xor.AbstractBO;
+import tools.xor.BusinessObject;
+import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.MapperSide;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.SimpleType;
+import tools.xor.TypeMapper;
 import tools.xor.service.AggregateManager;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
+import tools.xor.util.ObjectCreator;
+import tools.xor.util.excel.ExcelExporter;
 
 public class ExcelExportImport extends AbstractExportImport
 {
     private Workbook wb;
-    private XSSFSheet sh; // We cannot use the streaming version since we write the header after writing the body
+    private Sheet sh; // We cannot use the streaming version since we write the header after writing the body
     private int entitySheetRowNo;
     private Row row;
     private Cell cell;
     private Set<String> entityInfo = new HashSet<String>();
+    private boolean streaming;
 
     private CellStyle headerStyle;
     private CellStyle requiredStyle;
@@ -49,7 +63,14 @@ public class ExcelExportImport extends AbstractExportImport
     public ExcelExportImport (AggregateManager am)
     {
         super(am);
-    }
+        
+        if (ApplicationConfiguration.config().containsKey(Constants.Config.EXCEL_STREAMING)
+            && ApplicationConfiguration.config().getBoolean(Constants.Config.EXCEL_STREAMING)) {
+            streaming = true;
+        } else {
+            streaming = false;
+        }
+    }  
 
     @Override
     protected  Map<String, Integer> getHeader(String path, String name) throws IOException
@@ -75,7 +96,7 @@ public class ExcelExportImport extends AbstractExportImport
 
         return colMap;
     }
-
+    
     private boolean hasRelationships() {
         if(wb.getSheet(Constants.XOR.EXCEL_INDEX_SHEET) == null) {
             return false;
@@ -131,7 +152,7 @@ public class ExcelExportImport extends AbstractExportImport
 
             List<Object> entityBatch = new LinkedList<>();
             for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
-                JSONObject entityJSON = am.getJSON(colMap, entitySheet.getRow(i));
+                JSONObject entityJSON = getJSON(colMap, entitySheet.getRow(i));
 
                 if(!entityJSON.has(Constants.XOR.TYPE)) {
                     throw new RuntimeException("XOR.type column is missing");
@@ -190,12 +211,126 @@ public class ExcelExportImport extends AbstractExportImport
         catch (EncryptedDocumentException e) {
             throw new RuntimeException("Document is encrypted, provide a decrypted inputstream");
         }
-        catch (InvalidFormatException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
+    
+    private static Object getCellValue (Cell cell)
+    {
+        if (cell != null) {
+            try {
+                return cell.getStringCellValue();
+            }
+            catch (Exception e) {
+                // Numeric entry
+                return cell.getNumericCellValue();
+            }
+        }
+        else {
+            return "";
+        }
+    }    
+    
+    public void importDenormalized (InputStream is, Settings settings) throws
+        IOException
+    {
+
+        try {
+            Workbook wb = WorkbookFactory.create(is);
+
+            // First create the object based on the denormalized values
+            // The callInfo should have root BusinessObject
+            // clone the task object using a DataObject
+
+            // Create an object creator for the target root
+            TypeMapper typeMapper = am.getDataModel().getTypeMapper().newInstance(MapperSide.EXTERNAL);
+            ObjectCreator oc = new ObjectCreator(
+                settings,
+                am.getDataStore(),
+                typeMapper);            
+
+            // The Excel should have a single sheet containing the denormalized data
+            // Create a JSONObject for each row
+            Sheet entitySheet = wb.getSheetAt(0);
+            Map<String, Integer> colMap = getHeaderMap(wb.getSheetAt(0));
+
+            Map<BusinessObject, Object> roots = new IdentityHashMap<BusinessObject, Object>();
+            for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
+                Row row = entitySheet.getRow(i);
+
+                Property idProperty = ((EntityType)settings.getEntityType()).getIdentifierProperty();
+                String idName = idProperty.getName();
+                if(!colMap.containsKey(idName)) {
+                    throw new RuntimeException("The Excel sheet needs to have the entity identifier column");
+                }
+
+                // TODO: Create a JSON object and then extract the value with the correct type
+                Object idValue = getCellValue(row.getCell(colMap.get(idName)));
+                if(idProperty.getType() instanceof SimpleType) {
+                    idValue = ((SimpleType)idProperty.getType()).unmarshall(idValue.toString());
+                }
+
+                // Get a child business object of the same type
+                // TODO: Get by user key
+                //EntityKey ek = oc.getTypeMapper().getEntityKey(idValue, settings.getEntityType());
+                EntityKey ek = oc.getTypeMapper().getSurrogateKey(idValue, settings.getEntityType());
+                BusinessObject bo = oc.getByEntityKey(ek, settings.getEntityType());
+                if (bo == null) {
+                    
+                    bo = oc.createDataObject(
+                        AbstractBO.createInstance(oc, idValue, settings.getEntityType()),
+                        settings.getEntityType(),
+                        null,
+                        null);
+                    BusinessObject potentialRoot = (BusinessObject)bo.getRootObject();
+                    if(!roots.containsKey(potentialRoot)) {
+                        roots.put(potentialRoot, null);
+                    }
+                }
+
+                for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+                    Cell cell = row.getCell(entry.getValue());
+                    Object cellValue = getCellValue(cell);
+                    Property property = (settings.getEntityType()).getProperty(entry.getKey());
+                    cellValue = ((SimpleType)property.getType()).unmarshall(cellValue.toString());
+                    bo.set(entry.getKey(), cellValue);
+                }
+            }
+            for(BusinessObject root: roots.keySet()) {
+                am.update(root.getInstance(), settings);
+            }
+
+        }
+        catch (EncryptedDocumentException e) {
+            throw new RuntimeException("Document is encrypted, provide a decrypted inputstream", e);
+        }
+        catch (InvalidFormatException e) {
+            throw new RuntimeException("The provided inputstream is not valid. ", e);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("An error occurred during update.", e);
+        }
+    }
+
+    public void exportDenormalized (OutputStream outputStream, Settings settings)
+    {
+        // Make sure this is a denormalized query
+        settings.setDenormalized(true);
+        List<?> result = am.query(null, settings);
+
+        // Currently only address one sheet, additional sheets will handle
+        // dependencies
+        ExcelExporter e = new ExcelExporter(outputStream, settings);
+
+        // The first row is the column names
+        e.writeRow(result.get(0));
+
+        for (int i = 1; i < result.size(); i++) {
+            e.writeRow(result.get(i));
+        }
+        // TODO: add validation support
+        e.writeValidations();
+
+        e.finish();
+    }    
 
     @Override
     protected void populateMaps(String path, Map<String, String> entitySheets,
@@ -258,7 +393,7 @@ public class ExcelExportImport extends AbstractExportImport
 
         // process each entity
         for (int i = 1; i <= entitySheet.getLastRowNum(); i++) {
-            JSONObject entityJSON = am.getJSON(colMap, entitySheet.getRow(i));
+            JSONObject entityJSON = getJSON(colMap, entitySheet.getRow(i));
             idMap.put(entityJSON.getString(Constants.XOR.ID), entityJSON);
         }
     }
@@ -291,7 +426,7 @@ public class ExcelExportImport extends AbstractExportImport
                 // skip empty rows
                 continue;
             }
-            JSONObject collectionEntryJSON = am.getJSON(colMap, row);
+            JSONObject collectionEntryJSON = getJSON(colMap, row);
             String key = getCollectionKey(
                 collectionEntryJSON.getString(Constants.XOR.OWNER_ID),
                 entityInfo);
@@ -307,17 +442,21 @@ public class ExcelExportImport extends AbstractExportImport
     @Override
     protected void setupExport(String filePath) throws FileNotFoundException
     {
-        wb = new XSSFWorkbook();
+        if(streaming) {
+            wb = new SXSSFWorkbook();
+        } else {
+            wb = new XSSFWorkbook();
+        }
 
         requiredStyle = wb.createCellStyle();
         requiredStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
-        requiredStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        setBorder(requiredStyle, CellStyle.BORDER_THIN, IndexedColors.GREY_25_PERCENT.getIndex());
+        requiredStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        setBorder(requiredStyle, BorderStyle.THIN, IndexedColors.GREY_25_PERCENT.getIndex());
 
         headerStyle = wb.createCellStyle();
         headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-        headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        setBorder(headerStyle, CellStyle.BORDER_THIN, IndexedColors.AUTOMATIC.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        setBorder(headerStyle, BorderStyle.THIN, IndexedColors.AUTOMATIC.getIndex());
         Font font= wb.createFont();
         font.setFontHeightInPoints((short)11);
         font.setFontName("Times New Roman");
@@ -327,7 +466,7 @@ public class ExcelExportImport extends AbstractExportImport
         headerStyle.setFont(font);
     }
 
-    private void setBorder (CellStyle style, short borderType,
+    private void setBorder (CellStyle style, BorderStyle borderType,
                             short borderColor)
     {
         style.setBorderLeft(borderType);
@@ -345,9 +484,9 @@ public class ExcelExportImport extends AbstractExportImport
         boolean result = false;
 
         entitySheetRowNo = 1;
-        sh = (XSSFSheet)wb.getSheet(sheetName);
+        sh = wb.getSheet(sheetName);
         if (sh == null) {
-            sh = (XSSFSheet)wb.createSheet(sheetName);
+            sh = wb.createSheet(sheetName);
             result = true;
         }
         else {
@@ -361,9 +500,14 @@ public class ExcelExportImport extends AbstractExportImport
     protected void prepareItem() {
         row = sh.createRow(entitySheetRowNo++);
     }
+    
+    @Override
+    protected void finishItem () {
+        // do nothing
+    }    
 
     @Override
-    protected void finishupItem () {
+    protected void finishEntity () {
         // do nothing
     }
 
@@ -397,8 +541,14 @@ public class ExcelExportImport extends AbstractExportImport
     }
 
     @Override
-    protected void writeEntityHeader (String sheetName, EntityType entityType)
+    protected void writeEntityHeader (String sheetName, EntityStructure entityStructure)
     {
+        writeEntityHeader(sh, sheetName, propertyColIndex);
+        
+        writeInfo(sheetName, entityStructure);
+    }
+
+    protected void writeEntityHeader (Sheet sh, String sheetName, Map<String, Integer> header) {
         Row row = sh.getRow(0);
         if (row != null) {
             // Column names have already been populated
@@ -406,124 +556,128 @@ public class ExcelExportImport extends AbstractExportImport
         }
 
         row = sh.createRow(0);
-        for (Map.Entry<String, Integer> entry : propertyColIndex.entrySet()) {
+        for (Map.Entry<String, Integer> entry : header.entrySet()) {
             Cell cell = row.createCell(entry.getValue());
             cell.setCellValue(entry.getKey());
             cell.setCellStyle(headerStyle);
-            sh.autoSizeColumn(entry.getValue());
+            if(!streaming) {
+                sh.autoSizeColumn(entry.getValue());
+            }
         }
-
-        writeInfo(sheetName, entityType);
     }
 
+    private void writeInfo(String sheetName, EntityStructure entityStructure) {
+        for (EntityType entityType : entityStructure.getSubTypeMap().values()) {
+            if (entityInfo.contains(entityType.getName())) {
+                return;
+            } else {
+                entityInfo.add(entityType.getName());
+            }
 
-    private void writeInfo(String sheetName, EntityType entityType) {
-        if(entityInfo.contains(entityType.getName())) {
-            return;
-        } else {
-            entityInfo.add(entityType.getName());
-        }
+            Sheet infoSheet = wb.getSheet(Constants.XOR.EXCEL_INFO_SHEET);
+            if (infoSheet == null) {
+                CellStyle blankBG = wb.createCellStyle();
+                blankBG.setFillForegroundColor(IndexedColors.WHITE.getIndex());
+                blankBG.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                CellStyle separator = wb.createCellStyle();
+                separator.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                separator.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        Sheet infoSheet = wb.getSheet(Constants.XOR.EXCEL_INFO_SHEET);
-        if (infoSheet == null) {
-            CellStyle blankBG = wb.createCellStyle();
-            blankBG.setFillForegroundColor(IndexedColors.WHITE.getIndex());
-            blankBG.setFillPattern(CellStyle.SOLID_FOREGROUND);
-            CellStyle separator = wb.createCellStyle();
-            separator.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            separator.setFillPattern(CellStyle.SOLID_FOREGROUND);
+                infoSheet = wb.createSheet(Constants.XOR.EXCEL_INFO_SHEET);
+                wb.setSheetOrder(Constants.XOR.EXCEL_INFO_SHEET, 0);
 
-            infoSheet = wb.createSheet(Constants.XOR.EXCEL_INFO_SHEET);
-            wb.setSheetOrder(Constants.XOR.EXCEL_INFO_SHEET, 0);
+                Row infoRow = infoSheet.createRow(0);
+                infoRow.setRowStyle(blankBG);
+                infoRow = infoSheet.createRow(1);
+                infoRow.setRowStyle(blankBG);
+                Cell cell = infoRow.createCell(1);
+                cell.setCellValue("Legend");
 
-            Row infoRow = infoSheet.createRow(0);
-            infoRow.setRowStyle(blankBG);
-            infoRow = infoSheet.createRow(1);
-            infoRow.setRowStyle(blankBG);
-            Cell cell = infoRow.createCell(1);
-            cell.setCellValue("Legend");
+                infoRow = infoSheet.createRow(2);
+                infoRow.setRowStyle(blankBG);
+                cell = infoRow.createCell(1);
+                cell.setCellStyle(requiredStyle);
+                cell = infoRow.createCell(2);
+                cell.setCellValue("Required");
 
-            infoRow = infoSheet.createRow(2);
-            infoRow.setRowStyle(blankBG);
-            cell = infoRow.createCell(1);
-            cell.setCellStyle(requiredStyle);
-            cell = infoRow.createCell(2);
-            cell.setCellValue("Required");
+                infoRow = infoSheet.createRow(3);
+                infoRow.setRowStyle(blankBG);
+                infoRow = infoSheet.createRow(4);
+                infoRow.setRowStyle(separator);
+            }
 
-            infoRow = infoSheet.createRow(3);
-            infoRow.setRowStyle(blankBG);
-            infoRow = infoSheet.createRow(4);
-            infoRow.setRowStyle(separator);
-        }
+            int startRow = infoSheet.getLastRowNum() + 2;
+            Row sheetDetailsRow = infoSheet.createRow(startRow);
+            infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow, 0, 1));
+            cell = sheetDetailsRow.createCell(0);
+            cell.setCellValue("Entity: " + entityType.getName());
+            /*
+             * infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,0,1)); Cell
+             * cell = sheetDetailsRow.createCell(0); cell.setCellValue("Sheet Name: " +
+             * sheetName);
+             * 
+             * infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,2,4)); cell
+             * = sheetDetailsRow.createCell(2); cell.setCellValue("Entity: " +
+             * entityType.getName());
+             */
 
-        int startRow = infoSheet.getLastRowNum() + 2;
-        Row sheetDetailsRow = infoSheet.createRow(startRow);
-        infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,0,1));
-        cell = sheetDetailsRow.createCell(0);
-        cell.setCellValue("Entity: " + entityType.getName());
-        /*
-        infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,0,1));
-        Cell cell = sheetDetailsRow.createCell(0);
-        cell.setCellValue("Sheet Name: " + sheetName);
-
-        infoSheet.addMergedRegion(new CellRangeAddress(startRow, startRow,2,4));
-        cell = sheetDetailsRow.createCell(2);
-        cell.setCellValue("Entity: " + entityType.getName());
-        */
-
-        // Create header area
-        startRow++;
-        sheetDetailsRow = infoSheet.createRow(startRow);
-        cell = sheetDetailsRow.createCell(0);
-        cell.setCellValue("Property");
-        cell.setCellStyle(headerStyle);
-        cell = sheetDetailsRow.createCell(1);
-        cell.setCellValue("Type");
-        cell.setCellStyle(headerStyle);
-        cell = sheetDetailsRow.createCell(2);
-        cell.setCellValue("Vector");
-        cell.setCellStyle(headerStyle);
-        cell = sheetDetailsRow.createCell(3);
-        cell.setCellValue("Required");
-        cell.setCellStyle(headerStyle);
-        cell = sheetDetailsRow.createCell(4);
-        cell.setCellValue("isOpen");
-        cell.setCellStyle(headerStyle);
-
-        EntityType domainType = (EntityType) am.getTypeMapper().getDomainShape().getType(entityType.getEntityName());
-        for(Property property: domainType.getProperties()) {
+            // Create header area
             startRow++;
             sheetDetailsRow = infoSheet.createRow(startRow);
             cell = sheetDetailsRow.createCell(0);
-            cell.setCellValue(property.getName());
+            cell.setCellValue("Property");
+            cell.setCellStyle(headerStyle);
             cell = sheetDetailsRow.createCell(1);
-
-            if(property.isMany()) {
-                String typeName = ((ExtendedProperty)property).getElementType() == null ?
-                    property.getType().getName() :
-                    ((ExtendedProperty)property).getElementType().getName();
-                cell.setCellValue(typeName);
-            } else {
-                cell.setCellValue(property.getType().getName());
-            }
+            cell.setCellValue("Type");
+            cell.setCellStyle(headerStyle);
             cell = sheetDetailsRow.createCell(2);
-            cell.setCellValue(property.isMany() ? "true" : "");
+            cell.setCellValue("Vector");
+            cell.setCellStyle(headerStyle);
             cell = sheetDetailsRow.createCell(3);
-            cell.setCellValue(property.isNullable() ? "" : "true");
+            cell.setCellValue("Required");
+            cell.setCellStyle(headerStyle);
             cell = sheetDetailsRow.createCell(4);
-            cell.setCellValue(property.isOpenContent() ? "true" : "");
-        }
+            cell.setCellValue("isOpen");
+            cell.setCellStyle(headerStyle);
 
-        infoSheet.autoSizeColumn(0);
-        infoSheet.autoSizeColumn(1);
-        infoSheet.autoSizeColumn(2);
-        infoSheet.autoSizeColumn(3);
-        infoSheet.autoSizeColumn(4);
+            EntityType domainType = (EntityType) am.getTypeMapper().getDomainShape()
+                    .getType(entityType.getEntityName());
+            for (Property property : domainType.getProperties()) {
+                startRow++;
+                sheetDetailsRow = infoSheet.createRow(startRow);
+                cell = sheetDetailsRow.createCell(0);
+                cell.setCellValue(property.getName());
+                cell = sheetDetailsRow.createCell(1);
+
+                if (property.isMany()) {
+                    String typeName = ((ExtendedProperty) property).getElementType() == null
+                            ? property.getType().getName()
+                            : ((ExtendedProperty) property).getElementType().getName();
+                    cell.setCellValue(typeName);
+                } else {
+                    cell.setCellValue(property.getType().getName());
+                }
+                cell = sheetDetailsRow.createCell(2);
+                cell.setCellValue(property.isMany() ? "true" : "");
+                cell = sheetDetailsRow.createCell(3);
+                cell.setCellValue(property.isNullable() ? "" : "true");
+                cell = sheetDetailsRow.createCell(4);
+                cell.setCellValue(property.isOpenContent() ? "true" : "");
+            }
+
+            if (!streaming) {
+                infoSheet.autoSizeColumn(0);
+                infoSheet.autoSizeColumn(1);
+                infoSheet.autoSizeColumn(2);
+                infoSheet.autoSizeColumn(3);
+                infoSheet.autoSizeColumn(4);
+            }
+        }
     }
 
     @Override
     protected void setupRelationship() {
-        sh = (XSSFSheet)wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
+        sh = wb.createSheet(Constants.XOR.EXCEL_INDEX_SHEET);
 
         // Write header
         Row headerRow = sh.createRow(0);
@@ -545,22 +699,28 @@ public class ExcelExportImport extends AbstractExportImport
 
     @Override
     protected void finishupRelationship() {
-        sh.autoSizeColumn(0);
-        sh.autoSizeColumn(1);
-        sh.autoSizeColumn(2);
+        if(!streaming) {
+            sh.autoSizeColumn(0);
+            sh.autoSizeColumn(1);
+            sh.autoSizeColumn(2);
+        }            
         wb.setSheetOrder(Constants.XOR.EXCEL_INDEX_SHEET, 1);
     }
 
     @Override
-    protected void writeRelationshipMap(String filePath, Map<String, String> relationshipMap) throws
+    protected void writeRelationshipMap(Map<String, String> relationshipMap) throws
         IOException
     {
-        super.writeRelationshipMap(filePath, relationshipMap);
-
+        super.writeRelationshipMap(relationshipMap);
+    }
+    
+    protected void finishExport (String filePath) throws
+    IOException
+    {
+        // Write the file
         FileOutputStream os = new FileOutputStream(filePath);
-
         wb.write(os);
         os.close();
-        wb.close();
+        wb.close();          
     }
 }

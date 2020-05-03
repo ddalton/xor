@@ -1,7 +1,20 @@
 = XOR
 :hardbreaks:
 
-XOR is a tool that allows users to perform CRUDQ (Create, Read, Update, Delete, Query) operations against a Data Model using a uniform interface. It has mechanisms to allow a user to control how some of these operations are implemented. This allows it to address performance concerns related to persistence in a J2EE environment.
+XOR is a tool that works with Data Models and provides services against them.
+
+== Services
+
+* Provide CRUDQ operations against an RDBMS using Json or POJO objects.
+* Optimization for Q (Query) operation. Achieved by allowing the user to construct a Json or POJO object in an efficient manner with no impact to the end user of the implementation user. For e.g., the developer can specify a SQL, OQL or even a Stored Procedure to satisfy the query request with no changes to the code.
+* Daa generation of objects against the types in the Data Model
+* Object Export/Import to the following sinks/sources
+** Database
+** CSV
+** Excel
+* Type Export/Import to allow creation and export of the Data Model. For e.g., A Data Model can be imported/exported from a JSON schema, or it can be imported from the Meta model of the JPA layer.
+* Generation of Class and Object diagrams for the Data Model
+* TypeMapper functionality to enable data transformation from one Data Model to another
 
 In a typical J2EE environment, a development team has to interact with the following 3 data models:
 

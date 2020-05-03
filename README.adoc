@@ -16,6 +16,8 @@ XOR is a tool that works with Data Models and provides services against them.
 * Generation of Class and Object diagrams for the Data Model
 * TypeMapper functionality to enable data transformation from one Data Model to another
 
+== Supported Data Models
+
 In a typical J2EE environment, a development team has to interact with the following 3 data models:
 
 1. *UI model* - Schema section in swagger for REST APIs

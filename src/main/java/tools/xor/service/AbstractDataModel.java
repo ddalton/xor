@@ -117,6 +117,10 @@ public abstract class AbstractDataModel implements DataModel {
 		return shapes.get(name);
 	}
 	
+	@Override public Shape createShape () {
+	    return createShape(DEFAULT_SHAPE);
+	}
+	
     @Override public Shape createShape (String name)
     {
         return createShape(name, null);

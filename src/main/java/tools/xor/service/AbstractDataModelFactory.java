@@ -99,7 +99,7 @@ public abstract class AbstractDataModelFactory implements DataModelFactory {
 		injectDependencies(models.get(name), name);
 
 		if(addShape) {
-			models.get(name).createShape(AbstractDataModel.DEFAULT_SHAPE);
+			models.get(name).createShape();
 		}
 
 		return models.get(name);

@@ -600,7 +600,6 @@ public abstract class AbstractExportImport implements ExportImport
     /**
      * Re-orders the property paths so that the required columns are at the beginning
      * @param entityStructure structure that contains the properties for the entity
-     * @return the set of required columns
      */
     protected void setupPropertyColumns(EntityStructure entityStructure) {
 

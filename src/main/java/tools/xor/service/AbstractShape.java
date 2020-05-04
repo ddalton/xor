@@ -116,6 +116,11 @@ public abstract class AbstractShape implements Shape
     public Shape getParent() {
         return this.parent;
     }
+    
+    @Override
+    public void setParent(Shape shape) {
+        this.parent = shape;
+    }
 
     @Override
     public void addType(String className, Type type) {

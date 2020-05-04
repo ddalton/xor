@@ -105,6 +105,14 @@ public interface Shape
      * @return parent shape or null if no parent
      */
     public Shape getParent();
+    
+    /**
+     * Set the parent shape of this shape.
+     * If there are many shapes with common types or properties, then we can avoid duplication 
+     * by capturing the common information in a parent shape
+     * @param shape representing the parent shape
+     */
+    public void setParent(Shape shape);
 
     /**
      * Add a type to the shape system. Will just add it without checking parent type.

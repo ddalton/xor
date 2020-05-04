@@ -86,6 +86,14 @@ public interface DataModel {
 	 */
 	public void setActive(Shape shape);
 	
+	/**
+     * It depends on the specific Data Model on how the default Shape needs to be constructed
+     * if the name is not provided
+     * 
+     * @return default shape
+     */
+	public Shape createShape();
+	
     /**
      * Add the shape to the DAS.
      * The shape that is added does not affect the active shape.

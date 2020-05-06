@@ -183,7 +183,7 @@ public class JPAType extends AbstractType {
 
 	@Override
 	public boolean isAbstract() {
-		return false;
+		return persistenceType.getPersistenceType() != javax.persistence.metamodel.Type.PersistenceType.ENTITY;
 	}
 
 	@Override

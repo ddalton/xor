@@ -783,7 +783,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	@Override
 	public List<V> toposort(Shape shape) {
 
-		List<E> edgesToReverse = new ArrayList<E>();
+	    // Reverse each edge only once
+	    Set<E> edgesToReverse = new HashSet<E>();
 
 		// Go through all the types and reverse the cascaded relationships
 		for(V state: getVertices()) {
@@ -797,8 +798,12 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 					// Foreign keys cannot typically be enforced on a containment
 					// relationship, especially on abstract entity types.
 					// So we will not consider their ordering unless they are required.
-					if(p != null && p.isNullable()) {
-						unlinkEdge(outTransitions.get(state).get(p.getName()));
+					if(p != null) {
+					    if(p.isNullable()) {
+					        unlinkEdge(outTransitions.get(state).get(p.getName()));
+					    } else if(p.isContainment()) {
+					        edgesToReverse.add(edge);
+					    }
 					}
 				}
 			}
@@ -1471,9 +1476,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			V vertex = (V)vertexIter.next();
 
 			String referenceStyle = vertex.isReference() ? "shape=component, " : "";
-			writer.write(
-				"  " + getId(vertex) + "[" + referenceStyle + "label = \"" + getLabel(vertex)
-					+ "\"]\n");
+			String abstractStyle = vertex.getType().isAbstract() ? "style=filled,fillcolor=white," : "";
+			writer.write(String.format("  %s[%s%slabel = \"%s\"]\n", getId(vertex), abstractStyle, referenceStyle, getLabel(vertex)));
 		}
 	}
 
@@ -1484,7 +1488,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	@Override
 	protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
 	{
-		writer.write("  node[shape=record,style=filled,fillcolor=ivory]\n");
+		writer.write("  node[shape=record,style=filled,fillcolor=burlywood1]\n"); // ivory is also a good option
 	}
 
 	@Override

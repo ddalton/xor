@@ -28,7 +28,6 @@ import org.apache.logging.log4j.Logger;
 
 import tools.xor.AbstractTypeNarrower;
 import tools.xor.EntityType;
-import tools.xor.QueryType;
 import tools.xor.Settings;
 import tools.xor.Type;
 

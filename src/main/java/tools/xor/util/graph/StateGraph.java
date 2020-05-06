@@ -797,9 +797,11 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 					// Foreign keys cannot typically be enforced on a containment
 					// relationship, especially on abstract entity types.
-					// So we will not consider their ordering unless they are required.
+					// So we will not consider their ordering unless they are required
+					// Only TO_ONE required relationships are considered as
+					// TO_MANY required relationship cannot be enforced on the DB side
 					if(p != null) {
-					    if(p.isNullable()) {
+					    if(p.isNullable() || p.isMany()) {
 					        unlinkEdge(outTransitions.get(state).get(p.getName()));
 					    } else if(p.isContainment()) {
 					        edgesToReverse.add(edge);
@@ -1488,7 +1490,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 	@Override
 	protected void writeGraphvizDotHeader(BufferedWriter writer) throws IOException
 	{
-		writer.write("  node[shape=record,style=filled,fillcolor=burlywood1]\n"); // ivory is also a good option
+		writer.write("  node[shape=record,style=filled,fillcolor=burlywood1,minlen=2]\n"); // ivory is also a good option
 	}
 
 	@Override
@@ -1505,6 +1507,15 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			Type startType = edge.getStart().getType();
 			Type endType = edge.getEnd().getType();
 			Property property = startType.getProperty(edge.getName());
+			
+			String edgeLabels = "";
+			String edgeLabelsBack = "";
+			if(property != null) {
+			    String tailLabel = property.isContainment() ? "1" : "0..*";
+			    String headLabel = property.isNullable() ? (property.isMany() ? "0..*" : "0..1") : (property.isMany() ? "1..*" : "1..1");
+			    edgeLabels = String.format(", headlabel=\"%s\", taillabel=\"%s\"", headLabel, tailLabel);
+			    edgeLabelsBack = String.format(", headlabel=\"%s\", taillabel=\"%s\"", tailLabel, headLabel);
+			}
 
 			boolean constrain = true;
 			if(getRootState() == edge.getStart() && !(endType instanceof EntityType && ((EntityType)endType).isEmbedded())) {
@@ -1525,6 +1536,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			// Aggregation edge
 			else if(property != null && property.isContainment()) {
 				result.append("dir=back, arrowtail=diamond, style=dashed");
+                edgeLabels = edgeLabelsBack;				
 			}
 			// Association edge
 			else {
@@ -1536,6 +1548,8 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				result.append(", color=red");
 			}
 
+			// Edge labels should be configurable
+			//result.append(edgeLabels);
 			result.append("]\n");
 
 			writer.write(result.toString());

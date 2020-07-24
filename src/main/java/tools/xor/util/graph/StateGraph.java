@@ -1540,7 +1540,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 			}
 			// Association edge
 			else {
-				result.append("arrowhead=open, style=dashed");
+			    boolean isMany = (property != null && property.isMany()) ? true : false;
+				result.append("arrowhead=open");
+				result.append(isMany ? "open" : ""); // double headed arrow
+				result.append(", style=dashed");
 			}
 
 			// Required edge is marked in a different color

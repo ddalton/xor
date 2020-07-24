@@ -27,18 +27,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HSQLTranslator extends DBTranslator
+public class H2Translator extends DBTranslator
 {
-    private static final String FOREIGN_KEY_SQL = "SELECT FK_NAME, FKTABLE_NAME, PKTABLE_NAME, FKCOLUMN_NAME, PKCOLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM INFORMATION_SCHEMA.SYSTEM_CROSSREFERENCE WHERE FKTABLE_SCHEM = CURRENT_SCHEMA ORDER BY FK_NAME, KEY_SEQ";
-    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DTD_IDENTIFIER, is_identity, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = CURRENT_SCHEMA";
-    private static final String PRIMARY_KEY_SQL = "SELECT table_name, pk_name, column_name, key_seq FROM INFORMATION_SCHEMA.SYSTEM_PRIMARYKEYS WHERE table_schem = CURRENT_SCHEMA ORDER BY pk_name, key_seq";
-    private static final String SEQUENCES_SQL = "SELECT sequence_name, data_type, maximum_value, minimum_value, increment, start_with, cycle_option  FROM information_schema.sequences WHERE SEQUENCE_SCHEMA = CURRENT_SCHEMA";
-    private static final String TABLE_EXISTS_SQL = "SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = CURRENT_SCHEMA";
+    private static final String FOREIGN_KEY_SQL = "SELECT FK_NAME, FKTABLE_NAME, PKTABLE_NAME, FKCOLUMN_NAME, PKCOLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM INFORMATION_SCHEMA.CROSS_REFERENCES WHERE FKTABLE_SCHEMA = schema() ORDER BY FK_NAME, ordinal_position";
+    private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, type_name, CASE WHEN column_default is not null AND column_default like '(NEXT VALUE FOR%' THEN 'YES' ELSE 'NO' END AS is_identity, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = schema()";
+    private static final String PRIMARY_KEY_SQL = "SELECT table_name, constraint_name, column_list FROM INFORMATION_SCHEMA.CONSTRAINTS WHERE constraint_schema = schema() ORDER BY constraint_name";
+
+    // H2 database uses BIGINT as the sequence type
+    private static final String SEQUENCES_SQL = "SELECT sequence_name, 'BIGINT', max_value, min_value, increment, current_value, is_cycle FROM information_schema.sequences WHERE sequence_schema = schema()";
+    private static final String TABLE_EXISTS_SQL = "SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = schema()";
 
     private Map<String, JDBCDataModel.SequenceInfo> sequenceMap;
 
@@ -189,5 +192,29 @@ public class HSQLTranslator extends DBTranslator
         }
 
         throw new RuntimeException("Unknown value for foreign key rule: " + value);
+    }
+
+    // Need to pivot for H2
+    @Override
+    public Map<String, List<String>> getPrimaryKeys (Connection connection)
+    {
+        Map<String, List<String>> result = new HashMap<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(getPrimaryKeySQL());
+            ResultSet rs = ps.executeQuery();
+        ) {
+            while(rs.next()) {
+                String tableName = rs.getString(1);
+		String colList = rs.getString(3);
+
+                List<String> columns = Arrays.asList(colList.split("\\s*,\\s*"));
+                result.put(tableName, columns);
+            }
+        }
+        catch (SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+
+        return result;
     }
 }

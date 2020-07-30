@@ -137,29 +137,22 @@ public class JDBCType extends AbstractType {
                 String propertyName = this.tableInfo.getPrimaryKeys().get(0);
                 this.id = getProperty(propertyName);
             } else {
-                // Possible to have multi-column foreign keys subsumed in the primary key
-                Set<String> primaryKeySet = new HashSet<>(this.tableInfo.getPrimaryKeys());
-                Set<String> foreignKeySet = new HashSet<>();
-
-                List<String> primaryKeyPropertyNames = new LinkedList<>();
-                if(this.tableInfo.getForeignKeys() != null) {
-                    for (JDBCDataModel.ForeignKey fk : this.tableInfo.getForeignKeys()) {
-                        if (primaryKeySet.containsAll(fk.getReferencingColumns())) {
-                            primaryKeyPropertyNames.add(fk.getPropertyName());
-                            foreignKeySet.addAll(fk.getReferencingColumns());
-                        }
-                    }
-                }
-                if(primaryKeyPropertyNames.size() > 0) {
-                    // Subtract all the columns used up by the foreign keys
-                    primaryKeySet.removeAll(foreignKeySet);
-                    primaryKeyPropertyNames.addAll(primaryKeySet);
-                } else {
-                    primaryKeyPropertyNames.addAll(this.tableInfo.getPrimaryKeys());
-                }
-
-                String[] keys = primaryKeyPropertyNames.stream().toArray(String[]::new);
-                setNaturalKey(keys);
+                /* Currently we don't support a compound primary key property
+                 *
+                 * Possible to have multi-column foreign keys subsumed in the primary key
+                 * So if that relationship is initialized those fields are populated with values
+                 * So setting the compound primary key value needs to consider this
+                 * 
+                 * primary key: <col1><col2><col3><col4>
+                 * fk1: <col1><col2>
+                 * fk2: <col3>
+                 * 
+                 * In the above example, the property representing col4 needs to be set to set the 
+                 * primary key, in addition to the properties modeled by fk1 and fk2
+                 * 
+                 */
+                String[] keys = new String[this.tableInfo.getPrimaryKeys().size()];
+                setNaturalKey(this.tableInfo.getPrimaryKeys().toArray(keys));
             }
         }
     }

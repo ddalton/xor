@@ -1208,7 +1208,7 @@ public abstract class AbstractType implements EntityType {
 
 		// validation
 		if(this.naturalKey != null && new HashSet<String>(this.naturalKey).size() != this.naturalKey.size()) {
-			throw new RuntimeException("Duplicate natural key components not allowed: " + keys);
+			throw new RuntimeException(String.format("Duplicate natural key components not allowed [%s]: %s", getName(), String.join(", ", keys)));
 		}
 
 		// reset expandedNaturalKey

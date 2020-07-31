@@ -19,13 +19,13 @@
 
 package tools.xor.view;
 
-import tools.xor.util.InterQuery;
-import tools.xor.util.IntraQuery;
-
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import tools.xor.util.InterQuery;
+import tools.xor.util.IntraQuery;
 
 /**
  * When a type needs to be downcast, then the query needs to mention this.

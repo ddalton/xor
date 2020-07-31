@@ -19,24 +19,24 @@
 
 package tools.xor;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tools.xor.action.CollectionUpdateAction;
-import tools.xor.action.ElementAction;
-import tools.xor.action.Executable;
-import tools.xor.action.MigratorActionFactory;
-import tools.xor.action.PropertyKey;
-import tools.xor.action.SetterAction;
-import tools.xor.providers.jdbc.CustomPersister;
-import tools.xor.util.ClassUtil;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import tools.xor.action.CollectionUpdateAction;
+import tools.xor.action.ElementAction;
+import tools.xor.action.Executable;
+import tools.xor.action.MigratorActionFactory;
+import tools.xor.action.PropertyKey;
+import tools.xor.action.SetterAction;
+import tools.xor.util.ClassUtil;
 
 public class ObjectPersister {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

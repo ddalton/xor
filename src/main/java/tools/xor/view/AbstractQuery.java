@@ -19,12 +19,6 @@
 
 package tools.xor.view;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tools.xor.EntityType;
-import tools.xor.Settings;
-import tools.xor.providers.jdbc.DBTranslator;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,6 +34,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import tools.xor.EntityType;
+import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
 
 public abstract class AbstractQuery implements Query {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

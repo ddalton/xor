@@ -1,17 +1,18 @@
 package tools.xor.service;
 
-import org.json.JSONObject;
-import tools.xor.Settings;
-import tools.xor.providers.jdbc.DBTranslator;
-import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AbstractQuery;
-import tools.xor.view.Query;
-
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.json.JSONObject;
+
+import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.view.AbstractQuery;
+import tools.xor.view.Query;
 
 public abstract class AbstractEntityScroll implements EntityScroll
 {

@@ -19,21 +19,23 @@
 
 package tools.xor;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.graph.StateGraph;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
+
+import tools.xor.util.ClassUtil;
+import tools.xor.util.graph.StateGraph;
 
 public class BlobType extends SimpleType {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

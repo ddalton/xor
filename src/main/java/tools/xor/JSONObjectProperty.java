@@ -1,12 +1,5 @@
 package tools.xor;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import tools.xor.util.ClassUtil;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -18,6 +11,14 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import tools.xor.util.ClassUtil;
 
 public class JSONObjectProperty
 {

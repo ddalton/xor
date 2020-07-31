@@ -19,13 +19,11 @@
 
 package tools.xor;
 
+import java.sql.Connection;
+import java.util.Iterator;
+
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
-
-import java.sql.Connection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 public class CounterGenerator extends DefaultGenerator implements Iterator<Integer>, GeneratorDriver
 {

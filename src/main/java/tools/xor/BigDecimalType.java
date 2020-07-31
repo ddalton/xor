@@ -19,19 +19,18 @@
 
 package tools.xor;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
-import tools.xor.generator.DateRange;
-import tools.xor.generator.Generator;
-import tools.xor.generator.Range;
-import tools.xor.util.Constants;
-import tools.xor.util.graph.StateGraph;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
+
+import tools.xor.generator.Generator;
+import tools.xor.util.Constants;
+import tools.xor.util.graph.StateGraph;
 
 public class BigDecimalType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

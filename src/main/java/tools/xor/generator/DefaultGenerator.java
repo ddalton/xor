@@ -19,9 +19,19 @@
 
 package tools.xor.generator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.IteratorListener;
@@ -31,15 +41,6 @@ import tools.xor.Type;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateTree;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 public class DefaultGenerator implements Generator
 {

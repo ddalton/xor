@@ -1,9 +1,9 @@
 package tools.xor.util;
 
+import java.io.File;
+
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
-
-import java.io.File;
 
 public class ApplicationConfiguration {
     private final static ApplicationConfiguration INSTANCE = new ApplicationConfiguration();

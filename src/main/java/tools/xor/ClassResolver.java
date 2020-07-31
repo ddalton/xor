@@ -19,13 +19,13 @@
 
 package tools.xor;
 
-import tools.xor.exception.AmbiguousMatchException;
-import tools.xor.exception.PropertyNotFoundException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import tools.xor.exception.AmbiguousMatchException;
+import tools.xor.exception.PropertyNotFoundException;
 
 public class ClassResolver {
 	private BasicType type;

@@ -19,15 +19,15 @@
 
 package tools.xor.generator;
 
-import tools.xor.Property;
-import tools.xor.StringType;
-import tools.xor.util.graph.StateGraph;
-
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import tools.xor.Property;
+import tools.xor.StringType;
+import tools.xor.util.graph.StateGraph;
 
 public class LocalizedString extends FixedSet
 {

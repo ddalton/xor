@@ -30,7 +30,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tools.xor.service.DataModel;
-import tools.xor.service.Shape;
 import tools.xor.util.Constants;
 import tools.xor.util.CreationStrategy;
 import tools.xor.util.ExcelJsonCreationStrategy;

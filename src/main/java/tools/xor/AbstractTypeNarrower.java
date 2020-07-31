@@ -19,13 +19,13 @@
 
 package tools.xor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import tools.xor.service.AggregateManager;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.View;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public abstract class AbstractTypeNarrower implements TypeNarrower {
 

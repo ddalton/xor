@@ -1,10 +1,10 @@
 package tools.xor.generator;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.util.graph.StateGraph;
-
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * We directly have to access the values array since

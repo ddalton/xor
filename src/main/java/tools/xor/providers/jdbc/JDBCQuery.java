@@ -1,5 +1,15 @@
 package tools.xor.providers.jdbc;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
 import tools.xor.util.ClassUtil;
@@ -9,17 +19,6 @@ import tools.xor.view.NativeQuery;
 import tools.xor.view.Query;
 import tools.xor.view.QueryStringHelper;
 import tools.xor.view.View;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class JDBCQuery extends AbstractQuery
 {

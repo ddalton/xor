@@ -19,13 +19,13 @@
 
 package tools.xor;
 
-import tools.xor.service.Shape;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
+
+import tools.xor.service.Shape;
 
 public interface EntityType extends BasicType, Comparable<EntityType> {
 	

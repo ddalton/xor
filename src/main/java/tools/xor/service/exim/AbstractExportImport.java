@@ -1,23 +1,5 @@
 package tools.xor.service.exim;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import tools.xor.BusinessObject;
-import tools.xor.EntityType;
-import tools.xor.ExcelJsonTypeMapper;
-import tools.xor.Property;
-import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.AggregateManager;
-import tools.xor.service.exim.AbstractExportImport.EntityStructure;
-import tools.xor.util.Constants;
-import tools.xor.util.ExcelJsonCreationStrategy;
-import tools.xor.view.AggregateView;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +8,24 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import tools.xor.BusinessObject;
+import tools.xor.EntityType;
+import tools.xor.ExcelJsonTypeMapper;
+import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.Type;
+import tools.xor.service.AggregateManager;
+import tools.xor.util.Constants;
+import tools.xor.util.ExcelJsonCreationStrategy;
+import tools.xor.view.AggregateView;
 
 public abstract class AbstractExportImport implements ExportImport
 {

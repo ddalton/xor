@@ -1,9 +1,10 @@
 package tools.xor.view;
 
-import tools.xor.providers.jdbc.DBTranslator;
+import java.sql.PreparedStatement;
 
 import javax.persistence.ParameterMode;
-import java.sql.PreparedStatement;
+
+import tools.xor.providers.jdbc.DBTranslator;
 
 public class UnmodifiableBindParameter extends BindParameter
 {

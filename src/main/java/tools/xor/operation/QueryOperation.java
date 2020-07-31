@@ -19,6 +19,11 @@
 
 package tools.xor.operation;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -28,6 +33,7 @@ import tools.xor.UnchangedTypeMapper;
 import tools.xor.service.DataModel;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.InterQuery;
+import tools.xor.view.AggregateTree;
 import tools.xor.view.ObjectResolver;
 import tools.xor.view.ParallelDispatcher;
 import tools.xor.view.Query;
@@ -35,14 +41,8 @@ import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryDispatcher;
 import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
-import tools.xor.view.AggregateTree;
 import tools.xor.view.QueryTreeInvocation;
 import tools.xor.view.SerialDispatcher;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Needs to handle both the types of QueryTree instances:

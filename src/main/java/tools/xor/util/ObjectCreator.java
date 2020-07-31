@@ -45,7 +45,6 @@ import tools.xor.EntityKey;
 import tools.xor.EntityType;
 import tools.xor.ImmutableBO;
 import tools.xor.ListType;
-import tools.xor.MapperSide;
 import tools.xor.MutableBO;
 import tools.xor.NaturalEntityKey;
 import tools.xor.ProcessingStage;

@@ -22,7 +22,6 @@ package tools.xor.action;
 import java.util.List;
 
 import tools.xor.AbstractProperty;
-import tools.xor.BusinessEdge;
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
 import tools.xor.ExtendedProperty.Phase;
@@ -30,7 +29,6 @@ import tools.xor.MethodInfo;
 import tools.xor.ProcessingStage;
 import tools.xor.Settings;
 import tools.xor.event.PropertyElement;
-import tools.xor.util.graph.ObjectGraph;
 
 
 public final class SetterAction implements Executable {

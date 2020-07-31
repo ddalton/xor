@@ -1,37 +1,35 @@
 package tools.xor.view;
 
-import tools.xor.JSONObjectProperty;
-import tools.xor.MutableJsonProperty;
-import tools.xor.providers.jdbc.DBTranslator;
-import tools.xor.util.ClassUtil;
-
-import javax.persistence.ParameterMode;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlTransient;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
-import java.sql.DatabaseMetaData;
+import java.sql.Date;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.sql.Date;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.persistence.ParameterMode;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlTransient;
+
+import tools.xor.JSONObjectProperty;
+import tools.xor.providers.jdbc.DBTranslator;
+import tools.xor.util.ClassUtil;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BindParameter implements Comparable<BindParameter>

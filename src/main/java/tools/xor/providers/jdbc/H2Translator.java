@@ -19,19 +19,19 @@
 
 package tools.xor.providers.jdbc;
 
-import tools.xor.service.ForeignKeyEnhancer;
-import tools.xor.util.ClassUtil;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import tools.xor.service.ForeignKeyEnhancer;
+import tools.xor.util.ClassUtil;
 
 public class H2Translator extends DBTranslator
 {

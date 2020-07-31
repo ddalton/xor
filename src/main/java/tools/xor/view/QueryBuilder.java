@@ -19,14 +19,14 @@
 
 package tools.xor.view;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.Settings;
 import tools.xor.util.InterQuery;
 import tools.xor.util.IntraQuery;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Generates the literal OQL QueryString for each QueryTree in an AggregateTree.

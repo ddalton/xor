@@ -1,15 +1,15 @@
 package tools.xor.generator;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Type;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.graph.StateGraph;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class SubTypeChoices extends DefaultGenerator
 {

@@ -1,9 +1,9 @@
 package tools.xor.providers.jdbc;
 
+import javax.sql.DataSource;
+
 import tools.xor.TypeMapper;
 import tools.xor.service.DataModelFactory;
-
-import javax.sql.DataSource;
 
 public class JDBCConfigDataModel extends JDBCDataModel
 {

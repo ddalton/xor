@@ -1,6 +1,5 @@
 package tools.xor.view;
 
-import tools.xor.Settings;
 import tools.xor.service.DataStore;
 
 /**

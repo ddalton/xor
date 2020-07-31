@@ -19,12 +19,12 @@
 
 package tools.xor.service;
 
-import org.springframework.orm.jpa.JpaTransactionManager;
-
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
+
+import org.springframework.orm.jpa.JpaTransactionManager;
 
 public class JPASpringPO extends JPADataStore {
 	

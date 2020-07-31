@@ -19,17 +19,17 @@
 
 package tools.xor.view;
 
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import tools.xor.CallInfo;
 import tools.xor.Settings;
 import tools.xor.service.DataStore;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Goes through each QueryTree and executes it serially.

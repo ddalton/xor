@@ -19,9 +19,9 @@
 
 package tools.xor.generator;
 
-import tools.xor.util.graph.StateGraph;
-
 import java.util.Random;
+
+import tools.xor.util.graph.StateGraph;
 
 /**
  * This class takes a field of the form

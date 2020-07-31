@@ -19,16 +19,16 @@
 
 package tools.xor.generator;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tools.xor.JSONObjectProperty;
-import tools.xor.MutableJsonProperty;
-import tools.xor.util.graph.StateGraph;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import tools.xor.JSONObjectProperty;
+import tools.xor.util.graph.StateGraph;
 
 public class DateRange extends DefaultGenerator
 {

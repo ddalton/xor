@@ -28,17 +28,15 @@
 
 package tools.xor.generator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
+
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
-import tools.xor.util.State;
 import tools.xor.util.graph.StateGraph;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Date;
-import java.util.List;
 
 public interface Generator
 {

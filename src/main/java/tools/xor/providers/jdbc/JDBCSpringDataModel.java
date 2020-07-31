@@ -1,10 +1,11 @@
 package tools.xor.providers.jdbc;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
+
 import tools.xor.TypeMapper;
 import tools.xor.service.DataModelFactory;
-
-import javax.sql.DataSource;
 
 public class JDBCSpringDataModel extends JDBCDataModel
 {

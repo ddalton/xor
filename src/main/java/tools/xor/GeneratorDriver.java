@@ -20,10 +20,10 @@
 
 package tools.xor;
 
+import java.sql.Connection;
+
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
-
-import java.sql.Connection;
 
 /**
  * A generator implementing this interface signals that that generator is the
@@ -38,11 +38,31 @@ import java.sql.Connection;
  */
 public interface GeneratorDriver
 {
+    /**
+     * Gives an opportunity for the generator driver to keep the visitor
+     * up to date with the current generated value
+     * 
+     * @param connection Used by QueryGenerator to generate value from a database query
+     * @param visitor object that is updated with the current generated value
+     */
     void init(Connection connection, StateGraph.ObjectGenerationVisitor visitor);
 
+    /**
+     * All the GeneratorVisit instances are processed when this is invoked.
+     * This allows a GeneratorDriver to dynamically change the generators associated
+     * with a property.
+     */
     public void processVisitors();
 
+    /**
+     * Allows to control dynamically the generator that is associated with a property
+     * @param visit
+     */
     void addVisit(DefaultGenerator.GeneratorVisit visit);
 
+    /**
+     * Allows other generators to be notified when there is a change in generated value
+     * @param listener generator that registers for this generator's events
+     */
     void addListener(IteratorListener listener);
 }

@@ -20,21 +20,16 @@
 package tools.xor.action;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import tools.xor.AggregateAction;
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.ExtendedProperty;
 import tools.xor.ProcessingStage;
-import tools.xor.Property;
 import tools.xor.operation.GraphTraversal;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;

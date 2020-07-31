@@ -19,11 +19,11 @@
 
 package tools.xor.view;
 
-import tools.xor.util.InterQuery;
-import tools.xor.util.IntraQuery;
-
 import java.util.LinkedList;
 import java.util.List;
+
+import tools.xor.util.InterQuery;
+import tools.xor.util.IntraQuery;
 
 /**
  * This strategy needs to be used if needing an OUTER JOIN type functionality

@@ -19,11 +19,11 @@
 
 package tools.xor.view;
 
-import tools.xor.Settings;
-import tools.xor.service.AggregateManager;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import tools.xor.Settings;
+import tools.xor.service.AggregateManager;
 
 public class OQLQuery extends QuerySupport
 {

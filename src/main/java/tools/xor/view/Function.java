@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang3.RandomStringUtils;
+
 import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.Settings;

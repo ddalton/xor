@@ -20,12 +20,12 @@
 package tools.xor.operation;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.util.ClassUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CloneOperation extends GraphTraversal {
 	

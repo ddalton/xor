@@ -19,11 +19,11 @@
 
 package tools.xor;
 
-import tools.xor.generator.DefaultGenerator;
-import tools.xor.util.graph.StateGraph;
-
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import tools.xor.generator.DefaultGenerator;
+import tools.xor.util.graph.StateGraph;
 
 public class SharedCounterGenerator extends DefaultGenerator implements Iterator
 {

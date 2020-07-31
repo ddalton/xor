@@ -19,12 +19,6 @@
 
 package tools.xor.providers.jdbc;
 
-import tools.xor.JSONObjectProperty;
-import tools.xor.UnsignedByteType;
-import tools.xor.service.ForeignKeyEnhancer;
-import tools.xor.util.ClassUtil;
-import tools.xor.view.BindParameter;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,6 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import tools.xor.JSONObjectProperty;
+import tools.xor.UnsignedByteType;
+import tools.xor.service.ForeignKeyEnhancer;
+import tools.xor.util.ClassUtil;
+import tools.xor.view.BindParameter;
 
 public class HANATranslator extends DBTranslator
 {

@@ -1,8 +1,8 @@
 package tools.xor.service;
 
-import tools.xor.providers.jdbc.JDBCDataModel;
-
 import java.util.List;
+
+import tools.xor.providers.jdbc.JDBCDataModel;
 
 /**
  * XOR, empowering Model Driven Architecture in J2EE applications

@@ -19,13 +19,14 @@
 
 package tools.xor.view;
 
-import tools.xor.AggregateAction;
-
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlTransient;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlTransient;
+
+import tools.xor.AggregateAction;
 
 /*
  * This option is useful if the IN list size is much greater than 1000.

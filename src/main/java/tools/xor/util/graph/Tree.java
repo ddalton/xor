@@ -19,10 +19,10 @@
 
 package tools.xor.util.graph;
 
+import java.util.List;
+
 import tools.xor.util.Edge;
 import tools.xor.util.Vertex;
-
-import java.util.List;
 
 public interface Tree<V extends Vertex, E extends Edge<V>>
 {

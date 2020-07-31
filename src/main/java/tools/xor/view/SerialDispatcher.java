@@ -19,11 +19,11 @@
 
 package tools.xor.view;
 
+import java.util.List;
+
 import tools.xor.CallInfo;
 import tools.xor.service.DataStore;
 import tools.xor.util.InterQuery;
-
-import java.util.List;
 
 /**
  * Goes through each QueryTree and executes it serially.

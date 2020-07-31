@@ -19,6 +19,8 @@
 
 package tools.xor.util;
 
+import java.util.Collection;
+
 import tools.xor.JDBCProperty;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -26,8 +28,6 @@ import tools.xor.service.DataStore;
 import tools.xor.view.QueryBuilder;
 import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
-
-import java.util.Collection;
 
 public class IntraQuery<V extends QueryFragment> extends Edge<V>
 {

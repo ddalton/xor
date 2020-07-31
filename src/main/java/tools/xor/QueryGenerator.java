@@ -19,10 +19,6 @@
 
 package tools.xor;
 
-import tools.xor.generator.DefaultGenerator;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.graph.StateGraph;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
@@ -35,6 +31,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import tools.xor.generator.DefaultGenerator;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.graph.StateGraph;
 
 public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Closeable
 {

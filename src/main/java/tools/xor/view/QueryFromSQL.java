@@ -19,11 +19,11 @@
 
 package tools.xor.view;
 
-import tools.xor.Settings;
-import tools.xor.service.DataStore;
-
 import java.util.LinkedList;
 import java.util.List;
+
+import tools.xor.Settings;
+import tools.xor.service.DataStore;
 
 public class QueryFromSQL implements QueryBuilderStrategy
 {

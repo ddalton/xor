@@ -1,18 +1,18 @@
 package tools.xor.util.graph;
 
-import org.json.JSONObject;
-import tools.xor.AssociationSetting;
-import tools.xor.Property;
-import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.Shape;
-import tools.xor.util.Edge;
-import tools.xor.util.State;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.json.JSONObject;
+
+import tools.xor.AssociationSetting;
+import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.Type;
+import tools.xor.util.Edge;
+import tools.xor.util.State;
 
 public class UnmodifiableTypeGraph<V extends State, E extends Edge<V>> implements TypeGraph<V, E>, Tree<V, E> {
 

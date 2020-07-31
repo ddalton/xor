@@ -19,14 +19,14 @@
 
 package tools.xor.generator;
 
-import tools.xor.Property;
-import tools.xor.util.graph.StateGraph;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import tools.xor.Property;
+import tools.xor.util.graph.StateGraph;
 
 /**
  * This generator transforms from one range of values to another

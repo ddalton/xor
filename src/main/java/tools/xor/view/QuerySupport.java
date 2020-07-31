@@ -19,10 +19,10 @@
 
 package tools.xor.view;
 
-import tools.xor.Settings;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import tools.xor.Settings;
 
 public abstract class QuerySupport
 {

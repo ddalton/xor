@@ -19,11 +19,6 @@
 
 package tools.xor.view;
 
-import tools.xor.FunctionScope;
-import tools.xor.FunctionType;
-import tools.xor.Settings;
-import tools.xor.providers.jdbc.DBTranslator;
-
 import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -31,6 +26,11 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import tools.xor.FunctionScope;
+import tools.xor.FunctionType;
+import tools.xor.Settings;
+import tools.xor.providers.jdbc.DBTranslator;
 
 public class QueryStringHelper
 {

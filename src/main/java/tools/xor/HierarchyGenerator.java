@@ -19,15 +19,16 @@
 
 package tools.xor;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import tools.xor.generator.DefaultGenerator;
-import tools.xor.util.graph.StateGraph;
-
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.lang3.RandomStringUtils;
+
+import tools.xor.generator.DefaultGenerator;
+import tools.xor.util.graph.StateGraph;
 
 public class HierarchyGenerator extends DefaultGenerator implements GeneratorDriver, Iterator<HierarchyGenerator>
 {

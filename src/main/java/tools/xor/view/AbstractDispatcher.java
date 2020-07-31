@@ -19,19 +19,19 @@
 
 package tools.xor.view;
 
-import tools.xor.BusinessObject;
-import tools.xor.CallInfo;
-import tools.xor.ReconstituteRecordVisitor;
-import tools.xor.service.DataStore;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.InterQuery;
-
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import tools.xor.BusinessObject;
+import tools.xor.CallInfo;
+import tools.xor.ReconstituteRecordVisitor;
+import tools.xor.service.DataStore;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.InterQuery;
 
 /**
  * Goes through each QueryTree and executes it serially.

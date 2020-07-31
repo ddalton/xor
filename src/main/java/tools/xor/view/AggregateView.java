@@ -19,18 +19,20 @@
 
 package tools.xor.view;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tools.xor.AggregateAction;
-import tools.xor.Settings;
-import tools.xor.Type;
-import tools.xor.service.Shape;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import tools.xor.AggregateAction;
+import tools.xor.Settings;
+import tools.xor.Type;
+import tools.xor.service.Shape;
 
 /**
  * If using stored procedures, then a copy of this must be made as

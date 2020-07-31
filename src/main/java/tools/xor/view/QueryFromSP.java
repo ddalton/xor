@@ -19,10 +19,10 @@
 
 package tools.xor.view;
 
+import java.util.ArrayList;
+
 import tools.xor.Settings;
 import tools.xor.service.DataStore;
-
-import java.util.ArrayList;
 
 public class QueryFromSP implements QueryBuilderStrategy
 {

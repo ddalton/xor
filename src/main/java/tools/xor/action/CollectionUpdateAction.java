@@ -22,7 +22,6 @@ package tools.xor.action;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,10 +29,8 @@ import org.json.JSONArray;
 
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
-import tools.xor.DataObjectList;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
-import tools.xor.Property;
 import tools.xor.util.ClassUtil;
 
 

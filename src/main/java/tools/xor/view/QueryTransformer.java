@@ -21,6 +21,7 @@ package tools.xor.view;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import tools.xor.EntityType;
 import tools.xor.Settings;
 import tools.xor.util.InterQuery;

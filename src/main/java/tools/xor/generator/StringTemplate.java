@@ -19,16 +19,17 @@
 
 package tools.xor.generator;
 
-import org.apache.commons.lang3.StringUtils;
-import tools.xor.HierarchyGenerator;
-import tools.xor.Property;
-import tools.xor.SharedCounterGenerator;
-import tools.xor.util.graph.StateGraph;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
+import tools.xor.HierarchyGenerator;
+import tools.xor.Property;
+import tools.xor.SharedCounterGenerator;
+import tools.xor.util.graph.StateGraph;
 
 public class StringTemplate extends DefaultGenerator implements GeneratorRecipient
 {

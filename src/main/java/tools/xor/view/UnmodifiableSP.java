@@ -19,11 +19,11 @@
 
 package tools.xor.view;
 
-import tools.xor.AggregateAction;
-
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
+
+import tools.xor.AggregateAction;
 
 public class UnmodifiableSP extends StoredProcedure
 {

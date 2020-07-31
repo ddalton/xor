@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.json.Json;
-
 import org.json.JSONObject;
 
 import tools.xor.EntityType;

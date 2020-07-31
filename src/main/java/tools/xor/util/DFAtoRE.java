@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +37,6 @@ import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.service.Shape;
 import tools.xor.util.graph.StateGraph;
-import tools.xor.view.AggregateView;
 import tools.xor.view.TraversalView;
 
 /**

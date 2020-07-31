@@ -19,7 +19,14 @@
 
 package tools.xor.service;
 
+import java.sql.Blob;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.json.JSONObject;
+
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.EntityType;
@@ -32,12 +39,6 @@ import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
 import tools.xor.view.QueryTree;
 import tools.xor.view.QueryTreeInvocation;
-
-import java.sql.Blob;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Interface XOR uses to interact with persistent storage such as an RDBMS

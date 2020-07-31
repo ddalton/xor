@@ -19,17 +19,17 @@
 
 package tools.xor.operation;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import tools.xor.CallInfo;
 import tools.xor.Settings;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.Query;
 import tools.xor.view.QueryTransformer;
 import tools.xor.view.View;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class DenormalizedQueryOperation extends AbstractOperation {
 

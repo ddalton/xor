@@ -20,11 +20,8 @@
 package tools.xor.view;
 
 import tools.xor.BusinessObject;
-import tools.xor.CallInfo;
 import tools.xor.Settings;
 import tools.xor.util.InterQuery;
-
-import java.util.List;
 
 public interface ObjectResolver
 {

@@ -19,17 +19,18 @@
 
 package tools.xor;
 
+import java.util.List;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+
 import tools.xor.generator.Generator;
 import tools.xor.generator.LocalizedString;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
-
-import java.util.List;
 
 public class StringType extends SimpleType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

@@ -19,19 +19,6 @@
 
 package tools.xor;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
-import tools.xor.providers.jdbc.ImportMethod;
-import tools.xor.providers.jdbc.JDBCDataStore;
-import tools.xor.providers.jdbc.JDBCSessionContext;
-import tools.xor.service.DataModelFactory;
-import tools.xor.service.Shape;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.Constants;
-import tools.xor.util.graph.StateGraph;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -49,6 +36,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
+
+import tools.xor.providers.jdbc.ImportMethod;
+import tools.xor.providers.jdbc.JDBCDataStore;
+import tools.xor.providers.jdbc.JDBCSessionContext;
+import tools.xor.service.DataModelFactory;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.Constants;
+import tools.xor.util.graph.StateGraph;
 
 /**
  * Generate JSONObject instances based on the GeneratorSettings for the Entity types in the shape.

@@ -19,24 +19,6 @@
 
 package tools.xor.providers.jdbc;
 
-import org.json.JSONObject;
-import tools.xor.BasicType;
-import tools.xor.BusinessObject;
-import tools.xor.DataGenerator;
-import tools.xor.EntityType;
-import tools.xor.ExtendedProperty;
-import tools.xor.JDBCProperty;
-import tools.xor.JDBCType;
-import tools.xor.JSONObjectProperty;
-import tools.xor.Property;
-import tools.xor.Settings;
-import tools.xor.service.AbstractDataStore;
-import tools.xor.service.ForeignKeyEnhancer;
-import tools.xor.util.ClassUtil;
-import tools.xor.util.graph.StateGraph;
-import tools.xor.view.BindParameter;
-import tools.xor.view.QueryJoinAction;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -54,6 +36,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.json.JSONObject;
+
+import tools.xor.BasicType;
+import tools.xor.BusinessObject;
+import tools.xor.DataGenerator;
+import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
+import tools.xor.JDBCProperty;
+import tools.xor.JDBCType;
+import tools.xor.JSONObjectProperty;
+import tools.xor.Property;
+import tools.xor.Settings;
+import tools.xor.service.AbstractDataStore;
+import tools.xor.service.ForeignKeyEnhancer;
+import tools.xor.util.ClassUtil;
+import tools.xor.util.graph.StateGraph;
+import tools.xor.view.BindParameter;
+import tools.xor.view.QueryJoinAction;
 
 /**
  * Responsible for interacting with various RDBMS implementations.

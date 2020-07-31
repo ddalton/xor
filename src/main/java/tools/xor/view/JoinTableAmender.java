@@ -1,13 +1,11 @@
 package tools.xor.view;
 
-import tools.xor.Type;
-import tools.xor.service.DomainShape;
-import tools.xor.service.DataStore;
-import tools.xor.service.Shape;
-import tools.xor.util.InterQuery;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import tools.xor.service.DomainShape;
+import tools.xor.service.Shape;
+import tools.xor.util.InterQuery;
 
 /**
  * This class will be responsible for adding a node to the AggregateTree to be

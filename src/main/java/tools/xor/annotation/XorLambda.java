@@ -25,9 +25,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import tools.xor.AggregateAction;
+import tools.xor.ExtendedProperty.Phase;
 import tools.xor.ProcessingStage;
 import tools.xor.Settings;
-import tools.xor.ExtendedProperty.Phase;
 
 /**
  * This annotation helps a function behave like a lambda function, that can

@@ -1,8 +1,8 @@
 package tools.xor.view;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 // A class representing a Trie node

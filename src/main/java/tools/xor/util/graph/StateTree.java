@@ -1,8 +1,18 @@
 package tools.xor.util.graph;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
@@ -18,15 +28,6 @@ import tools.xor.util.State;
 import tools.xor.view.AggregateView;
 import tools.xor.view.TraversalView;
 import tools.xor.view.TraversalView.PropertyAlias;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * State specific to a particular edge. This graph might have multiple states for the same type,

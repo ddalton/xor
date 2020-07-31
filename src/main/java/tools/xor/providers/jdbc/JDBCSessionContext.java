@@ -19,6 +19,24 @@
 
 package tools.xor.providers.jdbc;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+import java.util.TreeMap;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -37,7 +55,6 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
-import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
@@ -47,26 +64,6 @@ import tools.xor.util.ObjectCreator;
 import tools.xor.util.State;
 import tools.xor.util.graph.ObjectGraph;
 import tools.xor.util.graph.TypeGraph;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public class JDBCSessionContext implements CustomPersister
 {

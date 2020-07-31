@@ -19,22 +19,17 @@
 
 package tools.xor.providers.jdbc;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.json.JSONObject;
+
 import tools.xor.BusinessObject;
 import tools.xor.DataGenerator;
 import tools.xor.EntityKey;
 import tools.xor.EntityType;
-import tools.xor.JDBCType;
 import tools.xor.Settings;
-import tools.xor.action.Executable;
-import tools.xor.action.PropertyKey;
-import tools.xor.service.DataStore;
 import tools.xor.util.ObjectCreator;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 public interface CustomPersister
 {

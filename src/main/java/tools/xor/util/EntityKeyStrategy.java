@@ -21,7 +21,6 @@ package tools.xor.util;
 
 import tools.xor.BusinessObject;
 import tools.xor.EntityKey;
-import tools.xor.EntityType;
 
 
 /**

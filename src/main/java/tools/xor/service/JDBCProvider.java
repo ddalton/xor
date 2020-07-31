@@ -23,7 +23,6 @@ import javax.sql.DataSource;
 
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
-import tools.xor.service.DataStore;
 
 public class JDBCProvider implements PersistenceProvider {
     private DataSource dataSource;

@@ -19,10 +19,10 @@
 
 package tools.xor.view;
 
-import tools.xor.FunctionType;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import tools.xor.FunctionType;
 
 public class NativeQuery extends QuerySupport
 {

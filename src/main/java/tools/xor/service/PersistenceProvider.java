@@ -19,8 +19,6 @@
 
 package tools.xor.service;
 
-import tools.xor.service.DataStore;
-
 public interface PersistenceProvider {
     /**
      * Creates the PersistenceOrchestrator appropriate for this DataModel

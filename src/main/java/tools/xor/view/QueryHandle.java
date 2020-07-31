@@ -1,9 +1,8 @@
 package tools.xor.view;
 
-import tools.xor.service.DataStore;
-
 import java.util.List;
-import java.util.Set;
+
+import tools.xor.service.DataStore;
 
 public class QueryHandle
 {

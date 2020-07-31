@@ -19,13 +19,13 @@
 
 package tools.xor.generator;
 
-import tools.xor.CollectionElementGenerator;
-import tools.xor.Property;
-import tools.xor.util.graph.StateGraph;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+
+import tools.xor.CollectionElementGenerator;
+import tools.xor.Property;
+import tools.xor.util.graph.StateGraph;
 
 public class ElementPositionGenerator extends DefaultGenerator
 {

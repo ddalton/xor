@@ -1,14 +1,9 @@
 package tools.xor;
 
-import org.json.JSONArray;
-
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import org.json.JSONArray;
 
 /**
  * Used to reconstitute the collection elements for all the changed fields in a record.

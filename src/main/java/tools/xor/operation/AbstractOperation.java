@@ -19,6 +19,10 @@
 
 package tools.xor.operation;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
 import tools.xor.BusinessObject;
 import tools.xor.CallInfo;
 import tools.xor.Settings;
@@ -26,10 +30,6 @@ import tools.xor.Type;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.Query;
 import tools.xor.view.QueryFragment;
-
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
 
 public abstract class AbstractOperation implements Operation {
 	@Override

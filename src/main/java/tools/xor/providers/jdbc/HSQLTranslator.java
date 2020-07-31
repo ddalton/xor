@@ -19,9 +19,6 @@
 
 package tools.xor.providers.jdbc;
 
-import tools.xor.service.ForeignKeyEnhancer;
-import tools.xor.util.ClassUtil;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,6 +28,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import tools.xor.service.ForeignKeyEnhancer;
+import tools.xor.util.ClassUtil;
 
 public class HSQLTranslator extends DBTranslator
 {

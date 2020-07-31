@@ -1,13 +1,13 @@
 package tools.xor.view;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import tools.xor.service.DataStore;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public class QueryJoinAction implements Action
 {

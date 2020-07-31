@@ -391,6 +391,7 @@ public class AggregateManager implements Xor
 		}
 	}
 
+	@Override
 	public Transaction createTransaction(Settings settings) {
 		configure(settings);
 
@@ -405,7 +406,7 @@ public class AggregateManager implements Xor
 			JPASpringPO jpaPO = (JPASpringPO) getDataStore();
 			return new JPATransaction(jpaPO.getTxManager());
 		} else {
-			throw new UnsupportedOperationException("beginTransaction is supported only on JDBC provider");
+			throw new UnsupportedOperationException("createTransaction is supported only on JDBC provider");
 		}
 	}
 
@@ -425,7 +426,7 @@ public class AggregateManager implements Xor
 					po.getSessionContext().init((JDBCSessionContext)settings.getSessionContext());
 				}
 			} else if(settings.getDataStore() != getDataStore()) {
-				throw new IllegalStateException("PersistenceOrchestrator in settings is different from AggregateManager!");
+				throw new IllegalStateException("DataStore in settings is different from AggregateManager!");
 			}
 		}
 	}

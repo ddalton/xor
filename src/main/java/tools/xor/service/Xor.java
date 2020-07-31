@@ -184,7 +184,17 @@ public interface Xor {
      * @param types in topological order
      * @param settings user settings
      */
-    void generateSameTX(String name, List<String> types, Settings settings);	
+    void generateSameTX(String name, List<String> types, Settings settings);
+    
+    /**
+     * A Transaction object is created to interact using the JDBC API.
+     * If no JDBC connection is provided, then this method helps to
+     * obtain one using the configured JDBC data source.
+     *  
+     * @param settings user settings
+     * @return Transaction object
+     */
+    Transaction createTransaction(Settings settings);    
 	
 	/**
 	 * Any configuration needed for the DataStore is done at this step.

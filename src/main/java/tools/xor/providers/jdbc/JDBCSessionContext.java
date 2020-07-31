@@ -585,6 +585,17 @@ public class JDBCSessionContext implements CustomPersister
             connections.push(new ConnectionHolder(getConnection(), false, readOnly));
         }
     }
+    
+    /**
+     * Used to participate in an existing JDBC connection
+     * @param connection existing JDBC connection
+     */
+    public void attachExisting(Connection connection) {
+        assert connection != null : "Provided JDBC connection should be valid and not null!";
+        
+        // Mark we are not the owner and that we should not commit on this connection
+        connections.push(new ConnectionHolder(connection, false, true));        
+    }
 
     @Override public void readOnlyTransaction() {
         if(connections.size() == 0) {

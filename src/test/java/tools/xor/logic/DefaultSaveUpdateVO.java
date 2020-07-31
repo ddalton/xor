@@ -30,7 +30,6 @@ import org.junit.BeforeClass;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
-import tools.xor.FunctionType;
 import tools.xor.Settings;
 import tools.xor.db.base.MetaEntity;
 import tools.xor.db.base.MetaEntityState;

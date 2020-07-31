@@ -19,13 +19,13 @@
 
 package tools.xor.db.base;
 
-import tools.xor.db.common.Head;
-
 import java.util.Set;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
+
+import tools.xor.db.common.Head;
 
 @Entity
 public class Department extends Identity {

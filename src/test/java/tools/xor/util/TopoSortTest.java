@@ -7,11 +7,8 @@ import tools.xor.AbstractDBTest.TypeTest;
 import tools.xor.Type;
 import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
-import tools.xor.util.graph.DirectedGraph;
-import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TreeOperations;
-import tools.xor.view.AggregateTree;
 import tools.xor.view.ReconstituteVisitor;
 
 /**

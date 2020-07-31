@@ -18,6 +18,16 @@
  */
 package tools.xor.logic;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -26,14 +36,15 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import tools.xor.BusinessObject;
 import tools.xor.CollectionElementGenerator;
 import tools.xor.CollectionOwnerGenerator;
 import tools.xor.CounterGenerator;
 import tools.xor.ElementGenerator;
-import tools.xor.GeneratorDriver;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
+import tools.xor.GeneratorDriver;
 import tools.xor.ImmutableBO;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
@@ -65,15 +76,6 @@ import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 //@ContextConfiguration(locations = { "classpath:/spring-hana-jdbc-test.xml" })

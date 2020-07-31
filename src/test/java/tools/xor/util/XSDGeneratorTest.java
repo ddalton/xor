@@ -25,6 +25,9 @@ import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+
 import tools.xor.Type;
 import tools.xor.db.base.Person;
 import tools.xor.db.pm.Task;
@@ -34,9 +37,6 @@ import tools.xor.util.xpath.XPathLexer;
 import tools.xor.util.xpath.XPathParser;
 import tools.xor.util.xsd.XSDGenerator;
 import tools.xor.util.xsd.XSDVisitor;
-
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })

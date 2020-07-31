@@ -32,8 +32,8 @@ import tools.xor.db.common.Contact;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DefaultDataModelFactory;
 import tools.xor.service.JPAXMLDataModelBuilder;
-import tools.xor.util.PersistenceType;
 import tools.xor.util.JPAUtil;
+import tools.xor.util.PersistenceType;
 
 public class JPAPersistenceXmlTest {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());

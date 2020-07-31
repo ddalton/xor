@@ -19,6 +19,16 @@
 
 package tools.xor.logic;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
@@ -28,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import tools.xor.AssociationSetting;
 import tools.xor.JDBCProperty;
 import tools.xor.JDBCType;
@@ -40,15 +51,6 @@ import tools.xor.service.DataModel;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
-
-import javax.sql.DataSource;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jdbc-test.xml" })

@@ -19,13 +19,33 @@
 
 package tools.xor.logic;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Blob;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Resource;
+
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import tools.xor.AbstractDBTest;
 import tools.xor.AggregateAction;
 import tools.xor.AssociationSetting;
@@ -47,33 +67,11 @@ import tools.xor.db.sp.P;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
 import tools.xor.service.DomainShape;
-import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
-import tools.xor.util.graph.StateGraph;
 import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateView;
 import tools.xor.view.OQLQuery;
 import tools.xor.view.View;
-
-import javax.annotation.Resource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Blob;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 public abstract class DefaultMutableJson extends AbstractDBTest {
 	@Resource(name = "aggregateManager")

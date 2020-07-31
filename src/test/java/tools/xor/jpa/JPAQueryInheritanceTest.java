@@ -26,13 +26,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
-import tools.xor.Settings;
 import tools.xor.logic.DefaultQueryInheritance;
-import tools.xor.service.JPADataStore;
-import tools.xor.service.DataStore;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-VO-jpa-test.xml" })

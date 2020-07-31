@@ -25,8 +25,6 @@ import tools.xor.Type;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
 
-import java.util.ArrayList;
-
 public class DefaultDataAccessService {
 	@Autowired
 	protected AggregateManager aggregateManager;

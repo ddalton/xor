@@ -28,8 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.logic.DefaultAggregatePaths;
 
-import java.io.FileNotFoundException;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
 @TransactionConfiguration(defaultRollback = true)

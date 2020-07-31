@@ -19,6 +19,21 @@
 
 package tools.xor.jpa;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,6 +47,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
+
 import tools.xor.CollectionElementGenerator;
 import tools.xor.CollectionOwnerGenerator;
 import tools.xor.CounterGenerator;
@@ -57,9 +73,6 @@ import tools.xor.generator.Generator;
 import tools.xor.generator.GeneratorRecipient;
 import tools.xor.generator.StringTemplate;
 import tools.xor.logic.DefaultMutableJson;
-import tools.xor.providers.jdbc.DBTranslator;
-import tools.xor.providers.jdbc.DBType;
-import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
@@ -71,27 +84,11 @@ import tools.xor.service.Transaction;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.InterQuery;
-import tools.xor.util.graph.TypeGraph;
 import tools.xor.view.AggregateTree;
 import tools.xor.view.AggregateView;
 import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTree;
 import tools.xor.view.View;
-
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })

@@ -28,7 +28,6 @@ import tools.xor.Type;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
-import tools.xor.view.QueryTree;
 import tools.xor.view.AggregateTree;
 import tools.xor.view.View;
 

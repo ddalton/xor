@@ -19,6 +19,9 @@
 
 package tools.xor.jpa;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,9 +36,6 @@ import tools.xor.db.base.Department;
 import tools.xor.db.common.Head;
 import tools.xor.logic.DefaultMappedBy;
 import tools.xor.service.DataModel;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })

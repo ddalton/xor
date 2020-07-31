@@ -1,25 +1,23 @@
 package tools.xor.logic;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.junit.Test;
+
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 import tools.xor.util.Edge;
 import tools.xor.util.Vertex;
 import tools.xor.util.graph.DirectedGraph;
 import tools.xor.util.graph.DirectedSparseGraph;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Test case for dispatcher testing

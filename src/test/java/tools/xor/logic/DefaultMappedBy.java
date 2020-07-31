@@ -28,7 +28,6 @@ import tools.xor.ExtendedProperty;
 import tools.xor.Property;
 import tools.xor.Type;
 import tools.xor.annotation.XorEntity;
-import tools.xor.db.base.Department;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.Manager;
 import tools.xor.db.base.MetaEntityState;
@@ -38,7 +37,6 @@ import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
-import tools.xor.util.ClassUtil;
 
 
 public class DefaultMappedBy {

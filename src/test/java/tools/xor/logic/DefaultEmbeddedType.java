@@ -20,6 +20,7 @@
 package tools.xor.logic;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
 import tools.xor.Settings;
 import tools.xor.db.base.Employee;
 import tools.xor.db.base.LocationDetails;

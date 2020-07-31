@@ -29,14 +29,12 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
-import tools.xor.AssociationSetting;
 import tools.xor.BusinessObject;
 import tools.xor.Settings;
 import tools.xor.action.Executable;
 import tools.xor.action.PropertyKey;
 import tools.xor.action.SetUpdateAction;
 import tools.xor.core.Interceptor;
-import tools.xor.db.base.Technician;
 import tools.xor.db.dao.TaskDao;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;

@@ -166,12 +166,25 @@ public interface Xor {
 	Object importAggregate(String filePath, Settings settings) throws IOException;
 
 	/**
-	 * Generate data based on the shape
+	 * Generate data based on the shape. The import will occur on 
+	 * separate threads to handle parallel load.
+	 * 
 	 * @param name of the shape
 	 * @param types in topological order
 	 * @param settings user settings
 	 */
 	void generate(String name, List<String> types, Settings settings);
+	
+    /**
+     * Generate data based on the shape using the same thread and hence
+     * the same JDBC connection.
+     * This allows transaction rollback to affect the generated data.
+     * 
+     * @param name of the shape
+     * @param types in topological order
+     * @param settings user settings
+     */
+    void generateSameTX(String name, List<String> types, Settings settings);	
 	
 	/**
 	 * Any configuration needed for the PersistenceOrchestrator is done at this step.

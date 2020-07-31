@@ -35,6 +35,7 @@ import tools.xor.util.graph.StateGraph;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +56,7 @@ import java.util.concurrent.Future;
  */
 public class DataGenerator
 {
+    // value > 1 only makes sense if sameThread is false
     public static final int IMPORTER_POOL_SIZE = 1;
 
     // Used for throttle control
@@ -72,18 +74,24 @@ public class DataGenerator
     private ImportMethod importMethod;
     private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
     private Map<String, List<Property>> generatedFields = new HashMap<>();
+    private boolean sameThread;
 
     // DataGenerator and DataImporter communication data structures
     private ConcurrentLinkedQueue[] importerQueues = new ConcurrentLinkedQueue[IMPORTER_POOL_SIZE];
     private boolean reachedHigh[] = new boolean[DataGenerator.IMPORTER_POOL_SIZE];
 
-    public DataGenerator (List<String> types, TypeMapper typeMapper, Settings settings, DataModelFactory dasFactory) {
+    public DataGenerator (List<String> types, TypeMapper typeMapper, Settings settings, DataModelFactory dasFactory, boolean sameThread) {
         this.types = types;
         this.typeMapper = typeMapper;
         this.settings = settings;
         this.dasFactory = dasFactory;
         this.importMethod = settings.getImportMethod();
+        this.sameThread = sameThread;
     }
+    
+    public DataGenerator (List<String> types, TypeMapper typeMapper, Settings settings, DataModelFactory dasFactory) {
+        this(types, typeMapper, settings, dasFactory, false);
+    }    
 
     /**
      * Get all the types and its supertypes
@@ -124,7 +132,11 @@ public class DataGenerator
         for(String typename: types) {
             Type type = typeMapper.getShape().getType(typename);
             if(hasGenerator(type)) {
-                generateInstances((EntityType)type, settings);
+                if(sameThread) {
+                    generateInstancesSameThread((EntityType)type, settings);
+                } else {
+                    generateInstancesUsingJobs((EntityType)type, settings);
+                }
                 processed.add(typename);
             }
         }
@@ -171,7 +183,7 @@ public class DataGenerator
         return importJobs;
     }
 
-    public void generateInstances(EntityType entityType, Settings settings)
+    public void generateInstancesUsingJobs(EntityType entityType, Settings settings)
     {
         for(GeneratorDriver generator : entityType.getGenerators()) {
             System.out.println(String.format("Generating data for entity: %s", entityType.getName()));
@@ -245,6 +257,54 @@ public class DataGenerator
             }
         }
     }
+    
+    /*
+     * This function uses the same thread as the generator to import the data
+     * so rolling back the JDBC transaction by the caller rolls back the generated data
+     * 
+     * Whereas if the import jobs are used then the caller has to explicitly delete the data
+     */
+    public void generateInstancesSameThread(EntityType entityType, Settings settings)
+    {
+        for(GeneratorDriver generator : entityType.getGenerators()) {
+            System.out.println(String.format("Generating data for entity: %s", entityType.getName()));
+
+            StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(
+                null,
+                settings,
+                null);
+
+            JDBCDataStore po = (JDBCDataStore)settings.getPersistenceOrchestrator();
+            JDBCSessionContext sc = po.getSessionContext();
+            assert sc.getConnection() != null : "Can import only in the context of an existing JDBC connection";
+            
+            generator.init(sc.getConnection(), visitor);
+            generator.processVisitors();
+            Iterator iter = (Iterator) generator;
+            
+            int i = 1;
+            while(iter.hasNext()) {
+                if(iter.next() == null) {
+                    continue;
+                }
+
+                JSONObject json = generateObject(entityType, visitor, -1);
+                try {
+                    DataImporter.importJson(po, json, typeMapper, settings, this);
+                } catch(SQLException sqe) {
+                    throw new RuntimeException(sqe);
+                }
+                
+                if (i++ % DataImporter.COMMIT_SIZE == 0) {
+                    // commit in batches
+                    sc.flush();
+                }
+            }
+            
+            // last flush
+            sc.flush();
+        }
+    }    
 
     private boolean waitForJobs(List<Future> importJobs) {
 
@@ -268,7 +328,7 @@ public class DataGenerator
         return encounteredError;
     }
 
-    private void generateObject(EntityType entityType, StateGraph.ObjectGenerationVisitor visitor, int jobNo) {
+    private JSONObject generateObject(EntityType entityType, StateGraph.ObjectGenerationVisitor visitor, int jobNo) {
         // Generate the JSONObject
         JSONObject json = new JSONObject();
 
@@ -288,7 +348,12 @@ public class DataGenerator
         }
         json.put(Constants.XOR.TYPE, entityType.getName());
 
-        importerQueues[jobNo].offer(json);
+        if(jobNo >= 0) {
+            importerQueues[jobNo].offer(json);
+        }
+        
+        // Needed when running within same thread
+        return json;
     }
 
     public List<Property> getGeneratedFields(EntityType entityType) {

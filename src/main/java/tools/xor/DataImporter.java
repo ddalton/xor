@@ -34,7 +34,7 @@ import tools.xor.util.Constants;
 
 public class DataImporter implements Callable
 {
-    private static int COMMIT_SIZE;
+    static int COMMIT_SIZE;
 
     static {
         if (ApplicationConfiguration.config().containsKey(Constants.Config.BATCH_COMMIT_SIZE)) {
@@ -85,15 +85,7 @@ public class DataImporter implements Callable
                     break;
                 }
 
-                String entityName = json.getString(Constants.XOR.TYPE);
-                Type type = typeMapper.getShape().getType(entityName);
-                BusinessObject bo = new ImmutableBO(type, null, null, null);
-                bo.setInstance(json);
-                if(logger.isDebugEnabled()) {
-                    logger.debug("DataImporter#call json: " + json.toString());
-                }
-
-                po.getSessionContext().create(bo, settings, dataGenerator);
+                importJson(po, json, typeMapper, settings, dataGenerator);
 
                 if (i++ % COMMIT_SIZE == 0) {
                     // commit in batches
@@ -116,6 +108,24 @@ public class DataImporter implements Callable
         }
 
         return result;
+    }
+    
+    public static void importJson(
+            JDBCDataStore po, 
+            JSONObject json, 
+            TypeMapper typeMapper, 
+            Settings settings, 
+            DataGenerator dataGenerator) 
+                    throws SQLException {
+        String entityName = json.getString(Constants.XOR.TYPE);
+        Type type = typeMapper.getShape().getType(entityName);
+        BusinessObject bo = new ImmutableBO(type, null, null, null);
+        bo.setInstance(json);
+        if(logger.isDebugEnabled()) {
+            logger.debug("DataImporter#call json: " + json.toString());
+        }
+
+        po.getSessionContext().create(bo, settings, dataGenerator);
     }
 
     private void commit() {

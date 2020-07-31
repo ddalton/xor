@@ -1128,6 +1128,85 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 			// We don't close as the connection belongs to Spring
 		}
 	}
+	
+    @Test
+    public void testGenerateSameThread() {
+        // First create a task with 100 children
+        // We use the generators to create this data
+        // This data is committed by the generators
+
+        Shape shape = amJDBC.getDataModel().getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if(shape == null) {
+            shape = amJDBC.getDataModel().createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+
+        JDBCType task = (JDBCType)shape.getType("TASK");
+        task.clearGenerators();
+
+        ExtendedProperty taskparent = (ExtendedProperty)task.getProperty("TASKPARENT_UUID");
+        Generator parentgen = new StringTemplate(new String[] {"ID_[GENERATOR]"});
+        taskparent.setGenerator(parentgen);
+        Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+        ExtendedProperty rootid = (ExtendedProperty)task.getProperty("UUID");
+        rootid.setGenerator(rootidgen);
+        Generator namegen = new StringTemplate(new String[] {"NAME_[VISITOR_CONTEXT]"});
+        ExtendedProperty namep = (ExtendedProperty)task.getProperty("NAME");
+        namep.setGenerator(namegen);
+        ExtendedProperty dtype = (ExtendedProperty)task.getProperty("DTYPE");
+        Generator dtypegen = new DefaultGenerator(new String[] {"Task"});
+        dtype.setGenerator(dtypegen);
+
+        ToOneGenerator toonegen = new ToOneGenerator(new String[] { "0",
+                                                                    "0,0:0", // root task
+                                                                    "1,100:100" // root task with 100 children
+        });
+
+        // 101 is the total number of tasks. 1 root task and 100 child tasks
+        CounterGenerator gensettings = new CounterGenerator(101);
+        gensettings.addListener(toonegen);
+        task.addGenerator(gensettings);
+        gensettings.addVisit(new DefaultGenerator.GeneratorVisit(toonegen,
+                (GeneratorRecipient)parentgen));
+
+        String[] types = new String[] {
+            "TASK"
+        };
+
+        Settings settings = new Settings();
+        //settings.setImportMethod(ImportMethod.CSV);
+        Transaction tx = amJDBC.createTransaction(settings);
+        tx.begin();
+        
+        AggregateTree<QueryTree, InterQuery<QueryTree>> aggregateTree = null;
+        try {
+            // Generate the tasks in the DB
+            amJDBC.generateSameTX(shape.getName(), Arrays.asList(types), settings);
+
+            // Query using the mix view
+            settings = new Settings();
+            settings.setView(aggregateService.getView("TASKCHILDRENMIX"));
+            shape = aggregateService.getDataModel().getShape();
+            Type type = shape.getType(Task.class);
+            settings.setEntityType(type);
+            settings.init(shape);
+
+            // Print a graph of the aggregateTree
+            aggregateTree = settings.getView().getAggregateTree(type);
+            aggregateTree.exportToDOT("taskchildrenmix.dot");
+
+            List<?> result = aggregateService.query(null, settings);
+            assert(result.size() == 101);
+        } finally {
+            tx.rollback();
+            
+            // Now query the data, it should return 0 records
+            List<?> result = aggregateService.query(null, settings);
+            assert(result.size() == 0);
+            
+            // We don't close as the connection belongs to Spring
+        }
+    }	
 
 	@Test
 	public void testChildrenMixTemp() {

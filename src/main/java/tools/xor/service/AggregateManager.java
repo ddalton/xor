@@ -1368,4 +1368,15 @@ public class AggregateManager implements Xor
 		configure(settings);
 		(new DataGenerator(types, typeMapper, settings, getDataModelFactory())).execute();
 	}
+	
+
+    @Override
+    public void generateSameTX (String name, List<String> types, Settings settings)
+    {
+        TypeMapper typeMapper = getDataModel().getTypeMapper().newInstance(MapperSide.DOMAIN, name);
+
+        // Generate the data
+        configure(settings);
+        (new DataGenerator(types, typeMapper, settings, getDataModelFactory(), true)).execute();
+    }	
 }

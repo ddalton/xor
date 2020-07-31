@@ -64,10 +64,12 @@ public abstract class DBTranslator
     private final static Map<String, DBTranslator> translators = new ConcurrentHashMap<>();
     private final static Map<String, DBType> dbTypeByProductName = new ConcurrentHashMap<>();
 
+    private static final String H2_PRODUCT_NAME = "H2";
     private static final String HANA_PRODUCT_NAME = "HDB";
     private static final String HSQLDB_PRODUCT_NAME = "HSQL DATABASE ENGINE";
 
     static {
+        translators.put(H2_PRODUCT_NAME, new H2Translator() );        
         translators.put(HANA_PRODUCT_NAME, new HANATranslator() );
         translators.put(HSQLDB_PRODUCT_NAME, new HSQLTranslator() );
 

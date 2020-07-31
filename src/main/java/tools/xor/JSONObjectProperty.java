@@ -103,7 +103,7 @@ public class JSONObjectProperty
                 public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
 
                     try {
-                        Blob result = settings.getPersistenceOrchestrator().createBlob();
+                        Blob result = settings.getDataStore().createBlob();
                         result.setBytes(1, Base64.getDecoder().decode(jsonObject.getString(key)));
                         return result;
                     }

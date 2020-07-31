@@ -170,7 +170,7 @@ public class DataGenerator
         // Create the importers
         List<Future> importJobs = new ArrayList<Future>();
         for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
-            JDBCDataStore po = (JDBCDataStore)dasFactory.createPersistenceOrchestrator(settings.getSessionContext());
+            JDBCDataStore po = (JDBCDataStore)dasFactory.createDataStore(settings.getSessionContext());
             po.getSessionContext().setImportMethod(importMethod);
             if(importMethod == ImportMethod.CSV && IMPORTER_POOL_SIZE > 1)
             {
@@ -195,7 +195,7 @@ public class DataGenerator
                 settings,
                 null);
 
-            JDBCDataStore po = (JDBCDataStore)settings.getPersistenceOrchestrator();
+            JDBCDataStore po = (JDBCDataStore)settings.getDataStore();
             JDBCSessionContext sc = po.getSessionContext();
             sc.beginTransaction();
 
@@ -274,7 +274,7 @@ public class DataGenerator
                 settings,
                 null);
 
-            JDBCDataStore po = (JDBCDataStore)settings.getPersistenceOrchestrator();
+            JDBCDataStore po = (JDBCDataStore)settings.getDataStore();
             JDBCSessionContext sc = po.getSessionContext();
             assert sc.getConnection() != null : "Can import only in the context of an existing JDBC connection";
             

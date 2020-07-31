@@ -49,7 +49,7 @@ public class JPAXmlDataModel extends JPADataModel {
         if(super.getPersistenceProvider() == null) {
             this.persistenceProvider = new PersistenceProvider() {
                 @Override
-                public DataStore createPO(Object sessionContext, Object data) {
+                public DataStore createDS(Object sessionContext, Object data) {
                     
                     DataStore po = new JPAPersistenceXMLPO(sessionContext, data);
                     ((JPAPersistenceXMLPO)po).setPersistenceUtil(persistenceUtil);

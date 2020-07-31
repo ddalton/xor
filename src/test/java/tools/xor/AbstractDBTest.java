@@ -175,7 +175,7 @@ public class AbstractDBTest {
 		}			
 		
 		// Ensure the values are seen by queries
-		aggregateManager.getDataModelFactory().createPersistenceOrchestrator(null).flush();
+		aggregateManager.getDataModelFactory().createDataStore(null).flush();
 	}	
 	
 	public void setupMetaEntityTypeVO(AggregateManager aggregateService){
@@ -193,7 +193,7 @@ public class AbstractDBTest {
 		}	
 		
 		// Ensure the values are seen by queries
-		aggregateManager.getDataModelFactory().createPersistenceOrchestrator(null).flush();
+		aggregateManager.getDataModelFactory().createDataStore(null).flush();
 	}	
 	
 	public void setupMetaEntityStateVO(AggregateManager aggregateService){
@@ -211,7 +211,7 @@ public class AbstractDBTest {
 		}	
 		
 		// Ensure the values are seen by queries
-		aggregateManager.getDataModelFactory().createPersistenceOrchestrator(null).flush();
+		aggregateManager.getDataModelFactory().createDataStore(null).flush();
 	}	
 	
 	public void setupChapterTypeVO(AggregateManager aggregateService){
@@ -229,7 +229,7 @@ public class AbstractDBTest {
 		}
 		
 		// Ensure the values are seen by queries
-		aggregateManager.getDataModelFactory().createPersistenceOrchestrator(null).flush();
+		aggregateManager.getDataModelFactory().createDataStore(null).flush();
 	}		
 	
 	public void setupValueType(AggregateManager aggregateService){

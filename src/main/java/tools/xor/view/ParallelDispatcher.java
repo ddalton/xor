@@ -95,7 +95,7 @@ public class ParallelDispatcher extends AbstractDispatcher implements Callback
             // Ensure we have initialized for DB access for the current thread
             settings.getAggregateManager().configure(settings);
 
-            DataStore po = settings.getPersistenceOrchestrator();
+            DataStore po = settings.getDataStore();
             po.initForQuery();
 
             Query query = queryTree.createQuery(po);

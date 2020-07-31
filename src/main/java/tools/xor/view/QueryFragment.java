@@ -270,7 +270,7 @@ public class QueryFragment implements Vertex
             if (iter.hasNext()) {
                 IntraQuery<QueryFragment> incomingEdge = iter.next();
                 ExtendedProperty property = (ExtendedProperty)incomingEdge.getProperty();
-                if (property != null && property.isMany() && !Settings.doSQL(settings.getPersistenceOrchestrator())) {
+                if (property != null && property.isMany() && !Settings.doSQL(settings.getDataStore())) {
                     if (property.isList()) {
                         // add INDEX
                         position += addField(

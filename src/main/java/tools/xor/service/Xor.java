@@ -187,7 +187,8 @@ public interface Xor {
     void generateSameTX(String name, List<String> types, Settings settings);	
 	
 	/**
-	 * Any configuration needed for the PersistenceOrchestrator is done at this step.
+	 * Any configuration needed for the DataStore is done at this step.
+	 * The Xor instance is then initialized with an instance of the DataStore for the current thread.
 	 * 
 	 * @param settings user provided settings
 	 */

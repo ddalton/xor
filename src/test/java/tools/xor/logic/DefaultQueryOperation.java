@@ -761,7 +761,7 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		Task c1 = master.getRootTask().getTaskChildren().iterator().next();
 		assert(c1 != null && c1.getId() != null && c1.getTaskChildren().size() == 2);
 		
-		Project prj = (Project) aggregateService.getDataModelFactory().createPersistenceOrchestrator(null).findById(Project.class, master.getId());
+		Project prj = (Project) aggregateService.getDataModelFactory().createDataStore(null).findById(Project.class, master.getId());
 
 		// query the task object
 		Settings settings = new Settings();

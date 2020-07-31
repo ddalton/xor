@@ -623,7 +623,7 @@ public abstract class JDBCDataModel extends AbstractDataModel
         if(super.getPersistenceProvider() == null) {
             this.persistenceProvider = new PersistenceProvider() {
                 @Override
-                public DataStore createPO(Object sessionContext, Object data) {
+                public DataStore createDS(Object sessionContext, Object data) {
                     JDBCDataStore po = new JDBCDataStore((JDBCSessionContext)sessionContext, data);
                     po.setDataSource(getDataSource());
 

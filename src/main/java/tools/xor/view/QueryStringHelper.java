@@ -161,7 +161,7 @@ public class QueryStringHelper
         // the QueryTree
         List<Function> consolidatedFunctions = new LinkedList<>();
         for(Function function : temp) {
-            if(function.normalize(queryTree, settings.getPersistenceOrchestrator())) {
+            if(function.normalize(queryTree, settings.getDataStore())) {
                 consolidatedFunctions.add(function);
             }
         }

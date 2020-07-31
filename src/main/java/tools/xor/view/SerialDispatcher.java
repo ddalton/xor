@@ -39,7 +39,7 @@ public class SerialDispatcher extends AbstractDispatcher
      */
     @Override
     protected void executeQueries(List<QueryTree> queries, QueryTreeInvocation queryInvocation) {
-        DataStore po = callInfo.getSettings().getPersistenceOrchestrator();
+        DataStore po = callInfo.getSettings().getDataStore();
 
         while(!queries.isEmpty()) {
             QueryTree queryTree = queries.remove(0);

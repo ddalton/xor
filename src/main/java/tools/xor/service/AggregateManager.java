@@ -413,18 +413,18 @@ public class AggregateManager implements Xor
 	public void configure (Settings settings) {
 
 		if (getDataStore() == null) {
-			setDataStore(dataModelFactory.createPersistenceOrchestrator(settings != null ? settings.getSessionContext() : null));
+			setDataStore(dataModelFactory.createDataStore(settings != null ? settings.getSessionContext() : null));
 		}
 		if(settings != null) {
-			if(settings.getPersistenceOrchestrator() == null) {
+			if(settings.getDataStore() == null) {
 				settings.setAggregateManager(this);
-				settings.initPersistenceOrchestrator(getDataStore());
+				settings.initDataStore(getDataStore());
 				if (settings.getSessionContext() != null
 					&& getDataStore() instanceof JDBCDataStore) {
 					JDBCDataStore po = ((JDBCDataStore)getDataStore());
 					po.getSessionContext().init((JDBCSessionContext)settings.getSessionContext());
 				}
-			} else if(settings.getPersistenceOrchestrator() != getDataStore()) {
+			} else if(settings.getDataStore() != getDataStore()) {
 				throw new IllegalStateException("PersistenceOrchestrator in settings is different from AggregateManager!");
 			}
 		}

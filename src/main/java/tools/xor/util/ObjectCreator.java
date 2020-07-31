@@ -905,8 +905,8 @@ public class ObjectCreator {
 	}
 	
 	public void persistGraph(Settings settings) {
-		if(settings.getPersistenceOrchestrator() instanceof JDBCDataStore) {
-			CustomPersister cp = ((JDBCDataStore)settings.getPersistenceOrchestrator()).getSessionContext();
+		if(settings.getDataStore() instanceof JDBCDataStore) {
+			CustomPersister cp = ((JDBCDataStore)settings.getDataStore()).getSessionContext();
 			cp.persistGraph(this, settings);
 		} else {
 			objectGraph.persistGraph(this, settings);
@@ -914,8 +914,8 @@ public class ObjectCreator {
 	}
 
 	public void deleteGraph(Settings settings) {
-		if(settings.getPersistenceOrchestrator() instanceof JDBCDataStore) {
-			CustomPersister cp = ((JDBCDataStore)settings.getPersistenceOrchestrator()).getSessionContext();
+		if(settings.getDataStore() instanceof JDBCDataStore) {
+			CustomPersister cp = ((JDBCDataStore)settings.getDataStore()).getSessionContext();
 			cp.deleteGraph(this, settings);
 		} else {
 			objectGraph.deleteGraph(this, settings);

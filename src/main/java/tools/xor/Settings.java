@@ -247,7 +247,7 @@ public class Settings {
 		return this.aggregateManager;
 	}
 
-	public DataStore getPersistenceOrchestrator ()
+	public DataStore getDataStore ()
 	{
 		return this.aggregateManager == null ? null : this.aggregateManager.getDataStore();
 	}
@@ -259,7 +259,7 @@ public class Settings {
 	/*
 	 * we need to get the persistence orchestrator specific to that thread
 	 */
-	public void initPersistenceOrchestrator (DataStore persistenceOrchestrator)
+	public void initDataStore (DataStore persistenceOrchestrator)
 	{
 		if(persistenceOrchestrator instanceof JDBCDataStore) {
 

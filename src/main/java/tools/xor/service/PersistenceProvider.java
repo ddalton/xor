@@ -21,13 +21,13 @@ package tools.xor.service;
 
 public interface PersistenceProvider {
     /**
-     * Creates the PersistenceOrchestrator appropriate for this DataModel
+     * Creates the DataStore appropriate for this DataModel
      * @param sessionContext required if manually creating the session/entityManager
-     * @param data any additional data required by the PersistenceOrchestrator, e.g., 
+     * @param data any additional data required by the DataStore, e.g., 
      *        persistence unit name
-     * @return PersistenceOrchestrator object
+     * @return DataStore object
      */
-    DataStore createPO(Object sessionContext, Object data);    
+    DataStore createDS(Object sessionContext, Object data);    
     
     /**
      * Set the PersistenceUtil for this PersistenceProvider.

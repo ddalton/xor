@@ -43,14 +43,14 @@ public interface DataModelFactory {
 	AggregateManager getAggregateManager();
 	
 	/**
-	 * Create the PersistenceOrchestrator for this DataModel. The PersistenceOrchestrator
+	 * Create the DataStore instance for this DataModel. The DataStore
 	 * encapsulates the interactions with a particular persistence manager (JDBC, JPA etc)
 	 * for this model.
 	 * 
 	 * @param sessionContext session related data
-	 * @return PersistenceOrchestrator instance
+	 * @return DataStore instance
 	 */
-	DataStore createPersistenceOrchestrator (Object sessionContext);
+	DataStore createDataStore (Object sessionContext);
 	
 	/**
 	 * Used to inject dependencies for an object managed by a Dependency injection framework

@@ -56,7 +56,7 @@ public interface GeneratorDriver
 
     /**
      * Allows to control dynamically the generator that is associated with a property
-     * @param visit
+     * @param visit object modelling relationship between generator and property
      */
     void addVisit(DefaultGenerator.GeneratorVisit visit);
 

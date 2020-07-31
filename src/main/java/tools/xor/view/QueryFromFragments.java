@@ -86,7 +86,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
     private String constructOQL(Settings settings) {
 
-        DataStore po = settings.getPersistenceOrchestrator();
+        DataStore po = settings.getDataStore();
         QueryTree<QueryFragment, IntraQuery<QueryFragment>> qp = this.queryTree;
 
         // SELECT clause
@@ -373,7 +373,7 @@ public class QueryFromFragments implements QueryBuilderStrategy
 
     private String buildOrderClause(Settings settings, List<Function> consolidatedFunctions) {
 
-        DataStore po = settings.getPersistenceOrchestrator();
+        DataStore po = settings.getDataStore();
         QueryTree<QueryFragment, IntraQuery<QueryFragment>> queryTree = this.queryTree;
 
         // We need ORDER BY clauses for all collection properties so that they are

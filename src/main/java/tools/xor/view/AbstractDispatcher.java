@@ -172,7 +172,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
             if (iter.hasNext()) {
                 parentEdge = iter.next();
 
-                DataStore po = callInfo.getSettings().getPersistenceOrchestrator();
+                DataStore po = callInfo.getSettings().getDataStore();
                 
                 // At this point we check if we need to proceed further depending on whether the parent
                 // query produced any results
@@ -220,7 +220,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
         // execute actions
         List<Action> actions = queryTree.getActions();
         for(Action action: actions) {
-            action.execute(disptacher, queryInvocation, callInfo.getSettings().getPersistenceOrchestrator());
+            action.execute(disptacher, queryInvocation, callInfo.getSettings().getDataStore());
         }
         
         return true;

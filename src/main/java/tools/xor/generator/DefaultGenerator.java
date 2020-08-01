@@ -79,6 +79,18 @@ public class DefaultGenerator implements Generator
     {
         this.values = arguments;
     }
+    
+    /**
+     * This constructor is used if the min and max value
+     * is the same. i.e., the generator can produce only 1 value.
+     * 
+     * @param argument single value
+     */
+    public DefaultGenerator (int argument)
+    {
+        String strval = String.valueOf(argument);
+        this.values = new String[] {strval, strval};
+    }    
 
     public String[] getValues ()
     {

@@ -344,34 +344,6 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
 	public void setCollectionKey(Set<String> collectionKey);
 
 	/**
-	 * Set the Generator to be used for this property
-	 * @param generator instance
-	 */
-	public void setGenerator(Generator generator);
-
-	/**
-	 * Set the Generator specific to populating data when coming from incomingProperty
-	 * @param incomingProperty of the form sourceType:property
-	 * @param generator instance
-	 */
-	public void setGenerator(String incomingProperty, Generator generator);
-
-	/**
-	 * Get the Generator instance configured on this property
-	 * @return generator instance
-	 */
-	public Generator getGenerator();
-
-	/**
-	 * Get the Generator instance configured on this property, depending upon the incoming path
-	 * by which this entity is being created.
-	 *
-	 * @param incomingProperty through which this instance is being generated
-	 * @return generator instance
-	 */
-	public Generator getGenerator(String incomingProperty);
-
-	/**
 	 * This is applicable only if the property references a collection and
 	 * if the collection only contains references, for example identifiers.
 	 * @return true if the property returns a collection of ids

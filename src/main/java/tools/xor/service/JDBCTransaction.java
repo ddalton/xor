@@ -1,5 +1,7 @@
 package tools.xor.service;
 
+import java.sql.Connection;
+
 import tools.xor.providers.jdbc.JDBCSessionContext;
 
 public class JDBCTransaction implements Transaction
@@ -23,5 +25,9 @@ public class JDBCTransaction implements Transaction
     @Override public void rollback ()
     {
         sc.rollback();
+    }
+    
+    @Override public void bind(Connection connection) {
+        sc.attachToExisting(connection);
     }
 }

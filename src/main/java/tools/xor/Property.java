@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import tools.xor.generator.Generator;
+
 /**
  * A representation of a Property in the {@link Type type} of a {@link DataObject data object}.
  */
@@ -187,4 +189,33 @@ public interface Property
    * @return true if the property is defined in a superclass
    */
   boolean isInherited();
+  
+
+  /**
+   * Set the Generator to be used for this property
+   * @param generator instance
+   */
+  void setGenerator(Generator generator);
+
+  /**
+   * Set the Generator specific to populating data when coming from incomingProperty
+   * @param incomingProperty of the form sourceType:property
+   * @param generator instance
+   */
+  void setGenerator(String incomingProperty, Generator generator);
+
+  /**
+   * Get the Generator instance configured on this property
+   * @return generator instance
+   */
+  Generator getGenerator();
+
+  /**
+   * Get the Generator instance configured on this property, depending upon the incoming path
+   * by which this entity is being created.
+   *
+   * @param incomingProperty through which this instance is being generated
+   * @return generator instance
+   */
+  Generator getGenerator(String incomingProperty);  
 }

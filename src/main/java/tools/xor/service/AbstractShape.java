@@ -129,6 +129,8 @@ public abstract class AbstractShape implements Shape
 
     private void addType(String className, Type type, Map<String, Type> typeMap) {
         typeMap.put(className, type);
+        logger.info("Adding type for entity: " + className);
+        System.out.println("Adding type for entity: " + className);
 
         if(EntityType.class.isAssignableFrom(type.getClass())) {
             ((EntityType)type).setShape(this);

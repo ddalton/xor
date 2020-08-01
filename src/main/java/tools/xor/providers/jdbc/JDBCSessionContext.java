@@ -84,12 +84,30 @@ public class JDBCSessionContext implements CustomPersister
     private final Map<String, PreparedStatement> statementCache = lruCache(1000);
     private Stack<ConnectionHolder> connections = new Stack<>();
     private Map<String, BufferedWriter> csvWriters = new HashMap<>();
+    private Boolean autoCommit; // 3 value logic, only set if initialized
+
+    public Boolean isAutoCommit() {
+        return autoCommit;
+    }
+
+    public void setAutoCommit(boolean autoCommit) {
+        this.autoCommit = autoCommit;
+    }
 
     private static class ConnectionHolder {
         private final boolean owner;
         private final Connection connection;
         private final boolean readOnly; // If this is true, then there are no modifications and
                                         // it does not have to be committed
+        private boolean originalAutoCommit;
+
+        public boolean isOriginalAutoCommit() {
+            return originalAutoCommit;
+        }
+
+        public void setOriginalAutoCommit(boolean originalAutoCommit) {
+            this.originalAutoCommit = originalAutoCommit;
+        }
 
         public Connection getConnection() {
             return this.connection;
@@ -580,7 +598,17 @@ public class JDBCSessionContext implements CustomPersister
         }
 
         if(connections.size() == 0) {
-            connections.push(new ConnectionHolder(po.getNewConnection(), true, readOnly));
+            Connection c = po.getNewConnection();
+            ConnectionHolder ch = new ConnectionHolder(c, true, readOnly);
+            try {
+                if(isAutoCommit() != null) {
+                    ch.setOriginalAutoCommit(c.getAutoCommit());
+                    c.setAutoCommit(isAutoCommit());
+                }
+            } catch(SQLException e) {
+                throw new RuntimeException(e);
+            }
+            connections.push(ch);
         } else {
             connections.push(new ConnectionHolder(getConnection(), false, readOnly));
         }
@@ -590,7 +618,7 @@ public class JDBCSessionContext implements CustomPersister
      * Used to participate in an existing JDBC connection
      * @param connection existing JDBC connection
      */
-    public void attachExisting(Connection connection) {
+    public void attachToExisting(Connection connection) {
         assert connection != null : "Provided JDBC connection should be valid and not null!";
         
         // Mark we are not the owner and that we should not commit on this connection
@@ -612,6 +640,10 @@ public class JDBCSessionContext implements CustomPersister
         ConnectionHolder holder = connections.pop();
         try {
             if(holder.isOwner()) {
+                // restore the autocommit value
+                if(isAutoCommit() != null) {
+                    holder.getConnection().setAutoCommit(holder.isOriginalAutoCommit());
+                }
                 holder.getConnection().close();
             }
         }

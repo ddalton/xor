@@ -39,6 +39,15 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
     {
         super(arguments);
     }
+    
+    /**
+     * Convenience constructor. Represents a single value for the argument
+     * @param argument single value
+     */
+    public StringTemplate (String argument)
+    {
+        super(new String[] {argument});
+    }    
 
     @Override public void accept (Generator generator)
     {

@@ -28,7 +28,6 @@ import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 import tools.xor.AbstractProperty.LambdaResult;
 import tools.xor.JSONObjectProperty.Converter;
 import tools.xor.event.PropertyEvent;
-import tools.xor.generator.Generator;
 import tools.xor.generator.GeneratorRecipient;
 
 public interface ExtendedProperty extends Property, GeneratorRecipient
@@ -386,4 +385,16 @@ public interface ExtendedProperty extends Property, GeneratorRecipient
      * @return domain type name. null if not present.
      */
     String getDomainTypeName();
+    
+    /**
+     * Mainly used to capture different generators for a property 
+     * when the shape containing this property using VALUE typeInheritance
+     * 
+     * When the copy is done, the correct subtype for which it is needed
+     * is passed
+     * 
+     * @param parentType correct containing type
+     * @return copy of the property instance
+     */
+    ExtendedProperty copy(EntityType parentType);
 }

@@ -32,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 
 /**
  * SimpleType have no properties
@@ -231,7 +232,7 @@ public class MutableJsonType extends ExternalType {
         if(required != null) {
             for(int i = 0; i < required.length(); i++) {
                 String propertyName = required.getString(i);
-                MutableJsonProperty property = (MutableJsonProperty) getProperty(propertyName);
+                MutableJsonProperty property = (MutableJsonProperty) ClassUtil.getDelegate(getProperty(propertyName));
                 property.setNullable(true);    
             }
         }

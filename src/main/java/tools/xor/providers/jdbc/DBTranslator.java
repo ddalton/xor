@@ -447,12 +447,12 @@ public abstract class DBTranslator
             // Go to the parent if possible
             if(bo.getContainer() != null) {
                 if (bo.getContainer() != null) {
-                    containerProperty = (JDBCProperty)bo.getContainer().getContainmentProperty();
+                    containerProperty = (JDBCProperty)ClassUtil.getDelegate(bo.getContainer().getContainmentProperty());
                     container = (BusinessObject)bo.getContainer().getContainer();
                 }
             }
         } else {
-            containerProperty = (JDBCProperty)bo.getContainmentProperty();
+            containerProperty = (JDBCProperty)ClassUtil.getDelegate(bo.getContainmentProperty());
             container = (BusinessObject)bo.getContainer();
         }
 

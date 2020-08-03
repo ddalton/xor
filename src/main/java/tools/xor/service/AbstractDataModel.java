@@ -128,7 +128,16 @@ public abstract class AbstractDataModel implements DataModel {
     
     @Override public Shape createShape (String name, SchemaExtension extension)
     {
-        Shape shape = new DomainShape(name, null, this);
+        Shape shape = new DomainShape(name, null, this, Shape.Inheritance.VALUE);
+        addShape(shape);
+        this.setActive(shape);
+        
+        return shape;
+    }    
+    
+    @Override public Shape createShape (String name, SchemaExtension extension, Shape.Inheritance typeInheritance)
+    {
+        Shape shape = new DomainShape(name, null, this, typeInheritance);
         addShape(shape);
         this.setActive(shape);
         
@@ -146,7 +155,7 @@ public abstract class AbstractDataModel implements DataModel {
 				return result;
 			}
 			result = parent;
-		}while (result.getShapeStrategy() == Shape.ShapeStrategy.SHARED && parent != null);
+		}while (result.getShapeInheritance() == Shape.Inheritance.REFERENCE && parent != null);
 
 		return null;
 	}

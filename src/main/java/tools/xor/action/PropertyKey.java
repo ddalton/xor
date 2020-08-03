@@ -26,6 +26,7 @@ import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
 import tools.xor.Property;
+import tools.xor.util.ClassUtil;
 
 /**
  * Uniquely identifies a persistent entity.
@@ -56,14 +57,15 @@ public final class PropertyKey implements Serializable {
 	public int hashCode() {
 		int result = 17;
 		result = 37 * result + System.identityHashCode(dataObject);
-		result = 37 * result + System.identityHashCode(property);
+		result = 37 * result + System.identityHashCode(ClassUtil.getDelegate(property));
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object other) {
 		PropertyKey otherKey = (PropertyKey) other;
-		return otherKey.dataObject == this.dataObject && otherKey.property == this.property;
+		
+		return otherKey.dataObject == this.dataObject && ClassUtil.isSameDelegate(this.property, otherKey.property);
 	}	
 
 	public boolean isOneToOne() {

@@ -66,7 +66,7 @@ import tools.xor.util.Constants;
 import tools.xor.util.I18NUtils;
 
 
-public abstract class AbstractProperty implements ExtendedProperty {
+public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	public static final String EMPTY_TAG = "_EMPTY_";
@@ -165,6 +165,23 @@ public abstract class AbstractProperty implements ExtendedProperty {
 		
 		this.elementType = elementType;
 	}
+	
+    @Override
+    public ExtendedProperty copy(EntityType parentType) {
+        try {
+            AbstractProperty copy = (AbstractProperty) super.clone();
+            
+            // Fix any mutable objects
+            copy.generators = new HashMap<>();
+            copy.aliasNames = new ArrayList<String>();
+            copy.generator = null;
+            copy.parentType = parentType;
+            
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }	
 	
 	@Override
 	public Converter getConverter() {
@@ -273,7 +290,7 @@ public abstract class AbstractProperty implements ExtendedProperty {
 
 		if(property != null) {
 			((ExtendedProperty)mappedBy).setMapPath(mapPath);
-			((AbstractProperty)property).setMapOf(this);
+			((AbstractProperty)ClassUtil.getDelegate(property)).setMapOf(this);
 		}
 	}
 

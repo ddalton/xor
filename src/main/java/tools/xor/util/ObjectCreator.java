@@ -451,7 +451,7 @@ public class ObjectCreator {
 				for(String key: ((EntityType)targetType).getNaturalKey()) {
 					Property pKey = targetType.getProperty(key);
 					if(pKey.getType() instanceof EntityType) {
-						Object keyInstance = ((AbstractProperty)pKey).query(targetInstance);
+						Object keyInstance = ((AbstractProperty)ClassUtil.getDelegate(pKey)).query(targetInstance);
 						if(keyInstance != null) {
 							String keyAnchor = anchor == null ? null : anchor + Settings.PATH_DELIMITER +pKey.getName();
 							this.createDataObject(null, keyInstance, pKey.getType(), null, null, keyAnchor);

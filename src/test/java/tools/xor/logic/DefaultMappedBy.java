@@ -37,6 +37,7 @@ import tools.xor.db.pm.Quote;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
+import tools.xor.util.ClassUtil;
 
 
 public class DefaultMappedBy {
@@ -104,10 +105,10 @@ public class DefaultMappedBy {
 		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Project.class);
-		ExtendedProperty managers = (ExtendedProperty) taskType.getProperty("managers");
+		ExtendedProperty managers = (ExtendedProperty) ClassUtil.getDelegate(taskType.getProperty("managers"));
 
 		Type quoteType = das.getShape().getType(Manager.class);
-		ExtendedProperty projects = (ExtendedProperty) quoteType.getProperty("projects");
+		ExtendedProperty projects = (ExtendedProperty) ClassUtil.getDelegate(quoteType.getProperty("projects"));
 
 		assert(managers != null);
 		assert(projects != null);
@@ -118,8 +119,8 @@ public class DefaultMappedBy {
 		assert(managers.getMapOf() == null);
 		assert(projects.getMappedBy() == null);
 
-		assert(managers.getMappedBy() == projects);
-		assert(projects.getMapOf() == managers);			
+		assert(ClassUtil.getDelegate(managers.getMappedBy()) == projects);
+		assert(ClassUtil.getDelegate(projects.getMapOf()) == managers);			
 	}
 
 	/**

@@ -50,6 +50,7 @@ import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
 import tools.xor.service.SchemaExtension;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateView;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -86,7 +87,7 @@ public class TwitterJDBCTest
                 JDBCType entitiesUserType = (JDBCType) shape.getType("entities_user");
                 JDBCType userUrlType = (JDBCType) shape.getType("user_url");
                 JDBCType userDescType = (JDBCType) shape.getType("user_description");
-                JDBCProperty userUrlPK = (JDBCProperty)userUrlType.getProperty("ID_STR");
+                JDBCProperty userUrlPK = (JDBCProperty) ClassUtil.getDelegate(userUrlType.getProperty("ID_STR"));
                 JDBCDataModel.ForeignKey fk = new JDBCDataModel.ForeignKey("FK1_1__1_url", userUrlType.getTableInfo(), entitiesUserType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
@@ -95,7 +96,7 @@ public class TwitterJDBCTest
                 entities.initMappedBy(das.getShape());
                 userUrlType.addProperty(entities);
 
-                JDBCProperty userDescPK = (JDBCProperty)userDescType.getProperty("ID_STR");
+                JDBCProperty userDescPK = (JDBCProperty)ClassUtil.getDelegate(userDescType.getProperty("ID_STR"));
                 fk = new JDBCDataModel.ForeignKey("FK1_1__1_description", userDescType.getTableInfo(), entitiesUserType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
@@ -105,7 +106,7 @@ public class TwitterJDBCTest
                 userDescType.addProperty(entities);
 
                 JDBCType urlsType = (JDBCType) shape.getType("urls");
-                JDBCProperty urlsPK = (JDBCProperty)urlsType.getProperty("ID_STR");
+                JDBCProperty urlsPK = (JDBCProperty)ClassUtil.getDelegate(urlsType.getProperty("ID_STR"));
                 // Create a synthetic foreign key between urls and user_url
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_urls", urlsType.getTableInfo(), userUrlType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
@@ -113,8 +114,8 @@ public class TwitterJDBCTest
                 fk.makeComposition();
                 JDBCProperty userurl = new JDBCProperty("userurl", urlsPK.getColumns(), userUrlType, urlsType, fk);
                 userurl.initMappedBy(das.getShape());
-                JDBCProperty position = (JDBCProperty)urlsType.getProperty("POSITION");
-                ((JDBCProperty)userUrlType.getProperty("urls")).setIndexPositionProperty(position);
+                JDBCProperty position = (JDBCProperty)ClassUtil.getDelegate(urlsType.getProperty("POSITION"));
+                ((JDBCProperty)ClassUtil.getDelegate(userUrlType.getProperty("urls"))).setIndexPositionProperty(position);
 
                 // Create a synthetic foreign key between urls and user_description
                 fk = new JDBCDataModel.ForeignKey("FK2_1__N_urls", urlsType.getTableInfo(), userDescType.getTableInfo(),
@@ -146,7 +147,7 @@ public class TwitterJDBCTest
 
                 JDBCType indicesType = (JDBCType) shape.getType("indices");
                 JDBCType hashtagsType = (JDBCType) shape.getType("hashtags");
-                JDBCProperty indicesPK = (JDBCProperty)indicesType.getProperty("ID_STR");
+                JDBCProperty indicesPK = (JDBCProperty)ClassUtil.getDelegate(indicesType.getProperty("ID_STR"));
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_indices", indicesType.getTableInfo(), hashtagsType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);

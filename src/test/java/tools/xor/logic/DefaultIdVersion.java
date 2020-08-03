@@ -27,6 +27,7 @@ import tools.xor.Type;
 import tools.xor.db.pm.Task;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
+import tools.xor.util.ClassUtil;
 
 
 public class DefaultIdVersion {
@@ -37,10 +38,10 @@ public class DefaultIdVersion {
 		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
-		Property id = taskType.getProperty("id");
+		Property id = (Property) ClassUtil.getDelegate(taskType.getProperty("id"));
 		
 		assert(((EntityType)taskType).getIdentifierProperty() != null);
-		assert(((EntityType)taskType).getIdentifierProperty() == id);
+		assert(ClassUtil.getDelegate(((EntityType)taskType).getIdentifierProperty()) == id);
 		
 
 	}
@@ -49,10 +50,10 @@ public class DefaultIdVersion {
 		DataModel das = aggregateManager.getDataModel(); 
 
 		Type taskType = das.getShape().getType(Task.class);
-		Property version = taskType.getProperty("version");
+		Property version = (Property) ClassUtil.getDelegate(taskType.getProperty("version"));
 		
 		assert(((EntityType)taskType).getVersionProperty() != null);
-		assert(((EntityType)taskType).getVersionProperty() == version);	
+		assert(ClassUtil.getDelegate(((EntityType)taskType).getVersionProperty()) == version);	
 	}
 	
 }

@@ -68,7 +68,7 @@ public class MetaModel {
 		Shape shape = getDAS().getShape();
 		ArrayList<Type> types = new ArrayList<>(shape.getUniqueTypes());
 
-		if(shape.getShapeStrategy() == Shape.ShapeStrategy.SHARED && shape.getParent() != null) {
+		if(shape.getShapeInheritance() == Shape.Inheritance.REFERENCE && shape.getParent() != null) {
 			types.addAll(shape.getParent().getUniqueTypes());
 		}
 

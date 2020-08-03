@@ -101,7 +101,7 @@ public interface DataModel {
      * @param name of the Shape representing the type system
      * @return shape that was added
      */
-    public Shape createShape(String name);	
+    public Shape createShape(String name);    
 
 	/**
 	 * Build the Type and Property objects for the static API
@@ -112,6 +112,18 @@ public interface DataModel {
 	 * @return shape that was added
 	 */
 	public Shape createShape(String name, SchemaExtension extension);
+	
+    
+    /**
+     * Add the shape to the DAS.
+     * The shape that is added does not affect the active shape.
+     *
+     * @param name of the Shape representing the type system
+     * @param extension code to add new types/properties to the shape 
+     * @param typeInheritance describes the strategy of how properties and shapes are shared
+     * @return shape that was added
+     */
+    public Shape createShape(String name, SchemaExtension extension, Shape.Inheritance typeInheritance);	
 
 	/**
 	 * Remove an existing shape

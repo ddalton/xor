@@ -324,7 +324,7 @@ public abstract class AbstractType implements EntityType {
 	public Set<EntityType> getSubtypes() {
 		if(subTypes == null) {
 			List allTypes = new ArrayList<>(getShape().getUniqueTypes());
-			if(getShape().getShapeStrategy() == Shape.ShapeStrategy.SHARED && getShape().getParent() != null) {
+			if(getShape().getShapeInheritance() == Shape.Inheritance.REFERENCE && getShape().getParent() != null) {
 				allTypes.addAll(getShape().getParent().getUniqueTypes());
 			}
 			defineSubtypes(allTypes);

@@ -35,6 +35,10 @@ public class DomainShape extends AbstractShape
         super(name, parent, das);
     }
     
+    public DomainShape(String name, Shape parent, DataModel das, Inheritance typeInheritance) {
+        super(name, parent, das, typeInheritance);
+    }    
+    
     /**
      * A simple mechanism to signal an event that the type structure has changed.
      * Currently supported only for JDBC to signal that a temporary table has been added.

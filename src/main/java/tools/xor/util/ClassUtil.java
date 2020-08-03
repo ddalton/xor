@@ -47,12 +47,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.cglib.proxy.Proxy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.stereotype.Component;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;
+import tools.xor.Property;
+import tools.xor.PropertyProxy;
 import tools.xor.Settings;
 import tools.xor.Type;
 import tools.xor.view.View;
@@ -107,6 +110,28 @@ public class ClassUtil {
 
 		return result;
 	}
+	
+    public static Object getDelegate(Property property) {
+        if (property != null && java.lang.reflect.Proxy.isProxyClass(property.getClass())) {
+            PropertyProxy pp = (PropertyProxy) java.lang.reflect.Proxy.getInvocationHandler(property);
+            property = pp.getDelegate();
+        }
+        
+        return property;
+    }
+    
+    private static Object getOldDelegate(Property property) {
+        if (property != null && java.lang.reflect.Proxy.isProxyClass(property.getClass())) {
+            PropertyProxy pp = (PropertyProxy) java.lang.reflect.Proxy.getInvocationHandler(property);
+            property = pp.getOldDelegate();
+        }
+        
+        return property;
+    }    
+    
+    public static boolean isSameDelegate(Property propA, Property propB) {
+        return ClassUtil.getOldDelegate(propA) == ClassUtil.getOldDelegate(propB);
+    }
 
 	public static boolean isEnhanced(Object proxy) {
 		boolean result = false;

@@ -133,7 +133,7 @@ public class HanaPerf1Test
                 JDBCDataModel.ForeignKey fk = new JDBCDataModel.ForeignKey("FK1_1__N_allresps", respType.getTableInfo(), userType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                JDBCProperty userid = (JDBCProperty)respType.getProperty("ROOTID");
+                JDBCProperty userid = (JDBCProperty) ClassUtil.getDelegate(respType.getProperty("ROOTID"));
                 JDBCProperty userProp = new JDBCProperty("user", userid.getColumns(), userType, respType, fk);
                 fk.makeComposition();
                 userProp.initMappedBy(shape);
@@ -144,7 +144,7 @@ public class HanaPerf1Test
                 fk = new JDBCDataModel.ForeignKey("FK1_1__1_userdetails", userType.getTableInfo(), ususerType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                userProp = (JDBCProperty)userType.getProperty("US_USER");
+                userProp = (JDBCProperty)ClassUtil.getDelegate(userType.getProperty("US_USER"));
                 JDBCProperty userEntityProp = new JDBCProperty("user", userProp.getColumns(), ususerType, userType, fk);
                 userProp.initMappedBy(shape);
                 userType.addProperty(userEntityProp);
@@ -156,7 +156,7 @@ public class HanaPerf1Test
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_allusers", baseidType.getTableInfo(), groupType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                JDBCProperty lvid = (JDBCProperty)baseidType.getProperty("LVID");
+                JDBCProperty lvid = (JDBCProperty)ClassUtil.getDelegate(baseidType.getProperty("LVID"));
                 JDBCProperty groupProp = new JDBCProperty("group", lvid.getColumns(), groupType, baseidType, fk);
                 groupProp.setNullable(false); // This field cannot be null and helps with topological sort
                 groupProp.initMappedBy(shape);
@@ -167,7 +167,7 @@ public class HanaPerf1Test
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_allids", baseidType.getTableInfo(), pogType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                JDBCProperty rootid = (JDBCProperty)baseidType.getProperty("ROOTID");
+                JDBCProperty rootid = (JDBCProperty)ClassUtil.getDelegate(baseidType.getProperty("ROOTID"));
                 JDBCProperty pogProp = new JDBCProperty("pog", rootid.getColumns(), pogType, baseidType, fk);
                 fk.makeComposition();
                 pogProp.initMappedBy(shape);
@@ -179,7 +179,7 @@ public class HanaPerf1Test
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), groupType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                JDBCProperty parentGroup = (JDBCProperty)respType.getProperty("GRB_GROUP");
+                JDBCProperty parentGroup = (JDBCProperty)ClassUtil.getDelegate(respType.getProperty("GRB_GROUP"));
                 JDBCProperty parentProp = new JDBCProperty("parentgroup", parentGroup.getColumns(), groupType, respType, fk);
                 parentProp.setNullable(false); // needed for dependency
                 parentProp.initMappedBy(shape);
@@ -189,7 +189,7 @@ public class HanaPerf1Test
                 fk = new JDBCDataModel.ForeignKey("FK1_1__1_context", procType.getTableInfo(), pogType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                JDBCProperty uniqueProp = (JDBCProperty)procType.getProperty("PROR_UNIQUENAME");
+                JDBCProperty uniqueProp = (JDBCProperty)ClassUtil.getDelegate(procType.getProperty("PROR_UNIQUENAME"));
                 pogProp = new JDBCProperty("pog", uniqueProp.getColumns(), pogType, procType, fk);
                 fk.makeComposition();
                 pogProp.initMappedBy(shape);
@@ -198,7 +198,7 @@ public class HanaPerf1Test
                 fk = new JDBCDataModel.ForeignKey("FK1_1__N_procresps", respType.getTableInfo(), procType.getTableInfo(),
                     JDBCDataModel.ForeignKeyRule.NO_ACTION,
                     JDBCDataModel.ForeignKeyRule.NO_ACTION);
-                JDBCProperty proc = (JDBCProperty)respType.getProperty("GRB_PROCUREMENTUNIT");
+                JDBCProperty proc = (JDBCProperty)ClassUtil.getDelegate(respType.getProperty("GRB_PROCUREMENTUNIT"));
                 JDBCProperty procProp = new JDBCProperty("procunit", proc.getColumns(), procType, respType, fk);
                 procProp.setNullable(false); // needed for dependency
                 procProp.initMappedBy(shape);

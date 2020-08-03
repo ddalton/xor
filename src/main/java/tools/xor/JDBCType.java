@@ -33,6 +33,7 @@ import org.json.JSONObject;
 
 import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 
 /**
  * An OpenType represents a custom type that is a composition of properties from other
@@ -205,7 +206,7 @@ public class JDBCType extends AbstractType {
         }
 
         for(String propertyName: keys) {
-            JDBCProperty property = (JDBCProperty)getProperty(propertyName);
+            JDBCProperty property = (JDBCProperty)ClassUtil.getDelegate(getProperty(propertyName));
 
             String childPrefix = (prefix.length() > 0 ? (prefix + Settings.PATH_DELIMITER) : "") + propertyName;
             Map<String, String> childFkMap = new HashMap<>();
@@ -241,7 +242,7 @@ public class JDBCType extends AbstractType {
 
     public void setOpposite(Shape shape) {
         for(Property property: getProperties()) {
-            ((JDBCProperty)property).initMappedBy(shape);
+            ((JDBCProperty)ClassUtil.getDelegate(property)).initMappedBy(shape);
         }
     }
 

@@ -57,9 +57,16 @@ import tools.xor.view.View;
  */
 public interface Shape
 {
-    public enum ShapeStrategy {
-        SHARED,
-        COPY
+    /**
+     * Describes how the types in a parent shape are inherited by a child shape 
+     * Also controls how properties within a parent and child type within a shape are shared
+     * If the inheritance strategy is REFERENCE then the types are shared by the child shape
+     * else if the inheritance strategy is VALUE then the types are copied to the child shape
+     *
+     */
+    public enum Inheritance {
+        REFERENCE,
+        VALUE
     };
 
     /**
@@ -86,11 +93,18 @@ public interface Shape
     public DataModel getDataModel();
 
     /**
-     * Returns the type of Shape object being created. Whether it has a copy of the properties from
-     * the parent shape or if it shares the common properties with the parent shape.
-     * @return shape strategy
+     * Returns the shape inheritance strategy of the Shape object being created. Whether the shape has a copy of the types from
+     * the parent shape or if the shape shares the types with the parent shape.
+     * @return shape inheritance value
      */
-    public ShapeStrategy getShapeStrategy();
+    public Inheritance getShapeInheritance();
+    
+    /**
+     * Returns the type inheritance strategy of the Shape object being created. Whether a type has a copy of the properties from
+     * the parent type or if the type shares the properties with the parent type.
+     * @return type inheritance value
+     */
+    public Inheritance getTypeInheritance();    
 
     /**
      * Get the name of the shape
@@ -158,8 +172,11 @@ public interface Shape
 
     /**
      * Get a full map of all the properties by the property name.
-     * It does not include properties from the ancestor types.
-     * But it does look at all the ancestor shapes for properties of this type.
+     * If shape inheritance is by reference, then we also include properties from parent shape for this type
+     * If shape inheritance is by value, then we look at properties only in the current shape
+     * 
+     * If type inheritance is by reference, then we include direct properties from parent types
+     * if type inheritance is by value, then we retrieve all properties for the type (including parent types)
      *
      * @param type entity type
      * @return a map of all the properties.
@@ -202,6 +219,7 @@ public interface Shape
     public void addProperty (Property property);
 
     /**
+     * Add a direct property.
      * Irrespective of the ShapeStrategy, a property can be overridden by a child Shape.
      * i.e., a type does not have to be defined in this Shape in order to define a property.
      *

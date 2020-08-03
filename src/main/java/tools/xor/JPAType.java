@@ -34,8 +34,10 @@ import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.cglib.proxy.Proxy;
 
 import tools.xor.service.Shape;
+import tools.xor.util.ClassUtil;
 
 public class JPAType extends AbstractType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
@@ -167,7 +169,8 @@ public class JPAType extends AbstractType {
 
 	public void setOpposite(Shape shape) {
 		for(Property property: getProperties()) {
-			((JPAProperty)property).initMappedBy(shape);
+		    JPAProperty jpaProperty = (JPAProperty) ClassUtil.getDelegate(property);
+			jpaProperty.initMappedBy(shape);
 		}
 	}
 
@@ -242,7 +245,7 @@ public class JPAType extends AbstractType {
 
 		// first check if any of its properties have the Access annotation
 		for(Property property: getProperties()) {
-			if( ((AbstractProperty)property).getAccessType() != null) {
+			if( ((ExtendedProperty)property).getAccessType() != null) {
 				hasAccessAnnotation = true;
 				break;
 			}
@@ -250,6 +253,7 @@ public class JPAType extends AbstractType {
 
 		if(!hasAccessAnnotation) {
 			for(Property property: getProperties()) {
+			    property = (Property) ClassUtil.getDelegate(property);
 				if(((JPAProperty)property).isFieldMapped())
 					return AccessType.FIELD;
 				else if(((JPAProperty)property).isPropertyMapped())

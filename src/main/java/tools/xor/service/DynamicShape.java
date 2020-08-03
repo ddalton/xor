@@ -37,6 +37,7 @@ import tools.xor.Property;
 import tools.xor.SimpleType;
 import tools.xor.Type;
 import tools.xor.TypeMapper;
+import tools.xor.service.Shape.Inheritance;
 import tools.xor.view.AggregateView;
 import tools.xor.view.AggregateViewFactory;
 import tools.xor.view.AggregateViews;
@@ -56,6 +57,10 @@ public class DynamicShape extends AbstractShape
     public DynamicShape(String name, Shape parent, DataModel das) {
         super(name, parent, das);
     }
+    
+    public DynamicShape(String name, Shape parent, DataModel das, Inheritance typeInheritance) {
+        super(name, parent, das, typeInheritance);
+    }        
     
     public DynamicShape(String name, Shape parent, Shape domainShape, TypeMapper typeMapper) {
         // We are going to create the dynamic shape from the provided domain shape
@@ -223,7 +228,7 @@ public class DynamicShape extends AbstractShape
                 }
             } while (result == null && current != null);
 
-            if (result == null && this.shapeStrategy == ShapeStrategy.SHARED && parent != null) {
+            if (result == null && this.shapeInheritance == Inheritance.REFERENCE && parent != null) {
                 result = parent.getProperty(type, name);
             }
         } else {

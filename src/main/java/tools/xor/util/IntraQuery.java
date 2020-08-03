@@ -65,7 +65,7 @@ public class IntraQuery<V extends QueryFragment> extends Edge<V>
                 .append(" AS ")
                 .append(getEnd().getAlias())
                 .append(" ON (")
-                .append(((JDBCProperty)property).getOnClause(getStart().getAlias(), getEnd().getAlias()))
+                .append(((JDBCProperty)ClassUtil.getDelegate(property)).getOnClause(getStart().getAlias(), getEnd().getAlias()))
                 .append(")");
             return join.toString();
         } else {

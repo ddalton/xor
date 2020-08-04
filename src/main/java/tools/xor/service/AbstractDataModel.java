@@ -128,7 +128,7 @@ public abstract class AbstractDataModel implements DataModel {
     
     @Override public Shape createShape (String name, SchemaExtension extension)
     {
-        return createShape(name, extension, Shape.Inheritance.REFERENCE);
+        return createShape(name, extension, Shape.Inheritance.VALUE);
     }    
     
     @Override public Shape createShape (String name, SchemaExtension extension, Shape.Inheritance typeInheritance)

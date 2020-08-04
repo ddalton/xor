@@ -11,11 +11,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PropertyProxy implements InvocationHandler {
     
     private ExtendedProperty oldDelegate;
-    private AtomicReference<ExtendedProperty> delegate = new AtomicReference<>();
+    private AtomicReference<ExtendedProperty> atomicReference = new AtomicReference<>();
     private EntityType parentType;
 
     public ExtendedProperty bind(ExtendedProperty delegate, EntityType parentType) {
-        this.delegate.set(delegate);
+        this.atomicReference.set(delegate);
         this.oldDelegate = delegate;
         this.parentType = parentType;
         
@@ -32,19 +32,25 @@ public class PropertyProxy implements InvocationHandler {
         // This can be expanded to all mutable methods in the future
         if(method.getName().equals("setGenerator")) {
             // Make a copy against the correct type
-            // delegate is no longer a proxy
-            if (delegate.compareAndSet(oldDelegate, delegate.get().copy(parentType))) {
+            if (atomicReference.get() == oldDelegate) {
+                // Are we successful in creating a copy
+                if (atomicReference.compareAndSet(oldDelegate, atomicReference.get().copy(parentType))) {
 
-                // Do the copy-on-write here
-                parentType.getShape().addProperty(delegate.get());
+                    // Do the copy-on-write here
+                    parentType.getShape().addProperty(atomicReference.get());
+                }
+                // someone else was successful, so update the delegate to the copy created by another thread
+                else {
+                    atomicReference.set((ExtendedProperty) parentType.getShape().getProperty(this.parentType, atomicReference.get().getName()));
+                }
             }
         }
         
-        return method.invoke(this.delegate.get(), args);
+        return method.invoke(this.atomicReference.get(), args);
     }
 
     public ExtendedProperty getDelegate() {
-        return this.delegate.get();
+        return this.atomicReference.get();
     }
     
     public ExtendedProperty getOldDelegate() {

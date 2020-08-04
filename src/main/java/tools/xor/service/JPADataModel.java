@@ -64,8 +64,8 @@ public abstract class JPADataModel extends AbstractDataModel {
 	public abstract EntityManagerFactory getEmf();	
 
 	@Override
-	public Shape createShape(String name, SchemaExtension extension) {
-        Shape shape = super.createShape(name, extension);
+	public Shape createShape(String name, SchemaExtension extension, Shape.Inheritance typeInheritance) {
+        Shape shape = super.createShape(name, extension, typeInheritance);
 		
 		processShape(shape, extension, null);
 

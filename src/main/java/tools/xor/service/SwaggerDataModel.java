@@ -87,8 +87,8 @@ public class SwaggerDataModel extends AbstractDataModel {
     }
     
     @Override
-    public Shape createShape(String name, SchemaExtension extension) {
-        Shape shape = super.createShape(name, extension);
+    public Shape createShape(String name, SchemaExtension extension, Shape.Inheritance typeInheritance) {
+        Shape shape = super.createShape(name, extension, typeInheritance);
         
         buildIdMap();
         

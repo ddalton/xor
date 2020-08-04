@@ -128,11 +128,7 @@ public abstract class AbstractDataModel implements DataModel {
     
     @Override public Shape createShape (String name, SchemaExtension extension)
     {
-        Shape shape = new DomainShape(name, null, this, Shape.Inheritance.VALUE);
-        addShape(shape);
-        this.setActive(shape);
-        
-        return shape;
+        return createShape(name, extension, Shape.Inheritance.REFERENCE);
     }    
     
     @Override public Shape createShape (String name, SchemaExtension extension, Shape.Inheritance typeInheritance)

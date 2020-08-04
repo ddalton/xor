@@ -43,4 +43,9 @@ public class JPAIdVersionTest extends DefaultIdVersion {
 	public void checkVersion() {
 		super.checkVersion();
 	}	
+	   
+    @Test
+    public void checkTypeInheritanceValue() {
+        super.checkTypeInheritanceValue();
+    }   
 }

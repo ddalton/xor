@@ -495,9 +495,9 @@ public abstract class JDBCDataModel extends AbstractDataModel
         return type;
     }
 
-    @Override public Shape createShape (String name, SchemaExtension extension)
+    @Override public Shape createShape (String name, SchemaExtension extension, Shape.Inheritance typeInheritance)
     {
-        Shape shape = super.createShape(name, extension);
+        Shape shape = super.createShape(name, extension, typeInheritance);
 
         List<TableInfo> tables = name.equals(RELATIONAL_SHAPE) ? getRelationalTables() : getTables();
 

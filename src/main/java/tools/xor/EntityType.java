@@ -397,4 +397,15 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
     
     @Override
     default String getJsonType() { return MutableJsonType.JSON_OBJECT_TYPE; }
+    
+    /**
+     * Mainly used to capture different generator drivers for a type 
+     * 
+     * When the copy is done, the correct shape for which it is needed
+     * is passed
+     * 
+     * @param shape new shape containing the type
+     * @return copy of the type instance
+     */
+    EntityType copy(Shape shape);    
 }

@@ -295,14 +295,11 @@ public class DataGenerator
                     throw new RuntimeException(sqe);
                 }
                 
-                if (i++ % DataImporter.COMMIT_SIZE == 0) {
-                    // commit in batches
-                    sc.flush();
-                }
+                DataImporter.performFlush(sc, i++, false);
             }
             
             // last flush
-            sc.flush();
+            DataImporter.performFlush(sc, i, true);  
         }
     }    
 

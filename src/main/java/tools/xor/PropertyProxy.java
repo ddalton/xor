@@ -37,7 +37,7 @@ public class PropertyProxy implements InvocationHandler {
                 if (atomicReference.compareAndSet(oldDelegate, atomicReference.get().copy(parentType))) {
 
                     // Do the copy-on-write here
-                    parentType.getShape().addProperty(atomicReference.get());
+                    parentType.getShape().addProperty(parentType, atomicReference.get());
                 }
                 // someone else was successful, so update the delegate to the copy created by another thread
                 else {

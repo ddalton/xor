@@ -533,7 +533,7 @@ public abstract class DBTranslator
         // Needed for performance optimization for objects containing a large number of fields in the type
         JSONObject jsonObject = (JSONObject)bo.getInstance();
         Iterator<String> propertyNames = jsonObject.keys();
-        Map<String, Property> directProperties = entityType.getShape().getDirectProperties(entityType);
+        Map<String, Property> directProperties = entityType.getShape().getDeclaredProperties(entityType);
         while(propertyNames.hasNext()) {
             Property property = directProperties.get(propertyNames.next());
             if(property == null) {

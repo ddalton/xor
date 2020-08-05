@@ -75,7 +75,7 @@ public class JDBCType extends AbstractType {
     
     @Override
     public List <Property> getDeclaredProperties() {
-        Map<String, Property> propertyMap = getShape().getDirectProperties(this);
+        Map<String, Property> propertyMap = getShape().getDeclaredProperties(this);
         if(propertyMap == null) {
             return null;
         }

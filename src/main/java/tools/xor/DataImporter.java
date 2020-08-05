@@ -28,13 +28,14 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.providers.jdbc.JDBCDataStore;
+import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.DataStore;
 import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.Constants;
 
 public class DataImporter implements Callable
 {
-    static int COMMIT_SIZE;
+    public static int COMMIT_SIZE;
 
     static {
         if (ApplicationConfiguration.config().containsKey(Constants.Config.BATCH_COMMIT_SIZE)) {
@@ -138,4 +139,16 @@ public class DataImporter implements Callable
             po.getSessionContext().close();
         }
     }
+    
+    public static void performFlush(JDBCSessionContext sc, int i, boolean isEnd) {
+        if(!isEnd) {
+            if (i % DataImporter.COMMIT_SIZE == 0) {
+                // flush in batches
+                // TODO: have option to commit
+                sc.flush();
+            }          
+        } else {
+            sc.flush();
+        }
+    }    
 }

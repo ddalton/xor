@@ -78,7 +78,10 @@ public abstract class AbstractShape implements Shape
     final protected Inheritance shapeInheritance;
     final protected Inheritance typeInheritance;
     private   Map<Class, Converter> convertersByClass = new ConcurrentHashMap<Class, Converter>();
-    protected Map<String, Map<String, Property>> directProperties = new ConcurrentHashMap<>();
+    
+    // Contains the entityType's declared properties for Inheritance.REFERENCE typeInheritance
+    // and both declared and overridden properties for Inheritance.VALUE typeInheritance
+    protected Map<String, Map<String, Property>> properties = new ConcurrentHashMap<>();
 
     // Used to signal if the shape has finished being being
     private volatile boolean buildFinished;
@@ -241,7 +244,7 @@ public abstract class AbstractShape implements Shape
         // be the last type popped from the stack
         while (!ancestors.isEmpty()) {
             current = ancestors.pop();
-            Map<String, Property> directProperties = getDirectProperties(current);
+            Map<String, Property> directProperties = this.properties.get(current.getEntityName());
             if (directProperties != null) {
                 if (result == null) {
                     // We are modifying the result so make a copy
@@ -275,8 +278,8 @@ public abstract class AbstractShape implements Shape
 
         EntityType current = type;
         do {
-            if (getDirectProperties(current) != null && getDirectProperties(current).containsKey(name)) {
-                result = getDirectProperties(current).get(name);
+            if (this.properties.get(current.getEntityName()) != null && this.properties.get(current.getEntityName()).containsKey(name)) {
+                result = this.properties.get(current.getEntityName()).get(name);
             }
             current = current.getParentType();
         } while (result == null && current != null);
@@ -298,8 +301,8 @@ public abstract class AbstractShape implements Shape
     public Property getDeclaredProperty(EntityType type, String name) {
         Property result = null;
 
-        if (getDirectProperties(type) != null && getDirectProperties(type).containsKey(name)) {
-            result = getDirectProperties(type).get(name);
+        if (getDeclaredProperties(type) != null && getDeclaredProperties(type).containsKey(name)) {
+            result = getDeclaredProperties(type).get(name);
         }
 
         if(result == null && this.shapeInheritance == Inheritance.REFERENCE && parent != null) {
@@ -310,8 +313,20 @@ public abstract class AbstractShape implements Shape
     }
 
     @Override
-    public Map<String, Property> getDirectProperties(EntityType type) {
-        return this.directProperties.get(type.getEntityName());
+    public Map<String, Property> getDeclaredProperties(EntityType type) {
+        Map<String, Property> result = null;
+        
+        Map<String, Property> entityProperties = this.properties.get(type.getEntityName());
+        if (entityProperties != null) {
+            result = new LinkedHashMap<>();
+            for (Map.Entry<String, Property> entry : entityProperties.entrySet()) {
+                if (entry.getValue().getContainingType().getName().equals(type.getName())) {
+                    result.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        
+        return result;
     }
 
     @Override
@@ -324,10 +339,10 @@ public abstract class AbstractShape implements Shape
     public void addProperty (EntityType type, Property property)
     {
 //            System.out.println(String.format("Adding property %s to type %s", property.getName(), type.getEntityName()));
-        Map<String, Property> directProps = this.directProperties.get(type.getEntityName());
+        Map<String, Property> directProps = this.properties.get(type.getEntityName());
         if (directProps == null) {
             directProps = new LinkedHashMap<>();
-            this.directProperties.put(type.getEntityName(), directProps);
+            this.properties.put(type.getEntityName(), directProps);
         }
         
         directProps.put(property.getName(), property);
@@ -341,8 +356,8 @@ public abstract class AbstractShape implements Shape
 
     @Override
     public void removeProperty (EntityType type, Property openProperty) {
-        if (this.directProperties.containsKey(type.getEntityName())) {
-            this.directProperties.get(type.getEntityName()).remove(openProperty.getName());
+        if (this.properties.containsKey(type.getEntityName())) {
+            this.properties.get(type.getEntityName()).remove(openProperty.getName());
         }        
     }
 
@@ -671,13 +686,13 @@ public abstract class AbstractShape implements Shape
         currentJson.put(MutableJsonType.SWAGGER_TYPE, "object");
         
         // populate properties  
-        Map<String, Property> propertyMap = getDirectProperties(type);
+        Map<String, Property> propertyMap = getDeclaredProperties(type);
         if(propertyMap != null && propertyMap.size() > 0) {
             JSONObject propertiesJson = new JSONObject();
             currentJson.put(MutableJsonType.SWAGGER_PROPERTIES, propertiesJson);
            
             Set<String> required = new HashSet<>();
-            for(Map.Entry<String, Property> entry: getDirectProperties(type).entrySet()) {
+            for(Map.Entry<String, Property> entry: getDeclaredProperties(type).entrySet()) {
                 
                 Property property = entry.getValue();
                 if(!property.isNullable()) {

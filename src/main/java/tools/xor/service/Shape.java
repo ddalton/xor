@@ -210,7 +210,7 @@ public interface Shape
      * @param type whose properties we need
      * @return the properties for the type in the current shape
      */
-    public Map<String, Property> getDirectProperties(EntityType type);
+    public Map<String, Property> getDeclaredProperties(EntityType type);
 
     /**
      * Add a property to the shape. The type will be inferred from the property instance.

@@ -61,7 +61,7 @@ import tools.xor.util.DFAtoRE;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.ViewType;
 
-public abstract class AbstractType implements EntityType {
+public abstract class AbstractType implements EntityType, Cloneable {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
 	public static final int ALL = -1;
@@ -96,7 +96,7 @@ public abstract class AbstractType implements EntityType {
 
 	private Shape shape;
 
-	private final List<GeneratorDriver> entityGenerators = new LinkedList<>();
+	private List<GeneratorDriver> entityGenerators = new LinkedList<>();
 
 	public AbstractType() {
 		classResolver = new ClassResolver(this);
@@ -131,6 +131,21 @@ public abstract class AbstractType implements EntityType {
 
 		this.shape = shape;
 	}
+	
+    @Override
+    public EntityType copy(Shape shape) {
+        try {
+            AbstractType copy = (AbstractType) super.clone();
+            
+            // Fix any mutable objects
+            copy.entityGenerators = new LinkedList<>();
+            copy.shape = shape;
+            
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }	
 	
 	@Override
 	public Set<String> getInitializedProperties() {
@@ -1398,7 +1413,7 @@ public abstract class AbstractType implements EntityType {
 	 */
 	protected boolean createdSuperTypeProperties() {
 	       // If the properties are already defined then return
-        if (shape.getDirectProperties(this) != null) {
+        if (shape.getDeclaredProperties(this) != null) {
             return false;
         }
 

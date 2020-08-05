@@ -25,8 +25,14 @@ import java.util.Iterator;
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 
+/**
+ * The CounterGenerator is a generator driver that helps to control other generators
+ * such as the property generators.
+ * 
+ */
 public class CounterGenerator extends DefaultGenerator implements Iterator<Integer>, GeneratorDriver
 {
+    // A negative value means that counter does not end
     private final int count;
     private final int start;
     private StateGraph.ObjectGenerationVisitor visitor;
@@ -50,7 +56,7 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
 
     @Override public boolean hasNext ()
     {
-        return current < count+start;
+        return current < count+start || count < 0;
     }
 
     @Override public Integer next ()

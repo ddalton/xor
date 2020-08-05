@@ -219,8 +219,8 @@ public class DynamicShape extends AbstractShape
             }
             ExternalType current = (ExternalType) type;
             do {
-                if (getDirectProperties(current) != null && getDirectProperties(current).containsKey(name)) {
-                    result = getDirectProperties(current).get(name);
+                if (getDeclaredProperties(current) != null && getDeclaredProperties(current).containsKey(name)) {
+                    result = getDeclaredProperties(current).get(name);
                 }
                 current = (ExternalType) pending.poll();
                 if(current != null && current.getParentTypes() != null) {

@@ -37,7 +37,7 @@ public class H2Translator extends DBTranslator
 {
     private static final String FOREIGN_KEY_SQL = "SELECT FK_NAME, FKTABLE_NAME, PKTABLE_NAME, FKCOLUMN_NAME, PKCOLUMN_NAME, DELETE_RULE, UPDATE_RULE FROM INFORMATION_SCHEMA.CROSS_REFERENCES WHERE FKTABLE_SCHEMA = schema() ORDER BY FK_NAME, ordinal_position";
     private static final String COLUMNS_SQL = "SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, type_name, CASE WHEN column_default is not null AND column_default like '(NEXT VALUE FOR%' THEN 'YES' ELSE 'NO' END AS is_identity, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE 'SYSTEM_%' AND TABLE_SCHEMA = schema()";
-    private static final String PRIMARY_KEY_SQL = "SELECT table_name, constraint_name, column_list FROM INFORMATION_SCHEMA.CONSTRAINTS WHERE constraint_schema = schema() ORDER BY constraint_name";
+    private static final String PRIMARY_KEY_SQL = "SELECT table_name, constraint_name, column_list FROM INFORMATION_SCHEMA.CONSTRAINTS WHERE constraint_schema = schema() AND constraint_type = 'PRIMARY_KEY' ORDER BY constraint_name";
 
     // H2 database uses BIGINT as the sequence type
     private static final String SEQUENCES_SQL = "SELECT sequence_name, 'BIGINT', max_value, min_value, increment, current_value, is_cycle FROM information_schema.sequences WHERE sequence_schema = schema()";

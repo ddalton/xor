@@ -317,6 +317,17 @@ public abstract class JDBCDataModel extends AbstractDataModel
         private boolean inheritance;             // Does this foreign key model an inheritance
                                                  //   relationship?
 
+        public String toString() {
+            StringBuilder builder = new StringBuilder(String.format("Foreign key: %s [logical name: %s]", nameInDatabase, name) );
+            
+            builder.append(String.format("\n  ReferencingTable: %s ---> Referenced Table: %s", referencingTable.getName(), referencedTable.getName()));
+            for(int i = 0; i < referencingColumns.size(); i++) {
+                builder.append(String.format("\n     Key: %s ---> %s", referencingColumns.get(i), referencedColumns.get(i)));
+            }
+            
+            return builder.toString();
+        }
+        
         public String getName() {
             return this.name;
         }

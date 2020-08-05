@@ -46,7 +46,6 @@ import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
-import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
 import tools.xor.service.exim.CSVLoader;
 import tools.xor.service.exim.CSVLoader.CSVState;
@@ -99,33 +98,12 @@ public class CSVLoaderTest {
 	    amJDBC.configure(null);
 	    JDBCDataStore dataStore = (JDBCDataStore)amJDBC.getDataStore();
         JDBCSessionContext sc = dataStore.getSessionContext();
-        sc.beginTransaction();	    
-	    csvLoader.importData(new Settings(), dataStore);
-	    
-		/*
-		 *
-		  if (MyClass.class.getClassLoader().getResource("directory/") != null)
-
-List<String> files = IOUtils.readLines(MyClass.class.getClassLoader().getResourceAsStream("directory/"), Charsets.UTF_8);
-
-
-
-
-insert into Task (createdBy_UUID, createdOn, updatedBy_UUID, updatedOn, version, description, detailedDescription, displayName, iconUrl, isCriticalSystemObject, name, objectId, alternateTask_UUID, assignedTo_UUID, auditedTask_UUID, depSeq, ownedBy_UUID, project_UUID, scheduledFinish, subTask, taskParent_UUID, taskUri, DTYPE, UUID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Task', ?)
-
-
-DTYPE values ‘TASK’
-
-Hibernate: create table Person 
-(UUID varchar(255) not null, 
-createdOn timestamp, updatedOn timestamp, version bigint, description varchar(255), detailedDescription varchar(255), displayName varchar(255), iconUrl varchar(255), isCriticalSystemObject boolean, name varchar(255), objectId varchar(255), commonName varchar(255), email varchar(255), password varchar(255), photo blob(255), userName varchar(255), createdBy_UUID varchar(255), updatedBy_UUID varchar(255), primary key (UUID))
-
-
-Hibernate: create table Task 
-(DTYPE varchar(31) not null, 
- UUID varchar(255) not null, 
-createdOn timestamp, updatedOn timestamp, version bigint, description varchar(255), detailedDescription varchar(255), displayName varchar(255), iconUrl varchar(255), isCriticalSystemObject boolean, name varchar(255), objectId varchar(255), depSeq integer, scheduledFinish timestamp, subTask varchar(255), taskUri varchar(255), priority integer, createdBy_UUID varchar(255), updatedBy_UUID varchar(255), alternateTask_UUID varchar(255), assignedTo_UUID varchar(255), auditedTask_UUID varchar(255), ownedBy_UUID varchar(255), project_UUID varchar(255), taskParent_UUID varchar(255), primary key (UUID))
-*/
+        sc.beginTransaction();	  
+        try {
+            csvLoader.importData(new Settings(), dataStore);
+        } finally {
+        	    sc.rollback();
+        }
 	}	
 	
 }

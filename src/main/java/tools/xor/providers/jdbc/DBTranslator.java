@@ -583,6 +583,56 @@ public abstract class DBTranslator
 
         return sqlstr.toString();
     }
+    
+    public String getUpdateSqlFragment(JDBCType entityType, BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys)
+    {
+        StringBuilder sqlstr = new StringBuilder("UPDATE ");
+        sqlstr.append(bo.getType().getName()).append(" SET ");
+
+        List<String> columnsToSetSQL = new LinkedList<>();
+        for(String column: columnsToSet) {
+            columnsToSetSQL.add(column + " = ?");
+        }
+        sqlstr.append(String.join(",", columnsToSetSQL));
+
+        // lookup keys
+        List<String> lookupClause = new LinkedList<>();
+        for(String column: lookupKeys.keySet()) {
+            lookupClause.add(column + " = ?");
+        }            
+        sqlstr.append(" WHERE ").append(String.join(" AND ", lookupClause));
+
+        return sqlstr.toString();
+    }    
+    
+    public String getSelectStmt(JDBCType entityType, BusinessObject bo, String primaryKeyColumn, Map<String, String> lookupKeys) {
+        StringBuilder sqlstr = new StringBuilder("SELECT ");
+        sqlstr.append(primaryKeyColumn)
+        .append(" FROM ")
+        .append(entityType.getName());
+
+        // lookup keys
+        List<String> lookupClause = new LinkedList<>();
+        for(String column: lookupKeys.keySet()) {
+            lookupClause.add(column + " = ?");
+        }            
+        sqlstr.append(" WHERE ").append(String.join(" AND ", lookupClause));
+
+        return sqlstr.toString();        
+    }
+    
+    public String setSelectValues(JDBCType entityType, PreparedStatement ps, BusinessObject bo, String primaryKeyColumn, Map<String, String> lookupKeys) {
+
+        // set the lookup values in the WHERE predicate list
+        int position = 1;
+        List<String> lookupValues = new LinkedList<>();        
+        for(Map.Entry<String, String> entry: lookupKeys.entrySet()) {
+            Property p = entityType.getProperty(entry.getKey());
+            position = setSimpleValue(ps, lookupValues, p, bo, position, false, true);            
+        }        
+
+        return null;
+    }       
 
     private List<Property> getPropertiesForDelete(JDBCType entityType, BusinessObject bo) {
         JSONObject jsonObject = (JSONObject)bo.getInstance();
@@ -616,9 +666,6 @@ public abstract class DBTranslator
     }
 
     public String getInsertSqlFragment(JDBCType entityType, BusinessObject bo, boolean isBindParameters, DataGenerator dataGenerator) {
-        StringBuilder sqlstr = new StringBuilder();
-        sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
-
         // iterate through the properties
         List<String> columnNames = new LinkedList<>();
         for(Property p: getProperties(entityType, dataGenerator)) {
@@ -642,6 +689,13 @@ public abstract class DBTranslator
                 }
             }
         }
+        
+        return getInsertSqlFragment(entityType, isBindParameters, columnNames);
+    }
+    
+    public String getInsertSqlFragment(JDBCType entityType, boolean isBindParameters, List<String> columnNames) {
+        StringBuilder sqlstr = new StringBuilder();
+        sqlstr.append("INSERT INTO " + entityType.getTableName() + " (");
 
         sqlstr.append(String.join(",", columnNames));
         sqlstr.append(") VALUES ");
@@ -656,8 +710,9 @@ public abstract class DBTranslator
                 .append(")");
         }
 
-        return sqlstr.toString();
+        return sqlstr.toString();        
     }
+    
 
     public void setDeletePredicate(JDBCType entityType,
                                    PreparedStatement ps,
@@ -673,16 +728,30 @@ public abstract class DBTranslator
                                    BusinessObject bo,
                                    boolean isCSV,
                                    DataGenerator dataGenerator) {
-        // get the values
-        List<String> values = new LinkedList<>();
-        int position = 1;
+
+        List<Property> properties = new ArrayList<>();
         for(Property p: getProperties(entityType, dataGenerator)) {
             if(shouldSkip(bo, p, dataGenerator)) {
                 continue;
             }
-
-            position = setValue(ps, values, p, bo, position, isCSV);
+            properties.add(p);
         }
+
+        return setInsertValues(entityType, ps, bo, isCSV, properties);
+    }
+    
+    public String setInsertValues (JDBCType entityType,
+            PreparedStatement ps,
+            BusinessObject bo,
+            boolean isCSV,
+            List<Property> properties) {
+        
+        // get the values
+        List<String> values = new LinkedList<>();
+        int position = 1;
+        for(Property p: properties) {
+            position = setValue(ps, values, p, bo, position, isCSV);
+        }        
 
         if(ps == null) {
             StringBuilder sqlstr = new StringBuilder();
@@ -691,7 +760,7 @@ public abstract class DBTranslator
             return sqlstr.toString();
         } else {
             return null;
-        }
+        }        
     }
 
     private int setValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV) {
@@ -700,14 +769,8 @@ public abstract class DBTranslator
 
     private int setValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV, boolean isUpdate) {
         // simple type
-        if(p.getType().isDataType() && !p.isMany()) {
-            JDBCDataModel.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
-            JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
-            values.add(getColumnString(bo.get(col.getName()), isUpdate, col.getName(), c));
-
-            if(ps != null) {
-                addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
-            }
+        if (p.getType().isDataType() && !p.isMany()) {
+            position = setSimpleValue(ps, values, p, bo, position, isCSV, isUpdate);
         }
 
         // foreign keys
@@ -730,6 +793,20 @@ public abstract class DBTranslator
 
         return position;
     }
+    
+    private int setSimpleValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV, boolean isUpdate) {
+        JDBCDataModel.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
+        JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
+        values.add(getColumnString(bo.get(col.getName()), isUpdate, col.getName(), c));
+
+        if(ps != null) {
+            addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
+        }
+         
+        return position;
+    }
+    
+    
 
     private String getColumnString(Object value, boolean isUpdate, String columnName, JDBCtoSQLConverter c) {
         if(isUpdate) {
@@ -781,6 +858,35 @@ public abstract class DBTranslator
             return null;
         }
     }
+    
+    public String setUpdateValues(JDBCType entityType, PreparedStatement ps, BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys) {
+
+        int position = 1;
+        List<String> modifiedValues = new LinkedList<>();
+        for(String columnToSet: columnsToSet) {
+            Property p = entityType.getProperty(columnToSet);
+            position = setSimpleValue(ps, modifiedValues, p, bo, position, false, true);
+        }
+
+        // set the lookup values in the WHERE predicate list
+        List<String> lookupValues = new LinkedList<>();        
+        for(Map.Entry<String, Object> entry: lookupKeys.entrySet()) {
+            Property p = entityType.getProperty(entry.getKey());
+            JDBCDataModel.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
+            position = setSimpleValue(ps, lookupValues, p, bo, position, false, true);            
+        }        
+
+        if(ps == null) {
+            StringBuilder sqlstr = new StringBuilder();
+            sqlstr.append(String.join(", ", modifiedValues))
+                .append(" WHERE ")
+                .append(String.join(" AND ", lookupValues));
+
+            return sqlstr.toString();
+        } else {
+            return null;
+        }
+    }    
 
     private void addBindParameter(PreparedStatement ps, String type, int position, Object value) {
         BindParameter bp = BindParameter.instance(position, null);
@@ -797,6 +903,16 @@ public abstract class DBTranslator
 
         return sqlstr.toString();
     }
+    
+    public String getInsertSql(JDBCType entityType, BusinessObject bo, List<String> columns, List<Property> properties) {
+
+        StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(entityType, false, columns));
+        sqlstr.append("(")
+            .append(setInsertValues(entityType, null, bo, false, properties))
+            .append(")");
+
+        return sqlstr.toString();
+    }    
 
     public String getCSV(JDBCType entityType, BusinessObject bo, DataGenerator dataGenerator) {
 
@@ -805,11 +921,27 @@ public abstract class DBTranslator
 
         return sqlstr.toString();
     }
+    
+    public String getCSV(JDBCType entityType, BusinessObject bo, List<Property> properties) {
+
+        StringBuilder sqlstr = new StringBuilder();
+        sqlstr.append(setInsertValues(entityType, null, bo, true, properties));
+
+        return sqlstr.toString();
+    }    
 
     public String getUpdateSql(JDBCType entityType, BusinessObject bo, BusinessObject dbBO) {
 
         StringBuilder sqlstr = new StringBuilder(getUpdateSqlFragment(entityType, bo, false));
         sqlstr.append(setUpdateValues(entityType, null, bo, dbBO));
+
+        return sqlstr.toString();
+    }
+    
+    public String getUpdateSql(JDBCType entityType, BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys) {
+
+        StringBuilder sqlstr = new StringBuilder(getUpdateSqlFragment(entityType, bo, columnsToSet, lookupKeys));
+        sqlstr.append(setUpdateValues(entityType, null, bo, columnsToSet, lookupKeys));
 
         return sqlstr.toString();
     }

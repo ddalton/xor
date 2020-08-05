@@ -21,6 +21,8 @@ package tools.xor.providers.jdbc;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 import org.json.JSONObject;
 
@@ -43,9 +45,13 @@ public interface CustomPersister
 
     void deleteGraph(ObjectCreator objectCreator, Settings settings);
 
-    void create (BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException;
+    void create (BusinessObject bo, Settings settings, DataGenerator generator);
+    
+    void create (BusinessObject bo, List<String> columnsToUpdate);    
 
     void update (BusinessObject bo, BusinessObject dbBO);
+    
+    void update (BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys);    
 
     void delete (BusinessObject bo);
 

@@ -24,6 +24,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -85,6 +86,15 @@ public class JDBCSessionContext implements CustomPersister
     private Stack<ConnectionHolder> connections = new Stack<>();
     private Map<String, BufferedWriter> csvWriters = new HashMap<>();
     private Boolean autoCommit; // 3 value logic, only set if initialized
+    private boolean orderSQL = true;
+
+    public boolean isOrderSQL() {
+        return orderSQL;
+    }
+
+    public void setOrderSQL(boolean orderSQL) {
+        this.orderSQL = orderSQL;
+    }
 
     public Boolean isAutoCommit() {
         return autoCommit;
@@ -276,48 +286,54 @@ public class JDBCSessionContext implements CustomPersister
 
     @Override public void persistGraph (ObjectCreator objectCreator, Settings settings)
     {
-        try {
-            List<BusinessObject> objects = new ArrayList<>(objectCreator.getDataObjects());
-            EntityType entityType = (EntityType)settings.getEntityType();
-            TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
-            Collections.sort(objects, new ObjectGraph.StateComparator(sg));
+        List<BusinessObject> objects = new ArrayList<>(objectCreator.getDataObjects());
+        EntityType entityType = (EntityType)settings.getEntityType();
+        TypeGraph<State, Edge<State>> sg = settings.getView().getTypeGraph(entityType);
+        Collections.sort(objects, new ObjectGraph.StateComparator(sg));
 
-            for (BusinessObject bo : objects) {
-                if (bo.getInstance() instanceof JSONObject) {
-                    Object persistentInstance = this.po.getEntity(bo);
-                    if (persistentInstance == null) {
-                        // create INSERT statements for this object
-                        create(bo, settings, null);
-                    } else {
-                        // update
-                        BusinessObject dbBO = new ImmutableBO(entityType, null, null, objectCreator);
-                        Object snapshotInstance = getSnapshot(persistentInstance);
-                        if(snapshotInstance != null) {
-                            dbBO.setInstance(snapshotInstance);
-                            update(bo, dbBO);
-                        }
+        for (BusinessObject bo : objects) {
+            if (bo.getInstance() instanceof JSONObject) {
+                Object persistentInstance = this.po.getEntity(bo);
+                if (persistentInstance == null) {
+                    // create INSERT statements for this object
+                    create(bo, settings, null);
+                } else {
+                    // update
+                    BusinessObject dbBO = new ImmutableBO(entityType, null, null, objectCreator);
+                    Object snapshotInstance = getSnapshot(persistentInstance);
+                    if(snapshotInstance != null) {
+                        dbBO.setInstance(snapshotInstance);
+                        update(bo, dbBO);
                     }
                 }
             }
-        } catch(SQLException exception) {
-            throw ClassUtil.wrapRun(exception);
         }
     }
+    
+    @Override public void create (BusinessObject bo, Settings settings, DataGenerator generator) {
+        List<EntitySQL> entitySQLs = getInsertObjs(settings, bo, importMethod, generator);
+        createEntity(bo, entitySQLs);
+    }
+    
+    @Override public void create (BusinessObject bo, List<String> columnsToUpdate) {
+        List<EntitySQL> entitySQLs = getInsertObjs(bo, importMethod, columnsToUpdate);
+        createEntity(bo, entitySQLs);
+    }    
 
-    @Override public void create (BusinessObject bo, Settings settings, DataGenerator dataGenerator) throws SQLException
+    private void createEntity (BusinessObject bo, List<EntitySQL> entitySQLs)
     {
         try {
             // If preparedStatement batching is not desired due to ordering reasons
             switch(importMethod) {
             case LITERAL_SQL:
                 createStatement();
-                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
+                for (EntitySQL entitySQL : entitySQLs) {
                     statement.addBatch(entitySQL.sql);
                     literalSQLs.add(entitySQL.sql);
                 }
                 break;
             case PREPARED_STATEMENT:
-                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
+                for (EntitySQL entitySQL : entitySQLs) {
                     entitySQL.ps.addBatch();
                     preparedInsert.put(new PSKey(entitySQL.entityType), entitySQL.ps);
 
@@ -327,13 +343,13 @@ public class JDBCSessionContext implements CustomPersister
                 }
                 break;
             case CSV:
-                for (EntitySQL entitySQL : getInsertObjs(settings, bo, importMethod, dataGenerator)) {
+                for (EntitySQL entitySQL : entitySQLs) {
                     addSQL(entitySQL);
                 }
                 break;
             }
-        }catch(Throwable t) {
-            t.printStackTrace();
+        } catch(SQLException e) {
+            throw ClassUtil.wrapRun(e);
         }
     }
 
@@ -362,6 +378,68 @@ public class JDBCSessionContext implements CustomPersister
             t.printStackTrace();
         }
     }
+    
+    @Override
+    public void update (BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys) {
+        try {
+            // If preparedStatement batching is not desired due to ordering reasons
+            switch(importMethod) {
+            case LITERAL_SQL:
+                createStatement();
+                for (EntitySQL entitySQL : getUpdateObjs(bo, columnsToSet, lookupKeys, importMethod)) {
+                    statement.addBatch(entitySQL.sql);
+                    literalSQLs.add(entitySQL.sql);
+                }
+                break;
+            case PREPARED_STATEMENT:
+                for (EntitySQL entitySQL : getUpdateObjs(bo, columnsToSet, lookupKeys, importMethod)) {
+                    entitySQL.ps.addBatch();
+                    preparedUpdate.put(new PSKey(entitySQL.entityType), entitySQL.ps);
+                }
+                break;
+            case CSV:
+                throw new RuntimeException("CSV is not supported for update");
+            }
+        }catch(SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }        
+    }
+
+    public Object getSingleResult(BusinessObject bo, String primaryKeyColumn, Map<String, String> lookupKeys) {
+        try {
+            // If preparedStatement batching is not desired due to ordering reasons
+            switch(importMethod) {
+            case PREPARED_STATEMENT:
+                PreparedStatement ps = getSelectStmt(bo, primaryKeyColumn, lookupKeys);
+                Object result = null;
+                try(ResultSet rs = ps.executeQuery()) {
+                    if(rs.next()) {
+                        result = rs.getObject(1);
+                    }
+                }                
+                return result;
+            case LITERAL_SQL:
+                throw new RuntimeException("Literal sql is not supported for select");                
+            case CSV:
+                throw new RuntimeException("CSV is not supported for update");
+            default:
+                return null;                
+            }
+        }catch(SQLException e) {
+            throw ClassUtil.wrapRun(e);
+        }  
+    }    
+    
+    private PreparedStatement getSelectStmt (BusinessObject bo, String primaryKeyColumn, Map<String, String> lookupKeys)
+    {
+        JDBCType entityType = (JDBCType)bo.getType();
+        String psSQL = getDbTranslator().getSelectStmt(entityType, bo, primaryKeyColumn, lookupKeys);
+
+        PreparedStatement ps = getOrCreate(psSQL);
+        getDbTranslator().setSelectValues(entityType, ps, bo, primaryKeyColumn, lookupKeys);
+
+        return ps;
+    }    
 
     private void addSQL(EntitySQL entitySQL) {
         List<String> sqls = sqlByType.get(entitySQL.entityType.getName());
@@ -426,6 +504,46 @@ public class JDBCSessionContext implements CustomPersister
 
         return result;
     }
+    
+    /*
+     * Use this method is loading data from a CSV file that has the identifier already populated
+     * Inheritance does not need to be handled as it is explicitly handled by the client
+     */
+    private List<EntitySQL> getInsertObjs(BusinessObject bo, ImportMethod importMethod, List<String> columns) {
+        JDBCType entityType = (JDBCType)bo.getType();
+        
+        List<Property> properties = new ArrayList<>();
+        for(String column: columns) {
+            Property p = entityType.getProperty(column.toUpperCase());
+            if(p == null) {
+                throw new RuntimeException(String.format("Unable to find property for column %s on table %s", column, entityType.getName()));
+            }
+            properties.add(p);
+        }
+
+        List result = new LinkedList<>();        
+        switch(importMethod) {
+        case PREPARED_STATEMENT:
+            String literalSQL = null;
+            if(logger.isDebugEnabled()) {
+                literalSQL = getDbTranslator().getInsertSql(entityType, bo, columns, properties);
+            }
+            result.add(new EntitySQL(entityType, getPreparedInsert(
+                    entityType,
+                    bo,
+                    columns,
+                    properties), literalSQL));
+            break;
+        case LITERAL_SQL:
+            result.add(new EntitySQL(entityType, null, getDbTranslator().getInsertSql(entityType, bo, columns, properties)));
+            break;
+        case CSV:
+            result.add(new EntitySQL(entityType, null, getDbTranslator().getCSV(entityType, bo, properties)));
+            break;
+        }
+
+        return result;
+    }    
 
     private List<EntitySQL> getUpdateObjs(BusinessObject bo, BusinessObject dbBO, ImportMethod importMethod) {
         JDBCType entityType = (JDBCType)bo.getType();
@@ -462,6 +580,32 @@ public class JDBCSessionContext implements CustomPersister
 
         return result;
     }
+    
+    private List<EntitySQL> getUpdateObjs(BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys, ImportMethod importMethod) {
+        JDBCType entityType = (JDBCType)bo.getType();
+
+        List result = new LinkedList<>();
+        switch (importMethod) {
+        case PREPARED_STATEMENT:
+            result.add(
+                new EntitySQL(
+                    entityType,
+                    getPreparedUpdate(entityType, bo, columnsToSet, lookupKeys),
+                    null));
+            break;
+        case LITERAL_SQL:
+            result.add(
+                new EntitySQL(
+                    entityType,
+                    null,
+                    getDbTranslator().getUpdateSql(entityType, bo, columnsToSet, lookupKeys)));
+            break;
+        case CSV:
+            throw new RuntimeException("CSV option not supported for update");
+        }
+
+        return result;
+    }    
 
     private List<EntitySQL> getDeleteObjs(BusinessObject bo) {
         JDBCType entityType = (JDBCType)bo.getType();
@@ -486,18 +630,7 @@ public class JDBCSessionContext implements CustomPersister
     {
         String psSQL = getDbTranslator().getDeleteSqlFragment(entityType, bo);
 
-        PreparedStatement ps = null;
-        try {
-            if(statementCache.containsKey(psSQL)) {
-                ps = statementCache.get(psSQL);
-            } else {
-                ps = getConnection().prepareStatement(psSQL);
-                statementCache.put(psSQL, ps);
-            }
-        }
-        catch (SQLException e) {
-            throw ClassUtil.wrapRun(e);
-        }
+        PreparedStatement ps = getOrCreate(psSQL);
         getDbTranslator().setDeletePredicate(entityType, ps, bo);
 
         return ps;
@@ -510,6 +643,27 @@ public class JDBCSessionContext implements CustomPersister
     {
         String psSQL = getDbTranslator().getInsertSqlFragment(entityType, bo, true, dataGenerator);
 
+        PreparedStatement ps = getOrCreate(psSQL);
+        getDbTranslator().setInsertValues(entityType, ps, bo, false, dataGenerator);
+
+        return ps;
+    }
+    
+    private PreparedStatement getPreparedInsert (
+            JDBCType entityType,
+            BusinessObject bo,
+            List<String> columns,
+            List<Property> properties)
+        {
+            String psSQL = getDbTranslator().getInsertSqlFragment(entityType, true, columns);
+
+            PreparedStatement ps = getOrCreate(psSQL);
+            getDbTranslator().setInsertValues(entityType, ps, bo, false, properties);
+
+            return ps;
+        }
+    
+    private PreparedStatement getOrCreate(String psSQL) {
         PreparedStatement ps = null;
         try {
             if(statementCache.containsKey(psSQL)) {
@@ -522,8 +676,7 @@ public class JDBCSessionContext implements CustomPersister
         catch (SQLException e) {
             throw ClassUtil.wrapRun(e);
         }
-        getDbTranslator().setInsertValues(entityType, ps, bo, false, dataGenerator);
-
+        
         return ps;
     }
 
@@ -531,22 +684,21 @@ public class JDBCSessionContext implements CustomPersister
     {
         String psSQL = getDbTranslator().getUpdateSqlFragment(entityType, bo, true);
 
-        PreparedStatement ps = null;
-        try {
-            if(statementCache.containsKey(psSQL)) {
-                ps = statementCache.get(psSQL);
-            } else {
-                ps = getConnection().prepareStatement(psSQL);
-                statementCache.put(psSQL, ps);
-            }
-        }
-        catch (SQLException e) {
-            throw ClassUtil.wrapRun(e);
-        }
+        PreparedStatement ps = getOrCreate(psSQL);
         getDbTranslator().setUpdateValues(entityType, ps, bo, dbBO);
 
         return ps;
     }
+    
+    private PreparedStatement getPreparedUpdate (JDBCType entityType, BusinessObject bo, List<String> columnsToSet, Map<String, Object> lookupKeys)
+    {
+        String psSQL = getDbTranslator().getUpdateSqlFragment(entityType, bo, columnsToSet, lookupKeys);
+
+        PreparedStatement ps = getOrCreate(psSQL);
+        getDbTranslator().setUpdateValues(entityType, ps, bo, columnsToSet, lookupKeys);
+
+        return ps;
+    }    
 
     @Override public void deleteGraph (ObjectCreator objectCreator, Settings settings)
     {
@@ -717,9 +869,11 @@ public class JDBCSessionContext implements CustomPersister
 
                 switch(importMethod) {
                 case PREPARED_STATEMENT:
-                    this.preparedInsert = getSortedMap(this.preparedInsert, false);
-                    this.preparedUpdate = getSortedMap(this.preparedUpdate, false);
-                    this.preparedDelete = getSortedMap(this.preparedDelete, true);
+                    if (orderSQL) {
+                        this.preparedInsert = getSortedMap(this.preparedInsert, false);
+                        this.preparedUpdate = getSortedMap(this.preparedUpdate, false);
+                        this.preparedDelete = getSortedMap(this.preparedDelete, true);
+                    }
 
                     for(PreparedStatement ps: preparedInsert.values()) {
                         ps.executeBatch();

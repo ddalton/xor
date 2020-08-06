@@ -26,7 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +42,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -97,6 +102,7 @@ import tools.xor.util.graph.StateGraph;
  *    entityName - Java entity name, typically the fully qualified class name of the entity
  *    tableName  - The name of the table
  *    columns    - The columns that need to be populated in the table
+ *    dateFormat - If there is at least a single column of type Date
  *    
  *    Optional fields
  *    ---------------
@@ -120,6 +126,7 @@ import tools.xor.util.graph.StateGraph;
  *    {
  *      "entityName" : "tools.xor.db.pm.Task",
  *      "tableName"  : "TASK",
+ *      "dateFormat" : "yyyy-MM-dd HH:mm:ss", 
  *      "columns" : ["col1", "col2", "col3", "col4", "col5", "col6", "col7" ....],
  *      "keys" : ["col1"],
  *      "foreignKeys" : [
@@ -172,6 +179,7 @@ public class CSVLoader {
     
     private static final String KEY_ENTITY_NAME = "entityName";
     private static final String KEY_TABLE_NAME = "tableName";
+    private static final String KEY_DATE_FORMAT = "dateFormat";
     private static final String KEY_COLUMNS = "columns";
     private static final String KEY_KEYS = "keys";
     private static final String KEY_FOREIGN_KEYS = "foreignKeys";
@@ -188,6 +196,7 @@ public class CSVLoader {
         private Map<String, Integer> headerMap;
         private List<JSONObject> notNullForeignKeys;
         private List<JSONObject> nullableForeignKeys;
+        private SimpleDateFormat dateFormatter;
 
         public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader) {
             super(type, false);
@@ -236,6 +245,15 @@ public class CSVLoader {
                     }
                 }
             }
+            
+            if(schema.has(KEY_DATE_FORMAT)) {
+                String dateFormat = this.schema.getString(KEY_DATE_FORMAT);
+                this.dateFormatter = new SimpleDateFormat(dateFormat);
+            }
+        }
+        
+        public DateFormat getDateFormatter() {
+            return this.dateFormatter;
         }
         
         public List<Property> getPropertiesWithGenerator() {
@@ -530,6 +548,16 @@ public class CSVLoader {
             columns.add(p.getName());
         }
         
+        List<Property> dateProperties = new ArrayList<>();
+        for(String column: columns) {
+            Property p = csvState.getType().getProperty(column);
+            if(Date.class.isAssignableFrom(p.getType().getInstanceClass())) {
+                dateProperties.add(p);
+            }
+        }
+        if(dateProperties.size() > 0 && csvState.getDateFormatter() == null) {
+            throw new RuntimeException("Some of the columns are of type Date, and a 'dateFormat' expression is not set on the schema");
+        }
         
         // Read the data for non FK columns
         try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvState.getCSVFile());
@@ -548,6 +576,21 @@ public class CSVLoader {
                     for(Map.Entry<String, Object> entry: notNullFKData.entrySet()) {                    
                         entityJSON.put(entry.getKey(), entry.getValue());
                     }   
+                    
+                    for(Property p: dateProperties) {
+                        String dateStr = entityJSON.getString(p.getName());
+                        if(StringUtils.isNotEmpty(dateStr)) {
+                            Date value = null;
+                            try {
+                                value = csvState.getDateFormatter().parse(dateStr);
+                            } catch (ParseException e) {
+                                throw new RuntimeException(String.format(
+                                        "The date value '%s' for property %s in table %s cannot be parsed", dateStr,
+                                        p.getName(), csvState.getTableName()));
+                            }
+                            entityJSON.put(p.getName(), value);
+                        }
+                    }
                     
                     // check if any properties have generators and if so execute them
                     for(Property p: propWithGenerator) {

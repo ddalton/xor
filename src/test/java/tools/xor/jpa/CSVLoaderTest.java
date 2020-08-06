@@ -119,6 +119,7 @@ public class CSVLoaderTest {
             List<String> paths = new ArrayList<>();
             paths.add("UUID");
             paths.add("NAME");
+            paths.add("CREATEDON");
             paths.add("OWNEDBY_UUID");
             AggregateView ownedByView = new AggregateView("OWNEDBY");
             ownedByView.setAttributeList(paths);
@@ -137,6 +138,7 @@ public class CSVLoaderTest {
             JSONObject json = (JSONObject)result.get(0);
             System.out.println("CSVLOADER JSON: " + json.toString());
             assert(json.getString("UUID").equals("ID_4"));
+            assert(json.getString("CREATEDON").startsWith("2019-12-25T23:59:59"));
             
             JSONObject ownedBy = json;
             if(modelsRelationships) {

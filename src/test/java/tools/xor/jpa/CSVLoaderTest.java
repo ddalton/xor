@@ -21,6 +21,7 @@ package tools.xor.jpa;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -28,6 +29,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -51,6 +53,7 @@ import tools.xor.service.exim.CSVLoader;
 import tools.xor.service.exim.CSVLoader.CSVState;
 import tools.xor.util.Edge;
 import tools.xor.util.graph.Graph;
+import tools.xor.view.AggregateView;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })
@@ -84,6 +87,11 @@ public class CSVLoaderTest {
 	    
 	    DataModel dm = amJDBC.getDataModel();
 	    Shape shape = dm.getShape();
+	    boolean modelsRelationships = true;
+	    if(shape.getName().equals(DataModel.RELATIONAL_SHAPE)) {
+	        modelsRelationships = false;
+	    }
+	    
 	    CSVLoader csvLoader = new CSVLoader(shape, testFolder);
 	    
 	   Graph<CSVState, Edge<CSVState>> graph = csvLoader.getGraph();
@@ -101,6 +109,43 @@ public class CSVLoaderTest {
         sc.beginTransaction();	  
         try {
             csvLoader.importData(new Settings(), dataStore);
+            
+            // Load a task 
+            JSONObject queryTask = new JSONObject();
+            queryTask.put("UUID", "ID_4");
+            
+            // Cannot use relationships since
+            // some JUnit tests use DataModel.RELATIONAL_SHAPE and this does not have relationship
+            List<String> paths = new ArrayList<>();
+            paths.add("UUID");
+            paths.add("NAME");
+            paths.add("OWNEDBY_UUID");
+            AggregateView ownedByView = new AggregateView("OWNEDBY");
+            ownedByView.setAttributeList(paths);
+            
+            // This whole creating the settings object needs to be updated
+            Settings settings = new Settings();
+            // Why is the shape getting un-initialized when called after settings.init???
+            settings.setView(ownedByView);    
+            settings.setSessionContext(sc);
+            settings.setEntityType(shape.getType("TASK"));
+            settings.init(shape);
+                    
+            List result = amJDBC.query(queryTask, settings);
+            assert(result != null);
+            assert(result.size() == 1);
+            JSONObject json = (JSONObject)result.get(0);
+            System.out.println("CSVLOADER JSON: " + json.toString());
+            assert(json.getString("UUID").equals("ID_4"));
+            
+            JSONObject ownedBy = json;
+            if(modelsRelationships) {
+                ownedBy = json.getJSONObject("OWNEDBY_UUID");
+                assert(ownedBy.getString("UUID").equals("ID_2"));
+            } else {
+                assert(ownedBy.getString("OWNEDBY_UUID").equals("ID_2"));
+            }
+            
         } finally {
         	    sc.rollback();
         }

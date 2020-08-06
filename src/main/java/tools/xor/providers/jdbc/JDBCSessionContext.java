@@ -658,7 +658,7 @@ public class JDBCSessionContext implements CustomPersister
             String psSQL = getDbTranslator().getInsertSqlFragment(entityType, true, columns);
 
             PreparedStatement ps = getOrCreate(psSQL);
-            getDbTranslator().setInsertValues(entityType, ps, bo, false, properties);
+            getDbTranslator().setInsertValues(entityType, ps, bo, false, properties, false);
 
             return ps;
         }

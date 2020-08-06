@@ -230,7 +230,10 @@ public abstract class AbstractShape implements Shape
         Map<String, Property> result = null;
 
         if (this.shapeInheritance == Inheritance.REFERENCE && parent != null) {
-            result = parent.getProperties(type);
+            Map<String, Property> temp = parent.getProperties(type);
+            if(temp != null) {
+                result = new LinkedHashMap<>(parent.getProperties(type));
+            }
         }
         
         EntityType current = type;
@@ -315,16 +318,23 @@ public abstract class AbstractShape implements Shape
     @Override
     public Map<String, Property> getDeclaredProperties(EntityType type) {
         Map<String, Property> result = null;
+
+        if(this.shapeInheritance == Inheritance.REFERENCE && parent != null) {
+            result = parent.getDeclaredProperties(type);
+        }        
         
+        // Override with current shape declared properties
         Map<String, Property> entityProperties = this.properties.get(type.getEntityName());
         if (entityProperties != null) {
-            result = new LinkedHashMap<>();
+            if(result == null) {
+                result = new LinkedHashMap<>();
+            }
             for (Map.Entry<String, Property> entry : entityProperties.entrySet()) {
                 if (entry.getValue().getContainingType().getName().equals(type.getName())) {
                     result.put(entry.getKey(), entry.getValue());
                 }
             }
-        }
+        }       
         
         return result;
     }

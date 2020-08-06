@@ -123,7 +123,6 @@ public class JDBCType extends AbstractType {
             }
         }
 
-
         setIdentifierProperty();
     }
 
@@ -385,5 +384,16 @@ public class JDBCType extends AbstractType {
         }
 
         return this.pathToColumnMap.get(path);
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder(String.format("Entity type: %s", getName()) );
+        
+        for(Property p: getProperties()) {
+            builder.append(String.format("\n     %s", p.toString()));
+        }
+        
+        return builder.toString();        
     }
 }

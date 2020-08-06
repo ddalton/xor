@@ -141,6 +141,12 @@ public abstract class AbstractType implements EntityType, Cloneable {
             copy.entityGenerators = new LinkedList<>();
             copy.shape = shape;
             
+            // Also make a copy of the properties
+            for(Property p: getProperties()) {
+                Property pCopy = ((ExtendedProperty)p).copy(copy);
+                shape.addProperty(pCopy);
+            }
+            
             return copy;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);

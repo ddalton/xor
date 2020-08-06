@@ -1,7 +1,7 @@
 name, displayname, description,ownedBy,dtype
 { "entityName":"tools.xor.db.pm.Task", "tableName":"Task", "columns":["UUID", "DTYPE", "name", "displayName", "description"], "keys" : ["name"], "foreignKeys" : [ { "foreignKey" : "ownedBy_UUID", "foreignKeyTable" : "Person", "select" : "uuid", "join" : [{"name":"ownedBy"}]} ]}
-TASK_1, Task 1, Task 1, johnd,Task
-TASK_2, Task 2, Task 2, johnd,Task
-TASK_3, Task 3, Task 3, johnd,Task
-TASK_4, Task 4, Task 4, johnw,Task
-TASK_5, Task 5, Task 5, vivianr,Task
+TASK_1,Task 1, Task 1, johnd,Task
+TASK_2,Task 2, Task 2, johnd,Task
+TASK_3,Task 3, Task 3, johnd,Task
+TASK_4,Task 4, Task 4, johnw,Task
+TASK_5,Task 5, Task 5, vivianr,Task

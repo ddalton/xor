@@ -292,7 +292,7 @@ public class CSVLoader {
                     // normalize the column names
                     fkColName = normalize(fkColName);
                     headerName = normalize(headerName);
-                    String fkValue = csvRecord.get(this.headerMap.get(headerName));
+                    String fkValue = csvRecord.get(this.headerMap.get(headerName)).trim();
                     entityJSON.put(fkColName, fkValue);
                     lookupKeys.put(fkColName, fkValue);
                 }
@@ -592,13 +592,13 @@ public class CSVLoader {
                     // Fetch the foreign key value from the DB
                     Map<String, Object> nullableFKData = csvState.loadNullableFKData(csvRecord, po);    
                     List<String> columnsToUpdate = new ArrayList<>(nullableFKData.keySet());                    
-                    for(Map.Entry<String, Object> entry: nullableFKData.entrySet()) {                    
+                    for(Map.Entry<String, Object> entry: nullableFKData.entrySet()) {                        
                         entityJSON.put(entry.getKey(), entry.getValue());
                     }
                     
                     // Get the lookup keys for that particular record
                     Map<String, Object> lookupKeys = csvState.getLookupKeys(csvRecord);
-                    for(Map.Entry<String, Object> entry: lookupKeys.entrySet()) {                    
+                    for(Map.Entry<String, Object> entry: lookupKeys.entrySet()) {      
                         entityJSON.put(entry.getKey(), entry.getValue());
                     }                    
                         

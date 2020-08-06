@@ -416,4 +416,11 @@ public class JDBCProperty extends AbstractProperty implements Cloneable
     public boolean isUpdatable() {
         return !(getForeignKey() != null && (getForeignKey().isComposition() || getForeignKey().isInheritance()));
     }
+    
+    @Override
+    public String toString() {
+        return String.format("Name: %s, Type: %s, isDataType: %s, isNullable: %s, Containing type: %s", getName(),
+                getType().getName(), isDataType(), isNullable(),
+                (getContainingType() != null) ? getContainingType().getName() : "N/A");
+    }
 }

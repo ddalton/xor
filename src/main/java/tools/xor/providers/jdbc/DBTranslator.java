@@ -737,22 +737,27 @@ public abstract class DBTranslator
             properties.add(p);
         }
 
-        return setInsertValues(entityType, ps, bo, isCSV, properties);
+        return setInsertValues(entityType, ps, bo, isCSV, properties, true);
     }
     
     public String setInsertValues (JDBCType entityType,
             PreparedStatement ps,
             BusinessObject bo,
             boolean isCSV,
-            List<Property> properties) {
+            List<Property> properties,
+            boolean modelsRelationships) {
         
         // get the values
         List<String> values = new LinkedList<>();
         int position = 1;
         for(Property p: properties) {
-            position = setValue(ps, values, p, bo, position, isCSV);
+            if(modelsRelationships) {
+                position = setValue(ps, values, p, bo, position, isCSV);
+            } else {
+                position = setSimpleValue(ps, values, p, bo, position, isCSV, false);                
+            }
         }        
-
+        
         if(ps == null) {
             StringBuilder sqlstr = new StringBuilder();
             sqlstr.append(String.join(",", values));
@@ -875,7 +880,7 @@ public abstract class DBTranslator
             JDBCDataModel.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
             position = setSimpleValue(ps, lookupValues, p, bo, position, false, true);            
         }        
-
+        
         if(ps == null) {
             StringBuilder sqlstr = new StringBuilder();
             sqlstr.append(String.join(", ", modifiedValues))
@@ -908,7 +913,7 @@ public abstract class DBTranslator
 
         StringBuilder sqlstr = new StringBuilder(getInsertSqlFragment(entityType, false, columns));
         sqlstr.append("(")
-            .append(setInsertValues(entityType, null, bo, false, properties))
+            .append(setInsertValues(entityType, null, bo, false, properties, false))
             .append(")");
 
         return sqlstr.toString();
@@ -925,7 +930,7 @@ public abstract class DBTranslator
     public String getCSV(JDBCType entityType, BusinessObject bo, List<Property> properties) {
 
         StringBuilder sqlstr = new StringBuilder();
-        sqlstr.append(setInsertValues(entityType, null, bo, true, properties));
+        sqlstr.append(setInsertValues(entityType, null, bo, true, properties, false));
 
         return sqlstr.toString();
     }    

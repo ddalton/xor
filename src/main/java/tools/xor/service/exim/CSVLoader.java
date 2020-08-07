@@ -25,6 +25,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -56,6 +58,7 @@ import tools.xor.ImmutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.generator.Generator;
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.DomainShape;
@@ -148,6 +151,13 @@ import tools.xor.util.graph.StateGraph;
  *                                    { "FKTcol4" : "Icol4" }
  *                                 ]
  *          }
+ *       ],
+ *       "generators" : [
+ *          {
+ *             "column" : "col10",
+ *             "className" : "tools.xor.generator.StringTemplate",
+ *             "arguments" : ["ID_[VISITOR_CONTEXT]"]
+ *          }
  *       ]
  *    }
  * 
@@ -188,6 +198,10 @@ public class CSVLoader {
     private static final String KEY_FOREIGN_KEY = "foreignKey";
     private static final String KEY_JOIN = "join";
     private static final String KEY_SELECT = "select";
+    private static final String KEY_GENERATORS = "generators";
+    private static final String KEY_COLUMN = "column";
+    private static final String KEY_CLASSNAME = "className";
+    private static final String KEY_ARGUMENTS = "arguments";
     
     public static class CSVState extends State {
         
@@ -198,6 +212,7 @@ public class CSVLoader {
         private List<JSONObject> notNullForeignKeys;
         private List<JSONObject> nullableForeignKeys;
         private SimpleDateFormat dateFormatter;
+        private Object context;
 
         public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader) {
             super(type, false);
@@ -251,10 +266,52 @@ public class CSVLoader {
                 String dateFormat = this.schema.getString(KEY_DATE_FORMAT);
                 this.dateFormatter = new SimpleDateFormat(dateFormat);
             }
+            
+            // initialize generators
+            if(schema.has(KEY_GENERATORS)) {
+                JSONArray jsonArray = schema.getJSONArray(KEY_GENERATORS);
+                for(int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject generator = jsonArray.getJSONObject(i);
+                    String generatorColumn = generator.getString(KEY_COLUMN);
+                    String generatorClassName = generator.getString(KEY_CLASSNAME);
+                    
+                    String[] args = null;
+                    if(generator.has(KEY_ARGUMENTS)) {
+                        JSONArray arguments = generator.getJSONArray(KEY_ARGUMENTS);
+                        args = new String[arguments.length()];
+                        for(int j = 0; i < arguments.length(); j++) {
+                            args[j] = arguments.getString(j);
+                        }
+                    }
+                    
+                    Property p = getType().getProperty(normalize(generatorColumn));
+                    if(p != null) {
+                        // construct the generator
+                        Class<?> cl;
+                        try {
+                            cl = Class.forName(generatorClassName);
+                            Constructor<?> cons = cl.getConstructor(String[].class);
+                            p.setGenerator((Generator) cons.newInstance(args));
+                        } catch (Exception e) {
+                            throw ClassUtil.wrapRun(e);
+                        }
+                    } else {
+                        throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, getType().getName()));
+                    }
+                }
+            }
         }
         
         public DateFormat getDateFormatter() {
             return this.dateFormatter;
+        }
+        
+        public void setContext(Object context) {
+            this.context = context;
+        }
+        
+        public Object getContext() {
+            return this.context;
         }
         
         /*
@@ -586,6 +643,8 @@ public class CSVLoader {
                 null,
                 settings,
                 null);
+        // set any additional context
+        visitor.setContext(0, csvState.getContext());
         
         JDBCSessionContext sc = po.getSessionContext();
         assert sc.getConnection() != null : "Can import only in the context of an existing JDBC connection";

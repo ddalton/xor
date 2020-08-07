@@ -125,6 +125,24 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                         visitor.getContext().toString()) : input;
                 }
             });
+        
+        for(int i = 0; i < MAX_VISITOR_CONTEXT; i++) {
+            final String contextName = VISITOR_CONTEXT + "_" + i; 
+            evaluators.put(
+                    contextName, new TokenEvaluator()
+                    {
+                        @Override public String evaluate (String input,
+                                                          Generator generator,
+                                                          StateGraph.ObjectGenerationVisitor visitor)
+                        {
+                            String[] pieces = contextName.split("_");
+                            int index = Integer.parseInt(pieces[pieces.length-1]);
+                            return visitor.getContext(index) != null ? StringUtils.replace(input,
+                                contextName,
+                                visitor.getContext(index).toString()) : input;
+                        }
+                    });        
+        }
 
         evaluators.put(
             GENERATOR, new TokenEvaluator()

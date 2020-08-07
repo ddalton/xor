@@ -54,6 +54,7 @@ public class DefaultGenerator implements Generator
     public static final String GENERATOR_HIER_ID = "[GENERATOR_HIER_ID]";
     public static final String GENERATOR_PARENT_ID = "[GENERATOR_PARENT_ID]";
     public static final String QUERY_DATA = "QUERY_DATA.";
+    public static final int MAX_VISITOR_CONTEXT = 3;    
 
     // Used for collection sizes and range percent choices
     protected static final String RANGE_DELIM = ",";

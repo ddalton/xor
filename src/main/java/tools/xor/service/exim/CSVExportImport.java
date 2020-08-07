@@ -33,7 +33,7 @@ public class CSVExportImport extends AbstractExportImport
     private CSVPrinter csvPrinter;
     private List entityRecord;
 
-    private static final CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator("\n");
+    public static final CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator("\n");
 
     public CSVExportImport (AggregateManager am)
     {
@@ -44,23 +44,23 @@ public class CSVExportImport extends AbstractExportImport
     {
         JSONObject entity = new JSONObject();
 
-        for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
-            String value = row.get(entry.getValue());
-            if (isEmbeddedPath(entry.getKey())) {
-                setEmbeddableValue(entity, entry.getKey(), value);
-            }
-            else {
-                // set direct value
-                if (value != null) {
-                    //if(NumberUtils.isNumber(value)) {
-                    //  entity.put(entry.getKey(), NumberUtils.toDouble(value));
-                    //} else {
+        if (row != null) {
+            for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+                String value = row.get(entry.getValue());
+                if (isEmbeddedPath(entry.getKey())) {
+                    setEmbeddableValue(entity, entry.getKey(), value);
+                } else {
+                    // set direct value
+                    if (value != null) {
+                        // if(NumberUtils.isNumber(value)) {
+                        // entity.put(entry.getKey(), NumberUtils.toDouble(value));
+                        // } else {
                         entity.put(entry.getKey(), value);
-                    //}
-                }
-                else {
-                    //entity.put(entry.getKey(), JSONObject.NULL);
-                    entity.put(entry.getKey(), "");
+                        // }
+                    } else {
+                        // entity.put(entry.getKey(), JSONObject.NULL);
+                        entity.put(entry.getKey(), "");
+                    }
                 }
             }
         }

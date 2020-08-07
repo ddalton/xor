@@ -26,7 +26,15 @@ import tools.xor.service.exim.AbstractExportImport;
 
 public class Constants {
 
-  // Constants related to logging
+  /*
+   *  Constants related to logging
+   *  If there are problems with the log4j with an application using XOR, then
+   *  turn on the following option to see if there are any problems with parsing the configuration
+   *  -Dorg.apache.logging.log4j.simplelog.StatusLogger.level=DEBUG
+   *  
+   *  Usually xml config file has more problems due to unsupported features
+   */
+   
   public static class Log {
     public static final String OBJECT_WALKER = "object.graph.walker";
     public static final String STATE_GRAPH   = "state.graph";

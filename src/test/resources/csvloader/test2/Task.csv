@@ -1,0 +1,7 @@
+name, displayname, description,ownedBy,dtype,createdon
+{ "entityName":"tools.xor.db.pm.Task", "tableName":"Task", "dateFormat":"yyyy-MM-dd HH:mm:ss", "columns":["UUID", "DTYPE", "name", "displayName", "description","createdon"], "keys" : ["name"], "foreignKeys" : [ { "foreignKey" : "ownedBy_UUID", "foreignKeyTable" : "Person", "select" : "uuid", "join" : [{"name":"ownedBy"}]} ], "columnGenerators":[{ "column":"UUID", "className": "tools.xor.generator.StringTemplate", "arguments": ["ID_[VISITOR_CONTEXT]"]} ]}
+TASK_1,Task 1, Task 1, johnd,Task,2019-11-31 23:59:59
+TASK_2,Task 2, Task 2, johnd,Task,2019-12-21 23:59:59
+TASK_3,Task 3, Task 3, johnd,Task,2019-09-05 00:59:59
+TASK_4,Task 4, Task 4, johnw,Task,2019-12-25 23:59:59
+TASK_5,Task 5, Task 5, vivianr,Task,2019-12-23 01:59:59

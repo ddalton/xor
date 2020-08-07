@@ -987,13 +987,13 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		private JSONObject root;
 		private StateGraph stateGraph;
 		private Object context; // used for passing data, for example string length
-		private List additionalContext; // any additional context is set here
+		private Map<Integer, Object> additionalContext; // any additional context is set here
 
 		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings, StateGraph stateGraph) {
 			this.objectStateMap = objectStateMap;
 			this.settings = settings;
 			this.stateGraph = stateGraph;
-			this.additionalContext = new ArrayList<>();
+			this.additionalContext = new HashMap<>();
 		}
 
 		public boolean hasReachedLimit() {
@@ -1093,7 +1093,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		}
 		
 		public void setContext(int i, Object value) {
-		    this.additionalContext.set(i, value);
+		    this.additionalContext.put(i, value);
 		}
 		
 		public Object getContext(int i) {

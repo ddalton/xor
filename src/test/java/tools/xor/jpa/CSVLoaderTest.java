@@ -19,6 +19,7 @@
 
 package tools.xor.jpa;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -153,4 +154,42 @@ public class CSVLoaderTest {
         }
 	}	
 	
+    private String getAbsoluteResourcePath(String path) {
+        path = "src/test/resources/" + path;
+        String[] paths = path.split("/");
+        String systemFilePath = String.join(File.separator, paths);
+        
+        File file = new File(systemFilePath);
+        return file.getAbsolutePath();
+    }	
+
+    @Test
+    public void test2() throws IOException {
+        String csvFilePath = "csvloader/test2/Task.csv";
+        String csvGenFilePath = csvFilePath + ".gen";
+
+        String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+        System.out.println("Path: " + absolutePath);
+
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+        boolean modelsRelationships = true;
+        if (shape.getName().equals(DataModel.RELATIONAL_SHAPE)) {
+            modelsRelationships = false;
+        }
+
+        CSVLoader csvLoader = new CSVLoader(shape);
+        CSVState csvState = csvLoader.getCSVState(csvFilePath);
+        System.out.println("Got state");
+
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore) amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.beginTransaction();
+        try {
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+        } finally {
+            sc.rollback();
+        }
+    }
 }

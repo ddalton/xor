@@ -434,7 +434,6 @@ public class CSVLoader {
                 if (((ExtendedProperty) p).isDataType() && !p.isNullable()
                         && !columnsWithData.contains(normalize(p.getName()))) {
                     result.add(p);
-                    System.out.println("The required property is: " + p.getName());
                 }
             }
 

@@ -51,6 +51,7 @@ import tools.xor.BusinessObject;
 import tools.xor.CounterGenerator;
 import tools.xor.DataImporter;
 import tools.xor.EntityType;
+import tools.xor.ExtendedProperty;
 import tools.xor.ImmutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
@@ -256,9 +257,15 @@ public class CSVLoader {
             return this.dateFormatter;
         }
         
-        public List<Property> getPropertiesWithGenerator() {
+        /*
+         * Get properties that either have generators or are NOT NULL
+         * The value with will generated for these properties
+         */
+        public List<Property> getGeneratedProperties() {
             List<Property> result = new ArrayList<>();
             JSONArray columns = this.schema.getJSONArray(KEY_COLUMNS);
+            
+            Set<String> propertiesWithGenerator = new HashSet<>();
             for (int i = 0; i < columns.length(); i++) {
                 String columnName = normalize(columns.getString(i));
                 Property p = getType().getProperty(columnName);
@@ -268,6 +275,7 @@ public class CSVLoader {
                 }
                 if (p.getGenerator() != null) {
                     result.add(p);
+                    propertiesWithGenerator.add(p.getName());
                 } else {
                     // Check that a NOT NULL column either has data in the csv file or a generator
                     if (!this.headerMap.containsKey(columnName) && !p.isNullable()) {
@@ -275,6 +283,12 @@ public class CSVLoader {
                                 "NOT NULL column %s in table %s needs to either have data in the csv file or be configured with a generator",
                                 columnName, this.getTableName()));
                     }
+                }
+            }
+            
+            for(Property p: getMissingRequiredProperties()) {
+                if(!propertiesWithGenerator.contains(p.getName())) {
+                    result.add(p);
                 }
             }
 
@@ -360,7 +374,7 @@ public class CSVLoader {
             return notNullFKTables;
         }
         
-        public Set<String> gatherNonFKColumns() {
+        public Set<String> getNonFKColumns() {
             Set<String> result = new HashSet<>();
             
             // first get all valid columns
@@ -388,14 +402,45 @@ public class CSVLoader {
             return result;
         }
         
+        /**
+         * Columns that have data directly specified in the csv file,
+         * or columns that can derive the data using the foreign keys
+         * @return list of columns with data 
+         */
+        public Set<String> getColumnsWithData() {
+            Set<String> result = getNonFKColumns();
+            result.addAll(getFKColumns());
+            
+            return result;
+        }
+        
         public String getCSVFile() {
             return this.csvFile;
         }
+        
+        public String getEntityName() {
+            return schema.getString(KEY_ENTITY_NAME);
+        }        
         
         public String getTableName() {
             return schema.getString(KEY_TABLE_NAME);
         }
         
+        public List<Property> getMissingRequiredProperties() {
+            List<Property> result = new ArrayList<>();
+
+            Set<String> columnsWithData = getColumnsWithData();
+            for (Property p : getType().getProperties()) {
+                if (((ExtendedProperty) p).isDataType() && !p.isNullable()
+                        && !columnsWithData.contains(normalize(p.getName()))) {
+                    result.add(p);
+                    System.out.println("The required property is: " + p.getName());
+                }
+            }
+
+            return result;
+        }
+
         public void addEdges() {
             // Add edge from the dependedOn table to the dependedBy table
            for(String fkTable: getNotNullFKTables()) {
@@ -497,7 +542,27 @@ public class CSVLoader {
                 updateRecords(csvState, settings, po);
             }
         }
-    }    
+    }  
+    
+    private Set<String> getColumnsToPopulate(CSVState csvState, Map<String, Integer> colPosition, List<Property> generatedProperties) {
+        // The columns list direct which table columns need to be populated
+        Set<String> columns = csvState.getNonFKColumns();
+        for(Map.Entry<String, Integer> entry: csvState.headerMap.entrySet()) {
+            if(columns.contains(entry.getKey())) {
+                colPosition.put(entry.getKey(), entry.getValue());
+            }
+        }
+        // Add the not-null FK to the column list
+        for(JSONObject json: csvState.notNullForeignKeys) {
+            columns.add(CSVState.normalize(json.getString(KEY_FOREIGN_KEY)));
+        }
+        //Add the generated properties to the column list
+        for(Property p: generatedProperties) {
+            columns.add(p.getName());
+        }
+        
+        return columns;
+    }
     
     private void createRecords(CSVState csvState, Settings settings, JDBCDataStore po) throws IOException {
         /* Get the columns we need to populate
@@ -529,25 +594,11 @@ public class CSVLoader {
         counterGen.init(sc.getConnection(), visitor);
         counterGen.processVisitors();
         Iterator iter = counterGen;        
-        
-        Set<String> columns = csvState.gatherNonFKColumns();
+
         Map<String, Integer> colPosition = new HashMap<>();
-        for(Map.Entry<String, Integer> entry: csvState.headerMap.entrySet()) {
-            if(columns.contains(entry.getKey())) {
-                colPosition.put(entry.getKey(), entry.getValue());
-            }
-        }
-        
-        // All the not-null FK to the column list
-        for(JSONObject json: csvState.notNullForeignKeys) {
-            columns.add(CSVState.normalize(json.getString(KEY_FOREIGN_KEY)));
-        }
-        
-        List<Property> propWithGenerator = csvState.getPropertiesWithGenerator();
-        for(Property p: propWithGenerator) {
-            columns.add(p.getName());
-        }
-        
+        List<Property> generatedProperties = csvState.getGeneratedProperties();
+        Set<String> columns = getColumnsToPopulate(csvState, colPosition, generatedProperties);
+                
         List<Property> dateProperties = new ArrayList<>();
         for(String column: columns) {
             Property p = csvState.getType().getProperty(column);
@@ -592,8 +643,9 @@ public class CSVLoader {
                         }
                     }
                     
-                    // check if any properties have generators and if so execute them
-                    for(Property p: propWithGenerator) {
+                    // Finally populate the values for those properties whose values are 
+                    // to be generated
+                    for(Property p: generatedProperties) {
                         entityJSON.put(
                                 p.getName(), ((BasicType)p.getType()).generate(
                                     settings,
@@ -665,7 +717,7 @@ public class CSVLoader {
      * 
      * @param csvFile path relative to classpath
      * @return new CSVState object
-     * @throws IOException
+     * @throws IOException if there is a problem with reading the CSV file
      */
     public CSVState getCSVState(String csvFile) throws IOException {
         try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvFile);

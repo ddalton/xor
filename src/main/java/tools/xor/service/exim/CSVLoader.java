@@ -628,17 +628,21 @@ public class CSVLoader {
                     }   
                     
                     for(Property p: dateProperties) {
-                        String dateStr = entityJSON.getString(p.getName());
-                        if(StringUtils.isNotEmpty(dateStr)) {
-                            Date value = null;
-                            try {
-                                value = csvState.getDateFormatter().parse(dateStr);
-                            } catch (ParseException e) {
-                                throw new RuntimeException(String.format(
-                                        "The date value '%s' for property %s in table %s cannot be parsed", dateStr,
-                                        p.getName(), csvState.getTableName()));
+                        // This could be a generated property, so it might
+                        // not yet be present in the JSON object
+                        if(entityJSON.has(p.getName())) {
+                            String dateStr = entityJSON.getString(p.getName());
+                            if(StringUtils.isNotEmpty(dateStr.trim())) {
+                                Date value = null;
+                                try {
+                                    value = csvState.getDateFormatter().parse(dateStr);
+                                } catch (ParseException e) {
+                                    throw new RuntimeException(String.format(
+                                            "The date value '%s' for property %s in table %s cannot be parsed", dateStr,
+                                            p.getName(), csvState.getTableName()));
+                                }
+                                entityJSON.put(p.getName(), value);
                             }
-                            entityJSON.put(p.getName(), value);
                         }
                     }
                     

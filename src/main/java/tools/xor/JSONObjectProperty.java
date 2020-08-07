@@ -12,8 +12,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -311,14 +313,16 @@ public class JSONObjectProperty
                     if(date instanceof Date) {
                         return date;
                     }
-
+                    
+                    if(date == null || "".equals(date.toString().trim())) {
+                        return null;
+                    }
+                    
                     if(settings.getDateForm() == Settings.DateForm.FORMATTED) {
                         DateFormat df = new SimpleDateFormat(settings.getDateFormat());
                         String dateString = jsonObject.getString(key);
                         try {
-                            return dateString == null ?
-                                null :
-                                ("".equals(dateString) ? null : df.parse(dateString));
+                            return df.parse(dateString);
                         }
                         catch (ParseException e) {
                             logger.warn(
@@ -328,14 +332,8 @@ public class JSONObjectProperty
                         }
                     } else {
                         String dateString = jsonObject.getString(key);
-                        Long timeInMillis = dateString == null ?
-                            null :
-                            ("".equals(dateString) ? null : Long.parseLong(dateString));
-                        if(timeInMillis != null) {
-                            return new Date(timeInMillis);
-                        } else {
-                            return null;
-                        }
+                        Long timeInMillis = Long.parseLong(dateString);
+                        return new Date(timeInMillis);
                     }
                 }
 

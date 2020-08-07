@@ -860,20 +860,22 @@ public class BindParameter implements Comparable<BindParameter>
 												 Object value) throws SQLException
 				{
 					Timestamp timestamp = null;
-					if(value instanceof String) {
-						DateFormat df = new SimpleDateFormat(this.dateFormat != null ? this.dateFormat : JSONObjectProperty.ISO8601_FORMAT);
-						try {
-							timestamp = new Timestamp(df.parse(value.toString()).getTime());
-						}
-						catch (ParseException e) {
-							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + JSONObjectProperty.ISO8601_FORMAT);
-						}
-					} else if(value instanceof Timestamp) {
-						timestamp = (Timestamp)value;
-					} else if(value instanceof java.util.Date) {
-						timestamp = new Timestamp(((java.util.Date)value).getTime());
-					} else {
-						throw new RuntimeException("Unsupported value type for Timestamp converter");
+					if(value != null) {
+					    if(value instanceof String) {
+					        DateFormat df = new SimpleDateFormat(this.dateFormat != null ? this.dateFormat : JSONObjectProperty.ISO8601_FORMAT);
+					        try {
+					            timestamp = new Timestamp(df.parse(value.toString()).getTime());
+					        }
+					        catch (ParseException e) {
+					            throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + JSONObjectProperty.ISO8601_FORMAT);
+					        }
+					    } else if(value instanceof Timestamp) {
+					        timestamp = (Timestamp)value;
+					    } else if(value instanceof java.util.Date) {
+					        timestamp = new Timestamp(((java.util.Date)value).getTime());
+					    } else {
+					        throw new RuntimeException("Unsupported value type for Timestamp converter: " + value.getClass().getName());
+					    }
 					}
 					ps.setTimestamp(parameterIndex, timestamp);
 				}

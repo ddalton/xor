@@ -802,10 +802,18 @@ public abstract class DBTranslator
     private int setSimpleValue(PreparedStatement ps, List<String> values, Property p, BusinessObject bo, int position, boolean isCSV, boolean isUpdate) {
         JDBCDataModel.ColumnInfo col = ((JDBCProperty)p).getColumns().get(0);
         JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
-        values.add(getColumnString(bo.get(col.getName()), isUpdate, col.getName(), c));
+        
+        Object value = bo.get(col.getName());
+        // check the length and trim if necessary
+        if(value != null && value instanceof String) {
+            if(value.toString().length() >= col.getLength()) {
+                value = value.toString().substring(0, col.getLength());
+            }
+        }
+        values.add(getColumnString(value, isUpdate, col.getName(), c));
 
         if(ps != null) {
-            addBindParameter(ps, col.getDataType(), position++, bo.get(col.getName()));
+            addBindParameter(ps, col.getDataType(), position++, value);
         }
          
         return position;

@@ -283,8 +283,11 @@ public class CSVLoader {
             
             if(schema.has(KEY_COLUMN_ALIASES)) {
                 JSONObject json = schema.getJSONObject(KEY_COLUMN_ALIASES);
-                for(String key: json.keySet()) {
+                Iterator<String> keyIter = json.keys();
+                while(keyIter.hasNext()) {
+                    String key = keyIter.next();
                     this.columnAliases.put(normalize(key), normalize(json.getString(key)));
+                    logger.info(String.format("Column alias - Key %s, Value %s", key, json.getString(key)));
                 }
             }
             
@@ -747,7 +750,12 @@ public class CSVLoader {
         
         // Add column aliases
         for(Map.Entry<String, String> entry: csvState.columnAliases.entrySet()) {
-            colPosition.put(entry.getKey(), csvState.headerMap.get(entry.getValue()));
+            if(csvState.headerMap.containsKey(entry.getValue())) {
+                colPosition.put(entry.getKey(), csvState.headerMap.get(entry.getValue()));
+                columns.add(entry.getKey());
+            } else {
+                logger.warn(String.format("Column alias %s in table %s missing in header", entry.getValue(), csvState.getTableName()));
+            }
         }
         
         // Add the not-null FK to the column list

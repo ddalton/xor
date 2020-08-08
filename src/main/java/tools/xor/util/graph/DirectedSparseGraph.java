@@ -730,7 +730,7 @@ public class DirectedSparseGraph<V, E> implements DirectedGraph<V, E> {
 	 * Renumber the id based on sorted list
 	 * @param sorted list of vertices
 	 */
-	protected void renumber(List<V> sorted) {
+	public void renumber(List<V> sorted) {
 		this.nextId = START;
 
 		// Clear the vertices

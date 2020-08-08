@@ -26,11 +26,15 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.ClassUtil;
@@ -38,13 +42,15 @@ import tools.xor.util.graph.StateGraph;
 
 public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Closeable
 {
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+    
     private final String sql;
     private final int max;
     private Statement statement;
     private ResultSet rs;
     private int numCols;
     private boolean isLast;
-    private int rowCount;
+    private int rowCount = 0;
     private Object[] row;
     private int fetchSize = 1000;
     private StateGraph.ObjectGenerationVisitor visitor;
@@ -53,12 +59,26 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
     // Used if the generator is a driver
     private Set<IteratorListener> listeners = new HashSet<>();
 
+    public QueryGenerator(String[] args) {
+        if(args.length >= 1) {
+            this.sql = args[0];
+        } else {
+            this.sql = null;
+        }
+
+        if(args.length >= 2) {
+            this.max = Integer.parseInt(args[1]);
+        } else {
+            // Negative value means we read all the records
+            this.max = -1;
+        }
+    }
+    
     public QueryGenerator (String sql,
                            int max)
     {
         this.sql = sql;
         this.max = max;
-        this.rowCount = 0;
     }
 
     public void setFetchSize(int size) {
@@ -75,6 +95,7 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
                 ResultSet.CONCUR_READ_ONLY);
             this.statement.setFetchSize(fetchSize);
 
+            logger.debug("QueryGenerator executing query -> " + this.sql);
             this.rs = this.statement.executeQuery(this.sql);
 
             ResultSetMetaData rsmd = rs.getMetaData();
@@ -94,7 +115,7 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
             throw new RuntimeException("The generator has not been initialized");
         }
 
-        return (rowCount < max && !isLast);
+        return ((rowCount < max || max < 0) && !isLast);
     }
 
     @Override public Object[] next ()
@@ -102,6 +123,7 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
         try {
             isLast = !rs.next();
             if (isLast) {
+                logger.debug("QueryGenerator#next - No more records to process");
                 return null;
             }
 
@@ -109,6 +131,15 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
             for (int i = 1; i <= numCols; i++) {
                 row[i] = rs.getObject(i);
             }
+            
+            if(logger.isDebugEnabled()) {
+                List<String> record = new ArrayList<>();
+                for(Object obj: row) {
+                    record.add(obj==null?"":(obj.toString()+":"+obj.getClass().getName()));
+                }
+                logger.debug("QueryGenerator#next -> " + String.join(",", record));
+            }
+            visitor.setContext(0, rowCount);
         }
         catch (SQLException e) {
             e.printStackTrace();

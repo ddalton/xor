@@ -59,7 +59,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
     }
 
     public static String[] getTokens() {
-        return new String[] {
+        String[] fixed = new String[] {
             ENTITY_SIZE,
             THREAD_NO,
             GLOBAL_SEQ,
@@ -68,6 +68,23 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
             GENERATOR_HIER_ID,
             GENERATOR_PARENT_ID
         };
+        
+        String[] all = new String[fixed.length+MAX_VISITOR_CONTEXT];
+        
+        int i = 0;
+        for(String token: fixed) {
+            all[i++] = token;
+        }
+        for(int j = 0; j < MAX_VISITOR_CONTEXT; j++) {
+            final String contextName = getContextWithIndex(j);
+            all[i++] = contextName;
+        }
+        
+        return all;
+    }
+    
+    private static String getContextWithIndex(int i) {
+        return VISITOR_CONTEXT.substring(0, VISITOR_CONTEXT.length()-1) + "_" + i + "]";
     }
 
     private static final Map<String, TokenEvaluator> evaluators = new HashMap<>();
@@ -127,7 +144,8 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
             });
         
         for(int i = 0; i < MAX_VISITOR_CONTEXT; i++) {
-            final String contextName = VISITOR_CONTEXT + "_" + i; 
+            final String contextName = getContextWithIndex(i);
+            final int contextIndex = i; 
             evaluators.put(
                     contextName, new TokenEvaluator()
                     {
@@ -135,11 +153,9 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                                                           Generator generator,
                                                           StateGraph.ObjectGenerationVisitor visitor)
                         {
-                            String[] pieces = contextName.split("_");
-                            int index = Integer.parseInt(pieces[pieces.length-1]);
-                            return visitor.getContext(index) != null ? StringUtils.replace(input,
+                            return visitor.getContext(contextIndex) != null ? StringUtils.replace(input,
                                 contextName,
-                                visitor.getContext(index).toString()) : input;
+                                visitor.getContext(contextIndex).toString()) : input;
                         }
                     });        
         }

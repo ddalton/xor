@@ -107,26 +107,38 @@ import tools.xor.util.graph.StateGraph;
  *    
  *    Required fields
  *    ---------------
- *    entityName - Java entity name, typically the fully qualified class name of the entity
  *    tableName  - The name of the table
  *    columns    - The columns that need to be populated in the table
- *    dateFormat - If there is at least a single column of type Date
  *    
  *    Optional fields
  *    ---------------
- *    keys        - Represents the fields that unique identify the row in the table
- *                  The columns in the keys cannot comprise foreign key columns
- *                  This field is needed when updating NULL foreign key columns
- *    foreignKeys - Columns that need to be populated based on foreign key relationships
- *                  These columns are not part of header columns in Section 1
- *                  So this section provides info on how they can be populated using
- *                  the "foreignKeyTable", "select" and "join" information.
+ *    entityName       - Java entity name, typically the fully qualified class name of the entity
+ *    dateFormat       - If there is at least a single column of type Date
+ *    keys             - Represents the fields that unique identify the row in the table
+ *                       The columns in the keys cannot comprise foreign key columns
+ *                       This field is needed when updating NULL foreign key columns
+ *    foreignKeys      - Columns that need to be populated based on foreign key relationships
+ *                       These columns are not part of header columns in Section 1
+ *                       So this section provides info on how they can be populated using
+ *                       the "foreignKeyTable", "select" and "join" information.
  *                  
- *                  In the example below, the foreign key column "col2" is populated
- *                  by selecting the id column from the FKTABLE1 table under the
- *                  join condition(s) restriction.
+ *                       In the example below, the foreign key column "col2" is populated
+ *                       by selecting the id column from the FKTABLE1 table under the
+ *                       join condition(s) restriction.
  *                  
- *                  SELECT f.id FROM FKTABLE1 f WHERE FKTcol3 = :Icol2              
+ *                       SELECT f.id FROM FKTABLE1 f WHERE FKTcol3 = :Icol2  
+ *                      
+ *    columnGenerators - Useful for generating values for missing columns    
+ *    dependsOn        - Useful to explicitly state the dependency of loading
+ *                       table data. This is useful if the dependency cannot
+ *                       be inferred from the foreign keys alone, or
+ *                       the data is dynamically created using a SQL query.
+ *    entityGenerator  - Useful for generating data for a table that does
+ *                       not have data in an existing CSV file.
+ *                       Most common usecase is using a QueryGenerator to get
+ *                       the data from other tables.
+ *                       When this is set, then the dependsOn property is
+ *                       also usually set.                        
  *    
  * 
  *    Example:
@@ -156,6 +168,11 @@ import tools.xor.util.graph.StateGraph;
  *                                 ]
  *          }
  *       ],
+ *       "dependsOn" : ["TABLE1", "TABLE2"],
+ *       "entityGenerator" : [
+ *          "className" : "tools.xor.QueryGenerator",
+ *          "arguments" : ["SELECT t1.col1, t1.col2, t2.col3 FROM TABLE1 t1, TABLE2 t2 WHERE t1.t2id = t2.id"]
+ *       ]
  *       "columnGenerators" : [
  *          {
  *             "column" : "col10",
@@ -208,6 +225,8 @@ public class CSVLoader {
     private static final String KEY_COLUMN = "column";
     private static final String KEY_CLASSNAME = "className";
     private static final String KEY_ARGUMENTS = "arguments";
+    private static final String KEY_DEPENDS_ON = "dependsOn";
+    private static final String KEY_ENTITY_GENERATOR = "entityGenerator";
     
     public static class CSVState extends State {
         
@@ -220,6 +239,8 @@ public class CSVLoader {
         private SimpleDateFormat dateFormatter;
         private Object context;
         private GeneratorDriver entityGenerator;
+        private Set<String> dependsOn;
+        private CSVPrinter csvPrinter;
 
         public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader) {
             super(type, false);
@@ -231,6 +252,7 @@ public class CSVLoader {
             this.notNullForeignKeys = new ArrayList<>();
             this.nullableForeignKeys = new ArrayList<>();
             this.entityGenerator = new CounterGenerator(-1, 1);
+            this.dependsOn = new HashSet<>();
             
             try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(this.csvFile);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {                    
@@ -282,32 +304,55 @@ public class CSVLoader {
                     JSONObject generator = jsonArray.getJSONObject(i);
                     String generatorColumn = generator.getString(KEY_COLUMN);
                     String generatorClassName = generator.getString(KEY_CLASSNAME);
-                    
-                    String[] args = null;
-                    if(generator.has(KEY_ARGUMENTS)) {
-                        JSONArray arguments = generator.getJSONArray(KEY_ARGUMENTS);
-                        args = new String[arguments.length()];
-                        for(int j = 0; j < arguments.length(); j++) {
-                            args[j] = arguments.getString(j);
-                        }
-                    }
+                    String[] args = buildArguments(generator);
                     
                     Property p = getType().getProperty(normalize(generatorColumn));
                     if(p != null) {
-                        // construct the generator
-                        Class<?> cl;
-                        try {
-                            cl = Class.forName(generatorClassName);
-                            Constructor<?> cons = cl.getConstructor(String[].class);
-                            p.setGenerator((Generator) cons.newInstance((Object) args));
-                        } catch (Exception e) {
-                            throw ClassUtil.wrapRun(e);
-                        }
+                        p.setGenerator((Generator) createGenerator(generatorClassName, args));
                     } else {
                         throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, getType().getName()));
                     }
                 }
             }
+            
+            if(schema.has(KEY_DEPENDS_ON)) {
+                JSONArray jsonArray = schema.getJSONArray(KEY_DEPENDS_ON);
+                for(int i = 0; i < jsonArray.length(); i++) {
+                    this.dependsOn.add(normalize(jsonArray.getString(i)));
+                }
+            }
+            
+            if(schema.has(KEY_ENTITY_GENERATOR)) {
+                JSONObject generator = schema.getJSONObject(KEY_ENTITY_GENERATOR);
+                String generatorClassName = generator.getString(KEY_CLASSNAME);
+                String[] args = buildArguments(generator);
+                this.entityGenerator = (GeneratorDriver) createGenerator(generatorClassName, args);
+            }
+        }
+        
+        private String[] buildArguments(JSONObject generator) {
+            String[] args = null;
+            if(generator.has(KEY_ARGUMENTS)) {
+                JSONArray arguments = generator.getJSONArray(KEY_ARGUMENTS);
+                args = new String[arguments.length()];
+                for(int j = 0; j < arguments.length(); j++) {
+                    args[j] = arguments.getString(j);
+                }
+            }            
+            
+            return args;
+        }
+        
+        private Object createGenerator(String generatorClassName, String[] args) {
+            // construct the generator
+            Class<?> cl;
+            try {
+                cl = Class.forName(generatorClassName);
+                Constructor<?> cons = cl.getConstructor(String[].class);
+                return cons.newInstance((Object) args);
+            } catch (Exception e) {
+                throw ClassUtil.wrapRun(e);
+            } 
         }
         
         public DateFormat getDateFormatter() {
@@ -525,7 +570,17 @@ public class CSVLoader {
                    throw new RuntimeException(String.format("Unable to find csv file for table " + fkTable));
                }
                
-               Edge<CSVState> edge = new Edge<>("fkTable", fkState, this);
+               Edge<CSVState> edge = new Edge<>(fkTable, fkState, this);
+               addEdge(edge);
+           }
+           
+           for(String dependsOnTable: this.dependsOn) {
+               CSVState fkState = loader.findState(dependsOnTable);
+               if(fkState == null) {
+                   throw new RuntimeException(String.format("Unable to find csv file for table " + dependsOnTable));
+               }
+               
+               Edge<CSVState> edge = new Edge<>(dependsOnTable, fkState, this);
                addEdge(edge);
            }
         }
@@ -533,22 +588,29 @@ public class CSVLoader {
         private void addEdge(Edge<CSVState> edge) {
             loader.orderingGraph.addEdge(edge, edge.getStart(), edge.getEnd());            
         }
-        
+
+        /**
+         * Needs to be called everytime when creating records
+         * @param filePath of the file that contains the output
+         */
+        public void createCSVPrinter(String filePath) {
+            try {
+                // initialize FileWriter object
+                FileWriter fileWriter = new FileWriter(filePath);
+
+                // initialize CSVPrinter object
+                this.csvPrinter = new CSVPrinter(fileWriter, CSVExportImport.csvFileFormat);
+            } catch (IOException e) {
+                throw ClassUtil.wrapRun(e);
+            }
+        }
+
         public void writeToCSV(String filePath, Settings settings, JDBCDataStore dataStore) {
             try {
-                //initialize FileWriter object
-                FileWriter fileWriter = new FileWriter(filePath );
-
-                //initialize CSVPrinter object                
-                CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVExportImport.csvFileFormat);
-                
-                try {
-                    loader.createRecords(this, settings, dataStore, csvPrinter);
-                } finally {
-                    csvPrinter.close();
-                }
+                createCSVPrinter(filePath);
+                loader.createRecords(this, settings, dataStore);
             } catch (IOException e) {
-                ClassUtil.wrapRun(e);
+                throw ClassUtil.wrapRun(e);
             }
         }
     }
@@ -611,23 +673,39 @@ public class CSVLoader {
     
     private void buildStates(List<String> csvFiles) throws FileNotFoundException, IOException {
         for(String csvFile: csvFiles) {
+            logger.info("Building state for: " + csvFile);
             CSVState csvState = getCSVState(csvFile);
             orderingGraph.addVertex(csvState);
         }
         
         for(CSVState state: orderingGraph.getVertices()) {
+            logger.debug(String.format("Before topo sort, table %s has id %s", state.getTableName(), orderingGraph.getId(state)));
             state.addEdges();
         }
         
         // Do topological sorting
         this.orderingGraph.toposort(shape);
+        // renumber the vertices
+        this.orderingGraph.renumber(this.orderingGraph.toposort(shape));
+        
+        if (logger.isDebugEnabled()) {
+            for(Edge<CSVState> edge: orderingGraph.getEdges() ) {
+                logger.debug(edge.toString());
+            }
+            
+            for (CSVState state : orderingGraph.getVertices()) {
+                logger.debug(String.format("After topo sort, table %s has id %s", state.getTableName(),
+                        orderingGraph.getId(state)));
+                state.addEdges();
+            }
+        }
     }
     
     private void insertData(Settings settings, JDBCDataStore po) throws FileNotFoundException, IOException {
         // iterate on topo sorted order of csv files
         for(int i = orderingGraph.START; i < orderingGraph.START+orderingGraph.getVertices().size(); i++ ) {
             CSVState csvState = orderingGraph.getVertex(i);
-            createRecords(csvState, settings, po, null);
+            createRecords(csvState, settings, po);
         }
     }
     
@@ -662,7 +740,7 @@ public class CSVLoader {
         return columns;
     }
     
-    private void createRecords(CSVState csvState, Settings settings, JDBCDataStore dataStore, CSVPrinter csvPrinter) throws IOException {
+    private void createRecords(CSVState csvState, Settings settings, JDBCDataStore dataStore) throws IOException {
         /* Get the columns we need to populate
          * 1. All non foreign key columns
          * 2. All not-null foreign key columns
@@ -676,8 +754,10 @@ public class CSVLoader {
         // We create a CounterGenerator to drive this process
         // ensure that the entityType does not have any generators
         EntityType entityType = (EntityType) csvState.getType();
+        CSVPrinter csvPrinter = csvState.csvPrinter;
         assert entityType.getGenerators().size() == 0 : "Please clear existing generators on entity: " + entityType.getName();
         
+        logger.info("Creating date for table " + csvState.getTableName());
         StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(
                 null,
                 settings,
@@ -708,7 +788,7 @@ public class CSVLoader {
             }
         }
         if(dateProperties.size() > 0 && csvState.getDateFormatter() == null) {
-            throw new RuntimeException("Some of the columns are of type Date, and a 'dateFormat' expression is not set on the schema");
+            logger.warn("Some of the columns are of type Date, and a 'dateFormat' expression is not set on the schema");
         }
         
         List<String> columnList = new ArrayList<>(columns);
@@ -728,18 +808,27 @@ public class CSVLoader {
                 while(csvIterator.hasNext() || entityIterator.hasNext()) {
                     csvRecord = csvIterator.hasNext() ? csvIterator.next() : null;
                     
-                    // Only if we don't have csv data do we solely rely on entity driver generator powered
-                    if(!csvPowered) {
-                        if(csvRecord != null) {
-                            csvPowered = true;
-                        }
-                    } else if(csvRecord == null) {
-                        // end of csv powered processing
+                    // Should support more records as it is a generator
+                    // If not then we break
+                    entityIterator.next();
+                    if(!entityIterator.hasNext()) {
                         break;
                     }
                     
-                    // Should support more records as it is a generator
-                    entityIterator.next(); 
+                    // Only if we don't have csv data do we solely rely on entity driver generator powered
+                    if(!csvPowered) {
+                        if(csvRecord != null) {
+                            logger.info(String.format("Data generation for table %s is CSV powered", csvState.getTableName()));
+                            csvPowered = true;
+                        }
+                    } else if(csvRecord == null) {
+                        if (csvPowered) {
+                            // end of csv powered processing
+                            break;
+                        }
+                    } else if(i == 1) {
+                        logger.info(String.format("Data generation for table %s is entityGenerator powered", csvState.getTableName()));
+                    } 
                     
                     JSONObject entityJSON = CSVExportImport.getJSON(colPosition, csvRecord);
                     
@@ -802,6 +891,11 @@ public class CSVLoader {
                 if (isWriteToDB(csvPrinter)) {
                     DataImporter.performFlush(sc, i, true);
                 }
+            }
+        } finally {
+            if(csvPrinter != null) {
+                csvPrinter.close();
+                csvPrinter = null;
             }
         }
 

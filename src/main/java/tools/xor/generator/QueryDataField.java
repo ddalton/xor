@@ -21,7 +21,12 @@ package tools.xor.generator;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import tools.xor.Property;
 import tools.xor.util.graph.StateGraph;
@@ -29,9 +34,12 @@ import tools.xor.util.graph.StateGraph;
 /**
  * The field will contain a reference to the query data field. For example:
  * QUERY_DATA.1
+ * 
+ * NOTE: The start index is 1
  */
 public class QueryDataField extends DefaultGenerator
 {
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());    
     public QueryDataField (String[] arguments)
     {
         super(arguments);
@@ -44,6 +52,15 @@ public class QueryDataField extends DefaultGenerator
 
     private Object getValue(StateGraph.ObjectGenerationVisitor visitor) {
         Object[] queryData = (Object[])visitor.getContext();
+        
+        if(logger.isDebugEnabled()) {
+            List<String> record = new ArrayList<>();
+            for(Object obj: queryData) {
+                record.add(obj==null?"":(obj.toString()+":"+obj.getClass().getName()));
+            }
+            logger.debug("QueryDataField#getValue -> " + String.join(",", record));
+        }
+        
         return queryData[getIndex()];
     }
 

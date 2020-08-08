@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
@@ -196,7 +197,7 @@ public class Settings {
 	private Object sessionContext;
 
 	// A negative value indicates that the globalSeq has not been initialized
-	private int globalSeq = -1;
+	private AtomicLong globalSeq = new AtomicLong(1);
 
 	private int batchSize;
 	
@@ -331,14 +332,14 @@ public class Settings {
 		this.sessionContext = sessionContext;
 	}
 
-	public int getGlobalSeq ()
+	public long getAndIncrGlobalSeq ()
 	{
-		return globalSeq;
+		return globalSeq.getAndIncrement();
 	}
 
-	public void setGlobalSeq (int globalSeq)
+	public void setGlobalSeq (long globalSeq)
 	{
-		this.globalSeq = globalSeq;
+		this.globalSeq.set(globalSeq);;
 	}
 
 	public int getBatchSize() {

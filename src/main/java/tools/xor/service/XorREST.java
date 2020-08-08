@@ -184,11 +184,7 @@ public abstract class XorREST
         // Generate the batch
         for(int i = 0; i < settings.getBatchSize(); i++) {
             entityBatch.add(sg.generateObjectGraph(settings));
-
-            int globalSeq = settings.getGlobalSeq();
-            if(globalSeq != -1) {
-                settings.setGlobalSeq(globalSeq+1);
-            }
+            settings.getAndIncrGlobalSeq();
         }
 
         // Try and persist this now

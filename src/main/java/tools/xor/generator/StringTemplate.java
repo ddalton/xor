@@ -126,7 +126,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
                 {
                     return visitor.getSettings() != null ? StringUtils.replace(input,
                         GLOBAL_SEQ,
-                        new Integer(visitor.getSettings().getGlobalSeq()).toString()) : input;
+                        new Long(visitor.getSettings().getAndIncrGlobalSeq()).toString()) : input;
                 }
             });
 

@@ -95,6 +95,7 @@ import tools.xor.util.graph.StateGraph;
  *    NOTE: the columns that get values are the "columns" key in the JSON schema and not
  *    section 1. This is because there are some columns that represent foreign keys and
  *    need to be resolved using the JSON schema.
+ *    If the columns names are not the same as table names then we need to provide aliases
  * 
  *    *********************************************************  
  *    *      S E C T I O N   2    -   S C H E M A             *
@@ -108,11 +109,11 @@ import tools.xor.util.graph.StateGraph;
  *    Required fields
  *    ---------------
  *    tableName  - The name of the table
- *    columns    - The columns that need to be populated in the table
  *    
  *    Optional fields
  *    ---------------
  *    entityName       - Java entity name, typically the fully qualified class name of the entity
+ *    columnAliases    - Map the header name to a column name
  *    dateFormat       - If there is at least a single column of type Date
  *    keys             - Represents the fields that unique identify the row in the table
  *                       The columns in the keys cannot comprise foreign key columns
@@ -147,7 +148,11 @@ import tools.xor.util.graph.StateGraph;
  *      "entityName" : "tools.xor.db.pm.Task",
  *      "tableName"  : "TASK",
  *      "dateFormat" : "yyyy-MM-dd HH:mm:ss", 
- *      "columns" : ["col1", "col2", "col3", "col4", "col5", "col6", "col7" ....],
+ *      "columnAliases" : {
+ *          "col1" : "Icol1",
+ *          "col2" : "Icol1",
+ *          "col3" : "Icol2"
+ *      }
  *      "keys" : ["col1"],
  *      "foreignKeys" : [
  *          {
@@ -214,7 +219,7 @@ public class CSVLoader {
     private static final String KEY_ENTITY_NAME = "entityName";
     private static final String KEY_TABLE_NAME = "tableName";
     private static final String KEY_DATE_FORMAT = "dateFormat";
-    private static final String KEY_COLUMNS = "columns";
+    private static final String KEY_COLUMN_ALIASES = "columnAliases";
     private static final String KEY_KEYS = "keys";
     private static final String KEY_FOREIGN_KEYS = "foreignKeys";
     private static final String KEY_FOREIGN_KEY_TABLE = "foreignKeyTable";
@@ -241,6 +246,7 @@ public class CSVLoader {
         private GeneratorDriver entityGenerator;
         private Set<String> dependsOn;
         private CSVPrinter csvPrinter;
+        private Map<String, String> columnAliases;
 
         public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader) {
             super(type, false);
@@ -253,6 +259,7 @@ public class CSVLoader {
             this.nullableForeignKeys = new ArrayList<>();
             this.entityGenerator = new CounterGenerator(-1, 1);
             this.dependsOn = new HashSet<>();
+            this.columnAliases = new HashMap<>();
             
             try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(this.csvFile);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {                    
@@ -272,6 +279,13 @@ public class CSVLoader {
                 }
             } catch(IOException e) {
                 throw ClassUtil.wrapRun(e);
+            }
+            
+            if(schema.has(KEY_COLUMN_ALIASES)) {
+                JSONObject json = schema.getJSONObject(KEY_COLUMN_ALIASES);
+                for(String key: json.keySet()) {
+                    this.columnAliases.put(normalize(key), normalize(json.getString(key)));
+                }
             }
             
             if(schema.has(KEY_FOREIGN_KEYS)) {
@@ -304,10 +318,11 @@ public class CSVLoader {
                     JSONObject generator = jsonArray.getJSONObject(i);
                     String generatorColumn = generator.getString(KEY_COLUMN);
                     String generatorClassName = generator.getString(KEY_CLASSNAME);
-                    String[] args = buildArguments(generator);
+                    Object args = buildArguments(generator);
                     
                     Property p = getType().getProperty(normalize(generatorColumn));
                     if(p != null) {
+                        logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s'", generatorClassName, p.getName(), generatorColumn));
                         p.setGenerator((Generator) createGenerator(generatorClassName, args));
                     } else {
                         throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, getType().getName()));
@@ -325,30 +340,42 @@ public class CSVLoader {
             if(schema.has(KEY_ENTITY_GENERATOR)) {
                 JSONObject generator = schema.getJSONObject(KEY_ENTITY_GENERATOR);
                 String generatorClassName = generator.getString(KEY_CLASSNAME);
-                String[] args = buildArguments(generator);
+                Object args = buildArguments(generator);
                 this.entityGenerator = (GeneratorDriver) createGenerator(generatorClassName, args);
             }
         }
         
-        private String[] buildArguments(JSONObject generator) {
-            String[] args = null;
-            if(generator.has(KEY_ARGUMENTS)) {
+        private Object buildArguments(JSONObject generator) {
+            Object args = null;
+            if (generator.has(KEY_ARGUMENTS)) {
                 JSONArray arguments = generator.getJSONArray(KEY_ARGUMENTS);
-                args = new String[arguments.length()];
-                for(int j = 0; j < arguments.length(); j++) {
-                    args[j] = arguments.getString(j);
+
+                if (arguments.length() == 1 && arguments.get(0) instanceof Number) {
+                    args = arguments.getInt(0);
+                } else {
+                    args = new String[arguments.length()];
+                    for (int j = 0; j < arguments.length(); j++) {
+                        ((String[]) args)[j] = arguments.getString(j);
+                    }
                 }
-            }            
-            
+            }
+
             return args;
         }
         
-        private Object createGenerator(String generatorClassName, String[] args) {
+        private Object createGenerator(String generatorClassName, Object args) {
             // construct the generator
             Class<?> cl;
             try {
                 cl = Class.forName(generatorClassName);
-                Constructor<?> cons = cl.getConstructor(String[].class);
+                Constructor<?> cons = null;
+                if(String[].class.isAssignableFrom(args.getClass())) {
+                    cons = cl.getConstructor(String[].class);
+                } else if (Integer.class.isAssignableFrom(args.getClass())) {
+                    cons = cl.getConstructor(int.class);
+                } else {
+                    throw new RuntimeException(String.format("Unknown argument type for generator %s in table %s", generatorClassName, getTableName()));
+                }
                 return cons.newInstance((Object) args);
             } catch (Exception e) {
                 throw ClassUtil.wrapRun(e);
@@ -381,27 +408,16 @@ public class CSVLoader {
          */
         public List<Property> getGeneratedProperties() {
             List<Property> result = new ArrayList<>();
-            JSONArray columns = this.schema.getJSONArray(KEY_COLUMNS);
-            
             Set<String> propertiesWithGenerator = new HashSet<>();
-            for (int i = 0; i < columns.length(); i++) {
-                String columnName = normalize(columns.getString(i));
-                Property p = getType().getProperty(columnName);
+            for (Property p: getType().getProperties()) {
                 if (p == null) {
                     throw new RuntimeException(
-                            String.format("Unable to find column %s in table %s", columnName, getType().getName()));
+                            String.format("Unable to find column %s in table %s", p.getName(), getType().getName()));
                 }
                 if (p.getGenerator() != null) {
                     result.add(p);
                     propertiesWithGenerator.add(p.getName());
-                } else {
-                    // Check that a NOT NULL column either has data in the csv file or a generator
-                    if (!this.headerMap.containsKey(columnName) && !p.isNullable()) {
-                        throw new RuntimeException(String.format(
-                                "NOT NULL column %s in table %s needs to either have data in the csv file or be configured with a generator",
-                                columnName, this.getTableName()));
-                    }
-                }
+                } 
             }
             
             for(Property p: getMissingRequiredProperties()) {
@@ -728,12 +744,19 @@ public class CSVLoader {
                 colPosition.put(entry.getKey(), entry.getValue());
             }
         }
+        
+        // Add column aliases
+        for(Map.Entry<String, String> entry: csvState.columnAliases.entrySet()) {
+            colPosition.put(entry.getKey(), csvState.headerMap.get(entry.getValue()));
+        }
+        
         // Add the not-null FK to the column list
         for(JSONObject json: csvState.notNullForeignKeys) {
             columns.add(CSVState.normalize(json.getString(KEY_FOREIGN_KEY)));
         }
         //Add the generated properties to the column list
         for(Property p: generatedProperties) {
+            logger.info(String.format("[%s] Genererated property: %s", csvState.getName(), p.getName()));
             columns.add(p.getName());
         }
         
@@ -782,6 +805,7 @@ public class CSVLoader {
                 
         List<Property> dateProperties = new ArrayList<>();
         for(String column: columns) {
+            logger.info(String.format("[%s] Column being populated: %s", csvState.getName(), column));
             Property p = csvState.getType().getProperty(column);
             if(Date.class.isAssignableFrom(p.getType().getInstanceClass())) {
                 dateProperties.add(p);

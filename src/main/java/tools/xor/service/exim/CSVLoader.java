@@ -215,6 +215,7 @@ public class CSVLoader {
     private DirectedSparseGraph<CSVState, Edge<CSVState>> orderingGraph;
     private Map<String, CSVState> tableStateMap;
     private String folderPath;
+    private StateGraph.ObjectGenerationVisitor visitor;
     
     private static final String KEY_ENTITY_NAME = "entityName";
     private static final String KEY_TABLE_NAME = "tableName";
@@ -242,7 +243,6 @@ public class CSVLoader {
         private List<JSONObject> notNullForeignKeys;
         private List<JSONObject> nullableForeignKeys;
         private SimpleDateFormat dateFormatter;
-        private Object context;
         private GeneratorDriver entityGenerator;
         private Set<String> dependsOn;
         private CSVPrinter csvPrinter;
@@ -388,15 +388,7 @@ public class CSVLoader {
         public DateFormat getDateFormatter() {
             return this.dateFormatter;
         }
-        
-        public void setContext(Object context) {
-            this.context = context;
-        }
-        
-        public Object getContext() {
-            return this.context;
-        }
-        
+  
         public GeneratorDriver getEntityGenerator() {
             return entityGenerator;
         }
@@ -494,9 +486,21 @@ public class CSVLoader {
         Map<String, Object> getLookupKeys(CSVRecord csvRecord) {
             Map<String, Object> result = new HashMap<>();
             
-            JSONArray keys = schema.getJSONArray(KEY_KEYS);
+            JSONArray keys = null;
+            try {
+                keys = schema.getJSONArray(KEY_KEYS);
+            } catch (org.json.JSONException e) {
+                throw new RuntimeException(
+                        String.format("Unable to find '%s' fragment in the schema for table %s. Message: %s", KEY_KEYS,
+                                getTableName(), e.getMessage()));
+            }
             for(int i = 0; i < keys.length(); i++) {
                 String key = normalize(keys.getString(i));
+                if(!this.headerMap.containsKey(key)) {
+                    if(this.columnAliases.containsKey(key)) {
+                        key = this.columnAliases.get(key);
+                    }
+                }
                 String value = csvRecord.get(this.headerMap.get(key));
                 
                 result.put(key, value);
@@ -588,6 +592,10 @@ public class CSVLoader {
                if(fkState == null) {
                    throw new RuntimeException(String.format("Unable to find csv file for table " + fkTable));
                }
+               if(fkState == this) {
+                   logger.info("Avoiding self-loop edge for table %s");
+                   continue;
+               }
                
                Edge<CSVState> edge = new Edge<>(fkTable, fkState, this);
                addEdge(edge);
@@ -672,6 +680,10 @@ public class CSVLoader {
         }
     }
     
+    public void setVisitor(StateGraph.ObjectGenerationVisitor visitor) {
+        this.visitor = visitor;
+    }
+    
     public DirectedSparseGraph<CSVState, Edge<CSVState>> getGraph() {
         return this.orderingGraph;
     }
@@ -698,7 +710,7 @@ public class CSVLoader {
         }
         
         for(CSVState state: orderingGraph.getVertices()) {
-            logger.debug(String.format("Before topo sort, table %s has id %s", state.getTableName(), orderingGraph.getId(state)));
+            logger.info(String.format("Before topo sort, table %s has id %s", state.getTableName(), orderingGraph.getId(state)));
             state.addEdges();
         }
         
@@ -707,13 +719,13 @@ public class CSVLoader {
         // renumber the vertices
         this.orderingGraph.renumber(this.orderingGraph.toposort(shape));
         
-        if (logger.isDebugEnabled()) {
+        if (logger.isInfoEnabled()) {
             for(Edge<CSVState> edge: orderingGraph.getEdges() ) {
-                logger.debug(edge.toString());
+                logger.info(edge.toString());
             }
             
             for (CSVState state : orderingGraph.getVertices()) {
-                logger.debug(String.format("After topo sort, table %s has id %s", state.getTableName(),
+                logger.info(String.format("After topo sort, table %s has id %s", state.getTableName(),
                         orderingGraph.getId(state)));
                 state.addEdges();
             }
@@ -771,6 +783,15 @@ public class CSVLoader {
         return columns;
     }
     
+    private StateGraph.ObjectGenerationVisitor getOrCreateVisitor(Settings settings) {
+        StateGraph.ObjectGenerationVisitor currentVisitor = this.visitor;
+        if (currentVisitor == null) {
+            currentVisitor = new StateGraph.ObjectGenerationVisitor(null, settings, null);
+        }
+        
+        return currentVisitor;
+    }
+    
     private void createRecords(CSVState csvState, Settings settings, JDBCDataStore dataStore) throws IOException {
         /* Get the columns we need to populate
          * 1. All non foreign key columns
@@ -789,12 +810,7 @@ public class CSVLoader {
         assert entityType.getGenerators().size() == 0 : "Please clear existing generators on entity: " + entityType.getName();
         
         logger.info("Creating date for table " + csvState.getTableName());
-        StateGraph.ObjectGenerationVisitor visitor = new StateGraph.ObjectGenerationVisitor(
-                null,
-                settings,
-                null);
-        // set any additional context
-        visitor.setContext(0, csvState.getContext());
+        StateGraph.ObjectGenerationVisitor currentVisitor = getOrCreateVisitor(settings);
         
         JDBCSessionContext sc = dataStore == null ? null : dataStore.getSessionContext();
         if(isWriteToDB(csvPrinter)) {
@@ -803,7 +819,7 @@ public class CSVLoader {
         
         GeneratorDriver entityGenerator = csvState.getEntityGenerator();
         entityType.addGenerator(entityGenerator);
-        entityGenerator.init(sc == null ? null : sc.getConnection(), visitor);
+        entityGenerator.init(sc == null ? null : sc.getConnection(), currentVisitor);
         entityGenerator.processVisitors();
         Iterator entityIterator = (Iterator) entityGenerator;        
 
@@ -861,8 +877,15 @@ public class CSVLoader {
                     } else if(i == 1) {
                         logger.info(String.format("Data generation for table %s is entityGenerator powered", csvState.getTableName()));
                     } 
-                    
-                    JSONObject entityJSON = CSVExportImport.getJSON(colPosition, csvRecord);
+
+                    JSONObject entityJSON = null;
+                    try {
+                        entityJSON = CSVExportImport.getJSON(colPosition, csvRecord);
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        throw new RuntimeException(String.format(
+                                "Unable to find data for some column(s) in row %s while processing table %s. ArrayIndexOutOfBoundsException on index: %s",
+                                i, csvState.getTableName(), e.getMessage()));
+                    }
                     
                     Map<String, Object> notNullFKData = csvState.loadNotNullFKData(csvRecord, dataStore);
                     for(Map.Entry<String, Object> entry: notNullFKData.entrySet()) {                    
@@ -882,6 +905,8 @@ public class CSVLoader {
                                     throw new RuntimeException(String.format(
                                             "The date value '%s' for property %s in table %s cannot be parsed", dateStr,
                                             p.getName(), csvState.getTableName()));
+                                } catch (NullPointerException npe) {
+                                    throw new RuntimeException("Date format needs to be specified in the schema for table " + csvState.getTableName());
                                 }
                                 entityJSON.put(p.getName(), value);
                             }
@@ -897,7 +922,7 @@ public class CSVLoader {
                                     p,
                                     null,
                                     null,
-                                    visitor));
+                                    currentVisitor));
                     }
                     
                     if(logger.isDebugEnabled()) {

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import tools.xor.HierarchyGenerator;
 import tools.xor.Property;
@@ -33,6 +35,7 @@ import tools.xor.util.graph.StateGraph;
 
 public class StringTemplate extends DefaultGenerator implements GeneratorRecipient
 {
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     private Generator generator;
 
     public StringTemplate (String[] arguments)
@@ -232,6 +235,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
             this.relevantEvaluators = new ArrayList<>();
             for (String tokenName : getTokens()) {
                 if(input.contains(tokenName)) {
+                    logger.info(String.format("Found evaluator for token %s for input %s", tokenName, input));
                     relevantEvaluators.add(evaluators.get(tokenName));
                 }
             }
@@ -248,5 +252,20 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
         return resolve(getValues()[0], this.generator, visitor);
+    }
+    
+    @Override
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        String intStr = getStringValue(null, visitor);
+        if(intStr == null || "".equals(intStr.trim())) {
+            String propertyInfo = "";
+            if(visitor.getProperty() != null) {
+                propertyInfo = " for property " + visitor.getProperty().getName();
+            }
+            throw new RuntimeException("Unable to parse an integer from an empty string value" + propertyInfo);
+        }
+        
+        return Integer.parseInt(intStr);
     }
 }

@@ -139,7 +139,11 @@ import tools.xor.util.graph.StateGraph;
  *                       Most common usecase is using a QueryGenerator to get
  *                       the data from other tables.
  *                       When this is set, then the dependsOn property is
- *                       also usually set.                        
+ *                       also usually set.     
+ *    columnGenerator  - The lookup key for resolving a foreign key can have
+ *                       a generator, if the data is purely based on generated data.
+ *                       i.e., there is no CSV data in the file, but just generators in
+ *                       the schema.                   
  *    
  * 
  *    Example:
@@ -171,13 +175,30 @@ import tools.xor.util.graph.StateGraph;
  *                                    { "FKTcol2" : "Icol3" },
  *                                    { "FKTcol4" : "Icol4" }
  *                                 ]
+ *          },
+ *          {
+ *             "foreignKey"      : "col7",
+ *             "foreignKeyTable" : "FKTABLE3",
+ *             "select"          : "id",
+ *             "join"            : [
+ *                                    { 
+ *                                       "FKTcol1" : "Icol9"
+ *                                       "columnGenerator" : {
+ *                                          "className" : "tools.xor.generator.StringTemplate",
+ *                                          "arguments" : ["ID_[VISITOR_CONTEXT]"]
+ *                                       } 
+ *                                    },
+ *                                    { 
+ *                                      "FKTcol2" : "Icol11" 
+ *                                    }
+ *                                 ]
  *          }
  *       ],
  *       "dependsOn" : ["TABLE1", "TABLE2"],
- *       "entityGenerator" : [
+ *       "entityGenerator" : {
  *          "className" : "tools.xor.QueryGenerator",
  *          "arguments" : ["SELECT t1.col1, t1.col2, t2.col3 FROM TABLE1 t1, TABLE2 t2 WHERE t1.t2id = t2.id"]
- *       ]
+ *       },
  *       "columnGenerators" : [
  *          {
  *             "column" : "col10",
@@ -228,6 +249,7 @@ public class CSVLoader {
     private static final String KEY_JOIN = "join";
     private static final String KEY_SELECT = "select";
     private static final String KEY_COLUMN_GENERATORS = "columnGenerators";
+    private static final String KEY_COLUMN_GENERATOR = "columnGenerator";    
     private static final String KEY_COLUMN = "column";
     private static final String KEY_CLASSNAME = "className";
     private static final String KEY_ARGUMENTS = "arguments";
@@ -248,8 +270,12 @@ public class CSVLoader {
         private CSVPrinter csvPrinter;
         private Map<String, String> columnAliases;
 
-        public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader) {
-            super(type, false);
+        public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader, Shape childShape) {
+            // make a copy of the type and add it to the child shape
+            super(((EntityType)type).copy(childShape), false);
+            
+            // update the type to point to the copy
+            type = getType();
             
             this.schema = schema;
             this.loader = loader;
@@ -259,7 +285,7 @@ public class CSVLoader {
             this.nullableForeignKeys = new ArrayList<>();
             this.entityGenerator = new CounterGenerator(-1, 1);
             this.dependsOn = new HashSet<>();
-            this.columnAliases = new HashMap<>();
+            this.columnAliases = new HashMap<>();          
             
             try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(this.csvFile);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {                    
@@ -306,6 +332,8 @@ public class CSVLoader {
                     } else {
                         nullableForeignKeys.add(fkey);
                     }
+                    
+                    extractColumnGenerator(fkey);
                 }
             }
             
@@ -319,17 +347,7 @@ public class CSVLoader {
                 JSONArray jsonArray = schema.getJSONArray(KEY_COLUMN_GENERATORS);
                 for(int i = 0; i < jsonArray.length(); i++) {
                     JSONObject generator = jsonArray.getJSONObject(i);
-                    String generatorColumn = generator.getString(KEY_COLUMN);
-                    String generatorClassName = generator.getString(KEY_CLASSNAME);
-                    Object args = buildArguments(generator);
-                    
-                    Property p = getType().getProperty(normalize(generatorColumn));
-                    if(p != null) {
-                        logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s'", generatorClassName, p.getName(), generatorColumn));
-                        p.setGenerator((Generator) createGenerator(generatorClassName, args));
-                    } else {
-                        throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, getType().getName()));
-                    }
+                    setGenerator(generator, getType(), generator.getString(KEY_COLUMN));
                 }
             }
             
@@ -348,6 +366,46 @@ public class CSVLoader {
             }
         }
         
+        private void setGenerator(JSONObject generator, Type type, String generatorColumn) {
+            String generatorClassName = generator.getString(KEY_CLASSNAME);
+            Object args = buildArguments(generator);
+            
+            Property p = getType().getProperty(normalize(generatorColumn));
+            if(p != null) {
+                logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s'", generatorClassName, p.getName(), generatorColumn));
+                p.setGenerator((Generator) createGenerator(generatorClassName, args));
+            } else {
+                throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, getType().getName()));
+            }            
+        }
+        
+        private Shape getShape() {
+            return ((EntityType)getType()).getShape();
+        }
+        
+        // If the lookup key has a column generator then extract that here
+        private void extractColumnGenerator(JSONObject fkJson) {
+            
+            // get the type for the foreign key table
+            Type type = getShape().getType(normalize(fkJson.getString(KEY_FOREIGN_KEY_TABLE)));
+            
+            // To be safe, we make a copy so we can manipulate the column generators
+            // We need to get the shape of the CSVState's type since that is the correct
+            // shape we should make this copy on
+            type = ((EntityType)type).copy(getShape());
+            
+            JSONArray joinArray = fkJson.getJSONArray(KEY_JOIN);
+            for (int j = 0; j < joinArray.length(); j++) {
+                JSONObject joinJson = joinArray.getJSONObject(j);
+                String fkColName = joinJson.names().getString(0);
+
+                if(joinJson.has(KEY_COLUMN_GENERATOR)) {
+                    JSONObject generator = joinJson.getJSONObject(KEY_COLUMN_GENERATOR);
+                    setGenerator(generator, type, fkColName);
+                }
+            }            
+        }
+        
         private Object buildArguments(JSONObject generator) {
             Object args = null;
             if (generator.has(KEY_ARGUMENTS)) {
@@ -361,6 +419,9 @@ public class CSVLoader {
                         ((String[]) args)[j] = arguments.getString(j);
                     }
                 }
+                logger.info("buildArguments: ", args);
+            } else {
+                logger.info(String.format("Generator for table %s has not arguments", this.getTableName()));
             }
 
             return args;
@@ -372,12 +433,16 @@ public class CSVLoader {
             try {
                 cl = Class.forName(generatorClassName);
                 Constructor<?> cons = null;
-                if(String[].class.isAssignableFrom(args.getClass())) {
-                    cons = cl.getConstructor(String[].class);
-                } else if (Integer.class.isAssignableFrom(args.getClass())) {
-                    cons = cl.getConstructor(int.class);
-                } else {
-                    throw new RuntimeException(String.format("Unknown argument type for generator %s in table %s", generatorClassName, getTableName()));
+                
+                if (args != null) {
+                    if (String[].class.isAssignableFrom(args.getClass())) {
+                        cons = cl.getConstructor(String[].class);
+                    } else if (Integer.class.isAssignableFrom(args.getClass())) {
+                        cons = cl.getConstructor(int.class);
+                    } else {
+                        throw new RuntimeException(String.format("Unknown argument type for generator %s in table %s",
+                                generatorClassName, getTableName()));
+                    }
                 }
                 return cons.newInstance((Object) args);
             } catch (Exception e) {
@@ -424,28 +489,28 @@ public class CSVLoader {
             return result;
         }
         
-        public Map<String, Object> loadNotNullFKData(CSVRecord csvRecord, JDBCDataStore dataStore) {
-            return loadFKData(csvRecord, dataStore, this.notNullForeignKeys, true);
+        public Map<String, Object> loadNotNullFKData(JSONObject entityJSON, JDBCDataStore dataStore) {
+            return loadFKData(entityJSON, dataStore, this.notNullForeignKeys, true);
         }
         
-        public Map<String, Object> loadNullableFKData(CSVRecord csvRecord, JDBCDataStore dataStore) {
-            return loadFKData(csvRecord, dataStore, this.nullableForeignKeys, false);
+        public Map<String, Object> loadNullableFKData(JSONObject entityJSON, JDBCDataStore dataStore) {
+            return loadFKData(entityJSON, dataStore, this.nullableForeignKeys, false);
         }        
         
-        public Map<String, Object> loadFKData(CSVRecord csvRecord, JDBCDataStore dataStore, List<JSONObject> foreignKeysJson, boolean isNotNull) {
+        public Map<String, Object> loadFKData(JSONObject entityJSON, JDBCDataStore dataStore, List<JSONObject> foreignKeysJson, boolean isNotNull) {
             Map<String, Object> result = new HashMap<>();
             
-            if(csvRecord == null || dataStore == null) {
+            if(entityJSON == null || dataStore == null) {
                 return result;
             }
             
             for(JSONObject fkJson: foreignKeysJson) {
                 // get the type for the foreign key table
-                Type type = loader.shape.getType(fkJson.getString(KEY_FOREIGN_KEY_TABLE));
+                Type type = getShape().getType(normalize(fkJson.getString(KEY_FOREIGN_KEY_TABLE)));
                 
                 BusinessObject bo = new ImmutableBO(type, null, null, null);
-                JSONObject entityJSON = new JSONObject();
-                bo.setInstance(entityJSON);
+                JSONObject fkJsonInstance = new JSONObject();
+                bo.setInstance(fkJsonInstance);
                 JSONArray joinArray = fkJson.getJSONArray(KEY_JOIN);
                 
                 Map<String, String> lookupKeys = new HashMap<>(); 
@@ -457,23 +522,55 @@ public class CSVLoader {
                     // normalize the column names
                     fkColName = normalize(fkColName);
                     headerName = normalize(headerName);
-                    String fkValue = csvRecord.get(this.headerMap.get(headerName)).trim();
-                    entityJSON.put(fkColName, fkValue);
+                    String fkValue = entityJSON.getString(headerName);
+                    fkJsonInstance.put(fkColName, fkValue);
                     lookupKeys.put(fkColName, fkValue);
                 }
                  
                 Object value = dataStore.getSessionContext().getSingleResult(bo, fkJson.getString(KEY_SELECT), lookupKeys);
-                if (value == null && isNotNull) {
-                    StringBuilder keyStr = new StringBuilder();
-                    int i = 1;
-                    for (Map.Entry<String, String> entry : lookupKeys.entrySet()) {
-                        keyStr.append(String.format("Key %s: %s, Value: %s\n", i++, entry.getKey(), entry.getValue()));
+                if (value == null) {
+                    if (isNotNull) {
+                        StringBuilder keyStr = new StringBuilder();
+                        int i = 1;
+                        for (Map.Entry<String, String> entry : lookupKeys.entrySet()) {
+                            keyStr.append(
+                                    String.format("Key %s: %s, Value: %s\n", i++, entry.getKey(), entry.getValue()));
+                        }
+                        throw new RuntimeException(String.format(
+                                "Unable to load required value for column %s in table %s for the following key(s): \n%s",
+                                fkJson.getString(KEY_FOREIGN_KEY), getType().getName(), keyStr.toString()));
                     }
-                    throw new RuntimeException(String.format(
-                            "Unable to load required value for column %s in table %s for the following key(s): \n%s",
-                            fkJson.getString(KEY_FOREIGN_KEY), getType().getName(), keyStr.toString()));
+                } else {
+                    result.put(normalize(fkJson.getString(KEY_FOREIGN_KEY)), value);
+                    entityJSON.put(normalize(fkJson.getString(KEY_FOREIGN_KEY)), value);
                 }
-                result.put(normalize(fkJson.getString(KEY_FOREIGN_KEY)), value);
+            }
+            
+            return result;
+        }
+        
+        public Map<String, Property> getLookupKeyNotNullFKMap() {
+            return getHeaderLookupPropertyMap(this.notNullForeignKeys);
+        }
+        
+        public Map<String, Property> getLookupKeyNullableFKMap() {
+            return getHeaderLookupPropertyMap(this.nullableForeignKeys);
+        }        
+        
+        private Map<String, Property> getHeaderLookupPropertyMap(List<JSONObject> fkeys) {
+            Map<String, Property> result = new HashMap<>();
+            for(JSONObject fkJson: fkeys) {
+                JSONArray joinArray = fkJson.getJSONArray(KEY_JOIN);
+                for (int j = 0; j < joinArray.length(); j++) {
+                    JSONObject joinJson = joinArray.getJSONObject(j);
+                    String fkColName = joinJson.names().getString(0);
+                    
+                    // fkColName should not be normalized to the get the value
+                    String headerName = joinJson.getString(fkColName);
+                    Type type = getShape().getType(normalize(fkJson.getString(KEY_FOREIGN_KEY_TABLE)));
+                    Property property = type.getProperty(normalize(fkColName));
+                    result.put(headerName, property);
+                }
             }
             
             return result;
@@ -483,7 +580,7 @@ public class CSVLoader {
             return column.trim().toUpperCase();
         }
         
-        Map<String, Object> getLookupKeys(CSVRecord csvRecord) {
+        Map<String, Object> getLookupKeys(JSONObject entityJSON) {
             Map<String, Object> result = new HashMap<>();
             
             JSONArray keys = null;
@@ -501,7 +598,7 @@ public class CSVLoader {
                         key = this.columnAliases.get(key);
                     }
                 }
-                String value = csvRecord.get(this.headerMap.get(key));
+                String value = entityJSON.getString(key);
                 
                 result.put(key, value);
             }
@@ -643,8 +740,7 @@ public class CSVLoader {
     }
     
     public CSVLoader(Shape shape) {
-        // A child shape is created so that we can manipulate the entity generators for the types
-        this.shape = new DomainShape("test", shape, shape.getDataModel());
+        this.shape = shape;
         this.orderingGraph = new DirectedSparseGraph<>();
         this.tableStateMap = new HashMap<>();
     }
@@ -751,19 +847,17 @@ public class CSVLoader {
         }
     }  
     
-    private Set<String> getColumnsToPopulate(CSVState csvState, Map<String, Integer> colPosition, List<Property> generatedProperties) {
+    private Set<String> getColumnsToPopulate(CSVState csvState, List<Property> generatedProperties) {
         // The columns list direct which table columns need to be populated
         Set<String> columns = csvState.getNonFKColumns();
         for(Map.Entry<String, Integer> entry: csvState.headerMap.entrySet()) {
             if(columns.contains(entry.getKey())) {
-                colPosition.put(entry.getKey(), entry.getValue());
             }
         }
         
         // Add column aliases
         for(Map.Entry<String, String> entry: csvState.columnAliases.entrySet()) {
             if(csvState.headerMap.containsKey(entry.getValue())) {
-                colPosition.put(entry.getKey(), csvState.headerMap.get(entry.getValue()));
                 columns.add(entry.getKey());
             } else {
                 logger.warn(String.format("Column alias %s in table %s missing in header", entry.getValue(), csvState.getTableName()));
@@ -823,9 +917,8 @@ public class CSVLoader {
         entityGenerator.processVisitors();
         Iterator entityIterator = (Iterator) entityGenerator;        
 
-        Map<String, Integer> colPosition = new HashMap<>();
         List<Property> generatedProperties = csvState.getGeneratedProperties();
-        Set<String> columns = getColumnsToPopulate(csvState, colPosition, generatedProperties);
+        Set<String> columns = getColumnsToPopulate(csvState, generatedProperties);
                 
         List<Property> dateProperties = new ArrayList<>();
         for(String column: columns) {
@@ -840,6 +933,7 @@ public class CSVLoader {
         }
         
         List<String> columnList = new ArrayList<>(columns);
+        Set<String> columnsToInsert = new HashSet<>(columnList);
         
         // Read the data for non FK columns
         try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvState.getCSVFile());
@@ -880,17 +974,28 @@ public class CSVLoader {
 
                     JSONObject entityJSON = null;
                     try {
-                        entityJSON = CSVExportImport.getJSON(colPosition, csvRecord);
+                        // It is fine to copy everything to the JSON object since we say exactly which columns to insert
+                        entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord);
+                        populateLookupKeyValues(entityJSON, settings, currentVisitor, csvState.getLookupKeyNotNullFKMap());                        
                     } catch (ArrayIndexOutOfBoundsException e) {
                         throw new RuntimeException(String.format(
                                 "Unable to find data for some column(s) in row %s while processing table %s. ArrayIndexOutOfBoundsException on index: %s",
                                 i, csvState.getTableName(), e.getMessage()));
                     }
                     
-                    Map<String, Object> notNullFKData = csvState.loadNotNullFKData(csvRecord, dataStore);
-                    for(Map.Entry<String, Object> entry: notNullFKData.entrySet()) {                    
-                        entityJSON.put(entry.getKey(), entry.getValue());
-                    }   
+                    csvState.loadNotNullFKData(entityJSON, dataStore); 
+                    if(!isWriteToDB(csvPrinter)) {
+                        // Since we cannot update a CSV file, we also try and get the values 
+                        // for the nullable Foreign keys.
+                        // The assumption is that the data is already persisted, if not, it will be null.
+                        Set<String> lookupColumns = updateNullableFKFields(entityJSON, csvState, settings, dataStore, currentVisitor).keySet();
+                        for(String lookupColumn: lookupColumns) {
+                            if(!columnsToInsert.contains(lookupColumn)) {
+                                columnsToInsert.add(lookupColumn);
+                                columnList.add(lookupColumn);
+                            }
+                        }
+                    }
                     
                     for(Property p: dateProperties) {
                         // This could be a generated property, so it might
@@ -928,6 +1033,7 @@ public class CSVLoader {
                     if(logger.isDebugEnabled()) {
                         logger.debug("entityJSON: " + entityJSON.toString());
                     }
+
                     if (isWriteToDB(csvPrinter)) {
                         BusinessObject bo = new ImmutableBO(csvState.getType(), null, null, null);
                         bo.setInstance(entityJSON);
@@ -982,35 +1088,55 @@ public class CSVLoader {
             if(reader.ready()) { reader.readLine();}
             if(reader.ready()) { reader.readLine();}
             
+            StateGraph.ObjectGenerationVisitor currentVisitor = getOrCreateVisitor(settings);            
             try(CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT)) {
                 int i = 1;
                 JDBCSessionContext sc = dataStore.getSessionContext();
-                for (CSVRecord csvRecord : parser) {                
-                    JSONObject entityJSON = new JSONObject();                    
+                for (CSVRecord csvRecord : parser) {           
+                    JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord);
+
+                    Map<String, Object> nullableFKData = updateNullableFKFields(entityJSON, csvState, settings, dataStore, currentVisitor);                       
+                    List<String> columnsToUpdate = new ArrayList<>(nullableFKData.keySet());                     
                     
-                    // Fetch the foreign key value from the DB
-                    Map<String, Object> nullableFKData = csvState.loadNullableFKData(csvRecord, dataStore);    
-                    List<String> columnsToUpdate = new ArrayList<>(nullableFKData.keySet());                    
-                    for(Map.Entry<String, Object> entry: nullableFKData.entrySet()) {                        
-                        entityJSON.put(entry.getKey(), entry.getValue());
+                    if (columnsToUpdate.size() > 0) {
+                        // Get the lookup keys for that particular record
+                        Map<String, Object> lookupKeys = csvState.getLookupKeys(entityJSON);
+
+                        BusinessObject bo = new ImmutableBO(csvState.getType(), null, null, null);
+                        bo.setInstance(entityJSON);
+                        dataStore.getSessionContext().update(bo, columnsToUpdate, lookupKeys);
+
+                        DataImporter.performFlush(sc, i++, false);
                     }
-                    
-                    // Get the lookup keys for that particular record
-                    Map<String, Object> lookupKeys = csvState.getLookupKeys(csvRecord);
-                    for(Map.Entry<String, Object> entry: lookupKeys.entrySet()) {      
-                        entityJSON.put(entry.getKey(), entry.getValue());
-                    }                    
-                        
-                    BusinessObject bo = new ImmutableBO(csvState.getType(), null, null, null);
-                    bo.setInstance(entityJSON);
-                    dataStore.getSessionContext().update(bo, columnsToUpdate, lookupKeys);
-                    
-                    DataImporter.performFlush(sc, i++, false);
                 }
-                DataImporter.performFlush(sc, i, true);                
+                if(i > 1) {
+                    DataImporter.performFlush(sc, i, true);
+                }
             }
         }
     } 
+    
+    private Map<String, Object> updateNullableFKFields(JSONObject entityJSON, CSVState csvState, Settings settings, JDBCDataStore dataStore, StateGraph.ObjectGenerationVisitor currentVisitor) {
+        populateLookupKeyValues(entityJSON, settings, currentVisitor, csvState.getLookupKeyNullableFKMap());
+        
+        // Fetch the foreign key value from the DB
+        return  csvState.loadNullableFKData(entityJSON, dataStore);
+    }
+    
+    private void populateLookupKeyValues(JSONObject entityJSON, Settings settings, StateGraph.ObjectGenerationVisitor currentVisitor, Map<String, Property> loopKeyPropertyMap) {
+        for(Map.Entry<String, Property> entry: loopKeyPropertyMap.entrySet()) {
+            logger.info(String.format("populateLookupKeyValues: key: %s, property name: %s", entry.getKey(), (entry.getValue() == null ? "null" : entry.getValue().getName())));
+            
+            if(!entityJSON.has(entry.getValue().getName())) {
+                entityJSON.put(entry.getKey(), ((BasicType)entry.getValue().getType()).generate(
+                        settings,
+                        entry.getValue(),
+                        null,
+                        null,
+                        currentVisitor));
+            }
+        }          
+    }
     
     public CSVState findState(String tableName) {
         return tableStateMap.get(tableName);
@@ -1024,6 +1150,10 @@ public class CSVLoader {
      * @throws IOException if there is a problem with reading the CSV file
      */
     public CSVState getCSVState(String csvFile) throws IOException {
+        // A child shape is created so that we can manipulate the entity generators for the types
+        // Also the child shape for each Type ensures that a copy of the relationship types are also made
+        Shape childShape = new DomainShape("test", shape, shape.getDataModel());
+        
         try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvFile);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             // Skip first line as schema is in second line
@@ -1040,13 +1170,9 @@ public class CSVLoader {
             // Create a state object using the json schema and check if there are any not-null
             // foreign keys in the columns. This creates a dependency with the state object of the foreignKeyTable
             String tableName = CSVState.normalize(schema.getString(KEY_TABLE_NAME));
-            Type type = this.shape.getType(tableName);
+            Type type = childShape.getType(tableName);
             
-            // We make a copy so we can manipulate the entity generators
-            type = ((EntityType)type).copy(this.shape);
-            this.shape.addType(type);
-            
-            CSVState result = new CSVState(type, schema, csvFile, this);
+            CSVState result = new CSVState(type, schema, csvFile, this, childShape);
             this.tableStateMap.put(tableName, result);
             
             return result;

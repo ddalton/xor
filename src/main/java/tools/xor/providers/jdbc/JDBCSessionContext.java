@@ -433,7 +433,7 @@ public class JDBCSessionContext implements CustomPersister
     private PreparedStatement getSelectStmt (BusinessObject bo, String primaryKeyColumn, Map<String, String> lookupKeys)
     {
         JDBCType entityType = (JDBCType)bo.getType();
-        String psSQL = getDbTranslator().getSelectStmt(entityType, bo, primaryKeyColumn, lookupKeys);
+        String psSQL = getDbTranslator().getSelectStmt(entityType, primaryKeyColumn, lookupKeys);
 
         PreparedStatement ps = getOrCreate(psSQL);
         getDbTranslator().setSelectValues(entityType, ps, bo, primaryKeyColumn, lookupKeys);

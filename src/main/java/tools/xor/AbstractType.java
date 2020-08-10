@@ -140,6 +140,7 @@ public abstract class AbstractType implements EntityType, Cloneable {
             // Fix any mutable objects
             copy.entityGenerators = new LinkedList<>();
             copy.shape = shape;
+            shape.addType(copy);
             
             // Also make a copy of the properties
             for(Property p: getProperties()) {

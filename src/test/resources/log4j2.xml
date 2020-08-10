@@ -49,7 +49,7 @@
   </Appenders>
 
   <Loggers>
-    <Logger name="tools.xor.service.exim.CSVLoader" level="warn" additivity="false">
+    <Logger name="tools.xor.service.exim.CSVLoader" level="info" additivity="false">
       <AppenderRef ref="graphappender" />
       <AppenderRef ref="Console" />
     </Logger>

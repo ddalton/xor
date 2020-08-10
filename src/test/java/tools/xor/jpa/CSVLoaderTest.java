@@ -249,48 +249,108 @@ public class CSVLoaderTest {
             }
             
             csvLoader.importData(new Settings(), dataStore);
-            /*
-            // Load a Project 
-            JSONObject queryTask = new JSONObject();
-            queryTask.put("UUID", "ID_4");
-            
-            // Cannot use relationships since
-            // some JUnit tests use DataModel.RELATIONAL_SHAPE and this does not have relationship
-            List<String> paths = new ArrayList<>();
-            paths.add("UUID");
-            paths.add("NAME");
-            paths.add("CREATEDON");
-            paths.add("OWNEDBY_UUID");
-            AggregateView ownedByView = new AggregateView("OWNEDBY");
-            ownedByView.setAttributeList(paths);
-            
-            // This whole creating the settings object needs to be updated
-            Settings settings = new Settings();
-            // Why is the shape getting un-initialized when called after settings.init???
-            settings.setView(ownedByView);    
-            settings.setSessionContext(sc);
-            settings.setEntityType(shape.getType("TASK"));
-            settings.init(shape);
-                    
-            List result = amJDBC.query(queryTask, settings);
-            assert(result != null);
-            assert(result.size() == 1);
-            JSONObject json = (JSONObject)result.get(0);
-            System.out.println("CSVLOADER JSON: " + json.toString());
-            assert(json.getString("UUID").equals("ID_4"));
-            assert(json.getString("CREATEDON").startsWith("2019-12-25T23:59:59"));
-            
-            JSONObject ownedBy = json;
-            if(modelsRelationships) {
-                ownedBy = json.getJSONObject("OWNEDBY_UUID");
-                assert(ownedBy.getString("UUID").equals("ID_2"));
-            } else {
-                assert(ownedBy.getString("OWNEDBY_UUID").equals("ID_2"));
-            }
-            */
             
         } finally {
                 sc.rollback();
         }
-    }       
+    }   
+    
+    @Test
+    public void test4() throws IOException {
+        String testFolder = "csvloader/test4/";
+        
+        if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test1", testFolder));
+        }
+        
+        List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
+        for(String file: files) {
+            System.out.println(file);
+        }
+        
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+        boolean modelsRelationships = true;
+        if(shape.getName().equals(DataModel.RELATIONAL_SHAPE)) {
+            modelsRelationships = false;
+        }
+        
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder);
+        
+       Graph<CSVState, Edge<CSVState>> graph = csvLoader.getGraph();
+       for(CSVState state: graph.getVertices()) {
+           // set the generator for the primary key
+           Generator rootidgen = new StringTemplate(new String[] {"ID_[VISITOR_CONTEXT]"});
+           EntityType entityType = (EntityType) state.getType();
+           Property p = entityType.getProperty("UUID");
+           p.setGenerator(rootidgen);
+       }
+        
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore)amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();    
+        try {
+            // We are only loading the Person entries
+            csvLoader.importData(new Settings(), dataStore);
+
+            // We shall now generate the Task.schema.gen 
+            String csvFilePath = "csvloader/test4/Task.schema";
+            String csvGenFilePath = csvFilePath + ".gen";
+            String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+            
+            CSVState csvState = csvLoader.getCSVState(csvFilePath);
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+            
+        } finally {
+                sc.rollback();
+        }
+    } 
+    
+    @Test
+    /*
+     * Complex Test.
+     * With dependsOn set
+     * No CSV data. All data is generated
+     * Uses CounterGenerator
+     * Has foreign key column generator
+     * 
+     * Uses 2 csv files
+     * 1. Person.csv - has CSV data
+     * 2. Task.csv - fully auto generated 
+     */
+    public void test5() throws IOException {
+        String testFolder = "csvloader/test5/";
+        
+        if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test1", testFolder));
+        }
+        
+        List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
+        for(String file: files) {
+            System.out.println(file);
+        }
+        
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+        boolean modelsRelationships = true;
+        if(shape.getName().equals(DataModel.RELATIONAL_SHAPE)) {
+            modelsRelationships = false;
+        }
+        
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder);
+        
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore)amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();    
+        try {
+            csvLoader.importData(new Settings(), dataStore);
+            
+        } finally {
+                sc.rollback();
+        }
+    }
 }

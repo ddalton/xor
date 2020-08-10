@@ -605,7 +605,7 @@ public abstract class DBTranslator
         return sqlstr.toString();
     }    
     
-    public String getSelectStmt(JDBCType entityType, BusinessObject bo, String primaryKeyColumn, Map<String, String> lookupKeys) {
+    public String getSelectStmt(JDBCType entityType, String primaryKeyColumn, Map<String, String> lookupKeys) {
         StringBuilder sqlstr = new StringBuilder("SELECT ");
         sqlstr.append(primaryKeyColumn)
         .append(" FROM ")
@@ -804,6 +804,7 @@ public abstract class DBTranslator
         JDBCtoSQLConverter c = isCSV ? getCSVConverter(col.getDataType()) : getConverter(col.getDataType());
         
         Object value = bo.get(col.getName());
+
         // check the length and trim if necessary
         if(value != null && value instanceof String) {
             if(value.toString().length() >= col.getLength()) {

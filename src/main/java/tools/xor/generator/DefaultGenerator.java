@@ -198,10 +198,18 @@ public class DefaultGenerator implements Generator
         long maximum = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years in future
 
         if (values.length >= 1) {
-            minimum = Long.parseLong(values[0]);
+            try {
+                minimum = Long.parseLong(values[0]);
+            } catch (NumberFormatException nfe) {
+                minimum = new BigDecimal(values[0]).longValueExact();
+            }
         }
         if (values.length >= 2) {
-            maximum = Long.parseLong(values[1]);
+            try {
+                maximum = Long.parseLong(values[1]);
+            } catch (NumberFormatException nfe) {
+                maximum = new BigDecimal(values[1]).longValueExact();
+            }            
         }        
         
         long  range = maximum - minimum;

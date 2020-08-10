@@ -66,24 +66,23 @@ public class StringType extends SimpleType {
 
 		Generator gen = ((ExtendedProperty)property).getGenerator(visitor.getRelationshipName());
 
+		Integer stringLen = null;
 		if(gen == null || gen instanceof LocalizedString) {
 			int length = DEFAULT_LENGTH;
 			if (property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
 				length = (int)property.getConstraints().get(Constants.XOR.CONS_LENGTH);
 			}
-			int stringLen = (int)(Math.random() * length);
+			stringLen = (int)(Math.random() * length);
 			if (stringLen < MIN_LENGTH) {
 				stringLen = (MIN_LENGTH > length) ? length : MIN_LENGTH;
 			}
-
-			visitor.setContext(stringLen);
 		}
 
 		if(gen != null) {
 			return gen.getStringValue(property, visitor);
 		} else {
 			//return RandomStringUtils.randomAscii(stringLen);
-			return RandomStringUtils.randomAlphanumeric(getLength((Integer) visitor.getContext()));
+			return RandomStringUtils.randomAlphanumeric(getLength(stringLen));
 		}
 	}	
 	

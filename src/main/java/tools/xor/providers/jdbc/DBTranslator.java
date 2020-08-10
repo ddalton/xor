@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.BasicType;
@@ -62,6 +64,8 @@ import tools.xor.view.QueryJoinAction;
  */
 public abstract class DBTranslator
 {
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+    
     private final static Map<String, DBTranslator> translators = new ConcurrentHashMap<>();
     private final static Map<String, DBType> dbTypeByProductName = new ConcurrentHashMap<>();
 
@@ -810,6 +814,7 @@ public abstract class DBTranslator
             if(value.toString().length() >= col.getLength()) {
                 value = value.toString().substring(0, col.getLength());
             }
+            logger.debug(String.format("Setting String value '%s' on column '%s'", value.toString(), col.getName()));
         }
         values.add(getColumnString(value, isUpdate, col.getName(), c));
 

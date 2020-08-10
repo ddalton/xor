@@ -102,6 +102,8 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
             this.numCols = rsmd.getColumnCount();
 
             this.row = new Object[numCols + 1];
+            
+            logger.info("Setting the row object array on the visitor");
             this.visitor.setContext(row);
         }
         catch (SQLException e) {

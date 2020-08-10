@@ -953,11 +953,7 @@ public class CSVLoader {
                     
                     if(!entityIterator.hasNext()) {
                         break;
-                    }
-                    
-                    // Should support more records as it is a generator
-                    // If not then we break
-                    entityIterator.next();                    
+                    }                  
                     
                     // Only if we don't have csv data do we solely rely on entity driver generator powered
                     if(!csvPowered) {
@@ -972,7 +968,14 @@ public class CSVLoader {
                         }
                     } else if(i == COUNTER_START) {
                         logger.info(String.format("Data generation for table %s is entityGenerator powered", csvState.getTableName()));
-                    } 
+                    }
+                    
+                    // Should support more records as it is a generator
+                    // If not then we break
+                    Object result = entityIterator.next();  
+                    if(!csvPowered && result == null) {
+                        break;
+                    }
 
                     JSONObject entityJSON = null;
                     try {

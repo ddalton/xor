@@ -1090,6 +1090,9 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		public void setContext (Object context)
 		{
 			this.context = context;
+			if(logger.isDebugEnabled())  {
+			    logger.debug(String.format("Setting context[%s] on the visitor", context==null?"null":context.getClass().getName()));
+			}
 		}
 		
 		public void setContext(int i, Object value) {

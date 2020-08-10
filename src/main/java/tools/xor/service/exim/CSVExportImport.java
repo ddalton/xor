@@ -40,14 +40,18 @@ public class CSVExportImport extends AbstractExportImport
         super(am);
     }
     
-    public static JSONObject getJSON (Map<String, Integer> colMap, CSVRecord row)
+    public static JSONObject getJSON (Map<String, Integer> colMap, CSVRecord row) {
+        return getJSON(colMap, row, true);
+    }
+    
+    public static JSONObject getJSON (Map<String, Integer> colMap, CSVRecord row, boolean resolveEmbedded)
     {
         JSONObject entity = new JSONObject();
 
         if (row != null) {
             for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
                 String value = row.get(entry.getValue());
-                if (isEmbeddedPath(entry.getKey())) {
+                if (resolveEmbedded && isEmbeddedPath(entry.getKey())) {
                     setEmbeddableValue(entity, entry.getKey(), value);
                 } else {
                     // set direct value

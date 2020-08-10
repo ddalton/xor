@@ -977,7 +977,7 @@ public class CSVLoader {
                     JSONObject entityJSON = null;
                     try {
                         // It is fine to copy everything to the JSON object since we say exactly which columns to insert
-                        entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord);
+                        entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
                         populateLookupKeyValues(entityJSON, settings, currentVisitor, csvState.getLookupKeyNotNullFKMap());                        
                     } catch (ArrayIndexOutOfBoundsException e) {
                         throw new RuntimeException(String.format(
@@ -1114,7 +1114,7 @@ public class CSVLoader {
                 int i = 1;
                 JDBCSessionContext sc = dataStore.getSessionContext();
                 for (CSVRecord csvRecord : parser) {           
-                    JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord);
+                    JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
 
                     Map<String, Object> nullableFKData = updateNullableFKFields(entityJSON, csvState, settings, dataStore, currentVisitor);                       
                     List<String> columnsToUpdate = new ArrayList<>(nullableFKData.keySet());                     

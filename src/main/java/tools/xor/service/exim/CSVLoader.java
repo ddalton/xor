@@ -232,6 +232,8 @@ public class CSVLoader {
     
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());    
     
+    private static final int COUNTER_START = 1;
+    
     private Shape shape;
     private DirectedSparseGraph<CSVState, Edge<CSVState>> orderingGraph;
     private Map<String, CSVState> tableStateMap;
@@ -370,12 +372,12 @@ public class CSVLoader {
             String generatorClassName = generator.getString(KEY_CLASSNAME);
             Object args = buildArguments(generator);
             
-            Property p = getType().getProperty(normalize(generatorColumn));
+            Property p = type.getProperty(normalize(generatorColumn));
             if(p != null) {
-                logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s'", generatorClassName, p.getName(), generatorColumn));
+                logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s' in table %s", generatorClassName, p.getName(), generatorColumn, type.getName()));
                 p.setGenerator((Generator) createGenerator(generatorClassName, args));
             } else {
-                throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, getType().getName()));
+                throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, type.getName()));
             }            
         }
         
@@ -565,8 +567,7 @@ public class CSVLoader {
                     JSONObject joinJson = joinArray.getJSONObject(j);
                     String fkColName = joinJson.names().getString(0);
                     
-                    // fkColName should not be normalized to the get the value
-                    String headerName = joinJson.getString(fkColName);
+                    String headerName = normalize(joinJson.getString(fkColName));
                     Type type = getShape().getType(normalize(fkJson.getString(KEY_FOREIGN_KEY_TABLE)));
                     Property property = type.getProperty(normalize(fkColName));
                     result.put(headerName, property);
@@ -944,18 +945,19 @@ public class CSVLoader {
             
             try(CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT)) {
                 Iterator<CSVRecord> csvIterator = parser.iterator();
-                int i = 1;
+                int i = COUNTER_START;
                 boolean csvPowered = false;
                 CSVRecord csvRecord = null;
                 while(csvIterator.hasNext() || entityIterator.hasNext()) {
                     csvRecord = csvIterator.hasNext() ? csvIterator.next() : null;
                     
-                    // Should support more records as it is a generator
-                    // If not then we break
-                    entityIterator.next();
                     if(!entityIterator.hasNext()) {
                         break;
                     }
+                    
+                    // Should support more records as it is a generator
+                    // If not then we break
+                    entityIterator.next();                    
                     
                     // Only if we don't have csv data do we solely rely on entity driver generator powered
                     if(!csvPowered) {
@@ -968,7 +970,7 @@ public class CSVLoader {
                             // end of csv powered processing
                             break;
                         }
-                    } else if(i == 1) {
+                    } else if(i == COUNTER_START) {
                         logger.info(String.format("Data generation for table %s is entityGenerator powered", csvState.getTableName()));
                     } 
 
@@ -1030,6 +1032,25 @@ public class CSVLoader {
                                     currentVisitor));
                     }
                     
+                    if(!csvPowered) {
+                        // If not csv powered we have to add the header columns that are properties
+                        // and that are not present in the JSON object
+                        for(String columnName: csvState.headerMap.keySet()) {
+                            if(entityJSON.has(columnName) || csvState.getType().getProperty(columnName) == null) {
+                                continue;
+                            }
+                            
+                            Property p = csvState.getType().getProperty(columnName);
+                            entityJSON.put(
+                                    p.getName(), ((BasicType)p.getType()).generate(
+                                        settings,
+                                        p,
+                                        null,
+                                        null,
+                                        currentVisitor));                            
+                        }
+                    }
+                    
                     if(logger.isDebugEnabled()) {
                         logger.debug("entityJSON: " + entityJSON.toString());
                     }
@@ -1041,7 +1062,7 @@ public class CSVLoader {
 
                         DataImporter.performFlush(sc, i, false);
                     } else {
-                        if(i == 1) {
+                        if(i == COUNTER_START) {
                             csvPrinter.printRecord(columnList);
                         }
                         csvPrinter.printRecord(extractValues(entityJSON, columnList));
@@ -1127,7 +1148,7 @@ public class CSVLoader {
         for(Map.Entry<String, Property> entry: loopKeyPropertyMap.entrySet()) {
             logger.info(String.format("populateLookupKeyValues: key: %s, property name: %s", entry.getKey(), (entry.getValue() == null ? "null" : entry.getValue().getName())));
             
-            if(!entityJSON.has(entry.getValue().getName())) {
+            if(!entityJSON.has(entry.getKey())) {
                 entityJSON.put(entry.getKey(), ((BasicType)entry.getValue().getType()).generate(
                         settings,
                         entry.getValue(),
@@ -1135,7 +1156,7 @@ public class CSVLoader {
                         null,
                         currentVisitor));
             }
-        }          
+        }   
     }
     
     public CSVState findState(String tableName) {

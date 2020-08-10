@@ -168,6 +168,7 @@ public class CSVLoaderTest {
             
         } finally {
         	    sc.rollback();
+                sc.close();
         }
 	}	
 	
@@ -201,11 +202,13 @@ public class CSVLoaderTest {
         amJDBC.configure(null);
         JDBCDataStore dataStore = (JDBCDataStore) amJDBC.getDataStore();
         JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
         sc.beginTransaction();
         try {
             csvState.writeToCSV(absolutePath, new Settings(), dataStore);
         } finally {
             sc.rollback();
+            sc.close();
         }
     }
     
@@ -252,6 +255,7 @@ public class CSVLoaderTest {
             
         } finally {
                 sc.rollback();
+                sc.close();
         }
     }   
     
@@ -305,6 +309,7 @@ public class CSVLoaderTest {
             
         } finally {
                 sc.rollback();
+                sc.close();
         }
     } 
     
@@ -347,10 +352,20 @@ public class CSVLoaderTest {
         sc.setAutoCommit(false);
         sc.beginTransaction();    
         try {
+            // We are only loading the Person entries
             csvLoader.importData(new Settings(), dataStore);
+            
+            // We shall now generate the Task.csv.gen 
+            String csvFilePath = "csvloader/test5/Task.schema";
+            String csvGenFilePath = csvFilePath + ".gen";
+            String absolutePath = getAbsoluteResourcePath(csvGenFilePath);            
+            
+            CSVState csvState = csvLoader.getCSVState(csvFilePath);
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);            
             
         } finally {
                 sc.rollback();
+                sc.close();
         }
     }
 }

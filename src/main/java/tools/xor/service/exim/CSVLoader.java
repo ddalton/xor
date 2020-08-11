@@ -688,7 +688,8 @@ public class CSVLoader {
            for(String fkTable: getNotNullFKTables()) {
                CSVState fkState = loader.findState(fkTable);
                if(fkState == null) {
-                   throw new RuntimeException(String.format("Unable to find csv file for table " + fkTable));
+                   logger.warn(String.format("Unable to find csv file for table %s. File not needed if data for this table is already in database.", fkTable));
+                   continue;
                }
                if(fkState == this) {
                    logger.info("Avoiding self-loop edge for table %s");
@@ -734,6 +735,8 @@ public class CSVLoader {
             try {
                 createCSVPrinter(filePath);
                 loader.createRecords(this, settings, dataStore);
+                
+                // Don't need to clear the generators since we created a child shape to make generator related changes
             } catch (IOException e) {
                 throw ClassUtil.wrapRun(e);
             }
@@ -792,6 +795,9 @@ public class CSVLoader {
             insertData(settings, po);
             
             updateData(settings, po);
+            
+            // Don't need to clear the generators since we created a child shape to make generator related changes
+            
         } catch (IOException e) {
             throw ClassUtil.wrapRun(e);
         } finally {
@@ -1085,8 +1091,6 @@ public class CSVLoader {
                 csvPrinter = null;
             }
         }
-
-        entityType.clearGenerators();
     }
     
     private List<Object> extractValues(JSONObject json, List<String> columnList) {
@@ -1112,12 +1116,74 @@ public class CSVLoader {
             if(reader.ready()) { reader.readLine();}
             if(reader.ready()) { reader.readLine();}
             
-            StateGraph.ObjectGenerationVisitor currentVisitor = getOrCreateVisitor(settings);            
+            StateGraph.ObjectGenerationVisitor currentVisitor = getOrCreateVisitor(settings);  
+            
+            JDBCSessionContext sc = dataStore == null ? null : dataStore.getSessionContext();
+            GeneratorDriver entityGenerator = csvState.getEntityGenerator();
+            entityGenerator.init(sc == null ? null : sc.getConnection(), currentVisitor);
+            entityGenerator.processVisitors();
+            Iterator entityIterator = (Iterator) entityGenerator;            
+            
             try(CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT)) {
-                int i = 1;
-                JDBCSessionContext sc = dataStore.getSessionContext();
-                for (CSVRecord csvRecord : parser) {           
+                Iterator<CSVRecord> csvIterator = parser.iterator();
+                int i = COUNTER_START;
+                boolean csvPowered = false;
+                CSVRecord csvRecord = null;
+                while(csvIterator.hasNext() || entityIterator.hasNext()) {
+                    csvRecord = csvIterator.hasNext() ? csvIterator.next() : null;
+                    
+                    if(!entityIterator.hasNext()) {
+                        break;
+                    }                  
+                    
+                    // Only if we don't have csv data do we solely rely on entity driver generator powered
+                    if(!csvPowered) {
+                        if(csvRecord != null) {
+                            logger.info(String.format("Data update for table %s is CSV powered", csvState.getTableName()));
+                            csvPowered = true;
+                        }
+                    } else if(csvRecord == null) {
+                        if (csvPowered) {
+                            // end of csv powered processing
+                            break;
+                        }
+                    } else if(i == COUNTER_START) {
+                        logger.info(String.format("Data update for table %s is entityGenerator powered", csvState.getTableName()));
+                    }
+                    
+                    // Should support more records as it is a generator
+                    // If not then we break
+                    Object result = entityIterator.next();  
+                    if(!csvPowered && result == null) {
+                        break;
+                    }                    
+                    
                     JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
+                    
+                    if(!csvPowered) {
+                        // generate the lookup key(s) for the current type
+                        // NOTE: The generation of the lookup key values should be idempotent, i.e., they should not change with different invocations
+                        if(csvState.schema.has(KEY_KEYS)) {
+                            JSONArray keys = csvState.schema.getJSONArray(KEY_KEYS);
+                            for(int j = 0; j < keys.length(); j++) {
+                                String key = CSVState.normalize(keys.getString(j));
+                                Property p = csvState.getType().getProperty(key);
+                                if(p != null && p.getGenerator() != null) {
+                                    logger.info(String.format("Lookup keys: Property %s in table %s is initialized with a generator", p.getName(), csvState.getTableName()));
+                                }
+                                
+                                if(p != null) {
+                                    entityJSON.put(
+                                            p.getName(), ((BasicType)p.getType()).generate(
+                                                settings,
+                                                p,
+                                                null,
+                                                null,
+                                                currentVisitor));
+                                }
+                            }
+                        }
+                    }
 
                     Map<String, Object> nullableFKData = updateNullableFKFields(entityJSON, csvState, settings, dataStore, currentVisitor);                       
                     List<String> columnsToUpdate = new ArrayList<>(nullableFKData.keySet());                     
@@ -1133,7 +1199,7 @@ public class CSVLoader {
                         DataImporter.performFlush(sc, i++, false);
                     }
                 }
-                if(i > 1) {
+                if(i > COUNTER_START) {
                     DataImporter.performFlush(sc, i, true);
                 }
             }
@@ -1150,7 +1216,7 @@ public class CSVLoader {
     private void populateLookupKeyValues(JSONObject entityJSON, Settings settings, StateGraph.ObjectGenerationVisitor currentVisitor, Map<String, Property> loopKeyPropertyMap) {
         for(Map.Entry<String, Property> entry: loopKeyPropertyMap.entrySet()) {
             logger.info(String.format("populateLookupKeyValues: key: %s, property name: %s", entry.getKey(), (entry.getValue() == null ? "null" : entry.getValue().getName())));
-            
+
             if(!entityJSON.has(entry.getKey())) {
                 entityJSON.put(entry.getKey(), ((BasicType)entry.getValue().getType()).generate(
                         settings,

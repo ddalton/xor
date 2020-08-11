@@ -90,6 +90,13 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
         this.visitor = visitor;
 
         try {
+            // Check if we need to reset
+            // this can happen if the generator is being used a second time (e.g., UPDATE phase of CSVLoader)
+            this.isLast = false;
+            if(this.statement != null && !this.statement.isClosed()) {
+                this.statement.close();
+            }            
+            
             this.statement = connection.createStatement(
                 ResultSet.TYPE_FORWARD_ONLY,
                 ResultSet.CONCUR_READ_ONLY);

@@ -35,8 +35,8 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
     // A negative value means that counter does not end
     private final int count;
     private final int start;
-    private StateGraph.ObjectGenerationVisitor visitor;
     private int current;
+    private StateGraph.ObjectGenerationVisitor visitor;
 
     public CounterGenerator(int count) {
         this(count, 0);
@@ -72,6 +72,9 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
     @Override public void init (Connection connection, StateGraph.ObjectGenerationVisitor visitor)
     {
         this.visitor = visitor;
+        
+        // reset the values
+        this.current = this.start;
     }
 
     @Override

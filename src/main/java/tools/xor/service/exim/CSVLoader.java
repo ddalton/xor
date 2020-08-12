@@ -365,6 +365,8 @@ public class CSVLoader {
                 String generatorClassName = generator.getString(KEY_CLASSNAME);
                 Object args = buildArguments(generator);
                 this.entityGenerator = (GeneratorDriver) createGenerator(generatorClassName, args);
+                
+                ((EntityType)getType()).addGenerator(entityGenerator);
             }
         }
         
@@ -908,7 +910,6 @@ public class CSVLoader {
         // ensure that the entityType does not have any generators
         EntityType entityType = (EntityType) csvState.getType();
         CSVPrinter csvPrinter = csvState.csvPrinter;
-        assert entityType.getGenerators().size() == 0 : "Please clear existing generators on entity: " + entityType.getName();
         
         logger.info("Creating date for table " + csvState.getTableName());
         StateGraph.ObjectGenerationVisitor currentVisitor = getOrCreateVisitor(settings);
@@ -919,7 +920,6 @@ public class CSVLoader {
         }
         
         GeneratorDriver entityGenerator = csvState.getEntityGenerator();
-        entityType.addGenerator(entityGenerator);
         entityGenerator.init(sc == null ? null : sc.getConnection(), currentVisitor);
         entityGenerator.processVisitors();
         Iterator entityIterator = (Iterator) entityGenerator;        

@@ -571,9 +571,7 @@ public class BindParameter implements Comparable<BindParameter>
 			}
 		);
 
-		convertersBySQLType.put(
-			Types.DATE,
-
+		SQLConverter dateConverter =
 			new SQLConverter() {
 
 				@Override public void javaToSQL (PreparedStatement ps,
@@ -589,10 +587,8 @@ public class BindParameter implements Comparable<BindParameter>
 						catch (ParseException e) {
 							throw new RuntimeException("Unable to parse date value: " + value + ", the desired format is: " + JSONObjectProperty.ISO8601_FORMAT_DATE);
 						}
-					} else if(value instanceof Date) {
+					} else if(value instanceof Date || value instanceof java.util.Date) {
 						date = (Date) value;
-					} else if(value instanceof java.util.Date) {
-						date = new Date(((java.util.Date)value).getTime());
 					} else {
 						throw new RuntimeException("Unsupported value type for Date converter");
 					}
@@ -619,8 +615,9 @@ public class BindParameter implements Comparable<BindParameter>
 				@Override public Object stringToSQLType(String value) {
 					return getSqlDate(value);
 				}
-			}
-		);
+			};
+        convertersBySQLType.put(Types.DATE, dateConverter);
+        convertersBySQLType.put(Types.TIMESTAMP, dateConverter);
 
 		SQLConverter bigdecimalConverter =
 			new SQLConverter() {
@@ -871,6 +868,8 @@ public class BindParameter implements Comparable<BindParameter>
 					        }
 					    } else if(value instanceof Timestamp) {
 					        timestamp = (Timestamp)value;
+                        } else if(value instanceof Date) {
+                            timestamp = new Timestamp(((Date) value).getTime());					        
 					    } else if(value instanceof java.util.Date) {
 					        timestamp = new Timestamp(((java.util.Date)value).getTime());
 					    } else {

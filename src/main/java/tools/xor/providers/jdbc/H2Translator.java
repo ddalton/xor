@@ -62,6 +62,14 @@ public class H2Translator extends DBTranslator
 
         return sequenceMap.get(sequenceName);
     }
+    
+    @Override
+    protected Class getJavaClass (String sqlType) {
+        if(sqlType.startsWith("TIMESTAMP")) {
+            sqlType = "TIMESTAMP";
+        }
+        return super.getJavaClass(sqlType);
+    }    
 
     @Override
     protected JDBCDataModel.ColumnInfo createColumnInfo(ResultSet rs) throws SQLException

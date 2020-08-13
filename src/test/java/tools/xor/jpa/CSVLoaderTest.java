@@ -166,6 +166,29 @@ public class CSVLoaderTest {
                 assert(ownedBy.getString("OWNEDBY_UUID").equals("ID_2"));
             }
             
+            
+            // Load a quote
+            JSONObject quote = new JSONObject();
+            quote.put("PRICE", 100.37);
+            
+            paths = new ArrayList<>();
+            paths.add("UUID");
+            paths.add("PRICE");
+            AggregateView quoteView = new AggregateView("QUOTEPRICE");
+            quoteView.setAttributeList(paths);
+            
+            // This whole creating the settings object needs to be updated
+            settings = new Settings();
+            settings.setSessionContext(sc);
+            // Why is the shape getting un-initialized when called after settings.init???
+            settings.setView(quoteView);    
+            settings.setEntityType(shape.getType("QUOTE"));
+            settings.init(shape);          
+            
+            result = amJDBC.query(quote, settings);
+            assert(result != null);
+            assert(result.size() == 1);
+            
         } finally {
         	    sc.rollback();
                 sc.close();

@@ -253,22 +253,14 @@ public class DefaultGenerator implements Generator
     @Override
     public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
     {
-        BigDecimal minimum = BigDecimal.ONE;
-        BigDecimal maximum = new BigDecimal((new Long(Long.MAX_VALUE)).toString());
-
-        if (values.length >= 1) {
-            minimum = new BigDecimal(values[0]);
+        BigInteger value = getBigInteger(visitor);
+        
+        int scale = 0;
+        if(values.length >= 3) {
+            scale = Integer.valueOf(values[2]);
         }
-        if (values.length >= 2) {
-            maximum = new BigDecimal(values[1]);
-        }
-
-        BigDecimal range = maximum.subtract(minimum);
-        BigDecimal increment = range.equals(BigDecimal.ZERO) ?
-            BigDecimal.ZERO :
-            range.multiply(new BigDecimal((new Double(Math.random())).toString()));
-
-        return minimum.add(increment);
+        
+        return new BigDecimal(value, scale);
     }
 
     @Override

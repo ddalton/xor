@@ -743,6 +743,22 @@ public class CSVLoader {
                 throw ClassUtil.wrapRun(e);
             }
         }
+        
+        private Set<String> getMissingKeys() {
+            Set<String> result = new HashSet<>();
+
+            if(schema.has(KEY_KEYS)) {
+                JSONArray keys = schema.getJSONArray(KEY_KEYS);
+                for(int i = 0; i < keys.length(); i++) {
+                    String key = normalize(keys.getString(i));
+                    if(!this.headerMap.containsKey(key) && !this.columnAliases.containsKey(key)) {
+                        result.add(key);
+                    }
+                }
+            }
+            
+            return result;
+        }        
     }
     
     public CSVLoader(Shape shape) {
@@ -1159,14 +1175,19 @@ public class CSVLoader {
                     }                    
                     
                     JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
-                    
-                    if(!csvPowered) {
+                    Set<String> missingKeys = csvState.getMissingKeys();
+                    if(!csvPowered || missingKeys.size() > 0) {
                         // generate the lookup key(s) for the current type
                         // NOTE: The generation of the lookup key values should be idempotent, i.e., they should not change with different invocations
                         if(csvState.schema.has(KEY_KEYS)) {
+                            
                             JSONArray keys = csvState.schema.getJSONArray(KEY_KEYS);
                             for(int j = 0; j < keys.length(); j++) {
                                 String key = CSVState.normalize(keys.getString(j));
+                                missingKeys.add(key);
+                            }
+                             
+                            for(String key: missingKeys) {
                                 Property p = csvState.getType().getProperty(key);
                                 if(p != null && p.getGenerator() != null) {
                                     logger.info(String.format("Lookup keys: Property %s in table %s is initialized with a generator", p.getName(), csvState.getTableName()));

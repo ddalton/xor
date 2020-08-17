@@ -57,10 +57,11 @@ public class DefaultGenerator implements Generator
     public static final int MAX_VISITOR_CONTEXT = 3;    
 
     // Used for collection sizes and range percent choices
+    private static final String SIZE_DELIM = ":";
     protected static final String RANGE_DELIM = ",";
     protected static final String PERCENT_DELIM = ":";
-    private static final String SIZE_DELIM = ":";
     protected static final String PLACEHOLDER = "[__]";
+    protected static final String TOKEN_END = "]";
 
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
     protected String[] values;

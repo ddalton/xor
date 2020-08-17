@@ -19,10 +19,15 @@
 
 package tools.xor.generator;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -36,6 +41,17 @@ import tools.xor.util.graph.StateGraph;
 public class StringTemplate extends DefaultGenerator implements GeneratorRecipient
 {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+    
+    private static final Set<String> visitorTokens = new HashSet<>();
+    
+    static {
+        visitorTokens.add(VISITOR_CONTEXT);
+        
+        for(int i = 0; i < MAX_VISITOR_CONTEXT; i++) {
+            visitorTokens.add(getContextWithIndex(i));
+        }
+    }
+    
     private Generator generator;
 
     public StringTemplate (String[] arguments)
@@ -86,8 +102,108 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
         return all;
     }
     
+    public static class QueryVisitor {
+        private Map<String, List<Integer>> bindPositions = new HashMap<>();
+
+        private void addPosition(String token, int pos) {
+            List<Integer> positions = bindPositions.get(token);
+            if (positions == null) {
+                positions = new ArrayList<>();
+                bindPositions.put(token, positions);
+            }
+
+            positions.add(pos);
+        }
+
+        public String process(String sql) {
+
+            int startIndex = 0;
+            int endIndex = 0;
+            int previousEndIndex = endIndex;
+            int position = 1;
+            String pattern = getContextPrefix();
+            StringBuilder modifiedSql = new StringBuilder();
+
+            // is end of token found
+            while (endIndex != -1 && startIndex != -1) {
+                startIndex = sql.indexOf(pattern, endIndex);
+                if (startIndex != -1) {
+                    endIndex = sql.indexOf(TOKEN_END, startIndex + pattern.length() - 1);
+                    if (endIndex != -1) {
+                        // adjust for length of closing bracket
+                        endIndex += 1;
+
+                        String token = sql.substring(startIndex, endIndex);
+                        if (visitorTokens.contains(token)) {
+                            addPosition(token, position++);
+                            modifiedSql.append(sql.substring(previousEndIndex, startIndex)).append("?");
+                            startIndex = endIndex;
+                        }
+
+                        previousEndIndex = endIndex;
+                    }
+                }
+            }
+            modifiedSql.append(sql.substring(previousEndIndex));
+
+            return modifiedSql.toString();
+        }
+
+        public Map<String, List<Integer>> getBindPositions() {
+            return this.bindPositions;
+        }
+        
+        public void bindPositions(PreparedStatement ps, StateGraph.ObjectGenerationVisitor visitor) throws SQLException {
+            if(bindPositions.size() > 0) {
+                for(Map.Entry<String, List<Integer>> entry: bindPositions.entrySet()) {
+                    if(entry.getKey().equals(VISITOR_CONTEXT)) {
+                        setBindValues(ps, visitor.getContext(), entry.getValue());
+                    } else {
+                        int contextIndex = getIndexFromContext(entry.getKey());
+                        setBindValues(ps, visitor.getContext(contextIndex), entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+    
+    private static void setBindValues(PreparedStatement ps, Object obj, List<Integer> positions) throws SQLException {
+        for(Integer pos: positions) {
+            ps.setObject(pos, obj);
+        }
+    }
+    
+    /**
+     * Function used to create a PreparedStatement object after processing all visitor tokens in the SQL.
+     * The values are retrieved from the visitor object and bound to the prepared statement.
+     * 
+     * @param sql containing visitor tokens (if any)
+     * @param connection used to create the PreparedStatement object
+     * @param visitor object containing the token values
+     * @return processed PreparedStatement object
+     * @throws SQLException any error in SQL processing
+     */
+    public static PreparedStatement getStatement(String sql, Connection connection, StateGraph.ObjectGenerationVisitor visitor) throws SQLException {
+        QueryVisitor qv = new QueryVisitor();
+        sql = qv.process(sql);
+        PreparedStatement ps = connection.prepareStatement(sql);
+        
+        qv.bindPositions(ps, visitor);        
+        return ps;
+    }
+    
+    private static String getContextPrefix() {
+        return VISITOR_CONTEXT.substring(0, VISITOR_CONTEXT.length()-1) ;
+    }
+    
+    private static Integer getIndexFromContext(String context) {
+        int startIndex = (getContextPrefix() + "_").length();
+        int endIndex = context.indexOf(TOKEN_END);
+        return Integer.valueOf(context.substring(startIndex, endIndex));
+    }    
+    
     private static String getContextWithIndex(int i) {
-        return VISITOR_CONTEXT.substring(0, VISITOR_CONTEXT.length()-1) + "_" + i + "]";
+        return getContextPrefix() + "_" + i + TOKEN_END;
     }
 
     private static final Map<String, TokenEvaluator> evaluators = new HashMap<>();

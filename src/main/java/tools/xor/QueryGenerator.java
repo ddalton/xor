@@ -22,6 +22,7 @@ package tools.xor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -37,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import tools.xor.generator.DefaultGenerator;
+import tools.xor.generator.StringTemplate.QueryVisitor;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
@@ -95,15 +97,17 @@ public class QueryGenerator implements Iterator<Object[]>, GeneratorDriver, Clos
             this.isLast = false;
             if(this.statement != null && !this.statement.isClosed()) {
                 this.statement.close();
-            }            
+            }         
             
-            this.statement = connection.createStatement(
-                ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_READ_ONLY);
+            QueryVisitor qv = new QueryVisitor();
+            String processedSql = qv.process(this.sql);
+            this.statement = connection.prepareStatement(processedSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            
+            qv.bindPositions((PreparedStatement) this.statement, visitor);        
             this.statement.setFetchSize(fetchSize);
 
             logger.debug("QueryGenerator executing query -> " + this.sql);
-            this.rs = this.statement.executeQuery(this.sql);
+            this.rs = ((PreparedStatement)this.statement).executeQuery();
 
             ResultSetMetaData rsmd = rs.getMetaData();
             this.numCols = rsmd.getColumnCount();

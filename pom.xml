@@ -3,7 +3,7 @@
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
     <packaging>jar</packaging>
-    <version>2.1.2</version>
+    <version>2.1.3</version>
     <name>xor</name>
     <description>Empowering Model Driven Architecture in J2EE applications</description>
     <url>https://github.com/ddalton/xor</url>
@@ -43,24 +43,6 @@
 
     <build>
         <plugins>
-            <!--
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <configuration>
-                        <argLine>-agentpath:"${yourkit.home}\bin\win64\yjpagent.dll"</argLine>
-                    </configuration>
-                </plugin>
-    -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>**/HanaPerf2Test.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -166,11 +148,11 @@
     </profiles>
 
     <dependencies>
-	    <!-- 
-		 *********************
-	     *   SCOPE: Default  *
-		 *********************
-	    -->
+        <!-- 
+         *********************
+         *   SCOPE: Default  *
+         *********************
+        -->
 
         <dependency>
             <groupId>it.unimi.dsi</groupId>
@@ -295,11 +277,11 @@
             <version>${spring.version}</version>
         </dependency>
 
-	    <!-- 
-		 *********************
-	     *  SCOPE: Provided  *
-		 *********************
-	    -->
+        <!-- 
+         *********************
+         *  SCOPE: Provided  *
+         *********************
+        -->
 
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -315,11 +297,11 @@
             <scope>provided</scope>
         </dependency>
 
-	    <!-- 
-		 *********************
-	     *    SCOPE: Test    *
-		 *********************
-	    -->
+        <!-- 
+         *********************
+         *    SCOPE: Test    *
+         *********************
+        -->
 
         <!-- needed for running standalone java apps -->
         <dependency>

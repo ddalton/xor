@@ -1,10 +1,11 @@
 package tools.xor.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Set;
 import java.util.Stack;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import tools.xor.AbstractDBTest.TypeTest;
 import tools.xor.util.graph.DirectedGraph;
@@ -34,9 +35,9 @@ public class TarjanSCCTest {
 		
 		Stack<Set<State>> sccs = dg.getSCC();
 
-		Assert.assertTrue(sccs.size() == 1);
-		Assert.assertTrue(sccs.get(0).contains(stateA));
-		Assert.assertTrue(sccs.get(0).contains(stateB));
+		assertTrue(sccs.size() == 1);
+		assertTrue(sccs.get(0).contains(stateA));
+		assertTrue(sccs.get(0).contains(stateB));
 	}
 
     /**
@@ -53,7 +54,7 @@ public class TarjanSCCTest {
 		
 		Stack<Set<State>> sccs = dg.getSCC();
 		
-		Assert.assertTrue(sccs.size() == 0);
+		assertTrue(sccs.size() == 0);
 	}
 
     /**
@@ -75,11 +76,11 @@ public class TarjanSCCTest {
 		
 		Stack<Set<State>> sccs = dg.getSCC();
 		
-		Assert.assertTrue(sccs.size() == 1);
-		Assert.assertTrue(sccs.get(0).contains(stateA));
-		Assert.assertTrue(sccs.get(0).contains(stateB));
-		Assert.assertTrue(sccs.get(0).contains(stateC));
-		Assert.assertTrue(sccs.get(0).contains(stateD));
+		assertTrue(sccs.size() == 1);
+		assertTrue(sccs.get(0).contains(stateA));
+		assertTrue(sccs.get(0).contains(stateB));
+		assertTrue(sccs.get(0).contains(stateC));
+		assertTrue(sccs.get(0).contains(stateD));
 	}
 
     /**
@@ -103,8 +104,8 @@ public class TarjanSCCTest {
 		
 		System.out.println(sccs.get(0));
 		System.out.println(sccs.get(1));
-		Assert.assertTrue(sccs.size() == 2);
-		Assert.assertTrue( 
+		assertTrue(sccs.size() == 2);
+		assertTrue( 
 				(sccs.get(0).contains(stateA) && sccs.get(0).contains(stateB) && sccs.get(1).contains(stateC) && sccs.get(1).contains(stateD) ) ||
 				(sccs.get(1).contains(stateA) && sccs.get(1).contains(stateB) && sccs.get(0).contains(stateC) && sccs.get(0).contains(stateD) )	
 			);

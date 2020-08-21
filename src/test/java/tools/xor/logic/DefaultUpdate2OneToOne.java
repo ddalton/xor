@@ -19,8 +19,8 @@
 
 package tools.xor.logic;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -49,7 +49,7 @@ public class DefaultUpdate2OneToOne extends AbstractDBTest {
 	 *
 	 */
 
-	@Before
+	@BeforeEach
 	public void setupData() {
 		
 		// create Task
@@ -73,7 +73,7 @@ public class DefaultUpdate2OneToOne extends AbstractDBTest {
 		B = (TaskDetails) aggregateService.read(B, getSettings());		
 	}
 
-	@After
+	@AfterEach
 	public void resetAssociation() {
 		// reset the OneToOne association
 		A.setTaskDetails(null);

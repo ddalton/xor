@@ -21,8 +21,8 @@ package tools.xor.logic;
 
 import java.util.List;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -43,12 +43,12 @@ public class DefaultQueryInheritance extends AbstractDBTest {
 	@Autowired
 	protected AggregateManager aggregateManager;
 
-	@BeforeClass
+	@BeforeAll
 	public static void executeOnceBeforeAll() {
 		ClassUtil.setParallelDispatch(false);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void executeOnceAfterAll() {
 		ClassUtil.setParallelDispatch(true);
 	}

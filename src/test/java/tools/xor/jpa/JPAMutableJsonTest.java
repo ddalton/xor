@@ -37,15 +37,11 @@ import javax.persistence.PersistenceContext;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.CollectionElementGenerator;
@@ -90,9 +86,9 @@ import tools.xor.view.QueryJoinAction;
 import tools.xor.view.QueryTree;
 import tools.xor.view.View;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(CSVLoaderTest.TraceUnitExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAMutableJsonTest extends DefaultMutableJson {
 
@@ -103,14 +99,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	protected AggregateManager amJDBC;	// Useful for generating data using JDBC
 	
 	S S1 = null;
-
-	@Rule
-	public TestRule watcher = new TestWatcher() {
-		protected void starting(Description description) {
-			System.out.println("@@@ Starting test: " + description.getMethodName());
-		}
-	};
-	
+		
 	@Test
 	public void checkStringField() throws JSONException {
 		super.checkStringField();
@@ -411,17 +400,19 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		super.generateBoundedPersonObjectGraph();
 	}
 
-	@Test(expected = javax.persistence.PersistenceException.class)
+	@Test
 	public void checkReferenceSemantics () throws JSONException
 	{
-		DataModel das = aggregateService.getDataModel();
-		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
-		Property openProperty = taskType.getProperty("ItemList");
-		if(openProperty != null) {
-			das.getShape().removeProperty(openProperty);
-		}
-
-		super.checkReferenceSemantics();
+	    Assertions.assertThrows(javax.persistence.PersistenceException.class, () -> {	    
+        		DataModel das = aggregateService.getDataModel();
+        		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
+        		Property openProperty = taskType.getProperty("ItemList");
+        		if(openProperty != null) {
+        			das.getShape().removeProperty(openProperty);
+        		}
+        
+        		super.checkReferenceSemantics();
+	    });
 	}
 
 	@Test

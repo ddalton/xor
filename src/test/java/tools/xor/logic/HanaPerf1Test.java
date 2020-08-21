@@ -29,13 +29,13 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import tools.xor.BusinessObject;
 import tools.xor.CollectionElementGenerator;
@@ -77,7 +77,7 @@ import tools.xor.util.ClassUtil;
 import tools.xor.util.ObjectCreator;
 import tools.xor.view.AggregateView;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 //@ContextConfiguration(locations = { "classpath:/spring-hana-jdbc-test.xml" })
 @ContextConfiguration(locations = { "classpath:/spring-jdbc-test.xml" })
 public class HanaPerf1Test
@@ -93,7 +93,7 @@ public class HanaPerf1Test
     @Autowired
     protected DataSource dataSource;
 
-    @Before
+    @BeforeEach
     public void setup() throws SQLException
     {
         am.configure(new Settings());
@@ -575,7 +575,7 @@ public class HanaPerf1Test
         am.generate(AbstractDataModel.RELATIONAL_SHAPE, Arrays.asList(types), settings);
     }
 
-    @After
+    @AfterEach
     public void teardown() throws SQLException
     {
         // Uncomment following line to drop all the tables

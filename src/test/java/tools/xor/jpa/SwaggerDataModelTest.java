@@ -30,11 +30,10 @@ import javax.annotation.Resource;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.CounterGenerator;
@@ -57,9 +56,8 @@ import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.service.Transaction;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-swagger-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class SwaggerDataModelTest extends DefaultQueryOperation {
 

@@ -19,19 +19,18 @@
 
 package tools.xor.jpa;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.exception.BidirOutOfSyncException;
 import tools.xor.logic.DefaultUpdate3Set;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAUpdate3SetTest extends DefaultUpdate3Set {
 
@@ -90,8 +89,10 @@ public class JPAUpdate3SetTest extends DefaultUpdate3Set {
 		super.testCase20();
 	}
 	
-	@Test(expected=BidirOutOfSyncException.class)
+	@Test
 	public void testCase25() {
-		super.testCase25();
+	    Assertions.assertThrows(BidirOutOfSyncException.class, () -> {
+	        super.testCase25();
+	    });
 	}			
 }

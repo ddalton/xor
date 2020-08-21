@@ -1,7 +1,8 @@
 package tools.xor.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 
 import tools.xor.AbstractDBTest.TypeTest;
 import tools.xor.Type;
@@ -38,16 +39,16 @@ public class TopoSortTest {
 		dg.addEdge(new Edge("edge2", stateC, stateB), stateC, stateB);
 		
 		// The states should be in order A, B, C
-		Assert.assertTrue(dg.getVertex(1).getName().equals("A"));
-		Assert.assertTrue(dg.getVertex(2).getName().equals("B"));
-		Assert.assertTrue(dg.getVertex(3).getName().equals("C"));
+		assertTrue(dg.getVertex(1).getName().equals("A"));
+		assertTrue(dg.getVertex(2).getName().equals("B"));
+		assertTrue(dg.getVertex(3).getName().equals("C"));
 		
 		// Do topological sorting and the order should be C, B, A
 		dg.renumber(dg.toposort(null));
 
-		Assert.assertTrue(dg.getVertex(1).getName().equals("C"));
-		Assert.assertTrue(dg.getVertex(2).getName().equals("B"));
-		Assert.assertTrue(dg.getVertex(3).getName().equals("A"));
+		assertTrue(dg.getVertex(1).getName().equals("C"));
+		assertTrue(dg.getVertex(2).getName().equals("B"));
+		assertTrue(dg.getVertex(3).getName().equals("A"));
 	}
 
 	/**

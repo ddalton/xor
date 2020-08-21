@@ -31,13 +31,13 @@ import javax.sql.DataSource;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import tools.xor.AssociationSetting;
 import tools.xor.JDBCProperty;
@@ -53,7 +53,7 @@ import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
 import tools.xor.view.AggregateView;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jdbc-test.xml" })
 public class TwitterJDBCTest
 {
@@ -199,7 +199,7 @@ public class TwitterJDBCTest
         das.createShape(DataModel.DEFAULT_SHAPE, extension);
     }
 
-    @Before
+    @BeforeEach
     public void init() throws SQLException, ClassNotFoundException, IOException
     {
         try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
@@ -381,7 +381,7 @@ public class TwitterJDBCTest
         }
     }
 
-    @After
+    @AfterEach
     public void destroy() throws SQLException, ClassNotFoundException, IOException {
         try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement();) {
             statement.executeUpdate("DROP TABLE sizes");

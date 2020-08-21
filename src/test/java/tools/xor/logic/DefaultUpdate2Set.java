@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -61,7 +61,7 @@ public class DefaultUpdate2Set extends AbstractDBTest {
 	 *
 	 */
 
-	@Before
+	@BeforeEach
 	public void setupData() {
 		// create defect fixing Task
 		if(A == null) {
@@ -90,7 +90,7 @@ public class DefaultUpdate2Set extends AbstractDBTest {
 		B = (Task) aggregateService.read(B, getSettings());
 	}
 
-	@After
+	@AfterEach
 	public void resetAssociation() {
 		// reset the OneToOne association
 		A.setTaskChildren(null);

@@ -16,12 +16,11 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 
@@ -38,14 +37,13 @@ import tools.xor.util.xpath.XPathParser;
 import tools.xor.util.xsd.XSDGenerator;
 import tools.xor.util.xsd.XSDVisitor;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(locations = {"classpath:/spring-jpa-test.xml"})
 @Transactional
 public class XSDGeneratorTest {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	@Autowired
+	@Autowired(required = true)
 	protected AggregateManager aggregateManager;
 	
 	@Test

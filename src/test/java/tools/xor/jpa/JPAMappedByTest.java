@@ -22,11 +22,10 @@ package tools.xor.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.AssociationSetting;
@@ -37,9 +36,8 @@ import tools.xor.db.common.Head;
 import tools.xor.logic.DefaultMappedBy;
 import tools.xor.service.DataModel;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAMappedByTest extends DefaultMappedBy {
 

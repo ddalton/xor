@@ -19,7 +19,7 @@
 
 package tools.xor.logic;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 //@RunWith(SpringJUnit4ClassRunner.class)
 //@ContextConfiguration(locations = { "classpath:/spring-hana-jdbc-test.xml" })

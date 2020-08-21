@@ -21,8 +21,8 @@ package tools.xor.logic;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.Settings;
@@ -34,7 +34,7 @@ public class DefaultQueryShape {
     @Autowired
     protected AggregateManager aggregateManager;
     
-    @Before
+    @BeforeEach
     public void setup() {
         // Data created will be rolled back, so no need for an explicit teardown
         // TODO: populate/generate data using domain type shape

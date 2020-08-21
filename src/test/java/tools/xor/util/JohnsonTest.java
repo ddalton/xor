@@ -1,9 +1,10 @@
 package tools.xor.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import tools.xor.AbstractDBTest.TypeTest;
 import tools.xor.util.graph.DirectedGraph;
@@ -31,10 +32,10 @@ public class JohnsonTest {
 		List<List<Vertex>> cycles = dg.getCircuits();
 		
 		System.out.println(GraphUtil.printCycles(cycles));
-		Assert.assertTrue(cycles.size() == 2);
+		assertTrue(cycles.size() == 2);
 		
 		List<List<Edge>> loops = dg.getLoops();		
-		Assert.assertTrue(loops.size() == 2);
+		assertTrue(loops.size() == 2);
 		
 	}
 	
@@ -57,10 +58,10 @@ public class JohnsonTest {
 		
 		List<List<Vertex>> cycles = dg.getCircuits();
 		
-		Assert.assertTrue(cycles.size() == 2);
+		assertTrue(cycles.size() == 2);
 		
 		cycles = dg.getCircuits();
-		Assert.assertTrue(cycles.size() == 2);
+		assertTrue(cycles.size() == 2);
 		
 		System.out.println(GraphUtil.printCycles(cycles));
 	}
@@ -82,10 +83,10 @@ public class JohnsonTest {
 		
 		List<List<Vertex>> cycles = dg.getCircuits();
 		
-		Assert.assertTrue(cycles.size() == 3);
+		assertTrue(cycles.size() == 3);
 		
 		cycles = dg.getCircuits();
-		Assert.assertTrue(cycles.size() == 3);
+		assertTrue(cycles.size() == 3);
 		
 		System.out.println(GraphUtil.printCycles(cycles));
 	}
@@ -108,15 +109,15 @@ public class JohnsonTest {
 		
 		List<List<Vertex>> cycles = dg.getCircuits();
 		
-		Assert.assertTrue(cycles.size() == 4);
+		assertTrue(cycles.size() == 4);
 		
 		cycles = dg.getCircuits();
-		Assert.assertTrue(cycles.size() == 4);
+		assertTrue(cycles.size() == 4);
 		
 		System.out.println(GraphUtil.printCycles(cycles));
 		
 		List<List<Edge>> loops = dg.getLoops();
-		Assert.assertTrue(loops.size() == 4);
+		assertTrue(loops.size() == 4);
 	}
 	
 	@Test
@@ -139,10 +140,10 @@ public class JohnsonTest {
 		
 		List<List<Vertex>> cycles = dg.getCircuits();
 		
-		Assert.assertTrue(cycles.size() == 4);
+		assertTrue(cycles.size() == 4);
 		
 		cycles = dg.getCircuits();
-		Assert.assertTrue(cycles.size() == 4);
+		assertTrue(cycles.size() == 4);
 		
 		System.out.println(GraphUtil.printCycles(cycles));
 	}	

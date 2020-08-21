@@ -22,8 +22,8 @@ package tools.xor.logic;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -98,7 +98,7 @@ public class DefaultUpdateMixOneToOne extends AbstractDBTest {
 	}		
 
 
-	@Before
+	@BeforeEach
 	public void setupData() {
 		// create defect fixing Task
 		if(a == null) {
@@ -152,7 +152,7 @@ public class DefaultUpdateMixOneToOne extends AbstractDBTest {
 		d = (Task) aggregateService.read(d, getSettings());		
 	}
 
-	@After
+	@AfterEach
 	public void resetAssociation() {
 		// reset the OneToOne association
 		a.setAuditTask(null);

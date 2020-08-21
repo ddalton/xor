@@ -19,27 +19,27 @@
 
 package tools.xor.jpa;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.db.base.SimpleDefinition;
 import tools.xor.db.base.SimpleDefinitionInfo;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPADefinitionTest extends AbstractDBTest
 {
@@ -52,7 +52,7 @@ public class JPADefinitionTest extends AbstractDBTest
 		SimpleDefinition sd = new SimpleDefinition();
 		entityManager.persist(sd);
 
-		Assert.assertNotNull(sd.getId());
+		assertNotNull(sd.getId());
 
 		SimpleDefinitionInfo info = new SimpleDefinitionInfo(sd.getId(), 1);
 		Set<SimpleDefinitionInfo> lt = new HashSet<SimpleDefinitionInfo>();
@@ -64,8 +64,8 @@ public class JPADefinitionTest extends AbstractDBTest
 		entityManager.clear();
 		sd = entityManager.find(SimpleDefinition.class, sd.getId());
 
-		Assert.assertTrue(sd != null);
-		Assert.assertTrue(sd.getDefinitionInfoList().size() > 0);
+		assertTrue(sd != null);
+		assertTrue(sd.getDefinitionInfoList().size() > 0);
 	}
 
 }

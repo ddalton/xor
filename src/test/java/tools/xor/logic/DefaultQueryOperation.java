@@ -30,8 +30,8 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -87,12 +87,12 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	final String DESCRIPTION = "First President of the United States of America";
 	final String USER_NAME = "gwashington";
 
-	@BeforeClass
+	@BeforeAll
 	public static void executeOnceBeforeAll() {
 		ClassUtil.setParallelDispatch(false);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void executeOnceAfterAll() {
 		ClassUtil.setParallelDispatch(true);
 	}

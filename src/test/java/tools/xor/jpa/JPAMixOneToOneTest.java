@@ -19,18 +19,17 @@
 
 package tools.xor.jpa;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.logic.DefaultUpdateMixOneToOne;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAMixOneToOneTest extends DefaultUpdateMixOneToOne {
 	
@@ -99,8 +98,10 @@ public class JPAMixOneToOneTest extends DefaultUpdateMixOneToOne {
 		super.testCase31();
 	}	
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testCase32() {
-		super.testCase32();
+	    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+	        super.testCase32();
+	    });
 	}		
 }

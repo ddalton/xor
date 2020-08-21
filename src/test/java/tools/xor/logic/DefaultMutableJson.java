@@ -43,8 +43,8 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 import tools.xor.AbstractDBTest;
 import tools.xor.AggregateAction;
@@ -77,12 +77,12 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 	@Resource(name = "aggregateManager")
 	protected AggregateManager aggregateService;
 
-	@BeforeClass
+	@BeforeAll
 	public static void executeOnceBeforeAll() {
 		ClassUtil.setParallelDispatch(false);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void executeOnceAfterAll() {
 		ClassUtil.setParallelDispatch(true);
 	}

@@ -31,16 +31,14 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import tools.xor.EntityType;
 import tools.xor.Property;
@@ -60,7 +58,8 @@ import tools.xor.util.graph.DirectedSparseGraph;
 import tools.xor.util.graph.Graph;
 import tools.xor.view.AggregateView;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(CSVLoaderTest.TraceUnitExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-mutable-JSON-jpa-test.xml" })
 public class CSVLoaderTest {
 
@@ -70,20 +69,21 @@ public class CSVLoaderTest {
 	@Resource(name = "amJDBCjson")
 	protected AggregateManager amJDBC;	// Useful for generating data using JDBC
 	
-	@Rule
-	public TestRule watcher = new TestWatcher() {
-		protected void starting(Description description) {
-			System.out.println("@@@ Starting test: " + description.getMethodName());
-		}
-	};
+	public static class TraceUnitExtension implements BeforeEachCallback {
+	    
+	    @Override
+	    public void beforeEach(ExtensionContext context) throws Exception {
+            System.out.println("@@@ Starting test: " + context.getDisplayName());
+	    }
+	}	
 	
-	@BeforeClass
+	@BeforeAll
 	public static void setup() {
         
         ClassUtil.setParallelDispatch(false);
 	}
 	
-    @AfterClass
+    @AfterAll
     public static void teardown() {
         
         ClassUtil.setParallelDispatch(true);

@@ -24,8 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -42,12 +42,12 @@ public class DefaultPatch extends AbstractDBTest {
 	@Autowired
 	protected AggregateManager aggregateManager;
 
-	@BeforeClass
+	@BeforeAll
 	public static void executeOnceBeforeAll() {
 		ClassUtil.setParallelDispatch(false);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void executeOnceAfterAll() {
 		ClassUtil.setParallelDispatch(true);
 	}

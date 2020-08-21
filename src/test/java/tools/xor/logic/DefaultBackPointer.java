@@ -22,8 +22,8 @@ package tools.xor.logic;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.AbstractDBTest;
@@ -55,7 +55,7 @@ public class DefaultBackPointer extends AbstractDBTest {
 	 *
 	 */
 
-	@Before
+	@BeforeEach
 	public void setupData() {
 		// create defect fixing Task
 		if(A == null) {
@@ -74,7 +74,7 @@ public class DefaultBackPointer extends AbstractDBTest {
 		}	
 	}
 
-	@After
+	@AfterEach
 	public void resetAssociation() {
 		A = null;
 		B = null;

@@ -19,18 +19,17 @@
 
 package tools.xor.jpa;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.logic.DefaultUpdate3OneToOne;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAUpdate3OneToOneTest extends DefaultUpdate3OneToOne {
 
@@ -84,8 +83,10 @@ public class JPAUpdate3OneToOneTest extends DefaultUpdate3OneToOne {
 		super.testCase10();
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testCase17() {
-		super.testCase17();
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            super.testCase17();
+        });	    
 	}		
 }

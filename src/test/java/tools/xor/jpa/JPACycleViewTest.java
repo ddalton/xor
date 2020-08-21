@@ -19,23 +19,24 @@
 
 package tools.xor.jpa;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.logic.DefaultCycleView;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-custom-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPACycleViewTest extends DefaultCycleView {
 	
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void checkCycleView() {
-		super.checkCycleView();
+	    Assertions.assertThrows(IllegalStateException.class, () -> {
+	        super.checkCycleView();
+	    });
 	}
 }

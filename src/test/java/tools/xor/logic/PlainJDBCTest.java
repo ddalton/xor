@@ -31,13 +31,13 @@ import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import tools.xor.EntityType;
 import tools.xor.FunctionType;
@@ -52,7 +52,7 @@ import tools.xor.service.DataModel;
 import tools.xor.service.Shape;
 import tools.xor.view.AggregateView;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-jdbc-test.xml" })
 public class PlainJDBCTest
 {
@@ -76,7 +76,7 @@ public class PlainJDBCTest
 		System.out.println("Num Idle: " + bds.getNumIdle());
 	}
 
-	@Before
+	@BeforeEach
 	public void init() throws SQLException, ClassNotFoundException, IOException
 	{
 		long time1 = System.nanoTime();
@@ -320,7 +320,7 @@ public class PlainJDBCTest
 		System.out.println("[Populate (only executeBatch) - " + ((time3 - time2) / 1000) + " μs");
 	}
 
-	@After
+	@AfterEach
 	public void destroy() throws SQLException, ClassNotFoundException, IOException {
 
 		long time1 = System.nanoTime();

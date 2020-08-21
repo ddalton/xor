@@ -25,7 +25,7 @@ import javax.persistence.EntityTransaction;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import tools.xor.Settings;
 import tools.xor.db.common.Contact;

@@ -19,28 +19,31 @@
 
 package tools.xor.jpa;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.xor.logic.DefaultPatch;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = { "classpath:/spring-VO-jpa-test.xml" })
-@TransactionConfiguration(defaultRollback = true)
 @Transactional
 public class JPAPatchTest extends DefaultPatch {
 
-	@Test(expected=UnsupportedOperationException.class)
+	@Test
 	public void patchConsultant() {
-		super.patchConsultant();
+       Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+           super.patchConsultant();
+       });
 	}
 
-	@Test(expected=UnsupportedOperationException.class)
+	@Test
 	public void patchConsultantBulk() {
-		super.patchConsultantBulk();
+       Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+           super.patchConsultantBulk();
+       });	    
 	}
 }

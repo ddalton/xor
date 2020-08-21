@@ -1,8 +1,9 @@
 package tools.xor.logic;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
-import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.xor.Type;
@@ -46,10 +47,10 @@ public class DefaultTopoSortTest {
 		
 		List<State> states = dg.toposort(das.getShape());
 		
-		Assert.assertTrue(states.size() == 3);
-		Assert.assertTrue(states.get(0).getType() == chapterType);
-		Assert.assertTrue(states.get(1).getType() == categoryType);
-		Assert.assertTrue(states.get(2).getType() == FacetType);
+		assertTrue(states.size() == 3);
+		assertTrue(states.get(0).getType() == chapterType);
+		assertTrue(states.get(1).getType() == categoryType);
+		assertTrue(states.get(2).getType() == FacetType);
 	}
 
 }

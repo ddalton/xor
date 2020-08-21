@@ -11,7 +11,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFDataValidationConstraint;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ExcelValidationTest {
 

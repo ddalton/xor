@@ -876,7 +876,8 @@ public class JDBCSessionContext implements CustomPersister
                     }
 
                     for(PreparedStatement ps: preparedInsert.values()) {
-                        ps.executeBatch();
+                        int[] result = ps.executeBatch();
+                        logger.info("Inserting batch with size: " + result.length);
                     }
 
                     for(PreparedStatement ps: preparedUpdate.values()) {

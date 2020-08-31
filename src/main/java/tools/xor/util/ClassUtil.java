@@ -36,10 +36,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sql.DataSource;
+import jcuda.Pointer;
+import jcuda.Sizeof;
+import jcuda.jcurand.curandGenerator;
+import jcuda.jcurand.curandRngType;
+import jcuda.jcurand.JCurand;
+import jcuda.runtime.cudaMemcpyKind;
+import jcuda.runtime.JCuda;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,7 +55,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.aop.support.AopUtils;
-import org.springframework.cglib.proxy.Proxy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.stereotype.Component;
@@ -67,8 +74,71 @@ public class ClassUtil {
 	private static final String JAVASSIST_STARTWITH = "org.javassist.tmp.";
 	private static final String JAVASSIST_INDEXOF = "_$$_javassist_";
 
-	private static AtomicBoolean parallelDispatch = new AtomicBoolean(true);
+	private static final AtomicBoolean parallelDispatch = new AtomicBoolean(true);
+	private static final RandomUtil randomUtil = new RandomUtil();
 
+	private static class RandomUtil {
+	    private static final int BATCH_SIZE = 100000;
+	    
+	    private float[] hostData;
+	    private int counter;
+	    private boolean cuda = false;
+	    private Pointer deviceData;	  
+	    private curandGenerator generator;
+	    private Random random = new Random();
+	    
+	    public RandomUtil() {
+            try {
+                // check if cuda is present
+                // Allocate device memory
+                this.deviceData = new Pointer();
+                JCuda.cudaMalloc(deviceData, BATCH_SIZE * Sizeof.FLOAT);
+
+                // Create and initialize a pseudo-random number generator
+                this.generator = new curandGenerator();
+                JCurand.curandCreateGenerator(this.generator, curandRngType.CURAND_RNG_PSEUDO_DEFAULT);
+                JCurand.curandSetPseudoRandomGeneratorSeed(this.generator, (new Random()).nextLong());
+                
+                hostData = new float[BATCH_SIZE];
+                this.cuda = true;
+
+            } catch (java.lang.UnsatisfiedLinkError le) {
+                logger.warn("Cuda framework is not found");
+            }	        
+	    }
+	    
+	    public float nextFloat() {
+	        if(!cuda) {
+	            return random.nextFloat();
+	        } else {
+	            if(counter == BATCH_SIZE) {
+	                synchronized(hostData) {
+	                    loadNextBatch();
+	                }
+                    counter = 0;
+	            }
+	            return hostData[counter++];
+	        }
+	    }
+	    
+	    private void loadNextBatch() {
+            try {
+                // Generate random numbers
+                JCurand.curandGenerateUniform(generator, deviceData, BATCH_SIZE);
+
+                // Copy the random numbers from the device to the host
+                JCuda.cudaMemcpy(Pointer.to(hostData), deviceData, BATCH_SIZE * Sizeof.FLOAT,
+                        cudaMemcpyKind.cudaMemcpyDeviceToHost);
+            } catch (java.lang.UnsatisfiedLinkError le) {
+                logger.warn("Cuda framework is not found");
+            }       
+	    }
+	}
+	
+	public static float nextFloat() {
+	    return randomUtil.nextFloat();
+	}
+	
 	private static boolean isJavassistEnhanced(Class<?> c) {
 		String className = c.getName();
 

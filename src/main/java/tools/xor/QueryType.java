@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -57,7 +56,7 @@ public class QueryType extends AbstractType {
      * @param properties whose aliases are modelled in QueryType
      */
     public QueryType(EntityType basedOn, Map<String, Property> properties) {
-        this(RandomStringUtils.randomAlphanumeric(16).toUpperCase(), basedOn.getShape(), properties);
+        this(StringType.randomAlphanumeric(16).toUpperCase(), basedOn.getShape(), properties);
         this.basedOn = basedOn;
     }
     

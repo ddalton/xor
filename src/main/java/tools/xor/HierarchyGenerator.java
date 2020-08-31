@@ -25,8 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 
@@ -181,7 +179,7 @@ public class HierarchyGenerator extends DefaultGenerator implements GeneratorDri
 
     private void generate() {
         // Can customize the string length later
-        pathPart = RandomStringUtils.randomAlphanumeric(15);
+        pathPart = StringType.randomAlphanumeric(15);
 
         // Generate the id
         idGenerator.next();

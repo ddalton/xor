@@ -20,6 +20,7 @@
 package tools.xor.service.exim;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -39,6 +40,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -46,6 +51,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -65,6 +71,7 @@ import tools.xor.Type;
 import tools.xor.generator.Generator;
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
+import tools.xor.service.DataModelFactory;
 import tools.xor.service.DomainShape;
 import tools.xor.service.Shape;
 import tools.xor.util.ClassUtil;
@@ -228,7 +235,7 @@ import tools.xor.util.graph.StateGraph;
  *    In this pass all the remaining NULL foreign key columns are updated
  *
  */
-public class CSVLoader {
+public class CSVLoader implements Callable {
     
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());    
     
@@ -239,6 +246,12 @@ public class CSVLoader {
     private Map<String, CSVState> tableStateMap;
     private String folderPath;
     private StateGraph.ObjectGenerationVisitor visitor;
+    
+    // Used in parallel execution
+    private Integer jobNo; // starts from 0
+    private Settings settings;
+    private JDBCDataStore dataStore;
+    private Integer numThreads;
     
     private static final String KEY_ENTITY_NAME = "entityName";
     private static final String KEY_TABLE_NAME = "tableName";
@@ -724,7 +737,7 @@ public class CSVLoader {
         public void createCSVPrinter(String filePath) {
             try {
                 // initialize FileWriter object
-                FileWriter fileWriter = new FileWriter(filePath);
+                BufferedWriter fileWriter = new BufferedWriter(new FileWriter(filePath));
 
                 // initialize CSVPrinter object
                 this.csvPrinter = new CSVPrinter(fileWriter, CSVExportImport.csvFileFormat);
@@ -763,13 +776,23 @@ public class CSVLoader {
     
     public CSVLoader(Shape shape) {
         this.shape = shape;
+        this.numThreads = 1;
         this.orderingGraph = new DirectedSparseGraph<>();
         this.tableStateMap = new HashMap<>();
     }
-
+    
     public CSVLoader(Shape shape, String path) {
+        this(shape, path, null, null, null, 1);
+    }
+
+    public CSVLoader(Shape shape, String path, Integer jobNo, Settings settings, JDBCDataStore dataStore, Integer numThreads) {
         this(shape);
+        
         this.folderPath = path;
+        this.jobNo = jobNo;
+        this.settings = settings;
+        this.dataStore = dataStore;
+        this.numThreads = numThreads;
 
         if (CSVLoader.class.getClassLoader().getResource(this.folderPath) == null) {
             throw new RuntimeException(
@@ -806,22 +829,42 @@ public class CSVLoader {
         return this.orderingGraph;
     }
     
-    public void importData(Settings settings, JDBCDataStore po) {
-        boolean orderSQL = po.getSessionContext().isOrderSQL();
+    public void importData(Settings settings, JDBCDataStore dataStore) {
+        boolean orderSQL = dataStore.getSessionContext().isOrderSQL();
         try {
-            po.getSessionContext().setOrderSQL(false);
-            insertData(settings, po);
+            dataStore.getSessionContext().setOrderSQL(false);
+            insertData(settings, dataStore);
             
-            updateData(settings, po);
+            updateData(settings, dataStore);
             
             // Don't need to clear the generators since we created a child shape to make generator related changes
             
         } catch (IOException e) {
             throw ClassUtil.wrapRun(e);
         } finally {
-            po.getSessionContext().setOrderSQL(orderSQL);
+            dataStore.getSessionContext().setOrderSQL(orderSQL);
         }
     }
+    
+    public void importDataParallel(Settings settings, DataModelFactory dataModelFactory, int numThreads) {
+        ExecutorService importers = Executors.newFixedThreadPool(numThreads);
+        
+        List<Future> importJobs = new ArrayList<Future>();
+        for (int i = 0; i < numThreads; i++) {
+            JDBCDataStore dataStore = (JDBCDataStore)dataModelFactory.createDataStore(settings.getSessionContext());
+            importJobs.add(importers.submit(new CSVLoader(this.shape, this.folderPath, i, settings, dataStore, numThreads)));
+        }
+
+        // wait for the jobs to complete
+        for (Future importJob : importJobs) {
+            try {
+                importJob.get();
+            }
+            catch (Exception e) {
+                logger.error(ExceptionUtils.getStackTrace(e));
+            }
+        }
+    }    
     
     private void buildStates(List<String> csvFiles) throws FileNotFoundException, IOException {
         for(String csvFile: csvFiles) {
@@ -853,21 +896,21 @@ public class CSVLoader {
         }
     }
     
-    private void insertData(Settings settings, JDBCDataStore po) throws FileNotFoundException, IOException {
+    private void insertData(Settings settings, JDBCDataStore dataStore) throws FileNotFoundException, IOException {
         // iterate on topo sorted order of csv files
         for(int i = orderingGraph.START; i < orderingGraph.START+orderingGraph.getVertices().size(); i++ ) {
             CSVState csvState = orderingGraph.getVertex(i);
-            createRecords(csvState, settings, po);
+            createRecords(csvState, settings, dataStore);
         }
     }
     
-    private void updateData(Settings settings, JDBCDataStore po) throws FileNotFoundException, IOException {
+    private void updateData(Settings settings, JDBCDataStore dataStore) throws FileNotFoundException, IOException {
         
         for(int i = orderingGraph.START; i < orderingGraph.START+orderingGraph.getVertices().size(); i++ ) {
             CSVState csvState = orderingGraph.getVertex(i);
             
             if(csvState.nullableForeignKeys.size() > 0) {
-                updateRecords(csvState, settings, po);
+                updateRecords(csvState, settings, dataStore);
             }
         }
     }  
@@ -967,7 +1010,7 @@ public class CSVLoader {
             
             try(CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT)) {
                 Iterator<CSVRecord> csvIterator = parser.iterator();
-                int i = COUNTER_START;
+                int i = COUNTER_START, recordNo = i;
                 boolean csvPowered = false;
                 CSVRecord csvRecord = null;
                 while(csvIterator.hasNext() || entityIterator.hasNext()) {
@@ -998,6 +1041,12 @@ public class CSVLoader {
                     if(!csvPowered && result == null) {
                         break;
                     }
+                    
+                    // This is a parallel execution
+                    // We process only its corresponding slot
+                    if(!isMyJob(i++)) {
+                        continue;
+                    }                    
 
                     JSONObject entityJSON = null;
                     try {
@@ -1085,7 +1134,7 @@ public class CSVLoader {
                         bo.setInstance(entityJSON);
                         dataStore.getSessionContext().create(bo, columnList);
 
-                        DataImporter.performFlush(sc, i, false);
+                        performFlush(sc, recordNo, false);
                     } else {
                         if(i == COUNTER_START) {
                             csvPrinter.printRecord(columnList);
@@ -1094,11 +1143,11 @@ public class CSVLoader {
                     }
                     
                     // increment counter
-                    i++;
+                    recordNo++;
                 }
                 
                 if (isWriteToDB(csvPrinter)) {
-                    DataImporter.performFlush(sc, i, true);
+                    performFlush(sc, recordNo, true);
                 }
             }
         } finally {
@@ -1142,7 +1191,7 @@ public class CSVLoader {
             
             try(CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT)) {
                 Iterator<CSVRecord> csvIterator = parser.iterator();
-                int i = COUNTER_START;
+                int i = COUNTER_START, recordNo = i;
                 boolean csvPowered = false;
                 CSVRecord csvRecord = null;
                 while(csvIterator.hasNext() || entityIterator.hasNext()) {
@@ -1172,7 +1221,13 @@ public class CSVLoader {
                     Object result = entityIterator.next();  
                     if(!csvPowered && result == null) {
                         break;
-                    }                    
+                    }      
+                    
+                    // This is a parallel execution
+                    // We process only its corresponding slot
+                    if(!isMyJob(i++)) {
+                        continue;
+                    }
                     
                     JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
                     Set<String> missingKeys = csvState.getMissingKeys();
@@ -1217,15 +1272,34 @@ public class CSVLoader {
                         bo.setInstance(entityJSON);
                         dataStore.getSessionContext().update(bo, columnsToUpdate, lookupKeys);
 
-                        DataImporter.performFlush(sc, i++, false);
+                        performFlush(sc, recordNo++, false);
                     }
                 }
                 if(i > COUNTER_START) {
-                    DataImporter.performFlush(sc, i, true);
+                    performFlush(sc, recordNo, true);
                 }
             }
         }
-    } 
+    }
+    
+    public void performFlush(JDBCSessionContext sc, int i, boolean isEnd) {
+        if(!isEnd) {
+            if (i % DataImporter.COMMIT_SIZE == 0) {
+                // flush in batches
+                sc.flush();
+            }          
+        } else {
+            sc.flush();
+        }
+    }     
+    
+    private boolean isMyJob(int recordNo) {
+        if(jobNo == null || recordNo%this.numThreads == jobNo) {
+            return true;
+        }        
+        
+        return false;
+    }
     
     private Map<String, Object> updateNullableFKFields(JSONObject entityJSON, CSVState csvState, Settings settings, JDBCDataStore dataStore, StateGraph.ObjectGenerationVisitor currentVisitor) {
         populateLookupKeyValues(entityJSON, settings, currentVisitor, csvState.getLookupKeyNullableFKMap());
@@ -1288,5 +1362,20 @@ public class CSVLoader {
             
             return result;
         }         
+    }
+
+    @Override
+    public Object call() throws Exception {
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.beginTransaction();
+        try {
+            this.importData(this.settings, this.dataStore);
+        } finally {
+            // When running in parallel, since it runs in a separate thread,
+            // we need to commit
+            sc.commit();
+        }
+        
+        return null;
     }
 }

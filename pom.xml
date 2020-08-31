@@ -3,7 +3,7 @@
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
     <packaging>jar</packaging>
-    <version>2.2.2</version>
+    <version>2.2.3</version>
     <name>xor</name>
     <description>Empowering Model Driven Architecture in J2EE applications</description>
     <url>https://github.com/ddalton/xor</url>
@@ -383,6 +383,16 @@
             <artifactId>spring-oxm</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcuda</artifactId>
+            <version>10.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jcuda</groupId>
+            <artifactId>jcurand</artifactId>
+            <version>10.2.0</version>
         </dependency>
 
     </dependencies>

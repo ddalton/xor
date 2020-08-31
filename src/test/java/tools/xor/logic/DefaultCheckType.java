@@ -33,6 +33,7 @@ import tools.xor.EntityType;
 import tools.xor.MapperSide;
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.StringType;
 import tools.xor.TypeMapper;
 import tools.xor.custom.TestAssociationStrategy;
 import tools.xor.db.base.Chapter;
@@ -198,5 +199,11 @@ public class DefaultCheckType extends AbstractDBTest {
 		JSONObject address = (JSONObject) addressType.generate(new Settings(), null, null, null, new StateGraph.ObjectGenerationVisitor(new HashMap<JSONObject, State>(), new Settings(), null));
 		System.out.println("Address street: " + address.get("street"));
 		assert(address.get("street").toString().length() > 0);
+	}
+	
+	protected void testRandomString() {
+	    String randomStr = StringType.randomAlphanumeric(10);
+	    System.out.println("Random str: " + randomStr);
+	    assert(randomStr.length() == 10);
 	}
 }

@@ -51,14 +51,14 @@ public class DataImporter implements Callable
     private ConcurrentLinkedQueue<JSONObject> queue;
     private Settings settings;
     private TypeMapper typeMapper;
-    private JDBCDataStore po;
+    private JDBCDataStore dataStore;
     private DataGenerator dataGenerator;
 
-    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, DataStore po, TypeMapper typeMapper, Settings settings) {
+    public DataImporter(DataGenerator dataGenerator, ConcurrentLinkedQueue<JSONObject> queue, DataStore dataStore, TypeMapper typeMapper, Settings settings) {
         this.queue = queue;
         this.settings = settings;
         this.typeMapper = typeMapper;
-        this.po = (JDBCDataStore)po;
+        this.dataStore = (JDBCDataStore)dataStore;
         this.dataGenerator = dataGenerator;
     }
 
@@ -68,10 +68,10 @@ public class DataImporter implements Callable
 
         try {
             // Begin a new transaction
-            po.getSessionContext().beginTransaction();
+            dataStore.getSessionContext().beginTransaction();
             
             // Initial cleanup
-            po.getSessionContext().commit();
+            dataStore.getSessionContext().commit();
             
             int i = 1;
             while (true) {
@@ -86,14 +86,14 @@ public class DataImporter implements Callable
                     break;
                 }
 
-                importJson(po, json, typeMapper, settings, dataGenerator);
+                importJson(dataStore, json, typeMapper, settings, dataGenerator);
 
                 if (i++ % COMMIT_SIZE == 0) {
                     // commit in batches
                     commit();
 
                     // Begin a new transaction
-                    po.getSessionContext().beginTransaction();
+                    dataStore.getSessionContext().beginTransaction();
                 }
             }
 
@@ -105,7 +105,7 @@ public class DataImporter implements Callable
             e.printStackTrace();
             throw e;
         } finally {
-            po.getSessionContext().closeResources();
+            dataStore.getSessionContext().closeResources();
         }
 
         return result;
@@ -131,12 +131,12 @@ public class DataImporter implements Callable
 
     private void commit() {
         try {
-            po.getSessionContext().commit();
+            dataStore.getSessionContext().commit();
         } catch (Exception e) {
-            po.getSessionContext().rollback();
+            dataStore.getSessionContext().rollback();
             throw e;
         } finally {
-            po.getSessionContext().close();
+            dataStore.getSessionContext().close();
         }
     }
     

@@ -29,11 +29,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
 import tools.xor.FunctionScope;
 import tools.xor.FunctionType;
 import tools.xor.Settings;
+import tools.xor.StringType;
 import tools.xor.service.DataStore;
 import tools.xor.util.IntraQuery;
 import tools.xor.view.expression.FreestyleHandler;
@@ -219,7 +218,7 @@ public class Function implements Comparable<Function> {
 			Object transformedValue = functionHandler.getTransformation(userParams.get(Settings.encodeParam(key)));
 			if(transformedValue != null) {
 				// since the value is changed, we need to refer to it using a new parameter
-				String uniqueSuffix = RandomStringUtils.randomAlphanumeric(5).toUpperCase();
+				String uniqueSuffix = StringType.randomAlphanumeric(5).toUpperCase();
 				key = key + Settings.URI_PATH_DELIMITER + uniqueSuffix;
 				userParams.put(key, transformedValue);
 

@@ -56,4 +56,9 @@ public class JPACheckTypeTest extends DefaultCheckType {
 	public void generateSimple() {
 		super.generateSimple();
 	}
+	
+    @Test
+    public void testRandomString() {
+        super.testRandomString();
+    }	
 }

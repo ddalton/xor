@@ -19,8 +19,6 @@
 
 package tools.xor.generator;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
 import tools.xor.Property;
 import tools.xor.StringType;
 import tools.xor.util.graph.StateGraph;
@@ -41,6 +39,6 @@ public class RandomString extends DefaultGenerator
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return RandomStringUtils.randomAlphanumeric(length);
+        return StringType.randomAlphanumeric(length);
     }
 }

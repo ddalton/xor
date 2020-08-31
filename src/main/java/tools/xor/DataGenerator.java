@@ -46,6 +46,7 @@ import tools.xor.providers.jdbc.ImportMethod;
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.DataModelFactory;
+import tools.xor.util.ApplicationConfiguration;
 import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
@@ -57,7 +58,19 @@ import tools.xor.util.graph.StateGraph;
 public class DataGenerator
 {
     // value > 1 only makes sense if sameThread is false
-    public static final int IMPORTER_POOL_SIZE = 1;
+    public static final int IMPORTER_POOL_SIZE;
+    
+    static {
+        int poolSize = 1;
+        if (ApplicationConfiguration.config().containsKey(Constants.Config.IMPORTER_POOL_SIZE)) {
+            poolSize = ApplicationConfiguration.config().getInt(Constants.Config.IMPORTER_POOL_SIZE);
+            if(poolSize < 1) {
+                poolSize = 1;
+            }
+        }
+
+        IMPORTER_POOL_SIZE = poolSize;
+    }    
 
     // Used for throttle control
     public static final int HIGH_WATERMARK = 1500;
@@ -70,7 +83,7 @@ public class DataGenerator
     private TypeMapper typeMapper;
     private Settings settings;
     private List<String> types;
-    private DataModelFactory dasFactory;
+    private DataModelFactory dataModelFactory;
     private ImportMethod importMethod;
     private ExecutorService importers = Executors.newFixedThreadPool(DataGenerator.IMPORTER_POOL_SIZE);
     private Map<String, List<Property>> generatedFields = new HashMap<>();
@@ -84,7 +97,7 @@ public class DataGenerator
         this.types = types;
         this.typeMapper = typeMapper;
         this.settings = settings;
-        this.dasFactory = dasFactory;
+        this.dataModelFactory = dasFactory;
         this.importMethod = settings.getImportMethod();
         this.sameThread = sameThread;
     }
@@ -170,14 +183,14 @@ public class DataGenerator
         // Create the importers
         List<Future> importJobs = new ArrayList<Future>();
         for (int i = 0; i < IMPORTER_POOL_SIZE; i++) {
-            JDBCDataStore po = (JDBCDataStore)dasFactory.createDataStore(settings.getSessionContext());
-            po.getSessionContext().setImportMethod(importMethod);
+            JDBCDataStore dataStore = (JDBCDataStore)dataModelFactory.createDataStore(settings.getSessionContext());
+            dataStore.getSessionContext().setImportMethod(importMethod);
             if(importMethod == ImportMethod.CSV && IMPORTER_POOL_SIZE > 1)
             {
                 throw new RuntimeException("Writing to CSV can have only 1 importer job");
             }
 
-            importJobs.add(importers.submit(new DataImporter(this, importerQueues[i], po, typeMapper, settings)));
+            importJobs.add(importers.submit(new DataImporter(this, importerQueues[i], dataStore, typeMapper, settings)));
         }
 
         return importJobs;
@@ -195,8 +208,8 @@ public class DataGenerator
                 settings,
                 null);
 
-            JDBCDataStore po = (JDBCDataStore)settings.getDataStore();
-            JDBCSessionContext sc = po.getSessionContext();
+            JDBCDataStore dataStore = (JDBCDataStore)settings.getDataStore();
+            JDBCSessionContext sc = dataStore.getSessionContext();
             sc.beginTransaction();
 
             generator.init(sc.getConnection(), visitor);
@@ -274,8 +287,8 @@ public class DataGenerator
                 settings,
                 null);
 
-            JDBCDataStore po = (JDBCDataStore)settings.getDataStore();
-            JDBCSessionContext sc = po.getSessionContext();
+            JDBCDataStore dataStore = (JDBCDataStore)settings.getDataStore();
+            JDBCSessionContext sc = dataStore.getSessionContext();
             assert sc.getConnection() != null : "Can import only in the context of an existing JDBC connection";
             
             generator.init(sc.getConnection(), visitor);
@@ -290,7 +303,7 @@ public class DataGenerator
 
                 JSONObject json = generateObject(entityType, visitor, -1);
                 try {
-                    DataImporter.importJson(po, json, typeMapper, settings, this);
+                    DataImporter.importJson(dataStore, json, typeMapper, settings, this);
                 } catch(SQLException sqe) {
                     throw new RuntimeException(sqe);
                 }

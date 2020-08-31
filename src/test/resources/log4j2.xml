@@ -50,11 +50,11 @@
 
   <Loggers>
     <Logger name="tools.xor.service.exim.CSVLoader" level="info" additivity="false">
-      <AppenderRef ref="graphappender" />
+      <AppenderRef ref="sqlappender" />
       <AppenderRef ref="Console" />
     </Logger>
-    <Logger name="tools.xor.QueryGenerator" level="warn" additivity="false">
-      <AppenderRef ref="graphappender" />
+    <Logger name="tools.xor.providers.jdbc.JDBCSessionContext" level="info" additivity="false">
+      <AppenderRef ref="sqlappender" />
       <AppenderRef ref="Console" />
     </Logger>
     <Logger name="tools.xor.generator.QueryDataField" level="warn" additivity="false">

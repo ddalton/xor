@@ -38,13 +38,17 @@ public class ParallelDispatcher extends AbstractDispatcher implements Callback
 {
     private final static int QUERY_POOL_SIZE;
     static {
+        int poolSize = 4;
         if (ApplicationConfiguration.config().containsKey(Constants.Config.QUERY_POOL_SIZE)) {
-            QUERY_POOL_SIZE = ApplicationConfiguration.config().getInt(Constants.Config.QUERY_POOL_SIZE);
+            poolSize = ApplicationConfiguration.config().getInt(Constants.Config.QUERY_POOL_SIZE);
+            if(poolSize < 1) {
+                poolSize = 4;
+            }
         }
-        else {
-            QUERY_POOL_SIZE = 10;
-        }
-    }
+
+        QUERY_POOL_SIZE = poolSize;
+    }      
+
     private static ExecutorService qe = Executors.newFixedThreadPool(QUERY_POOL_SIZE);
     private CountDownLatch latch;
 

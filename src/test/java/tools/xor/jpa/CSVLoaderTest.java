@@ -49,6 +49,7 @@ import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
 import tools.xor.service.DataModel;
+import tools.xor.service.DataModelFactory;
 import tools.xor.service.Shape;
 import tools.xor.service.exim.CSVLoader;
 import tools.xor.service.exim.CSVLoader.CSVState;
@@ -391,4 +392,56 @@ public class CSVLoaderTest {
                 sc.close();
         }
     }
+    
+    /*
+     * Test used to generate a csv file with 1 million records.
+     * To use this rename test6/Task.csv.gen to test6/Task.csv
+     * 
+    @Test
+    public void test6() throws IOException {
+        String csvFilePath = "csvloader/test6/Task.csv";
+        String csvGenFilePath = csvFilePath + ".gen";
+
+        String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+        System.out.println("Path: " + absolutePath);
+
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+        CSVLoader csvLoader = new CSVLoader(shape);
+        CSVState csvState = csvLoader.getCSVState(csvFilePath);
+
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore) amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();
+        try {
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+        } finally {
+            sc.rollback();
+            sc.close();
+        }
+    }
+    */   
+    
+    @Test
+    public void test6_import() throws IOException {
+
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+        CSVLoader csvLoader = new CSVLoader(shape, "csvloader/test6");
+
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore) amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();
+        try {
+            //csvLoader.importData(new Settings(), dataStore);
+            csvLoader.importDataParallel(new Settings(), amJDBC.getDataModelFactory(), 4);
+        } finally {
+            sc.rollback();
+            sc.close();
+        }
+    }    
 }

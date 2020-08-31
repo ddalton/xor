@@ -21,7 +21,6 @@ package tools.xor;
 
 import java.util.List;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -29,6 +28,7 @@ import org.json.JSONObject;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LocalizedString;
 import tools.xor.util.ApplicationConfiguration;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
@@ -38,6 +38,7 @@ public class StringType extends SimpleType {
 	public static final int DEFAULT_LENGTH = 255;
 	public static final int MIN_LENGTH = 7; // to avoid empty strings in natural keys and reduce the occurrence of unique constraint violations
 	public static final int MAX_LENGTH;
+	public static final char[] ALPHA_NUMERIC = new char[62]; // Currently restricted to English alphabets
 	
 	static {
 		if (ApplicationConfiguration.config().containsKey(Constants.Config.MAX_STRING_LEN)) {
@@ -45,6 +46,32 @@ public class StringType extends SimpleType {
 		} else {
 			MAX_LENGTH = -1;
 		}
+		
+		// initialize the numeric characters
+		int index = 0;
+		for(char c = '0'; c <= '9'; c++) {
+		    ALPHA_NUMERIC[index++] = c;
+		}
+		// initialize the lower case alphabetic characters
+        for(char c = 'a'; c <= 'z'; c++) {
+            ALPHA_NUMERIC[index++] = c;
+        }
+        // initialize the upper case alphabetic characters
+        for(char c = 'A'; c <= 'Z'; c++) {
+            ALPHA_NUMERIC[index++] = c;
+        }               
+	}
+	
+	public static String randomAlphanumeric(int count) {
+	    final char[] buffer = new char[count];
+	    
+	    int len = ALPHA_NUMERIC.length;
+	    for(int i = 0; i < count; i++) {
+	        int index = (int) (ClassUtil.nextFloat() * len);
+	        buffer[i] = ALPHA_NUMERIC[index];
+	    }
+	    
+	    return new String(buffer);
 	}
 
 	public StringType(Class<?> clazz) {
@@ -81,8 +108,7 @@ public class StringType extends SimpleType {
 		if(gen != null) {
 			return gen.getStringValue(property, visitor);
 		} else {
-			//return RandomStringUtils.randomAscii(stringLen);
-			return RandomStringUtils.randomAlphanumeric(getLength(stringLen));
+			return randomAlphanumeric(getLength(stringLen));
 		}
 	}	
 	

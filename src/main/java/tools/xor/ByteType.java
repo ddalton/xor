@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class ByteType extends SimpleType {
@@ -65,7 +66,7 @@ public class ByteType extends SimpleType {
 
 		// The different can overflow, so we use the next higher type
 		short range = (short) (getMax() - getMin());
-		return (byte) (getMin() + (Math.random() * range));
+		return (byte) (getMin() + (range == 0 ? 0 : ClassUtil.nextDouble()*range));
 	}	
 	
     @Override

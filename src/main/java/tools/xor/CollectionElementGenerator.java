@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 
 import tools.xor.generator.DefaultGenerator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 /**
@@ -85,7 +86,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Gene
 
     protected void updateValue() {
         int startOfBlock = blockNo++ * blockSize;
-        int offset = (int)(blockSize * Math.random());
+        int offset = (int)(blockSize * ClassUtil.nextDouble());
         this.value = start + (startOfBlock + offset);
     }
 

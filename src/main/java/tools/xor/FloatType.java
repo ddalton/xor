@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class FloatType extends SimpleType {
@@ -63,7 +64,7 @@ public class FloatType extends SimpleType {
 			gen.getFloatValue(visitor);
 		}
 		float range = getMax() - getMin();
-		return getMin() + ((float)(Math.random() * range));
+		return getMin() + ((float)(range == 0 ? 0 : ClassUtil.nextDouble()*range));
 	}	
 	
     @Override

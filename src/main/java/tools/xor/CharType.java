@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class CharType extends SimpleType {
@@ -64,7 +65,7 @@ public class CharType extends SimpleType {
 		}
 
 		char range = (char) (getMax() - getMin());
-		return (char) (getMin() + (Math.random() * range));
+		return (char) (getMin() + (range == 0 ? 0 : ClassUtil.nextDouble()*range));
 	}
 	
     @Override

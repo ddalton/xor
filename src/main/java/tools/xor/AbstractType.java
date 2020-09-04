@@ -1261,7 +1261,7 @@ public abstract class AbstractType implements EntityType, Cloneable {
 			if (property != null && !property.isContainment() && getNaturalKey() == null
 				&& entitiesToChooseFrom != null && entitiesToChooseFrom.size() > 0) {
 				result = entitiesToChooseFrom.get(
-					(int)(Math.random() * (entitiesToChooseFrom.size() - 1)));
+					(int)(ClassUtil.nextDouble() * (entitiesToChooseFrom.size() - 1)));
 			}
 		}
 

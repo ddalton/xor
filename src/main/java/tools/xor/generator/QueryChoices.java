@@ -74,7 +74,7 @@ public class QueryChoices extends DefaultGenerator
             return 0;
         }
 
-        int result =  (int) (Math.random() * (getQueryValues(visitor).length+1));
+        int result =  (int) (ClassUtil.nextDouble() * getQueryValues(visitor).length);
         if(result == getQueryValues(visitor).length) {
             result--;
         }

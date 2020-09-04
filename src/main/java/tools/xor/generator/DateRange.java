@@ -28,6 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import tools.xor.JSONObjectProperty;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class DateRange extends DefaultGenerator
@@ -66,6 +67,6 @@ public class DateRange extends DefaultGenerator
 
 
         long  range = maximum - minimum;
-        return new Date((long) (minimum + (Math.random() * range)));
+        return new Date((long) (minimum + (range == 0 ? 0 : ClassUtil.nextDouble()*range)));
     }
 }

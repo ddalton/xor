@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class BooleanType extends SimpleType {
@@ -34,7 +35,7 @@ public class BooleanType extends SimpleType {
 	@Override
 	public Object generate(Settings settings, Property property, JSONObject rootedAt, List<JSONObject> entitiesToChooseFrom,
 						   StateGraph.ObjectGenerationVisitor visitor) {
-		return (Math.random()*Integer.MAX_VALUE)%2 == 0 ? Boolean.TRUE : Boolean.FALSE;
+		return (ClassUtil.nextDouble()*Integer.MAX_VALUE)%2 == 0 ? Boolean.TRUE : Boolean.FALSE;
 	}		
 	
     @Override

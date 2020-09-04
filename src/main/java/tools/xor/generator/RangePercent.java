@@ -27,6 +27,7 @@ import java.util.List;
 
 import tools.xor.Property;
 import tools.xor.Settings;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class RangePercent extends DefaultGenerator
@@ -115,7 +116,7 @@ public class RangePercent extends DefaultGenerator
                 return startVal;
             } else {
                 long range = endVal - startVal;
-                return startVal + ((int)(Math.random() * range));
+                return startVal + ((int)(range == 0 ? 0 : ClassUtil.nextDouble()*range));
             }
         }
 
@@ -128,7 +129,7 @@ public class RangePercent extends DefaultGenerator
     }
 
     protected Integer getValue() {
-        BigDecimal random = BigDecimal.valueOf(Math.random());
+        BigDecimal random = BigDecimal.valueOf(ClassUtil.nextDouble());
 
         PercentNode node = tree.findNode(random);
         this.value = node.getInt();

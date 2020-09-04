@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class DoubleType extends SimpleType {
@@ -64,7 +65,7 @@ public class DoubleType extends SimpleType {
 		}
 
 		double range = getMax() - getMin();
-		return getMin() + (Math.random() * range);
+		return getMin() + (range == 0 ? 0 : ClassUtil.nextDouble()*range);
 	}	
 	
     @Override

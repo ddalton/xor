@@ -8,6 +8,7 @@ import java.util.Map;
 import tools.xor.EntityType;
 import tools.xor.ExtendedProperty;
 import tools.xor.Type;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.GraphUtil;
 import tools.xor.util.graph.StateGraph;
 
@@ -69,7 +70,7 @@ public class SubTypeChoices extends DefaultGenerator
             subTypeList.get(0);
         }
 
-        int index =  (int) (Math.random() * (subTypeList.size()+1));
+        int index =  (int) (ClassUtil.nextDouble() * subTypeList.size());
         if(index == subTypeList.size()) {
             index--;
         }

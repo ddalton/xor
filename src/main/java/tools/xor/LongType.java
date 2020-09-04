@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class LongType extends SimpleType {
@@ -66,7 +67,7 @@ public class LongType extends SimpleType {
 		}
 
 		long range = maximum - minimum;
-		return (long) (minimum + (Math.random() * range));
+		return (long) (minimum + (range == 0 ? 0 : ClassUtil.nextDouble()*range));
 	}		
 	
     @Override

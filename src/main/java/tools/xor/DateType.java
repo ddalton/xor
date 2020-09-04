@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 /**
@@ -88,7 +89,7 @@ public class DateType extends SimpleType {
 		}
 
 		long  range = getMax() - getMin();
-		return new Date((long) (getMin() + (Math.random() * range)));
+		return new Date((long) (getMin() + (range == 0 ? 0 : ClassUtil.nextDouble()*range)));
 	}	
 	
     @Override

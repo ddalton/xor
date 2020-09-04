@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class BigIntegerType extends SimpleType {
@@ -67,7 +68,8 @@ public class BigIntegerType extends SimpleType {
 		}
 
 		long range = maximum.longValue() - minimum.longValue();
-		return new BigInteger((new Long((long) (minimum.longValue() + (Math.random() * range)))).toString());
+		long incr = (long) (range == 0 ? 0 : ClassUtil.nextDouble()*range);
+		return new BigInteger((new Long((long) (minimum.longValue() + incr))).toString());
 	}		
 	
     @Override

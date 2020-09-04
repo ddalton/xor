@@ -38,6 +38,7 @@ import tools.xor.IteratorListener;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 import tools.xor.view.AggregateTree;
@@ -113,8 +114,7 @@ public class DefaultGenerator implements Generator
         }
 
         byte range = (byte) (maximum - minimum);
-        // Check if value is not null so as to not unnecessary invoke the Math.random() method
-        return (byte) (minimum + ((byte)(range != 0 ? Math.random() * range : 0)));
+        return (byte) (minimum + ((byte)(range != 0 ? ClassUtil.nextDouble() * range : 0)));
     }
 
     @Override
@@ -131,7 +131,7 @@ public class DefaultGenerator implements Generator
         }
 
         short range = (short) (maximum - minimum);
-        return (short) (minimum + ((short)(range != 0 ? Math.random() * range : 0)));
+        return (short) (minimum + ((short)(range != 0 ? ClassUtil.nextDouble() * range : 0)));
     }
 
     @Override
@@ -148,7 +148,7 @@ public class DefaultGenerator implements Generator
         }
 
         char range = (char) (maximum - minimum);
-        return (char) (minimum + ((char)(range != 0 ? Math.random() * range : 0)));
+        return (char) (minimum + ((char)(range != 0 ? ClassUtil.nextDouble() * range : 0)));
     }
 
     @Override
@@ -173,7 +173,7 @@ public class DefaultGenerator implements Generator
         }
 
         int range = maximum - minimum;
-        return minimum + (range != 0 ? ((int)(Math.random() * range)) : 0);
+        return minimum + (range != 0 ? ((int)(ClassUtil.nextDouble() * range)) : 0);
     }
 
     @Override
@@ -190,7 +190,7 @@ public class DefaultGenerator implements Generator
         }
 
         long range = maximum - minimum;
-        return minimum + (range != 0 ? ((long)(Math.random() * range)) : 0);
+        return minimum + (range != 0 ? ((long)(ClassUtil.nextDouble() * range)) : 0);
     }
 
     @Override
@@ -214,7 +214,7 @@ public class DefaultGenerator implements Generator
         }        
         
         long  range = maximum - minimum;
-        return new Date((long) (minimum + (range != 0 ? (Math.random() * range) : 0)));
+        return new Date((long) (minimum + (range != 0 ? (ClassUtil.nextDouble() * range) : 0)));
     }
 
     @Override
@@ -231,7 +231,7 @@ public class DefaultGenerator implements Generator
         }
 
         double range = maximum - minimum;
-        return minimum + (range != 0 ? (Math.random() * range) : 0);
+        return minimum + (range != 0 ? (ClassUtil.nextDouble() * range) : 0);
     }
 
     @Override
@@ -248,7 +248,7 @@ public class DefaultGenerator implements Generator
         }
 
         float range = maximum - minimum;
-        return minimum + ((float)(range != 0 ? Math.random() * range : 0));
+        return minimum + ((float)(range != 0 ? ClassUtil.nextDouble() * range : 0));
     }
 
     @Override
@@ -278,7 +278,7 @@ public class DefaultGenerator implements Generator
         }
 
         long range = maximum.longValue() - minimum.longValue();
-        return new BigInteger((new Long((long) (minimum.longValue() + (range != 0 ? Math.random() * range : 0)))).toString());
+        return new BigInteger((new Long((long) (minimum.longValue() + (range != 0 ? ClassUtil.nextDouble() * range : 0)))).toString());
     }
 
     /**
@@ -295,7 +295,7 @@ public class DefaultGenerator implements Generator
             return 0;
         }
 
-        int result =  (int) (Math.random() * (getValues().length+1));
+        int result =  (int) (ClassUtil.nextDouble() * getValues().length);
         if(result == getValues().length) {
             result--;
         }
@@ -324,7 +324,7 @@ public class DefaultGenerator implements Generator
             }
         }
 
-        int index =  (int) (Math.random() * (types.size()+1));
+        int index =  (int) (ClassUtil.nextDouble() * types.size());
         if(index == types.size()) {
             index--;
         }
@@ -372,7 +372,7 @@ public class DefaultGenerator implements Generator
         }
 
         float sparseness = settings.getSparseness(path);
-        return (int)(Math.random() * settings.getEntitySize().size() * sparseness);
+        return (int)(ClassUtil.nextDouble() * settings.getEntitySize().size() * sparseness);
     }
 
     @Override public boolean isApplicableToCollectionElement ()
@@ -564,7 +564,7 @@ public class DefaultGenerator implements Generator
                 return sizemin;
             }
 
-            return sizemin + ((int)(Math.random() * (sizemax-sizemin)));
+            return sizemin + ((int)(ClassUtil.nextDouble() * (sizemax-sizemin)));
         }
     }
 

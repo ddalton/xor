@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tools.xor.Property;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class ChoicesPercent extends DefaultGenerator
@@ -95,7 +96,7 @@ public class ChoicesPercent extends DefaultGenerator
     }
 
     protected String getValue() {
-        BigDecimal random = BigDecimal.valueOf(Math.random());
+        BigDecimal random = BigDecimal.valueOf(ClassUtil.nextDouble());
 
         PercentNode node = (PercentNode)tree.findNode(random);
         return node.getString();

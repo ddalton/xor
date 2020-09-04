@@ -1,5 +1,7 @@
 package tools.xor.generator;
 
+import tools.xor.util.ClassUtil;
+
 public class Lot
 {
     int numLots;
@@ -15,7 +17,7 @@ public class Lot
 
     public int pick ()
     {
-        value = (int)(Math.random() * (numLots + 1));
+        value = (int)(ClassUtil.nextDouble() * numLots);
         if (value == numLots) {
             value--;
         }

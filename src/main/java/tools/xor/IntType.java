@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import tools.xor.generator.Generator;
+import tools.xor.util.ClassUtil;
 import tools.xor.util.graph.StateGraph;
 
 public class IntType extends SimpleType {
@@ -65,7 +66,7 @@ public class IntType extends SimpleType {
 
 		// the range can overflow
 		long range = getMax() - getMin();
-		return getMin() + ((int)(Math.random() * range));
+		return getMin() + ((int)(range == 0 ? 0 : ClassUtil.nextDouble()*range));
 	}		
 	
     @Override

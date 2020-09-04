@@ -20,6 +20,7 @@
 package tools.xor;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,6 @@ import org.json.JSONObject;
 import tools.xor.generator.Generator;
 import tools.xor.generator.LocalizedString;
 import tools.xor.util.ApplicationConfiguration;
-import tools.xor.util.ClassUtil;
 import tools.xor.util.Constants;
 import tools.xor.util.graph.StateGraph;
 
@@ -67,8 +67,9 @@ public class StringType extends SimpleType {
         
         int len = ALPHA_NUMERIC.length;
         for(int i = 0; i < count; i++) {
-            int index = (int) (ClassUtil.nextFloat() * len);
-            buffer[i] = ALPHA_NUMERIC[index%len];
+            // int index = (int) (ClassUtil.nextDouble() * len);
+            // buffer[i] = ALPHA_NUMERIC[index%len];
+            buffer[i] = ALPHA_NUMERIC[ThreadLocalRandom.current().nextInt(0, len)];
         }
         
         return new String(buffer);
@@ -99,7 +100,8 @@ public class StringType extends SimpleType {
             if (property.getConstraints().containsKey(Constants.XOR.CONS_LENGTH)) {
                 length = (int)property.getConstraints().get(Constants.XOR.CONS_LENGTH);
             }
-            stringLen = (int)(Math.random() * length);
+            //stringLen =  (int)(Math.random() * length);
+            stringLen = ThreadLocalRandom.current().nextInt(0, length);
             if (stringLen < MIN_LENGTH) {
                 stringLen = (MIN_LENGTH > length) ? length : MIN_LENGTH;
             }

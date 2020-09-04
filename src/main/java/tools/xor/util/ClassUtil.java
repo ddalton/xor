@@ -36,9 +36,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
 import jcuda.Pointer;
@@ -80,26 +81,27 @@ public class ClassUtil {
     private static class RandomUtil {
         private static final int BATCH_SIZE = 1000000;
         
-        private float[] hostData;
-        private int counter;
+        private double[] hostData;
+        private AtomicInteger counter = new AtomicInteger(0);
         private boolean cuda = false;
         private Pointer deviceData;   
         private curandGenerator generator;
-        private Random random = new Random();
         
         public RandomUtil() {
             try {
                 // check if cuda is present
                 // Allocate device memory
                 this.deviceData = new Pointer();
-                JCuda.cudaMalloc(deviceData, BATCH_SIZE * Sizeof.FLOAT);
+                JCuda.cudaMalloc(deviceData, BATCH_SIZE * Sizeof.DOUBLE);
 
                 // Create and initialize a pseudo-random number generator
                 this.generator = new curandGenerator();
                 JCurand.curandCreateGenerator(this.generator, curandRngType.CURAND_RNG_PSEUDO_DEFAULT);
-                JCurand.curandSetPseudoRandomGeneratorSeed(this.generator, (new Random()).nextLong());
+                JCurand.curandSetPseudoRandomGeneratorSeed(this.generator, ThreadLocalRandom.current().nextLong());
                 
-                hostData = new float[BATCH_SIZE];
+                hostData = new double[BATCH_SIZE];
+                // force the loading of data
+                counter.set(BATCH_SIZE);
                 this.cuda = true;
 
             } catch (java.lang.UnsatisfiedLinkError le) {
@@ -107,36 +109,52 @@ public class ClassUtil {
             }           
         }
         
-        public float nextFloat() {
+        /**
+         * Returns a {@code double} value with a positive sign, greater
+         * than {@code 0.0} and less than or equal to {@code 1.0}.
+         */          
+        public double nextDouble() {
             if(!cuda) {
-                return random.nextFloat();
+                // Make it functionally similar to Cuda random
+                double d = ThreadLocalRandom.current().nextDouble();
+                return d == 0 ? 1 : d;
             } else {
-                if(counter == BATCH_SIZE) {
-                    synchronized(hostData) {
-                        loadNextBatch();
-                    }
-                    counter = 0;
+                if(counter.get() == BATCH_SIZE) {
+                    loadNextBatch();
                 }
-                return hostData[counter++];
+                return hostData[counter.getAndIncrement()];
             }
         }
         
-        private void loadNextBatch() {
+        private synchronized void loadNextBatch() {
             try {
+                // An other thread got here first
+                if(!counter.compareAndSet(BATCH_SIZE, 0)) {
+                    return;
+                }
+                
                 // Generate random numbers
-                JCurand.curandGenerateUniform(generator, deviceData, BATCH_SIZE);
+                JCurand.curandGenerateUniformDouble(generator, deviceData, BATCH_SIZE);
 
                 // Copy the random numbers from the device to the host
-                JCuda.cudaMemcpy(Pointer.to(hostData), deviceData, BATCH_SIZE * Sizeof.FLOAT,
+                JCuda.cudaMemcpy(Pointer.to(hostData), deviceData, BATCH_SIZE * Sizeof.DOUBLE,
                         cudaMemcpyKind.cudaMemcpyDeviceToHost);
+
             } catch (java.lang.UnsatisfiedLinkError le) {
                 logger.warn("Cuda framework is not found");
             }       
         }
     }
     
-    public static float nextFloat() {
-        return randomUtil.nextFloat();
+    /**
+    * Returns a {@code double} value with a positive sign, greater
+    * than {@code 0.0} and less than or equal to {@code 1.0}.
+    * 
+    * NOTE: This behavior is different from Math.random() where 0 is included
+    * and 1 is not
+    */    
+    public static double nextDouble() {
+        return randomUtil.nextDouble();
     }
     
     private static boolean isJavassistEnhanced(Class<?> c) {

@@ -814,6 +814,7 @@ public class JDBCSessionContext implements CustomPersister
             }
 
             if(connections.peek().isOwner()) {
+		    (new Exception()).printStackTrace();
                 getConnection().commit();
             }
         }

@@ -18,6 +18,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.EncryptedDocumentException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,11 +31,14 @@ import tools.xor.util.Constants;
 
 public class CSVExportImport extends AbstractExportImport
 {
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+
     private String filePath;
     private CSVPrinter csvPrinter;
     private List entityRecord;
 
     public static final CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator("\n");
+    public static final String urlSeparator = "/";
 
     public CSVExportImport (AggregateManager am)
     {
@@ -238,8 +243,10 @@ public class CSVExportImport extends AbstractExportImport
 
         if(!file.exists()) {
             // Relationships are not required
+            logger.info("No relationship file found under path: " + resource.getPath());
             return false;
         }
+        logger.info("Relationship file found under path: " + resource.getPath());
 
         return true;
     }
@@ -286,8 +293,8 @@ public class CSVExportImport extends AbstractExportImport
                 throw new IllegalArgumentException("filePath " + filePath + " should represent a directory name.");
             }
 
-            if(!filePath.endsWith(File.separator)) {
-                filePath += File.separator;
+            if(!filePath.endsWith(urlSeparator)) {
+                filePath += urlSeparator;
             }
 
             InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath + Constants.XOR.CSV_ENTITY_SHEET);
@@ -451,6 +458,7 @@ public class CSVExportImport extends AbstractExportImport
             {
                 String entityInfo = csvRecord.get(1);
 
+                logger.info("Relationship entity: " + entityInfo);
                 if (getProperty(entityInfo).isMany()) {
                     collectionSheets.put(csvRecord.get(0), entityInfo);
                 }

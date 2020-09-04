@@ -554,6 +554,8 @@ public class HanaPerf1Test
         };
 
         // Rebuild the types
+        das.removeShape(AbstractDataModel.DEFAULT_SHAPE);
+        das.removeShape(AbstractDataModel.RELATIONAL_SHAPE);
         das.createShape(AbstractDataModel.DEFAULT_SHAPE, relationshipExtension);
         das.createShape(AbstractDataModel.RELATIONAL_SHAPE, generatorExtension);
     }

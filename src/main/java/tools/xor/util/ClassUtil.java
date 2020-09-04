@@ -69,25 +69,25 @@ import tools.xor.view.View;
 
 @Component
 public class ClassUtil {
-	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
-	
-	private static final String JAVASSIST_STARTWITH = "org.javassist.tmp.";
-	private static final String JAVASSIST_INDEXOF = "_$$_javassist_";
+    private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
+    
+    private static final String JAVASSIST_STARTWITH = "org.javassist.tmp.";
+    private static final String JAVASSIST_INDEXOF = "_$$_javassist_";
 
-	private static final AtomicBoolean parallelDispatch = new AtomicBoolean(true);
-	private static final RandomUtil randomUtil = new RandomUtil();
+    private static final AtomicBoolean parallelDispatch = new AtomicBoolean(true);
+    private static final RandomUtil randomUtil = new RandomUtil();
 
-	private static class RandomUtil {
-	    private static final int BATCH_SIZE = 100000;
-	    
-	    private float[] hostData;
-	    private int counter;
-	    private boolean cuda = false;
-	    private Pointer deviceData;	  
-	    private curandGenerator generator;
-	    private Random random = new Random();
-	    
-	    public RandomUtil() {
+    private static class RandomUtil {
+        private static final int BATCH_SIZE = 1000000;
+        
+        private float[] hostData;
+        private int counter;
+        private boolean cuda = false;
+        private Pointer deviceData;   
+        private curandGenerator generator;
+        private Random random = new Random();
+        
+        public RandomUtil() {
             try {
                 // check if cuda is present
                 // Allocate device memory
@@ -104,24 +104,24 @@ public class ClassUtil {
 
             } catch (java.lang.UnsatisfiedLinkError le) {
                 logger.warn("Cuda framework is not found");
-            }	        
-	    }
-	    
-	    public float nextFloat() {
-	        if(!cuda) {
-	            return random.nextFloat();
-	        } else {
-	            if(counter == BATCH_SIZE) {
-	                synchronized(hostData) {
-	                    loadNextBatch();
-	                }
+            }           
+        }
+        
+        public float nextFloat() {
+            if(!cuda) {
+                return random.nextFloat();
+            } else {
+                if(counter == BATCH_SIZE) {
+                    synchronized(hostData) {
+                        loadNextBatch();
+                    }
                     counter = 0;
-	            }
-	            return hostData[counter++];
-	        }
-	    }
-	    
-	    private void loadNextBatch() {
+                }
+                return hostData[counter++];
+            }
+        }
+        
+        private void loadNextBatch() {
             try {
                 // Generate random numbers
                 JCurand.curandGenerateUniform(generator, deviceData, BATCH_SIZE);
@@ -132,55 +132,55 @@ public class ClassUtil {
             } catch (java.lang.UnsatisfiedLinkError le) {
                 logger.warn("Cuda framework is not found");
             }       
-	    }
-	}
-	
-	public static float nextFloat() {
-	    return randomUtil.nextFloat();
-	}
-	
-	private static boolean isJavassistEnhanced(Class<?> c) {
-		String className = c.getName();
+        }
+    }
+    
+    public static float nextFloat() {
+        return randomUtil.nextFloat();
+    }
+    
+    private static boolean isJavassistEnhanced(Class<?> c) {
+        String className = c.getName();
 
-		// pattern found in javassist ProxyFactory
-		return className.startsWith(JAVASSIST_STARTWITH)
-				|| className.indexOf(JAVASSIST_INDEXOF) != -1;
-	}
+        // pattern found in javassist ProxyFactory
+        return className.startsWith(JAVASSIST_STARTWITH)
+                || className.indexOf(JAVASSIST_INDEXOF) != -1;
+    }
 
-	public static void setParallelDispatch(boolean value) {
-		parallelDispatch.set(value);
-	}
+    public static void setParallelDispatch(boolean value) {
+        parallelDispatch.set(value);
+    }
 
-	public static boolean doParallelDispatch() {
-		return parallelDispatch.get();
-	}
+    public static boolean doParallelDispatch() {
+        return parallelDispatch.get();
+    }
 
-	public static Class<?> getUnEnhanced(Class<?> clazz) {
-		if(isEnhanced(clazz))
-			return clazz.getSuperclass();
+    public static Class<?> getUnEnhanced(Class<?> clazz) {
+        if(isEnhanced(clazz))
+            return clazz.getSuperclass();
 
-		return clazz;
-	}
+        return clazz;
+    }
 
-	public static String getCSVFilename(String entityName) {
-		return String.format("%s.csv", entityName);
-	}
+    public static String getCSVFilename(String entityName) {
+        return String.format("%s.csv", entityName);
+    }
 
-	public static boolean isEnhanced(Class<?> c) {
-		boolean result = false;
-		if (isJavassistEnhanced(c)) {
-			result = true;
-		}
-		/*
-		 * CGLIB support is deprecated so we won't support it. 
-		if (Enhancer.isEnhanced(c) || isJavassistEnhanced(c)) {
-			result = true;
-		}		
-		*/
+    public static boolean isEnhanced(Class<?> c) {
+        boolean result = false;
+        if (isJavassistEnhanced(c)) {
+            result = true;
+        }
+        /*
+         * CGLIB support is deprecated so we won't support it. 
+        if (Enhancer.isEnhanced(c) || isJavassistEnhanced(c)) {
+            result = true;
+        }       
+        */
 
-		return result;
-	}
-	
+        return result;
+    }
+    
     public static Object getDelegate(Property property) {
         if (property != null && java.lang.reflect.Proxy.isProxyClass(property.getClass())) {
             PropertyProxy pp = (PropertyProxy) java.lang.reflect.Proxy.getInvocationHandler(property);
@@ -203,302 +203,302 @@ public class ClassUtil {
         return ClassUtil.getOldDelegate(propA) == ClassUtil.getOldDelegate(propB);
     }
 
-	public static boolean isEnhanced(Object proxy) {
-		boolean result = false;
-		
-		/*
-		 * CGLIB support is deprecated so we won't support it.
-		if (Enhancer.isEnhanced(proxy.getClass()) || isJavassistEnhanced(proxy.getClass()) ||
-				AopUtils.isJdkDynamicProxy(proxy)) {
-			result = true;
-		}
-		*/
-		
-		if ( isJavassistEnhanced(proxy.getClass()) || AopUtils.isJdkDynamicProxy(proxy)) {
-			result = true;
-		}		
+    public static boolean isEnhanced(Object proxy) {
+        boolean result = false;
+        
+        /*
+         * CGLIB support is deprecated so we won't support it.
+        if (Enhancer.isEnhanced(proxy.getClass()) || isJavassistEnhanced(proxy.getClass()) ||
+                AopUtils.isJdkDynamicProxy(proxy)) {
+            result = true;
+        }
+        */
+        
+        if ( isJavassistEnhanced(proxy.getClass()) || AopUtils.isJdkDynamicProxy(proxy)) {
+            result = true;
+        }       
 
-		return result;
-	}	
+        return result;
+    }   
 
-	/**
-	 * Invoke the given method as a privileged action, if necessary.
-	 * @param target the object on which the method needs to be invoked
-	 * @param method to invoke
-	 * @param args to the method
-	 * @return result of the invocation
-	 * @throws InvocationTargetException while invoking the method
-	 * @throws IllegalAccessException when accessing the meta data
-	 */
-	//public static Object invokeMethodAsPrivileged(final Object target, final Method method, final Object[] args) 
-	public static Object invokeMethodAsPrivileged(final Object target, final Method method, final Object... args)
-			throws InvocationTargetException, IllegalAccessException 
-			{
-		if (Modifier.isPublic(method.getModifiers()))
-			if(args == null) {
-				return method.invoke(target);
-			} else {
-				try {
-					return method.invoke(target, args);
-				}
-				catch (IllegalArgumentException e) {
-					System.out.println("@@@@ Method: " + method.getName() + ", args: " + args.toString());
+    /**
+     * Invoke the given method as a privileged action, if necessary.
+     * @param target the object on which the method needs to be invoked
+     * @param method to invoke
+     * @param args to the method
+     * @return result of the invocation
+     * @throws InvocationTargetException while invoking the method
+     * @throws IllegalAccessException when accessing the meta data
+     */
+    //public static Object invokeMethodAsPrivileged(final Object target, final Method method, final Object[] args) 
+    public static Object invokeMethodAsPrivileged(final Object target, final Method method, final Object... args)
+            throws InvocationTargetException, IllegalAccessException 
+            {
+        if (Modifier.isPublic(method.getModifiers()))
+            if(args == null) {
+                return method.invoke(target);
+            } else {
+                try {
+                    return method.invoke(target, args);
+                }
+                catch (IllegalArgumentException e) {
+                    System.out.println("@@@@ Method: " + method.getName() + ", args: " + args.toString());
 
-					e.printStackTrace();
-				}
-			}
-		return AccessController.doPrivileged(
-				new PrivilegedAction<Object>() {
-					public Object run() {
-						method.setAccessible(true);
-						Object result = null;
-						try {
-							if(args == null)
-								result = method.invoke(target);
-							else
-								result = method.invoke(target, args);
-						} catch (Exception e) {
-							throw wrapRun(e);
-						}
-						return result;
-					}
-				});
-			}
-	
-	/** 
-	 * Invoke the given method as a privileged action, if necessary. 
-	 * @param target the object on which the method needs to be invoked
-	 * @param field we are reading or writing
-	 * @param value to set in the field
-	 * @param read true if this a read operation
-	 * @return result of the invocation
-	 * @throws InvocationTargetException while invoking the method
-	 * @throws IllegalAccessException when accessing the meta data
-	 */
-	public static Object invokeFieldAsPrivileged(final Object target, final Field field, final Object value, final boolean read) 
-			throws InvocationTargetException, IllegalAccessException 
-			{
+                    e.printStackTrace();
+                }
+            }
+        return AccessController.doPrivileged(
+                new PrivilegedAction<Object>() {
+                    public Object run() {
+                        method.setAccessible(true);
+                        Object result = null;
+                        try {
+                            if(args == null)
+                                result = method.invoke(target);
+                            else
+                                result = method.invoke(target, args);
+                        } catch (Exception e) {
+                            throw wrapRun(e);
+                        }
+                        return result;
+                    }
+                });
+            }
+    
+    /** 
+     * Invoke the given method as a privileged action, if necessary. 
+     * @param target the object on which the method needs to be invoked
+     * @param field we are reading or writing
+     * @param value to set in the field
+     * @param read true if this a read operation
+     * @return result of the invocation
+     * @throws InvocationTargetException while invoking the method
+     * @throws IllegalAccessException when accessing the meta data
+     */
+    public static Object invokeFieldAsPrivileged(final Object target, final Field field, final Object value, final boolean read) 
+            throws InvocationTargetException, IllegalAccessException 
+            {
 
-		if (Modifier.isPublic(field.getModifiers())) {
-			Object readValue = null;
-			if(read)
-				readValue = field.get(target);
-			else
-				field.set(target, value);
-			return readValue;
-		} else {
-			return AccessController.doPrivileged(
-					new PrivilegedAction<Object>() {
-						public Object run() {
-							field.setAccessible(true);
-							Object readValue = null;
-							try {
-								if(read)
-									readValue = field.get(target);
-								else
-									field.set(target, value);
-							} catch (Exception e) {
-								throw wrapRun(e);
-							} 
-							return readValue;
-						}
-					});
-		}
-			}		
+        if (Modifier.isPublic(field.getModifiers())) {
+            Object readValue = null;
+            if(read)
+                readValue = field.get(target);
+            else
+                field.set(target, value);
+            return readValue;
+        } else {
+            return AccessController.doPrivileged(
+                    new PrivilegedAction<Object>() {
+                        public Object run() {
+                            field.setAccessible(true);
+                            Object readValue = null;
+                            try {
+                                if(read)
+                                    readValue = field.get(target);
+                                else
+                                    field.set(target, value);
+                            } catch (Exception e) {
+                                throw wrapRun(e);
+                            } 
+                            return readValue;
+                        }
+                    });
+        }
+            }       
 
-	public static RuntimeException wrapRun(Exception e) {
-		if(InvocationTargetException.class.isAssignableFrom(e.getClass())) {
-			InvocationTargetException ite = (InvocationTargetException) e;
-			Throwable cause = ite.getCause();
-			if(cause != null && Exception.class.isAssignableFrom(cause.getClass()))
-				e = (Exception) cause;
-		}
+    public static RuntimeException wrapRun(Exception e) {
+        if(InvocationTargetException.class.isAssignableFrom(e.getClass())) {
+            InvocationTargetException ite = (InvocationTargetException) e;
+            Throwable cause = ite.getCause();
+            if(cause != null && Exception.class.isAssignableFrom(cause.getClass()))
+                e = (Exception) cause;
+        }
 
-		if(RuntimeException.class.isAssignableFrom(e.getClass()))
-			return (RuntimeException) e;
-		else
-			return new RuntimeException(e);
-	}
+        if(RuntimeException.class.isAssignableFrom(e.getClass()))
+            return (RuntimeException) e;
+        else
+            return new RuntimeException(e);
+    }
 
-	public static PersistenceType getAccessStrategy(String accessType) {
-		return PersistenceType.valueOf(accessType);
-	}	
+    public static PersistenceType getAccessStrategy(String accessType) {
+        return PersistenceType.valueOf(accessType);
+    }   
 
-	public static int getDimensionCount(Object array) {
-		int count = 0;
-		Class<?> arrayClass = array.getClass();
-		while ( arrayClass.isArray() ) {
-			count++;
-			arrayClass = arrayClass.getComponentType();
-		}
-		return count;
-	}	
+    public static int getDimensionCount(Object array) {
+        int count = 0;
+        Class<?> arrayClass = array.getClass();
+        while ( arrayClass.isArray() ) {
+            count++;
+            arrayClass = arrayClass.getComponentType();
+        }
+        return count;
+    }   
 
-	public static Object getInstance(Object dataObject) {
-		if(dataObject == null)
-			return null;
+    public static Object getInstance(Object dataObject) {
+        if(dataObject == null)
+            return null;
 
-		Object instance = dataObject;
-		// Using instanceof for performance reasons
-		//if(BusinessObject.class.isAssignableFrom(dataObject.getClass()))
-		if(dataObject instanceof BusinessObject)
-			instance = ((BusinessObject)dataObject).getInstance();
+        Object instance = dataObject;
+        // Using instanceof for performance reasons
+        //if(BusinessObject.class.isAssignableFrom(dataObject.getClass()))
+        if(dataObject instanceof BusinessObject)
+            instance = ((BusinessObject)dataObject).getInstance();
 
-		return instance;
-	}		
-	
-	/**
-	 * Creates a non cglib/javassist enhanced instance of the given class, which
-	 * could itself be the class of a cglib/javassist enhanced object.
-	 * @param fromClass basis of the java class for the new instance
-	 * @return new object instance
-	 */
-	public static Object newInstance(Class<?> fromClass) {
-		Class<?> toClass = ClassUtil.getUnEnhanced(fromClass);
+        return instance;
+    }       
+    
+    /**
+     * Creates a non cglib/javassist enhanced instance of the given class, which
+     * could itself be the class of a cglib/javassist enhanced object.
+     * @param fromClass basis of the java class for the new instance
+     * @return new object instance
+     */
+    public static Object newInstance(Class<?> fromClass) {
+        Class<?> toClass = ClassUtil.getUnEnhanced(fromClass);
 
-		try {
-			return newInstanceAsPrivileged(toClass);
-		} catch (Exception e) {
-			throw ClassUtil.wrapRun(e);
-		}	
-	}
-	
-	/**
-	 * Creates a new instance of the given class via the no-arg constructor,
-	 * invoking the constructor as a privileged action if it is protected or
-	 * private.
-	 * 
-	 * @param c given class
-	 * @return a new instance of the given class via the no-arg constructor
-	 * @throws Exception when creating the instance
-	 */
-	public static Object newInstanceAsPrivileged(final Class<?> c) throws Exception {
+        try {
+            return newInstanceAsPrivileged(toClass);
+        } catch (Exception e) {
+            throw ClassUtil.wrapRun(e);
+        }   
+    }
+    
+    /**
+     * Creates a new instance of the given class via the no-arg constructor,
+     * invoking the constructor as a privileged action if it is protected or
+     * private.
+     * 
+     * @param c given class
+     * @return a new instance of the given class via the no-arg constructor
+     * @throws Exception when creating the instance
+     */
+    public static Object newInstanceAsPrivileged(final Class<?> c) throws Exception {
 
-		try {
-			return c.newInstance();
+        try {
+            return c.newInstance();
 
-		} catch (Exception e) {
-			return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-				public Object run() {
-					try {
-						final Constructor<?> constructor = c.getDeclaredConstructor();
-						constructor.setAccessible(true);
-						return constructor.newInstance();
-					} catch (Exception e)  {
-						throw ClassUtil.wrapRun(e);
-					}
-				}
-			});
-		}
-	}
+        } catch (Exception e) {
+            return AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                public Object run() {
+                    try {
+                        final Constructor<?> constructor = c.getDeclaredConstructor();
+                        constructor.setAccessible(true);
+                        return constructor.newInstance();
+                    } catch (Exception e)  {
+                        throw ClassUtil.wrapRun(e);
+                    }
+                }
+            });
+        }
+    }
 
-	public static String getBucketName(Type type) {
+    public static String getBucketName(Type type) {
 
-		String name = type.getName();
-		return Settings.encodeParam(name);
-	}
-	
-	public static List jsonArrayToList (JSONArray jsonArray) {
-		List list = new ArrayList<>( jsonArray.length() );
-		try {
-			for(int i = 0; i < jsonArray.length(); i++) {
-				list.add(jsonArray.get(i));
-			}
-		} catch (JSONException e) {
-			throw ClassUtil.wrapRun(e);
-		}
-		
-		return list;
-	}
-	
-	public static boolean intersectsTags(String[] tags, String[] otherTags) {
-		Set<String> commonTags = new HashSet<String>(Arrays.asList(tags));
-		commonTags.retainAll(new HashSet<String>(Arrays.asList(otherTags)) );
-		if(commonTags.isEmpty()) {
-			// applies to different tags so they do not overlap
-			return false;
-		}
-		
-		return true;
-	}
+        String name = type.getName();
+        return Settings.encodeParam(name);
+    }
+    
+    public static List jsonArrayToList (JSONArray jsonArray) {
+        List list = new ArrayList<>( jsonArray.length() );
+        try {
+            for(int i = 0; i < jsonArray.length(); i++) {
+                list.add(jsonArray.get(i));
+            }
+        } catch (JSONException e) {
+            throw ClassUtil.wrapRun(e);
+        }
+        
+        return list;
+    }
+    
+    public static boolean intersectsTags(String[] tags, String[] otherTags) {
+        Set<String> commonTags = new HashSet<String>(Arrays.asList(tags));
+        commonTags.retainAll(new HashSet<String>(Arrays.asList(otherTags)) );
+        if(commonTags.isEmpty()) {
+            // applies to different tags so they do not overlap
+            return false;
+        }
+        
+        return true;
+    }
 
-	public static void initSingleLevel (Object instance, BusinessObject bo, Settings settings)
-	{
-		if(bo == null) {
-			return;
-		}
+    public static void initSingleLevel (Object instance, BusinessObject bo, Settings settings)
+    {
+        if(bo == null) {
+            return;
+        }
 
-		View view = settings.getView();
-		for(String propertyName: view.getAttributeList()) {
-			ExtendedProperty property = (ExtendedProperty) bo.getType().getProperty(propertyName);
-			if(property.isIdentifier()) {
-				continue;
-			}
+        View view = settings.getView();
+        for(String propertyName: view.getAttributeList()) {
+            ExtendedProperty property = (ExtendedProperty) bo.getType().getProperty(propertyName);
+            if(property.isIdentifier()) {
+                continue;
+            }
 
-			property.setValue(
-				settings,
-				instance,
-				property.getValue(bo));
-		}
-	}
+            property.setValue(
+                settings,
+                instance,
+                property.getValue(bo));
+        }
+    }
 
-	public static void executeScript(DataSource datasource, String path) throws SQLException
-	{
-		executeScript(datasource, path, false, ";");
-	}
+    public static void executeScript(DataSource datasource, String path) throws SQLException
+    {
+        executeScript(datasource, path, false, ";");
+    }
 
-	public static void executeScript(DataSource datasource, String path, String separator) throws SQLException
-	{
-		executeScript(datasource, path, false, separator);
-	}
+    public static void executeScript(DataSource datasource, String path, String separator) throws SQLException
+    {
+        executeScript(datasource, path, false, separator);
+    }
 
-	public static void executeScript(DataSource datasource, String path, boolean continueOnError, String separator) throws SQLException
-	{
-		EncodedResource er = new EncodedResource(new ClassPathResource(path));
-		try (Connection connection = datasource.getConnection();) {
-			ScriptUtils.executeSqlScript(
-				connection,
-				er,
-				continueOnError,
-				false,
-				"--",
-				separator,
-				"/*",
-				"*/");
-		}
-	}
+    public static void executeScript(DataSource datasource, String path, boolean continueOnError, String separator) throws SQLException
+    {
+        EncodedResource er = new EncodedResource(new ClassPathResource(path));
+        try (Connection connection = datasource.getConnection();) {
+            ScriptUtils.executeSqlScript(
+                connection,
+                er,
+                continueOnError,
+                false,
+                "--",
+                separator,
+                "/*",
+                "*/");
+        }
+    }
 
-	public static JSONObject copyJson(JSONObject original) {
-		return (JSONObject) copyValue(original, new HashMap<>());
-	}
+    public static JSONObject copyJson(JSONObject original) {
+        return (JSONObject) copyValue(original, new HashMap<>());
+    }
 
-	private static Object copyValue(Object originalValue, Map<JSONObject, JSONObject> sharedObjects) {
-		Object copyValue = originalValue;
+    private static Object copyValue(Object originalValue, Map<JSONObject, JSONObject> sharedObjects) {
+        Object copyValue = originalValue;
 
-		if(originalValue instanceof JSONObject) {
-			if(sharedObjects.containsKey(originalValue)) {
-				copyValue = sharedObjects.get(originalValue);
-			} else {
-				copyValue = new JSONObject();
-				sharedObjects.put((JSONObject) originalValue, (JSONObject) copyValue);
+        if(originalValue instanceof JSONObject) {
+            if(sharedObjects.containsKey(originalValue)) {
+                copyValue = sharedObjects.get(originalValue);
+            } else {
+                copyValue = new JSONObject();
+                sharedObjects.put((JSONObject) originalValue, (JSONObject) copyValue);
 
-				Iterator keys = ((JSONObject)originalValue).keys();
-				while(keys.hasNext()) {
-					String key = (String)keys.next();
-					Object value = ((JSONObject)originalValue).get(key);
+                Iterator keys = ((JSONObject)originalValue).keys();
+                while(keys.hasNext()) {
+                    String key = (String)keys.next();
+                    Object value = ((JSONObject)originalValue).get(key);
 
-					((JSONObject)copyValue).put(key, copyValue(value, sharedObjects));
-				}
-			}
-		} else if(originalValue instanceof JSONArray) {
-			JSONArray copyArray = new JSONArray();
-			for(int i = 0; i < ((JSONArray)originalValue).length(); i++) {
-				copyArray.put(i, copyValue(((JSONArray)originalValue).get(i), sharedObjects));
-			}
-		} else if(originalValue instanceof Date) {
-			copyValue =  new Date(((Date)originalValue).getTime());
-		}
+                    ((JSONObject)copyValue).put(key, copyValue(value, sharedObjects));
+                }
+            }
+        } else if(originalValue instanceof JSONArray) {
+            JSONArray copyArray = new JSONArray();
+            for(int i = 0; i < ((JSONArray)originalValue).length(); i++) {
+                copyArray.put(i, copyValue(((JSONArray)originalValue).get(i), sharedObjects));
+            }
+        } else if(originalValue instanceof Date) {
+            copyValue =  new Date(((Date)originalValue).getTime());
+        }
 
-		return copyValue;
-	}
+        return copyValue;
+    }
 }

@@ -608,7 +608,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		settings.setEntityType(aggregateService.getDataModel().getShape().getType(Task.class));
 		settings.init(aggregateService.getDataModel().getShape());
 
-		aggregateService.importCSV("bulk/", settings);
+		aggregateService.importCSV("bulk", settings);
 
 		// query the task object
 		settings = new Settings();
@@ -617,6 +617,8 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		List<?> result = aggregateService.query(null, settings);
 
 		// Return the task and its child
+		System.out.println("Result.size: " + result.size());
+		System.out.println(result.get(0).toString());
 		assert(result.size() == 2);
 	}
 
@@ -761,7 +763,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		tx.begin();
 
 		try {
-			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+			amJDBC.generateSameTX(shape.getName(), Arrays.asList(types), settings);
 
 			View view = aggregateService.getView("PARALLEL_QUERY");
 			view = view.copy();
@@ -973,7 +975,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		Transaction tx = amJDBC.createTransaction(settings);
 		tx.begin();
 		try {
-			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+			amJDBC.generateSameTX(shape.getName(), Arrays.asList(types), settings);
 
 			List<String> paths = new ArrayList<>();
 			paths.add("id");
@@ -1071,7 +1073,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		tx.begin();
 		try {
 			// Generate the tasks in the DB
-			amJDBC.generate(shape.getName(), Arrays.asList(types), settings);
+			amJDBC.generateSameTX(shape.getName(), Arrays.asList(types), settings);
 
 			// Query using the mix view
 			settings = new Settings();
@@ -1246,7 +1248,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 		tx.begin();
 		try {
 			// Generate the tasks in the DB
-			amJDBC.generate(jdbcShape.getName(), Arrays.asList(types), settings);
+			amJDBC.generateSameTX(jdbcShape.getName(), Arrays.asList(types), settings);
 
 			JDBCDataStore po = (JDBCDataStore)amJDBC.getDataStore();
 			po.createQueryJoinTable(null);

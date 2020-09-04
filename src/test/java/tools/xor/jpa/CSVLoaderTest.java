@@ -22,6 +22,8 @@ package tools.xor.jpa;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -440,6 +442,13 @@ public class CSVLoaderTest {
             //csvLoader.importData(new Settings(), dataStore);
             csvLoader.importDataParallel(new Settings(), amJDBC.getDataModelFactory(), 4);
         } finally {
+            try (Statement stmt = sc.getConnection().createStatement()) {
+                stmt.execute("DELETE from TASK");
+                sc.getConnection().commit();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }             
+            
             sc.rollback();
             sc.close();
         }

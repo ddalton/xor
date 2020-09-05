@@ -37,6 +37,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -77,15 +79,20 @@ public class ClassUtil {
 
     private static final AtomicBoolean parallelDispatch = new AtomicBoolean(true);
     private static final RandomUtil randomUtil = new RandomUtil();
+    
+    static {
+        randomUtil.init();
+    }
 
     private static class RandomUtil {
         private static final int BATCH_SIZE = 1000000;
         
         private double[] hostData;
-        private AtomicInteger counter = new AtomicInteger(0);
+        private AtomicInteger counter = new AtomicInteger(0); // can be just a simple int
         private boolean cuda = false;
         private Pointer deviceData;   
         private curandGenerator generator;
+        private static final BlockingQueue<Double> randomValues = new ArrayBlockingQueue<>(BATCH_SIZE);
         
         public RandomUtil() {
             try {
@@ -106,14 +113,41 @@ public class ClassUtil {
 
             } catch (java.lang.UnsatisfiedLinkError le) {
                 logger.warn("Cuda framework is not found");
-            }           
+            }          
+        }
+        
+        public void init() {
+            // This thread produces the random values
+            Thread thread = new Thread(){
+                public void run(){
+                    try {
+                        while(true) {
+                            randomValues.put(random());
+                        }
+                    } catch (InterruptedException e) {
+                        logger.info("Thread interrupted - Stopping random values generator thread");
+                    }      
+                }
+              };
+
+              thread.start();            
         }
         
         /**
          * Returns a {@code double} value with a positive sign, greater
          * than {@code 0.0} and less than or equal to {@code 1.0}.
-         */          
+         * 
+         * The consumers of random values call this method.
+         */
         public double nextDouble() {
+            try {
+                return randomValues.take();
+            } catch (InterruptedException e) {
+                throw ClassUtil.wrapRun(e);
+            }
+        }
+        
+        private double random() {
             if(!cuda) {
                 // Make it functionally similar to Cuda random
                 double d = ThreadLocalRandom.current().nextDouble();

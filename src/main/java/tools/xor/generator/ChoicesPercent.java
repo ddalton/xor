@@ -21,6 +21,7 @@ package tools.xor.generator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import tools.xor.Property;
@@ -55,11 +56,9 @@ public class ChoicesPercent extends DefaultGenerator
         super(arguments);
 
         buildNodes();
-
-        this.tree = (PercentNode)buildTree(0, nodeList.size()-1, nodeList);
     }
 
-    private void buildNodes() {
+    public void buildNodes() {
         nodeList = new ArrayList<>(values.length-1);
 
         ChoicesNode previous = null;
@@ -70,6 +69,8 @@ public class ChoicesPercent extends DefaultGenerator
 
             previous = node;
         }
+        
+        this.tree = (PercentNode)buildTree(0, nodeList.size()-1, nodeList);        
     }
 
     private static class ChoicesNode extends PercentNode {
@@ -89,15 +90,14 @@ public class ChoicesPercent extends DefaultGenerator
             return value;
         }
 
-        @Override public Integer getInt ()
+        @Override public Long getLong ()
         {
-            return Integer.parseInt(getString()) ;
+            return Long.parseLong(getString()) ;
         }
     }
 
     protected String getValue() {
         BigDecimal random = BigDecimal.valueOf(ClassUtil.nextDouble());
-
         PercentNode node = (PercentNode)tree.findNode(random);
         return node.getString();
     }
@@ -105,6 +105,19 @@ public class ChoicesPercent extends DefaultGenerator
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getValue();
+        return new Long(getLongValue(visitor)).toString();
+    }
+    
+    @Override
+    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        BigDecimal random = BigDecimal.valueOf(ClassUtil.nextDouble());
+        PercentNode node = (PercentNode)tree.findNode(random);
+        return node.getLong();
+    }
+    
+    @Override
+    public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
+        return new Date(getLongValue(visitor));
     }
 }

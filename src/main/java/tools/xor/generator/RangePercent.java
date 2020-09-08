@@ -34,7 +34,7 @@ public class RangePercent extends DefaultGenerator
 {
     private List<PercentNode> nodeList;
     private PercentNode tree;
-    protected Integer value;
+    protected Long value;
 
     /**
      * Arguments are of the form:
@@ -86,8 +86,8 @@ public class RangePercent extends DefaultGenerator
     }
 
     private static class RangeNode extends PercentNode {
-        Integer startVal;
-        Integer endVal;
+        Long startVal;
+        Long endVal;
 
         public void parse(String text, RangeNode previous) {
             super.parse(text, previous);
@@ -96,18 +96,18 @@ public class RangePercent extends DefaultGenerator
             String range = text.substring(0, text.indexOf(PERCENT_DELIM)).trim();
             if(range.indexOf(RANGE_DELIM) == -1) {
                 if(!("".equals(range))) {
-                    this.startVal = new Integer(range);
+                    this.startVal = new Long(range);
                 }
                 this.endVal = startVal;
             } else {
-                this.startVal = new Integer(range.substring(0, range.indexOf(RANGE_DELIM)));
-                this.endVal = new Integer(range.substring(
+                this.startVal = new Long(range.substring(0, range.indexOf(RANGE_DELIM)));
+                this.endVal = new Long(range.substring(
                     text.indexOf(RANGE_DELIM) + RANGE_DELIM.length()));
             }
         }
 
         @Override
-        public Integer getInt () {
+        public Long getLong () {
             if(startVal == null) {
                 return null;
             }
@@ -116,23 +116,22 @@ public class RangePercent extends DefaultGenerator
                 return startVal;
             } else {
                 long range = endVal - startVal;
-                return startVal + ((int)(range == 0 ? 0 : ClassUtil.nextDouble()*range));
+                return startVal + ((long)(range == 0 ? 0 : ClassUtil.nextDouble()*range));
             }
         }
 
         @Override
         public String getString() {
-            Integer val = getInt();
-
+            Long val = getLong();
             return val == null ? null : String.valueOf(val);
         }
     }
 
-    protected Integer getValue() {
+    protected Long getValue() {
         BigDecimal random = BigDecimal.valueOf(ClassUtil.nextDouble());
 
         PercentNode node = tree.findNode(random);
-        this.value = node.getInt();
+        this.value = node.getLong();
 
         return this.value;
     }
@@ -158,7 +157,7 @@ public class RangePercent extends DefaultGenerator
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getValue();
+        return getValue().intValue();
     }
 
     @Override
@@ -199,13 +198,13 @@ public class RangePercent extends DefaultGenerator
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        Integer value = getValue();
+        Long value = getValue();
         return value == null ? null : values[0].replace(PLACEHOLDER, String.valueOf(value));
     }
 
     @Override public int getFanout (Property property, Settings settings, String path, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getValue();
+        return getValue().intValue();
     }
 
     @Override

@@ -16,7 +16,7 @@ public class DeferredRangePercent extends RangePercent implements IteratorListen
         super.getValue();
     }
 
-    @Override protected Integer getValue() {
+    @Override protected Long getValue() {
         return this.value;
     }
 }

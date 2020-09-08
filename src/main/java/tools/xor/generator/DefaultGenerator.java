@@ -672,7 +672,7 @@ public class DefaultGenerator implements Generator
             }
         }
 
-        public abstract Integer getInt ();
+        public abstract Long getLong ();
 
         public abstract String getString ();
     }

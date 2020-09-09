@@ -20,6 +20,7 @@
 package tools.xor.generator;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -101,6 +102,30 @@ public class ChoicesPercent extends DefaultGenerator
         PercentNode node = (PercentNode)tree.findNode(random);
         return node.getString();
     }
+    
+    @Override
+    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Byte.valueOf(getValue());
+    }
+
+    @Override
+    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Short.valueOf(getValue());
+    }
+
+    @Override
+    public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return (char) getShortValue(visitor);
+    }
+
+    @Override
+    public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Integer.valueOf(getValue());
+    }    
 
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
@@ -120,4 +145,28 @@ public class ChoicesPercent extends DefaultGenerator
     public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
         return new Date(getLongValue(visitor));
     }
+    
+    @Override
+    public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Double.valueOf(getValue());
+    }
+
+    @Override
+    public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Double.valueOf(getValue()).floatValue();
+    }
+
+    @Override
+    public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigDecimal(getValue());
+    }
+
+    @Override
+    public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigInteger(getValue());
+    }    
 }

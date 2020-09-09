@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,13 +47,17 @@ public class DateRange extends DefaultGenerator
         long minimum = 0;
         long maximum = (new Date()).getTime() + (1000*3600*24*365*2); // 2 years in future
 
-        DateFormat df = new SimpleDateFormat(JSONObjectProperty.ISO8601_FORMAT);
+        String dateFormat = JSONObjectProperty.ISO8601_FORMAT;
+        if(getValues().length >= 3) {
+            dateFormat = getValues()[2];
+        }
+        DateFormat df = new SimpleDateFormat(dateFormat);
         try {
-            if(getValues().length >= 1 ) {
+            if(getValues().length >= 1 && !StringUtils.isBlank(getValues()[0])) {
                 minimum = (df.parse(getValues()[0])).getTime();
-                if(getValues().length >= 2) {
-                    maximum = (df.parse(getValues()[1])).getTime();
-                }
+            }
+            if(getValues().length >= 2 && !StringUtils.isBlank(getValues()[1])) {
+                maximum = (df.parse(getValues()[1])).getTime();
             }
         }
         catch (ParseException e) {

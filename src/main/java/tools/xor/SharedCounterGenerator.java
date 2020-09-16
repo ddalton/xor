@@ -19,22 +19,33 @@
 
 package tools.xor;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
 
 public class SharedCounterGenerator extends DefaultGenerator implements Iterator
 {
-    private AtomicInteger id;
-    private int value;
+    private AtomicLong id;
+    private long value;
 
-    public SharedCounterGenerator(AtomicInteger id) {
+    public SharedCounterGenerator(AtomicLong id) {
         super(new String[]{});
 
         this.id = id;
         this.value = id.get();
+    }
+    
+    public SharedCounterGenerator(String[] args) {
+        super(args);
+    }
+    
+    public void setId(AtomicLong id) {
+        this.id = id;
     }
 
     @Override public boolean hasNext ()
@@ -46,16 +57,69 @@ public class SharedCounterGenerator extends DefaultGenerator implements Iterator
     {
         return value = id.getAndIncrement();
     }
+    
+    @Override
+    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return (byte) this.value;
+    }
 
     @Override
-    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
+    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return String.valueOf(this.value);
+        return (short) this.value;
+    }
+
+    @Override
+    public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return (char) this.value;
     }
 
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
+        return (int) this.value;
+    }
+
+    @Override
+    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
         return this.value;
     }
+
+    @Override
+    public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
+        return new Date(this.value);
+    }
+
+    @Override
+    public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return (double) this.value;
+    }
+
+    @Override
+    public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return (float) this.value;
+    }
+
+    @Override
+    public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigDecimal(new Long(this.value).toString());
+    }
+
+    @Override
+    public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigInteger(new Long(this.value).toString());
+    }
+
+    @Override
+    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return String.valueOf(this.value);
+    }   
 }

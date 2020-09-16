@@ -45,7 +45,7 @@ public class ModGenerator extends DefaultGenerator implements GeneratorRecipient
         buildNodes();
     }
 
-    private void buildNodes() {
+    public void buildNodes() {
         nodeList = new ArrayList<>(values.length-1);
 
         for(int i = 1; i < values.length; i++) {

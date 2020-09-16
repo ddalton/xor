@@ -19,10 +19,13 @@
 
 package tools.xor.generator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -363,25 +366,86 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
 
         return input;
     }
+    
+    @Override
+    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return getIntValue(visitor).byteValue();
+    }
 
     @Override
-    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
+    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return resolve(getValues()[0], this.generator, visitor);
+        return getIntValue(visitor).shortValue();
     }
+
+    @Override
+    public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return (char) getShortValue(visitor);
+    }
+
     
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         String intStr = getStringValue(null, visitor);
-        if(intStr == null || "".equals(intStr.trim())) {
-            String propertyInfo = "";
-            if(visitor.getProperty() != null) {
-                propertyInfo = " for property " + visitor.getProperty().getName();
-            }
-            throw new RuntimeException("Unable to parse an integer from an empty string value" + propertyInfo);
-        }
+        checkIfEmpty(intStr, visitor);
         
         return Integer.parseInt(intStr);
+    }
+
+    @Override
+    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        String intStr = getStringValue(null, visitor);
+        checkIfEmpty(intStr, visitor);
+        
+        return Long.parseLong(intStr);
+    }
+
+    @Override
+    public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
+        return new Date(getLongValue(visitor));
+    }
+
+    @Override
+    public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Double.parseDouble(getStringValue(null, visitor));
+    }
+
+    @Override
+    public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return Float.parseFloat(getStringValue(null, visitor));
+    }
+
+    @Override
+    public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigDecimal(getStringValue(null, visitor));
+    }
+
+    @Override
+    public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return new BigInteger(getStringValue(null, visitor));
+    }
+
+    @Override
+    public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
+    {
+        return resolve(getValues()[0], this.generator, visitor);
+    }  
+    
+    private void checkIfEmpty(String strVal, StateGraph.ObjectGenerationVisitor visitor) {
+        if(strVal == null || "".equals(strVal.trim())) {
+            String propertyInfo = "";
+            if(visitor.getProperty() != null) {
+                propertyInfo = "for property " + visitor.getProperty().getName();
+            }
+            throw new RuntimeException(String.format("Found an empty value while evaluating %s for %s", getValues()[0], propertyInfo));
+        }        
     }
 }

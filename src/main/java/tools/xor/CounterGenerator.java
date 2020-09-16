@@ -53,6 +53,31 @@ public class CounterGenerator extends DefaultGenerator implements Iterator<Integ
         this.start = start;
         this.current = start;
     }
+    
+    /**
+     * If no arguments is passed then a default count of 100 is used
+     * @param arguments to initialized the counter generator
+     *        arg0 = count
+     *        arg1 = start value
+     */
+    public CounterGenerator (String[] arguments)
+    {
+        super(arguments);
+        
+        if(arguments.length >= 1) {
+            this.count = Integer.parseInt(arguments[0]);
+        } else {
+            this.count = 100;
+        }
+        
+        if(arguments.length >= 2) {
+            this.start = Integer.parseInt(arguments[1]);
+        } else {
+            this.start = 0;
+        }
+        
+        this.current = this.start;
+    }  
 
     @Override public boolean hasNext ()
     {

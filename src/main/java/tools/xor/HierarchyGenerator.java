@@ -23,7 +23,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import tools.xor.generator.DefaultGenerator;
 import tools.xor.util.graph.StateGraph;
@@ -83,7 +83,7 @@ public class HierarchyGenerator extends DefaultGenerator implements GeneratorDri
         HierarchyGenerator current = null;
         HierarchyGenerator root = null;
 
-        AtomicInteger id = new AtomicInteger();
+        AtomicLong id = new AtomicLong();
         for(int i = 0; i < maxDepth; i++) {
             HierarchyGenerator gen = new HierarchyGenerator(new SharedCounterGenerator(id));
             if(current != null) {

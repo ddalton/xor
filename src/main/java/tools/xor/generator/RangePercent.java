@@ -68,11 +68,9 @@ public class RangePercent extends DefaultGenerator
         super(arguments);
 
         buildNodes();
-
-        this.tree = buildTree(0, nodeList.size()-1, nodeList);
     }
 
-    private void buildNodes() {
+    public void buildNodes() {
         nodeList = new ArrayList<>(values.length-1);
 
         RangeNode previous = null;
@@ -83,6 +81,8 @@ public class RangePercent extends DefaultGenerator
 
             previous = node;
         }
+        
+        this.tree = buildTree(0, nodeList.size()-1, nodeList);        
     }
 
     private static class RangeNode extends PercentNode {

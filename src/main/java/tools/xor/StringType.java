@@ -77,7 +77,7 @@ public class StringType extends SimpleType {
 
     public StringType(Class<?> clazz) {
         super(clazz);
-    }
+    }  
     
     static public int getLength(Integer value) {
         value = (value == null) ? DEFAULT_LENGTH : value;
@@ -116,6 +116,6 @@ public class StringType extends SimpleType {
     
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_STRING_TYPE;
-    }   
+        return MutableJsonType.JSONSCHEMA_STRING_TYPE;
+    }    
 }

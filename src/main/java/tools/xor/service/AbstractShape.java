@@ -682,24 +682,24 @@ public abstract class AbstractShape implements Shape
         if(hasParent) {
             JSONArray contents = new JSONArray();
             contents.put(currentJson);
-            typeJson.put(MutableJsonType.SWAGGER_ALLOF, contents);
+            typeJson.put(MutableJsonType.SCHEMA_ALLOF, contents);
             
             for(Type parentType: type.getParentTypes()) {
                 JSONObject parentJson = new JSONObject();
                 contents.put(parentJson);
                 String entityName = parentType instanceof EntityType ? ((EntityType)parentType).getEntityName() : parentType.getName();
-                parentJson.put(MutableJsonType.SWAGGER_REF, getJsonId(entityName) );
+                parentJson.put(MutableJsonType.SCHEMA_REF, getJsonId(entityName) );
             }
         }
         
         currentJson.put("$id", getJsonId(((EntityType)type).getEntityName()));
-        currentJson.put(MutableJsonType.SWAGGER_TYPE, "object");
+        currentJson.put(MutableJsonType.SCHEMA_TYPE, "object");
         
         // populate properties  
         Map<String, Property> propertyMap = getDeclaredProperties(type);
         if(propertyMap != null && propertyMap.size() > 0) {
             JSONObject propertiesJson = new JSONObject();
-            currentJson.put(MutableJsonType.SWAGGER_PROPERTIES, propertiesJson);
+            currentJson.put(MutableJsonType.SCHEMA_PROPERTIES, propertiesJson);
            
             Set<String> required = new HashSet<>();
             for(Map.Entry<String, Property> entry: getDeclaredProperties(type).entrySet()) {
@@ -713,17 +713,17 @@ public abstract class AbstractShape implements Shape
                 propertiesJson.put(entry.getKey(), propertyJson);
                 
                 String propertyType = ((BasicType)property.getType()).getJsonType();
-                propertyJson.put(MutableJsonType.SWAGGER_TYPE, propertyType);
+                propertyJson.put(MutableJsonType.SCHEMA_TYPE, propertyType);
                 
-                if(propertyType.equals(MutableJsonType.JSON_ARRAY_TYPE)) {
+                if(propertyType.equals(MutableJsonType.JSONSCHEMA_ARRAY_TYPE)) {
                     JSONObject itemsJson = new JSONObject();
-                    propertyJson.put(MutableJsonType.SWAGGER_ITEMS, itemsJson);
+                    propertyJson.put(MutableJsonType.SCHEMA_ITEMS, itemsJson);
                     
                     Type elementType = ((ExtendedProperty)property).getElementType();
                     if(elementType.isDataType()) {
-                        itemsJson.put(MutableJsonType.SWAGGER_TYPE, ((BasicType)elementType).getJsonType());
+                        itemsJson.put(MutableJsonType.SCHEMA_TYPE, ((BasicType)elementType).getJsonType());
                     } else {
-                        itemsJson.put(MutableJsonType.SWAGGER_REF, getJsonId(((EntityType)elementType).getEntityName()));
+                        itemsJson.put(MutableJsonType.SCHEMA_REF, getJsonId(((EntityType)elementType).getEntityName()));
                     }
                 }
             }
@@ -734,7 +734,7 @@ public abstract class AbstractShape implements Shape
                     requiredJson.put(propertyName);
                 }
                 
-                currentJson.put(MutableJsonType.SWAGGER_REQUIRED, requiredJson);
+                currentJson.put(MutableJsonType.SCHEMA_REQUIRED, requiredJson);
             }
         }
         

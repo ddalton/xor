@@ -109,7 +109,7 @@ public class SwaggerDataModel extends AbstractDataModel {
                 JSONObject jsonSchema = new JSONObject(jsonTxt);
                 
                 if(this.schemaAnchor != null) {
-                    String[] paths = this.schemaAnchor.split(MutableJsonType.SWAGGER_REF_SEPARATOR);
+                    String[] paths = this.schemaAnchor.split(MutableJsonType.SCHEMA_REF_SEPARATOR);
                     for(String path: paths) {
                         if(!jsonSchema.has(path)) {
                             throw new RuntimeException("Unable to find key in schemaAnchor path: " + path);

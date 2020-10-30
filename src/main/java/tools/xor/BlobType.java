@@ -103,6 +103,6 @@ public class BlobType extends SimpleType {
     
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_STRING_TYPE;
+        return MutableJsonType.JSONSCHEMA_STRING_TYPE;
     }    
 }

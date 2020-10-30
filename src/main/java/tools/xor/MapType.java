@@ -60,6 +60,6 @@ public class MapType extends SimpleType {
 	
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_OBJECT_TYPE;
+        return MutableJsonType.JSONSCHEMA_OBJECT_TYPE;
     }	
 }

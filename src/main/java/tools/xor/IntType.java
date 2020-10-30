@@ -71,6 +71,6 @@ public class IntType extends SimpleType {
 	
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_NUMBER_TYPE;
+        return MutableJsonType.JSONSCHEMA_INTEGER_TYPE;
     }	
 }

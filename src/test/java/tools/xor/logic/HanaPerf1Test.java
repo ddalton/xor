@@ -539,8 +539,8 @@ public class HanaPerf1Test
                 exprProp.setGenerator(exoExpr);
 
 
-                BaseIdGenerator rootbidgen = new BaseIdGenerator(null, typecogen, (CollectionOwnerGenerator) cogen);
-                BaseIdGenerator myidbidgen = new BaseIdGenerator(null, typecogen, null);
+                Base64Generator rootbidgen = new Base64Generator(null, typecogen, (CollectionOwnerGenerator) cogen);
+                Base64Generator myidbidgen = new Base64Generator(null, typecogen, null);
 
                 typecogen.addVisit(new DefaultGenerator.GeneratorVisit(rootbidgen,
                         (GeneratorRecipient)orerootid));

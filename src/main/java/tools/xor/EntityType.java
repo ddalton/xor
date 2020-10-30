@@ -396,7 +396,7 @@ public interface EntityType extends BasicType, Comparable<EntityType> {
     default void defineProperties(Shape shape) {}
     
     @Override
-    default String getJsonType() { return MutableJsonType.JSON_OBJECT_TYPE; }
+    default String getJsonType() { return MutableJsonType.JSONSCHEMA_OBJECT_TYPE; }
     
     /**
      * Mainly used to capture different generator drivers for a type 

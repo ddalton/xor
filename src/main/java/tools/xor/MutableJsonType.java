@@ -21,7 +21,9 @@ package tools.xor;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,36 +45,44 @@ import tools.xor.util.ClassUtil;
 public class MutableJsonType extends ExternalType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());
 	
-	public static final String SWAGGER_ALLOF = "allOf";
-	public static final String SWAGGER_TYPE  = "type";
-	public static final String SWAGGER_ITEMS  = "items";
-	public static final String SWAGGER_PROPERTIES = "properties";
-	public static final String SWAGGER_REQUIRED = "required";
-	public static final String SWAGGER_REF   = "$ref";
-	public static final String  SWAGGER_REF_SEPARATOR = "/";
-	public static final String  SWAGGER_ID_PROPERTY = "surrogateKey";
+	public static final String SCHEMA_ALLOF = "allOf";
+	public static final String SCHEMA_TYPE  = "type";
+	public static final String SCHEMA_FORMAT  = "format";
+	public static final String SCHEMA_ITEMS  = "items";
+	public static final String SCHEMA_PROPERTIES = "properties";
+	public static final String SCHEMA_REQUIRED = "required";
+	public static final String SCHEMA_REF   = "$ref";
+	public static final String SCHEMA_REF_SEPARATOR = "/";
+	public static final String SCHEMA_ID_PROPERTY = "surrogateKey";
 	
-	public static final String JSON_STRING_TYPE  = "string";
-	public static final String JSON_NUMBER_TYPE  = "number";
-	public static final String JSON_INTEGER_TYPE  = "integer";
-	public static final String JSON_BOOLEAN_TYPE  = "boolean";
-	public static final String JSON_ARRAY_TYPE  = "array";
-	public static final String JSON_OBJECT_TYPE  = "object";
-	private static final Map<String, Class<?>> JSON_TYPES = new HashMap<>();
+	public static final String JSONSCHEMA_STRING_TYPE  = "string";
+	public static final String JSONSCHEMA_NUMBER_TYPE  = "number";
+	public static final String JSONSCHEMA_INTEGER_TYPE  = "integer";
+	public static final String JSONSCHEMA_BOOLEAN_TYPE  = "boolean";
+	public static final String JSONSCHEMA_ARRAY_TYPE  = "array";
+	public static final String JSONSCHEMA_OBJECT_TYPE  = "object";
+	private static final Map<String, Class<?>> JSONSCHEMA_TYPES = new HashMap<>();
 	
-	
+	public static final String JSONSCHEMA_FORMAT_DATE_TIME = "date-time";
+    public static final String JSONSCHEMA_FORMAT_BIGINTEGER = "biginteger";
+    public static final String JSONSCHEMA_FORMAT_BIGDECIMAL = "bigdecimal";    
 	
 	static {
-	    JSON_TYPES.put(JSON_STRING_TYPE, String.class);
-	    JSON_TYPES.put(JSON_NUMBER_TYPE, BigDecimal.class);
-	    JSON_TYPES.put(JSON_INTEGER_TYPE, Integer.class);
-	    JSON_TYPES.put(JSON_BOOLEAN_TYPE, boolean.class);
-	    JSON_TYPES.put(JSON_ARRAY_TYPE, List.class);
-	    JSON_TYPES.put(JSON_OBJECT_TYPE, Object.class);
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_STRING_TYPE, String.class);
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_NUMBER_TYPE, BigDecimal.class);
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_INTEGER_TYPE, Integer.class);
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_BOOLEAN_TYPE, boolean.class);
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_ARRAY_TYPE, List.class);
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_OBJECT_TYPE, Object.class);
+	    
+	    // some types are decided by the format specifier
+	    JSONSCHEMA_TYPES.put(JSONSCHEMA_FORMAT_DATE_TIME, Date.class);
+        JSONSCHEMA_TYPES.put(JSONSCHEMA_FORMAT_BIGINTEGER, BigInteger.class);
+        JSONSCHEMA_TYPES.put(JSONSCHEMA_FORMAT_BIGDECIMAL, BigDecimal.class);        
 	}
 	
 	private List<String> parentTypeNames;
-	private JSONObject   swaggerSchema;
+	private JSONObject   jsonSchema;
 
 	public MutableJsonType(EntityType domainType, Class<?> javaClass) {
 		super(domainType, javaClass);
@@ -87,7 +97,7 @@ public class MutableJsonType extends ExternalType {
 	public MutableJsonType(String entityName, JSONObject json, String idPropertyName) {
 	    super(entityName, JSONObject.class);
 	    
-	    this.swaggerSchema = json;
+	    this.jsonSchema = json;
         this.isDataType = true;
         this.idPropertyName = idPropertyName;
         this.versionPropertyName = null; // currently not supported as this schema is not used for updates
@@ -96,13 +106,13 @@ public class MutableJsonType extends ExternalType {
         this.parentTypeNames = new ArrayList<>();
         
         // extract parentTypes
-        if(json.has(SWAGGER_ALLOF)) {
-            JSONArray array = json.getJSONArray(SWAGGER_ALLOF);
+        if(json.has(SCHEMA_ALLOF)) {
+            JSONArray array = json.getJSONArray(SCHEMA_ALLOF);
             
             // Process each element in the array
             for(int i = 0 ; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
-                if(obj.has(SWAGGER_REF)) {
+                if(obj.has(SCHEMA_REF)) {
                     // get the parent entity name from the ref path
                     this.parentTypeNames.add(getEntityNameFromRef(obj));
                 }
@@ -116,10 +126,10 @@ public class MutableJsonType extends ExternalType {
 	}
 	
 	private String getEntityNameFromRef(JSONObject obj) {
-        String refPath = obj.getString(SWAGGER_REF);
+        String refPath = obj.getString(SCHEMA_REF);
         
         // get the last component in the parent path
-        String refEntityName = refPath.substring(refPath.lastIndexOf(SWAGGER_REF_SEPARATOR) + SWAGGER_REF_SEPARATOR.length());
+        String refEntityName = refPath.substring(refPath.lastIndexOf(SCHEMA_REF_SEPARATOR) + SCHEMA_REF_SEPARATOR.length());
         
         return refEntityName;
 	}
@@ -211,17 +221,17 @@ public class MutableJsonType extends ExternalType {
 	}
 	
     public void defineRequired() {
-        JSONArray required = swaggerSchema.has(SWAGGER_REQUIRED) ? swaggerSchema.getJSONArray(SWAGGER_REQUIRED)
+        JSONArray required = jsonSchema.has(SCHEMA_REQUIRED) ? jsonSchema.getJSONArray(SCHEMA_REQUIRED)
                 : null;
         
-        if (required == null && swaggerSchema.has(SWAGGER_ALLOF)) {
-            JSONArray array = swaggerSchema.getJSONArray(SWAGGER_ALLOF);
+        if (required == null && jsonSchema.has(SCHEMA_ALLOF)) {
+            JSONArray array = jsonSchema.getJSONArray(SCHEMA_ALLOF);
             
             // Process each element in the array
             for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
-                if (obj.has(SWAGGER_REQUIRED)) {
-                    required = obj.getJSONArray(SWAGGER_REQUIRED);
+                if (obj.has(SCHEMA_REQUIRED)) {
+                    required = obj.getJSONArray(SCHEMA_REQUIRED);
                 }
                 if(required != null) {
                     break;
@@ -243,28 +253,28 @@ public class MutableJsonType extends ExternalType {
 	 * @param shape for swagger schema
 	 */
     public void defineProperties(Shape shape) {
-        JSONObject properties = swaggerSchema.has(SWAGGER_PROPERTIES) ? swaggerSchema.getJSONObject(SWAGGER_PROPERTIES)
+        JSONObject properties = jsonSchema.has(SCHEMA_PROPERTIES) ? jsonSchema.getJSONObject(SCHEMA_PROPERTIES)
                 : null;
 
-        if (properties == null && swaggerSchema.has(SWAGGER_ALLOF)) {
-            JSONArray array = swaggerSchema.getJSONArray(SWAGGER_ALLOF);
+        if (properties == null && jsonSchema.has(SCHEMA_ALLOF)) {
+            JSONArray array = jsonSchema.getJSONArray(SCHEMA_ALLOF);
 
             // Process each element in the array
             for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
-                if (obj.has(SWAGGER_PROPERTIES)) {
-                    properties = obj.getJSONObject(SWAGGER_PROPERTIES);
+                if (obj.has(SCHEMA_PROPERTIES)) {
+                    properties = obj.getJSONObject(SCHEMA_PROPERTIES);
                     
-                    if(obj.has(SWAGGER_ID_PROPERTY)) {
-                        this.idPropertyName = obj.getString(SWAGGER_ID_PROPERTY);
+                    if(obj.has(SCHEMA_ID_PROPERTY)) {
+                        this.idPropertyName = obj.getString(SCHEMA_ID_PROPERTY);
                     }
                 }
                 if(properties != null) {
                     break;
                 }
             }
-        } else if(swaggerSchema.has(SWAGGER_ID_PROPERTY)) {
-            this.idPropertyName = swaggerSchema.getString(SWAGGER_ID_PROPERTY);            
+        } else if(jsonSchema.has(SCHEMA_ID_PROPERTY)) {
+            this.idPropertyName = jsonSchema.getString(SCHEMA_ID_PROPERTY);            
         }
 
         // process each property
@@ -283,20 +293,19 @@ public class MutableJsonType extends ExternalType {
                 Type elementType = null;
 
                 // TO_ONE relationship
-                if (obj.has(SWAGGER_REF)) {
+                if (obj.has(SCHEMA_REF)) {
                     String toOneEntityName = getEntityNameFromRef(obj);
                     propertyType = getShape().getType(toOneEntityName);
-                } else if (obj.has(SWAGGER_TYPE)) {
-                    propertyType = getShape().getType(JSON_TYPES.get(obj.get(SWAGGER_TYPE)));
-                    if (JSON_ARRAY_TYPE.equals(obj.get(SWAGGER_TYPE))) {
+                } else if (obj.has(SCHEMA_TYPE)) {
+                    propertyType = getType(obj);
+                    if (JSONSCHEMA_ARRAY_TYPE.equals(obj.get(SCHEMA_TYPE))) {
                         // look for the items object
-                        JSONObject items = obj.getJSONObject(SWAGGER_ITEMS);
+                        JSONObject items = obj.getJSONObject(SCHEMA_ITEMS);
                         // to many entity relationship
-                        if (items.has(SWAGGER_REF)) {
+                        if (items.has(SCHEMA_REF)) {
                             elementType = getShape().getType(getEntityNameFromRef(items));
                         } else {
-                            Class<?> simpleType = JSON_TYPES.get(items.get(SWAGGER_TYPE));
-                            elementType = getShape().getType(simpleType);
+                            elementType = getType(items);
                         }
                     }
                 }
@@ -307,6 +316,16 @@ public class MutableJsonType extends ExternalType {
                 }
             }
         }
+    }
+    
+    private Type getType(JSONObject obj) {
+        if (obj.has(SCHEMA_FORMAT)) {
+            return getShape().getType(JSONSCHEMA_TYPES.get(obj.get(SCHEMA_FORMAT)));
+        }
+        if (obj.has(SCHEMA_TYPE)) {
+            return getShape().getType(JSONSCHEMA_TYPES.get(obj.get(SCHEMA_TYPE)));
+        }
+        return null;
     }
 
 	@Override

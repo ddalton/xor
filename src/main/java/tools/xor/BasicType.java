@@ -66,4 +66,12 @@ public interface BasicType extends Type {
 	 * @return Json type
 	 */
 	String getJsonType();
+	
+    /**
+     * Returns the format for the json type
+     * @return format specification
+     */
+    default String getJsonFormat() {
+        return null;
+    }
 }

@@ -89,6 +89,11 @@ public class BigDecimalType extends SimpleType {
 	
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_NUMBER_TYPE;
+        return MutableJsonType.JSONSCHEMA_STRING_TYPE;
     }	
+    
+    @Override
+    public String getJsonFormat() {
+        return MutableJsonType.JSONSCHEMA_FORMAT_BIGDECIMAL;
+    }       
 }

@@ -49,6 +49,6 @@ public class CollectionType extends SimpleType {
 	
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_ARRAY_TYPE;
+        return MutableJsonType.JSONSCHEMA_ARRAY_TYPE;
     }	
 }

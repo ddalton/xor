@@ -69,6 +69,6 @@ public class FloatType extends SimpleType {
 	
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_NUMBER_TYPE;
+        return MutableJsonType.JSONSCHEMA_NUMBER_TYPE;
     }	
 }

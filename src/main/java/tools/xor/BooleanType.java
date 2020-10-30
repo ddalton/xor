@@ -40,6 +40,6 @@ public class BooleanType extends SimpleType {
 	
     @Override
     public String getJsonType() {
-        return MutableJsonType.JSON_BOOLEAN_TYPE;
+        return MutableJsonType.JSONSCHEMA_BOOLEAN_TYPE;
     }	
 }

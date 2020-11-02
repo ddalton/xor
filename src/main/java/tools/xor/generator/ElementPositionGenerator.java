@@ -39,15 +39,15 @@ public class ElementPositionGenerator extends DefaultGenerator
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new Integer(elementGenerator.getCounter()).byteValue();
+        return new Long(elementGenerator.getCounter()).byteValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new Integer(elementGenerator.getCounter()).shortValue();
+        return new Long(elementGenerator.getCounter()).shortValue();
     }
 
     @Override
@@ -59,11 +59,11 @@ public class ElementPositionGenerator extends DefaultGenerator
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return elementGenerator.getCounter();
+        return new Long(elementGenerator.getCounter()).intValue();
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return elementGenerator.getCounter();
     }
@@ -94,7 +94,7 @@ public class ElementPositionGenerator extends DefaultGenerator
     @Override
     public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new BigInteger(new Integer(elementGenerator.getCounter()).toString());
+        return new BigInteger(new Long(elementGenerator.getCounter()).toString());
     }
 
     @Override

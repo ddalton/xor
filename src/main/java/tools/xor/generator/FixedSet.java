@@ -34,13 +34,13 @@ public class FixedSet extends DefaultGenerator
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[visitor.getSequenceNo()]).byteValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[visitor.getSequenceNo()]).shortValue();
     }
@@ -58,7 +58,7 @@ public class FixedSet extends DefaultGenerator
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[visitor.getSequenceNo()]).longValue();
     }

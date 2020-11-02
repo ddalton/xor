@@ -702,7 +702,7 @@ public class PlainJDBCTest
 															 "86,2576:1.00"
 		});
 
-		short val = parentgen.getShortValue(null);
+		Short val = parentgen.getShortValue(null);
 		System.out.println(val);
 	}
 }

@@ -37,13 +37,13 @@ public class Choices extends DefaultGenerator
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[getPosition()]).byteValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[getPosition()]).shortValue();
     }
@@ -61,7 +61,7 @@ public class Choices extends DefaultGenerator
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Double.valueOf(getValues()[getPosition()]).longValue();
     }

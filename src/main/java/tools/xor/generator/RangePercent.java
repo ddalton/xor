@@ -137,62 +137,72 @@ public class RangePercent extends DefaultGenerator
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (byte)getValue().intValue();
+        Long val = getValue();
+        return val == null ? null : (byte)val.intValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (short)getValue().intValue();
+        Long val = getValue();
+        return val == null ? null : (short)val.intValue();        
     }
 
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getValue().intValue();
+        Long val = getValue();
+        return val == null ? null : (char)val.intValue();        
     }
 
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getValue().intValue();
+        Long val = getValue();
+        return val == null ? null : val.intValue();        
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getValue();
+        Long val = getValue();
+        return val == null ? null : val;        
     }
 
     @Override
     public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
-        return new Date(getValue());
+        Long val = getValue();
+        return val == null ? null : new Date(getValue());        
     }
 
     @Override
     public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValue());
+        Long val = getValue();
+        return val == null ? null : Double.valueOf(getValue());        
     }
 
     @Override
     public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValue()).floatValue();
+        Long val = getValue();
+        return val == null ? null : Double.valueOf(getValue()).floatValue();        
     }
 
     @Override
     public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new BigDecimal(getValue());
+        Long val = getValue();
+        return val == null ? null : new BigDecimal(getValue());                
     }
 
     @Override
     public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return BigInteger.valueOf( getValue() );
+        Long val = getValue();
+        return val == null ? null : BigInteger.valueOf( getValue() );        
     }
 
     @Override
@@ -204,7 +214,8 @@ public class RangePercent extends DefaultGenerator
 
     @Override public int getFanout (Property property, Settings settings, String path, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return getValue().intValue();
+        Long val = getValue();
+        return val == null ? null : val.intValue();          
     }
 
     @Override

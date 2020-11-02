@@ -103,7 +103,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Gene
         this.visitor = visitor;
     }
 
-    public int getCounter() {
+    public long getCounter() {
         return this.counter;
     }
 

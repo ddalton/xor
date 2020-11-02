@@ -46,7 +46,7 @@ public interface Generator
      * @param visitor contains data pertaining to the calling context
      * @return byte value
      */
-    byte getByteValue (StateGraph.ObjectGenerationVisitor visitor);
+    Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a char value
@@ -60,7 +60,7 @@ public interface Generator
      * @param visitor contains data pertaining to the calling context
      * @return short value
      */
-    short getShortValue (StateGraph.ObjectGenerationVisitor visitor);
+    Short getShortValue (StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * We return an Integer instead of an int since we would like to
@@ -80,7 +80,7 @@ public interface Generator
      * @param visitor contains data pertaining to the calling context
      * @return long value
      */
-    long getLongValue(StateGraph.ObjectGenerationVisitor visitor);
+    Long getLongValue(StateGraph.ObjectGenerationVisitor visitor);
 
     /**
      * Return a date value

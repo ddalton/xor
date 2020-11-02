@@ -101,7 +101,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         byte minimum = Byte.MIN_VALUE;
         byte maximum = Byte.MAX_VALUE;
@@ -118,7 +118,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         short minimum = Short.MIN_VALUE;
         short maximum = Short.MAX_VALUE;
@@ -177,7 +177,7 @@ public class DefaultGenerator implements Generator
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         long minimum = Long.MIN_VALUE;
         long maximum = Long.MAX_VALUE;
@@ -452,11 +452,11 @@ public class DefaultGenerator implements Generator
     }
 
     public static class ModRange {
-        Integer newstart; // start for the new range
-        Integer newend;   // end for the new range
-        int start;    // start of existing range
-        int end;      // end of existing range
-        int newRangeDiff;
+        Long newstart; // start for the new range
+        Long newend;   // end for the new range
+        long start;    // start of existing range
+        long end;      // end of existing range
+        long newRangeDiff;
 
         public void parse(String text) {
             if(text.indexOf(SIZE_DELIM) == -1) {
@@ -467,8 +467,8 @@ public class DefaultGenerator implements Generator
             String range = text.substring(text.indexOf(SIZE_DELIM)+SIZE_DELIM.length()).trim();
 
             if(!("".equals(newRange))) {
-                this.newstart = new Integer(newRange.substring(0, newRange.indexOf(RANGE_DELIM)).trim());
-                this.newend = new Integer(newRange.substring(newRange.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
+                this.newstart = new Long(newRange.substring(0, newRange.indexOf(RANGE_DELIM)).trim());
+                this.newend = new Long(newRange.substring(newRange.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
                 newRangeDiff = newend - newstart;
             }
 
@@ -476,7 +476,7 @@ public class DefaultGenerator implements Generator
             this.end = new Integer(range.substring(range.indexOf(RANGE_DELIM)+RANGE_DELIM.length()).trim());
         }
 
-        public Integer getNewValue(int value) {
+        public Long getNewValue(Long value) {
             if(newstart == null) {
                 return null;
             }
@@ -487,7 +487,7 @@ public class DefaultGenerator implements Generator
             return start + (value%newRangeDiff);
         }
 
-        public boolean inRange(int value) {
+        public boolean inRange(Long value) {
             return (value >= start && value <= end);
         }
     }

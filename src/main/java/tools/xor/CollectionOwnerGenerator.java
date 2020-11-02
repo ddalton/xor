@@ -170,7 +170,8 @@ public class CollectionOwnerGenerator extends DefaultGenerator implements Genera
         return this.invocationCount;
     }
 
-    public int getCounter() {
+    @Override
+    public long getCounter() {
         return this.counter;
     }
 }

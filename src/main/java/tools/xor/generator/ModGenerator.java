@@ -60,7 +60,7 @@ public class ModGenerator extends DefaultGenerator implements GeneratorRecipient
         this.generator = generator;
     }
 
-    private ModRange findNode(int value) {
+    private ModRange findNode(Long value) {
         for(ModRange range: nodeList) {
             if(range.inRange(value)) {
                 return range;
@@ -69,85 +69,115 @@ public class ModGenerator extends DefaultGenerator implements GeneratorRecipient
 
         return null;
     }
-
-    private Integer getIntValue(int value) {
+    
+    private Long getLongValue(Long value) {
+        if(value == null) {
+            return null;
+        }
         ModRange r = findNode(value);
-        return r == null ? null : r.getNewValue(value);
+        return r == null ? null : r.getNewValue(value);        
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        int value = generator.getByteValue(visitor);
-        return getIntValue(value).byteValue();
+        Byte value = generator.getByteValue(visitor);
+        return value == null ? null : getLongValue(value.longValue()).byteValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        int value = generator.getShortValue(visitor);
-        return getIntValue(value).shortValue();
+        Short value = generator.getShortValue(visitor);
+        if (value != null) {
+            Long longVal = getLongValue(value.longValue());
+            return longVal != null ? longVal.shortValue() : null;
+        }
+        return null;
     }
 
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        int value = generator.getCharValue(visitor);
-        return (char)getIntValue(value).intValue();
+        long value = generator.getCharValue(visitor);
+
+        Long longVal = getLongValue(value);
+        return longVal != null ? (char)longVal.shortValue() : null;
     }
 
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         Integer value = generator.getIntValue(visitor);
-        if(value == null) {
-            return null;
+        if (value != null) {
+            Long longVal = getLongValue(value.longValue());
+            return longVal != null ? longVal.intValue() : null;
         }
-        return getIntValue(value);
+        return null;
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        int value = (int)generator.getLongValue(visitor);
-        return getIntValue(value).longValue();
+        Long value = generator.getLongValue(visitor);
+        if (value != null) {
+            Long longVal = getLongValue(value.longValue());
+            return longVal != null ? longVal : null;
+        }
+        return null;        
     }
 
     @Override
     public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
-        return new Date(getLongValue(visitor));
+        Long value = generator.getLongValue(visitor);
+        
+        if (value != null) {
+            Long longVal = getLongValue(value.longValue());
+            return longVal != null ? new Date(longVal) : null;
+        }
+        return null;
     }
 
     @Override
     public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
-    {
-        int value = generator.getDoubleValue(visitor).intValue();
-        return getIntValue(value).doubleValue();
+    {       
+        Double value = generator.getDoubleValue(visitor);
+        if (value != null) {
+            Long longVal = getLongValue(value.longValue());
+            return longVal != null ? longVal.doubleValue() : null;
+        }
+        return null;          
     }
 
     @Override
     public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        int value = generator.getFloatValue(visitor).intValue();
-        return getIntValue(value).floatValue();
+        Float value = generator.getFloatValue(visitor);
+        if (value != null) {
+            Long longVal = getLongValue(value.longValue());
+            return longVal != null ? longVal.floatValue() : null;
+        }
+        return null;          
     }
 
     @Override
     public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new BigDecimal(new Long(getLongValue(visitor)).toString());
+        Long val = getLongValue(visitor);
+        return val == null ? null : new BigDecimal(val.toString());
     }
 
     @Override
     public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new BigInteger(new Long(getLongValue(visitor)).toString());
+        Long val = getLongValue(visitor);
+        return val == null ? null : new BigInteger(val.toString());        
     }
 
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        Integer value = getIntValue(visitor);
+        Long value = getLongValue(visitor);
 
         return value == null ? null : values[0].replace(PLACEHOLDER, String.valueOf(value));
     }

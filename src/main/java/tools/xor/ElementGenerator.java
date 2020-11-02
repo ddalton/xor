@@ -25,5 +25,5 @@ public interface ElementGenerator extends Iterator<Integer>
 {
     void nextOwner (int ownerId, int counter, int collectionSize);
 
-    int getCounter();
+    long getCounter();
 }

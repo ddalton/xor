@@ -93,7 +93,8 @@ public class ChoicesPercent extends DefaultGenerator
 
         @Override public Long getLong ()
         {
-            return Long.parseLong(getString()) ;
+            String val = getString();
+            return val == null ? null : Long.parseLong(val) ;
         }
     }
 
@@ -104,37 +105,41 @@ public class ChoicesPercent extends DefaultGenerator
     }
     
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Byte.valueOf(getValue());
+        String val = getValue();
+        return val == null ? null : Byte.valueOf(val);        
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Short.valueOf(getValue());
+        String val = getValue();
+        return val == null ? null : Short.valueOf(val);        
     }
 
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getShortValue(visitor);
+        return (char) getShortValue(visitor).shortValue();
     }
 
     @Override
     public Integer getIntValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Integer.valueOf(getValue());
+        String val = getValue();
+        return val == null ? null : Integer.valueOf(val);
     }    
 
     @Override
     public String getStringValue (Property property, StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new Long(getLongValue(visitor)).toString();
+        Long val = getLongValue(visitor);
+        return val == null ? null : val.toString();
     }
     
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         BigDecimal random = BigDecimal.valueOf(ClassUtil.nextDouble());
         PercentNode node = (PercentNode)tree.findNode(random);
@@ -143,30 +148,35 @@ public class ChoicesPercent extends DefaultGenerator
     
     @Override
     public Date getDateValue(StateGraph.ObjectGenerationVisitor visitor) {
-        return new Date(getLongValue(visitor));
+        Long val = getLongValue(visitor);
+        return val == null ? null : new Date(val);
     }
     
     @Override
     public Double getDoubleValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValue());
+        String val = getValue();        
+        return val == null ? null : Double.valueOf(val);
     }
 
     @Override
     public Float getFloatValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return Double.valueOf(getValue()).floatValue();
+        String val = getValue();        
+        return val == null ? null : Double.valueOf(val).floatValue();
     }
 
     @Override
     public BigDecimal getBigDecimal (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new BigDecimal(getValue());
+        String val = getValue();            
+        return val == null ? null : new BigDecimal(val);
     }
 
     @Override
     public BigInteger getBigInteger (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return new BigInteger(getValue());
+        String val = getValue();       
+        return val == null ? null : new BigInteger(val);
     }    
 }

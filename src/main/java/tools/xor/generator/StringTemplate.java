@@ -368,13 +368,13 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
     }
     
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return getIntValue(visitor).byteValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return getIntValue(visitor).shortValue();
     }
@@ -382,7 +382,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
     @Override
     public char getCharValue (StateGraph.ObjectGenerationVisitor visitor)
     {
-        return (char) getShortValue(visitor);
+        return (char) getShortValue(visitor).shortValue();
     }
 
     
@@ -396,7 +396,7 @@ public class StringTemplate extends DefaultGenerator implements GeneratorRecipie
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         String intStr = getStringValue(null, visitor);
         checkIfEmpty(intStr, visitor);

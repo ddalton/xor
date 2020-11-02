@@ -59,13 +59,13 @@ public class SharedCounterGenerator extends DefaultGenerator implements Iterator
     }
     
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return (byte) this.value;
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return (short) this.value;
     }
@@ -83,7 +83,7 @@ public class SharedCounterGenerator extends DefaultGenerator implements Iterator
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return this.value;
     }

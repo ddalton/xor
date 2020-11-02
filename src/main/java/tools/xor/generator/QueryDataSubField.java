@@ -93,13 +93,13 @@ public class QueryDataSubField extends DefaultGenerator
     }
 
     @Override
-    public byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Byte getByteValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return (byte)getIntValue(visitor).intValue();
     }
 
     @Override
-    public short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Short getShortValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return (short)getIntValue(visitor).intValue();
     }
@@ -117,7 +117,7 @@ public class QueryDataSubField extends DefaultGenerator
     }
 
     @Override
-    public long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
+    public Long getLongValue (StateGraph.ObjectGenerationVisitor visitor)
     {
         return Long.valueOf(getValue(visitor).toString());
     }

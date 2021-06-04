@@ -384,6 +384,11 @@
             <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- 
+         ****************************
+         *    Experimental: CUDA    *
+         ****************************
         <dependency>
             <groupId>org.jcuda</groupId>
             <artifactId>jcuda</artifactId>
@@ -394,6 +399,7 @@
             <artifactId>jcurand</artifactId>
             <version>10.2.0</version>
         </dependency>
+        -->
 
     </dependencies>
 

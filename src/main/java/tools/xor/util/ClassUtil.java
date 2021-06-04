@@ -19,6 +19,7 @@
 
 package tools.xor.util;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
+/*
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.jcurand.curandGenerator;
@@ -51,6 +53,7 @@ import jcuda.jcurand.curandRngType;
 import jcuda.jcurand.JCurand;
 import jcuda.runtime.cudaMemcpyKind;
 import jcuda.runtime.JCuda;
+*/
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,6 +62,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.stereotype.Component;
 
@@ -90,11 +94,14 @@ public class ClassUtil {
         private double[] hostData;
         private AtomicInteger counter = new AtomicInteger(0); // can be just a simple int
         private boolean cuda = false;
+        private static final BlockingQueue<Double> randomValues = new ArrayBlockingQueue<>(BATCH_SIZE);
+/* CUDA
         private Pointer deviceData;   
         private curandGenerator generator;
-        private static final BlockingQueue<Double> randomValues = new ArrayBlockingQueue<>(BATCH_SIZE);
+*/
         
         public RandomUtil() {
+/* CUDA
             try {
                 // check if cuda is present
                 // Allocate device memory
@@ -114,6 +121,7 @@ public class ClassUtil {
             } catch (java.lang.UnsatisfiedLinkError le) {
                 logger.warn("Cuda framework is not found");
             }          
+*/
         }
         
         public void init() {
@@ -161,6 +169,7 @@ public class ClassUtil {
         }
         
         private synchronized void loadNextBatch() {
+/* CUDA
             try {
                 // An other thread got here first
                 if(!counter.compareAndSet(BATCH_SIZE, 0)) {
@@ -177,6 +186,7 @@ public class ClassUtil {
             } catch (java.lang.UnsatisfiedLinkError le) {
                 logger.warn("Cuda framework is not found");
             }       
+*/
         }
     }
     
@@ -186,6 +196,9 @@ public class ClassUtil {
     * 
     * NOTE: This behavior is different from Math.random() where 0 is included
     * and 1 is not
+    *
+    * @return random double value
+    * 
     */    
     public static double nextDouble() {
         return randomUtil.nextDouble();
@@ -506,7 +519,14 @@ public class ClassUtil {
 
     public static void executeScript(DataSource datasource, String path, boolean continueOnError, String separator) throws SQLException
     {
-        EncodedResource er = new EncodedResource(new ClassPathResource(path));
+        File file = new File(path);
+        EncodedResource er = null;
+        if (file.isAbsolute()) {
+            er = new EncodedResource(new FileSystemResource(file));
+        } else {
+            er = new EncodedResource(new ClassPathResource(path));
+        }
+
         try (Connection connection = datasource.getConnection();) {
             ScriptUtils.executeSqlScript(
                 connection,

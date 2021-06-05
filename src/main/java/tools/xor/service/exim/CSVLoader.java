@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -302,8 +304,7 @@ public class CSVLoader implements Callable {
             this.dependsOn = new HashSet<>();
             this.columnAliases = new HashMap<>();          
             
-            try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(this.csvFile);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {                    
+            try(BufferedReader reader = getReader(csvFile)) {
                 if (reader.ready()) {
                     String header = reader.readLine();
                     // We are not doing anything with the header at this point
@@ -794,27 +795,47 @@ public class CSVLoader implements Callable {
         this.dataStore = dataStore;
         this.numThreads = numThreads;
 
-        if (CSVLoader.class.getClassLoader().getResource(this.folderPath) == null) {
-            throw new RuntimeException(
-                    String.format("Unable to find the folder '%s' needed to run test1", this.folderPath));
+        if(path == null || "".equals(path.trim())) {
+            throw new RuntimeException("Folder needs to be specified");
         }
 
         if (!folderPath.endsWith(File.separator)) {
             folderPath += File.separator;
         }
 
-        try {
-            List<String> files = IOUtils.readLines(
-                    CSVLoader.class.getClassLoader().getResourceAsStream(this.folderPath),
-                    StandardCharsets.UTF_8.name());
-            
-            List<String> csvFiles = new ArrayList<>();
-            for (String file : files) {
-                if(file.toUpperCase().endsWith("CSV")) {
-                    csvFiles.add(folderPath+file);
+        File folder = new File(path);
+        String folderError = String.format("Unable to find the folder '%s' needed to run test1", this.folderPath);
+        List<String> files = new ArrayList<>();
+        if(folder.isAbsolute()) {
+            if (folder.exists()) {
+                folderError = null;
+                files = Arrays.asList(folder.list());
+            }
+        } else {
+            if (CSVLoader.class.getClassLoader().getResource(this.folderPath) != null) {
+                folderError = null;
+                try {
+                    files = IOUtils.readLines(
+                        CSVLoader.class.getClassLoader().getResourceAsStream(this.folderPath),
+                        StandardCharsets.UTF_8.name());
+                } catch (IOException e) {
+                    throw ClassUtil.wrapRun(e);
                 }
             }
+        }
 
+        if (folderError != null) {
+            throw new RuntimeException(folderError);
+        }
+
+        List<String> csvFiles = new ArrayList<>();
+        for (String file : files) {
+            if(file.toUpperCase().endsWith("CSV")) {
+                csvFiles.add(folderPath+file);
+            }
+        }
+
+        try {
             buildStates(csvFiles);
         } catch (IOException e) {
             throw ClassUtil.wrapRun(e);
@@ -866,7 +887,7 @@ public class CSVLoader implements Callable {
         }
     }    
     
-    private void buildStates(List<String> csvFiles) throws FileNotFoundException, IOException {
+    private void buildStates(List<String> csvFiles) throws IOException {
         for(String csvFile: csvFiles) {
             logger.info("Building state for: " + csvFile);
             CSVState csvState = getCSVState(csvFile);
@@ -1002,8 +1023,7 @@ public class CSVLoader implements Callable {
         Set<String> columnsToInsert = new HashSet<>(columnList);
         
         // Read the data for non FK columns
-        try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvState.getCSVFile());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {        
+        try(BufferedReader reader = getReader(csvState.getCSVFile())) {
             // skip first 2 lines
             if(reader.ready()) { reader.readLine();}
             if(reader.ready()) { reader.readLine();}
@@ -1175,8 +1195,7 @@ public class CSVLoader implements Callable {
     private void updateRecords(CSVState csvState, Settings settings, JDBCDataStore dataStore) throws IOException {
                 
         // Read the data for nullable FK columns
-        try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvState.getCSVFile());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {                
+        try(BufferedReader reader = getReader(csvState.getCSVFile())) {
             // skip first 2 lines
             if(reader.ready()) { reader.readLine();}
             if(reader.ready()) { reader.readLine();}
@@ -1339,8 +1358,7 @@ public class CSVLoader implements Callable {
         // Also the child shape for each Type ensures that a copy of the relationship types are also made
         Shape childShape = new DomainShape("test", shape, shape.getDataModel());
         
-        try(InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(csvFile);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+        try(BufferedReader reader = getReader(csvFile)) {
             // Skip first line as schema is in second line
             if(reader.ready()) {
                 reader.readLine();
@@ -1362,6 +1380,17 @@ public class CSVLoader implements Callable {
             
             return result;
         }         
+    }
+
+    private static BufferedReader getReader(String filePath) throws FileNotFoundException
+    {
+        File file = new File(filePath);
+        if(file.isAbsolute()) {
+            return new BufferedReader(new FileReader(filePath));
+        } else {
+            InputStream is = CSVLoader.class.getClassLoader().getResourceAsStream(filePath);
+            return new BufferedReader(new InputStreamReader(is));
+        }
     }
 
     @Override

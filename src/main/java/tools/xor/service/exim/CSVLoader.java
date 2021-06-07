@@ -851,6 +851,10 @@ public class CSVLoader implements Callable {
     }
     
     public void importData(Settings settings, JDBCDataStore dataStore) {
+        if(dataStore == null || dataStore.getSessionContext() == null) {
+            throw new RuntimeException("Import needs an active transaction");
+        }
+
         boolean orderSQL = dataStore.getSessionContext().isOrderSQL();
         try {
             dataStore.getSessionContext().setOrderSQL(false);
@@ -1374,6 +1378,10 @@ public class CSVLoader implements Callable {
             // foreign keys in the columns. This creates a dependency with the state object of the foreignKeyTable
             String tableName = CSVState.normalize(schema.getString(KEY_TABLE_NAME));
             Type type = childShape.getType(tableName);
+
+            if (type == null) {
+                throw new RuntimeException(String.format("Type is missing in shape for table %s", tableName));
+            }
             
             CSVState result = new CSVState(type, schema, csvFile, this, childShape);
             this.tableStateMap.put(tableName, result);

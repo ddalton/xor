@@ -145,9 +145,11 @@ public class JSONObjectProperty
                 public Object toDomain(Settings settings, JSONObject jsonObject, Property property, String key) throws JSONException {
                     if(jsonObject.has(key)) {
                         Object value = jsonObject.get(key);
-                        if(value instanceof BigDecimal)
+                        if(value instanceof BigDecimal) {
                             return value;
-                        else
+                        } else if(value instanceof Number) {
+                            return new BigDecimal(value.toString());
+                        } else
                             return new BigDecimal(jsonObject.getString(key));
                     }
                     return null;

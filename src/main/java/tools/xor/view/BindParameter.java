@@ -631,6 +631,8 @@ public class BindParameter implements Comparable<BindParameter>
 						result = new BigDecimal(value.toString());
 					} else if(value instanceof BigDecimal) {
 						result = (BigDecimal)value;
+					} else if(value instanceof Number) {
+						result = new BigDecimal(value.toString());
 					} else {
 						throw new RuntimeException("Unsupported value type for BigDecimal converter");
 					}

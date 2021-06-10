@@ -290,7 +290,7 @@ public class CSVLoaderTest {
         String testFolder = "csvloader/test4/";
         
         if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
-            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test1", testFolder));
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test4", testFolder));
         }
         
         List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
@@ -355,7 +355,7 @@ public class CSVLoaderTest {
         String testFolder = "csvloader/test5/";
         
         if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
-            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test1", testFolder));
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test5", testFolder));
         }
         
         List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
@@ -452,5 +452,53 @@ public class CSVLoaderTest {
             sc.rollback();
             sc.close();
         }
-    }    
+    }
+
+    @Test
+    /*
+     * Direct entity generator Test.
+     *
+     * Uses 2 csv files
+     * 1. Person.csv - has CSV data
+     * 2. Task.csv - fully auto generated
+     */
+    public void test7() throws IOException {
+        String testFolder = "csvloader/test7/";
+
+        if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test7", testFolder));
+        }
+
+        List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
+        for(String file: files) {
+            System.out.println(file);
+        }
+
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder);
+
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore)amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();
+        try {
+            // We are only loading the Person entries
+            csvLoader.importData(new Settings(), dataStore);
+
+            // We shall now generate the Task.schema.gen
+            String csvFilePath = "csvloader/test7/Task.schema";
+            String csvGenFilePath = csvFilePath + ".gen";
+            String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+
+            CSVState csvState = csvLoader.getCSVState(csvFilePath);
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+
+        } finally {
+            sc.rollback();
+            sc.close();
+        }
+    }
 }

@@ -65,4 +65,20 @@ public interface GeneratorDriver
      * @param listener generator that registers for this generator's events
      */
     void addListener(IteratorListener listener);
+
+    /**
+     * Indicates if this generator driver is also directly responsible for generating the data
+     * for the type's properties.
+     * If true, then the Iterator#next method will return JSONObject instance
+     * relating the property name to its value.
+     * NOTE:
+     * 1. The values are restricted to only the types supported in json. For e.g., Date
+     *    objects need to be converted to String.
+     * 2. The json key name should be normalized using CSVLoader.CSVState#normalize
+     *
+     * @return true if generates property values false otherwise
+     */
+    default boolean isDirect() {
+        return false;
+    }
 }

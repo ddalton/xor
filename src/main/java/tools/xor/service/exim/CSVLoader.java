@@ -425,7 +425,7 @@ public class CSVLoader implements Callable {
         }
         
         private Object buildArguments(JSONObject generator) {
-            Object args = null;
+            Object args = new String[0];
             if (generator.has(KEY_ARGUMENTS)) {
                 JSONArray arguments = generator.getJSONArray(KEY_ARGUMENTS);
 
@@ -439,7 +439,7 @@ public class CSVLoader implements Callable {
                 }
                 logger.info("buildArguments: ", args);
             } else {
-                logger.info(String.format("Generator for table %s has not arguments", this.getTableName()));
+                logger.info(String.format("Generator for table %s has no arguments", this.getTableName()));
             }
 
             return args;
@@ -593,7 +593,7 @@ public class CSVLoader implements Callable {
             return result;
         }
         
-        private static String normalize(String column) {
+        public static String normalize(String column) {
             return column.trim().toUpperCase();
         }
         
@@ -978,6 +978,22 @@ public class CSVLoader implements Callable {
         
         return currentVisitor;
     }
+
+    private JSONObject getDirectJSON (Object json, GeneratorDriver entityGenerator)
+    {
+        if (json != null && entityGenerator.isDirect()) {
+            if (json instanceof JSONObject) {
+                return (JSONObject)json;
+            }
+            else {
+                throw new RuntimeException(String.format(
+                    "Entity generator class %s is defined as direct but is not returning a JSON object",
+                    entityGenerator.getClass().getName()));
+            }
+        }
+
+        return null;
+    }
     
     private void createRecords(CSVState csvState, Settings settings, JDBCDataStore dataStore) throws IOException {
         /* Get the columns we need to populate
@@ -1039,7 +1055,8 @@ public class CSVLoader implements Callable {
                 CSVRecord csvRecord = null;
                 while(csvIterator.hasNext() || entityIterator.hasNext()) {
                     csvRecord = csvIterator.hasNext() ? csvIterator.next() : null;
-                    
+
+                    // The default entity generator is counter generator
                     if(!entityIterator.hasNext()) {
                         break;
                     }                  
@@ -1072,10 +1089,13 @@ public class CSVLoader implements Callable {
                         continue;
                     }                    
 
-                    JSONObject entityJSON = null;
+                    JSONObject entityJSON = getDirectJSON(result, entityGenerator);
                     try {
                         // It is fine to copy everything to the JSON object since we say exactly which columns to insert
-                        entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
+                        if(entityJSON == null) {
+                            entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord,
+                                false);
+                        }
                         populateLookupKeyValues(entityJSON, settings, currentVisitor, csvState.getLookupKeyNotNullFKMap());                        
                     } catch (ArrayIndexOutOfBoundsException e) {
                         throw new RuntimeException(String.format(
@@ -1251,8 +1271,12 @@ public class CSVLoader implements Callable {
                     if(!isMyJob(i++)) {
                         continue;
                     }
-                    
-                    JSONObject entityJSON = CSVExportImport.getJSON(csvState.headerMap, csvRecord, false);
+
+                    JSONObject entityJSON = getDirectJSON(result, entityGenerator);
+                    if(entityJSON == null) {
+                        entityJSON = CSVExportImport.getJSON(csvState.headerMap,
+                            csvRecord, false);
+                    }
                     Set<String> missingKeys = csvState.getMissingKeys();
                     if(!csvPowered || missingKeys.size() > 0) {
                         // generate the lookup key(s) for the current type

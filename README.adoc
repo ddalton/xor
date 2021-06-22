@@ -63,6 +63,8 @@ A generator can specify how the data needs to be populated for e.g.,
 * Data needed to model association relationships 
 * Data needed to model inheritance relationships.
 
+Details on how to generate and import data using CSV files is described at https://github.com/ddalton/xor/wiki/Data-generation-using-CSV-files
+
 = Uniform type interface
 
 The access to the above 3 models is exposed through XOR using a common type system. This type system models the data as JSON objects.

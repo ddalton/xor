@@ -52,6 +52,7 @@ There are many times when we need to generate a large amount of data in a reason
 
 * Troubleshoot a performance issue when access to the customer's data is not permitted
 * Create a large data set for performance testing and the model is rapidly evolving
+* Create data for unit tests that requires a database (in-memory)
 
 As shown in the diagram above, transformation #2 puts a large overhead when populating the database.
 XOR allows the user to directly access the JDBC model and generate data as needed. 

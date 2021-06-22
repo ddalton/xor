@@ -1,7 +1,8 @@
 = XOR
 :hardbreaks:
 
-XOR is a tool that works with Data Models and provides services against them.
+XOR is a tool that works with Data Models and provides services against them. Below is the concepts guide to understand what XOR covers.
+If you would like to jump straight to using XOR library in your project then please go through the https://github.com/ddalton/xor/wiki[docs].
 
 == Services
 

@@ -56,8 +56,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
@@ -242,6 +245,20 @@ public class CSVLoader implements Callable {
     private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());    
     
     private static final int COUNTER_START = 1;
+
+    private static Schema SCHEMA;
+
+    static {
+        try (InputStream inputStream = CSVLoader.class.getResourceAsStream("/CSVLoaderSchema.json")) {
+            JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
+            SCHEMA = SchemaLoader.load(rawSchema);
+            logger.info("Initialized CSVLoader JSON schema");
+        }
+        catch (Throwable e) {
+            logger.error("Failed to load CSV JSON schema");
+            e.printStackTrace();
+        }
+    }
     
     private Shape shape;
     private DirectedSparseGraph<CSVState, Edge<CSVState>> orderingGraph;
@@ -302,7 +319,10 @@ public class CSVLoader implements Callable {
             this.nullableForeignKeys = new ArrayList<>();
             this.entityGenerator = new CounterGenerator(-1, 1);
             this.dependsOn = new HashSet<>();
-            this.columnAliases = new HashMap<>();          
+            this.columnAliases = new HashMap<>();
+
+            // Validate the schema
+            SCHEMA.validate(this.schema);
             
             try(BufferedReader reader = getReader(csvFile)) {
                 if (reader.ready()) {

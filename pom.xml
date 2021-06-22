@@ -3,7 +3,7 @@
     <groupId>tools.xor</groupId>
     <artifactId>xor</artifactId>
     <packaging>jar</packaging>
-    <version>2.2.7</version>
+    <version>2.3.1</version>
     <name>xor</name>
     <description>Empowering Model Driven Architecture in J2EE applications</description>
     <url>https://github.com/ddalton/xor</url>
@@ -40,6 +40,14 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
+
+    <!-- Needed for everit JSON schema validation -->
+	<repositories>
+	    <repository>
+		<id>jitpack.io</id>
+		<url>https://jitpack.io</url>
+	    </repository>
+	</repositories>
 
     <build>
         <plugins>
@@ -197,6 +205,11 @@
             <version>3.9</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.everit-org.json-schema</groupId>
+            <artifactId>org.everit.json.schema</artifactId>
+            <version>1.12.3</version>
+        </dependency>
 
         <dependency>
             <groupId>org.glassfish</groupId>

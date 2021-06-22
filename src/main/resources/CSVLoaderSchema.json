@@ -1,0 +1,139 @@
+{
+    "title": "GeneratorSettings",
+    "description": "Schema for CSV based data generation",
+    "type": "object",
+    "properties": {
+        "tableName": {
+            "type": "string",
+            "description": "Name of the database table."
+        },
+        "entityName": {
+            "type": "string",
+            "description": "Logical name for this table, typically the Business entity name."
+        },
+        "dateFormat": {
+            "type": "string",
+            "description": "The date format while parsing date values. This property is required if a column with date type is being generated."
+        },
+        "columnAliases": {
+            "type": "object",
+            "description": "Multiple database table columns can be mapped to a single column in the CSV file. Useful in reducing file size and errors in duplicating columns.",
+            "minProperties": 0,
+            "additionalProperties": { 
+                "type": "string" 
+            }
+        },
+        "keys": {
+            "type": "array",
+            "description": "Represents the columns that represent the natural key. Useful in lookup up of a particular row in the table to update it. This functionality is needed if foreign key relationships are being modelled.",
+            "minItems": 1,
+            "items": {
+                "type": "string"
+            }
+        },
+        "dependsOn": {
+            "type": "array",
+            "description": "Helps to enforce ordering between tables. Useful if the generation of data in one table is dependent on the data in another table.",
+            "minItems": 1,
+            "items": {
+                "type": "string"
+            }
+        },
+        "columnGenerators": {
+            "type": "array",
+            "description": "The header columns in the CSV file and any additional columns can be associated with a column generator. If such a generated is specified it overrides the values in the CSV file. If the CSV file does not have values and if no generator is specified, then random values are populated according to the column definition for the specified columns.",
+            "items": {
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/generator",
+                        "description": "The generator responsible for generating the values for the column. If this is specified then column information is required."
+                    },
+                    {
+                        "properties": {
+                            "column": {
+                                "type": "string",
+                                "description": "The column associated with this generator"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "entityGenerator": {
+            "$ref": "#/definitions/generator",
+            "description": "The generator at the entity level and controls generation of the columns directly. This option can be used if all the values for the table needs to be specified programmatically in one location."
+        },
+        "foreignKeys": {
+            "type": "array",
+            "description": "Foreign key columns need to be evaluated based on the lookup key values for the foreign key table. The usual pattern is to find the surrogate key for the foreign key lookup values.",
+            "items": {
+                "type": "object",
+                "description": "Each object in the array corresponds to a single foreign key column",
+                "properties": {
+                    "foreignKey": {
+                        "type": "string",
+                        "description": "Represents the column that needs to be populated using values from the foreign key table"
+                    },
+                    "foreignKeyTable": {
+                        "type": "string",
+                        "description": "The name of the foreign key table"
+                    },
+                    "select": {
+                        "type": "string",
+                        "description": "Column name in the foreign key table whose value we need to select"
+                    },
+                    "join": {
+                        "type": "array",
+                        "description": "This describes the foreign key relationship",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "columnGenerator": {
+                                    "$ref": "#/definitions/generator",
+                                    "description": "If the join column in the current table is virtual, then a generator needs to back it for its values as there is no explicit column in the database table to back it. This column generator will be initialized on a copy of the property representing the foreignKey column so the values are of the same type."
+                                }
+                            },
+                            "additionalProperties": { 
+                                "type": "string",
+                                "description": "Represents the mapping between the foreign table column and the column in the current table. If the column is not found in the current table or in the CSV file, then the value from the associated column generator if present is used."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "tableName"
+    ],
+
+
+    "definitions": {
+        "generator": {
+            "className": {
+                "type": "string",
+                "description": "Represents a Java class that generates data for different types. This class has 2 constructors. One takes a argument of an array of string and the other and array with one integer element"
+            },
+            "arguments": {
+                "type": "array",
+                "description": "Represents the arguments of the Java constructor",
+                "items": {
+                    "oneOf": [
+                        {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1,
+                            "description": "Use this to invoke the Java constructor with a single integer value"
+                        },
+                        {
+                            "type": "string",
+                            "description": "Use this to invoke the Java constructor with 0 or more string values"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

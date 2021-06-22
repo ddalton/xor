@@ -1,7 +1,8 @@
 = XOR
 :hardbreaks:
 
-XOR is a tool that works with Data Models and provides services against them.
+XOR is a tool that works with Data Models and provides services against them. Below is the concepts guide to understand what XOR covers.
+If you would like to jump straight to using XOR library in your project then please go through the https://github.com/ddalton/xor/wiki[docs].
 
 == Services
 
@@ -52,6 +53,7 @@ There are many times when we need to generate a large amount of data in a reason
 
 * Troubleshoot a performance issue when access to the customer's data is not permitted
 * Create a large data set for performance testing and the model is rapidly evolving
+* Create data for unit tests that requires a database (in-memory)
 
 As shown in the diagram above, transformation #2 puts a large overhead when populating the database.
 XOR allows the user to directly access the JDBC model and generate data as needed. 
@@ -61,6 +63,8 @@ A generator can specify how the data needs to be populated for e.g.,
 * Data for simple data types 
 * Data needed to model association relationships 
 * Data needed to model inheritance relationships.
+
+Details on how to generate and import data using CSV files is described at https://github.com/ddalton/xor/wiki/Data-generation-using-CSV-files
 
 = Uniform type interface
 

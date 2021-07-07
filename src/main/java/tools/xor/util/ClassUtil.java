@@ -519,6 +519,11 @@ public class ClassUtil {
 
     public static void executeScript(DataSource datasource, String path, boolean continueOnError, String separator) throws SQLException
     {
+        executeScript(datasource, path, continueOnError, separator, null);
+    }
+
+    public static void executeScript(DataSource datasource, String path, boolean continueOnError, String separator, String removeString) throws SQLException
+    {
         File file = new File(path);
         EncodedResource er = null;
         if (file.isAbsolute()) {
@@ -536,7 +541,8 @@ public class ClassUtil {
                 "--",
                 separator,
                 "/*",
-                "*/");
+                "*/",
+                removeString);
         }
     }
 

@@ -444,6 +444,13 @@ public abstract class ScriptUtils {
 				DEFAULT_BLOCK_COMMENT_START_DELIMITER, DEFAULT_BLOCK_COMMENT_END_DELIMITER);
 	}
 
+	public static void executeSqlScript(Connection connection, EncodedResource resource, boolean continueOnError,
+										boolean ignoreFailedDrops, String commentPrefix, String separator, String blockCommentStartDelimiter,
+										String blockCommentEndDelimiter) throws ScriptException {
+		executeSqlScript(connection, resource, continueOnError, ignoreFailedDrops, commentPrefix, separator,
+			blockCommentStartDelimiter, blockCommentEndDelimiter, null);
+	}
+
 	/**
 	 * Execute the given SQL script.
 	 * <p>Statement separators and comments will be removed before executing
@@ -469,6 +476,7 @@ public abstract class ScriptUtils {
 	 * {@code null} or empty
 	 * @param blockCommentEndDelimiter the <em>end</em> block comment delimiter; never
 	 * {@code null} or empty
+	 * @param removeString useful to remove any table prefix across the script
 	 * @throws ScriptException if an error occurred while executing the SQL script
 	 * @see #DEFAULT_STATEMENT_SEPARATOR
 	 * @see #FALLBACK_STATEMENT_SEPARATOR
@@ -478,7 +486,7 @@ public abstract class ScriptUtils {
 	 */
 	public static void executeSqlScript(Connection connection, EncodedResource resource, boolean continueOnError,
 			boolean ignoreFailedDrops, String commentPrefix, String separator, String blockCommentStartDelimiter,
-			String blockCommentEndDelimiter) throws ScriptException {
+			String blockCommentEndDelimiter, String removeString) throws ScriptException {
 
 		try {
 			if (logger.isInfoEnabled()) {
@@ -489,6 +497,10 @@ public abstract class ScriptUtils {
 			String script;
 			try {
 				script = readScript(resource, commentPrefix, separator);
+
+				if(hasText(removeString)) {
+					script = script.replaceAll(removeString, "");
+				}
 			}
 			catch (IOException ex) {
 				throw new CannotReadScriptException(resource, ex);

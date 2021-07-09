@@ -17,7 +17,7 @@
         },
         "columnAliases": {
             "type": "object",
-            "description": "Multiple database table columns can be mapped to a single column in the CSV file. Useful in reducing file size and errors in duplicating columns.",
+            "description": "Map a column name to a CSV field name. Used to lookup up the values for the key columns that are specified in column names.",
             "minProperties": 0,
             "additionalProperties": { 
                 "type": "string" 
@@ -50,6 +50,9 @@
                         "description": "The generator responsible for generating the values for the column. If this is specified then column information is required."
                     },
                     {
+                        "required": [
+                            "column"
+                        ],
                         "properties": {
                             "column": {
                                 "type": "string",
@@ -73,7 +76,7 @@
                 "properties": {
                     "foreignKey": {
                         "type": "string",
-                        "description": "Represents the column that needs to be populated using values from the foreign key table"
+                        "description": "Represents the column that needs to be populated using values from the foreign key table. This is also the relationship name for the foreign key column generator if provided."
                     },
                     "foreignKeyTable": {
                         "type": "string",
@@ -92,10 +95,10 @@
                             "properties": {
                                 "columnGenerator": {
                                     "$ref": "#/definitions/generator",
-                                    "description": "If the join column in the current table is virtual, then a generator needs to back it for its values as there is no explicit column in the database table to back it. This column generator will be initialized on a copy of the property representing the foreignKey column so the values are of the same type."
+                                    "description": "If the join column in the current table is virtual (no CSV data), then a generator needs to back it for its values as there is no explicit column in the database table to back it. This column generator will be initialized on a copy of the property representing the foreignKey column so the values are of the same type. If both a generator and an header name is provider, the generator gets precedence."
                                 }
                             },
-                            "additionalProperties": { 
+                            "additionalProperties": {
                                 "type": "string",
                                 "description": "Represents the mapping between the foreign table column and the column in the current table. If the column is not found in the current table or in the CSV file, then the value from the associated column generator if present is used."
                             }
@@ -109,31 +112,34 @@
         "tableName"
     ],
 
-
     "definitions": {
         "generator": {
-            "className": {
-                "type": "string",
-                "description": "Represents a Java class that generates data for different types. This class has 2 constructors. One takes a argument of an array of string and the other and array with one integer element"
-            },
-            "arguments": {
-                "type": "array",
-                "description": "Represents the arguments of the Java constructor",
-                "items": {
-                    "oneOf": [
-                        {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 1,
-                            "description": "Use this to invoke the Java constructor with a single integer value"
-                        },
-                        {
-                            "type": "string",
-                            "description": "Use this to invoke the Java constructor with 0 or more string values"
-                        }
-                    ]
+            "type": "object",
+            "properties": {
+                "className": {
+                    "type": "string",
+                    "description": "Represents a Java class that generates data for different types. This class has 2 constructors. One takes a argument of an array of string and the other and array with one integer element"
+                },
+                "arguments": {
+                    "description": "Represents the arguments of the Java constructor",
+                    "type": "array",
+                    "items": {
+                        "oneOf": [
+                            {
+                                "type": "integer",
+                                "description": "Use this to invoke the Java constructor with a single integer value"
+                            },
+                            {
+                                "description": "Use this to invoke the Java constructor with 0 or more string values",
+                                "type": "string"
+                            }
+                        ]
+                    }
                 }
-            }
+            },
+            "required": [
+                "className"
+            ]
         }
     }
 }

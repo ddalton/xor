@@ -125,7 +125,9 @@ import tools.xor.util.graph.StateGraph;
  *    Optional fields
  *    ---------------
  *    entityName       - Java entity name, typically the fully qualified class name of the entity
- *    columnAliases    - Map the header name to a column name
+ *    columnAliases    - Map a column name to a CSV field name
+ *                       Used to lookup up the values for the key columns that are specified
+ *                       in column names.
  *    dateFormat       - If there is at least a single column of type Date
  *    keys             - Represents the fields that unique identify the row in the table
  *                       The columns in the keys cannot comprise foreign key columns
@@ -167,7 +169,8 @@ import tools.xor.util.graph.StateGraph;
  *      "columnAliases" : {
  *          "col1" : "Icol1",
  *          "col2" : "Icol1",
- *          "col3" : "Icol2"
+ *          "col3" : "Icol2",
+ *          "col9" : "Icol9",
  *      }
  *      "keys" : ["col1"],
  *      "foreignKeys" : [
@@ -195,10 +198,6 @@ import tools.xor.util.graph.StateGraph;
  *             "join"            : [
  *                                    { 
  *                                       "FKTcol1" : "Icol9"
- *                                       "columnGenerator" : {
- *                                          "className" : "tools.xor.generator.StringTemplate",
- *                                          "arguments" : ["ID_[VISITOR_CONTEXT]"]
- *                                       } 
  *                                    },
  *                                    { 
  *                                      "FKTcol2" : "Icol11" 
@@ -216,7 +215,13 @@ import tools.xor.util.graph.StateGraph;
  *             "column" : "col10",
  *             "className" : "tools.xor.generator.StringTemplate",
  *             "arguments" : ["ID_[VISITOR_CONTEXT]"]
- *          }
+ *          },
+ *          {
+ *             "column" : "col9",
+ *             "table" : "FKTABLE3",
+ *             "className" : "tools.xor.generator.StringTemplate",
+ *             "arguments" : ["ID_[VISITOR_CONTEXT]"]
+ *          },
  *       ]
  *    }
  * 
@@ -383,7 +388,7 @@ public class CSVLoader implements Callable {
                 JSONArray jsonArray = schema.getJSONArray(KEY_COLUMN_GENERATORS);
                 for(int i = 0; i < jsonArray.length(); i++) {
                     JSONObject generator = jsonArray.getJSONObject(i);
-                    setGenerator(generator, getType(), generator.getString(KEY_COLUMN));
+                    setGenerator(generator, getType(), generator.getString(KEY_COLUMN), null);
                 }
             }
             
@@ -404,14 +409,19 @@ public class CSVLoader implements Callable {
             }
         }
         
-        private void setGenerator(JSONObject generator, Type type, String generatorColumn) {
+        private void setGenerator(JSONObject generator, Type type, String generatorColumn, String relationshipName) {
             String generatorClassName = generator.getString(KEY_CLASSNAME);
             Object args = buildArguments(generator);
             
             Property p = type.getProperty(normalize(generatorColumn));
             if(p != null) {
                 logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s' in table %s", generatorClassName, p.getName(), generatorColumn, type.getName()));
-                p.setGenerator((Generator) createGenerator(generatorClassName, args));
+                Generator columnGenerator = (Generator)createGenerator(generatorClassName, args);
+                if(relationshipName == null) {
+                    p.setGenerator(columnGenerator);
+                } else {
+                    p.setGenerator(relationshipName, columnGenerator);
+                }
             } else {
                 throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, type.getName()));
             }            
@@ -439,7 +449,8 @@ public class CSVLoader implements Callable {
 
                 if(joinJson.has(KEY_COLUMN_GENERATOR)) {
                     JSONObject generator = joinJson.getJSONObject(KEY_COLUMN_GENERATOR);
-                    setGenerator(generator, type, fkColName);
+                    String relationshipName = normalize(fkJson.getString(KEY_FOREIGN_KEY));
+                    setGenerator(generator, type, fkColName, relationshipName);
                 }
             }            
         }
@@ -527,15 +538,51 @@ public class CSVLoader implements Callable {
             return result;
         }
         
-        public Map<String, Object> loadNotNullFKData(JSONObject entityJSON, JDBCDataStore dataStore) {
-            return loadFKData(entityJSON, dataStore, this.notNullForeignKeys, true);
+        public Map<String, Object> loadNotNullFKData(JSONObject entityJSON, JDBCDataStore dataStore, StateGraph.ObjectGenerationVisitor currentVisitor) {
+            return loadFKData(entityJSON, dataStore, this.notNullForeignKeys, true, currentVisitor);
         }
         
-        public Map<String, Object> loadNullableFKData(JSONObject entityJSON, JDBCDataStore dataStore) {
-            return loadFKData(entityJSON, dataStore, this.nullableForeignKeys, false);
-        }        
+        public Map<String, Object> loadNullableFKData(JSONObject entityJSON, JDBCDataStore dataStore, StateGraph.ObjectGenerationVisitor currentVisitor) {
+            return loadFKData(entityJSON, dataStore, this.nullableForeignKeys, false, currentVisitor);
+        }
+
+        /**
+         * This can be a generated value or a value specified in the CSV file
+         *
+         * @param entityJSON contains values
+         * @param fkType
+         * @param fkColName
+         * @return a string value
+         */
+        private String getFKValue(JSONObject entityJSON, Type fkType, JSONObject joinJson, String relationshipName, StateGraph.ObjectGenerationVisitor currentVisitor) {
+
+            // First check if a generator is present for the column in the foreign key table
+            String fkColName = joinJson.names().getString(0);
+            String headerName = joinJson.getString(fkColName);
+
+            // normalize the column names
+            fkColName = normalize(fkColName);
+            headerName = normalize(headerName);
+            Property p = fkType.getProperty(fkColName);
+
+            if(p.getGenerator(relationshipName) != null) {
+                String oldValue = currentVisitor.getRelationshipName();
+                currentVisitor.setRelationshipName(relationshipName);
+                Object result = ((BasicType)p.getType()).generate(
+                    currentVisitor.getSettings(),
+                    p,
+                    null,
+                    null,
+                    currentVisitor);
+
+                currentVisitor.setRelationshipName(oldValue);
+                return result.toString();
+            }
+
+            return entityJSON.getString(headerName);
+        }
         
-        public Map<String, Object> loadFKData(JSONObject entityJSON, JDBCDataStore dataStore, List<JSONObject> foreignKeysJson, boolean isNotNull) {
+        public Map<String, Object> loadFKData(JSONObject entityJSON, JDBCDataStore dataStore, List<JSONObject> foreignKeysJson, boolean isNotNull, StateGraph.ObjectGenerationVisitor currentVisitor) {
             Map<String, Object> result = new HashMap<>();
             
             if(entityJSON == null || dataStore == null) {
@@ -544,23 +591,19 @@ public class CSVLoader implements Callable {
             
             for(JSONObject fkJson: foreignKeysJson) {
                 // get the type for the foreign key table
-                Type type = getShape().getType(normalize(fkJson.getString(KEY_FOREIGN_KEY_TABLE)));
+                Type fkType = getShape().getType(normalize(fkJson.getString(KEY_FOREIGN_KEY_TABLE)));
                 
-                BusinessObject bo = new ImmutableBO(type, null, null, null);
+                BusinessObject bo = new ImmutableBO(fkType, null, null, null);
                 JSONObject fkJsonInstance = new JSONObject();
                 bo.setInstance(fkJsonInstance);
                 JSONArray joinArray = fkJson.getJSONArray(KEY_JOIN);
                 
-                Map<String, String> lookupKeys = new HashMap<>(); 
+                Map<String, String> lookupKeys = new HashMap<>();
+                String foreignKeyCol = normalize(fkJson.getString(KEY_FOREIGN_KEY));
                 for(int i = 0; i < joinArray.length(); i++) {
                     JSONObject joinJson = joinArray.getJSONObject(i);
-                    String fkColName = joinJson.names().getString(0);
-                    String headerName = joinJson.getString(fkColName);
-                    
-                    // normalize the column names
-                    fkColName = normalize(fkColName);
-                    headerName = normalize(headerName);
-                    String fkValue = entityJSON.getString(headerName);
+                    String fkValue = getFKValue(entityJSON, fkType, joinJson, foreignKeyCol, currentVisitor);
+                    String fkColName = normalize(joinJson.names().getString(0));
                     fkJsonInstance.put(fkColName, fkValue);
                     lookupKeys.put(fkColName, fkValue);
                 }
@@ -579,8 +622,8 @@ public class CSVLoader implements Callable {
                                 fkJson.getString(KEY_FOREIGN_KEY), getType().getName(), keyStr.toString()));
                     }
                 } else {
-                    result.put(normalize(fkJson.getString(KEY_FOREIGN_KEY)), value);
-                    entityJSON.put(normalize(fkJson.getString(KEY_FOREIGN_KEY)), value);
+                    result.put(foreignKeyCol, value);
+                    entityJSON.put(foreignKeyCol, value);
                 }
             }
             
@@ -961,12 +1004,8 @@ public class CSVLoader implements Callable {
     }  
     
     private Set<String> getColumnsToPopulate(CSVState csvState, List<Property> generatedProperties) {
-        // The columns list direct which table columns need to be populated
+        // Get all columns except the foreign key columns
         Set<String> columns = csvState.getNonFKColumns();
-        for(Map.Entry<String, Integer> entry: csvState.headerMap.entrySet()) {
-            if(columns.contains(entry.getKey())) {
-            }
-        }
         
         // Add column aliases
         for(Map.Entry<String, String> entry: csvState.columnAliases.entrySet()) {
@@ -1122,8 +1161,7 @@ public class CSVLoader implements Callable {
                                 "Unable to find data for some column(s) in row %s while processing table %s. ArrayIndexOutOfBoundsException on index: %s",
                                 i, csvState.getTableName(), e.getMessage()));
                     }
-                    
-                    csvState.loadNotNullFKData(entityJSON, dataStore); 
+
                     if(!isWriteToDB(csvPrinter)) {
                         // Since we cannot update a CSV file, we also try and get the values 
                         // for the nullable Foreign keys.
@@ -1169,7 +1207,11 @@ public class CSVLoader implements Callable {
                                     null,
                                     currentVisitor));
                     }
-                    
+
+                    // We load the not null FK data after all the columns have been populated
+                    // since we will need to refer to these columns to get the lookup values
+                    csvState.loadNotNullFKData(entityJSON, dataStore, currentVisitor);
+
                     if(!csvPowered) {
                         // If not csv powered we have to add the header columns that are properties
                         // and that are not present in the JSON object
@@ -1372,7 +1414,7 @@ public class CSVLoader implements Callable {
         populateLookupKeyValues(entityJSON, settings, currentVisitor, csvState.getLookupKeyNullableFKMap());
         
         // Fetch the foreign key value from the DB
-        return  csvState.loadNullableFKData(entityJSON, dataStore);
+        return  csvState.loadNullableFKData(entityJSON, dataStore, currentVisitor);
     }
     
     private void populateLookupKeyValues(JSONObject entityJSON, Settings settings, StateGraph.ObjectGenerationVisitor currentVisitor, Map<String, Property> loopKeyPropertyMap) {

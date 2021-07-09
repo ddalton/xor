@@ -922,7 +922,7 @@ public class JDBCSessionContext implements CustomPersister
                 case LITERAL_SQL:
                     try(Statement stmt = getConnection().createStatement()) {
                         for (String insertSQL : literalSQLs) {
-                            //System.out.println("INSERTING: " + insertSQL);
+                            logger.debug(insertSQL);
                             stmt.executeUpdate(insertSQL);
                         }
                     }

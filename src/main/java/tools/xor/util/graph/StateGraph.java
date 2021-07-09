@@ -988,6 +988,7 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 		private StateGraph stateGraph;
 		private Object context; // used for passing data, for example string length
 		private Map<Integer, Object> additionalContext; // any additional context is set here
+		private String relationshipName; // Allows multiple generators to be set for a property
 
 		public ObjectGenerationVisitor (Map<JSONObject, State> objectStateMap, Settings settings, StateGraph stateGraph) {
 			this.objectStateMap = objectStateMap;
@@ -1044,6 +1045,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 
 		public String getRelationshipName ()
 		{
+			if(this.relationshipName != null && !"".equals(this.relationshipName)) {
+				return this.relationshipName;
+			}
+
 			if (this.sourceEntityType == null || this.getProperty() == null) {
 				return AbstractProperty.TYPE_GENERATOR;
 			}
@@ -1052,6 +1057,10 @@ public class StateGraph<V extends State, E extends Edge<V>> extends DirectedSpar
 				Constants.XOR.getRelationshipName(
 					getSourceEntityType(),
 					getProperty());
+		}
+
+		public void setRelationshipName (String name) {
+			this.relationshipName = name;
 		}
 
 		public int getSequenceNo ()

@@ -501,4 +501,49 @@ public class CSVLoaderTest {
             sc.close();
         }
     }
+
+    /**
+     * Tests a columnGenerator on a foreign key that has all tasks with only the same owner
+     * @throws IOException
+     */
+    @Test
+    public void test8() throws IOException {
+        String testFolder = "csvloader/test8/";
+
+        if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test8", testFolder));
+        }
+
+        List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
+        for(String file: files) {
+            System.out.println(file);
+        }
+
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape();
+
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder);
+
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore)amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();
+        try {
+            // We are only loading the Person entries
+            csvLoader.importData(new Settings(), dataStore);
+
+            // We shall now generate the Task.schema.gen
+            String csvFilePath = "csvloader/test8/Task.schema";
+            String csvGenFilePath = csvFilePath + ".gen";
+            String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+
+            CSVState csvState = csvLoader.getCSVState(csvFilePath);
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+
+        } finally {
+            sc.rollback();
+            sc.close();
+        }
+    }
 }

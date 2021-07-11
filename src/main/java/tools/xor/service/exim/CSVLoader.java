@@ -200,7 +200,11 @@ import tools.xor.util.graph.StateGraph;
  *                                       "FKTcol1" : "Icol9"
  *                                    },
  *                                    { 
- *                                      "FKTcol2" : "Icol11" 
+ *                                      "FKTcol2" : "Icol11",
+ *                                      "columnGenerator" : {
+ *                                          "className" : "tools.xor.generator.StringTemplate",
+ *                                          "arguments" : ["ID_[VISITOR_CONTEXT]"]
+ *                                       }
  *                                    }
  *                                 ]
  *          }
@@ -215,13 +219,7 @@ import tools.xor.util.graph.StateGraph;
  *             "column" : "col10",
  *             "className" : "tools.xor.generator.StringTemplate",
  *             "arguments" : ["ID_[VISITOR_CONTEXT]"]
- *          },
- *          {
- *             "column" : "col9",
- *             "table" : "FKTABLE3",
- *             "className" : "tools.xor.generator.StringTemplate",
- *             "arguments" : ["ID_[VISITOR_CONTEXT]"]
- *          },
+ *          }
  *       ]
  *    }
  * 
@@ -1242,7 +1240,7 @@ public class CSVLoader implements Callable {
 
                         performFlush(sc, recordNo, false);
                     } else {
-                        if(i == COUNTER_START) {
+                        if(recordNo == COUNTER_START) {
                             csvPrinter.printRecord(columnList);
                         }
                         csvPrinter.printRecord(extractValues(entityJSON, columnList));

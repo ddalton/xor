@@ -153,11 +153,7 @@ import tools.xor.util.graph.StateGraph;
  *                       Most common usecase is using a QueryGenerator to get
  *                       the data from other tables.
  *                       When this is set, then the dependsOn property is
- *                       also usually set.     
- *    columnGenerator  - The lookup key for resolving a foreign key can have
- *                       a generator, if the data is purely based on generated data.
- *                       i.e., there is no CSV data in the file, but just generators in
- *                       the schema.                   
+ *                       also usually set.
  *    
  * 
  *    Example:

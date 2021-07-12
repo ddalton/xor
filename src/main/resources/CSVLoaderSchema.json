@@ -17,7 +17,7 @@
         },
         "columnAliases": {
             "type": "object",
-            "description": "Map a column name to a CSV field name. Used to lookup up the values for the key columns that are specified in column names.",
+            "description": "Map a column name to a CSV field name. This is useful to give a descriptive name to a column name in the CSV header row. Commonly used to lookup up the values for the key columns that are specified using database column names.",
             "minProperties": 0,
             "additionalProperties": { 
                 "type": "string" 
@@ -25,7 +25,7 @@
         },
         "keys": {
             "type": "array",
-            "description": "Represents the columns that represent the natural key. Useful in lookup up of a particular row in the table to update it. This functionality is needed if foreign key relationships are being modelled.",
+            "description": "List of column names that represents a database table's natural key. Useful in lookup up of a particular row in the table to update it. This functionality is needed if foreign key relationships are being modelled.",
             "minItems": 1,
             "items": {
                 "type": "string"

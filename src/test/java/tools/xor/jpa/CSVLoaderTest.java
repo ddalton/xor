@@ -531,7 +531,8 @@ public class CSVLoaderTest {
         sc.beginTransaction();
         try {
             // We are only loading the Person entries
-            csvLoader.importData(new Settings(), dataStore);
+            Settings settings = new Settings();
+            csvLoader.importData(settings, dataStore);
 
             // We shall now generate the Task.schema.gen
             String csvFilePath = "csvloader/test8/Task.schema";
@@ -539,11 +540,60 @@ public class CSVLoaderTest {
             String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
 
             CSVState csvState = csvLoader.getCSVState(csvFilePath);
-            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
 
+            csvState.writeToCSV(absolutePath, settings, dataStore);
+
+            validateSameOwner(importTasks(dataStore, settings, shape, testFolder), 20, shape);
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         } finally {
             sc.rollback();
             sc.close();
+        }
+    }
+
+    private List importTasks(JDBCDataStore dataStore, Settings settings, Shape shape, String testFolder) {
+
+        // Import the tasks to the DB
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder, "SCHEMA");
+        csvLoader.importData(settings, dataStore);
+
+        List<String> paths = new ArrayList<>();
+        paths.add("UUID");
+        paths.add("NAME");
+        paths.add("CREATEDON");
+        paths.add("OWNEDBY_UUID");
+        AggregateView ownedByView = new AggregateView("TTT");
+        ownedByView.setAttributeList(paths);
+
+        settings.setView(ownedByView);
+        settings.setEntityType(shape.getType("TASK"));
+        settings.init(shape);
+
+        List result = amJDBC.query(null, settings);
+
+        return result;
+    }
+
+    private void validateSameOwner(List tasks, int numTasks, Shape shape) {
+        assert tasks.size() == numTasks;
+
+        boolean modelsRelationships = true;
+        if(shape.getName().equals(DataModel.RELATIONAL_SHAPE)) {
+            modelsRelationships = false;
+        }
+
+        for(Object task: tasks) {
+            JSONObject t = (JSONObject) task;
+
+            if(modelsRelationships) {
+                t = t.getJSONObject("OWNEDBY_UUID");
+                assert(t.getString("UUID").equals("ID_1"));
+            } else {
+                assert(t.getString("OWNEDBY_UUID").equals("ID_1"));
+            }
         }
     }
 }

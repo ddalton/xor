@@ -64,8 +64,21 @@
             }
         },
         "entityGenerator": {
-            "$ref": "#/definitions/generator",
-            "description": "The generator at the entity level and controls generation of the columns directly. This option can be used if all the values for the table needs to be specified programmatically in one location."
+            "type": "object",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/generator",
+                    "description": "The generator at the entity level and controls generation of the columns directly. This option can be used if all the values for the table needs to be specified programmatically in one location."
+                },
+                {
+                    "properties": {
+                        "visits": {
+                            "type": "object",
+                            "description": "Mapping between generator recipient and the generator it will accept. The key and value are the bean names. So the locationPattern needs to be specified."
+                        }
+                    }
+                }
+            ]
         },
         "foreignKeys": {
             "type": "array",
@@ -106,6 +119,10 @@
                     }
                 }
             }
+        },
+        "locationPattern": {
+            "type": "string",
+            "description": "Location to the spring config file for the spring generator beans. Useful if relationships between generators need to be configured. If this is used, then the beanName for the generator needs to be specified to refer to the bean from this config."
         }
     },
     "required": [
@@ -114,31 +131,47 @@
 
     "definitions": {
         "generator": {
-            "type": "object",
-            "properties": {
-                "className": {
-                    "type": "string",
-                    "description": "Represents a Java class that generates data for different types. This class has 2 constructors. One takes a argument of an array of string and the other and array with one integer element"
-                },
-                "arguments": {
-                    "description": "Represents the arguments of the Java constructor",
-                    "type": "array",
-                    "items": {
-                        "oneOf": [
-                            {
-                                "type": "integer",
-                                "description": "Use this to invoke the Java constructor with a single integer value"
-                            },
-                            {
-                                "description": "Use this to invoke the Java constructor with 0 or more string values",
-                                "type": "string"
+            "anyOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "className": {
+                            "type": "string",
+                            "description": "Represents a Java class that generates data for different types. This class has 2 constructors. One takes a argument of an array of string and the other and array with one integer element"
+                        },
+                        "arguments": {
+                            "description": "Represents the arguments of the Java constructor",
+                            "type": "array",
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "type": "integer",
+                                        "description": "Use this to invoke the Java constructor with a single integer value"
+                                    },
+                                    {
+                                        "description": "Use this to invoke the Java constructor with 0 or more string values",
+                                        "type": "string"
+                                    }
+                                ]
                             }
-                        ]
-                    }
+                        }
+                    },
+                    "required": [
+                        "className"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "beanName": {
+                            "type": "string",
+                            "description": "The name of the Spring bean that represents a generator"
+                        }
+                    },
+                    "required": [
+                        "beanName"
+                    ]
                 }
-            },
-            "required": [
-                "className"
             ]
         }
     }

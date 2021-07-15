@@ -38,6 +38,7 @@ import tools.xor.util.graph.StateGraph;
  * In the above example a collection owner with id 9000 will have a collection containing 2 elements
  *
  * This implemention does not allow duplicate elements in the collection.
+ * A random value is selected once within a block of values
  * If this restriction is not needed, then the calculation can be more efficient.
  *
  */
@@ -56,10 +57,18 @@ public class CollectionElementGenerator extends DefaultGenerator implements Gene
     public CollectionElementGenerator(String[] arguments) {
         super(arguments);
 
-        this.start = Integer.valueOf(values[0]);
+        // Block size is based off start and end values and is adjusted for the collection size
+        if(values.length == 1) {
+            this.start = Integer.valueOf(values[0]);
+        } else {
+            this.start = 0;
+        }
 
         if(values.length > 1) {
             this.end = Integer.valueOf(values[1]);
+        } else {
+            // block size is 1
+            this.end = this.start;
         }
 
         nextOwner(-1, 0, 1);
@@ -93,7 +102,7 @@ public class CollectionElementGenerator extends DefaultGenerator implements Gene
     @Override
     public void nextOwner (int ownerId, int counter, int collectionSize) {
         this.collectionSize = collectionSize;
-        this.blockNo = 0;
+        this.blockNo = ownerId-counter+collectionSize; // set to end of owner node block
         this.blockSize = collectionSize>0 ? (end-start+1)/collectionSize : 0;
         this.counter = 0;
     }

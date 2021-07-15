@@ -61,6 +61,10 @@ import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import tools.xor.BasicType;
 import tools.xor.BusinessObject;
@@ -73,7 +77,9 @@ import tools.xor.ImmutableBO;
 import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.Type;
+import tools.xor.generator.DefaultGenerator;
 import tools.xor.generator.Generator;
+import tools.xor.generator.GeneratorRecipient;
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.DataModelFactory;
@@ -264,6 +270,7 @@ public class CSVLoader implements Callable {
     private Map<String, CSVState> tableStateMap;
     private String folderPath;
     private StateGraph.ObjectGenerationVisitor visitor;
+    private boolean ignoreDependencyErrors;
     
     // Used in parallel execution
     private Integer jobNo; // starts from 0
@@ -288,6 +295,9 @@ public class CSVLoader implements Callable {
     private static final String KEY_ARGUMENTS = "arguments";
     private static final String KEY_DEPENDS_ON = "dependsOn";
     private static final String KEY_ENTITY_GENERATOR = "entityGenerator";
+    private static final String KEY_LOCATION_PATTERN = "locationPattern";
+    private static final String KEY_BEAN_NAME = "beanName";
+    private static final String KEY_VISITS = "visits";
     
     public static class CSVState extends State {
         
@@ -302,6 +312,7 @@ public class CSVLoader implements Callable {
         private Set<String> dependsOn;
         private CSVPrinter csvPrinter;
         private Map<String, String> columnAliases;
+        private GenericApplicationContext springContext;
 
         public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader, Shape childShape) {
             // make a copy of the type and add it to the child shape
@@ -322,6 +333,25 @@ public class CSVLoader implements Callable {
 
             // Validate the schema
             SCHEMA.validate(this.schema);
+
+            if(schema.has(KEY_LOCATION_PATTERN)) {
+                try {
+                    String locationPattern = this.schema.getString(KEY_LOCATION_PATTERN);
+                    PathMatchingResourcePatternResolver pmrl = new PathMatchingResourcePatternResolver(
+                        this.getClass().getClassLoader());
+                    // location pattern can be something like
+                    // "classpath*:com/mycompany/**/applicationContext.xml"
+                    Resource[] resources = pmrl.getResources(locationPattern);
+
+                    springContext = new GenericApplicationContext();
+                    for (Resource r : resources) {
+                        XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(springContext);
+                        reader.loadBeanDefinitions(r);
+                    }
+                } catch (IOException e) {
+                    throw ClassUtil.wrapRun(e);
+                }
+            }
             
             try(BufferedReader reader = getReader(csvFile)) {
                 if (reader.ready()) {
@@ -395,30 +425,55 @@ public class CSVLoader implements Callable {
             
             if(schema.has(KEY_ENTITY_GENERATOR)) {
                 JSONObject generator = schema.getJSONObject(KEY_ENTITY_GENERATOR);
-                String generatorClassName = generator.getString(KEY_CLASSNAME);
-                Object args = buildArguments(generator);
-                this.entityGenerator = (GeneratorDriver) createGenerator(generatorClassName, args);
-                
+                this.entityGenerator = (GeneratorDriver) instantiateGenerator(generator);
                 ((EntityType)getType()).addGenerator(entityGenerator);
+
+                if(generator.has(KEY_VISITS) && springContext != null) {
+                    JSONObject visits = generator.getJSONObject(KEY_VISITS);
+                    Iterator<String> keyIter = visits.keys();
+                    while(keyIter.hasNext()) {
+                        String key = keyIter.next();
+                        Generator guest = (Generator) springContext.getBean(key);
+                        GeneratorRecipient recipient = (GeneratorRecipient) springContext.getBean(visits.getString(key));
+                        this.entityGenerator.addVisit(new DefaultGenerator.GeneratorVisit(guest, recipient));
+                    }
+                }
             }
         }
-        
-        private void setGenerator(JSONObject generator, Type type, String generatorColumn, String relationshipName) {
-            String generatorClassName = generator.getString(KEY_CLASSNAME);
-            Object args = buildArguments(generator);
-            
+
+        private Object instantiateGenerator(JSONObject generator) {
+            if (generator.has(KEY_BEAN_NAME)) {
+                String beanName = generator.getString(KEY_BEAN_NAME);
+                return springContext.getBean(beanName);
+            }
+            else {
+                String generatorClassName = generator.getString(KEY_CLASSNAME);
+                Object args = buildArguments(generator);
+                return createGenerator(generatorClassName, args);
+            }
+        }
+
+        private void setGenerator (JSONObject generator, Type type, String generatorColumn,
+                                   String relationshipName)
+        {
+            Generator columnGenerator = (Generator) instantiateGenerator(generator);
+
             Property p = type.getProperty(normalize(generatorColumn));
-            if(p != null) {
-                logger.info(String.format("Setting generator '%s' for property %s mapped to column '%s' in table %s", generatorClassName, p.getName(), generatorColumn, type.getName()));
-                Generator columnGenerator = (Generator)createGenerator(generatorClassName, args);
-                if(relationshipName == null) {
+            if (p != null) {
+                logger.info(String.format(
+                    "Setting generator '%s' for property %s mapped to column '%s' in table %s",
+                    generator.toString(), p.getName(), generatorColumn, type.getName()));
+                if (relationshipName == null) {
                     p.setGenerator(columnGenerator);
-                } else {
+                }
+                else {
                     p.setGenerator(relationshipName, columnGenerator);
                 }
-            } else {
-                throw new RuntimeException(String.format("Unable to find property for column %s in table %s", generatorColumn, type.getName()));
-            }            
+            }
+            else {
+                throw new RuntimeException(String.format("Unable to find property for column %s in table %s",
+                    generatorColumn, type.getName()));
+            }
         }
         
         private Shape getShape() {
@@ -776,7 +831,12 @@ public class CSVLoader implements Callable {
            for(String dependsOnTable: this.dependsOn) {
                CSVState fkState = loader.findState(dependsOnTable);
                if(fkState == null) {
-                   throw new RuntimeException(String.format("Unable to find csv file for table " + dependsOnTable));
+                   if(!loader.ignoreDependencyErrors) {
+                       throw new RuntimeException(String.format("Unable to find csv file for table " + dependsOnTable));
+                   } else {
+                       logger.warn(String.format("Unable to find csv file for table %s. File not needed if data for this table is already in database.", dependsOnTable));
+                       continue;
+                   }
                }
                
                Edge<CSVState> edge = new Edge<>(dependsOnTable, fkState, this);
@@ -843,7 +903,15 @@ public class CSVLoader implements Callable {
         this(shape, path, null, null, null, 1);
     }
 
+    public CSVLoader(Shape shape, String path, String fileFilter) {
+        this(shape, path, null, null, null, 1, fileFilter, true);
+    }
+
     public CSVLoader(Shape shape, String path, Integer jobNo, Settings settings, JDBCDataStore dataStore, Integer numThreads) {
+        this(shape, path, jobNo, settings, dataStore, numThreads, "CSV", false);
+    }
+
+    public CSVLoader(Shape shape, String path, Integer jobNo, Settings settings, JDBCDataStore dataStore, Integer numThreads, String fileFilter, boolean ignoreDependencyErrors) {
         this(shape);
         
         this.folderPath = path;
@@ -851,6 +919,7 @@ public class CSVLoader implements Callable {
         this.settings = settings;
         this.dataStore = dataStore;
         this.numThreads = numThreads;
+        this.ignoreDependencyErrors = ignoreDependencyErrors;
 
         if(path == null || "".equals(path.trim())) {
             throw new RuntimeException("Folder needs to be specified");
@@ -887,7 +956,7 @@ public class CSVLoader implements Callable {
 
         List<String> csvFiles = new ArrayList<>();
         for (String file : files) {
-            if(file.toUpperCase().endsWith("CSV")) {
+            if(file.toUpperCase().endsWith(fileFilter)) {
                 csvFiles.add(folderPath+file);
             }
         }
@@ -1064,7 +1133,7 @@ public class CSVLoader implements Callable {
         EntityType entityType = (EntityType) csvState.getType();
         CSVPrinter csvPrinter = csvState.csvPrinter;
         
-        logger.info("Creating date for table " + csvState.getTableName());
+        logger.info("Creating data for table " + csvState.getTableName());
         StateGraph.ObjectGenerationVisitor currentVisitor = getOrCreateVisitor(settings);
         
         JDBCSessionContext sc = dataStore == null ? null : dataStore.getSessionContext();
@@ -1342,7 +1411,9 @@ public class CSVLoader implements Callable {
                             JSONArray keys = csvState.schema.getJSONArray(KEY_KEYS);
                             for(int j = 0; j < keys.length(); j++) {
                                 String key = CSVState.normalize(keys.getString(j));
-                                missingKeys.add(key);
+                                if(!entityJSON.has(key)) {
+                                    missingKeys.add(key);
+                                }
                             }
                              
                             for(String key: missingKeys) {
@@ -1413,7 +1484,7 @@ public class CSVLoader implements Callable {
     
     private void populateLookupKeyValues(JSONObject entityJSON, Settings settings, StateGraph.ObjectGenerationVisitor currentVisitor, Map<String, Property> loopKeyPropertyMap) {
         for(Map.Entry<String, Property> entry: loopKeyPropertyMap.entrySet()) {
-            logger.info(String.format("populateLookupKeyValues: key: %s, property name: %s", entry.getKey(), (entry.getValue() == null ? "null" : entry.getValue().getName())));
+            logger.debug(String.format("populateLookupKeyValues: key: %s, property name: %s", entry.getKey(), (entry.getValue() == null ? "null" : entry.getValue().getName())));
 
             if(!entityJSON.has(entry.getKey())) {
                 entityJSON.put(entry.getKey(), ((BasicType)entry.getValue().getType()).generate(

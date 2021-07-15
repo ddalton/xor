@@ -908,7 +908,7 @@ public class CSVLoader implements Callable {
     }
 
     public CSVLoader(Shape shape, String path, Integer jobNo, Settings settings, JDBCDataStore dataStore, Integer numThreads) {
-        this(shape, path, jobNo, settings, dataStore, numThreads, "CSV", false);
+        this(shape, path, jobNo, settings, dataStore, numThreads, "(?i).*csv", false);
     }
 
     public CSVLoader(Shape shape, String path, Integer jobNo, Settings settings, JDBCDataStore dataStore, Integer numThreads, String fileFilter, boolean ignoreDependencyErrors) {
@@ -956,7 +956,7 @@ public class CSVLoader implements Callable {
 
         List<String> csvFiles = new ArrayList<>();
         for (String file : files) {
-            if(file.toUpperCase().endsWith(fileFilter)) {
+            if(file.toUpperCase().matches(fileFilter)) {
                 csvFiles.add(folderPath+file);
             }
         }

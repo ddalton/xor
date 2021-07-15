@@ -209,7 +209,8 @@ public class CSVLoaderTest {
 
     @Test
     public void test2() throws IOException {
-        String csvFilePath = "csvloader/test2/Task.csv";
+	    String testFolder = "csvloader/test2";
+        String csvFilePath = testFolder + "/Task.csv";
         String csvGenFilePath = csvFilePath + ".gen";
 
         String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
@@ -231,13 +232,19 @@ public class CSVLoaderTest {
         sc.setAutoCommit(false);
         sc.beginTransaction();
         try {
-            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+            Settings settings = new Settings();
+            csvState.writeToCSV(absolutePath, settings, dataStore);
+            validateTask(importTasks(dataStore, settings, shape, testFolder, "(?i).*csv"), 5, shape, false);
         } finally {
             sc.rollback();
             sc.close();
         }
     }
-    
+
+    /**
+     * Uses a QueryGenerator to populate project from task
+     * @throws IOException
+     */
     @Test
     public void test3() throws IOException {
         String testFolder = "csvloader/test3/";
@@ -271,14 +278,20 @@ public class CSVLoaderTest {
         try {
             Graph<CSVState, Edge<CSVState>> graph = csvLoader.getGraph();
             ((DirectedSparseGraph)graph).exportToDOT("test3.dot");
+
+            /* Uncomment the following code to write to file
             for(CSVState state: graph.getVertices()) {
                 if(state.getTableName().equals("Project")) {
                     state.createCSVPrinter(absolutePath);
                 }
             }
-            
-            csvLoader.importData(new Settings(), dataStore);
-            
+             */
+
+            Settings settings = new Settings();
+            csvLoader.importData(settings, dataStore);
+            validateTask(queryTasks(settings, shape), 5, shape, false);
+            validateProject(queryProjects(settings, shape), 5, shape);
+
         } finally {
                 sc.rollback();
                 sc.close();
@@ -323,7 +336,8 @@ public class CSVLoaderTest {
         sc.beginTransaction();    
         try {
             // We are only loading the Person entries
-            csvLoader.importData(new Settings(), dataStore);
+            Settings settings = new Settings();
+            csvLoader.importData(settings, dataStore);
 
             // We shall now generate the Task.schema.gen 
             String csvFilePath = "csvloader/test4/Task.schema";
@@ -332,6 +346,8 @@ public class CSVLoaderTest {
             
             CSVState csvState = csvLoader.getCSVState(csvFilePath);
             csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+
+            validateTask(importTasks(dataStore, settings, shape, testFolder), 5, shape);
             
         } finally {
                 sc.rollback();
@@ -379,7 +395,8 @@ public class CSVLoaderTest {
         sc.beginTransaction();    
         try {
             // We are only loading the Person entries
-            csvLoader.importData(new Settings(), dataStore);
+            Settings settings = new Settings();
+            csvLoader.importData(settings, dataStore);
             
             // We shall now generate the Task.csv.gen 
             String csvFilePath = "csvloader/test5/Task.schema";
@@ -387,7 +404,9 @@ public class CSVLoaderTest {
             String absolutePath = getAbsoluteResourcePath(csvGenFilePath);            
             
             CSVState csvState = csvLoader.getCSVState(csvFilePath);
-            csvState.writeToCSV(absolutePath, new Settings(), dataStore);            
+            csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+
+            validateTask(importTasks(dataStore, settings, shape, testFolder), 10, shape);
             
         } finally {
                 sc.rollback();
@@ -398,19 +417,12 @@ public class CSVLoaderTest {
     /*
      * Test used to generate a csv file with 1 million records.
      * To use this rename test6/Task.csv.gen to test6/Task.csv
-     * 
+     *
     @Test
     public void test6() throws IOException {
-        String csvFilePath = "csvloader/test6/Task.csv";
-        String csvGenFilePath = csvFilePath + ".gen";
-
-        String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+        String csvFilePath = "csvloader/test6/Task.csv.gen";
+        String absolutePath = getAbsoluteResourcePath("csvloader/test6/Task.1M.csv");
         System.out.println("Path: " + absolutePath);
-
-        DataModel dm = amJDBC.getDataModel();
-        Shape shape = dm.getShape();
-        CSVLoader csvLoader = new CSVLoader(shape);
-        CSVState csvState = csvLoader.getCSVState(csvFilePath);
 
         amJDBC.configure(null);
         JDBCDataStore dataStore = (JDBCDataStore) amJDBC.getDataStore();
@@ -418,20 +430,29 @@ public class CSVLoaderTest {
         sc.setAutoCommit(false);
         sc.beginTransaction();
         try {
+            DataModel dm = amJDBC.getDataModel();
+            Shape shape = dm.getShape();
+            CSVLoader csvLoader = new CSVLoader(shape);
+            CSVState csvState = csvLoader.getCSVState(csvFilePath);
+
             csvState.writeToCSV(absolutePath, new Settings(), dataStore);
-        } finally {
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        finally {
             sc.rollback();
             sc.close();
         }
     }
-    */   
+     */
     
     @Test
     public void test6_import() throws IOException {
 
         DataModel dm = amJDBC.getDataModel();
         Shape shape = dm.getShape();
-        CSVLoader csvLoader = new CSVLoader(shape, "csvloader/test6");
+        String testFolder = "csvloader/test6";
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder);
 
         amJDBC.configure(null);
         JDBCDataStore dataStore = (JDBCDataStore) amJDBC.getDataStore();
@@ -440,7 +461,9 @@ public class CSVLoaderTest {
         sc.beginTransaction();
         try {
             //csvLoader.importData(new Settings(), dataStore);
-            csvLoader.importDataParallel(new Settings(), amJDBC.getDataModelFactory(), 4);
+            Settings settings = new Settings();
+            csvLoader.importDataParallel(settings, amJDBC.getDataModelFactory(), 4);
+            validateTask(queryTasks(settings, shape), 24997, shape, false);
         } finally {
             try (Statement stmt = sc.getConnection().createStatement()) {
                 stmt.execute("DELETE from TASK");
@@ -486,7 +509,8 @@ public class CSVLoaderTest {
         sc.beginTransaction();
         try {
             // We are only loading the Person entries
-            csvLoader.importData(new Settings(), dataStore);
+            Settings settings = new Settings();
+            csvLoader.importData(settings, dataStore);
 
             // We shall now generate the Task.schema.gen
             String csvFilePath = "csvloader/test7/Task.schema";
@@ -495,6 +519,8 @@ public class CSVLoaderTest {
 
             CSVState csvState = csvLoader.getCSVState(csvFilePath);
             csvState.writeToCSV(absolutePath, new Settings(), dataStore);
+
+            validateTask(importTasks(dataStore, settings, shape, testFolder), 20, shape);
 
         } finally {
             sc.rollback();
@@ -554,27 +580,45 @@ public class CSVLoaderTest {
         }
     }
 
-    private List importTasks(JDBCDataStore dataStore, Settings settings, Shape shape, String testFolder) {
+    private List queryTasks(Settings settings, Shape shape) {
+        return queryEntity(settings, shape, "TASK");
+    }
 
-        // Import the tasks to the DB
-        CSVLoader csvLoader = new CSVLoader(shape, testFolder, "SCHEMA");
-        csvLoader.importData(settings, dataStore);
+    private List queryProjects(Settings settings, Shape shape) {
+        return queryEntity(settings, shape, "PROJECT");
+    }
 
+    private List queryEntity(Settings settings, Shape shape, String tableName) {
         List<String> paths = new ArrayList<>();
         paths.add("UUID");
         paths.add("NAME");
         paths.add("CREATEDON");
-        paths.add("OWNEDBY_UUID");
-        AggregateView ownedByView = new AggregateView("TTT");
+        if(tableName.equals("TASK")) {
+            paths.add("OWNEDBY_UUID");
+        }
+        AggregateView ownedByView = new AggregateView(tableName+"_VIEW");
         ownedByView.setAttributeList(paths);
 
         settings.setView(ownedByView);
-        settings.setEntityType(shape.getType("TASK"));
+        settings.setEntityType(shape.getType(tableName));
         settings.init(shape);
 
         List result = amJDBC.query(null, settings);
 
         return result;
+    }
+
+    private List importTasks(JDBCDataStore dataStore, Settings settings, Shape shape, String testFolder) {
+        return importTasks(dataStore, settings, shape, testFolder, "(?i).*schema");
+    }
+
+    private List importTasks(JDBCDataStore dataStore, Settings settings, Shape shape, String testFolder, String fileFilter) {
+
+        // Import the tasks to the DB
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder, fileFilter);
+        csvLoader.importData(settings, dataStore);
+
+        return queryTasks(settings, shape);
     }
 
     private void validateSameOwner(List tasks, int numTasks, Shape shape) {
@@ -593,6 +637,41 @@ public class CSVLoaderTest {
                 assert(t.getString("UUID").equals("ID_1"));
             } else {
                 assert(t.getString("OWNEDBY_UUID").equals("ID_1"));
+            }
+        }
+    }
+
+    private void validateTask(List tasks, int numTasks, Shape shape) {
+        validateTask(tasks, numTasks, shape, true);
+    }
+
+    private void validateProject(List tasks, int numTasks, Shape shape) {
+        validateTask(tasks, numTasks, shape, false);
+    }
+
+    private void validateTask(List tasks, int numTasks, Shape shape, boolean validateOwner) {
+        assert tasks.size() == numTasks;
+
+        boolean modelsRelationships = true;
+        if(shape.getName().equals(DataModel.RELATIONAL_SHAPE)) {
+            modelsRelationships = false;
+        }
+
+        for(Object task: tasks) {
+            JSONObject t = (JSONObject) task;
+
+            t.has("CREATEDON");
+            t.has("UUID");
+            t.has("NAME");
+
+            if(validateOwner) {
+                if (modelsRelationships) {
+                    t = t.getJSONObject("OWNEDBY_UUID");
+                    assert (t.has("UUID"));
+                }
+                else {
+                    assert (t.has("OWNEDBY_UUID"));
+                }
             }
         }
     }

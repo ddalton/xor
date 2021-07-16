@@ -47,6 +47,7 @@ import tools.xor.Property;
 import tools.xor.Settings;
 import tools.xor.generator.Generator;
 import tools.xor.generator.StringTemplate;
+import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.providers.jdbc.JDBCDataStore;
 import tools.xor.providers.jdbc.JDBCSessionContext;
 import tools.xor.service.AggregateManager;
@@ -561,7 +562,7 @@ public class CSVLoaderTest {
             csvLoader.importData(settings, dataStore);
 
             // We shall now generate the Task.schema.gen
-            String csvFilePath = "csvloader/test8/Task.schema";
+            String csvFilePath = testFolder + "Task.schema";
             String csvGenFilePath = csvFilePath + ".gen";
             String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
 
@@ -570,6 +571,63 @@ public class CSVLoaderTest {
             csvState.writeToCSV(absolutePath, settings, dataStore);
 
             validateSameOwner(importTasks(dataStore, settings, shape, testFolder), 20, shape);
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            sc.rollback();
+            sc.close();
+        }
+    }
+
+    /**
+     * Uses Spring config to populate data. Spring config is required to model dependencies
+     * between generators
+     *
+     * @throws IOException
+     */
+    @Test
+    public void test9() throws IOException {
+        String testFolder = "csvloader/test9/";
+
+        if (CSVLoaderTest.class.getClassLoader().getResource(testFolder) == null) {
+            throw new RuntimeException(String.format("Unable to find the folder '%s' needed to run test8", testFolder));
+        }
+
+        List<String> files = IOUtils.readLines(CSVLoaderTest.class.getClassLoader().getResourceAsStream(testFolder), StandardCharsets.UTF_8.name());
+        for(String file: files) {
+            System.out.println(file);
+        }
+
+        DataModel dm = amJDBC.getDataModel();
+        Shape shape = dm.getShape(JDBCDataModel.RELATIONAL_SHAPE);
+        if(shape == null) {
+            shape = dm.createShape(JDBCDataModel.RELATIONAL_SHAPE);
+        }
+
+        CSVLoader csvLoader = new CSVLoader(shape, testFolder);
+
+        amJDBC.configure(null);
+        JDBCDataStore dataStore = (JDBCDataStore)amJDBC.getDataStore();
+        JDBCSessionContext sc = dataStore.getSessionContext();
+        sc.setAutoCommit(false);
+        sc.beginTransaction();
+        try {
+            // We are only loading the Person entries
+            Settings settings = new Settings();
+            csvLoader.importData(settings, dataStore);
+
+            // We shall now generate the Task.schema.gen
+            String csvFilePath = testFolder + "Task.schema";
+            String csvGenFilePath = csvFilePath + ".gen";
+            String absolutePath = getAbsoluteResourcePath(csvGenFilePath);
+
+            CSVState csvState = csvLoader.getCSVState(csvFilePath);
+
+            csvState.writeToCSV(absolutePath, settings, dataStore);
+
+            validateTaskChildren(importTasks(dataStore, settings, shape, testFolder), 600, shape);
 
         }
         catch (Exception e) {
@@ -591,6 +649,7 @@ public class CSVLoaderTest {
     private List queryEntity(Settings settings, Shape shape, String tableName) {
         List<String> paths = new ArrayList<>();
         paths.add("UUID");
+        paths.add("TASKPARENT_UUID");
         paths.add("NAME");
         paths.add("CREATEDON");
         if(tableName.equals("TASK")) {
@@ -637,6 +696,23 @@ public class CSVLoaderTest {
                 assert(t.getString("UUID").equals("ID_1"));
             } else {
                 assert(t.getString("OWNEDBY_UUID").equals("ID_1"));
+            }
+        }
+    }
+
+    private void validateTaskChildren(List tasks, int numTasks, Shape shape) {
+        assert tasks.size() == numTasks;
+
+        for(int i = 0; i < tasks.size(); i++) {
+            JSONObject t = (JSONObject) tasks.get(i);
+
+            // First 100 tasks do not have TASKPARENT_UUID
+            String idNum = t.getString("UUID").substring(3);
+            int id = Integer.parseInt(idNum);
+
+            // First 100 tasks go from 2  - 101
+            if(id < 102) {
+                assert !t.has("TASKPARENT_UUID");
             }
         }
     }

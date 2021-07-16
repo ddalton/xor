@@ -347,6 +347,7 @@ public class CSVLoader implements Callable {
                     for (Resource r : resources) {
                         XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(springContext);
                         reader.loadBeanDefinitions(r);
+                        springContext.refresh();
                     }
                 } catch (IOException e) {
                     throw ClassUtil.wrapRun(e);
@@ -433,8 +434,8 @@ public class CSVLoader implements Callable {
                     Iterator<String> keyIter = visits.keys();
                     while(keyIter.hasNext()) {
                         String key = keyIter.next();
-                        Generator guest = (Generator) springContext.getBean(key);
-                        GeneratorRecipient recipient = (GeneratorRecipient) springContext.getBean(visits.getString(key));
+                        GeneratorRecipient recipient = (GeneratorRecipient) springContext.getBean(key);
+                        Generator guest = (Generator) springContext.getBean(visits.getString(key));
                         this.entityGenerator.addVisit(new DefaultGenerator.GeneratorVisit(guest, recipient));
                     }
                 }
@@ -1331,7 +1332,12 @@ public class CSVLoader implements Callable {
         List<Object> result = new ArrayList<>();
         
         for(String column: columnList) {
-            result.add(json.get(column));
+            if(!json.has(column)) {
+                // Need to handle case where column has a null value
+                result.add(null);
+            } else {
+                result.add(json.get(column));
+            }
         }
         
         return result;

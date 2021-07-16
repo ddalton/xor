@@ -277,6 +277,7 @@ public class CSVLoader implements Callable {
     private Settings settings;
     private JDBCDataStore dataStore;
     private Integer numThreads;
+    private Map<String, GenericApplicationContext> globalContexts;
     
     private static final String KEY_ENTITY_NAME = "entityName";
     private static final String KEY_TABLE_NAME = "tableName";
@@ -295,7 +296,9 @@ public class CSVLoader implements Callable {
     private static final String KEY_ARGUMENTS = "arguments";
     private static final String KEY_DEPENDS_ON = "dependsOn";
     private static final String KEY_ENTITY_GENERATOR = "entityGenerator";
+    private static final String KEY_SPRING_CONFIGS = "springConfigs";
     private static final String KEY_LOCATION_PATTERN = "locationPattern";
+    private static final String KEY_SPRING_SCOPE = "scope";
     private static final String KEY_BEAN_NAME = "beanName";
     private static final String KEY_VISITS = "visits";
     
@@ -312,7 +315,7 @@ public class CSVLoader implements Callable {
         private Set<String> dependsOn;
         private CSVPrinter csvPrinter;
         private Map<String, String> columnAliases;
-        private GenericApplicationContext springContext;
+        private GenericApplicationContext localContext;
 
         public CSVState(Type type, JSONObject schema, String csvFile, CSVLoader loader, Shape childShape) {
             // make a copy of the type and add it to the child shape
@@ -334,20 +337,48 @@ public class CSVLoader implements Callable {
             // Validate the schema
             SCHEMA.validate(this.schema);
 
-            if(schema.has(KEY_LOCATION_PATTERN)) {
+            if(schema.has(KEY_SPRING_CONFIGS)) {
                 try {
-                    String locationPattern = this.schema.getString(KEY_LOCATION_PATTERN);
-                    PathMatchingResourcePatternResolver pmrl = new PathMatchingResourcePatternResolver(
-                        this.getClass().getClassLoader());
-                    // location pattern can be something like
-                    // "classpath*:com/mycompany/**/applicationContext.xml"
-                    Resource[] resources = pmrl.getResources(locationPattern);
+                    JSONArray configs = schema.getJSONArray(KEY_SPRING_CONFIGS);
+                    int numLocalConfigs = 0;
+                    for(int i = 0; i < configs.length(); i++) {
+                        JSONObject springConfig = configs.getJSONObject(i);
+                        boolean isGlobal = true;
+                        if(springConfig.has(KEY_SPRING_SCOPE)) {
+                            if(springConfig.getString(KEY_SPRING_SCOPE).toLowerCase().equals("local")) {
+                                isGlobal = false;
+                                numLocalConfigs++;
 
-                    springContext = new GenericApplicationContext();
-                    for (Resource r : resources) {
-                        XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(springContext);
-                        reader.loadBeanDefinitions(r);
-                        springContext.refresh();
+                                if(numLocalConfigs > 1) {
+                                    throw new RuntimeException("Can have only one local spring config per table");
+                                }
+                            }
+                        }
+                        String locationPattern = springConfig.getString(KEY_LOCATION_PATTERN);
+                        PathMatchingResourcePatternResolver pmrl = new PathMatchingResourcePatternResolver(
+                            this.getClass().getClassLoader());
+                        // location pattern can be something like
+                        // "classpath*:com/mycompany/**/applicationContext.xml"
+                        Resource[] resources = pmrl.getResources(locationPattern);
+
+                        // Check if this is a global config that has already been loaded
+                        if(isGlobal && this.loader.globalContexts.containsKey(locationPattern)) {
+                            continue;
+                        }
+
+                        GenericApplicationContext springContext = new GenericApplicationContext();
+                        for (Resource r : resources) {
+                            XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(
+                                springContext);
+                            reader.loadBeanDefinitions(r);
+                            springContext.refresh();
+                        }
+
+                        if(isGlobal) {
+                            this.loader.globalContexts.put(locationPattern, springContext);
+                        } else {
+                            this.localContext = springContext;
+                        }
                     }
                 } catch (IOException e) {
                     throw ClassUtil.wrapRun(e);
@@ -429,23 +460,47 @@ public class CSVLoader implements Callable {
                 this.entityGenerator = (GeneratorDriver) instantiateGenerator(generator);
                 ((EntityType)getType()).addGenerator(entityGenerator);
 
-                if(generator.has(KEY_VISITS) && springContext != null) {
+                if(generator.has(KEY_VISITS)) {
                     JSONObject visits = generator.getJSONObject(KEY_VISITS);
                     Iterator<String> keyIter = visits.keys();
                     while(keyIter.hasNext()) {
                         String key = keyIter.next();
-                        GeneratorRecipient recipient = (GeneratorRecipient) springContext.getBean(key);
-                        Generator guest = (Generator) springContext.getBean(visits.getString(key));
+                        GeneratorRecipient recipient = (GeneratorRecipient) getBean(key);
+                        Generator guest = (Generator) getBean(visits.getString(key));
                         this.entityGenerator.addVisit(new DefaultGenerator.GeneratorVisit(guest, recipient));
                     }
                 }
             }
         }
 
+        private Object getBean(String beanName) {
+            Object result = null;
+
+            if(localContext != null) {
+                result = localContext.getBean(beanName);
+                if(result == null) {
+                    logger.info("Unable to find bean " + beanName + " in local spring context");
+                }
+            }
+
+            // Check the global contexts for the bean
+            // with return the first bean that matches the name
+            if(result == null) {
+                for(Map.Entry<String, GenericApplicationContext> entry: loader.globalContexts.entrySet()) {
+                    result = entry.getValue().getBean(beanName);
+                    if(result != null) {
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private Object instantiateGenerator(JSONObject generator) {
             if (generator.has(KEY_BEAN_NAME)) {
                 String beanName = generator.getString(KEY_BEAN_NAME);
-                return springContext.getBean(beanName);
+                return getBean(beanName);
             }
             else {
                 String generatorClassName = generator.getString(KEY_CLASSNAME);
@@ -898,6 +953,7 @@ public class CSVLoader implements Callable {
         this.numThreads = 1;
         this.orderingGraph = new DirectedSparseGraph<>();
         this.tableStateMap = new HashMap<>();
+        this.globalContexts = new HashMap<String, GenericApplicationContext>();
     }
     
     public CSVLoader(Shape shape, String path) {

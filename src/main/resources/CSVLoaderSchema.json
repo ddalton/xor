@@ -120,9 +120,29 @@
                 }
             }
         },
-        "locationPattern": {
-            "type": "string",
-            "description": "Location to the spring config file for the spring generator beans. Useful if relationships between generators need to be configured. If this is used, then the beanName for the generator needs to be specified to refer to the bean from this config."
+        "springConfigs": {
+            "type": "array",
+            "description": "Location to the spring config files for the spring generator beans. Useful if relationships between generators need to be configured. If this is used, then the beanName for the generator needs to be specified to refer to the bean from this config.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "locationPattern": {
+                        "type": "string",
+                        "description": "Spring xml file location. This file contains the generator as spring beans"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "global",
+                            "local"
+                        ],
+                        "description": "A global config shares the generators across the tables. This is useful to satisfy any generator dependencies. By default the config is global."
+                    }
+                },
+                "required": [
+                    "locationPattern"
+                ]
+            }
         }
     },
     "required": [

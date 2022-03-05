@@ -1,0 +1,3 @@
+task
+{ "entityName":"tools.xor.db.pm.Quote", "tableName":"Quote", "keys" : ["uuid"], "columnGenerators":[ { "column" : "PRICE", "className" : "tools.xor.generator.DefaultGenerator", "arguments":["10037","10037","2"] }], "foreignKeys" : [ { "foreignKey" : "task_UUID", "foreignKeyTable" : "Task", "select" : "uuid", "join" : [{"name":"task"}]} ]}
+TASK_4

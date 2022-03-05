@@ -1,0 +1,36 @@
+markdown: kramdown
+highlighter: rouge
+
+google_analytics_id: UA-90089680-1
+google-site-verification: Yta1nnv-oAV-9Z-zS422-H0NMpdPbKlWkMuGsNeqgxw
+
+repository: https://github.com/ddalton/xor
+help_url: http://stackoverflow.com/questions/tagged/xortools
+
+timezone: America/Los_Angeles
+
+collections:
+  docs:
+    output: true
+  posts:
+    permalink: /news/:year/:month/:day/:title/
+    output: true
+
+name: XOR
+description: Transform your ORM app to be powerful, simple and fast
+url: http://xor.tools
+
+logo: /img/logo-2x.png
+
+gems:
+  - jekyll-avatar
+  - jekyll-feed
+  - jekyll-mentions
+  - jekyll-redirect-from
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jemoji
+
+exclude:
+  - README.md
+  - .gitignore

@@ -1,0 +1,122 @@
+= XOR
+:hardbreaks:
+
+XOR is a tool that works with Data Models and provides services against them. Below is the concepts guide to understand what XOR covers.
+If you would like to jump straight to using XOR library in your project then please go through the https://github.com/ddalton/xor/wiki[docs].
+
+== Services
+
+* Provide CRUDQ operations against an RDBMS using Json or POJO objects.
+* Optimization for Q (Query) operation. Achieved by allowing the user to construct a Json or POJO object in an efficient manner with no impact to the end user of the implementation user. For e.g., the developer can specify a SQL, OQL or even a Stored Procedure to satisfy the query request with no changes to the code. More details can be found below under the Data retrieval pattern section.
+* Daa generation of objects against the types in the Data Model. More details can be found below under the Data generation pattern section.
+* Object Export/Import to the following sinks/sources
+** Database
+** CSV
+** Excel
+* Type Export/Import to allow creation and export of the Data Model. For e.g., A Data Model can be imported/exported from a JSON schema, or it can be imported from the Meta model of the JPA layer.
+* Generation of Class and Object diagrams for the Data Model
+* TypeMapper functionality to enable data transformation from one Data Model to another
+
+== Supported Data Models
+
+In a typical J2EE environment, a development team has to interact with the following 3 data models:
+
+1. *UI model* - Schema section in swagger for REST APIs
+2. *Java model* - Business logic classes modeled in an ORM 
+3. *Database model* - Tables and foreign keys in an RDBMS
+
+Support comes out of the box for Swagger, JPA and JDBC representations for these models. It is possible for other models to be plugged into this architecture.
+
+= Data patterns
+A couple of data patterns rise to the top in terms of performance related to persistence.
+
+== Data retrieval
+When a UI needs to retrieve data to populate its model it has to go through 2 transformations
+  
+       +------------+     1     +--------------+    2     +---------------+
+       |  UI Model  |---------->|  JPA model   |--------->|   JDBC model  |      
+       +------------+           +--------------+          +---------------+
+               
+                       Fig 1. Example of a data flow involving all 3 models
+
+Transformation #1 is usually straightforward, as it is a mapping from a Java object to a JSON object and 
+can be done in-memory.
+Transformation #2 is where most of the performance issues occur. This happens because the ORM layer tries
+to hide most of the complexity between the Object Oriented to the Relational model mapping.
+Depending on how this mapping is done and how complex the business model is, some queries can perform
+very badly.
+XOR addresses this issue by allowing the web developer to express the data retrieval request directly
+against the RDBMS using the UI model, thereby bypassing transformation #2.
+
+== Data generation
+There are many times when we need to generate a large amount of data in a reasonable time:
+
+* Troubleshoot a performance issue when access to the customer's data is not permitted
+* Create a large data set for performance testing and the model is rapidly evolving
+* Create data for unit tests that requires a database (in-memory)
+
+As shown in the diagram above, transformation #2 puts a large overhead when populating the database.
+XOR allows the user to directly access the JDBC model and generate data as needed. 
+It supports the concept of generators for each field. 
+A generator can specify how the data needs to be populated for e.g., 
+
+* Data for simple data types 
+* Data needed to model association relationships 
+* Data needed to model inheritance relationships.
+
+Details on how to generate and import data using CSV files is described at https://github.com/ddalton/xor/wiki/Data-generation-using-CSV-files
+
+= Uniform type interface
+
+The access to the above 3 models is exposed through XOR using a common type system. This type system models the data as JSON objects.
+For example, in the UI model the XOR tool is initialized with the swagger schema and for the JDBC model, it is initialized by reading the tables and foreign keys using the appropriate database dialect.
+
+This architecture allows XOR to also be used as a data migration tool between incompatible models, as long as the necessary data conversion is performed on the JSON object to match the type appropriate for each model.
+
+= Configuration
+
+Depending on the use case configuration requirements to use XOR varies.
+Before we address the configuration requirements we need to understand the following concepts
+
+== Model classification
+
+A data model can be one of 2 forms depending on how it is created
+
+1. *Prescribed* - User specifies the model. For e.g., swagger or JSON schema document
+2. *Derived* - The model is derived from another model. For e.g., JPA metadata or RDBMS catalog
+
+XOR works with models of any of the above 2 forms transparently since it uses a uniform type interface. 
+But the CRUDQ operations on a Prescribed model might be limited, depending on the configuration.
+
+== Architecture
+
+The configuration is directly tied to the architecture of XOR. 
+XOR is a data transformation tool, taking data from one model representation and transforming it to data in another model representation.
+Below is the anatomy of the transformation process
+
+                            prescribed                          derived
+                    +-----------------+                +---------------+
+      USER <------> |  EXTERNAL       | <------------> |   DOMAIN      | <--------->  DATABASE
+                    +-----------------+                +---------------+
+                             ^                                 ^
+                             |             typeMapper          |
+                             +----------------------------------
+
+                  Fig 2: Transformation between prescribed and derived models
+
+A model can be in involved in one or both of the following roles
+
+1. *EXTERNAL* - The audience for this model is the end user
+2. *DOMAIN* - The audience for this model is the database
+
+A type mapper is configured to help in the data transformation between the models.
+A few built-in type mappers are supported and this is an area of improvement where enhancements will allow more complex type mappings.
+Two ways of configuring the type mappers are currently provided.
+
+1. Implement a custom type mapper or use one of the built-in Java type mappers. Used mainly for CRUD operations.
+2. Specify the type mapping in an XML file. Used in query operation, where one can specify OQL or SQL queries.
+
+Fig 2. above gives an example of a prescribed model (e.g., swagger) configured as the EXTERNAL model and a derived model (e.g., JPA) configured as the DOMAIN model.
+
+== License
+This project is licensed under https://apache.org/licenses/LICENSE-2.0[Apache 2.0 license].

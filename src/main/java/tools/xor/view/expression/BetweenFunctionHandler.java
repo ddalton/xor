@@ -1,0 +1,42 @@
+/**
+ * XOR, empowering Model Driven Architecture in J2EE applications
+ *
+ * Copyright (c) 2012, Dilip Dalton
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations 
+ * under the License.
+ */
+
+package tools.xor.view.expression;
+
+import java.util.List;
+
+/**
+ * Support the between function with format
+ *   between(updatedOn, ":updatedFrom", ":updatedTo")
+ */
+public class BetweenFunctionHandler extends FunctionHandler
+{
+
+	@Override public void init (List<String> args)
+	{
+		normalizedNames.put(args.get(0), null);
+		parameterName.add(args.get(1));
+		parameterName.add(args.get(2));
+	}
+
+	@Override
+	public String getQueryString() {
+		return getNormalizedAttributeName() + " BETWEEN :" + parameterName.get(0) + " AND :" + parameterName.get(1);
+	}	
+}

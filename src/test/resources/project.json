@@ -1,0 +1,138 @@
+{
+  "info": {
+    "title": "Project model",
+    "description": "This is a sample project model including tasks and owners",
+    "version": "1.0.1"
+  },
+  "components": {
+    "schemas": {
+      "Id": {
+        "type": "object",
+        "surrogateKey": "id",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identifier for the entity"
+          },
+          "createdOn": {
+            "type": "string",
+            "description": "The date the entity was created"
+          },
+          "updatedOn": {
+            "type": "string",
+            "description": "The date the entity was updated"
+          }
+        },
+        "description": "All entities are represented by the Id type"
+      },
+      "Identity": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Id"
+          },
+          {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the person"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name of the person"
+              },
+              "iconUrl": {
+                "type": "string",
+                "description": "The profile picture for the person"
+              },
+              "detailedDescription": {
+                "type": "string",
+                "description": "A detailed description about the person"
+              },
+              "description": {
+                "type": "string",
+                "description": "A short description about the person"
+              }
+            }
+          }
+        ],
+        "description": "The identity entity"
+      },
+      "Person": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Identity"
+          },
+          {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "username": {
+                "type": "string",
+                "maxLength": 30,
+                "description": "username property"
+              },
+              "commonName": {
+                "type": "string",
+                "description": "The common name of the person"
+              },
+              "password": {
+                "type": "string",
+                "description": "Hashed value of the password"
+              },
+              "email": {
+                "type": "string",
+                "description": "The email value for the person"
+              }
+            }
+          }
+        ],
+        "description": "The Person type"
+      },
+      "Task": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Identity"
+          },
+          {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "taskUri": {
+                "type": "string",
+                "maxLength": 1024,
+                "description": "The URI for the task entity"
+              },
+              "assignedTo": {
+                "$ref": "#/components/schemas/Person"
+              },
+              "subTasks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "description": "A list of subtask names"
+              },
+              "childTasks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Task"
+                },
+                "description": "A list of child tasks"
+              } 
+            }
+          }
+        ],
+        "description": "The Task type"
+      } 
+    }
+  }
+}

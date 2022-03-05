@@ -1,0 +1,5 @@
+name, displayName, description
+{ "entityName":"tools.xor.db.base.Person", "tableName":"Person", "columns":["UUID", "name", "displayName", "description"],"columnGenerators":[ { "column":"UUID", "className": "tools.xor.generator.StringTemplate", "arguments": ["ID_[VISITOR_CONTEXT]"]}] }
+johnd, John Doe, A fictional user
+johnw, John Wayne, A film actor
+vivianr, Vivian Richards, A cricket player

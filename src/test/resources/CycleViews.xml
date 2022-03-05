@@ -1,0 +1,9 @@
+<AggregateViews>
+	<aggregateView>
+		<name>CYCLEVIEW</name>
+		<attributeList>id</attributeList>
+		<attributeList>name</attributeList>
+		<attributeList>displayName</attributeList>	
+		<attributeList>[CYCLEVIEW]</attributeList>
+	</aggregateView>
+</AggregateViews>

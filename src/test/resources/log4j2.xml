@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <Appenders>
+    <!-- Console Appender -->
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MMM-dd HH:mm:ss a} [%t] %-5level %logger{36} - %msg%n" />
+    </Console>
+
+    <!-- Rolling File Appender -->
+    <RollingFile name="fileappender">
+      <FileName>logs/xor.log</FileName>
+      <FilePattern>logs/xor.%d{yyyy-MM-dd-hh-mm}.log.zip</FilePattern>
+      <PatternLayout>
+        <Pattern>%d{yyyy-MMM-dd HH:mm:ss a} [%t] %-5level %logger{36} - %msg%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <OnStartupTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="10 MB" />
+        <TimeBasedTriggeringPolicy />
+      </Policies>
+      <DefaultRolloverStrategy max="5" />
+    </RollingFile>
+    <RollingFile name="sqlappender">
+      <FileName>logs/xor_sql.log</FileName>
+      <FilePattern>logs/xor_sql.%d{yyyy-MM-dd-hh-mm}.log.zip</FilePattern>
+      <PatternLayout>
+        <Pattern>%d{yyyy-MMM-dd HH:mm:ss a} [%t] %-5level %logger{36} - %msg%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <OnStartupTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="10 MB" />
+        <TimeBasedTriggeringPolicy />
+      </Policies>
+      <DefaultRolloverStrategy max="5" />
+    </RollingFile>
+    <RollingFile name="graphappender">
+      <FileName>logs/xor_graph.log</FileName>
+      <FilePattern>logs/xor_graph.%d{yyyy-MM-dd-hh-mm}.log.zip</FilePattern>
+      <PatternLayout>
+        <Pattern>%d{yyyy-MMM-dd HH:mm:ss a} [%t] %-5level %logger{36} - %msg%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <OnStartupTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="10 MB" />
+        <TimeBasedTriggeringPolicy />
+      </Policies>
+      <DefaultRolloverStrategy max="5" />
+    </RollingFile>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="tools.xor.service.exim.CSVLoader" level="warn" additivity="false">
+      <AppenderRef ref="sqlappender" />
+      <AppenderRef ref="Console" />
+    </Logger>
+    <Logger name="tools.xor.service.exim.CSVExportImport" level="info" additivity="false">
+      <AppenderRef ref="Console" />
+    </Logger>
+    <Logger name="tools.xor.generator.QueryDataField" level="warn" additivity="false">
+      <AppenderRef ref="graphappender" />
+      <AppenderRef ref="Console" />
+    </Logger>
+    <Root level="warn">
+      <AppenderRef ref="Console" />
+    </Root>
+  </Loggers>
+</Configuration>

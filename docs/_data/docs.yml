@@ -1,0 +1,16 @@
+- title: Getting Started
+  docs:
+  - home
+  - quickstart
+  - installation
+
+- title: Guides
+  docs:
+  - architecture
+  - view
+  - meta
+  - performance
+  - visual
+  - exim
+  - generation
+  - operations

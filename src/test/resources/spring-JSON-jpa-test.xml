@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+     http://www.springframework.org/schema/context
+     http://www.springframework.org/schema/context/spring-context-3.0.xsd
+     http://www.springframework.org/schema/tx
+     http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+     http://www.springframework.org/schema/aop 
+     http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+
+	<context:component-scan base-package="tools.xor" />
+	
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>cfg-test.properties</value>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- XOR -->
+	<bean id="aggregateManager"
+		class="tools.xor.service.AggregateManager">
+		<property name="viewFiles">		
+			<list>
+				<value>CustomViews.xml</value>
+			</list>
+		</property>		
+		<property name="typeMapper" ref="typeMapper" />		
+		<property name="associationStrategy" ref="associationStrategy" />	
+		<property name="dataModelFactory" ref="jsonjpadas" />				
+	</bean>		
+	
+	<bean id="jsonjpadas"
+		class="tools.xor.service.SpringDataModelFactory">
+		<property name="name" value="jsonjpadas" />		
+		<property name="dataModelBuilder" ref="jpabuilder" />
+	</bean>			
+
+	<bean id="jpabuilder" class="tools.xor.service.JPASpringDataModelBuilder"/>
+	
+	<!-- Type Mapper for DTO objects -->
+	<bean id="typeMapper" class="tools.xor.ImmutableJsonTypeMapper">	
+		<property name="domainPackagePath" value="tools.xor.db" />	
+	</bean>	
+	
+	<!-- Association Strategy between aggregates -->
+	<bean id="associationStrategy" class="tools.xor.custom.TestAssociationStrategy" />
+	
+
+	<!-- DataSource -->
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${test.connection.driverClass}" />
+		<property name="url" value="${test.connection.url}" />
+		<property name="username" value="${test.connection.userName}" />
+		<property name="password" value="${test.connection.password}" />
+	</bean>	
+
+	<bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="tools.xor.db" />
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"/>
+		</property>
+        <property name="jpaPropertyMap">
+            <map>		
+				<entry key="hibernate.dialect" value="${test.hibernate.dialect}"/>
+				<entry key="hibernate.show_sql" value="${test.hibernate.showSql}"/>
+				<entry key="hibernate.hbm2ddl.auto" value="${test.hibernate.hbm2ddlAuto}"/>
+				<entry key="hibernate.max_fetch_depth" value="0"/>		 
+			</map>
+		</property>
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<bean id="jaxb2Marshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+		<property name="classesToBeBound">
+			<list>
+				<value>tools.xor.db.vo.base.BookVO</value>
+			</list>
+		</property>
+	</bean>	
+</beans>

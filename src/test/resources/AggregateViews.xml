@@ -331,7 +331,7 @@
                 <args> ORDER BY id ASC</args>
             </function>             
             <function type="FREESTYLE" include="scroll">
-                <args>WHERE NAME > :ORDER_BY_startName AND UUID > :ORDER_BY_startId ORDER BY NAME, UUID</args>
+                <args>WHERE name > :ORDER_BY_startName AND id > :ORDER_BY_startId ORDER BY name, id</args>
             </function>             
         </userOQLQuery>
     </aggregateView>	

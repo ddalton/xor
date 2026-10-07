@@ -24,8 +24,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.ParameterMode;
-import javax.xml.bind.JAXBException;
+import jakarta.persistence.ParameterMode;
+import jakarta.xml.bind.JAXBException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -164,10 +164,10 @@ public class DefaultStoredProcedure extends AbstractDBTest {
 	}
 	
 	private void outputSP(View view) throws JAXBException, UnsupportedEncodingException {
-		javax.xml.bind.JAXBContext jaxbCtx = javax.xml.bind.JAXBContext.newInstance(AggregateView.class);
-		javax.xml.bind.Marshaller marshaller = jaxbCtx.createMarshaller();
-		marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_ENCODING, "UTF-8"); //NOI18N
-		marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		jakarta.xml.bind.JAXBContext jaxbCtx = jakarta.xml.bind.JAXBContext.newInstance(AggregateView.class);
+		jakarta.xml.bind.Marshaller marshaller = jaxbCtx.createMarshaller();
+		marshaller.setProperty(jakarta.xml.bind.Marshaller.JAXB_ENCODING, "UTF-8"); //NOI18N
+		marshaller.setProperty(jakarta.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		marshaller.marshal(view, System.out);
 
 		ByteArrayOutputStream bOut = new ByteArrayOutputStream();

@@ -19,8 +19,8 @@
 
 package tools.xor.db.base;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class ParkingSpot extends Id {

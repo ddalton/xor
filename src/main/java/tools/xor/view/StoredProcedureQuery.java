@@ -27,9 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.ParameterMode;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.NonUniqueResultException;
+import jakarta.persistence.ParameterMode;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -227,8 +227,8 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 	@Override
 	/**
-	 * @throws javax.persistence.NoResultException if there is no result
-	 * @throws javax.persistence.NonUniqueResultException if more than one result
+	 * @throws jakarta.persistence.NoResultException if there is no result
+	 * @throws jakarta.persistence.NonUniqueResultException if more than one result
 	 */
 	public Object getSingleResult(View view, Settings settings) {
 		List result = getResultList(view, settings);

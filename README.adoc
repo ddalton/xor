@@ -73,6 +73,12 @@ For example, in the UI model the XOR tool is initialized with the swagger schema
 
 This architecture allows XOR to also be used as a data migration tool between incompatible models, as long as the necessary data conversion is performed on the JSON object to match the type appropriate for each model.
 
+= Requirements
+
+* Java 17 or later
+* Jakarta Persistence 3.2 (`jakarta.persistence`). The test suite runs against Hibernate ORM 7.4 and Spring Framework 7.0.
+* Applications using the `javax.persistence` namespace need to migrate to `jakarta.persistence` first.
+
 = Configuration
 
 Depending on the use case configuration requirements to use XOR varies.

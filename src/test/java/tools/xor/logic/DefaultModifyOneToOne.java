@@ -19,7 +19,7 @@
 
 package tools.xor.logic;
 
-import javax.persistence.metamodel.Attribute.PersistentAttributeType;
+import jakarta.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 

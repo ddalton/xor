@@ -28,17 +28,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.FlushModeType;
-import javax.persistence.LockModeType;
-import javax.persistence.PersistenceException;
-import javax.persistence.PersistenceUnitUtil;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.FlushModeType;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.PersistenceUnitUtil;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -150,7 +150,7 @@ public abstract class JPADataStore extends AbstractDataStore
 	@Override
 	public List<Object> findByIds (EntityType entityType, final Collection ids)
 	{
-		javax.persistence.Query query = getEntityManager().createQuery(
+		jakarta.persistence.Query query = getEntityManager().createQuery(
 			"SELECT e FROM " + entityType.getName() + " e WHERE e.id in :ids");
 		query.setParameter("ids", ids);
 		return query.getResultList();

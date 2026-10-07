@@ -19,9 +19,9 @@
 
 package tools.xor.db.base;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
 import tools.xor.AggregateAction;
 import tools.xor.annotation.XorDomain;

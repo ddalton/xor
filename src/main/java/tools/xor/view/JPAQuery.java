@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.Parameter;
+import jakarta.persistence.Parameter;
 
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
@@ -33,12 +33,12 @@ import tools.xor.Settings;
 
 public class JPAQuery extends AbstractQuery {
 	
-	private javax.persistence.Query jpaQuery;
+	private jakarta.persistence.Query jpaQuery;
 	private NativeQuery nativeQuery;
 	private Map<String, Object> paramValues = new HashMap<>();
 	private Set<String> namedParams;
 
-	public JPAQuery(String queryString, javax.persistence.Query jpaQuery) {
+	public JPAQuery(String queryString, jakarta.persistence.Query jpaQuery) {
 		this(queryString, jpaQuery, null);
 	}
 
@@ -46,7 +46,7 @@ public class JPAQuery extends AbstractQuery {
 		return this.nativeQuery != null;
 	}
 
-	public JPAQuery(String queryString, javax.persistence.Query jpaQuery, NativeQuery nativeQuery) {
+	public JPAQuery(String queryString, jakarta.persistence.Query jpaQuery, NativeQuery nativeQuery) {
 		super(queryString);
 		this.jpaQuery = jpaQuery;
 		this.nativeQuery = nativeQuery;
@@ -56,7 +56,7 @@ public class JPAQuery extends AbstractQuery {
 		}
 	}
 
-	public void setProviderQuery(javax.persistence.Query jpaQuery) {
+	public void setProviderQuery(jakarta.persistence.Query jpaQuery) {
 		this.jpaQuery = jpaQuery;
 	}
 

@@ -19,8 +19,8 @@
 
 package tools.xor.service;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManagerFactory;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManagerFactory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

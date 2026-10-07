@@ -1028,13 +1028,9 @@ public class CSVLoader implements Callable {
         } else {
             if (CSVLoader.class.getClassLoader().getResource(this.folderPath) != null) {
                 folderError = null;
-                try {
-                    files = IOUtils.readLines(
-                        CSVLoader.class.getClassLoader().getResourceAsStream(this.folderPath),
-                        StandardCharsets.UTF_8.name());
-                } catch (IOException e) {
-                    throw ClassUtil.wrapRun(e);
-                }
+                files = IOUtils.readLines(
+                    CSVLoader.class.getClassLoader().getResourceAsStream(this.folderPath),
+                    StandardCharsets.UTF_8);
             }
         }
 

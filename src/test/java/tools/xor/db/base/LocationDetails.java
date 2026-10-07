@@ -19,8 +19,8 @@
 
 package tools.xor.db.base;
 
-import javax.persistence.Embeddable;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.OneToOne;
 
 @Embeddable
 public class LocationDetails {

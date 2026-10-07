@@ -25,7 +25,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.Collection;
 import java.util.List;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import tools.xor.service.DAOFactory;
 import tools.xor.service.DAOTemplate;

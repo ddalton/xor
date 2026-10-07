@@ -37,8 +37,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

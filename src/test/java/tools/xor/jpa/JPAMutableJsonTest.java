@@ -30,9 +30,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.annotation.Resource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -403,7 +403,7 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	@Test
 	public void checkReferenceSemantics () throws JSONException
 	{
-	    Assertions.assertThrows(javax.persistence.PersistenceException.class, () -> {	    
+	    Assertions.assertThrows(jakarta.persistence.PersistenceException.class, () -> {	    
         		DataModel das = aggregateService.getDataModel();
         		EntityType taskType = (EntityType) das.getShape().getType(Task.class);
         		Property openProperty = taskType.getProperty("ItemList");

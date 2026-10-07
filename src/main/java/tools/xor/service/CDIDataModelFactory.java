@@ -19,10 +19,10 @@
 
 package tools.xor.service;
 
-import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.InjectionTarget;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Alternative;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.InjectionTarget;
+import jakarta.inject.Inject;
 
 import tools.xor.util.ClassUtil;
 
@@ -33,7 +33,7 @@ public class CDIDataModelFactory extends AbstractDataModelFactory {
 
 	@Override
 	public void injectDependencies(Object bean, String name) {
-	    InjectionTarget injectionTarget = beanManager.createInjectionTarget(beanManager.createAnnotatedType(ClassUtil.getUnEnhanced(bean.getClass())));		
+	    InjectionTarget injectionTarget = beanManager.getInjectionTargetFactory(beanManager.createAnnotatedType(ClassUtil.getUnEnhanced(bean.getClass()))).createInjectionTarget(null);
 	    injectionTarget.inject(bean, beanManager.createCreationalContext(null));
 	    injectionTarget.postConstruct(bean);
 	}

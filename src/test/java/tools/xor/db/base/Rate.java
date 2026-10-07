@@ -21,8 +21,8 @@ package tools.xor.db.base;
 
 import java.math.BigDecimal;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class Rate extends Id {

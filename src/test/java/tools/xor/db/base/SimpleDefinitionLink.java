@@ -2,7 +2,7 @@ package tools.xor.db.base;
 
 import java.io.Serializable;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class SimpleDefinitionLink implements Serializable

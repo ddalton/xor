@@ -21,12 +21,12 @@ package tools.xor.db.base;
 
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Version;
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Version;
+import jakarta.xml.bind.annotation.XmlElement;
 
 import org.hibernate.annotations.GenericGenerator;
 
@@ -39,7 +39,7 @@ public class Id {
 	@GeneratedValue(generator = "system-uuid")
 	@GenericGenerator(name = "system-uuid", strategy = "uuid")
 	@Column(name = "UUID")
-	@javax.persistence.Id
+	@jakarta.persistence.Id
 	public String getId() {
 		return this.id;
 	}

@@ -1,6 +1,6 @@
 package tools.xor.service;
 
-import javax.persistence.EntityTransaction;
+import jakarta.persistence.EntityTransaction;
 
 public class JPAManualTransaction implements Transaction
 {

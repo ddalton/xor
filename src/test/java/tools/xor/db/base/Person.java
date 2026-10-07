@@ -21,10 +21,10 @@ package tools.xor.db.base;
 
 import java.sql.Blob;
 
-import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Lob;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Lob;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)

@@ -22,8 +22,8 @@ package tools.xor;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.metamodel.Attribute.PersistentAttributeType;
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.persistence.metamodel.Attribute.PersistentAttributeType;
+import jakarta.xml.bind.annotation.XmlTransient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

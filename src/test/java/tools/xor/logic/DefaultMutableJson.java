@@ -1092,6 +1092,49 @@ public abstract class DefaultMutableJson extends AbstractDBTest {
 		assert(result.size() == 3);
 	}
 
+	/**
+	 * A native query for a list that does not return the rows in list order.
+	 * The JSON array is reconstituted from the query rows, so the elements
+	 * need to be placed using the list index column.
+	 */
+	public void queryListNative() {
+		final String[] NAMES = new String[] {"FIX_DEFECTS", "PRIORITIZE_DEFECTS", "VERIFY_DEFECTS"};
+
+		JSONObject json = new JSONObject();
+		json.put("name", "DEFECTS");
+		json.put("displayName", "Defects");
+		json.put("description", "User story to address product defects");
+		JSONArray dependants = new JSONArray();
+		for(String name: NAMES) {
+			JSONObject dependant = new JSONObject();
+			dependant.put("name", name);
+			dependant.put("displayName", name);
+			dependant.put("description", name);
+			dependants.put(dependant);
+		}
+		json.put("dependants", dependants);
+
+		Settings settings = getSettings();
+		settings.setEntityClass(Task.class);
+		Task task = (Task) aggregateService.create(json, settings);
+		assert(task.getDependants().size() == NAMES.length);
+
+		settings = getSettings();
+		settings.setEntityClass(Task.class);
+		settings.setView(aggregateService.getView("TASKDEP_NATIVE"));
+		settings.setPreFlush(true);
+		List<?> result = aggregateService.query(task, settings);
+
+		assert(result.size() == 1);
+		JSONObject root = (JSONObject) result.get(0);
+		assert(root.getString("name").equals("DEFECTS"));
+		JSONArray jsonDependants = root.getJSONArray("dependants");
+		assert(jsonDependants.length() == NAMES.length) : "Unexpected dependants: " + jsonDependants;
+		for(int i = 0; i < NAMES.length; i++) {
+			assert(jsonDependants.getJSONObject(i).getString("name").equals(NAMES[i])) : "Unexpected order: " + jsonDependants;
+		}
+	}
+
 	protected void generateMediumSizedEntity() throws IOException
 	{
 		DataModel das = aggregateManager.getDataModel();

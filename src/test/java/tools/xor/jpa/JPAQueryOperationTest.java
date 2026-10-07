@@ -137,6 +137,11 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	public void queryTaskDependencies() {
 		super.queryTaskDependencies();
 	}	
+
+	@Test
+	public void queryTaskDependenciesNative() {
+		super.queryTaskDependenciesNative();
+	}
 	
 	@Test
 	public void querySubProjects() {

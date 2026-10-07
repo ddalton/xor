@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import tools.xor.AbstractTypeMapper;
 import tools.xor.BusinessObject;
 import tools.xor.EntityKey;
+import tools.xor.ListPlacement;
 import tools.xor.SurrogateEntityKey;
 import tools.xor.Type;
 import tools.xor.util.InterQuery;
@@ -44,6 +45,8 @@ import tools.xor.util.InterQuery;
 public class QueryTreeInvocation
 {
     public static final int MAX_INLIST_SIZE = 999;
+
+    private final ListPlacement listPlacement = new ListPlacement();
     public static final int OFFSET = 1;
 
     private Map<QueryFragment, Set> parentIdList; //   Return the ids needed for a consuming Query
@@ -202,6 +205,13 @@ public class QueryTreeInvocation
         subquery.append(edge.getSource().getId()).append(" ").append(oql.substring(fromIndex));
 
         return subquery.toString();
+    }
+
+    /**
+     * @return tracks the position of the elements in the list collections being reconstituted
+     */
+    public ListPlacement getListPlacement() {
+        return this.listPlacement;
     }
 
     public void initInList(Query query) {

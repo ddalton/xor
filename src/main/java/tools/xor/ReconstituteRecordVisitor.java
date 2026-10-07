@@ -15,14 +15,33 @@ public class ReconstituteRecordVisitor
     public static final class AddEvent {
         JSONArray collection;
         Object element;
+        Object index;
+        ListPlacement placement;
 
         public AddEvent(JSONArray collection, Object element) {
             this.collection = collection;
             this.element = element;
         }
 
+        /**
+         * Add an element to a list collection at the position given by its index
+         * @param collection list
+         * @param element to add
+         * @param index of the element in the list, can be null
+         * @param placement tracks the positions of the elements in the list
+         */
+        public AddEvent(JSONArray collection, Object element, Object index, ListPlacement placement) {
+            this(collection, element);
+            this.index = index;
+            this.placement = placement;
+        }
+
         public void execute() {
-            collection.put(element);
+            if(placement != null) {
+                placement.add(collection, element, index);
+            } else {
+                collection.put(element);
+            }
         }
     }
 

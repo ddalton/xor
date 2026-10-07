@@ -315,6 +315,11 @@ public class JPAMutableJsonTest extends DefaultMutableJson {
 	}
 
 	@Test
+	public void queryListNative() {
+		super.queryListNative();
+	}
+
+	@Test
 	public void importCSV() throws Exception
 	{
 		super.importCSV();

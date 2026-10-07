@@ -730,6 +730,46 @@ public class DefaultQueryOperation extends AbstractDBTest {
 	}
 
 	/**
+	 * Native query for a list collection that provides the list index column.
+	 * Note: the returned entity holds the JPA managed list, see queryListNative in DefaultMutableJson
+	 * for the ordering of a reconstituted list
+	 */
+	public void queryTaskDependenciesNative() {
+		Task userStory = new Task();
+		userStory.setName("DEFECTS");
+		userStory.setDisplayName("Defects");
+		userStory.setDescription("User story to address product defects");
+		userStory = (Task) aggregateService.create(userStory, new Settings());
+
+		List<Task> dependents = new ArrayList<Task>();
+		for(String name: new String[] {"FIX_DEFECTS", "PRIORITIZE_DEFECTS", "VERIFY_DEFECTS"}) {
+			Task dependent = new Task();
+			dependent.setName(name);
+			dependent.setDisplayName(name);
+			dependent.setDescription(name);
+			dependent = (Task) aggregateService.create(dependent, new Settings());
+			dependent.setTaskParent(userStory);
+			dependents.add(dependent);
+		}
+		userStory.setDependants(dependents);
+		userStory = (Task) aggregateService.read(userStory, getSettings());
+
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("TASKDEP_NATIVE"));
+		settings.setPreFlush(true);
+		List<?> toList = aggregateService.query(userStory, settings);
+
+		assertEquals(1, toList.size());
+		Task root = (Task) toList.get(0);
+		assertEquals("DEFECTS", root.getName());
+		assertNotNull(root.getDependants());
+		assertEquals(3, root.getDependants().size());
+		assertEquals("FIX_DEFECTS", root.getDependants().get(0).getName());
+		assertEquals("PRIORITIZE_DEFECTS", root.getDependants().get(1).getName());
+		assertEquals("VERIFY_DEFECTS", root.getDependants().get(2).getName());
+	}
+
+	/**
 	 * Uni-directional query Map test
 	 */
 	public void querySubProjects() {

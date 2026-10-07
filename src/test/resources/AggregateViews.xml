@@ -675,6 +675,38 @@
 		<attributeList>dependants.[VERYBASIC]</attributeList>
 	</aggregateView>
 	<aggregateView>
+		<!-- Native query for a list. The rows are deliberately not sorted by the list index,
+		     the dependants are placed using the dependants.INDEX_ column -->
+		<name>TASKDEP_NATIVE</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>dependants.[VERYBASIC]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<augmenter>dependants.INDEX_</augmenter>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT t.UUID AS id,
+				                t.NAME AS name,
+				                t.DISPLAYNAME AS displayName,
+				                t.DESCRIPTION AS description,
+				                t.ICONURL AS iconUrl,
+				                t.DETAILEDDESCRIPTION AS detailedDescription,
+				                tt.DEP_SEQ AS "dependants.INDEX_",
+				                d.UUID AS "dependants.id",
+				                d.NAME AS "dependants.name",
+				                d.DISPLAYNAME AS "dependants.displayName",
+				                d.DESCRIPTION AS "dependants.description"
+				           FROM Task t
+				           LEFT JOIN TASK_TASK tt ON tt.TASK_UUID = t.UUID
+				           LEFT JOIN Task d ON d.UUID = tt.DEPENDANTS_UUID
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE t.UUID = ? ORDER BY tt.DEP_SEQ DESC</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<name>SUBPROJECTS</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<attributeList>subProjects.[VERYBASIC]</attributeList>

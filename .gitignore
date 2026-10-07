@@ -11,3 +11,6 @@
 /src/test/resources/EmployeeRandomMedium.xlsx
 /src/test/resources/csvloader/test2/Task.csv.gen
 /src/test/resources/csvloader/*/Task.schema.gen
+
+# Agent worktrees
+/.claude/worktrees/

@@ -1354,7 +1354,7 @@ public class AggregateManager implements Xor
 				f.mkdirs();
 			}
 		} catch (UnsupportedEncodingException e) {
-			ClassUtil.wrapRun(e);
+			throw ClassUtil.wrapRun(e);
 		}
 
 		return f;

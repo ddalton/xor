@@ -177,7 +177,7 @@ public class CSVExportImport extends AbstractExportImport
             }
         }
         catch (IOException e) {
-            ClassUtil.wrapRun(e);
+            throw ClassUtil.wrapRun(e);
         }            
     }
 
@@ -214,7 +214,7 @@ public class CSVExportImport extends AbstractExportImport
             csvPrinter = new CSVPrinter(fileWriter, csvFileFormat);
         }
         catch (IOException e) {
-            ClassUtil.wrapRun(e);
+            throw ClassUtil.wrapRun(e);
         }
 
         Object [] FILE_HEADER = new String[2];
@@ -230,7 +230,7 @@ public class CSVExportImport extends AbstractExportImport
                 csvPrinter = null;
             }
             catch (IOException e) {
-                ClassUtil.wrapRun(e);
+                throw ClassUtil.wrapRun(e);
             }
         }
     }

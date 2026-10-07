@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -60,6 +61,8 @@ import tools.xor.util.graph.StateGraph;
 
 public class ExcelExportImport extends AbstractExportImport
 {
+    public static final int MAX_CELL_LENGTH = SpreadsheetVersion.EXCEL2007.getMaxTextLength();
+
     private Workbook wb;
     private Sheet sh; // We cannot use the streaming version since we write the header after writing the body
     private int entitySheetRowNo;
@@ -324,7 +327,7 @@ public class ExcelExportImport extends AbstractExportImport
     {
         if (cell != null) {
             try {
-                return cell.getStringCellValue();
+                return getStringCellValue(cell);
             }
             catch (Exception e) {
                 // Numeric entry
@@ -644,7 +647,77 @@ public class ExcelExportImport extends AbstractExportImport
 
     @Override
     protected void writeEntityItemPropertyValue(String value) {
-        cell.setCellValue(value.toString());
+        if(value.length() > MAX_CELL_LENGTH) {
+            value = writeOverflow(wb, value);
+        }
+        cell.setCellValue(value);
+    }
+
+    /**
+     * Excel limits the size of a cell, so a large value (e.g., a Base64 encoded blob) is split
+     * across the cells of a new row in the overflow sheet.
+     *
+     * @param wb workbook being exported
+     * @param value that does not fit in a cell
+     * @return reference to the overflow row, to be stored in place of the value
+     */
+    public static String writeOverflow(Workbook wb, String value) {
+        int numCells = (value.length() + MAX_CELL_LENGTH - 1) / MAX_CELL_LENGTH;
+        if(numCells > SpreadsheetVersion.EXCEL2007.getMaxColumns()) {
+            throw new IllegalArgumentException("Value of length " + value.length() + " is too large to be exported to Excel");
+        }
+
+        Sheet overflow = wb.getSheet(Constants.XOR.EXCEL_OVERFLOW_SHEET);
+        int rowNo = 0;
+        if(overflow == null) {
+            overflow = wb.createSheet(Constants.XOR.EXCEL_OVERFLOW_SHEET);
+        } else {
+            rowNo = overflow.getLastRowNum() + 1;
+        }
+
+        Row overflowRow = overflow.createRow(rowNo);
+        for(int i = 0; i < numCells; i++) {
+            int start = i * MAX_CELL_LENGTH;
+            overflowRow.createCell(i).setCellValue(value.substring(start, Math.min(value.length(), start + MAX_CELL_LENGTH)));
+        }
+
+        return Constants.XOR.EXCEL_OVERFLOW_REF + rowNo;
+    }
+
+    /**
+     * Returns the string value of the cell, resolving any reference to the overflow sheet.
+     *
+     * @param cell containing a string value
+     * @return the cell value
+     */
+    public static String getStringCellValue(Cell cell) {
+        String value = cell.getStringCellValue();
+        if(value == null || !value.startsWith(Constants.XOR.EXCEL_OVERFLOW_REF)) {
+            return value;
+        }
+
+        Sheet overflow = cell.getSheet().getWorkbook().getSheet(Constants.XOR.EXCEL_OVERFLOW_SHEET);
+        if(overflow == null) {
+            // Not a reference, just a value with the same prefix
+            return value;
+        }
+
+        Row overflowRow;
+        try {
+            overflowRow = overflow.getRow(Integer.parseInt(value.substring(Constants.XOR.EXCEL_OVERFLOW_REF.length())));
+        } catch (NumberFormatException e) {
+            return value;
+        }
+        if(overflowRow == null) {
+            throw new IllegalStateException("Overflow row referenced by " + value + " is missing");
+        }
+
+        StringBuilder result = new StringBuilder();
+        for(int i = 0; i < overflowRow.getLastCellNum(); i++) {
+            result.append(overflowRow.getCell(i).getStringCellValue());
+        }
+
+        return result.toString();
     }
 
     @Override

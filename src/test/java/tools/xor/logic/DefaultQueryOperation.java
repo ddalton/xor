@@ -30,6 +30,10 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -173,6 +177,33 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(result.getName().equals(NAME));
 		assert(result.getDisplayName().equals(DISPLAY_NAME));
 		assert(result.getDescription().equals(DESCRIPTION));
+	}
+
+	public void queryPersonNativeMissingColumn() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// The native query returns fewer columns than the view attributes
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_NATIVE_MISSING_COLUMN"));
+		settings.setPreFlush(true);
+		final Person queryPerson = person;
+		RuntimeException e = assertThrows(RuntimeException.class, () -> aggregateService.query(queryPerson, settings));
+
+		Throwable cause = e;
+		while(cause != null && !(cause instanceof IllegalStateException)) {
+			cause = cause.getCause();
+		}
+		assertNotNull(cause, "Expected the column mismatch to be reported");
+		assertTrue(cause.getMessage().contains("BASICINFO_NATIVE_MISSING_COLUMN"), cause.getMessage());
+		assertTrue(cause.getMessage().contains("returned 5 columns, but 6 columns are expected"), cause.getMessage());
 	}
 
 	public void queryPersonOQL() {

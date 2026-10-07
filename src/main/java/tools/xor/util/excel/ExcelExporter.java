@@ -77,7 +77,7 @@ public class ExcelExporter {
 	    try {
 			wb.write(outputStream);
 		} catch (IOException e) {
-			ClassUtil.wrapRun(e);
+			throw ClassUtil.wrapRun(e);
 		}
 	}
 

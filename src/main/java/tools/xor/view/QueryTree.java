@@ -248,6 +248,35 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return rootObject;
 	}
 
+	/**
+	 * Check that the query result row has the columns needed to populate the view.
+	 * A user provided query (e.g., native SQL tuned by a DBA) maps columns by position,
+	 * so a mismatch would otherwise fail obscurely or silently populate the wrong attributes.
+	 *
+	 * @param queryResultRow a row returned by the query
+	 */
+	public void validateRow(Object[] queryResultRow) {
+		int expected = 0;
+		if(this.fields.size() > 0) {
+			for (QueryField field : this.fields) {
+				expected = Math.max(expected, field.getPosition() + 1);
+			}
+		} else if(getQuery() != null && getQuery().getColumns() != null) {
+			expected = getQuery().getColumns().size();
+		}
+
+		if(queryResultRow.length != expected) {
+			List<String> columns = this.fields.size() > 0 ? getSelectedColumns() : getQuery().getColumns();
+			throw new IllegalStateException(String.format(
+				"The query for view %s returned %d columns, but %d columns are expected in the order: %s. Query: %s",
+				getView().getName(),
+				queryResultRow.length,
+				expected,
+				columns,
+				getQuery() != null ? getQuery().getQueryString() : null));
+		}
+	}
+
 	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) {
 		Map<String, Object> propertyResult = new HashMap<>();
 		Set<String> propertyPaths = new HashSet<>();

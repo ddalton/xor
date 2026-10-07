@@ -203,7 +203,7 @@ public abstract class AbstractQuery implements Query {
 
 	@Override
 	public void processLargeInList(Set values) {
-		int numBatches = values.size()/QueryTreeInvocation.MAX_INLIST_SIZE + 1;
+		int numBatches = (values.size() + QueryTreeInvocation.MAX_INLIST_SIZE - 1)/QueryTreeInvocation.MAX_INLIST_SIZE;
 		this.batches = new ArrayList<>(numBatches);
 
 		Iterator iter = values.iterator();

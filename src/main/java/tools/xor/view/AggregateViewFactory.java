@@ -149,7 +149,7 @@ public class AggregateViewFactory {
 				(new AggregateViewFactory()).save(fileName, entry.getValue());
 				
 			} catch (JAXBException e) {
-				ClassUtil.wrapRun(e);
+				throw ClassUtil.wrapRun(e);
 			}
 		}
 	}
@@ -224,7 +224,7 @@ public class AggregateViewFactory {
 		try {
 			db = dbf.newDocumentBuilder();
 		} catch (ParserConfigurationException pe) {
-			ClassUtil.wrapRun(pe);
+			throw ClassUtil.wrapRun(pe);
 		}
 
 		File dir = am.getGeneratedViewsDirectory();
@@ -250,9 +250,9 @@ public class AggregateViewFactory {
 					transformer.transform(source, result);
 					
 				} catch (SAXException e) {
-					ClassUtil.wrapRun(e);
+					throw ClassUtil.wrapRun(e);
 				} catch (IOException e) {
-					ClassUtil.wrapRun(e);
+					throw ClassUtil.wrapRun(e);
 				} catch (TransformerConfigurationException tce) {
 					System.out.println("* Transformer Factory error");
 					System.out.println(" " + tce.getMessage());

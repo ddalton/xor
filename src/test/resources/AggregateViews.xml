@@ -96,6 +96,27 @@
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
+		<!-- The native query is missing the DETAILEDDESCRIPTION column -->
+		<name>BASICINFO_NATIVE_MISSING_COLUMN</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT UUID,
+				                NAME,
+					        DISPLAYNAME,
+					        DESCRIPTION,
+					        ICONURL
+					   FROM Person
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<!-- The parent join query uses a temp table -->
 		<name>BASICINFO_NATIVE_TASK_TEMP</name>
 		<attributeList>[BASICINFO]</attributeList>

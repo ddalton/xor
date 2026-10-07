@@ -135,7 +135,7 @@ public class JSONTransformer {
 					}
 				}
 			} catch (JSONException e) {
-				ClassUtil.wrapRun(e);
+				throw ClassUtil.wrapRun(e);
 			}
 
 		}
@@ -208,7 +208,7 @@ public class JSONTransformer {
 					}
 				}
 			} catch (JSONException e) {
-				ClassUtil.wrapRun(e);
+				throw ClassUtil.wrapRun(e);
 			}		
 		}
 		
@@ -263,7 +263,7 @@ public class JSONTransformer {
 					}
 				}
 			} catch (JSONException e) {
-				ClassUtil.wrapRun(e);
+				throw ClassUtil.wrapRun(e);
 			}
 		}
 	}	

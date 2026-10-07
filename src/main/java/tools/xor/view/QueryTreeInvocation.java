@@ -193,8 +193,13 @@ public class QueryTreeInvocation
         // So we first split the query around the FROM clause
         // then prepend the select clause for the parent id
 
+        int fromIndex = QueryStringHelper.indexOfFromClause(oql);
+        if(fromIndex == -1) {
+            throw new IllegalStateException("Unable to find the FROM clause of the parent query: " + oql);
+        }
+
         StringBuilder subquery = new StringBuilder("SELECT ");
-        subquery.append(edge.getSource().getId()).append(oql.substring(oql.indexOf(" FROM ")));
+        subquery.append(edge.getSource().getId()).append(" ").append(oql.substring(fromIndex));
 
         return subquery.toString();
     }

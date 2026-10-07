@@ -74,6 +74,11 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	}
 
 	@Test
+	public void queryPersonNativeMissingColumn() {
+		super.queryPersonNativeMissingColumn();
+	}
+
+	@Test
 	public void queryPersonOQL() {
 		super.queryPersonOQL();
 	}

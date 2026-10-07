@@ -204,6 +204,7 @@ public abstract class AbstractDispatcher implements QueryDispatcher
             if(!records.get(0).getClass().isArray()) {
                 throw new RuntimeException("Was the identifier column forgotten to be added to the subtype query?");
             }
+            queryTree.validateRow((Object[])records.get(0));
         }
 
         queryInvocation.start(aggregateTree, queryTree);

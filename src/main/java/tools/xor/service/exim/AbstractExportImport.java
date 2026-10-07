@@ -97,14 +97,14 @@ public abstract class AbstractExportImport implements ExportImport
             Cell cell = row.getCell(entry.getValue(), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
             if (isEmbeddedPath(entry.getKey())) {
                 if(cell != null) {
-                    setEmbeddableValue(entity, entry.getKey(), cell.getStringCellValue());
+                    setEmbeddableValue(entity, entry.getKey(), ExcelExportImport.getStringCellValue(cell));
                 }
             }
             else {
                 // set direct value
                 if (cell != null) {
                     try {
-                        entity.put(entry.getKey(), cell.getStringCellValue());
+                        entity.put(entry.getKey(), ExcelExportImport.getStringCellValue(cell));
                     }
                     catch (Exception e) {
                         // Numeric entry

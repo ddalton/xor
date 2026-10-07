@@ -1,0 +1,13 @@
+# Build output
+/target/
+
+# Files written by the test suite into the working directory
+/*.dot
+/*.png
+/*.xlsx
+/logs/
+/taskcsv/
+/views/
+/src/test/resources/EmployeeRandomMedium.xlsx
+/src/test/resources/csvloader/test2/Task.csv.gen
+/src/test/resources/csvloader/*/Task.schema.gen

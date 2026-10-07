@@ -74,6 +74,16 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	}
 
 	@Test
+	public void queryPersonNativeAliased() {
+		super.queryPersonNativeAliased();
+	}
+
+	@Test
+	public void queryPersonNativeSwapped() {
+		super.queryPersonNativeSwapped();
+	}
+
+	@Test
 	public void queryPersonNativeMissingColumn() {
 		super.queryPersonNativeMissingColumn();
 	}

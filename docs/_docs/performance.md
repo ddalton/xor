@@ -37,3 +37,24 @@ Below is an example of using a native query:
 ```
 
 The advantage is that the application code does not have to be changed and the performance is boosted automatically.
+
+### Mapping columns to attributes
+
+By default the columns of a native query or stored procedure are mapped to the view attributes by position, so they need to be in the same order as the `attributeList`.
+Alternatively, label each column with the attribute it populates using a column alias. The columns can then be in any order:
+
+```xml
+<selectClause>
+    <![CDATA[SELECT td.UUID AS "taskDetails.id",
+                    t.NAME AS name,
+                    t.DESCRIPTION AS description,
+                    t.UUID AS id
+               FROM Task t, TaskDetails td
+              WHERE t.UUID = td.UUID]]>
+</selectClause>
+```
+
+* Labels are matched to the attribute paths ignoring case. An attribute path containing a `.` needs a quoted alias.
+* The columns are mapped by name only if every attribute has exactly one matching column and every column matches an attribute. Otherwise they are mapped by position.
+* System columns are labeled the same way, using the path of the collection or entity they belong to, e.g., `"taskChildren.INDEX_"` for a list index, `"taskChildren.KEY_"` for a map key and `TYPE_` for the entity type.
+* XOR reports an error if the query returns the wrong number of columns, or when mapping by position, if a column is labeled with an attribute at a different position, which usually means two columns have been swapped.

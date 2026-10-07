@@ -80,6 +80,15 @@ public interface Query extends DML {
 	List<String> getColumns();
 
 	/**
+	 * Get the labels of the columns returned by the last execution of this query.
+	 * Used to map the result columns to the view attributes by name.
+	 * @return list of column labels, or null if the query does not provide them
+	 */
+	default List<String> getResultLabels() {
+		return null;
+	}
+
+	/**
 	 * Get the position a particular attribute path is located
 	 * @param path column in the select query
 	 * @return position starting from 0

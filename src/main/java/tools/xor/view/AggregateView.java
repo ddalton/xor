@@ -75,6 +75,8 @@ public class AggregateView extends TraversalView {
 	@XmlTransient
 	private List results;
 
+	private List<String> resultLabels;
+
 	public AggregateView(QueryTree queryTree) {
 		super(queryTree);
 	}
@@ -294,5 +296,17 @@ public class AggregateView extends TraversalView {
 
 	public List getResults() {
 		return this.results;
+	}
+
+	public void setResultLabels(List<String> labels) {
+		this.resultLabels = labels;
+	}
+
+	/**
+	 * @return the column labels of the results set on this view, or null if not available
+	 */
+	@XmlTransient
+	public List<String> getResultLabels() {
+		return this.resultLabels;
 	}
 }

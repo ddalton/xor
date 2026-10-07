@@ -130,9 +130,10 @@ public class StoredProcedureQuery extends AbstractQuery {
 		}
 	}
 
-	private void setResults(View view, List results) {
+	private void setResults(View view, ResultSet rs) throws SQLException {
 		if(view instanceof AggregateView) {
-			((AggregateView)view).setResults(results);
+			((AggregateView)view).setResultLabels(extractLabels(rs));
+			((AggregateView)view).setResults(extractResults(rs));
 		} else {
 			throw new RuntimeException("A custom view being modified should be an instance of AggregateView");
 		}
@@ -179,7 +180,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 									// get cursor and cast it to ResultSet
 									rs = (ResultSet)((CallableStatement)sp.getStatement()).getObject(
 										param.position);
-									setResults(viewParam.get(param.name), extractResults(rs));
+									setResults(viewParam.get(param.name), rs);
 
 									// got the result, we don't want to break in case the SP has side effects
 									// break multiple;
@@ -199,7 +200,7 @@ public class StoredProcedureQuery extends AbstractQuery {
 
 				// Each view specifies the output location
 				if (positionView.containsKey(resultCount)) {
-					setResults(positionView.get(resultCount), extractResults(rs));
+					setResults(positionView.get(resultCount), rs);
 
 					// got the result, we don't want to break in case the SP has side effects
 					// break multiple;

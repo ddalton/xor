@@ -51,6 +51,7 @@ public abstract class AbstractQuery implements Query {
 	private Map<String, Integer> columnMap;
 	private String queryString;
 	private List<Map<String, Object>> batches;
+	private List<String> resultLabels;
 
 	// We always refer to bind parameters by name
 	// Even positional parameters in the query need to have a name mapped
@@ -83,6 +84,15 @@ public abstract class AbstractQuery implements Query {
 		for(int i = 0; i < columns.size(); i++) {
 			columnMap.put(columns.get(i), i);
 		}
+	}
+
+	@Override
+	public List<String> getResultLabels() {
+		return this.resultLabels;
+	}
+
+	protected void setResultLabels(List<String> labels) {
+		this.resultLabels = labels;
 	}
 
 	@Override
@@ -168,6 +178,17 @@ public abstract class AbstractQuery implements Query {
 		}
 
 		return list;
+	}
+
+	public static List<String> extractLabels(ResultSet rs) throws SQLException
+	{
+		ResultSetMetaData rsmd = rs.getMetaData();
+		List<String> result = new ArrayList<>(rsmd.getColumnCount());
+		for(int i = 1; i <= rsmd.getColumnCount(); i++) {
+			result.add(rsmd.getColumnLabel(i));
+		}
+
+		return result;
 	}
 
 	public static List extractResults(ResultSet rs) throws SQLException

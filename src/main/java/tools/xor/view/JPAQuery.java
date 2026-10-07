@@ -19,6 +19,7 @@
 
 package tools.xor.view;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.Parameter;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.TupleElement;
 
 import tools.xor.AggregateAction;
 import tools.xor.Settings;
@@ -92,12 +95,43 @@ public class JPAQuery extends AbstractQuery {
 			setParameters(settings, paramValues);
 		}
 
-		return jpaQuery.getResultList();
+		return fromTuples(jpaQuery.getResultList());
 	}
 
 	@Override
 	public Object getSingleResult(View view, Settings settings) {
-		return jpaQuery.getSingleResult();
+		Object result = jpaQuery.getSingleResult();
+		return (result instanceof Tuple) ? fromTuple((Tuple)result) : result;
+	}
+
+	/**
+	 * A native query is created as a Tuple query so the column labels are available.
+	 * Convert the tuples to the same form as an untyped query result: an Object[]
+	 * for multiple columns and the value itself for a single column.
+	 */
+	@SuppressWarnings("rawtypes")
+	private List fromTuples(List results) {
+		if(results.isEmpty() || !(results.get(0) instanceof Tuple)) {
+			return results;
+		}
+
+		List<String> labels = new ArrayList<>();
+		for(TupleElement<?> element: ((Tuple)results.get(0)).getElements()) {
+			labels.add(element.getAlias());
+		}
+		setResultLabels(labels);
+
+		List<Object> rows = new ArrayList<>(results.size());
+		for(Object tuple: results) {
+			rows.add(fromTuple((Tuple)tuple));
+		}
+
+		return rows;
+	}
+
+	private static Object fromTuple(Tuple tuple) {
+		Object[] row = tuple.toArray();
+		return row.length == 1 ? row[0] : row;
 	}
 
 	@Override

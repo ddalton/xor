@@ -34,6 +34,7 @@ import jakarta.persistence.FlushModeType;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.PersistenceUnitUtil;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -220,7 +221,7 @@ public abstract class JPADataStore extends AbstractDataStore
 				queryString,
 				Query.isDeferred(queryString) ?
 					null :
-					getEntityManager().createNativeQuery(queryString),
+					getEntityManager().createNativeQuery(queryString, Tuple.class),
 				(NativeQuery)queryInput);
 			break;
 
@@ -252,7 +253,7 @@ public abstract class JPADataStore extends AbstractDataStore
 			}
 			else if (queryType == QueryType.SQL) {
 				((JPAQuery)query).setProviderQuery(
-					getEntityManager().createNativeQuery(queryString));
+					getEntityManager().createNativeQuery(queryString, Tuple.class));
 			}
 
 			super.evaluateDeferred(query, queryType, qti);

@@ -309,7 +309,7 @@ public class QueryFragment implements Vertex
                     position += addField(
                         new QueryField(
                             LIST_INDEX_ATTRIBUTE,
-                            position++,
+                            position,
                             this,
                             true)) ? 1 : 0;
                 }

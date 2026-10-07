@@ -194,6 +194,7 @@ public class JDBCQuery extends AbstractQuery
 				columnLabels.add(rsmd.getColumnLabel(i));
 			}
 			setColumns(columnLabels);
+			setResultLabels(columnLabels);
 
 			while (rs.next()) {
 				Object[] row = new Object[NumOfCol];

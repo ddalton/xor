@@ -96,6 +96,50 @@
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
+		<!-- The columns are labeled with the attributes they populate, so the order does not matter -->
+		<name>BASICINFO_NATIVE_ALIASED</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT DETAILEDDESCRIPTION AS "detailedDescription",
+				                DESCRIPTION AS description,
+				                NAME AS name,
+				                ICONURL AS iconUrl,
+				                UUID AS id,
+				                DISPLAYNAME AS displayName
+					   FROM Person
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<!-- The NAME and DISPLAYNAME columns are swapped -->
+		<name>BASICINFO_NATIVE_SWAPPED</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT UUID,
+				                DISPLAYNAME,
+				                NAME,
+					        DESCRIPTION,
+					        ICONURL,
+					        DETAILEDDESCRIPTION
+					   FROM Person
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<!-- The native query is missing the DETAILEDDESCRIPTION column -->
 		<name>BASICINFO_NATIVE_MISSING_COLUMN</name>
 		<attributeList>[BASICINFO]</attributeList>

@@ -249,32 +249,35 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 	}
 
 	/**
-	 * Check that the query result row has the columns needed to populate the view.
-	 * A user provided query (e.g., native SQL tuned by a DBA) maps columns by position,
-	 * so a mismatch would otherwise fail obscurely or silently populate the wrong attributes.
+	 * Create the mapping from the columns of the query result to the columns needed to populate the view.
+	 * A user provided query (e.g., native SQL tuned by a DBA) can return the columns in the order of the
+	 * view attributes, or label them with column aliases. A mismatch would otherwise fail obscurely or
+	 * silently populate the wrong attributes.
 	 *
+	 * @param labels of the result columns, null if not available
 	 * @param queryResultRow a row returned by the query
+	 * @return column mapping
 	 */
-	public void validateRow(Object[] queryResultRow) {
-		int expected = 0;
+	public ColumnMapping getColumnMapping(List<String> labels, Object[] queryResultRow) {
+		List<String> expected = new ArrayList<>();
 		if(this.fields.size() > 0) {
 			for (QueryField field : this.fields) {
-				expected = Math.max(expected, field.getPosition() + 1);
+				while(expected.size() <= field.getPosition()) {
+					expected.add(null);
+				}
+				expected.set(field.getPosition(), field.getFullPath());
 			}
 		} else if(getQuery() != null && getQuery().getColumns() != null) {
-			expected = getQuery().getColumns().size();
+			expected.addAll(getQuery().getColumns());
 		}
 
-		if(queryResultRow.length != expected) {
-			List<String> columns = this.fields.size() > 0 ? getSelectedColumns() : getQuery().getColumns();
-			throw new IllegalStateException(String.format(
-				"The query for view %s returned %d columns, but %d columns are expected in the order: %s. Query: %s",
-				getView().getName(),
-				queryResultRow.length,
-				expected,
-				columns,
-				getQuery() != null ? getQuery().getQueryString() : null));
-		}
+		// A system generated query is consistent with the fields by construction
+		return ColumnMapping.create(
+			getView().getName(),
+			expected,
+			getView().isCustom() ? labels : null,
+			queryResultRow.length,
+			getQuery() != null ? getQuery().getQueryString() : null);
 	}
 
 	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) {

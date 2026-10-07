@@ -30,6 +30,7 @@ import java.util.Set;
 
 import jakarta.annotation.Resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -177,6 +178,62 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(result.getName().equals(NAME));
 		assert(result.getDisplayName().equals(DISPLAY_NAME));
 		assert(result.getDescription().equals(DESCRIPTION));
+	}
+
+	public void queryPersonNativeAliased() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+		person.setIconUrl("icon.png");
+		person.setDetailedDescription("detailed description");
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// The native query columns are in a different order than the view attributes
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_NATIVE_ALIASED"));
+		settings.setPreFlush(true);
+		List<?> toList = aggregateService.query(person, settings);
+
+		assertEquals(1, toList.size());
+		Person result = (Person) toList.get(0);
+		assertEquals(person.getId(), result.getId());
+		assertEquals(NAME, result.getName());
+		assertEquals(DISPLAY_NAME, result.getDisplayName());
+		assertEquals(DESCRIPTION, result.getDescription());
+		assertEquals("icon.png", result.getIconUrl());
+		assertEquals("detailed description", result.getDetailedDescription());
+	}
+
+	public void queryPersonNativeSwapped() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// The NAME and DISPLAYNAME columns are swapped
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_NATIVE_SWAPPED"));
+		settings.setPreFlush(true);
+		final Person queryPerson = person;
+		RuntimeException e = assertThrows(RuntimeException.class, () -> aggregateService.query(queryPerson, settings));
+
+		Throwable cause = e;
+		while(cause != null && !(cause instanceof IllegalStateException)) {
+			cause = cause.getCause();
+		}
+		assertNotNull(cause, "Expected the swapped columns to be reported");
+		assertTrue(cause.getMessage().contains("BASICINFO_NATIVE_SWAPPED"), cause.getMessage());
+		assertTrue(cause.getMessage().contains("out of order"), cause.getMessage());
 	}
 
 	public void queryPersonNativeMissingColumn() {

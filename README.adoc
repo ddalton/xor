@@ -2,7 +2,7 @@
 :hardbreaks:
 
 XOR is a tool that works with Data Models and provides services against them. Below is the concepts guide to understand what XOR covers.
-If you would like to jump straight to using XOR library in your project then please go through the https://github.com/ddalton/xor/wiki[docs].
+If you would like to jump straight to using XOR library in your project then please go through the link:docs/README.md[docs].
 
 == Services
 
@@ -64,7 +64,7 @@ A generator can specify how the data needs to be populated for e.g.,
 * Data needed to model association relationships 
 * Data needed to model inheritance relationships.
 
-Details on how to generate and import data using CSV files is described at https://github.com/ddalton/xor/wiki/Data-generation-using-CSV-files
+Details on how to generate and import data using CSV files is described in link:docs/data-generation.md#loading-csv-files-with-the-csv-loader[Data generation]
 
 = Uniform type interface
 

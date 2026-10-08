@@ -19,7 +19,7 @@
 
 package tools.xor.db.sp;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import tools.xor.db.base.Id;
 

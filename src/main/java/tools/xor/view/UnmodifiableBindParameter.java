@@ -2,7 +2,7 @@ package tools.xor.view;
 
 import java.sql.PreparedStatement;
 
-import javax.persistence.ParameterMode;
+import jakarta.persistence.ParameterMode;
 
 import tools.xor.providers.jdbc.DBTranslator;
 

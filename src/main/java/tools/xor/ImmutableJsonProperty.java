@@ -28,12 +28,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +41,7 @@ import org.apache.logging.log4j.Logger;
 import tools.xor.util.ClassUtil;
 
 /**
- * This is designed to work with javax.json.JsonObject
+ * This is designed to work with jakarta.json.JsonObject
  * 
  * @author Dilip Dalton
  *

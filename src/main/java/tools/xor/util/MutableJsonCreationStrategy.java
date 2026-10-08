@@ -31,6 +31,7 @@ import tools.xor.BasicType;
 import tools.xor.BusinessObject;
 import tools.xor.MutableJsonTypeMapper;
 import tools.xor.Property;
+import tools.xor.SimpleType;
 import tools.xor.Settings;
 import tools.xor.util.graph.ObjectGraph;
 
@@ -96,7 +97,14 @@ public class MutableJsonCreationStrategy extends AbstractCreationStrategy {
 			result = from;
 		} else if(toClass == JSONObject.class || type.getInstanceClass() == JSONObject.class) {
 			result = new JSONObject();
-			addEntityMeta((JSONObject)result, from);
+			if(type instanceof SimpleType) {
+				// Not an entity, e.g., a JSON object representing a map, so its keys should only be the map keys
+				if(container != null && containmentProperty != null) {
+					addCollectionMeta((JSONObject) container.getInstance(), containmentProperty, from);
+				}
+			} else {
+				addEntityMeta((JSONObject)result, from);
+			}
 		} else if(toClass == JSONArray.class || type.getInstanceClass() == JSONArray.class) {
 			result = new JSONArray();
 			if(container != null && containmentProperty != null) {

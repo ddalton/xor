@@ -309,7 +309,7 @@ public class QueryFragment implements Vertex
                     position += addField(
                         new QueryField(
                             LIST_INDEX_ATTRIBUTE,
-                            position++,
+                            position,
                             this,
                             true)) ? 1 : 0;
                 }
@@ -340,10 +340,64 @@ public class QueryFragment implements Vertex
                             this,
                             true)) ? 1 : 0;
                 }
+
+                // System columns of a collection or entity nested within this fragment,
+                // e.g., dependants.INDEX_ for the list index of the dependants collection
+                for(String augmenter: qs.getAugmenter()) {
+                    String relativePath = getNestedSystemPath(augmenter, queryTree);
+                    if(relativePath != null) {
+                        position += addField(
+                            new QueryField(
+                                relativePath,
+                                position,
+                                this,
+                                true)) ? 1 : 0;
+                    }
+                }
             }
         }
 
         return position;
+    }
+
+    /**
+     * Get the path relative to this fragment of a system column (list index, map key or entity type)
+     * that belongs to a path nested within this fragment.
+     *
+     * @param augmenter full path of the augmenter column
+     * @param queryTree containing this fragment
+     * @return relative path, or null if the augmenter does not belong to a nested path of this fragment
+     */
+    private String getNestedSystemPath(String augmenter, QueryTree queryTree) {
+        String anchorPath = getAnchorPath();
+        if(!augmenter.startsWith(anchorPath)) {
+            return null;
+        }
+
+        String relativePath = augmenter.substring(anchorPath.length());
+        int lastDelimiter = relativePath.lastIndexOf(Settings.PATH_DELIMITER);
+        if(lastDelimiter == -1) {
+            // Not nested, handled by the fragment level system columns
+            return null;
+        }
+
+        String attribute = relativePath.substring(lastDelimiter + 1);
+        if(!LIST_INDEX_ATTRIBUTE.equals(attribute)
+            && !MAP_KEY_ATTRIBUTE.equals(attribute)
+            && !ENTITY_TYPE_ATTRIBUTE.equals(attribute)) {
+            return null;
+        }
+
+        // The column belongs to the deepest fragment anchoring it
+        for(Object vertex: queryTree.getVertices()) {
+            QueryFragment fragment = (QueryFragment) vertex;
+            String otherAnchor = fragment.getAnchorPath();
+            if(fragment != this && otherAnchor.length() > anchorPath.length() && augmenter.startsWith(otherAnchor)) {
+                return null;
+            }
+        }
+
+        return relativePath;
     }
 
     public String getId() {

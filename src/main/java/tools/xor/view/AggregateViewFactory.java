@@ -31,10 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -149,7 +149,7 @@ public class AggregateViewFactory {
 				(new AggregateViewFactory()).save(fileName, entry.getValue());
 				
 			} catch (JAXBException e) {
-				ClassUtil.wrapRun(e);
+				throw ClassUtil.wrapRun(e);
 			}
 		}
 	}
@@ -224,7 +224,7 @@ public class AggregateViewFactory {
 		try {
 			db = dbf.newDocumentBuilder();
 		} catch (ParserConfigurationException pe) {
-			ClassUtil.wrapRun(pe);
+			throw ClassUtil.wrapRun(pe);
 		}
 
 		File dir = am.getGeneratedViewsDirectory();
@@ -250,9 +250,9 @@ public class AggregateViewFactory {
 					transformer.transform(source, result);
 					
 				} catch (SAXException e) {
-					ClassUtil.wrapRun(e);
+					throw ClassUtil.wrapRun(e);
 				} catch (IOException e) {
-					ClassUtil.wrapRun(e);
+					throw ClassUtil.wrapRun(e);
 				} catch (TransformerConfigurationException tce) {
 					System.out.println("* Transformer Factory error");
 					System.out.println(" " + tce.getMessage());

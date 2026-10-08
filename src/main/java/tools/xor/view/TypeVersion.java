@@ -19,7 +19,7 @@
 
 package tools.xor.view;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlAttribute;
 
 
 /*

@@ -190,13 +190,16 @@ public abstract class AbstractDispatcher implements QueryDispatcher
         }
 
         List records =  null;
+        List<String> labels = null;
         queryTree.prepare(callInfo, resolver, queryInvocation, parentEdge);
         View view = queryTree.getView();
         if(view instanceof AggregateView) {
             records = ((AggregateView)view).getResults();
+            labels = ((AggregateView)view).getResultLabels();
         }
         if(query != null && records == null) {
             records = query.getResultList(queryTree.getView(), callInfo.getSettings());
+            labels = query.getResultLabels();
         }
 
         // Check if this is a single column result
@@ -205,13 +208,14 @@ public abstract class AbstractDispatcher implements QueryDispatcher
                 throw new RuntimeException("Was the identifier column forgotten to be added to the subtype query?");
             }
         }
+        ColumnMapping columnMapping = records.isEmpty() ? null : queryTree.getColumnMapping(labels, (Object[])records.get(0));
 
         queryInvocation.start(aggregateTree, queryTree);
         Map<String, Object> previous = null;
         for (Object record : records) {
             previous = queryTree.resolveField(
                 null, // Not reconstituting at this phase
-                (Object[])record,
+                columnMapping.apply((Object[])record),
                 previous,
                 queryInvocation);
         }

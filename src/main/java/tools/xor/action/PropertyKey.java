@@ -21,7 +21,7 @@ package tools.xor.action;
 
 import java.io.Serializable;
 
-import javax.persistence.metamodel.Attribute.PersistentAttributeType;
+import jakarta.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import tools.xor.BusinessObject;
 import tools.xor.ExtendedProperty;

@@ -19,9 +19,9 @@
 
 package tools.xor.db.pm;
 
-import javax.persistence.Entity;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
 
 import tools.xor.db.base.Person;
 
@@ -30,7 +30,7 @@ public class AddressEntity {
 	
 	private String id;
 
-	@javax.persistence.Id
+	@jakarta.persistence.Id
 	public String getId() {
 		return this.id;
 	}	

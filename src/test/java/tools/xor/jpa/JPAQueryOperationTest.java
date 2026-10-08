@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
@@ -71,6 +71,21 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	@Test
 	public void queryPersonNative() {
 		super.queryPersonNative();
+	}
+
+	@Test
+	public void queryPersonNativeAliased() {
+		super.queryPersonNativeAliased();
+	}
+
+	@Test
+	public void queryPersonNativeSwapped() {
+		super.queryPersonNativeSwapped();
+	}
+
+	@Test
+	public void queryPersonNativeMissingColumn() {
+		super.queryPersonNativeMissingColumn();
 	}
 
 	@Test
@@ -122,6 +137,11 @@ public class JPAQueryOperationTest extends DefaultQueryOperation {
 	public void queryTaskDependencies() {
 		super.queryTaskDependencies();
 	}	
+
+	@Test
+	public void queryTaskDependenciesNative() {
+		super.queryTaskDependenciesNative();
+	}
 	
 	@Test
 	public void querySubProjects() {

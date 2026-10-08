@@ -248,6 +248,38 @@ public class QueryTree<V extends QueryFragment, E extends IntraQuery<V>> extends
 		return rootObject;
 	}
 
+	/**
+	 * Create the mapping from the columns of the query result to the columns needed to populate the view.
+	 * A user provided query (e.g., native SQL tuned by a DBA) can return the columns in the order of the
+	 * view attributes, or label them with column aliases. A mismatch would otherwise fail obscurely or
+	 * silently populate the wrong attributes.
+	 *
+	 * @param labels of the result columns, null if not available
+	 * @param queryResultRow a row returned by the query
+	 * @return column mapping
+	 */
+	public ColumnMapping getColumnMapping(List<String> labels, Object[] queryResultRow) {
+		List<String> expected = new ArrayList<>();
+		if(this.fields.size() > 0) {
+			for (QueryField field : this.fields) {
+				while(expected.size() <= field.getPosition()) {
+					expected.add(null);
+				}
+				expected.set(field.getPosition(), field.getFullPath());
+			}
+		} else if(getQuery() != null && getQuery().getColumns() != null) {
+			expected.addAll(getQuery().getColumns());
+		}
+
+		// A system generated query is consistent with the fields by construction
+		return ColumnMapping.create(
+			getView().getName(),
+			expected,
+			getView().isCustom() ? labels : null,
+			queryResultRow.length,
+			getQuery() != null ? getQuery().getQueryString() : null);
+	}
+
 	public Map<String, Object> resolveField(BusinessObject root, Object[] queryResultRow, Map<String, Object> previousResult, QueryTreeInvocation queryInvocation) {
 		Map<String, Object> propertyResult = new HashMap<>();
 		Set<String> propertyPaths = new HashSet<>();

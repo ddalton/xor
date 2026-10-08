@@ -19,8 +19,8 @@
 
 package tools.xor.db.pm;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
 import tools.xor.db.base.Id;
 

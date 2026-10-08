@@ -1,8 +1,8 @@
 package tools.xor.db.common;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import tools.xor.db.base.Department;
 import tools.xor.db.base.Id;

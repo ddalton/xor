@@ -19,7 +19,7 @@
 
 package tools.xor.db.base;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 @Entity
 public class Inode extends Id {

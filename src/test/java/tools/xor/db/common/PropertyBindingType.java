@@ -19,8 +19,8 @@
 
 package tools.xor.db.common;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import tools.xor.db.base.Category;
 

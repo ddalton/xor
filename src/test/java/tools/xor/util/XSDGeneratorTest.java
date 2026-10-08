@@ -4,10 +4,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.SchemaOutputResolver;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.SchemaOutputResolver;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.dom.DOMResult;
 
 import org.antlr.runtime.ANTLRStringStream;
@@ -24,8 +30,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 import tools.xor.Type;
 import tools.xor.db.base.Person;
@@ -68,7 +72,7 @@ public class XSDGeneratorTest {
 	 * @throws JAXBException
 	 */
 	//@Test
-	public void testDOM() throws IOException, JAXBException {
+	public void testDOM() throws IOException, JAXBException, TransformerException {
 
 		final List results = new ArrayList();
 		
@@ -94,10 +98,9 @@ public class XSDGeneratorTest {
 	 // output schema via System.out
 	    DOMResult domResult = (DOMResult) results.get( 0 );
 	    Document doc = (Document) domResult.getNode();
-	    OutputFormat format = new OutputFormat( doc );
-	    format.setIndenting( true );
-	    XMLSerializer serializer = new XMLSerializer( System.out, format );
-	    serializer.serialize( doc );
+	    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+	    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+	    transformer.transform( new DOMSource( doc ), new StreamResult( System.out ) );
 	}
 	
 	

@@ -19,7 +19,7 @@
 
 package tools.xor.db.base;
 
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.MappedSuperclass;
 
 @MappedSuperclass
 public class Identity extends Id {

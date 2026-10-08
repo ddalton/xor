@@ -28,7 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -173,6 +178,89 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(result.getName().equals(NAME));
 		assert(result.getDisplayName().equals(DISPLAY_NAME));
 		assert(result.getDescription().equals(DESCRIPTION));
+	}
+
+	public void queryPersonNativeAliased() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+		person.setIconUrl("icon.png");
+		person.setDetailedDescription("detailed description");
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// The native query columns are in a different order than the view attributes
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_NATIVE_ALIASED"));
+		settings.setPreFlush(true);
+		List<?> toList = aggregateService.query(person, settings);
+
+		assertEquals(1, toList.size());
+		Person result = (Person) toList.get(0);
+		assertEquals(person.getId(), result.getId());
+		assertEquals(NAME, result.getName());
+		assertEquals(DISPLAY_NAME, result.getDisplayName());
+		assertEquals(DESCRIPTION, result.getDescription());
+		assertEquals("icon.png", result.getIconUrl());
+		assertEquals("detailed description", result.getDetailedDescription());
+	}
+
+	public void queryPersonNativeSwapped() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// The NAME and DISPLAYNAME columns are swapped
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_NATIVE_SWAPPED"));
+		settings.setPreFlush(true);
+		final Person queryPerson = person;
+		RuntimeException e = assertThrows(RuntimeException.class, () -> aggregateService.query(queryPerson, settings));
+
+		Throwable cause = e;
+		while(cause != null && !(cause instanceof IllegalStateException)) {
+			cause = cause.getCause();
+		}
+		assertNotNull(cause, "Expected the swapped columns to be reported");
+		assertTrue(cause.getMessage().contains("BASICINFO_NATIVE_SWAPPED"), cause.getMessage());
+		assertTrue(cause.getMessage().contains("out of order"), cause.getMessage());
+	}
+
+	public void queryPersonNativeMissingColumn() {
+
+		// create person
+		Person person = new Person();
+		person.setName(NAME);
+		person.setDisplayName(DISPLAY_NAME);
+		person.setDescription(DESCRIPTION);
+		person.setUserName(USER_NAME);
+
+		person = (Person) aggregateService.create(person, new Settings());
+
+		// The native query returns fewer columns than the view attributes
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("BASICINFO_NATIVE_MISSING_COLUMN"));
+		settings.setPreFlush(true);
+		final Person queryPerson = person;
+		RuntimeException e = assertThrows(RuntimeException.class, () -> aggregateService.query(queryPerson, settings));
+
+		Throwable cause = e;
+		while(cause != null && !(cause instanceof IllegalStateException)) {
+			cause = cause.getCause();
+		}
+		assertNotNull(cause, "Expected the column mismatch to be reported");
+		assertTrue(cause.getMessage().contains("BASICINFO_NATIVE_MISSING_COLUMN"), cause.getMessage());
+		assertTrue(cause.getMessage().contains("returned 5 columns, but 6 columns are expected"), cause.getMessage());
 	}
 
 	public void queryPersonOQL() {
@@ -639,6 +727,46 @@ public class DefaultQueryOperation extends AbstractDBTest {
 		assert(root.getDependants() != null && root.getDependants().size() == 2);
 		assert(root.getDependants().get(0).getName().equals("FIX_DEFECTS"));
 		assert(root.getDependants().get(1).getName().equals("PRIORITIZE_DEFECTS"));		
+	}
+
+	/**
+	 * Native query for a list collection that provides the list index column.
+	 * Note: the returned entity holds the JPA managed list, see queryListNative in DefaultMutableJson
+	 * for the ordering of a reconstituted list
+	 */
+	public void queryTaskDependenciesNative() {
+		Task userStory = new Task();
+		userStory.setName("DEFECTS");
+		userStory.setDisplayName("Defects");
+		userStory.setDescription("User story to address product defects");
+		userStory = (Task) aggregateService.create(userStory, new Settings());
+
+		List<Task> dependents = new ArrayList<Task>();
+		for(String name: new String[] {"FIX_DEFECTS", "PRIORITIZE_DEFECTS", "VERIFY_DEFECTS"}) {
+			Task dependent = new Task();
+			dependent.setName(name);
+			dependent.setDisplayName(name);
+			dependent.setDescription(name);
+			dependent = (Task) aggregateService.create(dependent, new Settings());
+			dependent.setTaskParent(userStory);
+			dependents.add(dependent);
+		}
+		userStory.setDependants(dependents);
+		userStory = (Task) aggregateService.read(userStory, getSettings());
+
+		Settings settings = new Settings();
+		settings.setView(aggregateService.getView("TASKDEP_NATIVE"));
+		settings.setPreFlush(true);
+		List<?> toList = aggregateService.query(userStory, settings);
+
+		assertEquals(1, toList.size());
+		Task root = (Task) toList.get(0);
+		assertEquals("DEFECTS", root.getName());
+		assertNotNull(root.getDependants());
+		assertEquals(3, root.getDependants().size());
+		assertEquals("FIX_DEFECTS", root.getDependants().get(0).getName());
+		assertEquals("PRIORITIZE_DEFECTS", root.getDependants().get(1).getName());
+		assertEquals("VERIFY_DEFECTS", root.getDependants().get(2).getName());
 	}
 
 	/**

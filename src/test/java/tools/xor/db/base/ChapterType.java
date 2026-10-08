@@ -19,8 +19,8 @@
 
 package tools.xor.db.base;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("CHAPTER_TYPE")

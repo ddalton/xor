@@ -96,6 +96,71 @@
 		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
+		<!-- The columns are labeled with the attributes they populate, so the order does not matter -->
+		<name>BASICINFO_NATIVE_ALIASED</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT DETAILEDDESCRIPTION AS "detailedDescription",
+				                DESCRIPTION AS description,
+				                NAME AS name,
+				                ICONURL AS iconUrl,
+				                UUID AS id,
+				                DISPLAYNAME AS displayName
+					   FROM Person
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<!-- The NAME and DISPLAYNAME columns are swapped -->
+		<name>BASICINFO_NATIVE_SWAPPED</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT UUID,
+				                DISPLAYNAME,
+				                NAME,
+					        DESCRIPTION,
+					        ICONURL,
+					        DETAILEDDESCRIPTION
+					   FROM Person
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
+		<!-- The native query is missing the DETAILEDDESCRIPTION column -->
+		<name>BASICINFO_NATIVE_MISSING_COLUMN</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT UUID,
+				                NAME,
+					        DISPLAYNAME,
+					        DESCRIPTION,
+					        ICONURL
+					   FROM Person
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE UUID = ?</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<!-- The parent join query uses a temp table -->
 		<name>BASICINFO_NATIVE_TASK_TEMP</name>
 		<attributeList>[BASICINFO]</attributeList>
@@ -310,7 +375,7 @@
                 <args> ORDER BY id ASC</args>
             </function>             
             <function type="FREESTYLE" include="scroll">
-                <args>WHERE NAME > :ORDER_BY_startName AND UUID > :ORDER_BY_startId ORDER BY NAME, UUID</args>
+                <args>WHERE name > :ORDER_BY_startName AND id > :ORDER_BY_startId ORDER BY name, id</args>
             </function>             
         </userOQLQuery>
     </aggregateView>	
@@ -610,9 +675,72 @@
 		<attributeList>dependants.[VERYBASIC]</attributeList>
 	</aggregateView>
 	<aggregateView>
+		<!-- Native query for a list. The rows are deliberately not sorted by the list index,
+		     the dependants are placed using the dependants.INDEX_ column -->
+		<name>TASKDEP_NATIVE</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>dependants.[VERYBASIC]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<augmenter>dependants.INDEX_</augmenter>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT t.UUID AS id,
+				                t.NAME AS name,
+				                t.DISPLAYNAME AS displayName,
+				                t.DESCRIPTION AS description,
+				                t.ICONURL AS iconUrl,
+				                t.DETAILEDDESCRIPTION AS detailedDescription,
+				                tt.DEP_SEQ AS "dependants.INDEX_",
+				                d.UUID AS "dependants.id",
+				                d.NAME AS "dependants.name",
+				                d.DISPLAYNAME AS "dependants.displayName",
+				                d.DESCRIPTION AS "dependants.description"
+				           FROM Task t
+				           LEFT JOIN TASK_TASK tt ON tt.TASK_UUID = t.UUID
+				           LEFT JOIN Task d ON d.UUID = tt.DEPENDANTS_UUID
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE t.UUID = ? ORDER BY tt.DEP_SEQ DESC</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<name>SUBPROJECTS</name>
 		<attributeList>[BASICINFO]</attributeList>
 		<attributeList>subProjects.[VERYBASIC]</attributeList>
+	</aggregateView>
+	<aggregateView>
+		<!-- Native query for a map. The map key is provided by the subProjects.KEY_ column -->
+		<name>SUBPROJECTS_NATIVE</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>subProjects.[VERYBASIC]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<augmenter>subProjects.KEY_</augmenter>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT p.UUID AS id,
+				                p.NAME AS name,
+				                p.DISPLAYNAME AS displayName,
+				                p.DESCRIPTION AS description,
+				                p.ICONURL AS iconUrl,
+				                p.DETAILEDDESCRIPTION AS detailedDescription,
+				                s.UUID AS "subProjects.id",
+				                s.NAME AS "subProjects.name",
+				                s.DISPLAYNAME AS "subProjects.displayName",
+				                s.DESCRIPTION AS "subProjects.description",
+				                s.NAME AS "subProjects.KEY_"
+				           FROM Project p
+				           LEFT JOIN PROJECT_PROJECT pp ON pp.PROJECT_UUID = p.UUID
+				           LEFT JOIN Project s ON s.UUID = pp.SUBPROJECTS_UUID
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE p.UUID = ? ORDER BY s.NAME DESC</args>
+			</function>
+		</nativeQuery>
 	</aggregateView>
 	<aggregateView>
 		<name>SETLISTMAP</name>

@@ -40,11 +40,11 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.persistence.MapKey;
-import javax.persistence.OrderBy;
-import javax.persistence.metamodel.Attribute.PersistentAttributeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MapKey;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -532,12 +532,12 @@ public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 	protected void initByAnnotations() {
 
 		try {
-			javax.persistence.Access access = getterMethod.getAnnotation(javax.persistence.Access.class);
+			jakarta.persistence.Access access = getterMethod.getAnnotation(jakarta.persistence.Access.class);
 			if (access != null)
 				accessType = AccessType.valueOf(access.value().name());
 			else {
 				if (field != null) {
-					access = field.getAnnotation(javax.persistence.Access.class);
+					access = field.getAnnotation(jakarta.persistence.Access.class);
 					if (access != null)
 						accessType = AccessType.valueOf(access.value().name());
 				}
@@ -1280,23 +1280,23 @@ public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 	public String getMappedByName() {	
 		String result = null;
 
-		javax.persistence.ManyToOne manyToOne = null;
-		javax.persistence.OneToOne oneToOne = null;
-		javax.persistence.OneToMany oneToMany = null;
-		javax.persistence.ManyToMany manyToMany = null;
+		jakarta.persistence.ManyToOne manyToOne = null;
+		jakarta.persistence.OneToOne oneToOne = null;
+		jakarta.persistence.OneToMany oneToMany = null;
+		jakarta.persistence.ManyToMany manyToMany = null;
 		
 		if(getterMethod != null) {
-			manyToOne = getterMethod.getAnnotation(javax.persistence.ManyToOne.class);	
-			oneToOne = getterMethod.getAnnotation(javax.persistence.OneToOne.class);
-			oneToMany = getterMethod.getAnnotation(javax.persistence.OneToMany.class);
-			manyToMany = getterMethod.getAnnotation(javax.persistence.ManyToMany.class);
+			manyToOne = getterMethod.getAnnotation(jakarta.persistence.ManyToOne.class);	
+			oneToOne = getterMethod.getAnnotation(jakarta.persistence.OneToOne.class);
+			oneToMany = getterMethod.getAnnotation(jakarta.persistence.OneToMany.class);
+			manyToMany = getterMethod.getAnnotation(jakarta.persistence.ManyToMany.class);
 		}
 		
 		if(oneToOne == null && oneToMany == null && manyToMany == null && field != null) {
-			manyToOne = field.getAnnotation(javax.persistence.ManyToOne.class);				
-			oneToOne = field.getAnnotation(javax.persistence.OneToOne.class);
-			oneToMany = field.getAnnotation(javax.persistence.OneToMany.class);
-			manyToMany = field.getAnnotation(javax.persistence.ManyToMany.class);
+			manyToOne = field.getAnnotation(jakarta.persistence.ManyToOne.class);				
+			oneToOne = field.getAnnotation(jakarta.persistence.OneToOne.class);
+			oneToMany = field.getAnnotation(jakarta.persistence.OneToMany.class);
+			manyToMany = field.getAnnotation(jakarta.persistence.ManyToMany.class);
 		}
 		
 		if(manyToOne != null) // this annotation does not have a mappedBy field
@@ -1313,14 +1313,14 @@ public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 	}	
 	
 	private Column getColumnAnnotation() {
-		javax.persistence.Column col = null;
+		jakarta.persistence.Column col = null;
 		
 		if(getterMethod != null) {
-			col = getterMethod.getAnnotation(javax.persistence.Column.class);	
+			col = getterMethod.getAnnotation(jakarta.persistence.Column.class);	
 		}
 		
 		if(col == null && field != null) {
-			col = field.getAnnotation(javax.persistence.Column.class);		
+			col = field.getAnnotation(jakarta.persistence.Column.class);		
 		}
 
 		return col;
@@ -1336,7 +1336,7 @@ public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 		unique = Boolean.FALSE;
 		
 		// Check Column annotation first
-		javax.persistence.Column col = getColumnAnnotation();
+		jakarta.persistence.Column col = getColumnAnnotation();
 		
 		if(col != null) {
 			unique = col.unique();
@@ -1358,7 +1358,7 @@ public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 	
 	@Override
 	public int getLength() {
-		javax.persistence.Column col = getColumnAnnotation();
+		jakarta.persistence.Column col = getColumnAnnotation();
 		if(col != null) {
 			return col.length();
 		}
@@ -1370,9 +1370,9 @@ public abstract class AbstractProperty implements ExtendedProperty, Cloneable {
 	public boolean isUpdatable() {
 		boolean result = true;
 
-		javax.persistence.Column column = getterMethod.getAnnotation(javax.persistence.Column.class);
+		jakarta.persistence.Column column = getterMethod.getAnnotation(jakarta.persistence.Column.class);
 		if(column == null)
-			column = field.getAnnotation(javax.persistence.Column.class);
+			column = field.getAnnotation(jakarta.persistence.Column.class);
 
 		if(column != null && !column.updatable())
 			result = false;

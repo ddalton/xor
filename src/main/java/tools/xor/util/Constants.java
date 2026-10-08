@@ -111,6 +111,9 @@ public class Constants {
 	  public static final String EXCEL_SHEET_PREFIX = "Sheet";
 	  public static final String EXCEL_INDEX_SHEET = "Relationships";
 	  public static final String EXCEL_INFO_SHEET = "Info";
+	  // Holds values exceeding the Excel cell size limit, split across the cells of a row
+	  public static final String EXCEL_OVERFLOW_SHEET = "Overflow";
+	  public static final String EXCEL_OVERFLOW_REF = XOR_PATH_PREFIX + "overflow:";
 
 	  // Represents file names for CSV import
 	  public static final String CSV_FILE_SUFFIX = ".csv";

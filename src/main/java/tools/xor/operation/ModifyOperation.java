@@ -19,7 +19,7 @@
 
 package tools.xor.operation;
 
-import javax.persistence.metamodel.Attribute.PersistentAttributeType;
+import jakarta.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

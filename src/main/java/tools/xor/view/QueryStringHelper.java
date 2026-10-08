@@ -227,4 +227,75 @@ public class QueryStringHelper
             }
         }
     }
+    /**
+     * Find the FROM keyword of the outermost query. The keyword can be in any case and be
+     * surrounded by any whitespace. Occurrences inside parentheses (e.g., a subquery in the select list),
+     * quoted literals, quoted identifiers and comments are skipped.
+     *
+     * @param query OQL or SQL query string
+     * @return the index of the FROM keyword, or -1 if not found
+     */
+    public static int indexOfFromClause (String query)
+    {
+        int depth = 0;
+        int len = query.length();
+        for (int i = 0; i < len; i++) {
+            char c = query.charAt(i);
+            switch (c) {
+            case '\'':
+            case '"':
+            case '`':
+                // skip to the closing quote, a doubled quote is an escaped quote
+                int end = i + 1;
+                while (end < len) {
+                    if (query.charAt(end) == c) {
+                        if (end + 1 < len && query.charAt(end + 1) == c) {
+                            end += 2;
+                            continue;
+                        }
+                        break;
+                    }
+                    end++;
+                }
+                i = end;
+                break;
+            case '-':
+                if (i + 1 < len && query.charAt(i + 1) == '-') {
+                    int eol = query.indexOf('\n', i);
+                    i = (eol == -1) ? len : eol;
+                }
+                break;
+            case '/':
+                if (i + 1 < len && query.charAt(i + 1) == '*') {
+                    int close = query.indexOf("*/", i + 2);
+                    i = (close == -1) ? len : close + 1;
+                }
+                break;
+            case '(':
+                depth++;
+                break;
+            case ')':
+                depth--;
+                break;
+            case 'f':
+            case 'F':
+                if (depth == 0
+                    && query.regionMatches(true, i, "FROM", 0, 4)
+                    && (i == 0 || !isIdentifierPart(query.charAt(i - 1)))
+                    && (i + 4 == len || !isIdentifierPart(query.charAt(i + 4)))) {
+                    return i;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        return -1;
+    }
+
+    private static boolean isIdentifierPart (char c)
+    {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '$' || c == '.';
+    }
 }

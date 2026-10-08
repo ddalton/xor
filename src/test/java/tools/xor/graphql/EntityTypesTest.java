@@ -13,9 +13,9 @@ import tools.xor.GraphQLTypeMapper;
 import tools.xor.jpa.CSVLoaderTest;
 import tools.xor.service.AggregateManager;
 import tools.xor.util.ClassUtil;
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.annotation.Resource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @ExtendWith(SpringExtension.class)
 @ExtendWith(CSVLoaderTest.TraceUnitExtension.class)

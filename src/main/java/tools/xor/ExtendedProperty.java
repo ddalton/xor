@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.metamodel.Attribute.PersistentAttributeType;
+import jakarta.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import tools.xor.AbstractProperty.LambdaResult;
 import tools.xor.JSONObjectProperty.Converter;

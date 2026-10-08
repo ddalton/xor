@@ -22,8 +22,8 @@ package tools.xor.util;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
 public class JPAUtil {
 

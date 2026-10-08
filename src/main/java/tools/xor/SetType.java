@@ -22,7 +22,7 @@ package tools.xor;
 import java.util.List;
 import java.util.Set;
 
-import javax.json.JsonArray;
+import jakarta.json.JsonArray;
 
 import org.json.JSONObject;
 
@@ -54,10 +54,10 @@ public class SetType extends SimpleType {
 		if(instance != null ) {
 			if(instance instanceof Set) {
 				int expected = ((Set) instance).size();
-				return new ObjectOpenHashSet<Object>(expected, 1);
+				return new ObjectOpenHashSet<Object>(expected);
 			} else if(instance instanceof JsonArray) {
 				int expected = ((JsonArray) instance).size();
-				return new ObjectOpenHashSet<Object>(expected, 1);
+				return new ObjectOpenHashSet<Object>(expected);
 			} else 
 				return new ObjectOpenHashSet<Object>();
 		} else

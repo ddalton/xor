@@ -1,6 +1,6 @@
 package tools.xor.db.catalog;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import tools.xor.db.base.MetaEntity;
 

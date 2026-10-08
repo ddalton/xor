@@ -1,7 +1,7 @@
 package tools.xor.db.catalog;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 
 import tools.xor.db.base.Id;
 import tools.xor.db.base.MetaEntity;

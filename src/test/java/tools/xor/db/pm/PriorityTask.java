@@ -1,6 +1,6 @@
 package tools.xor.db.pm;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 @Entity
 public class PriorityTask extends Task

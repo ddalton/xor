@@ -24,13 +24,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.metamodel.Attribute;
-import javax.persistence.metamodel.EmbeddableType;
-import javax.persistence.metamodel.EntityType;
-import javax.persistence.metamodel.IdentifiableType;
-import javax.persistence.metamodel.ManagedType;
-import javax.persistence.metamodel.SingularAttribute;
-import javax.persistence.metamodel.Type.PersistenceType;
+import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.EmbeddableType;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.IdentifiableType;
+import jakarta.persistence.metamodel.ManagedType;
+import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.Type.PersistenceType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,12 +42,12 @@ import tools.xor.util.ClassUtil;
 public class JPAType extends AbstractType {
 	private static final Logger logger = LogManager.getLogger(new Exception().getStackTrace()[0].getClassName());	
 
-	private javax.persistence.metamodel.Type<?>  persistenceType;
+	private jakarta.persistence.metamodel.Type<?>  persistenceType;
 	private AccessType               accessType;
 	private JPAProperty              identifierProperty;
 	private JPAProperty              versionProperty;	
 
-	public JPAType(javax.persistence.metamodel.Type<?> entityType) {
+	public JPAType(jakarta.persistence.metamodel.Type<?> entityType) {
 		super();		
 		this.persistenceType = entityType;
 		
@@ -68,19 +68,19 @@ public class JPAType extends AbstractType {
 			return getName();
 	}	
 	
-	public javax.persistence.metamodel.Type<?> getProviderType() {
+	public jakarta.persistence.metamodel.Type<?> getProviderType() {
 	    return this.persistenceType;
 	}
 
     protected Iterator<?> getPropertyIterator() {
-        if (persistenceType.getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+        if (persistenceType.getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
             //return ((EntityType<?>) persistenceType).getAttributes().iterator();
             return ((EntityType<?>)persistenceType).getDeclaredAttributes().iterator();
         } else if (persistenceType
-                .getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.MAPPED_SUPERCLASS) {
+                .getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.MAPPED_SUPERCLASS) {
             return ((IdentifiableType<?>) persistenceType).getAttributes().iterator();
         } else if (persistenceType
-                .getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {
+                .getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {
             return ((EmbeddableType<?>) persistenceType).getAttributes().iterator();
         } else {
             throw new UnsupportedOperationException();
@@ -94,7 +94,7 @@ public class JPAType extends AbstractType {
 		Iterator<?> itr = getPropertyIterator();
 		while(itr.hasNext() ) {
 			Attribute<?, ?> attribute = (Attribute<?, ?>) itr.next();
-			if(attribute.getPersistentAttributeType() == javax.persistence.metamodel.Attribute.PersistentAttributeType.EMBEDDED) {
+			if(attribute.getPersistentAttributeType() == jakarta.persistence.metamodel.Attribute.PersistentAttributeType.EMBEDDED) {
 				JPAType type = new JPAType(((SingularAttribute<?, ?>)attribute).getType());
 				result.add(type);
 			}
@@ -186,14 +186,14 @@ public class JPAType extends AbstractType {
 
 	@Override
 	public boolean isAbstract() {
-		return persistenceType.getPersistenceType() != javax.persistence.metamodel.Type.PersistenceType.ENTITY;
+		return persistenceType.getPersistenceType() != jakarta.persistence.metamodel.Type.PersistenceType.ENTITY;
 	}
 
 	@Override
 	public List<Property> getDeclaredProperties() {
 		List<Property> result = new ArrayList<Property>();
 
-		if(getEntityType().getPersistenceType() != javax.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {		
+		if(getEntityType().getPersistenceType() != jakarta.persistence.metamodel.Type.PersistenceType.EMBEDDABLE) {		
 			Set<?> declaredAttributes = ((ManagedType<?>)persistenceType).getDeclaredAttributes();
 			Iterator<?> attribIter = declaredAttributes.iterator();		
 			while(attribIter.hasNext()) {
@@ -221,12 +221,12 @@ public class JPAType extends AbstractType {
 		return null;
 	}
 
-	public javax.persistence.metamodel.Type<?> getEntityType() {
+	public jakarta.persistence.metamodel.Type<?> getEntityType() {
 		return this.persistenceType;
 	}
 
 	public void initAccessType() {
-		javax.persistence.Access accessAnno = getInstanceClass().getAnnotation( javax.persistence.Access.class );
+		jakarta.persistence.Access accessAnno = getInstanceClass().getAnnotation( jakarta.persistence.Access.class );
 		if ( accessAnno != null ) {
 			accessType = AccessType.valueOf(accessAnno.value().name());
 		}

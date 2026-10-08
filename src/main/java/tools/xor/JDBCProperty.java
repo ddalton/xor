@@ -21,7 +21,7 @@ package tools.xor;
 
 import java.util.List;
 
-import javax.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.Attribute;
 
 import tools.xor.providers.jdbc.JDBCDataModel;
 import tools.xor.service.Shape;

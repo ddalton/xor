@@ -21,9 +21,9 @@ package tools.xor.db.base;
 
 import java.util.Set;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 
 import tools.xor.db.common.Head;
 

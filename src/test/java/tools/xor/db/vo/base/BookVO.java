@@ -19,7 +19,7 @@
  
 package tools.xor.db.vo.base;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "Book")
 public class BookVO extends MetaEntityVO {

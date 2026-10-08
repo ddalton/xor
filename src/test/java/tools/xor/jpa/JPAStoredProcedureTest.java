@@ -21,7 +21,7 @@ package tools.xor.jpa;
 
 import java.io.UnsupportedEncodingException;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;

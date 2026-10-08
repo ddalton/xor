@@ -1003,8 +1003,13 @@ public abstract class AbstractBO implements BusinessObject {
 
 					if( ((ExtendedProperty)property).isMap() ) {
 						Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
-						Map map = (Map) current.getInstance();
-						elementInstance = map.get(keyValue);
+						if(current.getInstance() instanceof JSONObject) {
+							// JSON object keys are strings
+							elementInstance = keyValue == null ? null : ((JSONObject)current.getInstance()).opt(keyValue.toString());
+						} else {
+							Map map = (Map) current.getInstance();
+							elementInstance = map.get(keyValue);
+						}
 					} 
 
 					if(elementInstance == null) {
@@ -1038,21 +1043,24 @@ public abstract class AbstractBO implements BusinessObject {
 				if( ((ExtendedProperty)property).isMap() ) {
 					// If this is a map, get the key
 					Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
-					Map map = (Map) current.getInstance();
-					map.put(keyValue, elementInstance);
+					if(current.getInstance() instanceof JSONObject) {
+						if(keyValue == null) {
+							throw new IllegalStateException("The map key is missing for the property " + fullPropertyPath);
+						}
+						((JSONObject)current.getInstance()).put(keyValue.toString(), elementInstance);
+					} else {
+						Map map = (Map) current.getInstance();
+						map.put(keyValue, elementInstance);
+					}
 				} else if ( ((ExtendedProperty)property).isList() ) {
 					Object indexValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.LIST_INDEX_ATTRIBUTE);
 					if(current.getInstance() instanceof JSONArray) {
-						// add it in the order we see it
 						JSONArray jsonArray = (JSONArray) current.getInstance();
-						visitor.add(currentPath.toString(), new ReconstituteRecordVisitor.AddEvent(jsonArray, elementInstance));
+						visitor.add(currentPath.toString(), new ReconstituteRecordVisitor.AddEvent(jsonArray, elementInstance, indexValue, qti.getListPlacement()));
 
 					} else {
-						List list = (List)current.getInstance();
-						int index = Integer.parseInt(indexValue.toString());
-						if (index >= list.size() || list.get(index) != elementInstance) {
-							list.add(elementInstance);
-						}
+						// The rows need not be ordered by the index, so place the element by its index
+						qti.getListPlacement().add((List)current.getInstance(), elementInstance, indexValue);
 					}
 				} else if ( ((ExtendedProperty)property).isSet() ) {
 					// Currently Immutable JSON is treated as a set, so we should check for this

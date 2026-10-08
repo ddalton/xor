@@ -712,6 +712,37 @@
 		<attributeList>subProjects.[VERYBASIC]</attributeList>
 	</aggregateView>
 	<aggregateView>
+		<!-- Native query for a map. The map key is provided by the subProjects.KEY_ column -->
+		<name>SUBPROJECTS_NATIVE</name>
+		<attributeList>[BASICINFO]</attributeList>
+		<attributeList>subProjects.[VERYBASIC]</attributeList>
+		<primaryKeyAttribute>id</primaryKeyAttribute>
+		<nativeQuery>
+			<augmenter>subProjects.KEY_</augmenter>
+			<parameterList name="ID_" />
+			<selectClause>
+				<![CDATA[SELECT p.UUID AS id,
+				                p.NAME AS name,
+				                p.DISPLAYNAME AS displayName,
+				                p.DESCRIPTION AS description,
+				                p.ICONURL AS iconUrl,
+				                p.DETAILEDDESCRIPTION AS detailedDescription,
+				                s.UUID AS "subProjects.id",
+				                s.NAME AS "subProjects.name",
+				                s.DISPLAYNAME AS "subProjects.displayName",
+				                s.DESCRIPTION AS "subProjects.description",
+				                s.NAME AS "subProjects.KEY_"
+				           FROM Project p
+				           LEFT JOIN PROJECT_PROJECT pp ON pp.PROJECT_UUID = p.UUID
+				           LEFT JOIN Project s ON s.UUID = pp.SUBPROJECTS_UUID
+                                 ]]>
+			</selectClause>
+			<function scope="ROOT" type="FREESTYLE">
+				<args>WHERE p.UUID = ? ORDER BY s.NAME DESC</args>
+			</function>
+		</nativeQuery>
+	</aggregateView>
+	<aggregateView>
 		<name>SETLISTMAP</name>
 		<attributeList>[SUBPROJECTS]</attributeList>
 		<attributeList>rootTask.[BASICINFO]</attributeList>

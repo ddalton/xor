@@ -1003,8 +1003,13 @@ public abstract class AbstractBO implements BusinessObject {
 
 					if( ((ExtendedProperty)property).isMap() ) {
 						Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
-						Map map = (Map) current.getInstance();
-						elementInstance = map.get(keyValue);
+						if(current.getInstance() instanceof JSONObject) {
+							// JSON object keys are strings
+							elementInstance = keyValue == null ? null : ((JSONObject)current.getInstance()).opt(keyValue.toString());
+						} else {
+							Map map = (Map) current.getInstance();
+							elementInstance = map.get(keyValue);
+						}
 					} 
 
 					if(elementInstance == null) {
@@ -1038,8 +1043,15 @@ public abstract class AbstractBO implements BusinessObject {
 				if( ((ExtendedProperty)property).isMap() ) {
 					// If this is a map, get the key
 					Object keyValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.MAP_KEY_ATTRIBUTE);
-					Map map = (Map) current.getInstance();
-					map.put(keyValue, elementInstance);
+					if(current.getInstance() instanceof JSONObject) {
+						if(keyValue == null) {
+							throw new IllegalStateException("The map key is missing for the property " + fullPropertyPath);
+						}
+						((JSONObject)current.getInstance()).put(keyValue.toString(), elementInstance);
+					} else {
+						Map map = (Map) current.getInstance();
+						map.put(keyValue, elementInstance);
+					}
 				} else if ( ((ExtendedProperty)property).isList() ) {
 					Object indexValue = propertyResult.get(anchorPath+currentPath + Settings.PATH_DELIMITER + QueryFragment.LIST_INDEX_ATTRIBUTE);
 					if(current.getInstance() instanceof JSONArray) {
